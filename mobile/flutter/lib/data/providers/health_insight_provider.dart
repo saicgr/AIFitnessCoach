@@ -194,6 +194,8 @@ class HealthInsightState {
 ///      persist it, and return it.
 final healthInsightProvider =
     FutureProvider.autoDispose<HealthInsightState>((ref) async {
+  // Keep alive so leaving/returning Home doesn't tear this down and refetch.
+  ref.keepAlive();
   final prefs = await SharedPreferences.getInstance();
   final dismissedToday = _isDismissedToday(prefs);
 

@@ -69,6 +69,8 @@ const Duration _kPostWorkoutWindow = Duration(minutes: 30);
 
 final contextualNudgeProvider =
     Provider.autoDispose<List<ContextualNudge>>((ref) {
+  // Keep alive so leaving/returning Home doesn't tear this down and recompute.
+  ref.keepAlive();
   final now = DateTime.now();
   final hour = now.hour;
   final minute = now.minute;

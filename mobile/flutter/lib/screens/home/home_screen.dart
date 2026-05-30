@@ -1132,11 +1132,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     //  • cycle        — self-hides unless menstrual tracking is enabled; the
     //    gate is cheap (hormonalProfileProvider), so filter it here too rather
     //    than leave a ~14px void between the nutrition card and Reports/Recap.
-    final menstrualEnabled = ref
-            .watch(hormonalProfileProvider)
-            .valueOrNull
-            ?.menstrualTrackingEnabled ??
-        false;
+    final menstrualEnabled = ref.watch(
+      hormonalProfileProvider.select(
+        (v) => v.valueOrNull?.menstrualTrackingEnabled ?? false,
+      ),
+    );
     final visible = sections.visibleInOrder
         .where((s) => s != HomeSection.strainCoach)
         .where((s) => s != HomeSection.timeline)
@@ -1148,14 +1148,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // ACTION, the Coach card is the framing. On a scheduled training day,
     // surface the workout first. On a rest day — or whenever the coach is
     // raising a high-priority (health-alert) nudge — surface the coach first.
-    final todayResp = ref.watch(todayWorkoutProvider).valueOrNull;
-    final isTrainingDay = todayResp != null &&
-        (todayResp.hasWorkoutToday ||
-            todayResp.todayWorkout != null ||
-            todayResp.completedToday);
-    final hasHighPriorityInsight = ref
-        .watch(contextualNudgeProvider)
-        .any((n) => n.priorityTier == NudgePriorityTier.healthAlert);
+    final isTrainingDay = ref.watch(
+      todayWorkoutProvider.select((v) {
+        final r = v.valueOrNull;
+        return r != null &&
+            (r.hasWorkoutToday ||
+                r.todayWorkout != null ||
+                r.completedToday);
+      }),
+    );
+    final hasHighPriorityInsight = ref.watch(
+      contextualNudgeProvider.select(
+        (nudges) =>
+            nudges.any((n) => n.priorityTier == NudgePriorityTier.healthAlert),
+      ),
+    );
     final coachFirst = !isTrainingDay || hasHighPriorityInsight;
     final iWorkout = visible.indexOf(HomeSection.workoutCard);
     final iCoach = visible.indexOf(HomeSection.coachHero);

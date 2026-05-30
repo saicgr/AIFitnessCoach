@@ -81,8 +81,11 @@ class HeroWorkoutCarousel extends ConsumerStatefulWidget {
   /// Optional key for app tour spotlight targeting
   final GlobalKey? carouselKey;
 
-  /// Shared card height constant
-  static const double cardHeight = 360;
+  /// Shared card height constant. Content-driven height that fits the title +
+  /// the "Tomorrow · Upper Body · 60m · 7 exercises" meta line + the START
+  /// button without overflow on an iPhone SE, while still peeking the next
+  /// carousel card. Reduced from 360 (too tall per user feedback + screenshot).
+  static const double cardHeight = 272;
 
   const HeroWorkoutCarousel({
     super.key,
@@ -737,7 +740,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
         // PageView carousel for multiple items
         return SizedBox(
-          height: 360,
+          height: HeroWorkoutCarousel.cardHeight,
           child: PageView.builder(
             controller: _pageController,
             itemCount: carouselItems.length,

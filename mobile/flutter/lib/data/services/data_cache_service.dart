@@ -23,6 +23,22 @@ class DataCacheService {
   static const String trophySummaryKey = 'cache_trophy_summary';
   static const String bodyMeasurementsKey = 'cache_body_measurements';
 
+  // First-paint tab data — cache-first so each tab paints last-known content
+  // instantly on a cold start, then silently revalidates. Mirrors the proven
+  // todayWorkout/workoutList pattern.
+  static const String timelineKey = 'cache_timeline';
+  static const String hydrationKey = 'cache_hydration';
+  static const String consistencyKey = 'cache_consistency';
+  static const String dailyActivityKey = 'cache_daily_activity';
+  static const String coachInsightKey = 'cache_coach_insight';
+  static const String nutritionDailyKey = 'cache_nutrition_daily';
+
+  /// Shared prefix for all below-the-fold stat aggregates (nutrition stats
+  /// strip, workout stats section). Any key starting with this picks up
+  /// [_statsTtlMs] without needing a per-key override entry — call sites just
+  /// build `'${DataCacheService.statsKeyPrefix}nutrition_weekly'` etc.
+  static const String statsKeyPrefix = 'cache_stats_';
+
   // TTL durations in milliseconds
   static const int _userProfileTtlMs = 30 * 60 * 1000; // 30 minutes
   static const int _defaultTtlMs = 60 * 60 * 1000; // 1 hour
@@ -31,11 +47,23 @@ class DataCacheService {
   static const int _xpDataTtlMs = 12 * 60 * 60 * 1000; // 12 hours
   static const int _trophyTtlMs = 12 * 60 * 60 * 1000; // 12 hours
   static const int _gymProfilesTtlMs = 24 * 60 * 60 * 1000; // 24 hours — gyms rarely change; revalidate silently in background
+  static const int _firstPaintTtlMs = 24 * 60 * 60 * 1000; // 24 hours — first-paint tab data survives overnight
+  static const int _dailyActivityTtlMs = 6 * 60 * 60 * 1000; // 6 hours — step count drifts intraday; refresh sooner
+  static const int _statsTtlMs = 12 * 60 * 60 * 1000; // 12 hours — stat aggregates change slowly
 
   /// Keys whose envelopes must also match the user's local wall-clock date.
   /// Used to defend against timezone rollover (e.g. LAX → JFK flight) where
   /// "today" changes per the user's clock but the TTL hasn't fired yet.
-  static const Set<String> _tzSensitiveKeys = {todayWorkoutKey};
+  /// All of these are "today"-scoped surfaces, so a calendar rollover must
+  /// invalidate them even before the TTL elapses.
+  static const Set<String> _tzSensitiveKeys = {
+    todayWorkoutKey,
+    timelineKey,
+    hydrationKey,
+    dailyActivityKey,
+    coachInsightKey,
+    nutritionDailyKey,
+  };
 
   /// Counter for unscoped writes — incremented every time `_scopedKey` falls
   /// back to the legacy global slot (no userId provided). Surfaces regressions
@@ -57,6 +85,12 @@ class DataCacheService {
     xpStreakKey: _xpDataTtlMs,
     trophySummaryKey: _trophyTtlMs,
     gymProfilesKey: _gymProfilesTtlMs,
+    timelineKey: _firstPaintTtlMs,
+    hydrationKey: _firstPaintTtlMs,
+    consistencyKey: _statsTtlMs,
+    dailyActivityKey: _dailyActivityTtlMs,
+    coachInsightKey: _statsTtlMs,
+    nutritionDailyKey: _firstPaintTtlMs,
   };
 
   DataCacheService._();
@@ -114,8 +148,21 @@ class DataCacheService {
     return _prefs!;
   }
 
-  /// Get TTL for a given key
-  int _getTtl(String key) => _ttlOverrides[key] ?? _defaultTtlMs;
+  /// Get TTL for a given key.
+  ///
+  /// [key] arrives already user-scoped (`<base>:<userId>`), so strip the
+  /// suffix before looking up the override — otherwise EVERY per-user entry
+  /// misses the override map and silently falls back to the 1h default (this
+  /// was a latent bug: today-workout/workout-list never actually got their
+  /// 24h "survives overnight" TTL on a real per-user install). Keys under the
+  /// shared stats prefix pick up [_statsTtlMs] without an override entry.
+  int _getTtl(String key) {
+    final base = key.contains(':') ? key.substring(0, key.indexOf(':')) : key;
+    final override = _ttlOverrides[base];
+    if (override != null) return override;
+    if (base.startsWith(statsKeyPrefix)) return _statsTtlMs;
+    return _defaultTtlMs;
+  }
 
   /// Today's date in the user's wall-clock timezone, as 'yyyy-MM-dd'.
   /// Stamped onto every envelope so TZ-sensitive keys can detect rollover
@@ -304,11 +351,24 @@ class DataCacheService {
         xpStreakKey,
         trophySummaryKey,
         bodyMeasurementsKey,
+        timelineKey,
+        hydrationKey,
+        consistencyKey,
+        dailyActivityKey,
+        coachInsightKey,
+        nutritionDailyKey,
       ];
-      // Remove the legacy unscoped form, plus every `<base>:<userId>` slot.
+      // Remove the legacy unscoped form, plus every `<base>:<userId>` slot,
+      // plus every stat-aggregate slot (shared `cache_stats_` prefix).
       final allKeys = p.getKeys();
       var removed = 0;
       for (final k in allKeys) {
+        if (k == statsKeyPrefix.substring(0, statsKeyPrefix.length - 1) ||
+            k.startsWith(statsKeyPrefix)) {
+          await p.remove(k);
+          removed++;
+          continue;
+        }
         for (final base in baseKeys) {
           if (k == base || k.startsWith('$base:')) {
             await p.remove(k);

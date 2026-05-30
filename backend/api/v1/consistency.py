@@ -661,7 +661,15 @@ async def get_calendar_heatmap(
         except Exception as log_error:
             logger.warning(f"Failed to log calendar access: {log_error}", exc_info=True)
 
-        # Get all scheduled workouts in range (use end-of-day for inclusive upper bound)
+        # Get all scheduled workouts in range.
+        #
+        # `workouts.scheduled_date` is a Postgres `timestamptz` column. Most
+        # scheduled rows are stored at midnight UTC ("...T00:00:00+00:00"), but
+        # completed / health-imported rows can carry a real time-of-day
+        # component (e.g. "2026-06-09 06:51:43.624477+00:00"). We compare with a
+        # tz-aware end-of-day upper bound so a row logged later on the end date
+        # is still inclusive (a bare-date upper coerces to midnight and would
+        # silently drop same-day rows that have a real timestamp).
         workouts_response = db.client.table("workouts").select(
             "id, name, scheduled_date, is_completed, generation_method"
         ).eq("user_id", user_id).gte(
@@ -673,10 +681,20 @@ async def get_calendar_heatmap(
         # Build a map of date -> workout info
         workout_map = {}
         for workout in (workouts_response.data or []):
-            scheduled_str = workout["scheduled_date"]
-            if "T" in scheduled_str:
-                scheduled_str = scheduled_str.split("T")[0]
-            workout_date = date.fromisoformat(scheduled_str)
+            # ROOT-CAUSE FIX (was "Failed to load activity"): the Supabase
+            # client returns scheduled_date as a full timestamp with a SPACE
+            # separator and (for non-midnight rows) fractional seconds + tz,
+            # e.g. "2026-06-09 06:51:43.624477+00:00". The old code only split
+            # on "T" and then called date.fromisoformat() on the remainder, so
+            # any row with a real time component raised
+            # `ValueError: Invalid isoformat string` on Python 3.11. That
+            # ValueError hit the broad `except Exception` below and returned a
+            # 500 for every user who had even one timestamped (completed /
+            # health-imported) workout in the window. Parse the YYYY-MM-DD
+            # prefix robustly instead, handling "T", space, and date-only.
+            scheduled_str = str(workout["scheduled_date"])
+            date_part = scheduled_str.replace("T", " ").split(" ")[0]
+            workout_date = date.fromisoformat(date_part)
             # Imported workouts from Health are always considered completed
             # since they represent workouts already performed on the device
             is_completed = workout["is_completed"] or workout.get("generation_method") == "health_connect_import"

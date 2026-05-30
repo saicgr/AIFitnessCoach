@@ -70,26 +70,50 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
     // Prime the StateNotifier-backed providers after first frame. FutureProvider
     // cards (volume trend, fueling, training insight, training load) self-fetch
     // when first watched, so they need no priming here.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _primeLoads());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _primeLoads();
+    });
   }
 
-  void _primeLoads() {
+  Future<void> _primeLoads() async {
     if (_primed || !mounted) return;
     final userId = ref.read(currentUserIdProvider);
     if (userId == null) return;
     _primed = true;
 
-    // Scores: overview + strength + PRs + fitness + readiness overview.
-    ref.read(scoresProvider.notifier).loadAllScores(userId: userId);
+    // Cache-first: seed the StateNotifiers from disk so the section paints the
+    // last-known numbers INSTANTLY (no skeleton wall), then only fire the
+    // network calls for slices that are still cold. Re-entering the Workouts
+    // tab with warm caches skips the full fan-out entirely.
+    await ref.read(scoresProvider.notifier).seedFromDisk(userId: userId);
+    await ref.read(milestonesProvider.notifier).seedFromDisk(userId: userId);
+    if (!mounted) return;
+
+    final scores = ref.read(scoresProvider);
+    final milestones = ref.read(milestonesProvider);
+
+    // Scores: overview + strength + PRs + fitness. Skip when overview is warm.
+    if (scores.overview == null) {
+      ref.read(scoresProvider.notifier).loadAllScores(userId: userId);
+    }
     // Readiness history powers the trend-chart overlay line.
-    ref
-        .read(scoresProvider.notifier)
-        .loadReadinessHistory(userId: userId, days: 30);
+    if (scores.readinessHistory == null) {
+      ref
+          .read(scoresProvider.notifier)
+          .loadReadinessHistory(userId: userId, days: 30);
+    }
     // Consistency: insights (streak / best day / patterns) + weekly metrics.
+    // Owned elsewhere — let its own cache-first logic decide; prime as before.
     ref.read(consistencyProvider.notifier).loadInsights(userId: userId);
     // Milestones: ROI metrics drive the scalar strip (workouts / time / weight).
-    ref.read(milestonesProvider.notifier).loadROIMetrics(userId: userId);
-    ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: userId);
+    if (milestones.roiMetrics == null) {
+      ref.read(milestonesProvider.notifier).loadROIMetrics(userId: userId);
+    }
+    if (milestones.milestones == null) {
+      ref
+          .read(milestonesProvider.notifier)
+          .loadMilestoneProgress(userId: userId);
+    }
   }
 
   @override
@@ -97,7 +121,9 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
     // Retry priming if the user id was not ready on the first frame (e.g. cold
     // start where auth resolves slightly after this widget mounts).
     if (!_primed) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _primeLoads());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _primeLoads();
+      });
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -111,101 +137,185 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
     const gap = SizedBox(height: 16);
 
     // Zero-data gate. A brand-new user (no logged workouts) would otherwise see
-    // ~7 near-identical grey "log a workout to unlock this" cards stacked down
-    // the page. Instead, when ROI metrics have LOADED and report zero completed
-    // workouts, collapse the whole section to one consolidated empty state.
+    // a stack of near-identical grey "log a workout to unlock this" cards.
+    // Instead, show ONE consolidated empty state until we KNOW there is data.
     //
-    // Cache-first / no-flicker: `roiMetrics` is primed in initState via
-    // loadROIMetrics(). While it's still null (loading / not yet primed) we
-    // fall through to the normal per-card layout (each card shows its own
-    // skeleton), so we never blank the section on a slow first frame. The
-    // consolidated state appears only once we have a definitive 0.
+    // The gate fires when ROI is null (still loading / unknown) OR reports zero
+    // completed workouts. Showing the single zero-state while loading (rather
+    // than the per-card wall) is the correct first impression: a returning user
+    // with cached data sees their strip instantly (roi is primed cache-first),
+    // and a genuinely-empty user never sees a "wall of nulls". Once ROI loads
+    // with >=1 completed workout, the curated card set renders.
     final roi = ref.watch(
       milestonesProvider.select((s) => s.roiMetrics),
     );
-    final bool hasNoSessions = roi != null && roi.totalWorkoutsCompleted == 0;
+    final bool hasNoSessions = roi == null || roi.totalWorkoutsCompleted == 0;
+
+    // Curated inline card set (research-backed, progressive disclosure):
+    //   A. Compact stat strip (always shown for a user with sessions)
+    //   B. Muscle balance with 10-20 sets/muscle/week productive band
+    //   C. AI insight strip (self-hides when empty)
+    //   D. Activity heatmap (consistency)
+    //   E. Recent PRs (renders nothing until the first PR exists)
+    // Each card collapses to SizedBox.shrink() when its own data is empty, and
+    // we build the children list dynamically so a collapsed card never leaves
+    // an orphaned 16px gap behind it. The deep-dive cards (trend chart, fueling,
+    // timing, body heatmap, detailed strength ETA) now live on /stats only (see
+    // WorkoutStatsDeepDive) so nothing is lost.
+    //
+    // Emptiness is computed from the same public providers the cards read, so
+    // the section can decide whether to insert the leading gap before each card
+    // without duplicating card-internal logic.
+    final muscleScores = ref.watch(muscleScoresProvider);
+    final muscleTotalSets =
+        muscleScores.values.fold<int>(0, (sum, m) => sum + m.weeklySets);
+    final hasMuscleBalance = muscleTotalSets > 0;
+
+    final recentPrs = ref.watch(prStatsProvider)?.recentPrs ?? const [];
+    final hasPrs = recentPrs.isNotEmpty;
+
+    final children = <Widget>[
+      StatSectionHeader(
+        title: 'Training stats',
+        isDark: isDark,
+        onSeeAll: () => context.push('/stats'),
+        // Custom-trends entry, collapsed from the old full-width card into a
+        // compact icon beside "See all". Seeds with whatever metric the trend
+        // chart would show (Volume / Sessions / Time). The trend chart itself
+        // now lives on /stats, but custom trends stays reachable here.
+        trendsAccent: accent,
+        onTrendsTap: () => context.push(
+          '/trends/custom',
+          extra: ref.read(_trendSegmentProvider).trendMetric,
+        ),
+      ),
+      const SizedBox(height: 8),
+    ];
+
+    if (hasNoSessions) {
+      children
+        ..add(pad(_StatsZeroState(isDark: isDark, accent: accent)))
+        ..add(const SizedBox(height: 8));
+    } else {
+      // C. AI insight strip first (self-hides when empty; when it hides it is
+      // the only always-first element, so no orphan gap before A).
+      children.add(pad(_AiInsightStrip(isDark: isDark, accent: accent)));
+
+      // A. Compact stat strip — the one always-present element for a user with
+      // sessions (sets/volume this week · consistency · top-lift e1RM delta).
+      children
+        ..add(gap)
+        ..add(pad(_ScalarStrip(isDark: isDark, accent: accent)));
+
+      // B. Muscle balance with the productive band — only when there are sets.
+      if (hasMuscleBalance) {
+        children
+          ..add(gap)
+          ..add(pad(RepaintBoundary(
+            child: _MuscleBalanceCard(isDark: isDark, accent: accent),
+          )));
+      }
+
+      // D. Activity heatmap (consistency) — always shown for a user with
+      // sessions; it self-loads and renders its own grid + states.
+      children
+        ..add(gap)
+        ..add(pad(RepaintBoundary(
+          child: _ActivityHeatmapCard(isDark: isDark),
+        )));
+
+      // E. Recent PRs — only when at least one real PR exists.
+      if (hasPrs) {
+        children
+          ..add(gap)
+          ..add(_RecentPrsRow(isDark: isDark, accent: accent));
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
+    );
+  }
+}
+
+/// The deep-dive training-stats stack, relocated off the Workout tab to the
+/// /stats Overview tab. Renders the cards that were curated OUT of the inline
+/// section (trend chart, fueling split, detailed strength-by-muscle + e1RM,
+/// best training time, body-diagram heatmap) using the EXACT same part-file
+/// widgets, so there is zero divergence between the two surfaces. It primes the
+/// StateNotifier-backed providers itself (the /stats screen also primes them,
+/// but priming twice is idempotent and keeps this widget self-contained).
+class WorkoutStatsDeepDive extends ConsumerStatefulWidget {
+  final bool isDark;
+  final Color accent;
+
+  const WorkoutStatsDeepDive({
+    super.key,
+    required this.isDark,
+    required this.accent,
+  });
+
+  @override
+  ConsumerState<WorkoutStatsDeepDive> createState() =>
+      _WorkoutStatsDeepDiveState();
+}
+
+class _WorkoutStatsDeepDiveState extends ConsumerState<WorkoutStatsDeepDive> {
+  bool _primed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _primeLoads());
+  }
+
+  void _primeLoads() {
+    if (_primed || !mounted) return;
+    final userId = ref.read(currentUserIdProvider);
+    if (userId == null) return;
+    _primed = true;
+    ref.read(scoresProvider.notifier).loadAllScores(userId: userId);
+    ref
+        .read(scoresProvider.notifier)
+        .loadReadinessHistory(userId: userId, days: 30);
+    ref.read(consistencyProvider.notifier).loadInsights(userId: userId);
+    ref.read(milestonesProvider.notifier).loadROIMetrics(userId: userId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_primed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _primeLoads());
+    }
+
+    final isDark = widget.isDark;
+    final accent = widget.accent;
+    const gap = SizedBox(height: 16);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        StatSectionHeader(
-          title: 'Training stats',
-          isDark: isDark,
-          onSeeAll: () => context.push('/stats'),
-          // Custom-trends entry, collapsed from the old full-width card into a
-          // compact icon beside "See all". Seeds with whatever metric the
-          // trend chart is currently showing (Volume / Sessions / Time).
-          trendsAccent: accent,
-          onTrendsTap: () => context.push(
-            '/trends/custom',
-            extra: ref.read(_trendSegmentProvider).trendMetric,
-          ),
-        ),
-        const SizedBox(height: 8),
-
-        // One consolidated empty state for zero-data users.
-        if (hasNoSessions) ...[
-          pad(_StatsZeroState(isDark: isDark, accent: accent)),
-          const SizedBox(height: 8),
-        ] else ...[
-
-        // 1. AI insight strip (hides itself when empty).
-        pad(_AiInsightStrip(isDark: isDark, accent: accent)),
-
-        // 2. Scalar strip (workouts / streak / strength / time).
+        // Trend chart (volume / sessions / time + readiness overlay + ACWR).
+        RepaintBoundary(child: _TrendChartCard(isDark: isDark, accent: accent)),
+        // Fueling: training vs rest day (shared card).
         gap,
-        pad(_ScalarStrip(isDark: isDark, accent: accent)),
-
-        // 3. Trend chart (volume / sessions / time + readiness overlay + ACWR).
-        gap,
-        pad(RepaintBoundary(
-          child: _TrendChartCard(isDark: isDark, accent: accent),
-        )),
-
-        // 4. Push / pull / legs / core muscle balance.
-        gap,
-        pad(RepaintBoundary(
-          child: _MuscleBalanceCard(isDark: isDark, accent: accent),
-        )),
-
-        // 5. Fueling: training vs rest day (shared card).
-        gap,
-        pad(RepaintBoundary(
+        RepaintBoundary(
           child: FuelingSplitCard(
             fueling: ref.watch(fuelingSplitProvider),
             isDark: isDark,
             accent: accent,
           ),
-        )),
-
-        // 6. Strength level by muscle + e1RM.
+        ),
+        // Strength level by muscle + e1RM (detailed).
         gap,
-        pad(RepaintBoundary(
-          child: _StrengthEtaCard(isDark: isDark, accent: accent),
-        )),
-
-        // 7. Best training time + streak-risk nudge.
+        RepaintBoundary(child: _StrengthEtaCard(isDark: isDark, accent: accent)),
+        // Best training time + streak-risk nudge.
         gap,
-        pad(_TimingCard(isDark: isDark, accent: accent)),
-
-        // 8. Body-diagram heatmap (reuses the shared AnatomicalFigure).
+        _TimingCard(isDark: isDark, accent: accent),
+        // Body-diagram heatmap (reuses the shared AnatomicalFigure).
         gap,
-        pad(RepaintBoundary(
-          child: _BodyHeatmapCard(isDark: isDark, accent: accent),
-        )),
-
-        // 9. Activity heatmap (reuses the shared ActivityHeatmap widget).
-        gap,
-        pad(RepaintBoundary(
-          child: _ActivityHeatmapCard(isDark: isDark),
-        )),
-
-        // 10. Recent PRs (horizontal scroll of chips).
-        // Custom trends now lives as a compact icon in the section header
-        // (beside "See all"), not a full-width card here.
-        gap,
-        _RecentPrsRow(isDark: isDark, accent: accent),
-        ], // end of populated-user per-card layout
+        RepaintBoundary(child: _BodyHeatmapCard(isDark: isDark, accent: accent)),
       ],
     );
   }

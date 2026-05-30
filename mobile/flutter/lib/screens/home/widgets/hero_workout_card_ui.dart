@@ -203,13 +203,13 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
           // it). Prior `Alignment.center` was producing visibly cropped
           // foreheads / faces on the per-exercise illustrations that
           // serve as the fail-soft fallback below.
-          alignment: const Alignment(0.0, 0.55),
+          alignment: const Alignment(0.0, 0.32),
           errorBuilder: (_, __, ___) {
             if (_backgroundImageUrl != null) {
               return CachedNetworkImage(
                 imageUrl: _backgroundImageUrl!,
                 fit: BoxFit.cover,
-                alignment: const Alignment(0.0, 0.55),
+                alignment: const Alignment(0.0, 0.32),
                 memCacheWidth: 400,
                 memCacheHeight: 400,
                 fadeInDuration: const Duration(milliseconds: 250),
@@ -230,7 +230,7 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
         child: CachedNetworkImage(
           imageUrl: _backgroundImageUrl!,
           fit: BoxFit.cover,
-          alignment: const Alignment(0.0, 0.55),
+          alignment: const Alignment(0.0, 0.32),
           memCacheWidth: 400,
           memCacheHeight: 400,
           fadeInDuration: const Duration(milliseconds: 250),
@@ -289,18 +289,21 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                stops: const [0.0, 0.25, 0.55],
+                stops: const [0.0, 0.22, 0.55],
+                // Lighter accent-tinted top fade so the illustration is not
+                // ghosted by the theme colour (was 0.15/0.10 dark, 0.18/0.10
+                // light). Just enough to soften the top-edge crop.
                 colors: isDark
                     ? [
-                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.15)!,
-                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.10)!
-                            .withValues(alpha: 0.55),
+                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.06)!,
+                        Color.lerp(const Color(0xFF1a1a2e), accentColor, 0.04)!
+                            .withValues(alpha: 0.35),
                         Colors.transparent,
                       ]
                     : [
-                        Color.lerp(Colors.white, accentColor, 0.18)!,
-                        Color.lerp(Colors.white, accentColor, 0.10)!
-                            .withValues(alpha: 0.55),
+                        Color.lerp(Colors.white, accentColor, 0.07)!,
+                        Color.lerp(Colors.white, accentColor, 0.04)!
+                            .withValues(alpha: 0.35),
                         Colors.transparent,
                       ],
               ),

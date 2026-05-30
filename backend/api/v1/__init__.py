@@ -57,6 +57,8 @@ from api.v1 import subscription_context  # Subscription context for AI personali
 from api.v1 import programs  # Branded workout programs and user program assignments
 from api.v1 import window_mode  # Window mode logging (split screen, PiP, freeform)
 from api.v1 import neat  # NEAT (Non-Exercise Activity Thermogenesis) improvement system
+from api.v1 import neat_compat  # NEAT query-param compat shim for the deployed Flutter app
+from api.v1 import neat_endpoints  # NEAT secondary path-param routes (dashboard/achievements/reminders)
 from api.v1 import supersets  # Superset preferences and manual pairing
 from api.v1 import strain_prevention  # Strain prevention and volume tracking
 from api.v1 import injuries  # Injury tracking and workout modifications
@@ -142,6 +144,14 @@ router.include_router(health.router, prefix="/health", tags=["Health"])
 # Supabase-backed CRUD endpoints
 router.include_router(users.router, prefix="/users", tags=["Users"])
 router.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
+# home_signals.workouts_router carries LITERAL /workouts/* paths (notably
+# /proposed-reschedule-slot) that MUST be registered before workouts.router's
+# dynamic /{workout_id} (UUID-pattern). Starlette matches in registration order
+# and the pattern= on /{workout_id} is validation, not routing — so if the
+# dynamic route is first it swallows the literal path and 422s on UUID
+# validation instead of falling through. (Fixes the prod reschedule-slot 422.)
+from api.v1 import home_signals as _home_signals_early  # noqa: E402
+router.include_router(_home_signals_early.workouts_router, prefix="/workouts", tags=["Workouts"])
 router.include_router(workouts.router, prefix="/workouts", tags=["Workouts"])
 router.include_router(equipment.router, prefix="/equipment", tags=["Equipment"])
 router.include_router(periodization.router, tags=["Periodization"])  # /periodization/state, /periodization/force-deload, /periodization/bonus-workout
@@ -368,7 +378,21 @@ router.include_router(window_mode.router, prefix="/window-mode", tags=["Window M
 
 
 # NEAT improvement system (step goals, hourly activity, NEAT scores, streaks, achievements)
+#
+# The deployed Flutter app calls NEAT with a QUERY-PARAM contract
+# (/neat/goals?user_id=...) but neat.py only registers PATH-PARAM routes
+# (/neat/goals/{user_id}). neat_compat.router supplies the exact query-param
+# paths the app sends and reshapes responses to the Dart model shapes. It is
+# mounted FIRST so its literal paths (e.g. /goals/steps, /goals) take routing
+# precedence over neat.py's dynamic /goals/{user_id}. neat_endpoints.router is
+# ALSO already included as a sub-router of neat.router (path-param routes); we
+# additionally mount it directly here so its path-param routes are reachable
+# under /neat regardless of include order. None of these collide because the
+# compat paths are literal query-param paths and the natives are {user_id}
+# path-param paths.
+router.include_router(neat_compat.router, prefix="/neat", tags=["NEAT"])
 router.include_router(neat.router, prefix="/neat", tags=["NEAT"])
+router.include_router(neat_endpoints.router, prefix="/neat", tags=["NEAT"])
 
 # Superset preferences and manual pairing
 router.include_router(supersets.router, tags=["Supersets"])
@@ -536,7 +560,8 @@ router.include_router(home.router, prefix="/home", tags=["Home"])
 # their respective prefixes.
 from api.v1 import home_signals  # noqa: E402
 router.include_router(home_signals.home_router, prefix="/home", tags=["Home"])
-router.include_router(home_signals.workouts_router, prefix="/workouts", tags=["Workouts"])
+# home_signals.workouts_router is registered earlier (just before workouts.router)
+# so its literal paths beat the dynamic /{workout_id}; not re-included here.
 router.include_router(home_signals.health_router, prefix="/health", tags=["Health"])
 router.include_router(home_signals.users_router, prefix="/users", tags=["Users"])
 router.include_router(home_signals.wearables_router, prefix="/wearables", tags=["Wearables"])

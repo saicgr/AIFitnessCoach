@@ -26,6 +26,25 @@ class TimelineRepository {
     int limit = 200,
     bool metricsOnly = false,
   }) async {
+    return (await fetchWithRaw(
+      userId: userId,
+      date: date,
+      days: days,
+      limit: limit,
+      metricsOnly: metricsOnly,
+    )).parsed;
+  }
+
+  /// Same as [fetch] but also returns the raw response map, so callers can
+  /// persist it to the disk cache (the timeline models have no `toJson`, so we
+  /// cache the server payload verbatim and re-parse it on cold-start seed).
+  Future<({TimelineResponse parsed, Map<String, dynamic> raw})> fetchWithRaw({
+    required String userId,
+    String? date,
+    int days = 1,
+    int limit = 200,
+    bool metricsOnly = false,
+  }) async {
     try {
       final params = <String, dynamic>{
         'user_id': userId,
@@ -46,7 +65,7 @@ class TimelineRepository {
       );
       final data = response.data;
       if (data is Map<String, dynamic>) {
-        return TimelineResponse.fromJson(data);
+        return (parsed: TimelineResponse.fromJson(data), raw: data);
       }
       throw Exception('Unexpected timeline payload shape');
     } on DioException {

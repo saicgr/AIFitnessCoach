@@ -22,6 +22,8 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/activity_heatmap.dart';
 import '../../../widgets/exercise_search_results.dart';
 import '../../../widgets/workout_day_detail_sheet.dart';
+import '../../workouts/widgets/workout_stats/workout_stats_section.dart'
+    show WorkoutStatsDeepDive;
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Disk-cached snapshots for the Overview tab.
@@ -410,6 +412,22 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             icon: Icons.pie_chart_outline,
             label: AppLocalizations.of(context).strengthMuscleAnalytics,
             onTap: () => context.push('/stats/muscle-analytics'),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Deep-dive training-stats cards relocated from the Workout tab's
+          // inline section (trend chart, fueling split, detailed
+          // strength-by-muscle + e1RM, best training time, body-diagram
+          // heatmap). Reuses the exact same widgets via WorkoutStatsDeepDive so
+          // nothing is lost when they were removed from the inline Plan tab.
+          SectionHeader(
+            title: AppLocalizations.of(context).youHubStatsScores,
+          ),
+          const SizedBox(height: 12),
+          WorkoutStatsDeepDive(
+            isDark: isDark,
+            accent: ref.watch(accentColorProvider).getColor(isDark),
           ),
 
           // Bottom padding for floating nav bar

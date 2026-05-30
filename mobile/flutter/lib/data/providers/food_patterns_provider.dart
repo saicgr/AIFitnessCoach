@@ -89,6 +89,9 @@ final foodPatternsMoodProvider = FutureProvider.autoDispose
 /// Top foods by nutrient for Section 2. Re-fires on metric/range change.
 final topFoodsProvider = FutureProvider.autoDispose
     .family<TopFoodsResponse, TopFoodsQuery>((ref, query) async {
+  // keepAlive so it survives Patterns-tab re-entry / metric/range toggles
+  // within a session instead of refetching every revisit.
+  ref.keepAlive();
   final repo = ref.watch(nutritionRepositoryProvider);
   return repo.getTopFoods(
     query.userId,
@@ -101,6 +104,9 @@ final topFoodsProvider = FutureProvider.autoDispose
 /// Macros/calorie summary for Section 1.
 final macrosSummaryProvider = FutureProvider.autoDispose
     .family<MacrosSummaryResponse, MacrosQuery>((ref, query) async {
+  // keepAlive so it survives Patterns-tab re-entry / range toggles within a
+  // session instead of refetching every revisit.
+  ref.keepAlive();
   final repo = ref.watch(nutritionRepositoryProvider);
   return repo.getMacrosSummary(
     query.userId,
@@ -112,6 +118,9 @@ final macrosSummaryProvider = FutureProvider.autoDispose
 /// Paginated meal history for Section 4.
 final patternsHistoryProvider = FutureProvider.autoDispose
     .family<List<Map<String, dynamic>>, HistoryQuery>((ref, query) async {
+  // keepAlive so paginated history survives Patterns-tab re-entry / range
+  // toggles within a session instead of refetching every revisit.
+  ref.keepAlive();
   final repo = ref.watch(nutritionRepositoryProvider);
   return repo.getPatternsHistory(
     query.userId,

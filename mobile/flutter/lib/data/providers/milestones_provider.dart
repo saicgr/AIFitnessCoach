@@ -1,7 +1,22 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../models/milestone.dart';
 import '../repositories/milestones_repository.dart';
+import '../services/data_cache_service.dart';
+
+/// In-memory caches (mirrors scoresProvider/consistencyProvider) so a notifier
+/// recreation paints prior milestone data instantly without a network flash.
+/// Flushed on a real account switch.
+ROIMetrics? _roiMetricsInMemoryCache;
+MilestonesResponse? _milestonesInMemoryCache;
+String? _milestonesCacheOwnerUserId;
+
+/// Disk cache keys (12h TTL via `statsKeyPrefix`). Cache the RAW model JSON so
+/// a cold start paints last-known numbers instantly.
+const String _roiMetricsCacheKey = '${DataCacheService.statsKeyPrefix}roi';
+const String _milestoneProgressCacheKey =
+    '${DataCacheService.statsKeyPrefix}milestone_progress';
 
 // ============================================
 // Milestones State
@@ -91,11 +106,70 @@ class MilestonesNotifier extends StateNotifier<MilestonesState> {
   final MilestonesRepository _repository;
   String? _currentUserId;
 
-  MilestonesNotifier(this._repository) : super(const MilestonesState());
+  MilestonesNotifier(this._repository)
+      : super(MilestonesState(
+          milestones: _milestonesInMemoryCache,
+          roiMetrics: _roiMetricsInMemoryCache,
+          uncelebrated: _milestonesInMemoryCache?.uncelebrated ?? const [],
+        ));
+
+  /// Clear in-memory caches (called on logout / account switch).
+  static void clearCache() {
+    _roiMetricsInMemoryCache = null;
+    _milestonesInMemoryCache = null;
+    debugPrint('🧹 [MilestonesProvider] In-memory cache cleared');
+  }
 
   /// Set user ID for this session
   void setUserId(String userId) {
     _currentUserId = userId;
+  }
+
+  /// Cold-start disk seed. Paints last-known ROI metrics + milestone progress
+  /// instantly (even if expired) before any network call, so the scalar strip
+  /// and milestones list show real prior numbers rather than skeletons. No-op
+  /// for slices already held in memory this session.
+  Future<void> seedFromDisk({String? userId}) async {
+    final uid = userId ??
+        Supabase.instance.client.auth.currentUser?.id ??
+        _currentUserId;
+    if (uid == null) return;
+    _currentUserId = uid;
+
+    try {
+      if (state.roiMetrics == null) {
+        final cached = await DataCacheService.instance.getCached(
+          _roiMetricsCacheKey,
+          userId: uid,
+          returnExpiredOnMiss: true,
+        );
+        if (cached != null && state.roiMetrics == null) {
+          final metrics = ROIMetrics.fromJson(cached);
+          _roiMetricsInMemoryCache = metrics;
+          state = state.copyWith(roiMetrics: metrics);
+          debugPrint('⚡ [MilestonesProvider] Seeded ROI metrics from disk');
+        }
+      }
+      if (state.milestones == null) {
+        final cached = await DataCacheService.instance.getCached(
+          _milestoneProgressCacheKey,
+          userId: uid,
+          returnExpiredOnMiss: true,
+        );
+        if (cached != null && state.milestones == null) {
+          final milestones = MilestonesResponse.fromJson(cached);
+          _milestonesInMemoryCache = milestones;
+          state = state.copyWith(
+            milestones: milestones,
+            uncelebrated: milestones.uncelebrated,
+          );
+          debugPrint(
+              '⚡ [MilestonesProvider] Seeded milestone progress from disk');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [MilestonesProvider] Disk seed failed: $e');
+    }
   }
 
   /// Load milestone progress for a user
@@ -111,11 +185,15 @@ class MilestonesNotifier extends StateNotifier<MilestonesState> {
 
     try {
       final milestones = await _repository.getMilestoneProgress(uid);
+      _milestonesInMemoryCache = milestones;
       state = state.copyWith(
         milestones: milestones,
         uncelebrated: milestones.uncelebrated,
         isLoading: false,
       );
+      // Write-through to disk so the next cold start paints instantly.
+      await DataCacheService.instance
+          .cache(_milestoneProgressCacheKey, milestones.toJson(), userId: uid);
       debugPrint(
           '[MilestonesProvider] Loaded ${milestones.totalAchieved} achieved milestones');
     } catch (e) {
@@ -151,7 +229,11 @@ class MilestonesNotifier extends StateNotifier<MilestonesState> {
 
     try {
       final metrics = await _repository.getROIMetrics(uid, recalculate: recalculate);
+      _roiMetricsInMemoryCache = metrics;
       state = state.copyWith(roiMetrics: metrics);
+      // Write-through to disk so the next cold start paints instantly.
+      await DataCacheService.instance
+          .cache(_roiMetricsCacheKey, metrics.toJson(), userId: uid);
       debugPrint(
           '[MilestonesProvider] Loaded detailed ROI metrics');
     } catch (e) {
@@ -340,6 +422,13 @@ class MilestonesNotifier extends StateNotifier<MilestonesState> {
 final milestonesProvider =
     StateNotifierProvider<MilestonesNotifier, MilestonesState>((ref) {
   final repository = ref.watch(milestonesRepositoryProvider);
+  // Flush the static in-memory caches on a real account switch so the new user
+  // never inherits the prior user's milestone numbers.
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId != null && userId != _milestonesCacheOwnerUserId) {
+    _milestonesCacheOwnerUserId = userId;
+    MilestonesNotifier.clearCache();
+  }
   return MilestonesNotifier(repository);
 });
 

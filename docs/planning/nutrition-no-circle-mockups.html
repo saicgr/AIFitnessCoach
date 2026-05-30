@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova · Nutrition — NO circles</title>
+<style>
+  :root{
+    --bg:#0d0f14; --card:#161a22; --card2:#1d222c; --line:#272d39;
+    --txt:#f2f5fa; --mut:#8b94a7; --faint:#5b6475;
+    --cal:#7c5cff;
+    --p:#ff6b8a; --c:#4cc9f0; --f:#ffb454;
+    --ok:#34d399; --warn:#fbbf24; --over:#fb7185;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;padding:32px 18px 90px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--mut);margin:0 0 26px;max-width:720px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;max-width:1200px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px 18px 22px;position:relative;overflow:hidden}
+  .tag{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-weight:700}
+  .name{font-weight:700;margin:6px 0 2px;font-size:16px}
+  .desc{color:var(--mut);font-size:13px;min-height:52px;margin-bottom:14px}
+  .big{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .big small{font-size:14px;font-weight:600;color:var(--mut)}
+  .lbl{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+  .row{display:flex;justify-content:space-between;align-items:baseline}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .legend{display:flex;gap:14px;margin-top:12px;font-size:12px;color:var(--mut);flex-wrap:wrap}
+  .legend b{color:var(--txt)}
+
+  /* 1 stacked budget bar */
+  .stack{height:26px;border-radius:10px;overflow:hidden;display:flex;margin:18px 0 4px;background:var(--card2)}
+  .stack > span{height:100%}
+  .ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:4px}
+
+  /* 2 fuel battery */
+  .battery{position:relative;height:40px;border:2px solid var(--line);border-radius:10px;background:var(--card2);overflow:hidden;margin:16px 0 6px}
+  .battery .fill{height:100%;background:linear-gradient(90deg,var(--ok),var(--cal));border-radius:8px 0 0 8px}
+  .battery .cap{position:absolute;right:-7px;top:11px;width:5px;height:16px;background:var(--line);border-radius:0 3px 3px 0}
+  .battery .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;text-shadow:0 1px 4px #000}
+
+  /* 3 liquid glass */
+  .glass{position:relative;width:120px;height:150px;margin:6px auto 0;border:3px solid var(--line);border-top:none;border-radius:0 0 26px 26px;overflow:hidden;background:var(--card2)}
+  .glass .liquid{position:absolute;left:0;right:0;bottom:0;height:62%;background:linear-gradient(180deg,#6f8cff,#4cc9f0)}
+  .glass .liquid::before,.glass .liquid::after{content:"";position:absolute;top:-12px;width:140px;height:24px;border-radius:45%;background:#7aa0ff}
+  .glass .liquid::before{left:-20px;opacity:.7}
+  .glass .liquid::after{right:-20px;opacity:.45;top:-8px}
+  .glass .gtxt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;text-shadow:0 1px 6px #000}
+
+  /* 4 number-first + sparkline */
+  .spark{margin-top:10px}
+
+  /* 5 equalizer */
+  .eq{display:flex;align-items:flex-end;gap:14px;height:120px;margin:14px 0 4px;padding:0 6px}
+  .eq .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .eq .barv{width:100%;border-radius:8px 8px 4px 4px;background:var(--card2);position:relative;display:flex;align-items:flex-end}
+  .eq .barv i{display:block;width:100%;border-radius:8px 8px 4px 4px}
+  .eq .cap{font-size:11px;color:var(--mut);margin-top:6px}
+  .eq .val{font-size:12px;color:var(--txt);font-weight:700}
+
+  /* 6 dot grid */
+  .dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin:16px 0 6px}
+  .dots i{aspect-ratio:1;border-radius:3px;background:var(--card2)}
+  .dots i.on{background:var(--cal)}
+  .dots i.p{background:var(--p)} .dots i.c{background:var(--c)} .dots i.f{background:var(--f)}
+
+  /* 7 meal timeline */
+  .tl{position:relative;height:84px;margin:16px 0 4px}
+  .tl .axis{position:absolute;left:0;right:0;bottom:22px;height:2px;background:var(--line)}
+  .tl .blk{position:absolute;bottom:24px;border-radius:6px 6px 0 0;opacity:.95}
+  .tl .hr{position:absolute;bottom:4px;font-size:10px;color:var(--faint);transform:translateX(-50%)}
+
+  /* 8 thermometer rows */
+  .therm{display:flex;flex-direction:column;gap:11px;margin-top:14px}
+  .tr{font-size:12px}
+  .tr .top{display:flex;justify-content:space-between;color:var(--mut);margin-bottom:4px}
+  .tr .track{height:9px;border-radius:6px;background:var(--card2);overflow:hidden;position:relative}
+  .tr .fill{height:100%;border-radius:6px}
+  .tr .goal{position:absolute;top:-3px;width:2px;height:15px;background:var(--txt);opacity:.5}
+
+  .note{max-width:1200px;margin:30px 0 0;color:var(--mut);font-size:13px}
+  .pick{color:var(--ok);font-weight:700}
+</style>
+</head>
+<body>
+<h1>Nutrition — circle-free concepts</h1>
+<p class="sub">No rings, no donuts, no gauges. Eight ways to show <b>620 kcal left of 2,100</b> + P/C/F using bars, fills, grids, and time. <span class="pick">★ = my top picks.</span></p>
+
+<div class="grid">
+
+  <!-- 1 stacked budget bar -->
+  <div class="card">
+    <span class="tag">1 · ★ stacked budget bar</span>
+    <div class="name">One bar, split by macro</div>
+    <div class="desc">A single horizontal bar = your calorie budget, internally segmented by where the calories came from (P/C/F). Total + composition in one line.</div>
+    <div class="row"><div class="big">620<small> kcal left</small></div><div class="lbl">1,480 / 2,100</div></div>
+    <div class="stack">
+      <span style="width:19%;background:var(--p)"></span>
+      <span style="width:31%;background:var(--c)"></span>
+      <span style="width:20%;background:var(--f)"></span>
+    </div>
+    <div class="ticks"><span>eaten 70%</span><span>620 left</span></div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--p)"></span>P <b>98g</b></span>
+      <span><span class="dot" style="background:var(--c)"></span>C <b>165g</b></span>
+      <span><span class="dot" style="background:var(--f)"></span>F <b>52g</b></span>
+    </div>
+  </div>
+
+  <!-- 2 fuel battery -->
+  <div class="card">
+    <span class="tag">2 · fuel battery</span>
+    <div class="name">Energy tank</div>
+    <div class="desc">Reads instantly as "fuel left for today." Fill color shifts green→purple→red. Playful, glanceable, zero learning curve.</div>
+    <div class="row"><div class="big">620<small> left</small></div><div class="lbl">of 2,100</div></div>
+    <div class="battery"><div class="fill" style="width:70%"></div><div class="pct">70%</div><div class="cap"></div></div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--p)"></span>P 98g</span>
+      <span><span class="dot" style="background:var(--c)"></span>C 165g</span>
+      <span><span class="dot" style="background:var(--f)"></span>F 52g</span>
+    </div>
+  </div>
+
+  <!-- 3 liquid glass -->
+  <div class="card">
+    <span class="tag">3 · liquid fill</span>
+    <div class="name">Filling glass</div>
+    <div class="desc">A vessel that fills as you eat (or empties as budget drains). Animatable wave. Distinctive, brandable, but more decorative than dense.</div>
+    <div class="glass">
+      <div class="liquid"></div>
+      <div class="gtxt"><div class="big" style="font-size:26px">620</div><div class="lbl">left</div></div>
+    </div>
+    <div class="legend" style="justify-content:center">
+      <span><span class="dot" style="background:var(--p)"></span>98</span>
+      <span><span class="dot" style="background:var(--c)"></span>165</span>
+      <span><span class="dot" style="background:var(--f)"></span>52</span>
+    </div>
+  </div>
+
+  <!-- 4 number-first -->
+  <div class="card">
+    <span class="tag">4 · ★ number-first</span>
+    <div class="name">Big number + trend</div>
+    <div class="desc">The honest minimal. Hero number does the work; a 7-day sparkline gives context; macros as inline pills. Cal-AI energy, fastest to read.</div>
+    <div class="big" style="font-size:54px">620<small style="font-size:16px"> left</small></div>
+    <div class="lbl">1,480 of 2,100 kcal</div>
+    <svg class="spark" width="100%" height="46" viewBox="0 0 280 46" preserveAspectRatio="none">
+      <polyline fill="none" stroke="var(--cal)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"
+        points="0,30 40,22 80,34 120,18 160,26 200,12 240,24 280,16"/>
+      <polyline fill="url(#sg)" stroke="none" points="0,30 40,22 80,34 120,18 160,26 200,12 240,24 280,16 280,46 0,46"/>
+      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7c5cff" stop-opacity=".35"/><stop offset="1" stop-color="#7c5cff" stop-opacity="0"/></linearGradient></defs>
+    </svg>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--p)"></span>P <b>98/150</b></span>
+      <span><span class="dot" style="background:var(--c)"></span>C <b>165/210</b></span>
+      <span><span class="dot" style="background:var(--f)"></span>F <b>52/70</b></span>
+    </div>
+  </div>
+
+  <!-- 5 equalizer -->
+  <div class="card">
+    <span class="tag">5 · equalizer</span>
+    <div class="name">Vertical macro bars</div>
+    <div class="desc">P/C/F as standing bars (height = % of goal); calories as the headline. Tappable columns. Feels energetic, very non-circular.</div>
+    <div class="row"><div class="big">620<small> left</small></div></div>
+    <div class="eq">
+      <div class="col"><span class="val">65%</span><div class="barv" style="height:65%"><i style="height:100%;background:var(--p)"></i></div><span class="cap">Protein</span></div>
+      <div class="col"><span class="val">78%</span><div class="barv" style="height:78%"><i style="height:100%;background:var(--c)"></i></div><span class="cap">Carbs</span></div>
+      <div class="col"><span class="val">74%</span><div class="barv" style="height:74%"><i style="height:100%;background:var(--f)"></i></div><span class="cap">Fat</span></div>
+      <div class="col"><span class="val">70%</span><div class="barv" style="height:70%"><i style="height:100%;background:var(--cal)"></i></div><span class="cap">Cals</span></div>
+    </div>
+  </div>
+
+  <!-- 6 dot grid -->
+  <div class="card">
+    <span class="tag">6 · ★ dot budget</span>
+    <div class="name">100-dot calorie budget</div>
+    <div class="desc">Each dot ≈ 1% of your day. Dots fill as you log, colored by macro. Gamified "how much is left" you can literally count. Great for streaks.</div>
+    <div class="dots" id="dots"></div>
+    <div class="row"><div class="lbl">70 of 100 used</div><div class="lbl">620 left</div></div>
+    <script>
+      const d=document.getElementById('dots');let h='';
+      for(let i=0;i<100;i++){let cls='';if(i<19)cls='p';else if(i<50)cls='c';else if(i<70)cls='f';h+=`<i class="${cls}"></i>`;}
+      d.innerHTML=h;
+    </script>
+  </div>
+
+  <!-- 7 meal timeline -->
+  <div class="card">
+    <span class="tag">7 · ★ day timeline</span>
+    <div class="name">Meals across the day</div>
+    <div class="desc">A horizontal time axis (6am→10pm). Each meal is a block; height = calories. You see your day's shape and the gaps. Story, not score.</div>
+    <div class="tl">
+      <div class="axis"></div>
+      <div class="blk" style="left:8%;width:11%;height:34px;background:#ffd166"></div>
+      <div class="blk" style="left:40%;width:13%;height:44px;background:#06d6a0"></div>
+      <div class="blk" style="left:74%;width:12%;height:28px;background:#4cc9f0"></div>
+      <div class="blk" style="left:60%;width:7%;height:16px;background:#b388ff"></div>
+      <span class="hr" style="left:8%">8a</span>
+      <span class="hr" style="left:46%">1p</span>
+      <span class="hr" style="left:80%">8p</span>
+    </div>
+    <div class="row"><div class="big" style="font-size:30px">1,480<small> kcal</small></div><div class="lbl">620 left</div></div>
+  </div>
+
+  <!-- 8 thermometer rows -->
+  <div class="card">
+    <span class="tag">8 · macro rows + goal ticks</span>
+    <div class="name">Honest bars (MacroFactor)</div>
+    <div class="desc">No hero shape at all. Calories + each macro as a bar with a goal tick mark. The most information-dense, least flashy. Power-user friendly.</div>
+    <div class="therm">
+      <div class="tr"><div class="top"><span>Calories</span><span>1,480 / 2,100</span></div><div class="track"><div class="fill" style="width:70%;background:var(--cal)"></div><span class="goal" style="left:100%"></span></div></div>
+      <div class="tr"><div class="top"><span>Protein</span><span>98 / 150g</span></div><div class="track"><div class="fill" style="width:65%;background:var(--p)"></div></div></div>
+      <div class="tr"><div class="top"><span>Carbs</span><span>165 / 210g</span></div><div class="track"><div class="fill" style="width:78%;background:var(--c)"></div></div></div>
+      <div class="tr"><div class="top"><span>Fat</span><span>52 / 70g</span></div><div class="track"><div class="fill" style="width:74%;background:var(--f)"></div></div></div>
+    </div>
+  </div>
+
+</div>
+
+<p class="note">
+<b>My read:</b> for a <i>hero</i> that's instantly readable and non-circular, <span class="pick">#1 stacked budget bar</span> or <span class="pick">#4 number-first + sparkline</span>.
+For something distinctive that no competitor ships, <span class="pick">#6 dot budget</span> (gamified, ties into your XP/streak scaffold) or <span class="pick">#7 day timeline</span> (tells the day's story).
+#8 is the power-user fallback. You can also layer: e.g. #4 hero number with #1's stacked bar underneath.
+</p>
+</body>
+</html>

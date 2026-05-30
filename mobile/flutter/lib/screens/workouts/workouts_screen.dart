@@ -412,8 +412,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     final completedDayIndices = weekly.completedDayIndices;
     final scheduledDayIndices = weekly.scheduledDayIndices;
 
-    return SliverList(
-      delegate: SliverChildListDelegate([
+    // Build the children list eagerly (cheap — these are widget *constructors*,
+    // not built subtrees), then hand it to a lazy SliverChildBuilderDelegate so
+    // the heavy below-fold widgets (WorkoutStatsSection et al.) only build as
+    // they scroll into view, instead of all on the first frame.
+    final children = <Widget>[
         // Gym profile switcher + calendar tune-menu share one row — the
         // switcher fills the former empty band below the title bar, and the
         // tune icon sits inline on its right instead of wasting its own
@@ -509,7 +512,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         // Bottom padding — clears both MainShell's nav bar and the
         // floating options bar docked above it.
         const SizedBox(height: 168),
-      ]),
+    ];
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) => children[index],
+        childCount: children.length,
+      ),
     );
   }
 

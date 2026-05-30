@@ -36,6 +36,22 @@ class _MuscleBalanceCard extends ConsumerWidget {
     return null;
   }
 
+  // Evidence-based weekly hard-set landmarks. Renaissance Periodization volume
+  // landmarks put the productive (hypertrophy) range at roughly 10-20 hard sets
+  // per muscle per week, with ~6 sets as the maintenance volume (MV) floor.
+  // We surface this as a per-bar band so a user can see at a glance whether a
+  // movement group is under-trained, in the productive range, or past the
+  // typical productive ceiling. Source: RP "Training Volume Landmarks for
+  // Muscle Growth" (MV ~6, MEV ~10, MAV 10-20, MRV ~20+ sets/wk).
+  static const int bandLow = 10; // below = under productive range
+  static const int bandHigh = 20; // above = past typical productive ceiling
+
+  static _BandStatus bandStatusFor(int sets) {
+    if (sets < bandLow) return _BandStatus.low;
+    if (sets > bandHigh) return _BandStatus.high;
+    return _BandStatus.optimal;
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final muscleScores = ref.watch(muscleScoresProvider);
@@ -62,23 +78,13 @@ class _MuscleBalanceCard extends ConsumerWidget {
     }
 
     final totalSets = groupSets.values.fold<int>(0, (a, b) => a + b);
+    // Collapse entirely when there are no sets this week. The inline Plan-tab
+    // section is curated to show only cards with real data (no "log more to
+    // unlock" placeholders), so an empty muscle-balance card renders nothing
+    // and the section drops its preceding gap. (Matches the zero-placeholder
+    // policy for the curated set; on /stats this card is gated the same way.)
     if (totalSets == 0) {
-      return StatCardShell(
-        isDark: isDark,
-        child: Row(
-          children: [
-            Icon(Icons.balance_rounded, size: 22, color: textMuted),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'Train this week to see how your push, pull, legs and core sets balance out.',
-                style:
-                    TextStyle(fontSize: 13, height: 1.35, color: textMuted),
-              ),
-            ),
-          ],
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     final maxSets =
@@ -126,14 +132,17 @@ class _MuscleBalanceCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 6),
+          // Productive-band legend: 10-20 hard sets/muscle/week (RP landmarks).
+          _BandLegend(isDark: isDark),
+          const SizedBox(height: 12),
           ...groupSets.entries.map((e) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _GroupBar(
                   label: e.key,
                   sets: e.value,
                   maxSets: maxSets,
-                  accent: accent,
+                  band: _MuscleBalanceCard.bandStatusFor(e.value),
                   isDark: isDark,
                 ),
               )),
@@ -205,18 +214,74 @@ class _MuscleBalanceCard extends ConsumerWidget {
   }
 }
 
+/// Where a weekly hard-set count sits relative to the productive band.
+/// (Top-level because part-file enums cannot be nested in a class.)
+enum _BandStatus { low, optimal, high }
+
+/// Colour for a band status. Optimal uses the success hue, under-band uses the
+/// muted/neutral hue (not an alarm — it's just "room to add volume"), and
+/// over-band uses the warning hue. Never the warm primary accent, per the UX
+/// deck's accent budget.
+Color _bandColor(_BandStatus status, bool isDark) {
+  switch (status) {
+    case _BandStatus.optimal:
+      return isDark ? AppColors.success : AppColorsLight.success;
+    case _BandStatus.high:
+      return isDark ? AppColors.warning : AppColorsLight.warning;
+    case _BandStatus.low:
+      return isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+  }
+}
+
+/// One-line legend explaining the productive-band colours (10-20 sets/wk).
+class _BandLegend extends StatelessWidget {
+  final bool isDark;
+  const _BandLegend({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    Widget dot(_BandStatus s, String label) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _bandColor(s, isDark),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(label, style: TextStyle(fontSize: 11, color: textMuted)),
+          ],
+        );
+    return Row(
+      children: [
+        dot(_BandStatus.low, 'Under 10'),
+        const SizedBox(width: 12),
+        dot(_BandStatus.optimal, '10-20'),
+        const SizedBox(width: 12),
+        dot(_BandStatus.high, 'Over 20'),
+      ],
+    );
+  }
+}
+
 class _GroupBar extends StatelessWidget {
   final String label;
   final int sets;
   final int maxSets;
-  final Color accent;
+
+  /// Where this group's weekly set count sits in the productive band.
+  final _BandStatus band;
   final bool isDark;
 
   const _GroupBar({
     required this.label,
     required this.sets,
     required this.maxSets,
-    required this.accent,
+    required this.band,
     required this.isDark,
   });
 
@@ -255,9 +320,12 @@ class _GroupBar extends StatelessWidget {
                   child: Container(
                     height: 10,
                     decoration: BoxDecoration(
+                      // Fill coloured by productive band, not the theme accent:
+                      // under-band (neutral), in-band (success), over-band
+                      // (warning). Empty bars stay faint neutral.
                       color: sets == 0
                           ? textMuted.withValues(alpha: 0.4)
-                          : accent,
+                          : _bandColor(band, isDark),
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
@@ -275,7 +343,7 @@ class _GroupBar extends StatelessWidget {
             style: TextStyle(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
-              color: sets == 0 ? textMuted : textPrimary,
+              color: sets == 0 ? textMuted : _bandColor(band, isDark),
             ),
           ),
         ),

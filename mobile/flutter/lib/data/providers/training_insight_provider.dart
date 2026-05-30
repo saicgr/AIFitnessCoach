@@ -18,6 +18,11 @@ import '../../core/providers/timezone_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../models/training_insight.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
+
+/// Disk cache key (12h TTL via `statsKeyPrefix`). Caches the RAW server JSON.
+const String _insightCacheKey =
+    '${DataCacheService.statsKeyPrefix}training_insight';
 
 TrainingInsight? _insightCache;
 String? _insightCacheOwner;
@@ -28,7 +33,11 @@ String _dateString(DateTime d) =>
     '${d.day.toString().padLeft(2, '0')}';
 
 final trainingInsightProvider =
-    FutureProvider.autoDispose<TrainingInsight?>((ref) async {
+    FutureProvider<TrainingInsight?>((ref) async {
+  // keepAlive: hold the insight for the session so re-entering the Workouts
+  // tab doesn't refetch + flash a skeleton.
+  ref.keepAlive();
+
   final userId = ref.watch(currentUserProvider).valueOrNull?.id;
   if (userId == null) {
     debugPrint('🔍 [TrainingInsight] No user id — returning null');
@@ -38,6 +47,31 @@ final trainingInsightProvider =
   if (_insightCacheOwner != userId) {
     _insightCacheOwner = userId;
     _insightCache = null;
+  }
+
+  // Fresh-cache-first: a NON-expired last-known insight on disk is returned
+  // immediately (instant cold start, skip the network). keepAlive holds it for
+  // the session. An expired entry is NOT served — it falls through to the
+  // fetch below (which write-throughs + resets the 12h TTL), so the card can
+  // never freeze to a stale insight.
+  if (_insightCache == null) {
+    final cacheUid = Supabase.instance.client.auth.currentUser?.id ?? userId;
+    final cached = await DataCacheService.instance.getCached(
+      _insightCacheKey,
+      userId: cacheUid,
+    );
+    if (cached != null) {
+      try {
+        _insightCache = TrainingInsight.fromJson(cached);
+        debugPrint('⚡ [TrainingInsight] Seeded from disk cache');
+        return _insightCache;
+      } catch (e) {
+        debugPrint('⚠️ [TrainingInsight] Disk cache parse failed: $e');
+      }
+    }
+  } else {
+    // Already warm in memory for this session — serve it, skip the network.
+    return _insightCache;
   }
 
   // Gate on tz settling + an existing session so the server caches the right
@@ -63,6 +97,10 @@ final trainingInsightProvider =
     if (data is Map<String, dynamic>) {
       final insight = TrainingInsight.fromJson(data);
       _insightCache = insight;
+      // Write-through: persist RAW server response for the next cold start.
+      final cacheUid = Supabase.instance.client.auth.currentUser?.id ?? userId;
+      await DataCacheService.instance
+          .cache(_insightCacheKey, data, userId: cacheUid);
       debugPrint(
         '✅ [TrainingInsight] "${insight.headline}" '
         '(fallback=${insight.isFallback})',

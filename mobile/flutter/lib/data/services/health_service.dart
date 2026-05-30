@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api_client.dart';
 import 'activity_service.dart';
+import 'data_cache_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../providers/demo_health_mode_provider.dart';
 

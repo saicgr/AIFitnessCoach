@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show DateTimeRange;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/consistency.dart';
 import '../models/workout_day_detail.dart';
 import '../repositories/consistency_repository.dart';
 import '../repositories/auth_repository.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -99,7 +103,44 @@ class ConsistencyNotifier extends StateNotifier<ConsistencyState> {
   String? _currentUserId;
 
   ConsistencyNotifier(this._repository)
-      : super(_consistencyInMemoryCache ?? const ConsistencyState());
+      : super(_consistencyInMemoryCache ?? const ConsistencyState()) {
+    // Cold start (no surviving in-memory cache): seed insights from the disk
+    // cache so the Home consistency card paints last-known streak/rate
+    // instantly instead of a loading shimmer, then the live fetch refreshes.
+    if (_consistencyInMemoryCache?.insights == null) {
+      _seedFromDisk();
+    }
+  }
+
+  /// Read the live user id from Supabase's session (never a cached field —
+  /// JWT-expiry rule). Scopes the disk cache slot per user.
+  String? _liveUserId() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Seed `insights` from the SharedPreferences disk cache on cold start.
+  Future<void> _seedFromDisk() async {
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.consistencyKey,
+        userId: _liveUserId(),
+        returnExpiredOnMiss: true,
+      );
+      if (cached == null) return;
+      // Don't clobber data the live fetch may have already delivered.
+      if (state.insights != null) return;
+      final insights = ConsistencyInsights.fromJson(cached);
+      state = state.copyWith(insights: insights);
+      _consistencyInMemoryCache = state;
+      debugPrint('⚡ [Consistency] Seeded insights from disk cache');
+    } catch (e) {
+      debugPrint('⚠️ [Consistency] disk seed error: $e');
+    }
+  }
 
   /// Clear in-memory cache (called on logout)
   static void clearCache() {
@@ -121,7 +162,12 @@ class ConsistencyNotifier extends StateNotifier<ConsistencyState> {
     }
     _currentUserId = uid;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    // Only show the loading shimmer when we have nothing cached to paint — a
+    // silent revalidation over already-visible insights must not blank them.
+    state = state.copyWith(
+      isLoading: state.insights == null,
+      clearError: true,
+    );
 
     try {
       final insights = await _repository.getInsights(userId: uid);
@@ -131,12 +177,23 @@ class ConsistencyNotifier extends StateNotifier<ConsistencyState> {
       );
       // Update in-memory cache for instant access on provider recreation
       _consistencyInMemoryCache = state;
+      // Write-through to disk so a cold start (app killed) still paints
+      // last-known insights instantly.
+      unawaited(DataCacheService.instance.cache(
+        DataCacheService.consistencyKey,
+        insights.toJson(),
+        userId: uid,
+      ));
       debugPrint('[Consistency] Loaded insights - streak: ${insights.currentStreak}');
     } catch (e) {
       debugPrint('[Consistency] Error loading insights: $e');
+      // Keep any cached insights visible; only surface the error when empty.
       state = state.copyWith(
         isLoading: false,
-        error: 'Failed to load consistency data: $e',
+        error: state.insights == null
+            ? 'Failed to load consistency data: $e'
+            : null,
+        clearError: state.insights != null,
       );
     }
   }

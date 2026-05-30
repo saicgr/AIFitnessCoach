@@ -91,34 +91,11 @@ class _RecentPrsRow extends ConsumerWidget {
       );
     }
 
+    // Curated Plan-tab policy: render NOTHING when there is no PR yet (no empty
+    // "hit a PR to see it here" placeholder inline). The card appears only once
+    // the user has at least one real PR.
     if (recent.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          header,
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: StatCardShell(
-              isDark: isDark,
-              child: Row(
-                children: [
-                  Icon(Icons.emoji_events_outlined,
-                      size: 22, color: textMuted),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Hit a heavier set than before and your first PR shows up here.',
-                      style: TextStyle(
-                          fontSize: 13, height: 1.35, color: textMuted),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      );
+      return const SizedBox.shrink();
     }
 
     return Column(

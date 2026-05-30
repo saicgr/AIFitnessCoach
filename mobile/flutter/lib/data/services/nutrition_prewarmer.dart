@@ -21,6 +21,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../providers/fueling_split_provider.dart';
+import '../providers/nutrition_stats_provider.dart';
 import '../repositories/nutrition_repository.dart';
 import 'api_client.dart';
 
@@ -72,6 +74,32 @@ class NutritionPrewarmer {
         }),
         notifier.loadRecentLogs(userId, forceRefresh: force).catchError((e) {
           debugPrint('⚠️ [NutritionPrewarmer] loadRecentLogs failed: $e');
+        }),
+        // Below-the-fold Stats strip — warm the cached aggregate providers so
+        // the first Stats render paints last-known REAL numbers instead of a
+        // wall of skeletons + 6 cold network calls. Each is cache-first
+        // (in-memory + disk, stale-while-revalidate); warming triggers the
+        // disk seed + background refresh ahead of tab open.
+        ref.read(weeklySummaryProvider(userId).future).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] weeklySummary warm failed: $e');
+          return null;
+        }),
+        ref.read(weeklyNutritionProvider(userId).future).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] weeklyNutrition warm failed: $e');
+          return null;
+        }),
+        ref.read(detailedTDEEProvider(userId).future).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] detailedTDEE warm failed: $e');
+          return null;
+        }),
+        ref.read(adherenceSummaryProvider(userId).future).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] adherenceSummary warm failed: $e');
+          return null;
+        }),
+        // fuelingSplitProvider reads its userId/timezone internally.
+        ref.read(fuelingSplitProvider.future).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] fuelingSplit warm failed: $e');
+          return null;
         }),
       ];
 

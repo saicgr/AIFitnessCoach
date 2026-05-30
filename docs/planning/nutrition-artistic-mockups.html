@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova · Nutrition — artistic concepts</title>
+<style>
+  :root{
+    --bg:#080a0f; --card:#12151d; --line:#222836; --txt:#f4f7fc; --mut:#8b94a7;
+    --p:#ff6b8a; --c:#4cc9f0; --f:#ffb454; --cal:#9b7bff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(120% 80% at 50% 0%,#10131c 0%,#080a0f 60%);
+       color:var(--txt);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;padding:34px 18px 90px}
+  h1{font-size:23px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--mut);margin:0 0 28px;max-width:740px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:20px;max-width:1240px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:26px;padding:0;position:relative;overflow:hidden;min-height:360px;display:flex;flex-direction:column}
+  .stage{position:relative;flex:1;min-height:240px;overflow:hidden}
+  .meta{padding:14px 18px 20px;position:relative;z-index:5}
+  .tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6f7891;font-weight:700}
+  .name{font-weight:700;margin:4px 0 3px;font-size:17px}
+  .desc{color:var(--mut);font-size:12.5px}
+  .hero{position:absolute;z-index:4;left:0;right:0;text-align:center;pointer-events:none}
+  .hero .n{font-size:44px;font-weight:800;letter-spacing:-.03em;text-shadow:0 2px 20px rgba(0,0,0,.6)}
+  .hero .n small{font-size:14px;font-weight:600;opacity:.7}
+  .hero .l{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin-top:2px}
+  .leg{display:flex;gap:13px;font-size:11.5px;color:var(--mut);margin-top:9px}
+  .leg b{color:var(--txt)} .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
+
+  /* ---------- 1 ember core ---------- */
+  .ember{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  .core{width:150px;height:150px;border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#fff4d6 0%,#ffb454 22%,#ff6b8a 52%,#9b7bff 78%,#3a2a6b 100%);
+    filter:blur(.4px);box-shadow:0 0 60px 12px rgba(255,140,120,.45),0 0 120px 30px rgba(155,123,255,.35);
+    animation:pulse 4.5s ease-in-out infinite}
+  .core::after{content:"";position:absolute;inset:-30px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,180,120,.25),transparent 65%);animation:pulse 4.5s ease-in-out infinite reverse}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.07)}}
+
+  /* ---------- 2 aurora ---------- */
+  .aurora{position:absolute;inset:-40%;filter:blur(38px);opacity:.9}
+  .aurora b{position:absolute;border-radius:50%;mix-blend-mode:screen}
+  .a1{width:60%;height:60%;left:5%;top:10%;background:#4cc9f0;animation:drift 11s ease-in-out infinite}
+  .a2{width:55%;height:65%;right:0%;top:0%;background:#9b7bff;animation:drift 14s ease-in-out infinite reverse}
+  .a3{width:50%;height:55%;left:25%;bottom:0%;background:#ff6b8a;animation:drift 9s ease-in-out infinite}
+  @keyframes drift{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(18%,-12%) scale(1.15)}66%{transform:translate(-12%,10%) scale(.9)}}
+
+  /* ---------- 3 living plant ---------- */
+  .plantbg{position:absolute;inset:0;background:linear-gradient(180deg,#0c1726,#0a1f1a)}
+  .sway{transform-origin:bottom center;animation:sway 6s ease-in-out infinite}
+  @keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+
+  /* ---------- 4 macro river (stream graph) ---------- */
+  .river{position:absolute;inset:0}
+
+  /* ---------- 5 constellation ---------- */
+  .sky{position:absolute;inset:0;background:radial-gradient(130% 90% at 70% 10%,#1a1f3a 0%,#0a0c1a 70%)}
+  .twinkle{animation:tw 3s ease-in-out infinite}
+  .twinkle:nth-child(2){animation-delay:.6s} .twinkle:nth-child(3){animation-delay:1.2s}
+  .twinkle:nth-child(4){animation-delay:1.8s} .twinkle:nth-child(5){animation-delay:2.4s}
+  @keyframes tw{0%,100%{opacity:.55}50%{opacity:1}}
+
+  /* ---------- 6 goo metaballs ---------- */
+  .goo{position:absolute;inset:0;filter:url(#goofilter)}
+  .blob{position:absolute;border-radius:50%}
+  .b1{width:120px;height:120px;background:var(--c);left:30%;top:34%;animation:float1 8s ease-in-out infinite}
+  .b2{width:96px;height:96px;background:var(--p);left:46%;top:30%;animation:float2 7s ease-in-out infinite}
+  .b3{width:78px;height:78px;background:var(--f);left:40%;top:48%;animation:float3 9s ease-in-out infinite}
+  @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-16px,14px)}}
+  @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(18px,-12px)}}
+  @keyframes float3{0%,100%{transform:translate(0,0)}50%{transform:translate(8px,18px)}}
+</style>
+</head>
+<body>
+<h1>Nutrition as art · six living concepts</h1>
+<p class="sub">No charts. Each is a generative, animated scene whose <i>shape, color, and motion</i> encode 620 kcal left of 2,100 and your P/C/F balance. These animate in-browser — open it.</p>
+
+<div class="grid">
+
+  <!-- 1 EMBER CORE -->
+  <div class="card">
+    <div class="stage">
+      <div class="ember"><div class="core"></div></div>
+      <div class="hero" style="top:50%;transform:translateY(-50%)">
+        <div class="n">620<small> left</small></div>
+        <div class="l">metabolic fuel</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="tag">1 · ember core</span>
+      <div class="name">The fuel within</div>
+      <div class="desc">A living energy core. Brightness = calories left; its hue blends toward your dominant macro. Over-eat and it cools to deep violet; balanced day burns warm gold. Breathes slowly.</div>
+    </div>
+  </div>
+
+  <!-- 2 AURORA -->
+  <div class="card">
+    <div class="stage">
+      <div class="aurora"><b class="a1"></b><b class="a2"></b><b class="a3"></b></div>
+      <div class="hero" style="bottom:18px"><div class="n">620<small> left</small></div><div class="l">today's sky</div></div>
+    </div>
+    <div class="meta">
+      <span class="tag">2 · aurora field</span>
+      <div class="name">Macro aurora</div>
+      <div class="desc">An ambient gradient field. Each macro is a colored light (P pink / C blue / F amber) that grows with grams logged; they drift and blend. Your whole day reads as one mood of color. Pure ambient.</div>
+      <div class="leg"><span><span class="dot" style="background:var(--p)"></span>P 98</span><span><span class="dot" style="background:var(--c)"></span>C 165</span><span><span class="dot" style="background:var(--f)"></span>F 52</span></div>
+    </div>
+  </div>
+
+  <!-- 3 LIVING PLANT -->
+  <div class="card">
+    <div class="stage">
+      <div class="plantbg"></div>
+      <svg viewBox="0 0 300 240" width="100%" height="100%" style="position:absolute;inset:0">
+        <defs><linearGradient id="stem" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1f7a4d"/><stop offset="1" stop-color="#3fd07f"/></linearGradient></defs>
+        <g class="sway">
+          <path d="M150 240 C150 180 148 150 150 110" stroke="url(#stem)" stroke-width="7" fill="none" stroke-linecap="round"/>
+          <!-- protein leaves -->
+          <path d="M150 170 C120 165 100 145 96 124 C124 126 146 146 150 170Z" fill="#ff6b8a" opacity=".9"/>
+          <path d="M150 150 C180 146 202 128 206 108 C176 110 154 128 150 150Z" fill="#ff6b8a" opacity=".8"/>
+          <!-- carb leaves -->
+          <path d="M150 150 C118 150 94 138 84 120 C116 116 144 130 150 150Z" fill="#4cc9f0" opacity=".85"/>
+          <path d="M150 132 C182 130 208 116 214 96 C182 96 156 112 150 132Z" fill="#4cc9f0" opacity=".75"/>
+          <!-- fat bud / flower -->
+          <circle cx="150" cy="104" r="15" fill="#ffb454"/>
+          <circle cx="150" cy="104" r="7" fill="#fff0c8"/>
+        </g>
+      </svg>
+      <div class="hero" style="bottom:14px"><div class="n" style="font-size:30px">620<small> left</small></div></div>
+    </div>
+    <div class="meta">
+      <span class="tag">3 · living plant</span>
+      <div class="name">Grow your day</div>
+      <div class="desc">Every logged meal grows the plant: protein sprouts leaves, carbs add height, fats bloom the flower. Balanced eating = a full, blossoming plant; junk day = sparse and droopy. Resets each morning, ties straight into streaks.</div>
+    </div>
+  </div>
+
+  <!-- 4 MACRO RIVER -->
+  <div class="card">
+    <div class="stage">
+      <svg class="river" viewBox="0 0 320 240" preserveAspectRatio="none" width="100%" height="100%">
+        <defs>
+          <linearGradient id="rp" x1="0" x2="1"><stop offset="0" stop-color="#ff6b8a" stop-opacity=".5"/><stop offset="1" stop-color="#ff6b8a"/></linearGradient>
+          <linearGradient id="rc" x1="0" x2="1"><stop offset="0" stop-color="#4cc9f0" stop-opacity=".5"/><stop offset="1" stop-color="#4cc9f0"/></linearGradient>
+          <linearGradient id="rf" x1="0" x2="1"><stop offset="0" stop-color="#ffb454" stop-opacity=".5"/><stop offset="1" stop-color="#ffb454"/></linearGradient>
+        </defs>
+        <!-- stacked flowing bands, width = time of day -->
+        <path d="M0,150 C60,120 110,170 160,140 C220,110 270,150 320,130 L320,178 C270,196 220,160 160,186 C110,210 60,168 0,196 Z" fill="url(#rc)"/>
+        <path d="M0,196 C60,168 110,210 160,186 C220,160 270,196 320,178 L320,208 C270,222 220,196 160,212 C110,226 60,206 0,224 Z" fill="url(#rp)"/>
+        <path d="M0,224 C60,206 110,226 160,212 C220,196 270,222 320,208 L320,240 L0,240 Z" fill="url(#rf)"/>
+      </svg>
+      <div class="hero" style="top:30px"><div class="n">620<small> left</small></div><div class="l">flow of the day</div></div>
+    </div>
+    <div class="meta">
+      <span class="tag">4 · macro river</span>
+      <div class="name">Stream of macros</div>
+      <div class="desc">A flowing river where each colored current is a macro, its thickness swelling at the times you ate. Reads left→right as morning→night. Artful and genuinely data-rich at once.</div>
+    </div>
+  </div>
+
+  <!-- 5 CONSTELLATION -->
+  <div class="card">
+    <div class="stage">
+      <div class="sky"></div>
+      <svg viewBox="0 0 320 240" width="100%" height="100%" style="position:absolute;inset:0">
+        <polyline points="60,70 120,120 175,95 230,150 265,110" fill="none" stroke="#9b7bff" stroke-width="1" opacity=".45"/>
+        <g fill="#fff">
+          <circle class="twinkle" cx="60" cy="70" r="5" fill="#ffd166"/>
+          <circle class="twinkle" cx="120" cy="120" r="6.5" fill="#06d6a0"/>
+          <circle class="twinkle" cx="175" cy="95" r="4" fill="#4cc9f0"/>
+          <circle class="twinkle" cx="230" cy="150" r="7" fill="#ff6b8a"/>
+          <circle class="twinkle" cx="265" cy="110" r="3.5" fill="#b388ff"/>
+        </g>
+        <!-- faint dust -->
+        <g fill="#fff" opacity=".3"><circle cx="40" cy="160" r="1"/><circle cx="200" cy="50" r="1.2"/><circle cx="290" cy="180" r="1"/><circle cx="100" cy="190" r="1"/></g>
+      </svg>
+      <div class="hero" style="bottom:16px"><div class="n" style="font-size:30px">620<small> left</small></div><div class="l">5 meals tonight</div></div>
+    </div>
+    <div class="meta">
+      <span class="tag">5 · constellation</span>
+      <div class="name">Meal constellation</div>
+      <div class="desc">Each meal is a star (size = calories, color = dominant macro), placed by the hour you logged it, connected into the night's constellation. Your eating day becomes something you'd screenshot and share.</div>
+    </div>
+  </div>
+
+  <!-- 6 GOO METABALLS -->
+  <div class="card">
+    <div class="stage">
+      <svg width="0" height="0"><defs><filter id="goofilter"><feGaussianBlur in="SourceGraphic" stdDeviation="9" result="b"/><feColorMatrix in="b" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -9"/></filter></defs></svg>
+      <div class="goo"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+      <div class="hero" style="top:50%;transform:translateY(-50%)"><div class="n">620<small> left</small></div></div>
+    </div>
+    <div class="meta">
+      <span class="tag">6 · liquid metaballs</span>
+      <div class="name">Macros that merge</div>
+      <div class="desc">Three gooey blobs (P/C/F) sized by grams, fusing and separating organically. A perfectly balanced day looks like one smooth orb; a lopsided day shows one blob dominating. Hypnotic, premium, alive.</div>
+    </div>
+  </div>
+
+</div>
+
+<p class="note" style="max-width:1240px;margin-top:30px;color:var(--mut);font-size:13px">
+<b>If you want one that's beautiful AND legible:</b> #1 ember core (hero number stays front-and-center, the art is the halo) or #4 macro river (art that's secretly a chart).
+<b>If you want a share-worthy signature no competitor has:</b> #3 living plant or #5 constellation — both turn a day of eating into something with emotional payoff and screenshot value, and both plug directly into Zealova's streak/Wrapped scaffold.
+<b>Wildcard:</b> #6 metaballs as a premium "live wallpaper" feel.
+</p>
+</body>
+</html>

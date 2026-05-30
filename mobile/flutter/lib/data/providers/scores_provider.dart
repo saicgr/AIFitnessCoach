@@ -1,12 +1,21 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../models/scores.dart';
 import '../repositories/scores_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../services/data_cache_service.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
 ScoresState? _scoresInMemoryCache;
+
+/// Disk cache keys (12h TTL via `statsKeyPrefix`). Cache the RAW model JSON so
+/// a cold start paints last-known scores instantly without a network round-trip.
+const String _scoresOverviewCacheKey =
+    '${DataCacheService.statsKeyPrefix}scores';
+const String _readinessHistoryCacheKey =
+    '${DataCacheService.statsKeyPrefix}readiness_history';
 
 /// Tracks the user_id this static cache belongs to, so we can flush it on a
 /// real account switch (sign-out → sign-in different account) and avoid the
@@ -159,6 +168,58 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
     _currentUserId = userId;
   }
 
+  /// Cold-start disk seed. Paints last-known overview + readiness history
+  /// instantly (even if expired) before any network call, so the Stats section
+  /// shows real prior numbers rather than a wall of skeletons. No-op when the
+  /// in-memory cache already holds richer data for this session.
+  Future<void> seedFromDisk({String? userId}) async {
+    final uid = userId ??
+        Supabase.instance.client.auth.currentUser?.id ??
+        _currentUserId;
+    if (uid == null) return;
+    _currentUserId = uid;
+
+    // Only seed slices we don't already have in memory.
+    final needOverview = state.overview == null;
+    final needHistory = state.readinessHistory == null;
+    if (!needOverview && !needHistory) return;
+
+    try {
+      if (needOverview) {
+        final cached = await DataCacheService.instance.getCached(
+          _scoresOverviewCacheKey,
+          userId: uid,
+          returnExpiredOnMiss: true,
+        );
+        if (cached != null && state.overview == null) {
+          final overview = ScoresOverview.fromJson(cached);
+          state = state.copyWith(
+            overview: overview,
+            todayReadiness: overview.todayReadiness,
+          );
+          _scoresInMemoryCache = state;
+          debugPrint('⚡ [ScoresProvider] Seeded overview from disk');
+        }
+      }
+      if (needHistory) {
+        final cached = await DataCacheService.instance.getCached(
+          _readinessHistoryCacheKey,
+          userId: uid,
+          returnExpiredOnMiss: true,
+        );
+        if (cached != null && state.readinessHistory == null) {
+          state = state.copyWith(
+            readinessHistory: ReadinessHistory.fromJson(cached),
+          );
+          _scoresInMemoryCache = state;
+          debugPrint('⚡ [ScoresProvider] Seeded readiness history from disk');
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [ScoresProvider] Disk seed failed: $e');
+    }
+  }
+
   /// Load all scores data (overview)
   Future<void> loadScoresOverview({String? userId}) async {
     final uid = userId ?? _currentUserId;
@@ -179,6 +240,9 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
       );
       // Update in-memory cache for instant access on provider recreation
       _scoresInMemoryCache = state;
+      // Write-through to disk so the next cold start paints instantly.
+      await DataCacheService.instance
+          .cache(_scoresOverviewCacheKey, overview.toJson(), userId: uid);
       debugPrint('✅ [ScoresProvider] Loaded scores overview');
     } catch (e) {
       debugPrint('❌ [ScoresProvider] Error loading overview: $e');
@@ -242,6 +306,10 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
         days: days,
       );
       state = state.copyWith(readinessHistory: history);
+      _scoresInMemoryCache = state;
+      // Write-through to disk for instant cold-start paint.
+      await DataCacheService.instance
+          .cache(_readinessHistoryCacheKey, history.toJson(), userId: uid);
       debugPrint('✅ [ScoresProvider] Loaded readiness history');
     } catch (e) {
       debugPrint('❌ [ScoresProvider] Error loading readiness history: $e');
@@ -479,6 +547,10 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
         overview: overview,
         todayReadiness: overview.todayReadiness,
       );
+      _scoresInMemoryCache = state;
+      // Write-through to disk so the next cold start paints instantly.
+      await DataCacheService.instance
+          .cache(_scoresOverviewCacheKey, overview.toJson(), userId: uid);
 
       // Load detailed scores in parallel
       await Future.wait([

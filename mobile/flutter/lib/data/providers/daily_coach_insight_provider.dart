@@ -13,6 +13,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../models/today_score.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 import 'today_score_provider.dart';
 import '../../services/score_coach_line.dart';
 import '../../core/providers/timezone_provider.dart';
@@ -177,6 +178,9 @@ class _InsightArgs {
 /// when `timezoneProvider` settles, so the real fetch happens then.
 final dailyCoachInsightProvider =
     FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
+  // Keep alive so leaving/returning Home doesn't tear this down and refetch
+  // the coach hero — it's often the FIRST card on Home.
+  ref.keepAlive();
   final tzState = ref.watch(timezoneProvider);
   if (tzState.isLoading) {
     return _buildClientFallback(ref);
@@ -190,7 +194,24 @@ final dailyCoachInsightProvider =
     tz: tzState.timezone,
     source: 'home',
   );
-  return _fetchInsight(ref, args);
+
+  // Fresh-cache-first: the disk cache (12h TTL, TZ-rollover aware) backs the
+  // coach hero so it paints instantly on a warm start instead of waiting on
+  // the network. Only a NON-expired, same-local-day entry is served — an
+  // expired one (>12h, or a new calendar day) falls through to the network so
+  // the insight refreshes each morning instead of freezing to yesterday's
+  // (returning expired here + keepAlive would otherwise never refetch). The
+  // REAL response is written through on success.
+  final uid = Supabase.instance.client.auth.currentUser?.id;
+  final cached = await DataCacheService.instance.getCached(
+    DataCacheService.coachInsightKey,
+    userId: uid,
+  );
+  if (cached != null) {
+    return DailyCoachInsight.fromJson(cached);
+  }
+
+  return _fetchInsight(ref, args, cacheKey: DataCacheService.coachInsightKey);
 });
 
 /// Picks the open-state source for Ask Coach based on the user's LOCAL hour:
@@ -251,7 +272,8 @@ final dailyCoachInsightRefreshProvider =
   );
 });
 
-Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args) async {
+Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
+    {String? cacheKey}) async {
   final api = ref.read(apiClientProvider);
   try {
     // NOTE: path is `/coach/daily-insight`, NOT `/api/v1/coach/daily-insight`.
@@ -271,6 +293,12 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args) async {
     );
     final data = res.data;
     if (data is Map<String, dynamic>) {
+      // Write-through the REAL response so the next warm start paints instantly
+      // from disk. Only the home provider passes a cacheKey.
+      if (cacheKey != null) {
+        final uid = Supabase.instance.client.auth.currentUser?.id;
+        await DataCacheService.instance.cache(cacheKey, data, userId: uid);
+      }
       return DailyCoachInsight.fromJson(data);
     }
     return _buildClientFallback(ref);

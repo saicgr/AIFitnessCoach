@@ -115,6 +115,8 @@ class _CachedInsight {
 final mealSlotSuggestionProvider =
     FutureProvider.autoDispose.family<DailyCoachInsight, MealSlot>(
   (ref, slot) async {
+    // Keep alive so leaving/returning Home doesn't tear this down and refetch.
+    ref.keepAlive();
     final tzState = ref.watch(timezoneProvider);
     if (tzState.isLoading) {
       return _fallback(slot);

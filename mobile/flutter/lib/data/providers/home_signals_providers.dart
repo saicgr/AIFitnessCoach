@@ -39,6 +39,8 @@ class SleepTarget {
 
 final sleepTargetProvider =
     FutureProvider.autoDispose<SleepTarget?>((ref) async {
+  // Keep alive so leaving/returning Home doesn't tear this down and refetch.
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   try {
     final api = ref.read(apiClientProvider);
@@ -63,6 +65,8 @@ class TodayWorkoutSchedule {
 
 final todayWorkoutScheduleProvider =
     FutureProvider.autoDispose<TodayWorkoutSchedule?>((ref) async {
+  // Keep alive so leaving/returning Home doesn't tear this down and refetch.
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   try {
     final api = ref.read(apiClientProvider);
@@ -128,6 +132,8 @@ class PlannedVsActual {
 final plannedVsActualProvider =
     FutureProvider.autoDispose.family<PlannedVsActual?, String>(
         (ref, workoutId) async {
+  // Keep alive so leaving/returning Home doesn't tear this down and refetch.
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   try {
     final api = ref.read(apiClientProvider);

@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova · Nutrition circle concepts</title>
+<style>
+  :root{
+    --bg:#0d0f14; --card:#161a22; --card2:#1d222c; --line:#272d39;
+    --txt:#f2f5fa; --mut:#8b94a7; --faint:#5b6475;
+    --cal:#7c5cff;            /* calories accent */
+    --p:#ff6b8a;              /* protein */
+    --c:#4cc9f0;              /* carbs */
+    --f:#ffb454;              /* fat */
+    --ok:#34d399; --warn:#fbbf24; --over:#fb7185;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+       padding:32px 18px 80px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--mut);margin:0 0 28px;max-width:680px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;max-width:1180px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px 18px 22px;
+        display:flex;flex-direction:column;align-items:center;position:relative;overflow:hidden}
+  .tag{position:absolute;top:14px;left:14px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;
+       color:var(--faint);font-weight:700}
+  .name{font-weight:700;margin:6px 0 2px;align-self:flex-start}
+  .desc{color:var(--mut);font-size:13px;align-self:flex-start;min-height:54px}
+  .ringwrap{position:relative;width:200px;height:200px;margin:14px 0 6px}
+  .ringwrap.gauge{height:130px}
+  .center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .big{font-size:34px;font-weight:800;letter-spacing:-.02em;line-height:1}
+  .big small{font-size:13px;font-weight:600;color:var(--mut)}
+  .lbl{font-size:12px;color:var(--mut);margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+  svg{transform:rotate(-90deg)}
+  .legend{display:flex;gap:14px;margin-top:8px;font-size:12px;color:var(--mut);flex-wrap:wrap;justify-content:center}
+  .legend b{color:var(--txt)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+  .bars{width:100%;margin-top:10px;display:flex;flex-direction:column;gap:9px}
+  .bar{font-size:12px}
+  .bar .row{display:flex;justify-content:space-between;margin-bottom:3px;color:var(--mut)}
+  .bar .track{height:7px;border-radius:6px;background:var(--card2);overflow:hidden}
+  .bar .fill{height:100%;border-radius:6px}
+  /* glow behind */
+  .glow{position:absolute;width:230px;height:230px;border-radius:50%;filter:blur(34px);opacity:.35;z-index:0}
+  .ringwrap svg,.ringwrap .center{position:relative;z-index:1}
+  /* log bar */
+  .logbar{display:flex;gap:8px;width:100%;margin-top:14px}
+  .logbtn{flex:1;background:var(--card2);border:1px solid var(--line);color:var(--txt);
+          border-radius:14px;padding:10px 6px;font-size:12px;font-weight:600;text-align:center;cursor:pointer}
+  .logbtn .ic{display:block;font-size:18px;margin-bottom:3px}
+  .logbtn.primary{background:linear-gradient(135deg,var(--cal),#a07cff);border-color:transparent}
+  .fab{position:absolute;right:16px;bottom:16px;width:48px;height:48px;border-radius:16px;
+       background:linear-gradient(135deg,var(--cal),#a07cff);display:flex;align-items:center;justify-content:center;
+       font-size:26px;font-weight:300;color:#fff;box-shadow:0 8px 22px rgba(124,92,255,.45)}
+  .note{max-width:1180px;margin:34px 0 0;color:var(--mut);font-size:13px}
+  .pill{display:inline-block;background:var(--card2);border:1px solid var(--line);border-radius:999px;
+        padding:6px 12px;font-size:12px;margin:4px 6px 0 0}
+  .pill b{color:var(--txt)}
+  hr{border:none;border-top:1px solid var(--line);margin:34px 0}
+</style>
+</head>
+<body>
+<h1>Nutrition circle · concept gallery</h1>
+<p class="sub">Six ways to show the daily calorie/macro state on the nutrition sheet, plus two logging affordances.
+Each is a static mock of the idea (numbers are sample: <b>1,480 / 2,100 kcal</b>, 620 remaining). Open in any browser.</p>
+
+<div class="grid">
+
+  <!-- 1 baseline -->
+  <div class="card">
+    <span class="tag">A · baseline</span>
+    <div class="name">Single ring</div>
+    <div class="desc">What you likely have now. Clean, instantly readable, but macros & context live elsewhere.</div>
+    <div class="ringwrap">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--card2)" stroke-width="16"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--cal)" stroke-width="16"
+                stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="159"/>
+      </svg>
+      <div class="center"><div class="big">620<small> left</small></div><div class="lbl">kcal</div></div>
+    </div>
+  </div>
+
+  <!-- 2 concentric -->
+  <div class="card">
+    <span class="tag">B · recommended</span>
+    <div class="name">Concentric tri-ring</div>
+    <div class="desc">One focal circle = calories. Protein / Carbs / Fat ride as thin inner rings — macros without extra cards.</div>
+    <div class="ringwrap">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--card2)" stroke-width="13"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--cal)" stroke-width="13" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="159"/>
+        <circle cx="100" cy="100" r="69" fill="none" stroke="var(--card2)" stroke-width="8"/>
+        <circle cx="100" cy="100" r="69" fill="none" stroke="var(--p)" stroke-width="8" stroke-linecap="round" stroke-dasharray="433.5" stroke-dashoffset="108"/>
+        <circle cx="100" cy="100" r="56" fill="none" stroke="var(--card2)" stroke-width="8"/>
+        <circle cx="100" cy="100" r="56" fill="none" stroke="var(--c)" stroke-width="8" stroke-linecap="round" stroke-dasharray="351.8" stroke-dashoffset="140"/>
+        <circle cx="100" cy="100" r="43" fill="none" stroke="var(--card2)" stroke-width="8"/>
+        <circle cx="100" cy="100" r="43" fill="none" stroke="var(--f)" stroke-width="8" stroke-linecap="round" stroke-dasharray="270.2" stroke-dashoffset="65"/>
+      </svg>
+      <div class="center"><div class="big">620<small> left</small></div><div class="lbl">kcal</div></div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--p)"></span>P <b>98g</b></span>
+      <span><span class="dot" style="background:var(--c)"></span>C <b>165g</b></span>
+      <span><span class="dot" style="background:var(--f)"></span>F <b>52g</b></span>
+    </div>
+  </div>
+
+  <!-- 3 ghost arc -->
+  <div class="card">
+    <span class="tag">C · "behind" idea</span>
+    <div class="name">Ghost baseline arc</div>
+    <div class="desc">Faint arc behind = your trailing 7-day average. You instantly see today vs your norm. Data-driven backdrop.</div>
+    <div class="ringwrap">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--card2)" stroke-width="16"/>
+        <!-- ghost 7d avg -->
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--cal)" stroke-width="16" opacity=".22" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="119"/>
+        <!-- today -->
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--cal)" stroke-width="16" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="159"/>
+      </svg>
+      <div class="center"><div class="big">620<small> left</small></div><div class="lbl">vs ~520 avg</div></div>
+    </div>
+    <div class="legend"><span style="opacity:.6"><span class="dot" style="background:var(--cal);opacity:.4"></span>7-day avg</span><span><span class="dot" style="background:var(--cal)"></span>today</span></div>
+  </div>
+
+  <!-- 4 meal segmented -->
+  <div class="card">
+    <span class="tag">D · storytelling</span>
+    <div class="name">Meal-segmented ring</div>
+    <div class="desc">Each arc = a logged meal (breakfast/lunch/dinner/snack). The ring fills meal-by-meal — your day becomes a story.</div>
+    <div class="ringwrap">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--card2)" stroke-width="16"/>
+        <!-- 4 segments with small gaps -->
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#ffd166" stroke-width="16" stroke-dasharray="120 420" stroke-dashoffset="0"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#06d6a0" stroke-width="16" stroke-dasharray="150 390" stroke-dashoffset="-126"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#4cc9f0" stroke-width="16" stroke-dasharray="90 450" stroke-dashoffset="-282"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#b388ff" stroke-width="16" stroke-dasharray="40 500" stroke-dashoffset="-378"/>
+      </svg>
+      <div class="center"><div class="big">1,480<small> kcal</small></div><div class="lbl">4 meals logged</div></div>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:#ffd166"></span>Breakfast</span>
+      <span><span class="dot" style="background:#06d6a0"></span>Lunch</span>
+      <span><span class="dot" style="background:#4cc9f0"></span>Dinner</span>
+      <span><span class="dot" style="background:#b388ff"></span>Snack</span>
+    </div>
+  </div>
+
+  <!-- 5 liquid fill -->
+  <div class="card">
+    <span class="tag">E · gamified</span>
+    <div class="name">Fuel-gauge fill + status glow</div>
+    <div class="desc">Ring fills like a tank; soft glow behind shifts green→amber→red as you approach/exceed goal. Playful, glanceable.</div>
+    <div class="ringwrap">
+      <div class="glow" style="background:var(--ok)"></div>
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--card2)" stroke-width="18"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="url(#g)" stroke-width="18" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="159"/>
+        <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#7c5cff"/></linearGradient></defs>
+      </svg>
+      <div class="center"><div class="big">70<small>%</small></div><div class="lbl">of daily fuel</div></div>
+    </div>
+  </div>
+
+  <!-- 6 half gauge -->
+  <div class="card">
+    <span class="tag">F · space-saver</span>
+    <div class="name">Half-gauge + macro bars</div>
+    <div class="desc">Speedometer arc frees vertical space; macros sit as honest bars below (MacroFactor-style). Great if the sheet is dense.</div>
+    <div class="ringwrap gauge">
+      <svg width="200" height="120" viewBox="0 0 200 120">
+        <path d="M14 110 A86 86 0 0 1 186 110" fill="none" stroke="var(--card2)" stroke-width="16" stroke-linecap="round" transform="rotate(90 100 100)"/>
+        <path d="M14 110 A86 86 0 0 1 186 110" fill="none" stroke="var(--cal)" stroke-width="16" stroke-linecap="round" stroke-dasharray="270.2" stroke-dashoffset="81" transform="rotate(90 100 100)"/>
+      </svg>
+      <div class="center" style="justify-content:flex-end;padding-bottom:6px"><div class="big">620<small> left</small></div></div>
+    </div>
+    <div class="bars">
+      <div class="bar"><div class="row"><span>Protein</span><span>98 / 150g</span></div><div class="track"><div class="fill" style="width:65%;background:var(--p)"></div></div></div>
+      <div class="bar"><div class="row"><span>Carbs</span><span>165 / 210g</span></div><div class="track"><div class="fill" style="width:78%;background:var(--c)"></div></div></div>
+      <div class="bar"><div class="row"><span>Fat</span><span>52 / 70g</span></div><div class="track"><div class="fill" style="width:74%;background:var(--f)"></div></div></div>
+    </div>
+  </div>
+
+</div>
+
+<hr/>
+<h1 style="font-size:18px">Logging affordance · where the "+" goes</h1>
+<p class="sub">Two patterns. Recommendation: the 3-wedge quick bar (left) over a lone ambiguous "+".</p>
+<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+  <div class="card">
+    <span class="tag">Recommended</span>
+    <div class="name">3-wedge quick-log bar</div>
+    <div class="desc">Sits under the circle. Exposes all three logging paths up front — your nutrition wedges.</div>
+    <div class="logbar">
+      <div class="logbtn primary"><span class="ic">＋</span>Log food</div>
+      <div class="logbtn"><span class="ic">📷</span>Scan food</div>
+      <div class="logbtn"><span class="ic">🍽</span>Scan menu</div>
+    </div>
+  </div>
+  <div class="card" style="min-height:200px">
+    <span class="tag">Alternative</span>
+    <div class="name">Floating "+" (FAB)</div>
+    <div class="desc">A single pinned + that opens the 3-way logger sheet. Less discoverable for the wedges; cleaner visually.</div>
+    <div class="ringwrap">
+      <svg width="200" height="200" viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--card2)" stroke-width="16"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="var(--cal)" stroke-width="16" stroke-linecap="round" stroke-dasharray="540.4" stroke-dashoffset="159"/>
+      </svg>
+      <div class="center"><div class="big">620<small> left</small></div><div class="lbl">kcal</div></div>
+    </div>
+    <div class="fab">＋</div>
+  </div>
+</div>
+
+<p class="note">
+<b>Reference patterns (from product knowledge, not a live scrape):</b>
+<span class="pill"><b>Apple Activity</b> concentric tri-ring</span>
+<span class="pill"><b>MacroFactor</b> single ring + macro bars</span>
+<span class="pill"><b>Cal AI</b> hero number + macro rings, photo-log front & center</span>
+<span class="pill"><b>Lifesum</b> "life circle"</span>
+<span class="pill"><b>Cronometer</b> dense bars</span>
+<span class="pill"><b>Yazio / Lose It</b> ring + remaining</span>
+</p>
+</body>
+</html>

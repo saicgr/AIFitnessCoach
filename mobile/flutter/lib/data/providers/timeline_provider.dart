@@ -8,16 +8,29 @@
 ///   - setSearch(q)     — substring filter across title + notes
 library;
 
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/timeline_entry.dart';
+import '../repositories/auth_repository.dart' show authStateProvider;
 import '../repositories/timeline_repository.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 
 final timelineRepositoryProvider = Provider<TimelineRepository>((ref) {
   return TimelineRepository(ref.read(apiClientProvider));
 });
+
+/// Module-level cache so a fresh [TimelineNotifier] (provider invalidation,
+/// returning to Home) seeds its first frame instantly instead of flashing a
+/// loading shimmer. Mirrors `todayWorkoutProvider`'s `_inMemoryCache`. Wiped
+/// on real user-id change so a new account never inherits the prior user's
+/// timeline. Holds the raw single-day server payload (`days=1` / today).
+Map<String, dynamic>? _timelineInMemoryRaw;
+String? _timelineCacheOwnerUserId;
 
 class TimelineState {
   final List<TimelineDay> days;
@@ -79,8 +92,37 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
   final Ref _ref;
   bool _disposed = false;
 
-  TimelineNotifier(this._ref) : super(const TimelineState(isLoading: true)) {
-    refresh();
+  TimelineNotifier(this._ref)
+      : super(
+          // Cache-first: seed synchronously from the module-level cache so the
+          // Home timeline paints last-known events instantly (no loading
+          // shimmer) when the notifier is recreated. Cold start (no in-memory
+          // cache) falls back to the disk read raced against the network in
+          // `_loadWithCacheFirst`.
+          _timelineInMemoryRaw != null
+              ? TimelineState(
+                  days: TimelineResponse.fromJson(_timelineInMemoryRaw!).days,
+                  isLoading: false,
+                )
+              : const TimelineState(isLoading: true),
+        ) {
+    if (_timelineInMemoryRaw != null) {
+      // Already painted from the in-memory cache — refresh silently.
+      refresh(showLoading: false);
+    } else {
+      _loadWithCacheFirst();
+    }
+  }
+
+  /// Read the live user id straight from Supabase's session (never a cached
+  /// field — see the JWT-expiry rule in project memory). Used to scope the
+  /// disk cache slot per user.
+  String? _currentUserId() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -89,7 +131,33 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
     super.dispose();
   }
 
-  Future<void> refresh() async {
+  /// Cold-start path: fire the network refresh immediately and, in parallel,
+  /// read the disk cache — painting stale-but-real events the instant they're
+  /// available, but only if the network hasn't already delivered fresh data
+  /// (never clobber fresh with stale). Mirrors `todayWorkoutProvider`.
+  Future<void> _loadWithCacheFirst() async {
+    final apiFuture = refresh(showLoading: false);
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.timelineKey,
+        userId: _currentUserId(),
+        returnExpiredOnMiss: true,
+      );
+      if (cached != null && !_disposed && state.days.isEmpty) {
+        _timelineInMemoryRaw = cached;
+        state = state.copyWith(
+          days: TimelineResponse.fromJson(cached).days,
+          isLoading: false,
+        );
+        debugPrint('⚡ [Timeline] Seeded from disk cache');
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Timeline] disk cache read error: $e');
+    }
+    await apiFuture;
+  }
+
+  Future<void> refresh({bool showLoading = true}) async {
     if (_disposed) return;
     final apiClient = _ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
@@ -97,16 +165,35 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
       state = state.copyWith(isLoading: false, error: 'Not signed in');
       return;
     }
-    state = state.copyWith(isLoading: true, clearError: true);
+    // Only show the loading shimmer when we have nothing to paint yet — a
+    // silent revalidation over already-visible cached data must not blank it.
+    if (showLoading && state.days.isEmpty) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    } else {
+      state = state.copyWith(clearError: true);
+    }
     try {
       final repo = _ref.read(timelineRepositoryProvider);
-      final response = await repo.fetch(userId: userId, days: 1);
+      final result = await repo.fetchWithRaw(userId: userId, days: 1);
       if (_disposed) return;
-      state = state.copyWith(days: response.days, isLoading: false);
+      state = state.copyWith(days: result.parsed.days, isLoading: false);
+      // Write-through to in-memory + disk for the next cold start / recreation.
+      _timelineInMemoryRaw = result.raw;
+      unawaited(DataCacheService.instance.cache(
+        DataCacheService.timelineKey,
+        result.raw,
+        userId: userId,
+      ));
     } catch (e) {
       debugPrint('⚠️ [Timeline] refresh failed: $e');
       if (_disposed) return;
-      state = state.copyWith(isLoading: false, error: e.toString());
+      // Keep any cached days visible; only surface the error when we have
+      // nothing to show (no silent blanking of real cached data).
+      state = state.copyWith(
+        isLoading: false,
+        error: state.days.isEmpty ? e.toString() : null,
+        clearError: state.days.isNotEmpty,
+      );
     }
   }
 
@@ -253,6 +340,13 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
 
 final timelineProvider =
     StateNotifierProvider<TimelineNotifier, TimelineState>((ref) {
+  // Wipe the cross-instance cache on a real user-id change so a new account
+  // never inherits the prior user's timeline (mirrors todayWorkoutProvider).
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != _timelineCacheOwnerUserId) {
+    _timelineCacheOwnerUserId = userId;
+    _timelineInMemoryRaw = null;
+  }
   return TimelineNotifier(ref);
 });
 

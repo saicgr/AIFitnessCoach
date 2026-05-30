@@ -107,6 +107,8 @@ class DeloadStatus {
 ///   4. Otherwise call the API, persist the result, and return it.
 final deloadStatusProvider =
     FutureProvider.autoDispose<DeloadStatus>((ref) async {
+  // Keep alive so leaving/returning Home doesn't tear this down and refetch.
+  ref.keepAlive();
   final prefs = await SharedPreferences.getInstance();
 
   // 1. Dismiss-suppression gate — cheapest check, no I/O beyond prefs.

@@ -252,68 +252,24 @@ class MainShell extends ConsumerWidget {
     final isNavBarVisible = !(pathWantsHidden || providerWantsHidden);
     final isGuestMode = ref.watch(isGuestModeProvider);
 
-    // ── Tab prewarm ──────────────────────────────────────────────────
-    // Warm every tab's first-paint data providers in the background so
-    // switching tabs (and landing on Home) paints from cache instead of a
-    // cold network skeleton. Each provider below is a StateNotifier / a
-    // derived Provider / an autoDispose provider that calls keepAlive(), so
-    // a bare `ref.read` constructs it, kicks off its fetch, and the result
-    // is retained for when the tab actually opens. `ref.read` is idempotent
-    // — re-running this block on every rebuild is a cheap no-op (no second
-    // notifier, no refetch), so no one-time guard is needed and a re-login
-    // (fresh MainShell) re-warms correctly.
-
-    // Home tab — hero workout, full workout list, daily nutrition, health
-    // activity, hydration, today's timeline, weekly consistency.
-    ref.read(todayWorkoutProvider);
-    ref.read(workoutsProvider);
-    ref.read(nutritionProvider);
-    ref.read(dailyActivityProvider);
-    ref.read(hydrationProvider);
-    ref.read(timelineProvider);
-    ref.read(consistencyProvider);
-    // YOUR COACH hero card — Gemini insight + the contextual nudge stack
-    // (Overnight reset, Breakfast suggestion, etc). Without prewarming, the
-    // skeleton shows for 1–3s on cold start before nudges paint. Prewarm
-    // also pulls the contextual nudges' dependency chain (nutrition +
-    // hydration + workout) into evaluation immediately.
-    ref.read(dailyCoachInsightProvider);
-    ref.read(contextualNudgeProvider);
-    // Workouts tab — screen summary header + synced-workout history.
-    ref.read(workoutScreenSummaryProvider);
-    ref.read(syncedWorkoutsProvider);
-    // Nutrition tab — preferences gate the daily tab's first paint.
-    ref.read(nutritionPreferencesProvider);
-    // Discover tab — kept-alive leaderboard snapshot; its notifier load()s
-    // on creation.
-    ref.read(discoverSnapshotProvider);
-    // You tab — XP / rewards state + unclaimed-crates badge count.
-    ref.read(xpProvider);
-    ref.read(unclaimedCratesCountProvider);
-
-    // Providers keyed by (or initialized with) the signed-in user id.
+    // ── Tab prewarm (staggered, active-tab-first) ─────────────────────
+    // Warm each tab's first-paint providers so silent network refreshes are
+    // in flight by the time a tab opens. Every first-paint provider is now
+    // disk-cache-first (it paints last-known content instantly regardless),
+    // so the prewarm's only job is to kick the *refresh* — which means we can
+    // safely STAGGER it.
+    //
+    // Previously all ~23 providers were `ref.read` synchronously in build(),
+    // constructing ~23 notifiers that each fired a network call into Dio's
+    // 6-socket pool at once. The tab the user was actually looking at then
+    // queued its own /today, /nutrition, /timeline calls BEHIND 19 other
+    // tabs' background fetches — the dominant "every tab feels laggy on open"
+    // cause. Now: warm the ACTIVE tab immediately (post-frame), then release
+    // the other tabs' refreshes in two later waves so they never starve the
+    // visible tab's sockets. Guarded so it schedules once per signed-in user
+    // (re-arms on a fresh login).
     final prewarmUserId = ref.read(authStateProvider).user?.id;
-    if (prewarmUserId != null && prewarmUserId.isNotEmpty) {
-      // fastingProvider's notifier needs an explicit initialize() — a bare
-      // read just constructs an empty notifier.
-      unawaited(ref.read(fastingProvider.notifier).initialize(prewarmUserId));
-      // Home habits section — userId-family StateNotifier.
-      ref.read(habitsProvider(prewarmUserId));
-      // Nutrition · Daily tab — batch-cook events.
-      ref.read(activeCookEventsProvider(prewarmUserId));
-      // Nutrition · Recipes sub-tab — upcoming meal schedules.
-      ref.read(upcomingSchedulesProvider(prewarmUserId));
-      // Nutrition · Patterns sub-tab — the two single-entry (userId-keyed)
-      // providers. The range/date-keyed ones (macros/topFoods/history)
-      // re-key as the user scrubs, so they load on first tab open.
-      ref.read(foodPatternsMoodProvider(prewarmUserId));
-      ref.read(patternsSettingsProvider(prewarmUserId));
-      // Nutrition · Saved hub — recipes/foods/menus. All keepAlive(), so
-      // warming them here makes the first open of the Saved hub instant.
-      ref.read(favoriteRecipesProvider(prewarmUserId));
-      ref.read(savedFoodsHubProvider(prewarmUserId));
-      ref.read(savedMenusHubProvider);
-    }
+    _schedulePrewarm(ref, selectedIndex, prewarmUserId);
 
     // Initialize widget action service (MethodChannel listener)
     // This allows Android widgets to trigger UI actions without navigation
@@ -611,6 +567,129 @@ class MainShell extends ConsumerWidget {
     );
   }
 
+}
+
+// ── Staggered tab prewarm ───────────────────────────────────────────────────
+// Module-level guard so the prewarm schedules exactly once per signed-in user.
+// MainShell is a ConsumerWidget and rebuilds frequently; re-scheduling the
+// delayed waves on every rebuild would re-flood the network. Re-arms on a real
+// user change (logout → login / account switch) so a fresh session re-warms.
+String? _prewarmOwnerUserId;
+bool _prewarmScheduled = false;
+
+void _schedulePrewarm(WidgetRef ref, int activeIndex, String? userId) {
+  if (userId != _prewarmOwnerUserId) {
+    _prewarmOwnerUserId = userId;
+    _prewarmScheduled = false; // fresh login → re-warm
+  }
+  if (_prewarmScheduled) return;
+  _prewarmScheduled = true;
+
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    // Wave 0 — the tab the user is actually on. Fired post-frame (off the
+    // synchronous build path) so it gets the Dio sockets first.
+    _warmTab(() => _warmActiveTab(ref, activeIndex, userId));
+    // Wave 1 — the OTHER primary tabs' first-paint providers (~700ms later).
+    Future.delayed(const Duration(milliseconds: 700), () {
+      _warmTab(() => _warmOtherTabs(ref, userId));
+    });
+    // Wave 2 — heavier / below-the-fold surfaces: coach insight + nudges,
+    // discover leaderboard, fasting, patterns extras, saved hub (~1.6s later).
+    Future.delayed(const Duration(milliseconds: 1600), () {
+      _warmTab(() => _warmSecondary(ref, userId));
+    });
+  });
+}
+
+/// Run a prewarm wave, swallowing any error. The delayed waves can fire after
+/// MainShell unmounts (e.g. logout navigated away), where `ref.read` would
+/// throw — that's harmless, so we ignore it rather than crash.
+void _warmTab(void Function() body) {
+  try {
+    body();
+  } catch (_) {
+    // Shell torn down before the wave fired — nothing to warm.
+  }
+}
+
+void _warmActiveTab(WidgetRef ref, int index, String? userId) {
+  final hasUser = userId != null && userId.isNotEmpty;
+  switch (index) {
+    case 0: // Home — hero workout, workout list, nutrition, activity,
+      // hydration, timeline, consistency, + the coach hero (insight + nudges,
+      // often the first card so warmed in wave 0 not wave 2).
+      ref.read(todayWorkoutProvider);
+      ref.read(workoutsProvider);
+      ref.read(nutritionProvider);
+      ref.read(dailyActivityProvider);
+      ref.read(hydrationProvider);
+      ref.read(timelineProvider);
+      ref.read(consistencyProvider);
+      ref.read(dailyCoachInsightProvider);
+      ref.read(contextualNudgeProvider);
+      if (hasUser) ref.read(habitsProvider(userId));
+      break;
+    case 1: // Workouts — hero workout, list, screen summary, synced history.
+      ref.read(todayWorkoutProvider);
+      ref.read(workoutsProvider);
+      ref.read(workoutScreenSummaryProvider);
+      ref.read(syncedWorkoutsProvider);
+      break;
+    case 2: // Nutrition — daily summary + preferences gate the first paint;
+      // batch-cook events + upcoming schedules feed the Daily tab.
+      ref.read(nutritionProvider);
+      ref.read(nutritionPreferencesProvider);
+      if (hasUser) {
+        ref.read(activeCookEventsProvider(userId));
+        ref.read(upcomingSchedulesProvider(userId));
+      }
+      break;
+    case 3: // You / Profile — XP state + unclaimed-crates badge.
+      ref.read(xpProvider);
+      ref.read(unclaimedCratesCountProvider);
+      break;
+  }
+}
+
+/// Wave 1 — the primary first-paint providers of every main tab. `ref.read` is
+/// idempotent, so re-reading whatever the active tab already warmed is a cheap
+/// no-op (no second notifier, no refetch).
+void _warmOtherTabs(WidgetRef ref, String? userId) {
+  ref.read(todayWorkoutProvider);
+  ref.read(workoutsProvider);
+  ref.read(nutritionProvider);
+  ref.read(dailyActivityProvider);
+  ref.read(hydrationProvider);
+  ref.read(timelineProvider);
+  ref.read(consistencyProvider);
+  ref.read(workoutScreenSummaryProvider);
+  ref.read(syncedWorkoutsProvider);
+  ref.read(nutritionPreferencesProvider);
+  ref.read(xpProvider);
+  ref.read(unclaimedCratesCountProvider);
+  if (userId != null && userId.isNotEmpty) {
+    ref.read(habitsProvider(userId));
+    ref.read(activeCookEventsProvider(userId));
+    ref.read(upcomingSchedulesProvider(userId));
+  }
+}
+
+/// Wave 2 — heavier / below-the-fold surfaces that aren't needed for any
+/// tab's above-the-fold first paint.
+void _warmSecondary(WidgetRef ref, String? userId) {
+  ref.read(dailyCoachInsightProvider);
+  ref.read(contextualNudgeProvider);
+  ref.read(discoverSnapshotProvider);
+  if (userId != null && userId.isNotEmpty) {
+    // fastingProvider needs an explicit initialize() — a bare read just
+    // constructs an empty notifier.
+    unawaited(ref.read(fastingProvider.notifier).initialize(userId));
+    ref.read(foodPatternsMoodProvider(userId));
+    ref.read(patternsSettingsProvider(userId));
+    ref.read(favoriteRecipesProvider(userId));
+    ref.read(savedFoodsHubProvider(userId));
+    ref.read(savedMenusHubProvider);
+  }
 }
 
 /// Helper to get contrast color for a given background

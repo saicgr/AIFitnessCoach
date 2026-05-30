@@ -55,6 +55,61 @@ class DailyActivity {
     this.sleepLatencyMinutes,
     this.sleepEfficiency,
   });
+
+  /// Lossless serialization for the SharedPreferences disk cache so the Home
+  /// activity/steps metric paints last-known values instantly on a connected
+  /// cold start while Health Connect / HealthKit is still being queried. Keys
+  /// are self-contained (not the backend `daily_activity` wire shape) and
+  /// cover EVERY field so a round-trip never drops a metric.
+  Map<String, dynamic> toJson() => {
+        'steps': steps,
+        'calories_burned': caloriesBurned,
+        'resting_heart_rate': restingHeartRate,
+        'sleep_minutes': sleepMinutes,
+        'deep_sleep_minutes': deepSleepMinutes,
+        'rem_sleep_minutes': remSleepMinutes,
+        'date': date.toIso8601String(),
+        'is_from_health_connect': isFromHealthConnect,
+        'is_from_watch': isFromWatch,
+        'avg_heart_rate': avgHeartRate,
+        'max_heart_rate': maxHeartRate,
+        'min_heart_rate': minHeartRate,
+        'light_sleep_minutes': lightSleepMinutes,
+        'awake_sleep_minutes': awakeSleepMinutes,
+        'water_ml': waterMl,
+        'active_minutes': activeMinutes,
+        'sleep_start': sleepStart?.toIso8601String(),
+        'sleep_end': sleepEnd?.toIso8601String(),
+        'sleep_latency_minutes': sleepLatencyMinutes,
+        'sleep_efficiency': sleepEfficiency,
+      };
+
+  factory DailyActivity.fromJson(Map<String, dynamic> json) => DailyActivity(
+        steps: json['steps'] as int? ?? 0,
+        caloriesBurned: (json['calories_burned'] as num?)?.toDouble() ?? 0,
+        restingHeartRate: json['resting_heart_rate'] as int?,
+        sleepMinutes: json['sleep_minutes'] as int?,
+        deepSleepMinutes: json['deep_sleep_minutes'] as int?,
+        remSleepMinutes: json['rem_sleep_minutes'] as int?,
+        date: DateTime.parse(json['date'] as String),
+        isFromHealthConnect: json['is_from_health_connect'] as bool? ?? false,
+        isFromWatch: json['is_from_watch'] as bool? ?? false,
+        avgHeartRate: json['avg_heart_rate'] as int?,
+        maxHeartRate: json['max_heart_rate'] as int?,
+        minHeartRate: json['min_heart_rate'] as int?,
+        lightSleepMinutes: json['light_sleep_minutes'] as int?,
+        awakeSleepMinutes: json['awake_sleep_minutes'] as int?,
+        waterMl: json['water_ml'] as int?,
+        activeMinutes: json['active_minutes'] as int?,
+        sleepStart: json['sleep_start'] != null
+            ? DateTime.tryParse(json['sleep_start'] as String)
+            : null,
+        sleepEnd: json['sleep_end'] != null
+            ? DateTime.tryParse(json['sleep_end'] as String)
+            : null,
+        sleepLatencyMinutes: json['sleep_latency_minutes'] as int?,
+        sleepEfficiency: (json['sleep_efficiency'] as num?)?.toDouble(),
+      );
 }
 
 
@@ -247,7 +302,48 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
   ) : super(const DailyActivityState()) {
     // Auto-load if connected
     if (_syncState.isConnected) {
+      // Cache-first: paint last-known steps/activity from disk instantly while
+      // the (potentially slow) Health Connect / HealthKit query runs. Only the
+      // real platform fetch ever overwrites it — the seed never blocks it.
+      _seedFromDisk();
       loadTodayActivity();
+    }
+  }
+
+  /// Live user id from Supabase's session (never a cached field — JWT-expiry
+  /// rule). Scopes the disk cache slot per user.
+  String? _liveUserId() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Seed today's activity from the SharedPreferences disk cache on a cold
+  /// start so the Home steps/activity metric isn't blank while Health Connect
+  /// is queried. The `dailyActivityKey` envelope is TZ-rollover aware, so a
+  /// stale day is rejected by [DataCacheService] automatically.
+  Future<void> _seedFromDisk() async {
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        DataCacheService.dailyActivityKey,
+        userId: _liveUserId(),
+        returnExpiredOnMiss: true,
+      );
+      if (cached == null || state.today != null) return;
+      final today = DailyActivity.fromJson(cached);
+      // Only seed if it's actually today's row (defend against a stale
+      // envelope the TTL hasn't dropped yet).
+      final now = DateTime.now();
+      if (today.date.year == now.year &&
+          today.date.month == now.month &&
+          today.date.day == now.day) {
+        state = state.copyWith(today: today);
+        debugPrint('⚡ [DailyActivity] Seeded from disk cache');
+      }
+    } catch (e) {
+      debugPrint('⚠️ [DailyActivity] disk seed error: $e');
     }
   }
 
@@ -339,7 +435,11 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       return;
     }
 
-    state = state.copyWith(isLoading: true, error: null);
+    // Only show the loading shimmer when there's nothing cached to paint — a
+    // silent revalidation over a disk-seeded `today` must not blank it.
+    if (state.today == null) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
     try {
       final steps = await _healthService.getTodaySteps();
@@ -388,6 +488,13 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
 
       state = state.copyWith(isLoading: false, today: today);
 
+      // Write-through to disk so the next cold start paints instantly.
+      unawaited(DataCacheService.instance.cache(
+        DataCacheService.dailyActivityKey,
+        today.toJson(),
+        userId: _liveUserId(),
+      ));
+
       _posthog.capture(
         eventName: 'health_sync_completed',
         properties: <String, Object>{
@@ -406,10 +513,14 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
           'error': e.toString(),
         },
       );
+      // Keep any disk-seeded/cached `today` visible on a transient fetch
+      // error — only fall back to the empty placeholder when there's nothing
+      // to show, so a flaky Health query doesn't wipe last-known steps.
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
-        today: DailyActivity(date: DateTime.now(), isFromHealthConnect: false),
+        today: state.today ??
+            DailyActivity(date: DateTime.now(), isFromHealthConnect: false),
       );
     }
   }

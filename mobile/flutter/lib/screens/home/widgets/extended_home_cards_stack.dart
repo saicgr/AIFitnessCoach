@@ -78,7 +78,12 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
     // a header only paints when ≥1 card in its group actually renders, so an
     // empty group shows nothing (no orphan header). The Timeline is NOT here —
     // home_screen appends it as the very last card after this whole stack.
-    return Column(
+    //
+    // Wrapped in a RepaintBoundary so this large self-collapsing card stack
+    // paints into its own layer — sibling slivers (and the deck above) don't
+    // force it to repaint, and its own repaints don't dirty them.
+    return RepaintBoundary(
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Readiness, HRV, Stress, VO₂max, Bedtime, Wake consistency and Sleep
@@ -193,6 +198,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
           ],
         ),
       ],
+      ),
     );
   }
 }
@@ -217,8 +223,14 @@ class _HomeCardSection extends StatefulWidget {
 class _HomeCardSectionState extends State<_HomeCardSection> {
   final GlobalKey _bodyKey = GlobalKey();
   bool _hasContent = false;
+  // Guards the post-frame measurement so it runs ONCE per build, not on every
+  // frame. The old code re-armed addPostFrameCallback on every build, turning
+  // each section into a per-frame layout probe (findRenderObject) — a major
+  // source of home-scroll jank with ~11 sections live.
+  bool _measureScheduled = false;
 
   void _measure() {
+    _measureScheduled = false;
     if (!mounted) return;
     final ctx = _bodyKey.currentContext;
     if (ctx == null) return;
@@ -228,12 +240,21 @@ class _HomeCardSectionState extends State<_HomeCardSection> {
     if (has != _hasContent) setState(() => _hasContent = has);
   }
 
+  void _scheduleMeasure() {
+    if (_measureScheduled) return;
+    _measureScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Re-measure after every layout so the header tracks the cards even when a
-    // card self-collapses/expands from a provider change that doesn't rebuild
-    // THIS widget. setState only fires on an actual flip, so there's no loop.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    // Measure once per build (de-duped via _measureScheduled) instead of
+    // re-arming a post-frame layout probe on every frame. The child cards
+    // self-collapse via their own providers; when one flips it rebuilds the
+    // affected card subtree, the parent SliverList relayouts, and this build
+    // runs again — re-arming exactly one measurement. setState only fires on an
+    // actual content flip, so there's no rebuild loop.
+    _scheduleMeasure();
     final c = ThemeColors.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
