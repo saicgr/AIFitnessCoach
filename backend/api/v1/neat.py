@@ -287,6 +287,52 @@ def get_motivation_message_for_dashboard(
 # Goals Endpoints
 # ============================================================================
 
+def _neat_goal_row_to_model(row: dict) -> dict:
+    """Map a raw `neat_goals` DB row onto NEATGoal model kwargs.
+
+    The live `neat_goals` table uses different column names than the NEATGoal
+    model. Translate the columns that DO map; leave the rest to fall back to the
+    model's own defaults (active_hours_goal=8, movement_breaks_goal=6,
+    min_steps_per_hour=250). Selecting/inserting the model field names directly
+    raises PostgREST PGRST204 ("column not found"), so this mapping is required.
+
+    DB column          -> model field
+    current_step_goal  -> daily_step_goal
+    goal_type          -> adjustment_strategy (best-effort; falls back to model
+                          default if not a recognized strategy)
+    last_goal_update   -> last_adjustment_date
+    id/user_id/created_at/updated_at pass through unchanged.
+    """
+    if not isinstance(row, dict):
+        return row
+
+    mapped: dict = {}
+    # Pass-through fields that share names with the model.
+    for k in ("id", "user_id", "created_at", "updated_at"):
+        if row.get(k) is not None:
+            mapped[k] = row[k]
+
+    # user_id is required by the model — make sure it's present.
+    mapped.setdefault("user_id", row.get("user_id"))
+
+    if row.get("current_step_goal") is not None:
+        mapped["daily_step_goal"] = row["current_step_goal"]
+
+    # goal_type is a free-text column; only forward it when it's a valid
+    # GoalAdjustmentStrategy so Pydantic validation doesn't fail.
+    goal_type = row.get("goal_type")
+    if goal_type is not None:
+        try:
+            mapped["adjustment_strategy"] = GoalAdjustmentStrategy(goal_type).value
+        except ValueError:
+            pass  # leave model default
+
+    if row.get("last_goal_update") is not None:
+        mapped["last_adjustment_date"] = row["last_goal_update"]
+
+    return mapped
+
+
 @router.get("/goals/{user_id}", response_model=NEATGoalProgress, tags=["NEAT Goals"])
 async def get_neat_goals(
     user_id: str,
@@ -305,29 +351,43 @@ async def get_neat_goals(
     try:
         logger.info(f"Fetching NEAT goals for user {user_id}")
 
-        # Get or create goals
-        goals_response = db.client.table("neat_goals").select("*").eq(
-            "user_id", user_id
-        ).maybe_single().execute()
+        # Get or create goals.
+        # NOTE: the live neat_goals table columns are
+        #   current_step_goal / baseline_steps / goal_increment / goal_type /
+        #   min_goal / max_goal / last_goal_update
+        # which do NOT match the NEATGoal model fields
+        #   (daily_step_goal / active_hours_goal / movement_breaks_goal /
+        #    min_steps_per_hour / is_progressive / adjustment_strategy).
+        # Map DB rows -> model fields on read, and write the real column names
+        # on the default-row insert. The unmapped model fields keep their model
+        # defaults (active_hours_goal=8, movement_breaks_goal=6,
+        # min_steps_per_hour=250) which the rest of this handler relies on.
+        # .maybe_single() also returns None / a None-.data response when there's
+        # no row yet — guard before reading .data.
+        try:
+            goals_response = db.client.table("neat_goals").select("*").eq(
+                "user_id", user_id
+            ).maybe_single().execute()
+        except Exception:
+            goals_response = None
 
-        if goals_response.data:
-            goal = NEATGoal(**goals_response.data)
+        if goals_response and goals_response.data:
+            goal = NEATGoal(**_neat_goal_row_to_model(goals_response.data))
         else:
-            # Create default goals
+            # Create default goal row using the REAL neat_goals columns.
             default_goal = {
                 "user_id": user_id,
-                "daily_step_goal": 8000,
-                "active_hours_goal": 8,
-                "movement_breaks_goal": 6,
-                "min_steps_per_hour": 250,
-                "is_progressive": True,
-                "adjustment_strategy": GoalAdjustmentStrategy.MODERATE.value,
-                "created_at": datetime.now().isoformat(),
+                "current_step_goal": 8000,
+                "baseline_steps": 0,
+                "goal_increment": 500,
+                "goal_type": GoalAdjustmentStrategy.MODERATE.value,
+                "min_goal": 5000,
+                "max_goal": 20000,
             }
             insert_response = db.client.table("neat_goals").insert(default_goal).execute()
-            if not insert_response.data:
+            if not insert_response or not insert_response.data:
                 raise safe_internal_error(ValueError("Failed to create default NEAT goals"), "neat")
-            goal = NEATGoal(**insert_response.data[0])
+            goal = NEATGoal(**_neat_goal_row_to_model(insert_response.data[0]))
 
         # Get today's activity — .maybe_single() can return None or raise on 0 rows.
         today = user_today_date(request).isoformat()
@@ -831,11 +891,17 @@ async def get_today_neat_score(user_id: str,
     try:
         today = user_today_date(request).isoformat()
 
-        response = db.client.table("neat_scores").select("*").eq(
-            "user_id", user_id
-        ).eq("score_date", today).maybe_single().execute()
+        # NOTE: .maybe_single() returns None (or a response with .data == None)
+        # when there's no score row for today — return None gracefully
+        # (response_model is Optional[NEATScore]) instead of crashing.
+        try:
+            response = db.client.table("neat_scores").select("*").eq(
+                "user_id", user_id
+            ).eq("score_date", today).maybe_single().execute()
+        except Exception:
+            response = None
 
-        if not response.data:
+        if not response or not response.data:
             return None
 
         data = response.data
@@ -1113,7 +1179,18 @@ async def get_neat_streaks(user_id: str,
             "user_id", user_id
         ).execute()
 
-        streaks = [NEATStreak(**s) for s in (response.data or [])]
+        # NOTE: the neat_streaks table stores streak lengths as current_count /
+        # longest_count, but the NEATStreak model fields are current_length /
+        # longest_length. Map the DB column names onto the model fields so the
+        # values aren't silently dropped (model has extra="ignore").
+        streaks = []
+        for s in (response.data or []):
+            row = dict(s)
+            if "current_count" in row:
+                row.setdefault("current_length", row.get("current_count", 0))
+            if "longest_count" in row:
+                row.setdefault("longest_length", row.get("longest_count", 0))
+            streaks.append(NEATStreak(**row))
 
         # Find best overall streak
         best_streak = None

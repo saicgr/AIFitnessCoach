@@ -86,10 +86,13 @@ async def get_streak_summary(user_id: str,
 
         streaks = {s.get("streak_type"): s for s in (response.data or [])}
 
-        step_goal = streaks.get(StreakType.STEP_GOAL.value, {}).get("current_length", 0)
-        active_hours = streaks.get(StreakType.ACTIVE_HOURS.value, {}).get("current_length", 0)
-        movement_breaks = streaks.get(StreakType.MOVEMENT_BREAKS.value, {}).get("current_length", 0)
-        neat_score = streaks.get(StreakType.NEAT_SCORE.value, {}).get("current_length", 0)
+        # NOTE: the neat_streaks table columns are current_count / longest_count
+        # (the NEATStreak model exposes them as current_length / longest_length,
+        # but the raw DB rows use the *_count names).
+        step_goal = streaks.get(StreakType.STEP_GOAL.value, {}).get("current_count", 0)
+        active_hours = streaks.get(StreakType.ACTIVE_HOURS.value, {}).get("current_count", 0)
+        movement_breaks = streaks.get(StreakType.MOVEMENT_BREAKS.value, {}).get("current_count", 0)
+        neat_score = streaks.get(StreakType.NEAT_SCORE.value, {}).get("current_count", 0)
 
         # Find best current and all-time
         best_type = None
@@ -98,8 +101,8 @@ async def get_streak_summary(user_id: str,
         all_time_type = None
 
         for s in (response.data or []):
-            current = s.get("current_length", 0)
-            longest = s.get("longest_length", 0)
+            current = s.get("current_count", 0)
+            longest = s.get("longest_count", 0)
 
             if current > best_value:
                 best_value = current
@@ -145,18 +148,37 @@ async def get_neat_achievements(user_id: str,
     db = get_supabase_db()
 
     try:
-        # Get user's achievements with definitions
+        # Get user's earned achievement rows.
+        # NOTE: the embedded-resource join
+        # ("*, neat_achievement_definitions(*)") fails with PostgREST PGRST200
+        # because no such FK relationship is exposed. Fetch the definitions in a
+        # second query and join in Python — resolves regardless of the exact FK
+        # relationship name and keeps the same response shape.
         response = db.client.table("user_neat_achievements").select(
-            "*, neat_achievement_definitions(*)"
+            "*"
         ).eq("user_id", user_id).order("achieved_at", desc=True).execute()
+
+        rows = response.data or [] if response else []
+
+        # Build a lookup of achievement definitions by id.
+        definition_ids = {
+            r.get("achievement_id") for r in rows if r.get("achievement_id")
+        }
+        definitions_by_id: Dict[Any, dict] = {}
+        if definition_ids:
+            defs_response = db.client.table("neat_achievement_definitions").select(
+                "*"
+            ).in_("id", list(definition_ids)).execute()
+            for d in (defs_response.data or [] if defs_response else []):
+                definitions_by_id[d.get("id")] = d
 
         earned = []
         total_points = 0
         recently_earned = []
         one_week_ago = datetime.now() - timedelta(days=7)
 
-        for data in (response.data or []):
-            definition_data = data.get("neat_achievement_definitions", {})
+        for data in rows:
+            definition_data = definitions_by_id.get(data.get("achievement_id"))
             definition = NEATAchievementDefinition(**definition_data) if definition_data else None
 
             achievement = UserNEATAchievement(
@@ -227,9 +249,11 @@ async def get_available_achievements(user_id: str,
 
         total_steps = sum(r.get("steps", 0) for r in (steps_response.data or []))
 
-        # Get current streaks
+        # Get current streaks.
+        # NOTE: the neat_streaks table columns are current_count / longest_count
+        # (NOT current_length / longest_length — selecting those raises 42703).
         streaks_response = db.client.table("neat_streaks").select(
-            "streak_type, current_length, longest_length"
+            "streak_type, current_count, longest_count"
         ).eq("user_id", user_id).execute()
 
         streaks = {s.get("streak_type"): s for s in (streaks_response.data or [])}
@@ -252,7 +276,7 @@ async def get_available_achievements(user_id: str,
             elif definition.category == NEATAchievementCategory.STREAKS.value:
                 # Use max of all streaks
                 current_value = max(
-                    s.get("current_length", 0) for s in streaks.values()
+                    s.get("current_count", 0) for s in streaks.values()
                 ) if streaks else 0
 
             progress_pct = min((current_value / definition.threshold * 100), 99) if definition.threshold > 0 else 0
@@ -315,13 +339,15 @@ async def check_neat_achievements(user_id: str,
 
         total_steps = sum(r.get("steps", 0) for r in (steps_response.data or []))
 
-        # Streaks
+        # Streaks.
+        # NOTE: the neat_streaks table columns are current_count / longest_count
+        # (NOT current_length / longest_length — selecting those raises 42703).
         streaks_response = db.client.table("neat_streaks").select(
-            "streak_type, current_length, longest_length"
+            "streak_type, current_count, longest_count"
         ).eq("user_id", user_id).execute()
 
         max_streak = max(
-            max(s.get("current_length", 0), s.get("longest_length", 0))
+            max(s.get("current_count", 0), s.get("longest_count", 0))
             for s in (streaks_response.data or [{}])
         ) if streaks_response.data else 0
 
@@ -415,11 +441,17 @@ async def get_reminder_preferences(user_id: str,
     db = get_supabase_db()
 
     try:
-        response = db.client.table("neat_reminder_preferences").select("*").eq(
-            "user_id", user_id
-        ).maybe_single().execute()
+        # NOTE: .maybe_single() returns None (or a response with .data == None)
+        # when the user has no preferences row yet — guard before reading .data
+        # and fall through to sensible defaults.
+        try:
+            response = db.client.table("neat_reminder_preferences").select("*").eq(
+                "user_id", user_id
+            ).maybe_single().execute()
+        except Exception:
+            response = None
 
-        if response.data:
+        if response and response.data:
             data = response.data
             # Parse time fields
             start_time = time.fromisoformat(data.get("start_time", "08:00:00"))
