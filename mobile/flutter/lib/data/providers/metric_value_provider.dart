@@ -25,6 +25,8 @@ import '../../screens/home/widgets/cards/vo2max_trend_chip.dart'
     show vo2maxTrendSignalProvider;
 import '../../screens/home/widgets/cards/zone_minutes_bar.dart'
     show zoneMinutesSignalProvider;
+import '../../screens/home/widgets/cards/step_streak_tile.dart'
+    show stepStreakSignalProvider;
 import 'mindfulness_provider.dart' show mindfulnessTodayProvider;
 import '../../screens/home/widgets/ring_catalog.dart';
 import 'metric_layout_provider.dart';
@@ -58,6 +60,10 @@ TrendMetric? _trendMetricFor(RingKind kind) {
       return TrendMetric.readinessScore;
     case RingKind.vo2max:
       return TrendMetric.vo2Max;
+    case RingKind.bodyFat:
+      return TrendMetric.bodyFat;
+    case RingKind.cardioDistance:
+      return TrendMetric.cardioDistance;
     case RingKind.train:
     case RingKind.hrv:
     case RingKind.stress:
@@ -69,6 +75,7 @@ TrendMetric? _trendMetricFor(RingKind kind) {
     case RingKind.protein:
     case RingKind.zoneMinutes:
     case RingKind.mindfulMinutes:
+    case RingKind.stepStreak:
       return null;
   }
 }
@@ -358,6 +365,59 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
           goal: m.targetMinutes.toDouble(),
           pct: pct,
           deltaLabel: m.targetMinutes > 0 ? 'of ${m.targetMinutes} min' : null,
+        );
+      }
+    case RingKind.stepStreak:
+      {
+        final s = ref.watch(stepStreakSignalProvider);
+        if (s.streakDays == null) return base(empty: true, unit: 'days');
+        final pct = (s.goal > 0 && s.todaySteps != null)
+            ? (s.todaySteps! / s.goal).clamp(0.0, 1.0)
+            : null;
+        return base(
+          value: s.streakDays!.toDouble(),
+          unit: s.streakDays == 1 ? 'day' : 'days',
+          pct: pct,
+          deltaLabel: s.todaySteps != null ? '${s.todaySteps} today' : null,
+        );
+      }
+    case RingKind.bodyFat:
+      {
+        final pts = ref
+            .watch(trendSeriesProvider(
+              TrendSeriesKey(TrendMetric.bodyFat, _trendRangeFor(layout.range)),
+            ))
+            .valueOrNull
+            ?.points;
+        if (pts == null || pts.isEmpty) return base(empty: true, unit: '%');
+        final last = pts.last.value;
+        String? delta;
+        if (pts.length >= 2) {
+          final d = last - pts.first.value;
+          delta = '${d >= 0 ? '↑' : '↓'} ${d.abs().toStringAsFixed(1)}';
+        }
+        return base(
+          value: last,
+          displayValue: last.toStringAsFixed(1),
+          unit: '%',
+          deltaLabel: delta,
+        );
+      }
+    case RingKind.cardioDistance:
+      {
+        final pts = ref
+            .watch(trendSeriesProvider(
+              TrendSeriesKey(
+                  TrendMetric.cardioDistance, _trendRangeFor(layout.range)),
+            ))
+            .valueOrNull
+            ?.points;
+        if (pts == null || pts.isEmpty) return base(empty: true, unit: 'km');
+        final last = pts.last.value;
+        return base(
+          value: last,
+          displayValue: last.toStringAsFixed(1),
+          unit: 'km',
         );
       }
     case RingKind.hrv:

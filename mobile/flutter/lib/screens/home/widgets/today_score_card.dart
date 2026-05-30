@@ -726,6 +726,9 @@ _RingData _resolveRingData(TodayScore score, RingKind kind) {
     case RingKind.protein:
     case RingKind.zoneMinutes:
     case RingKind.mindfulMinutes:
+    case RingKind.stepStreak:
+    case RingKind.bodyFat:
+    case RingKind.cardioDistance:
       // Optional rings — not wired into the today-score ring. Render as "not
       // applicable" so the ring shape still appears (encouraging connection /
       // setup) without faking data.

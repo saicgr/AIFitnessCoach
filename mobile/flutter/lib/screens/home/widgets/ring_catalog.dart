@@ -46,6 +46,10 @@ enum RingKind {
   protein,
   zoneMinutes,
   mindfulMinutes,
+  // Round 3 (activity streak / body composition / cardio distance).
+  stepStreak,
+  bodyFat,
+  cardioDistance,
 }
 
 /// Static metadata for a single ring.
@@ -242,6 +246,33 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     isCore: false,
     defaultVisible: false,
   ),
+  RingKind.stepStreak: RingSpec(
+    kind: RingKind.stepStreak,
+    id: 'step_streak',
+    label: 'Step streak',
+    color: Color(0xFF10B981),
+    sourceId: 'wearable.step_streak',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.bodyFat: RingSpec(
+    kind: RingKind.bodyFat,
+    id: 'body_fat',
+    label: 'Body fat',
+    color: Color(0xFFEC4899),
+    sourceId: 'measurement.body_fat',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.cardioDistance: RingSpec(
+    kind: RingKind.cardioDistance,
+    id: 'cardio_distance',
+    label: 'Distance',
+    color: Color(0xFF3DC97A),
+    sourceId: 'cardio.distance',
+    isCore: false,
+    defaultVisible: false,
+  ),
 };
 
 extension RingKindX on RingKind {
@@ -276,6 +307,9 @@ extension RingKindX on RingKind {
       case RingKind.protein: return 'Protein';
       case RingKind.zoneMinutes: return 'Zone minutes';
       case RingKind.mindfulMinutes: return 'Mindful minutes';
+      case RingKind.stepStreak: return 'Step streak';
+      case RingKind.bodyFat: return 'Body fat';
+      case RingKind.cardioDistance: return 'Distance';
     }
   }
 

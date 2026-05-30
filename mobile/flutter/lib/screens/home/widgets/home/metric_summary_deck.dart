@@ -685,7 +685,12 @@ class MetricTile extends ConsumerWidget {
         // Sleep-derived metrics live on the Sleep detail screen.
         context.push('/health/sleep');
       case RingKind.weight:
+      case RingKind.bodyFat:
         context.push('/measurements');
+      case RingKind.stepStreak:
+        context.push('/neat');
+      case RingKind.cardioDistance:
+        context.push('/stats');
       case RingKind.cycle:
         context.push('/cycle');
       case RingKind.train:
@@ -711,6 +716,8 @@ class MetricTile extends ConsumerWidget {
       case RingKind.bedtimeWindow:
       case RingKind.activeEnergy:
       case RingKind.zoneMinutes:
+      case RingKind.stepStreak:
+      case RingKind.cardioDistance:
         return true;
       case RingKind.nourish:
       case RingKind.hydration:
@@ -719,6 +726,7 @@ class MetricTile extends ConsumerWidget {
       case RingKind.cycle:
       case RingKind.protein:
       case RingKind.mindfulMinutes:
+      case RingKind.bodyFat:
         return false;
     }
   }

@@ -112,6 +112,7 @@ class MetricDisplayConfig {
       case RingKind.protein:
       case RingKind.zoneMinutes:
       case RingKind.mindfulMinutes:
+      case RingKind.stepStreak:
         return const MetricDisplayConfig(
           size: MetricSize.small,
           chart: MetricChart.ring,
@@ -133,6 +134,8 @@ class MetricDisplayConfig {
       case RingKind.hrv:
       case RingKind.stress:
       case RingKind.vo2max:
+      case RingKind.bodyFat:
+      case RingKind.cardioDistance:
         return const MetricDisplayConfig(
           size: MetricSize.small,
           chart: MetricChart.line,
