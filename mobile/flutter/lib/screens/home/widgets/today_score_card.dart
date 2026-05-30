@@ -722,6 +722,10 @@ _RingData _resolveRingData(TodayScore score, RingKind kind) {
     case RingKind.wakeConsistency:
     case RingKind.bedtimeWindow:
     case RingKind.vo2max:
+    case RingKind.activeEnergy:
+    case RingKind.protein:
+    case RingKind.zoneMinutes:
+    case RingKind.mindfulMinutes:
       // Optional rings — not wired into the today-score ring. Render as "not
       // applicable" so the ring shape still appears (encouraging connection /
       // setup) without faking data.

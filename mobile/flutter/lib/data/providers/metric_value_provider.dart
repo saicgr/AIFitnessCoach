@@ -23,6 +23,9 @@ import '../../screens/home/widgets/cards/bedtime_window_tile.dart'
     show bedtimeWindowSignalProvider;
 import '../../screens/home/widgets/cards/vo2max_trend_chip.dart'
     show vo2maxTrendSignalProvider;
+import '../../screens/home/widgets/cards/zone_minutes_bar.dart'
+    show zoneMinutesSignalProvider;
+import 'mindfulness_provider.dart' show mindfulnessTodayProvider;
 import '../../screens/home/widgets/ring_catalog.dart';
 import 'metric_layout_provider.dart';
 import 'nutrition_preferences_provider.dart';
@@ -62,6 +65,10 @@ TrendMetric? _trendMetricFor(RingKind kind) {
     case RingKind.sleepLatency:
     case RingKind.wakeConsistency:
     case RingKind.bedtimeWindow:
+    case RingKind.activeEnergy:
+    case RingKind.protein:
+    case RingKind.zoneMinutes:
+    case RingKind.mindfulMinutes:
       return null;
   }
 }
@@ -298,6 +305,59 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
           deltaLabel: d == null
               ? null
               : '${d >= 0 ? '↑' : '↓'} ${d.abs().toStringAsFixed(1)}',
+        );
+      }
+    case RingKind.activeEnergy:
+      {
+        final kcal = ref.watch(dailyActivityProvider).today?.caloriesBurned;
+        if (kcal == null || kcal <= 0) return base(empty: true, unit: 'kcal');
+        return base(value: kcal, unit: 'kcal');
+      }
+    case RingKind.protein:
+      {
+        final eaten = ref.watch(nutritionProvider).todaySummary?.totalProteinG;
+        final goal =
+            ref.watch(nutritionPreferencesProvider).currentProteinTarget;
+        if (eaten == null) return base(empty: true, unit: 'g');
+        final pct = goal > 0 ? (eaten / goal).clamp(0.0, 1.0) : null;
+        return base(
+          value: eaten.toDouble(),
+          unit: 'g',
+          goal: goal.toDouble(),
+          pct: pct,
+          deltaLabel: goal > 0 ? 'of ${goal}g' : null,
+        );
+      }
+    case RingKind.zoneMinutes:
+      {
+        final z = ref.watch(zoneMinutesSignalProvider);
+        if (z.moderateMinutes == null && z.vigorousMinutes == null) {
+          return base(empty: true, unit: 'min');
+        }
+        // WHO equivalence: 1 vigorous min counts as 2 moderate min.
+        final effective =
+            (z.moderateMinutes ?? 0) + 2 * (z.vigorousMinutes ?? 0);
+        const weeklyGoal = 150.0;
+        return base(
+          value: effective.toDouble(),
+          unit: 'min',
+          goal: weeklyGoal,
+          pct: (effective / weeklyGoal).clamp(0.0, 1.0),
+          deltaLabel: 'of 150 / wk',
+        );
+      }
+    case RingKind.mindfulMinutes:
+      {
+        final m = ref.watch(mindfulnessTodayProvider).valueOrNull;
+        if (m == null) return base(empty: true, unit: 'min');
+        final pct =
+            m.targetMinutes > 0 ? (m.minutes / m.targetMinutes).clamp(0.0, 1.0) : null;
+        return base(
+          value: m.minutes.toDouble(),
+          unit: 'min',
+          goal: m.targetMinutes.toDouble(),
+          pct: pct,
+          deltaLabel: m.targetMinutes > 0 ? 'of ${m.targetMinutes} min' : null,
         );
       }
     case RingKind.hrv:

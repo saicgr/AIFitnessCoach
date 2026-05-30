@@ -666,12 +666,17 @@ class MetricTile extends ConsumerWidget {
       case RingKind.sleep:
         context.push('/health/sleep');
       case RingKind.move:
+      case RingKind.activeEnergy:
+      case RingKind.zoneMinutes:
         context.push('/neat');
+      case RingKind.protein:
+        context.go('/nutrition');
       case RingKind.recovery:
       case RingKind.heartRate:
       case RingKind.hrv:
       case RingKind.stress:
       case RingKind.vo2max:
+      case RingKind.mindfulMinutes:
         // The Combined Health hub has per-metric history sections + graphs.
         context.push('/health/combined');
       case RingKind.sleepLatency:
@@ -704,12 +709,16 @@ class MetricTile extends ConsumerWidget {
       case RingKind.sleepLatency:
       case RingKind.wakeConsistency:
       case RingKind.bedtimeWindow:
+      case RingKind.activeEnergy:
+      case RingKind.zoneMinutes:
         return true;
       case RingKind.nourish:
       case RingKind.hydration:
       case RingKind.weight:
       case RingKind.train:
       case RingKind.cycle:
+      case RingKind.protein:
+      case RingKind.mindfulMinutes:
         return false;
     }
   }

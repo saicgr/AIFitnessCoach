@@ -109,6 +109,9 @@ class MetricDisplayConfig {
       case RingKind.nourish:
       case RingKind.move:
       case RingKind.hydration:
+      case RingKind.protein:
+      case RingKind.zoneMinutes:
+      case RingKind.mindfulMinutes:
         return const MetricDisplayConfig(
           size: MetricSize.small,
           chart: MetricChart.ring,
@@ -140,6 +143,7 @@ class MetricDisplayConfig {
       case RingKind.sleepLatency:
       case RingKind.wakeConsistency:
       case RingKind.bedtimeWindow:
+      case RingKind.activeEnergy:
         return const MetricDisplayConfig(
           size: MetricSize.small,
           chart: MetricChart.number,

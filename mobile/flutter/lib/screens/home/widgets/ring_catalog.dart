@@ -41,6 +41,11 @@ enum RingKind {
   wakeConsistency,
   bedtimeWindow,
   vo2max,
+  // Round 2 of deck metrics (activity / nutrition / mindfulness).
+  activeEnergy,
+  protein,
+  zoneMinutes,
+  mindfulMinutes,
 }
 
 /// Static metadata for a single ring.
@@ -201,6 +206,42 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     isCore: false,
     defaultVisible: false,
   ),
+  RingKind.activeEnergy: RingSpec(
+    kind: RingKind.activeEnergy,
+    id: 'active_energy',
+    label: 'Active energy',
+    color: Color(0xFFF97316),
+    sourceId: 'wearable.active_energy',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.protein: RingSpec(
+    kind: RingKind.protein,
+    id: 'protein',
+    label: 'Protein',
+    color: Color(0xFFEF4444),
+    sourceId: 'nutrition.protein',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.zoneMinutes: RingSpec(
+    kind: RingKind.zoneMinutes,
+    id: 'zone_minutes',
+    label: 'Zone minutes',
+    color: Color(0xFF10B981),
+    sourceId: 'wearable.zone_minutes',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.mindfulMinutes: RingSpec(
+    kind: RingKind.mindfulMinutes,
+    id: 'mindful_minutes',
+    label: 'Mindful minutes',
+    color: Color(0xFF8B5CF6),
+    sourceId: 'mindfulness.today',
+    isCore: false,
+    defaultVisible: false,
+  ),
 };
 
 extension RingKindX on RingKind {
@@ -231,6 +272,10 @@ extension RingKindX on RingKind {
       case RingKind.wakeConsistency: return 'Wake consistency';
       case RingKind.bedtimeWindow: return 'Bedtime';
       case RingKind.vo2max: return 'VO₂max';
+      case RingKind.activeEnergy: return 'Active energy';
+      case RingKind.protein: return 'Protein';
+      case RingKind.zoneMinutes: return 'Zone minutes';
+      case RingKind.mindfulMinutes: return 'Mindful minutes';
     }
   }
 
