@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova · Nutrition — 10 Bento layouts (with circles)</title>
+<style>
+  :root{
+    --ink:#2a2b30; --mut:#9097a3; --faint:#b8bdc7;
+    --bg:#ffffff; --card:#f6f7f9; --line:#eceef2;
+    --orange:#f5a623; --orange-soft:#ffd07a; --over:#ec6a5e;
+    --p:#c9b8ef; --p-deep:#8b6fc9; --p-bg:#f4efff;
+    --c:#a9d4e8; --c-deep:#5b9cbd; --c-bg:#ecf6fb;
+    --f:#f0c4a0; --f-deep:#d98a5a; --f-bg:#fdf1e7;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#e9ebf0;color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    padding:34px 22px 90px}
+  h1{font-size:25px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:#5b6170;margin:0 0 26px;max-width:920px}
+  .grid{display:flex;flex-wrap:wrap;gap:40px 38px}
+  .stack{display:flex;flex-direction:column;align-items:center;gap:11px;width:340px}
+  .vlabel{font-weight:800;font-size:13.5px;color:#3a4150;text-align:center}
+  .vdesc{font-size:11.5px;color:#7a8090;text-align:center;margin-top:-6px;min-height:30px;line-height:1.45}
+
+  /* phone */
+  .phone{width:340px;border-radius:50px;background:#0c0c0e;padding:11px;
+    box-shadow:0 40px 80px -28px rgba(20,24,40,.55)}
+  .screen{position:relative;border-radius:40px;overflow:hidden;background:var(--bg);
+    height:720px;display:flex;flex-direction:column}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:104px;height:27px;
+    background:#0c0c0e;border-radius:15px;z-index:30}
+  .stat{display:flex;justify-content:space-between;padding:13px 26px 2px;font-size:12px;font-weight:700}
+  .pbody{flex:1;overflow:hidden;padding:0 16px}
+  .today{display:flex;justify-content:space-between;align-items:center;padding:8px 4px 6px}
+  .today h2{font-size:21px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .today .ico{display:flex;gap:9px;align-items:center}
+  .datepill{width:33px;height:33px;border-radius:11px;background:var(--orange);color:#fff;
+    display:grid;place-items:center;font-weight:800;font-size:14px;box-shadow:0 6px 14px -4px rgba(245,166,35,.7)}
+  .gicon{width:33px;height:33px;border-radius:11px;background:var(--card);display:grid;place-items:center;color:#9aa0ab;font-size:14px}
+
+  /* ===== BENTO ===== */
+  .bento{display:grid;gap:9px;margin:4px 4px 0;grid-template-columns:repeat(4,1fr);grid-auto-rows:80px}
+  .tile{border-radius:19px;padding:10px 11px;position:relative;overflow:hidden;border:1px solid var(--line);
+    background:#fff;display:flex;flex-direction:column;justify-content:space-between}
+  .tlbl{font-size:9.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#9aa0ab;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .c2{grid-column:span 2} .c4{grid-column:span 4} .r2{grid-row:span 2}
+
+  .t-p{background:linear-gradient(160deg,var(--p-bg),#fff);border-color:#e6dcfb}
+  .t-c{background:linear-gradient(160deg,var(--c-bg),#fff);border-color:#d8ebf5}
+  .t-f{background:linear-gradient(160deg,var(--f-bg),#fff);border-color:#f6e2cf}
+  .t-cal{background:radial-gradient(130% 110% at 100% 0%, #fff6e6 0%, #ffffff 62%);border-color:#f6e7c8}
+  .t-water{background:linear-gradient(160deg,var(--c-bg),#fff);border-color:#d8ebf5}
+  .t-streak{background:linear-gradient(160deg,#fff0e6,#fff);border-color:#f6dcc8}
+  .t-fast{background:linear-gradient(160deg,#f4efff,#fff);border-color:#e6dcfb}
+
+  .mv{font-size:23px;font-weight:850;letter-spacing:-.02em;line-height:1}
+  .mu{font-size:10px;font-weight:700;color:var(--mut)}
+  .t-p .mv{color:var(--p-deep)} .t-c .mv{color:var(--c-deep)} .t-f .mv{color:var(--f-deep)}
+  .macbar{height:5px;border-radius:4px;background:#fff;overflow:hidden;margin-top:4px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+  .macbar i{display:block;height:100%;border-radius:4px}
+  .t-p .macbar i{background:linear-gradient(90deg,var(--p),var(--p-deep))}
+  .t-c .macbar i{background:linear-gradient(90deg,var(--c),var(--c-deep))}
+  .t-f .macbar i{background:linear-gradient(90deg,var(--f),var(--f-deep))}
+
+  .calbig{font-size:50px;font-weight:850;letter-spacing:-.03em;line-height:.92;color:var(--ink)}
+  .calword{color:var(--orange);font-weight:800;font-size:16px}
+  .eaten{display:flex;gap:16px;margin-top:2px}
+  .eaten div{font-size:10.5px;color:var(--mut);font-weight:600}
+  .eaten b{display:block;font-size:15px;color:var(--ink);font-weight:800}
+  .herobar{height:8px;border-radius:5px;background:#f1ead9;overflow:hidden;margin-top:8px}
+  .herobar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--orange-soft),var(--orange))}
+
+  /* ring tile */
+  .ringtile{align-items:center;justify-content:center;text-align:center}
+  .ringtile .rc{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;inset:0}
+  .ringtile .rc .rv{font-weight:850;letter-spacing:-.02em;line-height:1}
+  .ringtile .rc .rl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--mut);margin-top:1px}
+  .ringtile svg{display:block}
+
+  /* mini util */
+  .t-mini{align-items:flex-start;justify-content:space-between}
+  .t-mini .ico2{font-size:18px;line-height:1}
+  .t-mini .num{font-size:20px;font-weight:850;letter-spacing:-.02em;line-height:1}
+  .t-mini .s{font-size:9.5px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .drops{display:flex;gap:3px;margin-top:5px}
+  .drops span{width:8px;height:11px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:var(--c);opacity:.35}
+  .drops span.on{opacity:1;background:var(--c-deep)}
+
+  .t-log{background:var(--ink);color:#fff;border-color:var(--ink);flex-direction:row;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:14px}
+  .t-log .plus{width:22px;height:22px;border-radius:7px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:16px}
+  .t-meal{flex-direction:row;align-items:center;gap:9px}
+  .t-meal .mi{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;background:#fff3e0;flex:0 0 auto}
+  .t-meal .txt{min-width:0;flex:1}
+  .t-meal .mt{font-weight:800;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t-meal .md{font-size:10px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .t-meal .mk{margin-left:auto;font-weight:800;font-size:12.5px;color:#6b7280;flex:0 0 auto}
+
+  .tabs{display:flex;justify-content:space-around;align-items:center;padding:9px 0 5px;border-top:1px solid var(--line);background:#fff;margin-top:12px}
+  .tab{display:grid;place-items:center;gap:3px;font-size:9.5px;font-weight:700;color:#b3b8c2}
+  .tab.on{color:var(--orange)}
+  .tab .d{width:20px;height:20px;border-radius:7px;background:currentColor;opacity:.9}
+  .tab.on .d{box-shadow:0 6px 12px -3px rgba(245,166,35,.6)}
+
+  /* ===== Google-Fit style: ring left, macro pills right ===== */
+  .secthead{font-size:17px;font-weight:800;margin:8px 0 2px;letter-spacing:-.01em}
+  .secsub{color:#5b6170;margin:0 0 22px;font-size:13.5px;max-width:880px}
+  /* row: ring + pills share ONE height (= ring diameter), pills fill the rest of the width */
+  .fitcard{display:flex;align-items:stretch;gap:12px;margin:10px 4px 0;height:134px}
+  .fitring{position:relative;flex:0 0 134px;width:134px;height:134px;display:grid;place-items:center}
+  .fitring svg{width:100%;height:100%}
+  .fitring .rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .fitring .rl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+  .fitring .rv{font-size:27px;font-weight:850;letter-spacing:-.03em;line-height:1;color:var(--ink);margin-top:2px}
+  .fitring .ru{font-size:10px;font-weight:700;color:var(--mut);margin-top:3px}
+  /* pills: 3 equal-height tiles filling the same column height as the ring */
+  .pills{flex:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+  .pill{position:relative;flex:1;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+    display:flex;align-items:stretch;min-height:0}
+  .pill .pi{flex:0 0 auto;width:44px;display:grid;place-items:center;font-size:17px}
+  .pill .ptxt{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 10px;min-width:0}
+  .pill .pt{font-size:10.5px;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:#9aa0ab;line-height:1.15;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pill .pv{font-size:19px;font-weight:850;letter-spacing:-.02em;line-height:1.2;white-space:nowrap}
+  .pill .pu{font-size:11.5px;font-weight:700;color:var(--mut)}
+  /* icon panel sits on a slightly deeper shade, like the reference left-tab */
+  .pill.pp{background:linear-gradient(160deg,var(--p-bg),#fff);border-color:#e6dcfb} .pill.pp .pi{background:#ece2fb;color:var(--p-deep)} .pill.pp .pv{color:var(--p-deep)}
+  .pill.pc{background:linear-gradient(160deg,var(--c-bg),#fff);border-color:#d8ebf5} .pill.pc .pi{background:#dcecf6;color:var(--c-deep)} .pill.pc .pv{color:var(--c-deep)}
+  .pill.pf{background:linear-gradient(160deg,var(--f-bg),#fff);border-color:#f6e2cf} .pill.pf .pi{background:#f7e6d4;color:var(--f-deep)} .pill.pf .pv{color:var(--f-deep)}
+  /* micronutrient tints */
+  .pill.pg{background:linear-gradient(160deg,#eaf6ee,#fff);border-color:#d6ecdd} .pill.pg .pi{background:#dcf0e3;color:#3f9a63} .pill.pg .pv{color:#3f9a63}
+  .pill.pk{background:linear-gradient(160deg,#fdeef4,#fff);border-color:#f6d8e6} .pill.pk .pi{background:#f8dde9;color:#c25b8a} .pill.pk .pv{color:#c25b8a}
+  .pill.pb{background:linear-gradient(160deg,#eef0fb,#fff);border-color:#dadff5} .pill.pb .pi{background:#e1e5f8;color:#5a64c4} .pill.pb .pv{color:#5a64c4}
+  .pill.pn{background:linear-gradient(160deg,#fff4e6,#fff);border-color:#f6e4c8} .pill.pn .pi{background:#f8ead2;color:#cc8a2a} .pill.pn .pv{color:#cc8a2a}
+  .pill.pr{background:linear-gradient(160deg,#fdeeec,#fff);border-color:#f6dcd6} .pill.pr .pi{background:#f8ddd6;color:#cf5f4a} .pill.pr .pv{color:#cf5f4a}
+  .pill.pt{background:linear-gradient(160deg,#eafafa,#fff);border-color:#d2eded} .pill.pt .pi{background:#d8f0f0;color:#3a9a9a} .pill.pt .pv{color:#3a9a9a}
+
+  /* ===== carousel: right column swipes through nutrient pages ===== */
+  .carousel{flex:1;min-width:0;height:100%;display:flex;overflow-x:auto;overflow-y:hidden;
+    scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none}
+  .carousel::-webkit-scrollbar{display:none}
+  .cpage{flex:0 0 100%;width:100%;height:100%;display:flex;flex-direction:column;gap:12px;
+    scroll-snap-align:start}
+  /* count-up + draw + stagger animations */
+  @keyframes pillIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}
+  .anim .cpage:first-child .pill{animation:pillIn .5s cubic-bezier(.34,1.4,.5,1) backwards}
+  .anim .cpage:first-child .pill:nth-child(1){animation-delay:.32s}
+  .anim .cpage:first-child .pill:nth-child(2){animation-delay:.40s}
+  .anim .cpage:first-child .pill:nth-child(3){animation-delay:.48s}
+  /* ring draw: progress arc sweeps from 0 to value */
+  .fitring .prog{transition:stroke-dashoffset 1.1s cubic-bezier(.4,1.1,.4,1)}
+  /* idle micro-breathing on the ring center number */
+  @keyframes rvpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+  .fitring .rc.beat .rv{display:inline-block;animation:rvpulse 3.4s ease-in-out infinite}
+
+  /* dot indicators */
+  .dots{display:flex;justify-content:center;gap:7px;margin:11px 0 2px}
+  .dots .dot{width:7px;height:7px;border-radius:99px;background:#d5d9e2;transition:.3s;cursor:pointer}
+  .dots .dot.on{width:20px;background:var(--orange)}
+  .swipehint{text-align:center;font-size:10.5px;color:#aab0bb;font-weight:600;margin-top:2px;letter-spacing:.02em}
+
+  /* ===== inline tap-to-edit (like the home screen) ===== */
+  .editable{cursor:text;border-radius:6px;padding:0 2px;margin:0 -2px;transition:background .15s}
+  .editable:hover{background:rgba(0,0,0,.05)}
+  .editing{background:rgba(245,166,35,.14);box-shadow:0 0 0 2px rgba(245,166,35,.45)}
+  input.inlineEdit{font:inherit;color:inherit;font-weight:850;letter-spacing:-.02em;
+    border:0;outline:0;background:transparent;width:2.4em;padding:0;margin:0;text-align:left}
+  .edithint{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;color:#aab0bb;font-weight:600;
+    margin-top:2px;letter-spacing:.02em;justify-content:center;width:100%}
+
+  /* ===== FULL-CARD carousel — every page is the SAME height as page 1 ===== */
+  .cardcar{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;
+    scroll-behavior:smooth;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin:6px 0 0;
+    height:200px}
+  .cardcar::-webkit-scrollbar{display:none}
+  .card-pg{flex:0 0 100%;width:100%;height:100%;scroll-snap-align:start;padding:4px 4px 0;
+    display:flex;flex-direction:column;justify-content:center}
+  /* page 1 ring height grows to fill the shared card height */
+  .card-pg .fitcard{height:172px;margin:0}
+  .card-pg .fitring{flex:0 0 172px;width:172px;height:172px}
+  /* page 2+: 2-column grid of colored micronutrient tiles filling the same height */
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:10px;height:100%}
+  /* horizontal tile (icon left, label+value stacked right) — matches reference */
+  .mtile{position:relative;border-radius:18px;padding:9px 11px;overflow:hidden;
+    display:flex;align-items:center;gap:9px;border:1px solid transparent}
+  .mtile .mchip{flex:0 0 auto;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:16px}
+  .mtile .mtxt{min-width:0;flex:1;display:flex;flex-direction:column;justify-content:center}
+  .mtile .mlbl{font-size:10.5px;font-weight:800;letter-spacing:.01em;line-height:1.1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mtile .mval{font-size:18px;font-weight:850;letter-spacing:-.02em;line-height:1.15;white-space:nowrap}
+  .mtile .mval small{font-size:10.5px;font-weight:700;opacity:.7}
+  /* tinted micronutrient tiles */
+  .mt-fiber{background:linear-gradient(150deg,#e7f6ec,#f8fdf9);border-color:#d3ecdb;color:#3f8f5f} .mt-fiber .mchip{background:#d3ecdb;color:#3f8f5f}
+  .mt-sugar{background:linear-gradient(150deg,#fceaf2,#fff8fb);border-color:#f4d6e4;color:#b65689} .mt-sugar .mchip{background:#f4d6e4;color:#b65689}
+  .mt-sodium{background:linear-gradient(150deg,#eaecfa,#f8f9ff);border-color:#d8ddf3;color:#5560bf} .mt-sodium .mchip{background:#d8ddf3;color:#5560bf}
+  .mt-potassium{background:linear-gradient(150deg,#fff4e6,#fffdf9);border-color:#f6e4c8;color:#cc8a2a} .mt-potassium .mchip{background:#f8ead2;color:#cc8a2a}
+  .mt-chol{background:linear-gradient(150deg,#fdeeec,#fff9f8);border-color:#f6dcd6;color:#cf5f4a} .mt-chol .mchip{background:#f8ddd6;color:#cf5f4a}
+  .mt-calcium{background:linear-gradient(150deg,#eafafa,#f8ffff);border-color:#d2eded;color:#3a9a9a} .mt-calcium .mchip{background:#d8f0f0;color:#3a9a9a}
+  .mt-vitc{background:linear-gradient(150deg,#fff6e3,#fffdf7);border-color:#f6e6c0;color:#c79520} .mt-vitc .mchip{background:#f8ecc8;color:#c79520}
+  .mt-iron{background:linear-gradient(150deg,#f3ecf9,#fdfbff);border-color:#e4d6f0;color:#8c5bb0} .mt-iron .mchip{background:#ead8f5;color:#8c5bb0}
+  .mt-water{background:linear-gradient(150deg,#e4f3fb,#f7fcff);border-color:#cfe8f4;color:#3f7fa3} .mt-water .mchip{background:#cfe8f4;color:#3f7fa3}
+  .fitmeals{margin:13px 4px 0}
+  .fitmeals .mrow{display:flex;align-items:center;gap:11px;padding:10px 2px}
+  .fitmeals .mrow+.mrow{border-top:1px solid var(--line)}
+  .fitmeals .mi{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:16px;background:#fff3e0;flex:0 0 auto}
+  .fitmeals .mt{font-weight:800;font-size:13px}
+  .fitmeals .md{font-size:11px;color:var(--mut)}
+  .fitmeals .mk{margin-left:auto;font-weight:800;font-size:13px;color:#6b7280}
+  .fitlog{margin:12px 4px 0;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;border-radius:15px;padding:13px;font-weight:800;font-size:14.5px}
+  .fitlog .plus{width:22px;height:22px;border-radius:7px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:16px}
+</style>
+</head>
+<body>
+  <h1>Zealova Nutrition — two-page swipeable card</h1>
+  <p class="sub">The <b>whole card</b> is a carousel, like Google Fit. <b>Page 1:</b> calorie ring + Protein/Carbs/Fat pills. Swipe → <b>Page 2:</b> a colorful 2-column health grid (Fiber, Sugar, Sodium, Hydration, Sleep, Weight). <b>Dot indicators</b> at the bottom track the page; tap a dot to jump. Animated: ring sweep, count-up numbers, staggered pills, lazy count-up on page 2.</p>
+  <div class="grid" id="featured"></div>
+
+  <h2 class="secthead">More: 10 bento grid layouts (with circles)</h2>
+  <p class="secsub">Differently-arranged bento grids — calorie ring, macro mini-rings, Apple-Watch concentric, gauges. Mix tiles between any of them.</p>
+  <div class="grid" id="grid"></div>
+
+<script>
+/* ---------- data ---------- */
+const D = {
+  cal:{eaten:765, goal:1500, pct:.51, left:735},
+  p:{v:47,g:93,pct:.505}, c:{v:86,g:168,pct:.512}, f:{v:25,g:50,pct:.50},
+  water:{v:5,g:8}, streak:12, fast:'13:48'
+};
+/* macro + 6 micronutrient carousel pills: name, value, goal, unit, emoji, tint key */
+const NUTRIENTS = [
+  {k:'p',  name:'Protein', v:47,  g:93,  u:'g',  emo:'&#129385;', tint:'pp'},
+  {k:'c',  name:'Carbs',   v:86,  g:168, u:'g',  emo:'&#127838;', tint:'pc'},
+  {k:'f',  name:'Fat',     v:25,  g:50,  u:'g',  emo:'&#129480;', tint:'pf'},
+  {k:'fib',name:'Fiber',   v:18,  g:30,  u:'g',  emo:'&#129382;', tint:'pg'},
+  {k:'sug',name:'Sugar',   v:42,  g:50,  u:'g',  emo:'&#127853;', tint:'pk'},
+  {k:'sod',name:'Sodium',  v:1450,g:2300,u:'mg', emo:'&#129482;', tint:'pb'},
+  {k:'pot',name:'Potassium',v:2100,g:3500,u:'mg',emo:'&#127820;', tint:'pn'},
+  {k:'cho',name:'Cholest.',v:180, g:300, u:'mg', emo:'&#129472;', tint:'pr'},
+  {k:'cal',name:'Calcium', v:820, g:1000,u:'mg', emo:'&#129371;', tint:'pt'},
+];
+
+/* ---------- ring helper ---------- */
+function ring(pct, color, size, sw, centerHTML){
+  const r = (size-sw)/2, C = 2*Math.PI*r, off = C*(1-pct);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eef0f4" stroke-width="${sw}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
+      stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${off}"
+      transform="rotate(-90 ${size/2} ${size/2})"/>
+  </svg>${centerHTML?`<div class="rc">${centerHTML}</div>`:''}`;
+}
+function gauge(pct, color, size, sw, centerHTML){
+  // 270° gauge
+  const r=(size-sw)/2, C=2*Math.PI*r, arc=C*0.75, off=arc*(1-pct);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eef0f4" stroke-width="${sw}"
+      stroke-linecap="round" stroke-dasharray="${arc} ${C}" transform="rotate(135 ${size/2} ${size/2})"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
+      stroke-linecap="round" stroke-dasharray="${arc} ${C}" stroke-dashoffset="${off}" transform="rotate(135 ${size/2} ${size/2})"/>
+  </svg>${centerHTML?`<div class="rc">${centerHTML}</div>`:''}`;
+}
+function concentric(size, sw, gap){
+  // three rings P/C/F
+  const mk=(r,col,pct)=>{const C=2*Math.PI*r,off=C*(1-pct);
+    return `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eef0f4" stroke-width="${sw}"/>
+      <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"
+        stroke-dasharray="${C}" stroke-dashoffset="${off}" transform="rotate(-90 ${size/2} ${size/2})"/>`;};
+  const r1=(size-sw)/2, r2=r1-sw-gap, r3=r2-sw-gap;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    ${mk(r1,'var(--p-deep)',D.p.pct)}${mk(r2,'var(--c-deep)',D.c.pct)}${mk(r3,'var(--f-deep)',D.f.pct)}
+  </svg>`;
+}
+
+/* ---------- tile builders ---------- */
+const T = {
+  calBar:(cls='c2 r2')=>`<div class="tile t-cal ${cls}">
+    <div><div class="tlbl">Calories</div><div class="calbig">${D.cal.left}<span class="calword"> left</span></div></div>
+    <div><div class="eaten"><div>eaten<b>${D.cal.eaten}</b></div><div>goal<b>${D.cal.goal}</b></div></div>
+    <div class="herobar"><i style="width:${D.cal.pct*100}%"></i></div></div></div>`,
+
+  calRing:(size=104,cls='c2 r2')=>`<div class="tile t-cal ringtile ${cls}">
+    ${ring(D.cal.pct,'var(--orange)',size,11,
+      `<div class="rv" style="font-size:26px;color:var(--ink)">${D.cal.left}</div><div class="rl">kcal left</div>`)}
+  </div>`,
+
+  calRingWide:()=>`<div class="tile t-cal c4" style="flex-direction:row;align-items:center;gap:14px;justify-content:flex-start">
+    <div style="position:relative;display:grid;place-items:center">${ring(D.cal.pct,'var(--orange)',88,10,
+      `<div class="rv" style="font-size:20px">${Math.round(D.cal.pct*100)}<span style="font-size:11px">%</span></div>`)}</div>
+    <div><div class="tlbl">Calories</div><div class="calbig" style="font-size:40px">${D.cal.left}<span class="calword"> left</span></div>
+    <div class="eaten"><div>eaten<b>${D.cal.eaten}</b></div><div>goal<b>${D.cal.goal}</b></div></div></div></div>`,
+
+  calGauge:(cls='c2 r2')=>`<div class="tile t-cal ringtile ${cls}">
+    ${gauge(D.cal.pct,'var(--orange)',120,12,
+      `<div class="rv" style="font-size:30px;color:var(--ink)">${D.cal.left}</div><div class="rl">kcal left</div>
+       <div style="font-size:9px;color:var(--mut);font-weight:700;margin-top:2px">of ${D.cal.goal}</div>`)}
+  </div>`,
+
+  calNum:(cls='c2')=>`<div class="tile t-cal ${cls}">
+    <div class="tlbl">Calories left</div><div class="calbig" style="font-size:38px">${D.cal.left}</div>
+    <div style="font-size:10.5px;color:var(--mut);font-weight:600">${D.cal.eaten} of ${D.cal.goal} kcal</div></div>`,
+
+  macroRing:(k,cls='')=>{const m=D[k],col={p:'var(--p-deep)',c:'var(--c-deep)',f:'var(--f-deep)'}[k],
+    name={p:'Protein',c:'Carbs',f:'Fat'}[k];
+    return `<div class="tile t-${k} ringtile ${cls}">
+      ${ring(m.pct,col,58,7,`<div class="rv" style="font-size:15px;color:${col}">${m.v}</div>`)}
+      <div class="rl" style="position:absolute;bottom:7px;left:0;right:0;font-size:9px;font-weight:800;text-transform:uppercase;color:var(--mut)">${name} ·${m.g}g</div></div>`;},
+
+  macroBar:(k,cls='')=>{const m=D[k],name={p:'Protein',c:'Carbs',f:'Fat'}[k];
+    return `<div class="tile t-${k} ${cls}"><div class="tlbl">${name}</div>
+      <div><span class="mv">${m.v}</span><span class="mu"> /${m.g}g</span></div>
+      <div class="macbar"><i style="width:${m.pct*100}%"></i></div></div>`;},
+
+  macroBig:(k,cls='')=>{const m=D[k],col={p:'var(--p-deep)',c:'var(--c-deep)',f:'var(--f-deep)'}[k],
+    name={p:'Protein',c:'Carbs',f:'Fat'}[k];
+    return `<div class="tile t-${k} ringtile ${cls}">
+      ${ring(m.pct,col,76,8,`<div class="rv" style="font-size:18px;color:${col}">${m.v}</div><div class="rl">/${m.g}g</div>`)}
+      <div class="rl" style="position:absolute;bottom:6px;left:0;right:0">${name}</div></div>`;},
+
+  concentric:(cls='c2 r2')=>`<div class="tile ringtile ${cls}" style="border-color:#ececf2">
+    <div style="position:relative;display:grid;place-items:center">${concentric(118,10,4)}
+      <div class="rc" style="inset:auto"><div class="rv" style="font-size:13px">P·C·F</div></div></div>
+    <div class="rl" style="position:absolute;bottom:9px;left:0;right:0">Macros</div></div>`,
+
+  water:(cls='')=>`<div class="tile t-water ${cls}"><div class="tlbl">Water</div>
+    <div><span class="mv" style="font-size:20px;color:var(--c-deep)">${D.water.v}</span><span class="mu"> /${D.water.g}</span></div>
+    <div class="drops">${Array.from({length:D.water.g},(_,i)=>`<span class="${i<D.water.v?'on':''}"></span>`).join('')}</div></div>`,
+
+  waterRing:(cls='')=>`<div class="tile t-water ringtile ${cls}">
+    ${ring(D.water.v/D.water.g,'var(--c-deep)',54,7,`<div class="rv" style="font-size:14px;color:var(--c-deep)">${D.water.v}</div>`)}
+    <div class="rl" style="position:absolute;bottom:7px;left:0;right:0">Water /${D.water.g}</div></div>`,
+
+  streak:(cls='')=>`<div class="tile t-mini t-streak ${cls}"><span class="ico2">&#128293;</span>
+    <div><div class="num">${D.streak}</div><div class="s">day streak</div></div></div>`,
+
+  streakWide:(cls='c2')=>`<div class="tile t-mini t-streak ${cls}" style="flex-direction:row;align-items:center;gap:9px">
+    <span class="ico2">&#128293;</span><div><div class="num" style="font-size:22px">${D.streak}</div><div class="s">day streak · best 19</div></div></div>`,
+
+  fast:(cls='')=>`<div class="tile t-mini t-fast ${cls}"><span class="ico2">&#9201;</span>
+    <div><div class="num" style="font-size:16px">${D.fast}</div><div class="s">fasting</div></div></div>`,
+
+  fastWide:(cls='c2')=>`<div class="tile t-mini t-fast ${cls}" style="flex-direction:row;align-items:center;gap:9px">
+    <span class="ico2">&#9201;</span><div><div class="num" style="font-size:18px">${D.fast}</div><div class="s">fasting · 16:8</div></div></div>`,
+
+  meal:(emo,bg,nm,ds,kc,cls='c2')=>`<div class="tile t-meal ${cls}"><div class="mi" style="background:${bg}">${emo}</div>
+    <div class="txt"><div class="mt">${nm}</div><div class="md">${ds}</div></div><div class="mk">${kc}</div></div>`,
+
+  breakfast:(cls='c2')=>T.meal('&#129375;','#fff3e0','Breakfast','Yogurt, berries',320,cls),
+  lunch:(cls='c2')=>T.meal('&#129367;','#eaf4ff','Lunch','Chicken bowl',445,cls),
+
+  log:(cls='c2')=>`<div class="tile t-log ${cls}"><span class="plus">+</span> Log a meal</div>`,
+  scan:(cls='c2')=>`<div class="tile t-meal ${cls}" style="justify-content:center;background:#fff"><span style="font-size:16px">&#128247;</span><div class="mt">Scan food / menu</div></div>`,
+};
+
+/* ---------- 10 layouts ---------- */
+const LAYOUTS = [
+  {name:'1 · Calorie ring hero', desc:'Big calorie ring (2×2) + macro bars + utilities',
+    tiles:[T.calRing(104,'c2 r2'),T.macroBar('p'),T.streak(),T.macroBar('c'),T.macroBar('f'),
+           T.water(),T.fast(),T.breakfast(),T.lunch(),T.log(),T.scan()]},
+
+  {name:'2 · Wide ring + macro rings', desc:'Calorie % ring across the top, three macro mini-rings',
+    tiles:[T.calRingWide(),T.macroRing('p'),T.macroRing('c'),T.macroRing('f'),T.waterRing(),
+           T.streakWide(),T.fast(),T.breakfast('c4'),T.log('c4')]},
+
+  {name:'3 · All-rings mosaic', desc:'Four equal rings: calories + each macro, then utilities',
+    tiles:[T.calRing(82,'c2'),T.macroRing('p'),T.macroRing('c'),
+           T.macroRing('f'),T.waterRing(),T.streak(),T.fast(),
+           T.breakfast('c4'),T.lunch('c4'),T.log('c4')]},
+
+  {name:'4 · 270° gauge hero', desc:'Speedometer-style calorie gauge + macro bars',
+    tiles:[T.calGauge('c2 r2'),T.macroBar('p'),T.macroBar('c'),T.macroBar('f'),T.water(),
+           T.streakWide(),T.breakfast('c4'),T.log('c2'),T.scan('c2')]},
+
+  {name:'5 · Concentric macros', desc:'Apple-Watch 3-ring macros tile + calorie number',
+    tiles:[T.concentric('c2 r2'),T.calNum('c2'),T.macroBar('p','c2'),
+           T.water(),T.streak(),T.fast(),T.scan(),
+           T.breakfast('c4'),T.log('c4')]},
+
+  {name:'6 · Ring corners', desc:'Calorie + 3 macro rings in the four corners',
+    tiles:[T.calRing(82,'c2'),T.macroRing('p'),T.macroRing('c'),
+           T.streakWide(),T.fast(),
+           T.macroRing('f'),T.waterRing(),
+           T.breakfast('c4'),T.lunch('c4'),T.log('c4')]},
+
+  {name:'7 · Big center ring', desc:'One large calorie ring full-width, macros as squares below',
+    tiles:[`<div class="tile t-cal ringtile c4" style="grid-row:span 2">
+      ${ring(D.cal.pct,'var(--orange)',140,13,`<div class="rv" style="font-size:36px;color:var(--ink)">${D.cal.left}</div><div class="rl">kcal left · of ${D.cal.goal}</div>`)}</div>`,
+      T.macroRing('p'),T.macroRing('c'),T.macroRing('f'),T.waterRing(),
+      T.log('c4')]},
+
+  {name:'8 · Calories-hero (no ring)', desc:'Clean bar version for contrast — number-forward',
+    tiles:[T.calBar('c2 r2'),T.macroBar('p'),T.streak(),T.macroBar('c'),T.macroBar('f'),
+           T.water(),T.fast(),T.breakfast(),T.lunch(),T.log(),T.scan()]},
+
+  {name:'9 · Ring + bars split', desc:'Calorie ring left, macros stacked as bars right',
+    tiles:[T.calRing(96,'c2 r2'),T.macroBar('p','c2'),T.macroBar('c','c2'),T.macroBar('f','c2'),
+           T.waterRing(),T.streak(),T.fast(),T.breakfast('c4'),T.log('c4')]},
+
+  {name:'10 · Compact dashboard', desc:'Small calorie ring + dense macro grid + all utilities',
+    tiles:[T.calRing(74,'c2'),T.macroBig('p'),T.macroBig('c'),
+           T.macroBig('f'),T.waterRing(),T.streak(),T.fast(),
+           T.breakfast('c2'),T.lunch('c2'),T.log('c4')]},
+];
+
+/* ---------- featured: full-card carousel — page1 ring+macros, page2 metric grid ---------- */
+function macroPill(k){
+  const m=D[k], cls={p:'pp',c:'pc',f:'pf'}[k], emo={p:'&#129385;',c:'&#127838;',f:'&#129480;'}[k],
+    name={p:'Protein',c:'Carbs',f:'Fat'}[k];
+  return `<div class="pill ${cls}">
+    <div class="pi">${emo}</div>
+    <div class="ptxt">
+      <div class="pt">${name}</div>
+      <div style="white-space:nowrap"><span class="pv editable" data-to="${m.v}" data-edit="${name}" data-unit="g">0</span><span class="pu"> / ${m.g}g</span></div>
+    </div></div>`;
+}
+/* ring with an animated progress arc (prog class drives the draw) */
+function calRingAnimated(sw, inner){
+  const size=134, r=(size-sw)/2, C=2*Math.PI*r, off=C*(1-D.cal.pct);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#eef0f4" stroke-width="${sw}"/>
+    <circle class="prog" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--orange)" stroke-width="${sw}"
+      stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C}" data-off="${off}"
+      transform="rotate(-90 ${size/2} ${size/2})"/>
+  </svg><div class="rc beat">${inner}</div>`;
+}
+/* PAGE 1 — the ring + macro pills (your approved card) */
+function pageRing(){
+  const inner = `<div class="rl">Calories</div><div class="rv editable" data-to="${D.cal.left}" data-edit="Calories" data-unit="kcal">0</div><div class="ru">of ${D.cal.goal}</div>`;
+  return `<div class="card-pg">
+    <div class="fitcard">
+      <div class="fitring">${calRingAnimated(13, inner)}</div>
+      <div class="pills">${macroPill('p')}${macroPill('c')}${macroPill('f')}</div>
+    </div>
+  </div>`;
+}
+/* a colored micronutrient tile */
+function metricTile(t){
+  return `<div class="mtile mt-${t.cls}">
+    <div class="mchip">${t.emo}</div>
+    <div class="mtxt">
+      <div class="mlbl">${t.name}</div>
+      <div class="mval"><span class="mv editable" data-to="${t.v}" data-fixed="${t.fixed||0}" data-edit="${t.name}" data-unit="${t.unit||''}">0</span>${t.unit?`<small> ${t.unit}</small>`:''}</div>
+    </div></div>`;
+}
+/* micronutrients — 2 grid pages of 6 (Google-Fit dashboard style), same height as page 1 */
+const MICRO_PAGES = [
+  [ {cls:'fiber',    emo:'&#129382;', name:'Fiber',     v:18,  unit:'g'},
+    {cls:'sugar',    emo:'&#127853;', name:'Sugar',     v:42,  unit:'g'},
+    {cls:'sodium',   emo:'&#129482;', name:'Sodium',    v:1450,unit:'mg'},
+    {cls:'potassium',emo:'&#127820;', name:'Potassium', v:2100,unit:'mg'},
+    {cls:'chol',     emo:'&#129472;', name:'Cholesterol',v:180, unit:'mg'},
+    {cls:'calcium',  emo:'&#129371;', name:'Calcium',   v:820, unit:'mg'} ],
+  [ {cls:'iron',     emo:'&#129704;', name:'Iron',      v:12,  unit:'mg'},
+    {cls:'vitc',     emo:'&#127818;', name:'Vitamin C', v:65,  unit:'mg'},
+    {cls:'water',    emo:'&#128167;', name:'Hydration', v:5,   unit:'cups'},
+    {cls:'fiber',    emo:'&#129477;', name:'Magnesium', v:280, unit:'mg'},
+    {cls:'potassium',emo:'&#129385;', name:'Sat. Fat',  v:14,  unit:'g'},
+    {cls:'sugar',    emo:'&#129368;', name:'Add. Sugar',v:18,  unit:'g'} ],
+];
+function pageGrid(tiles){
+  return `<div class="card-pg"><div class="mgrid">${tiles.map(metricTile).join('')}</div></div>`;
+}
+function fitCarousel(){
+  const pages=[pageRing(), ...MICRO_PAGES.map(pageGrid)];
+  return `
+  <div class="cardcar">${pages.join('')}</div>
+  <div class="dots">${pages.map((_,i)=>`<span class="dot ${i===0?'on':''}" data-i="${i}"></span>`).join('')}</div>
+  <div class="swipehint">&#8592; swipe: Macros &middot; Micros 1 &middot; Micros 2 &#8594;</div>
+  <div class="edithint">&#9998; tap any number to edit</div>`;
+}
+
+const FEATURED = [
+  {name:'A · Two-page card carousel', desc:'Page 1: calorie ring + macros. Swipe → Page 2: colored health grid. Dots track the page.'},
+];
+
+const featured = document.getElementById('featured');
+FEATURED.forEach(F=>{
+  const el=document.createElement('div'); el.className='stack';
+  el.innerHTML=`
+    <div class="vlabel">${F.name}</div>
+    <div class="vdesc">${F.desc}</div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="stat"><span>9:41</span><span>&#9679;&#9679;&#9679;</span></div>
+      <div class="pbody">
+        <div class="today"><h2>Today</h2><div class="ico"><div class="gicon">&#9776;</div><div class="datepill">29</div></div></div>
+        ${fitCarousel()}
+      </div>
+      <div class="tabs">
+        <div class="tab on"><div class="d"></div>Home</div>
+        <div class="tab"><div class="d"></div>Nutrition</div>
+        <div class="tab"><div class="d"></div>Coach</div>
+        <div class="tab"><div class="d"></div>Profile</div>
+      </div>
+    </div></div>`;
+  featured.appendChild(el);
+});
+
+/* ---------- microanimations + carousel wiring ---------- */
+function countUp(elx, to, dur, fixed){
+  fixed = fixed||0;
+  const start=performance.now();
+  function fmt(x){ return fixed>0 ? x.toFixed(fixed) : Math.round(x).toLocaleString(); }
+  function step(now){
+    const t=Math.min(1,(now-start)/dur);
+    const e=1-Math.pow(1-t,3); // easeOutCubic
+    elx.textContent = fmt(to*e);
+    if(t<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+function activateFeatured(){
+  const phone = document.querySelector('#featured .pbody');
+  if(!phone) return;
+  phone.classList.add('anim');
+  // draw the ring arc
+  const prog = phone.querySelector('.fitring .prog');
+  if(prog){ requestAnimationFrame(()=>{ prog.style.strokeDashoffset = prog.dataset.off; }); }
+  // count up ring center + page-1 macro pills
+  const ringNum = phone.querySelector('.fitring .rv');
+  if(ringNum) countUp(ringNum, +ringNum.dataset.to, 1100);
+  phone.querySelectorAll('.card-pg:first-child .pv').forEach(v=>countUp(v, +v.dataset.to, 1000));
+  // full-card carousel: dots + lazy count-up on page 2 metric tiles
+  const carousel = phone.querySelector('.cardcar');
+  const dots = [...phone.querySelectorAll('.dots .dot')];
+  const counted = new Set([0]);
+  function pageFromScroll(){ return Math.round(carousel.scrollLeft / carousel.clientWidth); }
+  carousel.addEventListener('scroll', ()=>{
+    const i = pageFromScroll();
+    dots.forEach((d,di)=>d.classList.toggle('on', di===i));
+    if(!counted.has(i)){
+      counted.add(i);
+      [...carousel.children][i].querySelectorAll('.mv').forEach(v=>countUp(v, +v.dataset.to, 850, +v.dataset.fixed));
+    }
+  });
+  dots.forEach(d=>d.addEventListener('click', ()=>{
+    carousel.scrollTo({left: (+d.dataset.i)*carousel.clientWidth, behavior:'smooth'});
+  }));
+
+  // ----- inline tap-to-edit (like the home screen) -----
+  function fmt(x, fixed){ return fixed>0 ? (+x).toFixed(fixed) : Math.round(+x).toLocaleString(); }
+  phone.addEventListener('click', e=>{
+    const span = e.target.closest('.editable');
+    if(!span || span.querySelector('input')) return;
+    const fixed = +(span.dataset.fixed||0);
+    const raw = (span.textContent||'').replace(/[^0-9.]/g,'');
+    const input = document.createElement('input');
+    input.className='inlineEdit'; input.type='text'; input.inputMode='decimal'; input.value=raw;
+    span.classList.add('editing'); span.textContent=''; span.appendChild(input);
+    input.focus(); input.select();
+    const commit = ()=>{
+      let v = parseFloat(input.value); if(isNaN(v)||v<0) v = +span.dataset.to;
+      span.dataset.to = v; span.classList.remove('editing'); span.textContent = fmt(v, fixed);
+    };
+    input.addEventListener('keydown', ev=>{
+      if(ev.key==='Enter'){ ev.preventDefault(); input.blur(); }
+      if(ev.key==='Escape'){ input.value=raw; input.blur(); }
+    });
+    input.addEventListener('blur', commit);
+    ev=>ev; // noop
+  });
+}
+activateFeatured();
+
+/* ---------- render bento grids ---------- */
+const grid = document.getElementById('grid');
+LAYOUTS.forEach(L=>{
+  const el = document.createElement('div');
+  el.className='stack';
+  el.innerHTML = `
+    <div class="vlabel">${L.name}</div>
+    <div class="vdesc">${L.desc}</div>
+    <div class="phone"><div class="screen">
+      <div class="notch"></div>
+      <div class="stat"><span>9:41</span><span>&#9679;&#9679;&#9679;</span></div>
+      <div class="pbody">
+        <div class="today"><h2>Today</h2><div class="ico"><div class="gicon">&#9776;</div><div class="datepill">29</div></div></div>
+        <div class="bento">${L.tiles.join('')}</div>
+      </div>
+      <div class="tabs">
+        <div class="tab on"><div class="d"></div>Home</div>
+        <div class="tab"><div class="d"></div>Nutrition</div>
+        <div class="tab"><div class="d"></div>Coach</div>
+        <div class="tab"><div class="d"></div>Profile</div>
+      </div>
+    </div></div>`;
+  grid.appendChild(el);
+});
+</script>
+</body>
+</html>
