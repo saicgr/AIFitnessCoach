@@ -69,6 +69,17 @@ class _NutritionDiskCache {
 // _MealWriteQueue — offline meal-logging write queue (A11)
 // ===========================================================================
 
+/// Thrown when an offline meal log can't even be persisted to the local sync
+/// queue (e.g. SharedPreferences write failed). The caller must treat this as
+/// a genuine save failure — roll back the optimistic row and offer a retry —
+/// rather than showing a meal that will never reach the server.
+class MealLogPersistException implements Exception {
+  final String message;
+  const MealLogPersistException(this.message);
+  @override
+  String toString() => 'MealLogPersistException: $message';
+}
+
 /// Disk-backed FIFO queue of meal-log writes (`POST /nutrition/log-direct`)
 /// made while the device is offline.
 ///
@@ -87,19 +98,37 @@ class _MealWriteQueue {
 
   /// Append a meal-log request body to the on-disk queue, de-duping on the
   /// embedded `idempotency_key`.
-  static Future<void> enqueue(String userId, Map<String, dynamic> body) async {
+  ///
+  /// Returns true when the body is safely on disk (or already queued under the
+  /// same idempotency key), false when persistence itself failed. The offline
+  /// log path MUST surface a false return rather than pretend the meal was
+  /// saved — otherwise a SharedPreferences failure silently loses the write.
+  static Future<bool> enqueue(String userId, Map<String, dynamic> body) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final list = await _read(prefs, userId);
       final key = body['idempotency_key'];
       if (key != null && list.any((b) => b['idempotency_key'] == key)) {
-        return; // already queued — never enqueue twice
+        return true; // already queued — never enqueue twice
       }
       list.add(body);
       await _persist(prefs, userId, list);
       debugPrint('🥗 [MealQueue] enqueued (depth=${list.length})');
+      return true;
     } catch (e) {
       debugPrint('🥗 [MealQueue] enqueue failed: $e');
+      return false;
+    }
+  }
+
+  /// Current number of meal-log writes still waiting to sync for [userId].
+  /// Drives the pending-sync surface so a stuck queue is never invisible.
+  static Future<int> depth(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return (await _read(prefs, userId)).length;
+    } catch (_) {
+      return 0;
     }
   }
 
@@ -320,6 +349,12 @@ class NutritionState {
   final String? loadedSummaryDate;
   final String? loadedLogsDate;
 
+  /// Number of meal-log writes still waiting to sync to the server (offline
+  /// queue depth). > 0 means at least one logged meal is NOT yet on the server,
+  /// so the UI surfaces a "waiting to sync" affordance with a retry. Keeps a
+  /// stranded write visible instead of silently lost.
+  final int pendingMealSyncCount;
+
   const NutritionState({
     this.isLoading = false,
     this.error,
@@ -328,6 +363,7 @@ class NutritionState {
     this.recentLogs = const [],
     this.loadedSummaryDate,
     this.loadedLogsDate,
+    this.pendingMealSyncCount = 0,
   });
 
   NutritionState copyWith({
@@ -338,6 +374,7 @@ class NutritionState {
     List<FoodLog>? recentLogs,
     String? loadedSummaryDate,
     String? loadedLogsDate,
+    int? pendingMealSyncCount,
   }) {
     return NutritionState(
       isLoading: isLoading ?? this.isLoading,
@@ -347,6 +384,8 @@ class NutritionState {
       recentLogs: recentLogs ?? this.recentLogs,
       loadedSummaryDate: loadedSummaryDate ?? this.loadedSummaryDate,
       loadedLogsDate: loadedLogsDate ?? this.loadedLogsDate,
+      pendingMealSyncCount:
+          pendingMealSyncCount ?? this.pendingMealSyncCount,
     );
   }
 }
@@ -405,7 +444,13 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   Future<void> _flushMealQueue() async {
     final userId = _lastLoadedUserId;
     if (userId == null || _isFlushingMealQueue) return;
-    if (await _MealWriteQueue.isEmpty(userId)) return;
+    if (await _MealWriteQueue.isEmpty(userId)) {
+      // Nothing queued — make sure any stale "waiting to sync" badge clears.
+      if (state.pendingMealSyncCount != 0) {
+        state = state.copyWith(pendingMealSyncCount: 0);
+      }
+      return;
+    }
     _isFlushingMealQueue = true;
     try {
       final flushed = await _MealWriteQueue.flush(userId, (body) async {
@@ -425,7 +470,28 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       }
     } finally {
       _isFlushingMealQueue = false;
+      // Whatever remains queued (a write that keeps failing to land) stays
+      // visible via the pending badge instead of silently lingering.
+      await _refreshPendingMealCount(userId);
     }
+  }
+
+  /// Recompute the offline-queue depth into state so the "waiting to sync"
+  /// surface reflects reality. Cheap (one SharedPreferences read); safe to
+  /// call after any load or log.
+  Future<void> _refreshPendingMealCount(String userId) async {
+    final depth = await _MealWriteQueue.depth(userId);
+    if (state.pendingMealSyncCount != depth) {
+      state = state.copyWith(pendingMealSyncCount: depth);
+    }
+  }
+
+  /// Public retry hook for the "N meals waiting to sync" affordance. Forces a
+  /// flush attempt regardless of connectivity-change events (the queue is
+  /// otherwise only drained on a reconnect event, which never fires when the
+  /// app launches already-online with a stranded queue from a prior session).
+  Future<void> retryPendingMealWrites() async {
+    await _flushMealQueue();
   }
 
   /// Pre-seed state from bootstrap data so the home screen shows nutrition instantly.
@@ -561,6 +627,15 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       );
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
+
+      // (Sync-recovery) This network call just succeeded, so we are demonstrably
+      // online. Opportunistically drain any stranded offline meal-write queue.
+      // The connectivity listener only fires on a CHANGE event, so a queue left
+      // from a prior session never flushes when the app launches already-online
+      // — the meal sits unsynced forever while the user believes it saved. A
+      // tab-open flush closes that hole. Cheap + idempotent (isEmpty short-
+      // circuits; idempotency keys de-dupe), so fire-and-forget is safe.
+      unawaited(_flushMealQueue());
 
       // (4) Persist the RECONCILED result to disk for next cold start.
       // Fire-and-forget — never block the UI on disk I/O.
@@ -955,6 +1030,10 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
     // Persist the updated totals so the next cold-start shows the new log
     unawaited(_NutritionDiskCache.write(userId, todayStr, newSummary));
+
+    // If this splice corresponds to an offline-queued write, reflect the
+    // pending-sync badge immediately rather than waiting for the next load.
+    unawaited(_refreshPendingMealCount(userId));
 
     // (WR1) Hand the optimistic row back so callers can roll it back by id.
     return newLog;

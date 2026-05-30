@@ -825,7 +825,16 @@ extension NutritionRepositoryExt on NutritionRepository {
     // body carries its stable `idempotency_key` so the reconnect replay
     // can't double-log.
     if (!await NutritionRepository.isOnline()) {
-      await _MealWriteQueue.enqueue(userId, body);
+      final queued = await _MealWriteQueue.enqueue(userId, body);
+      if (!queued) {
+        // Couldn't even persist to the local sync queue — do NOT return a fake
+        // success. Surface it so the caller rolls back the optimistic row and
+        // offers a retry; the meal would otherwise vanish on next cold start.
+        debugPrint(
+            '🥗 [Nutrition] offline enqueue FAILED — surfacing to caller');
+        throw const MealLogPersistException(
+            'Could not save this meal to sync later. Please try again.');
+      }
       debugPrint('🥗 [Nutrition] offline — meal log queued (${body['idempotency_key']})');
       // Synthetic response — field names mirror LogFoodResponse.fromJson keys.
       return LogFoodResponse.fromJson({

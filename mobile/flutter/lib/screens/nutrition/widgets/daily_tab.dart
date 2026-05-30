@@ -411,6 +411,12 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 if (widget.userId.isNotEmpty && widget.isViewingToday)
                   const _FastingActiveBar(),
 
+                // 0. PENDING SYNC — a logged meal that hasn't reached the server
+                //    yet (offline queue). Surfaced so a stranded write is never
+                //    silently lost; tap retries the flush.
+                if (widget.userId.isNotEmpty)
+                  _PendingSyncBar(isDark: widget.isDark),
+
                 // 1. MORE NUTRIENTS (formerly "Pinned nutrients") — Compact, at the very top
                 if (widget.micronutrients != null &&
                     widget.micronutrients!.pinned.isNotEmpty) ...[
@@ -1187,6 +1193,93 @@ class _FastingProgressDots extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+/// Slim, amber "waiting to sync" bar shown only when one or more logged meals
+/// are still in the offline write queue (`pendingMealSyncCount > 0`). Tapping
+/// Retry forces a flush attempt. Hidden entirely at zero, so it costs nothing
+/// in the common case — its whole job is to make a stranded write visible
+/// instead of silently lost.
+class _PendingSyncBar extends ConsumerWidget {
+  final bool isDark;
+  const _PendingSyncBar({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pending = ref.watch(
+        nutritionProvider.select((s) => s.pendingMealSyncCount));
+    if (pending <= 0) return const SizedBox.shrink();
+
+    final colors = ref.colors(context);
+    final amber = isDark ? const Color(0xFFFFB74D) : const Color(0xFFE08600);
+    final label = pending == 1
+        ? '1 meal waiting to sync'
+        : '$pending meals waiting to sync';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: amber.withValues(alpha: isDark ? 0.14 : 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: amber.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.cloud_upload_outlined, size: 17, color: amber),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    'Saved on this device, not yet on the server.',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Material(
+              color: amber.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(20),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  ref.read(nutritionProvider.notifier).retryPendingMealWrites();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 7),
+                  child: Text(
+                    'Retry',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: amber,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

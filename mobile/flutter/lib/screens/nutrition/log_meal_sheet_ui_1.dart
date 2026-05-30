@@ -649,7 +649,13 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // (the _MealWriteQueue keeps the optimistic row + flushes on
         // reconnect). Only a genuine ONLINE failure should roll back. Probe
         // connectivity: offline → keep the optimistic row; online → roll back.
-        final stillOnline = await NutritionRepository.isOnline();
+        //
+        // EXCEPTION: a MealLogPersistException means the offline queue write
+        // itself failed, so the meal is NOT saved anywhere — roll back and
+        // surface a retry even though we're offline, or it vanishes silently.
+        final couldNotPersistOffline = e is MealLogPersistException;
+        final stillOnline =
+            couldNotPersistOffline || await NutritionRepository.isOnline();
         if (stillOnline) {
           // Genuine failure — remove the optimistic row so the UI doesn't
           // show a meal the server never stored, and surface a calm retry.

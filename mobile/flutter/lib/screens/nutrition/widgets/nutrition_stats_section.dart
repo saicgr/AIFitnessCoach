@@ -10,7 +10,10 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/nutrition_preferences.dart';
+import '../../../data/models/nutrition.dart';
 import '../../../data/providers/nutrition_stats_provider.dart';
+import '../../../data/repositories/nutrition_repository.dart';
+import '../log_meal_sheet.dart';
 import '../../../data/providers/fueling_split_provider.dart';
 import '../../../data/providers/trend_series_provider.dart';
 import '../../../widgets/charts/mini_sparkline.dart';
@@ -65,6 +68,36 @@ class NutritionStatsSection extends ConsumerWidget {
     final fueling = ref.watch(fuelingSplitProvider);
     final useKgForBody = ref.watch(useKgProvider);
 
+    // Section-level empty signal. When this week has zero logged days, EVERY
+    // sub-card empties out independently and the section degrades into a stack
+    // of near-identical grey "No X data" boxes. Instead we collapse the whole
+    // body into one inviting empty card with a CTA. We gate strictly on
+    // resolved data (daysLogged == 0 or a null summary); while the weekly
+    // summary is still loading we fall through to the normal layout so the
+    // per-card skeletons show rather than flashing the empty state.
+    final isEmptyWeek = weeklySummary.maybeWhen(
+      data: (s) => s == null || s.daysLogged == 0,
+      orElse: () => false,
+    );
+
+    // Most-recent log across all time (not just this week), used to give the
+    // empty state real context ("Last log: May 21, 612 cal lunch"). Sourced
+    // from already-loaded recentLogs so it adds no backend call; null when we
+    // genuinely have nothing on record, in which case the copy adapts.
+    final FoodLog? lastLog = isEmptyWeek
+        ? () {
+            final logs = ref.watch(
+                nutritionProvider.select((s) => s.recentLogs));
+            FoodLog? newest;
+            for (final l in logs) {
+              if (newest == null || l.loggedAt.isAfter(newest.loggedAt)) {
+                newest = l;
+              }
+            }
+            return newest;
+          }()
+        : null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -80,6 +113,21 @@ class NutritionStatsSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
 
+        if (isEmptyWeek)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _NutritionStatsEmptyState(
+              isDark: isDark,
+              accent: accent,
+              cardColor: cardColor,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              textMuted: textMuted,
+              lastLog: lastLog,
+              onLogMeal: () => showLogMealSheet(context, ref),
+            ),
+          )
+        else ...[
         // 1 — Scalar strip (week at a glance, big numbers).
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -158,6 +206,7 @@ class NutritionStatsSection extends ConsumerWidget {
             ],
           ),
         ),
+        ],
       ],
     );
   }
@@ -430,4 +479,183 @@ class _ScalarStripSkeleton extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Unified empty state for the whole NUTRITION STATS section.
+///
+/// Replaces the old behaviour where an empty week rendered five near-identical
+/// grey "No X data" boxes stacked vertically (calorie trend, macros, TDEE,
+/// adherence, fueling split). Instead we show ONE inviting card: an accent
+/// glyph, a headline, real last-log context when we have it, a "Log a meal"
+/// CTA, and a muted row of the metrics that unlock once data exists.
+///
+/// It never fabricates a number. [lastLog] is the genuine most-recent entry
+/// (or null), and the copy adapts to whichever case is true.
+class _NutritionStatsEmptyState extends StatelessWidget {
+  final bool isDark;
+  final Color accent;
+  final Color cardColor;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color textMuted;
+  final FoodLog? lastLog;
+  final VoidCallback onLogMeal;
+
+  const _NutritionStatsEmptyState({
+    required this.isDark,
+    required this.accent,
+    required this.cardColor,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.textMuted,
+    required this.lastLog,
+    required this.onLogMeal,
+  });
+
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ];
+
+  /// The four trends an empty week is missing, shown as muted chips so the
+  /// payoff of logging is concrete.
+  static const _ghostChips = ['calories', 'macros', 'TDEE', 'streak'];
+
+  @override
+  Widget build(BuildContext context) {
+    final hasLast = lastLog != null;
+
+    // Deterministic copy so it never reads robotic but also never flickers on
+    // rebuild (seeded by the last-log day, or a fixed seed when first-time).
+    final seed = hasLast ? lastLog!.loggedAt.day : 0;
+
+    final String body;
+    if (hasLast) {
+      final l = lastLog!;
+      final dateStr = '${_months[l.loggedAt.month - 1]} ${l.loggedAt.day}';
+      final meal = l.mealType.isEmpty ? 'meal' : l.mealType.toLowerCase();
+      final calPart =
+          l.totalCalories > 0 ? '${l.totalCalories} cal $meal' : meal;
+      final pool = [
+        'Last log was $dateStr ($calPart). Log a meal to unlock calories, macros, TDEE and adherence trends here.',
+        'Your most recent entry was $dateStr ($calPart). Add a meal this week to bring these trends back to life.',
+        'Nothing logged this week yet. Your last entry was $dateStr ($calPart) — log a meal to pick the trends back up.',
+        'You last logged on $dateStr ($calPart). Log a meal this week to track calories, macros, TDEE and adherence.',
+      ];
+      body = pool[seed % pool.length];
+    } else {
+      const pool = [
+        'Log your first meal to unlock calories, macros, TDEE and adherence trends here.',
+        'No meals on record yet. Log one to start tracking calories, macros, TDEE and adherence.',
+        'Start with a single meal and your calorie, macro, TDEE and adherence trends will appear here.',
+        'Log a meal to begin — your calories, macros, TDEE and adherence trends build from here.',
+      ];
+      body = pool[seed % pool.length];
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 22),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Accent glyph in a soft tinted disc.
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: accent.withValues(alpha: 0.14),
+            ),
+            child: Icon(Icons.insights_rounded, size: 26, color: accent),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No meals logged this week',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.4,
+              color: textSecondary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Primary CTA — opens the same log-meal sheet the tab's "+" uses.
+          Material(
+            color: accent,
+            borderRadius: BorderRadius.circular(28),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(28),
+              onTap: onLogMeal,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add_rounded,
+                        size: 19, color: _onAccent(accent)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Log a meal',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w700,
+                        color: _onAccent(accent),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          // Ghost chips: what logging unlocks.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: _ghostChips
+                .map((label) => Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 11, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: textMuted.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: textMuted,
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Pick black or white for text/icons sitting on the accent fill, by accent
+  /// luminance, so the CTA label stays legible across accent themes.
+  static Color _onAccent(Color accent) =>
+      accent.computeLuminance() > 0.6 ? Colors.black : Colors.white;
 }
