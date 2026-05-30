@@ -1214,6 +1214,24 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     var meals = server.meals;
     var changed = false;
 
+    // Data-loss guard: a 0-meal server payload must NOT blank a day that
+    // already has meals on screen. The daily summary is computed live from
+    // food_logs server-side, so an empty response for a populated day is a
+    // stale-cache / racy-read / timezone-window artifact — never the user
+    // clearing their whole day (real deletes are tombstoned + force-refreshed,
+    // and a genuinely empty day starts empty locally so this never trips).
+    // Without this, ANY reload that came back empty (e.g. the refresh fired
+    // right after saving daily targets) silently dropped every meal logged
+    // more than 90s ago via the re-add window below — the "my food vanished
+    // after I changed my targets" bug.
+    if (server.meals.isEmpty &&
+        local != null &&
+        local.meals.any((m) => !_deletedTombstones.contains(m.id))) {
+      debugPrint(
+          '🥗 [NutritionProvider] Ignored empty server summary — kept ${local.meals.length} on-screen meal(s)');
+      return local;
+    }
+
     if (_deletedTombstones.isNotEmpty) {
       final kept =
           meals.where((m) => !_deletedTombstones.contains(m.id)).toList();

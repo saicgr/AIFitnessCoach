@@ -840,19 +840,22 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final timelineWidget = _buildGoalTimeline(isDark, textMuted, accent);
 
     return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 4,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
+      // Bottom keyboard/safe-area inset is handled by the enclosing GlassSheet
+      // (it lifts the whole sheet above the keyboard), so we only add a small
+      // constant here — adding viewInsets again would double-pad and leave a
+      // gap below the pinned footer when the keyboard is up.
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 4, bottom: 8),
       // The form is taller than the glass-sheet's max height (~715 px) once
-      // the goal banner + recalc row + macros sliders + timeline + save row
-      // all render. Wrap the column in a scroll view so it pages instead of
-      // overflowing — keyboard avoidance still works via viewInsets above.
-      child: SingleChildScrollView(
-        physics: const ClampingScrollPhysics(),
-        child: Column(
+      // the goal banner + recalc row + macros sliders + timeline all render.
+      // Only the FORM scrolls — the Reset link + action buttons are pinned in
+      // a footer below so Save/Reset are always reachable without scrolling.
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Title row
@@ -1103,7 +1106,20 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             _buildRateSelector(isDark, textPrimary, textMuted, accent),
             const SizedBox(height: 8),
           ],
+                ],
+              ),
+            ),
+          ),
 
+          // ── Pinned footer ──────────────────────────────────────────────
+          // Reset + action buttons live OUTSIDE the scroll view so they stay
+          // visible no matter how far the form is scrolled. A hairline rule
+          // separates them from the scrolling content above.
+          Container(
+            height: 1,
+            margin: const EdgeInsets.only(top: 4),
+            color: textMuted.withValues(alpha: 0.12),
+          ),
           // B10: Reset link — reverts the four macro fields + rate + preset
           // to the values present when the sheet opened.
           Align(
@@ -1192,9 +1208,10 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               ),
             ],
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 4),
+          // Safe-area bottom inset is added by the enclosing GlassSheet, so
+          // only a small visual gap is needed under the buttons here.
+          const SizedBox(height: 4),
         ],
-      ),
       ),
     );
   }
@@ -2204,9 +2221,15 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                 child: GestureDetector(
                   onTap: () {
                     setState(() => _selectedRate = r.$1);
-                    // Re-derive recommended kcal so the "Rec: X" label and the
-                    // goal-timeline deficit refresh as the user picks rates.
+                    // Re-derive recommended kcal under the new rate, then write
+                    // it into the Calories + macro fields so the visible
+                    // numbers actually change (not just the "Rec:" label).
+                    // NOTE: when the user's deficit already hits the gender
+                    // safe-minimum floor, every rate resolves to the same
+                    // floored calories — the "Capped at safe minimum" note
+                    // under the timeline explains why the value won't move.
                     _computeRecommended();
+                    _applyRecommendedToFields();
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -2473,15 +2496,27 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   /// (presets are bodyweight-anchored gram models).
   void _onPresetSelected(MacroPreset preset) {
     setState(() => _selectedPreset = preset);
-    // Recompute `_recommendedX` under the new preset.
+    // Recompute `_recommendedX` under the new preset, then write the result
+    // into the four fields.
     _computeRecommended();
+    _applyRecommendedToFields();
+  }
+
+  /// Writes the freshly computed `_recommendedX` values into the four input
+  /// fields (grams mode). Shared by the diet-preset chips AND the weekly-rate
+  /// selector so BOTH immediately update the Calories + macro fields rather
+  /// than only refreshing the "Rec:" label. Without this, tapping a rate pill
+  /// looked like a no-op — the recommendation moved but the visible numbers
+  /// never did (the calorie field still read whatever was typed).
+  ///
+  /// No-op when there's no computable recommendation (missing TDEE) — the
+  /// chip/pill selection still sticks, there's just nothing to apply.
+  void _applyRecommendedToFields() {
     final cal = _recommendedCalories;
     final protein = _recommendedProtein;
     final carbs = _recommendedCarbs;
     final fat = _recommendedFat;
     if (cal == null || protein == null || carbs == null || fat == null) {
-      // No recommendation computable (no TDEE) — the chip selection still
-      // sticks; nothing to apply.
       return;
     }
     _balancing = true;

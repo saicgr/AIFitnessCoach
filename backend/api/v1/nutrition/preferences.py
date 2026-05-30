@@ -146,6 +146,29 @@ async def update_nutrition_preferences(user_id: str, request: NutritionPreferenc
         if not result.data:
             raise safe_internal_error(ValueError("Failed to update preferences"), "nutrition")
 
+        # This endpoint carries the calorie/macro TARGETS (the app's Edit
+        # Daily Targets sheet saves through here). A target change makes every
+        # cached payload that bakes in the goals stale: the daily-summary ring
+        # denominators, food patterns, and the home bootstrap. Bust them so the
+        # next read recomputes live against the new targets — and so a stale
+        # summary snapshot can never be served back to the client and blank the
+        # day's already-logged food (the summary is computed live from
+        # food_logs, so a fresh recompute always returns the real meals).
+        # Mirrors PUT /targets/{user_id}. Best-effort: a cache miss must not
+        # fail the write. Imported locally to avoid an import cycle.
+        try:
+            from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            from api.v1.nutrition.food_patterns import invalidate_patterns_cache
+            from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+            await invalidate_daily_summary_cache(user_id)
+            await invalidate_patterns_cache(user_id)
+            await invalidate_bootstrap_cache(user_id)
+        except Exception as cache_exc:
+            logger.warning(
+                f"Preference update cache invalidation failed for {user_id}: {cache_exc}",
+                exc_info=True,
+            )
+
         # Return the updated preferences
         return await get_nutrition_preferences(user_id)
 
