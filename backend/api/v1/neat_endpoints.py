@@ -735,8 +735,11 @@ async def get_neat_dashboard(
             streak_value=streak_summary.best_streak_value,
         )
 
-        # Determine next milestone
-        available = await get_available_achievements(user_id)
+        # Determine next milestone.
+        # NOTE: get_available_achievements requires `request` (it derives
+        # today's date via user_today_date(request, ...)); calling it with only
+        # user_id raised TypeError and crashed the dashboard. Pass request.
+        available = await get_available_achievements(user_id, request)
         next_milestone = None
         if available.closest_to_unlock:
             next_milestone = f"{available.closest_to_unlock.progress_percentage:.0f}% to {available.closest_to_unlock.achievement.name}"
