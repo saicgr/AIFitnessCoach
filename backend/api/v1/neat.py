@@ -298,10 +298,15 @@ def _neat_goal_row_to_model(row: dict) -> dict:
 
     DB column          -> model field
     current_step_goal  -> daily_step_goal
-    goal_type          -> adjustment_strategy (best-effort; falls back to model
-                          default if not a recognized strategy)
     last_goal_update   -> last_adjustment_date
     id/user_id/created_at/updated_at pass through unchanged.
+
+    The DB `goal_type` column is a goal *kind* (e.g. 'steps') guarded by a CHECK
+    constraint, NOT a GoalAdjustmentStrategy, so it is intentionally NOT mapped
+    onto adjustment_strategy — the model keeps its own default there. Likewise
+    active_hours_goal / movement_breaks_goal / min_steps_per_hour have no DB
+    column and keep their model defaults (8 / 6 / 250), which this handler relies
+    on for progress math.
     """
     if not isinstance(row, dict):
         return row
@@ -317,15 +322,6 @@ def _neat_goal_row_to_model(row: dict) -> dict:
 
     if row.get("current_step_goal") is not None:
         mapped["daily_step_goal"] = row["current_step_goal"]
-
-    # goal_type is a free-text column; only forward it when it's a valid
-    # GoalAdjustmentStrategy so Pydantic validation doesn't fail.
-    goal_type = row.get("goal_type")
-    if goal_type is not None:
-        try:
-            mapped["adjustment_strategy"] = GoalAdjustmentStrategy(goal_type).value
-        except ValueError:
-            pass  # leave model default
 
     if row.get("last_goal_update") is not None:
         mapped["last_adjustment_date"] = row["last_goal_update"]
@@ -374,17 +370,17 @@ async def get_neat_goals(
         if goals_response and goals_response.data:
             goal = NEATGoal(**_neat_goal_row_to_model(goals_response.data))
         else:
-            # Create default goal row using the REAL neat_goals columns.
-            default_goal = {
-                "user_id": user_id,
-                "current_step_goal": 8000,
-                "baseline_steps": 0,
-                "goal_increment": 500,
-                "goal_type": GoalAdjustmentStrategy.MODERATE.value,
-                "min_goal": 5000,
-                "max_goal": 20000,
-            }
-            insert_response = db.client.table("neat_goals").insert(default_goal).execute()
+            # Create default goal row.
+            # IMPORTANT: insert ONLY user_id and let the table's own column
+            # DEFAULTS populate the rest (current_step_goal=5000,
+            # goal_increment=500, min_goal=3000, max_goal=15000, goal_type via
+            # its default). Writing goal_type ourselves violates the table's
+            # CHECK constraint `neat_goals_goal_type_check` (e.g. 'moderate' is
+            # NOT an allowed value — the column is a goal *kind*, not an
+            # adjustment strategy), which raised 23514 and crashed this endpoint.
+            insert_response = db.client.table("neat_goals").insert(
+                {"user_id": user_id}
+            ).execute()
             if not insert_response or not insert_response.data:
                 raise safe_internal_error(ValueError("Failed to create default NEAT goals"), "neat")
             goal = NEATGoal(**_neat_goal_row_to_model(insert_response.data[0]))
@@ -404,18 +400,24 @@ async def get_neat_goals(
             else 0
         )
 
-        # Get today's hourly breakdown for active hours and movement breaks
+        # Get today's hourly breakdown for active hours and movement breaks.
+        # NOTE: the live neat_hourly_activity table has NO `active_minutes`
+        # column (selecting it raised 42703 and crashed this endpoint). The
+        # real columns are hour / steps / is_sedentary. Derive "movement breaks"
+        # from non-sedentary hours that also cleared the per-hour step floor —
+        # the closest real signal available in this table.
         hourly_response = db.client.table("neat_hourly_activity").select(
-            "hour, steps, active_minutes"
+            "hour, steps, is_sedentary"
         ).eq("user_id", user_id).eq("activity_date", today).execute()
 
         active_hours = 0
         movement_breaks = 0
 
         for record in (hourly_response.data or []):
-            if record.get("steps", 0) >= goal.min_steps_per_hour:
+            met_step_floor = record.get("steps", 0) >= goal.min_steps_per_hour
+            if met_step_floor:
                 active_hours += 1
-            if record.get("active_minutes", 0) >= 5:
+            if not record.get("is_sedentary", True) and met_step_floor:
                 movement_breaks += 1
 
         # Calculate progress percentages
@@ -742,7 +744,27 @@ async def get_hourly_breakdown(
             "user_id", user_id
         ).eq("activity_date", activity_date.isoformat()).order("hour").execute()
 
-        hours = [HourlyActivityRecord(**r) for r in (response.data or [])]
+        # NOTE: the live neat_hourly_activity table columns differ from the
+        # HourlyActivityRecord model. Real columns: is_sedentary, calories_burned,
+        # distance_meters (NO active_minutes / met_hourly_goal / was_sedentary /
+        # calories). Map the DB row onto the model fields so construction doesn't
+        # fail and the downstream attribute reads (.active_minutes/.calories/
+        # .met_hourly_goal/.was_sedentary) resolve. active_minutes has no source
+        # column, so it defaults to 0; met_hourly_goal is derived from steps.
+        def _hourly_row_to_model(r: dict) -> HourlyActivityRecord:
+            row = dict(r)
+            if "calories" not in row and "calories_burned" in row:
+                row["calories"] = row.get("calories_burned") or 0
+            if "was_sedentary" not in row and "is_sedentary" in row:
+                row["was_sedentary"] = bool(row.get("is_sedentary"))
+            row.setdefault("active_minutes", 0)
+            # No per-hour goal stored on this table — a non-sedentary hour that
+            # logged steps counts as having met the hourly movement goal.
+            if "met_hourly_goal" not in row:
+                row["met_hourly_goal"] = (not bool(row.get("is_sedentary", True))) and (row.get("steps", 0) > 0)
+            return HourlyActivityRecord(**row)
+
+        hours = [_hourly_row_to_model(r) for r in (response.data or [])]
 
         # Calculate summary statistics
         total_steps = sum(h.steps for h in hours)
@@ -951,9 +973,16 @@ async def get_neat_score_history(
     try:
         query = db.client.table("neat_scores").select("*").eq("user_id", user_id)
 
-        if start_date:
+        # NOTE: this function is also invoked directly (not via HTTP) by
+        # get_neat_dashboard as `get_neat_score_history(user_id, limit=7)`. In
+        # that path start_date/end_date keep their FastAPI `Query(None)` MARKER
+        # default (a Query object, which is truthy) rather than None, so a plain
+        # `if start_date:` wrongly entered the branch and called .isoformat() on
+        # a Query object. Guard on isinstance(..., date) so only real dates from
+        # the HTTP query string apply the filter.
+        if isinstance(start_date, date):
             query = query.gte("score_date", start_date.isoformat())
-        if end_date:
+        if isinstance(end_date, date):
             query = query.lte("score_date", end_date.isoformat())
 
         response = query.order("score_date", desc=True).limit(limit).execute()
@@ -1179,17 +1208,17 @@ async def get_neat_streaks(user_id: str,
             "user_id", user_id
         ).execute()
 
-        # NOTE: the neat_streaks table stores streak lengths as current_count /
-        # longest_count, but the NEATStreak model fields are current_length /
+        # NOTE: the neat_streaks table stores streak lengths as current_streak /
+        # longest_streak, but the NEATStreak model fields are current_length /
         # longest_length. Map the DB column names onto the model fields so the
-        # values aren't silently dropped (model has extra="ignore").
+        # values aren't silently dropped.
         streaks = []
         for s in (response.data or []):
             row = dict(s)
-            if "current_count" in row:
-                row.setdefault("current_length", row.get("current_count", 0))
-            if "longest_count" in row:
-                row.setdefault("longest_length", row.get("longest_count", 0))
+            if "current_streak" in row:
+                row.setdefault("current_length", row.get("current_streak", 0))
+            if "longest_streak" in row:
+                row.setdefault("longest_length", row.get("longest_streak", 0))
             streaks.append(NEATStreak(**row))
 
         # Find best overall streak

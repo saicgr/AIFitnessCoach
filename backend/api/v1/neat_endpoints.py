@@ -86,13 +86,13 @@ async def get_streak_summary(user_id: str,
 
         streaks = {s.get("streak_type"): s for s in (response.data or [])}
 
-        # NOTE: the neat_streaks table columns are current_count / longest_count
+        # NOTE: the neat_streaks table columns are current_streak / longest_streak
         # (the NEATStreak model exposes them as current_length / longest_length,
-        # but the raw DB rows use the *_count names).
-        step_goal = streaks.get(StreakType.STEP_GOAL.value, {}).get("current_count", 0)
-        active_hours = streaks.get(StreakType.ACTIVE_HOURS.value, {}).get("current_count", 0)
-        movement_breaks = streaks.get(StreakType.MOVEMENT_BREAKS.value, {}).get("current_count", 0)
-        neat_score = streaks.get(StreakType.NEAT_SCORE.value, {}).get("current_count", 0)
+        # but the raw DB rows use the *_streak names).
+        step_goal = streaks.get(StreakType.STEP_GOAL.value, {}).get("current_streak", 0)
+        active_hours = streaks.get(StreakType.ACTIVE_HOURS.value, {}).get("current_streak", 0)
+        movement_breaks = streaks.get(StreakType.MOVEMENT_BREAKS.value, {}).get("current_streak", 0)
+        neat_score = streaks.get(StreakType.NEAT_SCORE.value, {}).get("current_streak", 0)
 
         # Find best current and all-time
         best_type = None
@@ -101,8 +101,8 @@ async def get_streak_summary(user_id: str,
         all_time_type = None
 
         for s in (response.data or []):
-            current = s.get("current_count", 0)
-            longest = s.get("longest_count", 0)
+            current = s.get("current_streak", 0)
+            longest = s.get("longest_streak", 0)
 
             if current > best_value:
                 best_value = current
@@ -250,10 +250,10 @@ async def get_available_achievements(user_id: str,
         total_steps = sum(r.get("steps", 0) for r in (steps_response.data or []))
 
         # Get current streaks.
-        # NOTE: the neat_streaks table columns are current_count / longest_count
+        # NOTE: the neat_streaks table columns are current_streak / longest_streak
         # (NOT current_length / longest_length — selecting those raises 42703).
         streaks_response = db.client.table("neat_streaks").select(
-            "streak_type, current_count, longest_count"
+            "streak_type, current_streak, longest_streak"
         ).eq("user_id", user_id).execute()
 
         streaks = {s.get("streak_type"): s for s in (streaks_response.data or [])}
@@ -276,7 +276,7 @@ async def get_available_achievements(user_id: str,
             elif definition.category == NEATAchievementCategory.STREAKS.value:
                 # Use max of all streaks
                 current_value = max(
-                    s.get("current_count", 0) for s in streaks.values()
+                    s.get("current_streak", 0) for s in streaks.values()
                 ) if streaks else 0
 
             progress_pct = min((current_value / definition.threshold * 100), 99) if definition.threshold > 0 else 0
@@ -340,14 +340,14 @@ async def check_neat_achievements(user_id: str,
         total_steps = sum(r.get("steps", 0) for r in (steps_response.data or []))
 
         # Streaks.
-        # NOTE: the neat_streaks table columns are current_count / longest_count
+        # NOTE: the neat_streaks table columns are current_streak / longest_streak
         # (NOT current_length / longest_length — selecting those raises 42703).
         streaks_response = db.client.table("neat_streaks").select(
-            "streak_type, current_count, longest_count"
+            "streak_type, current_streak, longest_streak"
         ).eq("user_id", user_id).execute()
 
         max_streak = max(
-            max(s.get("current_count", 0), s.get("longest_count", 0))
+            max(s.get("current_streak", 0), s.get("longest_streak", 0))
             for s in (streaks_response.data or [{}])
         ) if streaks_response.data else 0
 
