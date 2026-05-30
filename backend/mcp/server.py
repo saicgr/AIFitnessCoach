@@ -5,11 +5,17 @@
 ──────────────────────────────────────────────────────────────────────
 The project has a local `backend/mcp/` package for its MCP *server code*
 that unavoidably shadows the PyPI `mcp` SDK (which lives at the same
-top-level name). We resolve the SDK at runtime via an explicit
-`importlib` + site-packages sweep: we locate the on-disk SDK, load it
-under the alias `_mcp_sdk`, then pull `FastMCP` out of it. This keeps
-the local package's import paths (`mcp.config`, `mcp.auth.*`, etc.)
-working AND lets us use the SDK without renaming either.
+top-level name). The SDK's own modules import each other with ABSOLUTE
+paths (`mcp/client/session.py` does `import mcp.types`), so loading the
+SDK under a private alias does NOT work — those absolute imports always
+resolve through `sys.modules['mcp']`, i.e. our local package, which has
+no `types` submodule (the bug this file once shipped: a silent fall back
+to the 503 stub). Instead we load the SDK under its REAL name `mcp`
+inside a window where the local `mcp` / `mcp.*` modules are temporarily
+evicted from `sys.modules`, capture `server.fastmcp`, then restore the
+local package — leaving the SDK's own leaves (`mcp.types`,
+`mcp.server.fastmcp.*`, …) cached so the captured `FastMCP` keeps
+working. See `_load_mcp_sdk` for the details.
 
 If the SDK is not installed (e.g. local Python 3.9 dev where the SDK
 requires 3.10+), we log a warning and expose a stub `mcp_app` whose
@@ -36,10 +42,11 @@ logger = get_logger(__name__)
 
 # ─── SDK loader ──────────────────────────────────────────────────────────────
 
-def _load_mcp_sdk() -> Optional[Any]:
-    """Load the `mcp` PyPI SDK under a non-colliding alias.
+def _find_sdk_init() -> Optional[Path]:
+    """Locate the PyPI `mcp` SDK's `__init__.py` on disk.
 
-    Returns the imported SDK module, or None if it can't be found.
+    Sweeps every site-packages / dist-packages dir, skipping our own
+    `backend/mcp/__init__.py`. Returns the path or None.
     """
     candidate_dirs = []
     try:
@@ -57,6 +64,7 @@ def _load_mcp_sdk() -> Optional[Any]:
         if p and ("site-packages" in p or "dist-packages" in p):
             candidate_dirs.append(p)
 
+    own_init = (Path(__file__).parent / "__init__.py").resolve()
     seen = set()
     for d in candidate_dirs:
         if not d or d in seen:
@@ -65,50 +73,84 @@ def _load_mcp_sdk() -> Optional[Any]:
         sdk_init = Path(d) / "mcp" / "__init__.py"
         if not sdk_init.is_file():
             continue
-        # Don't accidentally pick up our own backend/mcp/__init__.py
+        # Don't accidentally pick up our own backend/mcp/__init__.py.
         try:
-            if sdk_init.resolve() == (Path(__file__).parent / "__init__.py").resolve():
+            if sdk_init.resolve() == own_init:
                 continue
         except Exception:
             pass
-
-        try:
-            spec = importlib.util.spec_from_file_location(
-                "_mcp_sdk",
-                str(sdk_init),
-                submodule_search_locations=[str(sdk_init.parent)],
-            )
-            if spec is None or spec.loader is None:
-                continue
-            module = importlib.util.module_from_spec(spec)
-            sys.modules["_mcp_sdk"] = module
-            spec.loader.exec_module(module)
-            # Now import the FastMCP submodule manually.
-            server_init = sdk_init.parent / "server" / "__init__.py"
-            fastmcp_init = sdk_init.parent / "server" / "fastmcp" / "__init__.py"
-            for sub_name, sub_path in (
-                ("_mcp_sdk.server", server_init),
-                ("_mcp_sdk.server.fastmcp", fastmcp_init),
-            ):
-                if not sub_path.is_file():
-                    logger.warning(f"MCP SDK submodule missing on disk: {sub_path}")
-                    return None
-                sub_spec = importlib.util.spec_from_file_location(
-                    sub_name,
-                    str(sub_path),
-                    submodule_search_locations=[str(sub_path.parent)],
-                )
-                if sub_spec is None or sub_spec.loader is None:
-                    return None
-                sub_mod = importlib.util.module_from_spec(sub_spec)
-                sys.modules[sub_name] = sub_mod
-                sub_spec.loader.exec_module(sub_mod)
-            logger.info(f"Loaded MCP SDK from {sdk_init}")
-            return sys.modules["_mcp_sdk.server.fastmcp"]
-        except Exception as e:
-            logger.warning(f"Failed to load MCP SDK from {sdk_init}: {e}", exc_info=True)
-            continue
+        return sdk_init
     return None
+
+
+def _load_mcp_sdk() -> Optional[Any]:
+    """Load the PyPI `mcp` SDK and return its `server.fastmcp` module.
+
+    The hard part: our local `backend/mcp/` package occupies the same
+    top-level import name as the SDK. The SDK's own modules use ABSOLUTE
+    imports internally (e.g. `client/session.py` does `import mcp.types`),
+    so aliasing the SDK to a different name (the old `_mcp_sdk` trick)
+    cannot work — those absolute imports always resolve through
+    `sys.modules['mcp']`, which points at our local package and has no
+    `types` submodule. Result: `ModuleNotFoundError: No module named
+    'mcp.types'` and a silent fall back to the 503 stub.
+
+    The fix is to load the SDK under its REAL name `mcp`, but only inside
+    a window where we've temporarily evicted the local `mcp` / `mcp.*`
+    modules from `sys.modules`. The SDK's absolute imports then resolve to
+    the SDK on disk. We capture a direct reference to `server.fastmcp`
+    (whose `FastMCP` class binds its own dependencies at import time), then
+    restore the local package so the rest of the app keeps working.
+    """
+    sdk_init = _find_sdk_init()
+    if sdk_init is None:
+        return None
+
+    # The only `mcp.*` names defined by BOTH the SDK and our local package
+    # are the roots `mcp` and `mcp.server` (our `server.py` is a plain
+    # module, NOT a package, so we own no `mcp.server.*` submodules). The
+    # SDK, by contrast, owns a deep `mcp.server.*` tree (fastmcp, lowlevel,
+    # …) plus `mcp.types`, `mcp.client.*`, `mcp.shared.*`.
+    #
+    # Evict + remember every currently-loaded `mcp` / `mcp.*` module so the
+    # SDK loads against a clean namespace. We restore this exact snapshot in
+    # `finally` — which overwrites the two colliding roots back to our local
+    # package while LEAVING every SDK-only module cached. That caching is
+    # load-bearing: the returned `FastMCP`/`Settings` resolve pydantic
+    # forward refs at validation time via `sys.modules['mcp.server.fastmcp.
+    # server']`, so those SDK modules must outlive the load window.
+    evicted = {}
+    for name in list(sys.modules):
+        if name == "mcp" or name.startswith("mcp."):
+            evicted[name] = sys.modules.pop(name)
+
+    try:
+        spec = importlib.util.spec_from_file_location(
+            "mcp",
+            str(sdk_init),
+            submodule_search_locations=[str(sdk_init.parent)],
+        )
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        # Register under the REAL name so the SDK's internal absolute
+        # imports (`import mcp.types`, `from mcp.shared ...`) resolve here.
+        sys.modules["mcp"] = module
+        spec.loader.exec_module(module)
+        # FastMCP lives at mcp.server.fastmcp; importing it binds all of its
+        # SDK dependencies at module-load time onto the returned object.
+        fastmcp_mod = importlib.import_module("mcp.server.fastmcp")
+        logger.info(f"Loaded MCP SDK from {sdk_init}")
+        return fastmcp_mod
+    except Exception as e:
+        logger.warning(f"Failed to load MCP SDK from {sdk_init}: {e}", exc_info=True)
+        return None
+    finally:
+        # Restore the local package. `update` overwrites the two colliding
+        # roots (`mcp`, `mcp.server`) back to our local modules while every
+        # SDK-only module the SDK loaded (mcp.types, mcp.server.fastmcp.*,
+        # mcp.shared.*, …) stays cached so the returned FastMCP keeps working.
+        sys.modules.update(evicted)
 
 
 _sdk_fastmcp_mod = _load_mcp_sdk()
