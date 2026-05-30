@@ -88,13 +88,6 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         child: _trendsPage(c),
       ),
     ];
-    final labels = <String>[
-      'Summary',
-      for (var i = 0; i < moreChunks.length; i++)
-        moreChunks.length == 1 ? 'Metrics' : 'Metrics ${i + 1}',
-      'Trends',
-    ];
-
     // If the page count shrank below the parked page (e.g. a metric was hidden
     // so a "More" page vanished), clamp now and snap the controller next frame
     // so it can never sit on a page index that no longer exists.
@@ -112,8 +105,10 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(c, labels),
-          const SizedBox(height: 8),
+          // No more Summary/Metrics/Trends tab bar — the deck is a pure
+          // swipeable carousel now. Page position is shown by the dot
+          // indicator below (tap a dot to jump), and the customize gear sits
+          // in that same slim row. The card height (176) is unchanged.
           SizedBox(
             height: 176,
             child: PageView(
@@ -122,69 +117,53 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
               children: pages,
             ),
           ),
-          // The Log / Trends / Start action row was removed (issue 1): "Trends"
-          // duplicated this deck's own Trends tab + every tile's tap-through,
-          // "Start" duplicated the workout card's play button, and "Log"
-          // duplicated the quick-actions "Log Food" chip + the nav "+". The
-          // quick-actions row (its own home section) now carries those jobs.
+          const SizedBox(height: 8),
+          _indicatorRow(c, pages.length),
         ],
       ),
     );
   }
 
-  // ---- header: segmented tabs + dots + edit ----
-  Widget _header(ThemeColors c, List<String> labels) {
+  // ---- carousel dot indicator + customize gear (replaces the tab bar) ----
+  // Dots are centered (tap one to jump to that page); the gear sits at the
+  // right and opens the metric customize sheet ("ADD METRIC" lists every
+  // available metric). The leading spacer matches the gear width so the dots
+  // stay optically centered under the card.
+  Widget _indicatorRow(ThemeColors c, int pageCount) {
     return Row(
       children: [
-        Container(
-          padding: const EdgeInsets.all(3),
-          decoration: BoxDecoration(
-            color: c.surface,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: c.cardBorder),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (var i = 0; i < labels.length; i++)
-                GestureDetector(
-                  onTap: () {
-                    HapticService.light();
-                    _controller.animateToPage(
-                      i,
-                      duration: const Duration(milliseconds: 260),
-                      curve: Curves.easeOutCubic,
-                    );
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _page == i ? c.textPrimary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      labels[i],
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: _page == i ? c.background : c.textMuted,
+        const SizedBox(width: 32),
+        Expanded(
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < pageCount; i++)
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      _controller.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 260),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: _page == i ? 18 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _page == i ? c.accent : c.cardBorder,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
-        const Spacer(),
-        // The page-indicator dots were removed: the labeled Summary / More /
-        // Trends pills above already show the active page, so the dots were
-        // redundant signal competing for the same glance (declutter, issue 4).
-        // Customize button — labeled for a11y + a long-press tooltip so the
-        // tune glyph reads as "Customize metrics", not an ambiguous icon.
         Tooltip(
           message: 'Customize metrics',
           child: Semantics(
@@ -692,8 +671,14 @@ class MetricTile extends ConsumerWidget {
       case RingKind.heartRate:
       case RingKind.hrv:
       case RingKind.stress:
+      case RingKind.vo2max:
         // The Combined Health hub has per-metric history sections + graphs.
         context.push('/health/combined');
+      case RingKind.sleepLatency:
+      case RingKind.wakeConsistency:
+      case RingKind.bedtimeWindow:
+        // Sleep-derived metrics live on the Sleep detail screen.
+        context.push('/health/sleep');
       case RingKind.weight:
         context.push('/measurements');
       case RingKind.cycle:
@@ -715,6 +700,10 @@ class MetricTile extends ConsumerWidget {
       case RingKind.recovery:
       case RingKind.hrv:
       case RingKind.stress:
+      case RingKind.vo2max:
+      case RingKind.sleepLatency:
+      case RingKind.wakeConsistency:
+      case RingKind.bedtimeWindow:
         return true;
       case RingKind.nourish:
       case RingKind.hydration:

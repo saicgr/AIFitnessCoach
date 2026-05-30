@@ -15,6 +15,14 @@ import '../repositories/nutrition_repository.dart';
 import '../services/health_service.dart';
 import '../../screens/home/widgets/cards/readiness_score_card.dart'
     show readinessScoreSignalProvider;
+import '../../screens/home/widgets/cards/sleep_latency_tile.dart'
+    show sleepLatencySignalProvider;
+import '../../screens/home/widgets/cards/wake_consistency_tile.dart'
+    show wakeConsistencySignalProvider;
+import '../../screens/home/widgets/cards/bedtime_window_tile.dart'
+    show bedtimeWindowSignalProvider;
+import '../../screens/home/widgets/cards/vo2max_trend_chip.dart'
+    show vo2maxTrendSignalProvider;
 import '../../screens/home/widgets/ring_catalog.dart';
 import 'metric_layout_provider.dart';
 import 'nutrition_preferences_provider.dart';
@@ -45,10 +53,15 @@ TrendMetric? _trendMetricFor(RingKind kind) {
       return TrendMetric.water;
     case RingKind.recovery:
       return TrendMetric.readinessScore;
+    case RingKind.vo2max:
+      return TrendMetric.vo2Max;
     case RingKind.train:
     case RingKind.hrv:
     case RingKind.stress:
     case RingKind.cycle:
+    case RingKind.sleepLatency:
+    case RingKind.wakeConsistency:
+    case RingKind.bedtimeWindow:
       return null;
   }
 }
@@ -247,6 +260,44 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
           displayValue: last.toStringAsFixed(1),
           unit: 'lb',
           deltaLabel: delta,
+        );
+      }
+    case RingKind.sleepLatency:
+      {
+        final lat = ref.watch(sleepLatencySignalProvider);
+        if (lat == null) return base(empty: true, unit: 'min');
+        return base(value: lat.toDouble(), unit: 'min');
+      }
+    case RingKind.wakeConsistency:
+      {
+        final w = ref.watch(wakeConsistencySignalProvider);
+        if (w.stddevMinutes == null) return base(empty: true, unit: 'min');
+        return base(
+          displayValue: '±${w.stddevMinutes!.round()}',
+          unit: 'min',
+          deltaLabel: w.meanWake != null ? 'avg ${w.meanWake}' : null,
+        );
+      }
+    case RingKind.bedtimeWindow:
+      {
+        final bw = ref.watch(bedtimeWindowSignalProvider);
+        if (bw.windowStart == null || bw.windowEnd == null) {
+          return base(empty: true);
+        }
+        return base(displayValue: '${bw.windowStart} – ${bw.windowEnd}');
+      }
+    case RingKind.vo2max:
+      {
+        final v = ref.watch(vo2maxTrendSignalProvider);
+        if (v.latest == null) return base(empty: true, unit: 'ml/kg/min');
+        final d = v.previous != null ? v.latest! - v.previous! : null;
+        return base(
+          value: v.latest,
+          displayValue: v.latest!.toStringAsFixed(1),
+          unit: 'ml/kg/min',
+          deltaLabel: d == null
+              ? null
+              : '${d >= 0 ? '↑' : '↓'} ${d.abs().toStringAsFixed(1)}',
         );
       }
     case RingKind.hrv:

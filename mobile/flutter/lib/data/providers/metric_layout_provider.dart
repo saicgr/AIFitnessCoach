@@ -129,6 +129,7 @@ class MetricDisplayConfig {
       case RingKind.heartRate:
       case RingKind.hrv:
       case RingKind.stress:
+      case RingKind.vo2max:
         return const MetricDisplayConfig(
           size: MetricSize.small,
           chart: MetricChart.line,
@@ -136,6 +137,9 @@ class MetricDisplayConfig {
         );
       case RingKind.recovery:
       case RingKind.cycle:
+      case RingKind.sleepLatency:
+      case RingKind.wakeConsistency:
+      case RingKind.bedtimeWindow:
         return const MetricDisplayConfig(
           size: MetricSize.small,
           chart: MetricChart.number,

@@ -35,6 +35,12 @@ enum RingKind {
   hydration,
   weight,
   recovery,
+  // Appended (sleep/cardio metrics promoted from standalone home cards into
+  // the deck). Persistence is by `.id` slug, so appending is index-safe.
+  sleepLatency,
+  wakeConsistency,
+  bedtimeWindow,
+  vo2max,
 }
 
 /// Static metadata for a single ring.
@@ -159,6 +165,42 @@ const Map<RingKind, RingSpec> kRingCatalog = {
     isCore: false,
     defaultVisible: false,
   ),
+  RingKind.sleepLatency: RingSpec(
+    kind: RingKind.sleepLatency,
+    id: 'sleep_latency',
+    label: 'Sleep latency',
+    color: Color(0xFF8B5CF6),
+    sourceId: 'sleep.latency',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.wakeConsistency: RingSpec(
+    kind: RingKind.wakeConsistency,
+    id: 'wake_consistency',
+    label: 'Wake consistency',
+    color: Color(0xFFF59E0B),
+    sourceId: 'sleep.wake_consistency',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.bedtimeWindow: RingSpec(
+    kind: RingKind.bedtimeWindow,
+    id: 'bedtime_window',
+    label: 'Bedtime',
+    color: Color(0xFF6366F1),
+    sourceId: 'sleep.bedtime_window',
+    isCore: false,
+    defaultVisible: false,
+  ),
+  RingKind.vo2max: RingSpec(
+    kind: RingKind.vo2max,
+    id: 'vo2max',
+    label: 'VO₂max',
+    color: Color(0xFFE5544D),
+    sourceId: 'wearable.vo2max',
+    isCore: false,
+    defaultVisible: false,
+  ),
 };
 
 extension RingKindX on RingKind {
@@ -183,6 +225,12 @@ extension RingKindX on RingKind {
       case RingKind.hydration: return l10n.ringLabelHydration;
       case RingKind.weight: return l10n.ringLabelWeight;
       case RingKind.recovery: return l10n.ringLabelRecovery;
+      // New metrics use plain (English) labels for now — no ARB key yet, so
+      // they don't require an l10n regeneration to compile/ship.
+      case RingKind.sleepLatency: return 'Sleep latency';
+      case RingKind.wakeConsistency: return 'Wake consistency';
+      case RingKind.bedtimeWindow: return 'Bedtime';
+      case RingKind.vo2max: return 'VO₂max';
     }
   }
 

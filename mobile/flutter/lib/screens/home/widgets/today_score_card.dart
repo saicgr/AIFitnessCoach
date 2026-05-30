@@ -718,9 +718,13 @@ _RingData _resolveRingData(TodayScore score, RingKind kind) {
     case RingKind.hydration:
     case RingKind.weight:
     case RingKind.recovery:
-      // Optional rings — not wired in v1. Render as "not applicable" so the
-      // ring shape still appears (encouraging connection / setup) without
-      // faking data.
+    case RingKind.sleepLatency:
+    case RingKind.wakeConsistency:
+    case RingKind.bedtimeWindow:
+    case RingKind.vo2max:
+      // Optional rings — not wired into the today-score ring. Render as "not
+      // applicable" so the ring shape still appears (encouraging connection /
+      // setup) without faking data.
       return const _RingData(completion: 0, applicable: false);
   }
 }

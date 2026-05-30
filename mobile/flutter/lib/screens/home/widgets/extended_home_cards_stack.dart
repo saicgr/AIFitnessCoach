@@ -21,9 +21,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/theme_colors.dart';
 import 'cards/accountability_partner_nudge.dart';
 import 'cards/app_anniversary_card.dart';
-import 'cards/bedtime_window_tile.dart';
 import 'cards/birthday_card.dart';
-import 'cards/body_battery_tile.dart';
 import 'cards/body_comp_milestone_card.dart';
 import 'cards/busy_week_compressed_card.dart';
 import 'cards/cycle_phase_chip.dart';
@@ -37,7 +35,6 @@ import 'cards/first_of_month_card.dart';
 import 'cards/friend_activity_snippet.dart';
 import 'cards/group_challenge_progress.dart';
 import 'cards/hr_zone_breakdown_card.dart';
-import 'cards/hrv_trend_strip.dart';
 import 'cards/injury_workaround_banner.dart';
 import 'cards/jet_lag_adjust_card.dart';
 import 'cards/macro_pattern_callout.dart';
@@ -54,21 +51,16 @@ import 'cards/postworkout_tomorrow_adjust_card.dart';
 import 'cards/preworkout_rpe_chip.dart';
 import 'cards/preworkout_t30_card.dart';
 import 'cards/preworkout_warmup_card.dart';
-import 'cards/readiness_score_card.dart';
 import 'cards/recovery_countdown_tile.dart';
 import 'cards/referral_gift_tile.dart';
 import 'cards/return_to_exercise_card.dart';
 import 'cards/rhr_delta_card.dart';
-import 'cards/sleep_latency_tile.dart';
 import 'cards/smart_reschedule_banner.dart';
 import 'cards/smoothed_weight_trend_chip.dart';
 import 'cards/stand_reminder_chip.dart';
 import 'cards/step_streak_tile.dart';
 import 'cards/strain_recovery_mismatch_card.dart';
-import 'cards/stress_score_tile.dart';
 import 'cards/training_effect_card.dart';
-import 'cards/vo2max_trend_chip.dart';
-import 'cards/wake_consistency_tile.dart';
 import 'cards/weekly_plan_strip.dart';
 import 'cards/weigh_in_day_chip.dart';
 import 'cards/workout_felt_journal_prompt.dart';
@@ -89,17 +81,14 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Readiness, HRV, Stress, VO₂max, Bedtime, Wake consistency and Sleep
+        // latency moved OUT of standalone home cards and INTO the metric deck
+        // as selectable metric tiles (user feedback) — readiness == the
+        // existing Recovery ring. Only the evening sleep-story narrative (no
+        // metric equivalent) remains here.
         _HomeCardSection(
-          title: 'Recovery & sleep',
+          title: 'Sleep',
           children: const [
-            ReadinessScoreCard(),
-            HrvTrendStrip(),
-            BodyBatteryTile(),
-            StressScoreTile(),
-            Vo2maxTrendChip(),
-            BedtimeWindowTile(),
-            WakeConsistencyTile(),
-            SleepLatencyTile(),
             EveningSleepStoryTile(),
           ],
         ),
