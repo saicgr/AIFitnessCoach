@@ -156,6 +156,24 @@ def _load_mcp_sdk() -> Optional[Any]:
 _sdk_fastmcp_mod = _load_mcp_sdk()
 
 
+# ─── SDK Context re-export ───────────────────────────────────────────────────
+#
+# Tool/resource handlers annotate their first parameter `ctx: Context` so
+# FastMCP detects it as the injectable Context (and excludes it from the tool
+# input schema / resource URI-param matching). Because those modules use
+# `from __future__ import annotations`, the annotation is a STRING that FastMCP
+# resolves at registration time via `typing.get_type_hints(fn)` — which looks
+# up the name `Context` in each handler module's globals. The SDK's own
+# `mcp.server.fastmcp.Context` is not importable from those modules under our
+# package-shadow workaround (the local `backend/mcp/` package owns the `mcp`
+# name), so we re-export the real class HERE — `mcp.server` IS this module —
+# and the handler modules do `from mcp.server import Context`.
+#
+# Fallback to `object` keeps annotations resolvable in stub mode (local dev
+# without the SDK), where decorators are no-ops and detection never runs.
+Context: Any = getattr(_sdk_fastmcp_mod, "Context", object)
+
+
 # ─── Fallback stub ───────────────────────────────────────────────────────────
 
 class _StubApp:

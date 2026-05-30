@@ -18,6 +18,8 @@ and auditing.
 """
 from __future__ import annotations
 
+from mcp.server import Context  # SDK Context class, re-exported (package-shadow workaround)
+
 import asyncio
 import json
 import uuid
@@ -441,7 +443,7 @@ def register(mcp_app: Any) -> None:
             "exercises, sets, and status."
         ),
     )
-    async def get_today_workout(ctx) -> Dict[str, Any]:  # noqa: D401
+    async def get_today_workout(ctx: Context) -> Dict[str, Any]:  # noqa: D401
         return await run_tool(
             ctx, "get_today_workout",
             required_scope="read:workouts",
@@ -456,7 +458,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def get_workout_history(
-        ctx,
+        ctx: Context,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
         limit: int = 30,
@@ -476,7 +478,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def log_completed_set(
-        ctx,
+        ctx: Context,
         workout_id: str,
         exercise_id: str,
         reps: int,
@@ -505,7 +507,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def adjust_set_weight(
-        ctx,
+        ctx: Context,
         exercise_id: str,
         direction: str,
         workout_id: Optional[str] = None,
@@ -525,7 +527,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def modify_workout(
-        ctx,
+        ctx: Context,
         workout_id: str,
         action: str,
         payload: Optional[Dict[str, Any]] = None,
@@ -552,7 +554,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def generate_workout_plan(
-        ctx,
+        ctx: Context,
         goals: Optional[List[str]] = None,
         duration_days: int = 7,
         constraints: Optional[Dict[str, Any]] = None,

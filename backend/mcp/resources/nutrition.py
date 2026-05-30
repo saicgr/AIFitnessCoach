@@ -12,9 +12,10 @@ from mcp.middleware.auth import AuthError, require_user
 
 def register(mcp_app: Any) -> None:
     @mcp_app.resource("fitwiz://nutrition/summary")
-    async def nutrition_summary_7d(ctx) -> str:
+    async def nutrition_summary_7d() -> str:
         """7-day nutrition summary — totals per day."""
         try:
+            ctx = mcp_app.get_context()
             user = await require_user(ctx)
             require_scope(user.get("mcp_scopes") or [], "read:nutrition")
             db = get_supabase_db()

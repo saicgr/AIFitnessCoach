@@ -78,7 +78,14 @@ pytest-cov>=5.0.0,<6.0.0
 pytest-mock>=3.14.0,<4.0.0
 
 # MCP (Model Context Protocol) server — publishes Zealova tools to external AI clients
-mcp>=1.2.0
+# NOTE: floor bumped 2026-05-30. Versions <1.13 inline an unguarded
+# `issubclass(param.annotation, Context)` in Tool.from_function that crashes on
+# typing generics under `from __future__ import annotations` (annotations are
+# strings), which broke tool registration in prod. The floor must stay high
+# enough to FORCE pip to upgrade past stale wheels left in Render's persistent
+# build env (an unpinned `>=1.2.0` is "already satisfied" and never upgrades).
+# 1.13+ uses find_context_parameter (get_type_hints + guarded issubclass).
+mcp>=1.27.2
 # Report generation (PDF + HTML for generate_report tool)
 weasyprint>=62.0
 jinja2>=3.1.0

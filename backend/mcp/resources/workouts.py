@@ -14,8 +14,9 @@ from mcp.tools.workouts import (
 
 def register(mcp_app: Any) -> None:
     @mcp_app.resource("fitwiz://workouts/today")
-    async def workouts_today(ctx) -> str:
+    async def workouts_today() -> str:
         try:
+            ctx = mcp_app.get_context()
             user = await require_user(ctx)
             require_scope(user.get("mcp_scopes") or [], "read:workouts")
             data = await _get_today_workout_impl(user=user)
@@ -26,9 +27,10 @@ def register(mcp_app: Any) -> None:
             return json.dumps({"error": "resource_error", "detail": str(e)[:200]})
 
     @mcp_app.resource("fitwiz://workouts/history")
-    async def workouts_history(ctx) -> str:
+    async def workouts_history() -> str:
         """Last 30 days of workouts. Use the tool for filtered queries."""
         try:
+            ctx = mcp_app.get_context()
             user = await require_user(ctx)
             require_scope(user.get("mcp_scopes") or [], "read:workouts")
             data = await _get_workout_history_impl(user=user, limit=30)

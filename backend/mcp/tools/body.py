@@ -5,6 +5,8 @@ write paths.
 """
 from __future__ import annotations
 
+from mcp.server import Context  # SDK Context class, re-exported (package-shadow workaround)
+
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -118,7 +120,7 @@ def register(mcp_app: Any) -> None:
         name="get_user_profile",
         description="Return the user's profile, goals, and measurement preferences.",
     )
-    async def get_user_profile(ctx) -> Dict[str, Any]:
+    async def get_user_profile(ctx: Context) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_user_profile",
             required_scope="read:profile",
@@ -130,7 +132,7 @@ def register(mcp_app: Any) -> None:
         description="Log a body weight measurement. Unit is 'kg' or 'lbs'.",
     )
     async def log_body_weight(
-        ctx, weight: float, unit: str = "kg",
+        ctx: Context, weight: float, unit: str = "kg",
     ) -> Dict[str, Any]:
         return await run_tool(
             ctx, "log_body_weight",
@@ -149,7 +151,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def update_user_goal(
-        ctx, goal_type: str, value: Any,
+        ctx: Context, goal_type: str, value: Any,
     ) -> Dict[str, Any]:
         return await run_tool(
             ctx, "update_user_goal",

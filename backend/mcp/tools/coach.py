@@ -5,6 +5,8 @@ injury, hydration, coach). Scores/habits read directly from DB.
 """
 from __future__ import annotations
 
+from mcp.server import Context  # SDK Context class, re-exported (package-shadow workaround)
+
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -189,7 +191,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def chat_with_coach(
-        ctx,
+        ctx: Context,
         message: str,
         media_urls: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
@@ -207,7 +209,7 @@ def register(mcp_app: Any) -> None:
             "plus the 7-day average."
         ),
     )
-    async def get_readiness_score(ctx) -> Dict[str, Any]:
+    async def get_readiness_score(ctx: Context) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_readiness_score",
             required_scope="read:scores",
@@ -218,7 +220,7 @@ def register(mcp_app: Any) -> None:
         name="get_strength_scores",
         description="Return the latest strength score for each muscle group.",
     )
-    async def get_strength_scores(ctx) -> Dict[str, Any]:
+    async def get_strength_scores(ctx: Context) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_strength_scores",
             required_scope="read:scores",
@@ -229,7 +231,7 @@ def register(mcp_app: Any) -> None:
         name="get_streak_and_habits",
         description="Return the user's current workout streak and active habits.",
     )
-    async def get_streak_and_habits(ctx) -> Dict[str, Any]:
+    async def get_streak_and_habits(ctx: Context) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_streak_and_habits",
             required_scope="read:scores",
@@ -240,7 +242,7 @@ def register(mcp_app: Any) -> None:
         name="get_progress_photos",
         description="Return recent progress photos (URLs and metadata).",
     )
-    async def get_progress_photos(ctx, limit: int = 10) -> Dict[str, Any]:
+    async def get_progress_photos(ctx: Context, limit: int = 10) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_progress_photos",
             required_scope="read:profile",

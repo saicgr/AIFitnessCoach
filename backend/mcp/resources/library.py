@@ -21,8 +21,9 @@ logger = get_logger(__name__)
 
 def register(mcp_app: Any) -> None:
     @mcp_app.resource("fitwiz://exercises/library")
-    async def exercises_library(ctx) -> str:
+    async def exercises_library() -> str:
         try:
+            ctx = mcp_app.get_context()
             user = await require_user(ctx)
             # read:workouts gives visibility into the exercise library too —
             # no separate scope for it, since it's app-wide static data.

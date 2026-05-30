@@ -16,6 +16,8 @@ polling surface.
 """
 from __future__ import annotations
 
+from mcp.server import Context  # SDK Context class, re-exported (package-shadow workaround)
+
 import asyncio
 import uuid
 from typing import Any, Dict, Optional
@@ -245,7 +247,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def export_user_data(
-        ctx,
+        ctx: Context,
         format: str = "csv",
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
@@ -267,7 +269,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def generate_report(
-        ctx,
+        ctx: Context,
         report_type: str,
         start_date: str,
         end_date: str,

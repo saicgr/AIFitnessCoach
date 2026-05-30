@@ -11,9 +11,10 @@ from mcp.tools.body import _get_user_profile_impl
 
 def register(mcp_app: Any) -> None:
     @mcp_app.resource("fitwiz://user/profile")
-    async def user_profile(ctx) -> str:
+    async def user_profile() -> str:
         """User profile JSON. Requires read:profile scope."""
         try:
+            ctx = mcp_app.get_context()
             user = await require_user(ctx)
             require_scope(user.get("mcp_scopes") or [], "read:profile")
             data = await _get_user_profile_impl(user=user)

@@ -7,6 +7,8 @@ the AI surface gets parity with the in-app coach.
 """
 from __future__ import annotations
 
+from mcp.server import Context  # SDK Context class, re-exported (package-shadow workaround)
+
 import base64
 import json
 from datetime import datetime, timezone
@@ -219,7 +221,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def log_meal_from_text(
-        ctx,
+        ctx: Context,
         description: str,
         meal_type: Optional[str] = None,
         consumed_at: Optional[str] = None,
@@ -244,7 +246,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def log_meal_from_image(
-        ctx,
+        ctx: Context,
         image_url: str,
         meal_type: Optional[str] = None,
     ) -> Dict[str, Any]:
@@ -263,7 +265,7 @@ def register(mcp_app: Any) -> None:
         ),
     )
     async def get_nutrition_summary(
-        ctx,
+        ctx: Context,
         date: Optional[str] = None,
     ) -> Dict[str, Any]:
         return await run_tool(
@@ -277,7 +279,7 @@ def register(mcp_app: Any) -> None:
         name="search_food",
         description=f"Search the {branding.APP_NAME} food database (USDA + custom foods).",
     )
-    async def search_food(ctx, query: str, limit: int = 10) -> Dict[str, Any]:
+    async def search_food(ctx: Context, query: str, limit: int = 10) -> Dict[str, Any]:
         return await run_tool(
             ctx, "search_food",
             required_scope="read:nutrition",
@@ -289,7 +291,7 @@ def register(mcp_app: Any) -> None:
         name="log_water",
         description="Log a water intake in milliliters.",
     )
-    async def log_water(ctx, amount_ml: int) -> Dict[str, Any]:
+    async def log_water(ctx: Context, amount_ml: int) -> Dict[str, Any]:
         return await run_tool(
             ctx, "log_water",
             required_scope="write:logs",
@@ -301,7 +303,7 @@ def register(mcp_app: Any) -> None:
         name="get_recent_meals",
         description="Return the user's most recent logged meals.",
     )
-    async def get_recent_meals(ctx, limit: int = 10) -> Dict[str, Any]:
+    async def get_recent_meals(ctx: Context, limit: int = 10) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_recent_meals",
             required_scope="read:nutrition",
@@ -313,7 +315,7 @@ def register(mcp_app: Any) -> None:
         name="get_favorite_foods",
         description="Return the user's saved / favorite foods.",
     )
-    async def get_favorite_foods(ctx) -> Dict[str, Any]:
+    async def get_favorite_foods(ctx: Context) -> Dict[str, Any]:
         return await run_tool(
             ctx, "get_favorite_foods",
             required_scope="read:nutrition",
