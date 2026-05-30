@@ -1,6 +1,9 @@
 # FastAPI & Server
 fastapi==0.109.0
-uvicorn[standard]==0.27.0
+# Floor lifted 2026-05-30: mcp>=1.27.2 (line 88) requires uvicorn>=0.31.1, which
+# conflicts with the old exact pin uvicorn==0.27.0. Use a bounded floor so pip can
+# resolve against mcp while staying on the 0.x line (no breaking 1.0 jump).
+uvicorn[standard]>=0.31.1,<1.0.0
 gunicorn>=21.2.0
 python-multipart>=0.0.18
 
