@@ -476,7 +476,13 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
       return AsyncValue.error(state.error!, StackTrace.current);
     }
     if (state.isLoading) return const AsyncValue.loading();
-    return AsyncValue.data(state);
+    // No score, no error, not loading: a pre-load settled state (e.g. the
+    // initial `const NeatState()` rendered before the post-frame `_loadData`
+    // flips `isLoading`). `loadNeatData` always settles into a score OR an
+    // error, so this can only mean "nothing produced yet" — show the skeleton
+    // rather than handing a score-less state to `contentBuilder`, which would
+    // force-unwrap `score!` and crash.
+    return const AsyncValue.loading();
   }
 
   Widget _buildErrorState(

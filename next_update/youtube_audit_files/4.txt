@@ -1,0 +1,1699 @@
+https://www.youtube.com/watch?v=FG8qWlEeNm8
+This is the Fitbit Air and I've been
+wearing it for about two weeks now to
+test out the sleep tracking, the heart
+rate accuracy, the activity tracking,
+and everything else that you would need
+to know before buying this device. I did
+pretty much everything you could with
+this watch from working out, traveling
+internationally, going through time
+zones, getting sick, drinking alcohol.
+Literally anything that a watch would
+track, I've done it in the past two
+weeks. It's been a wild two weeks. But I
+want to start off with just the design,
+the fit, and the comfort. I promise it's
+really interesting once we get into the
+accuracy tracking, but I think this is
+probably the most important part, the
+fit and the comfort. Looking at the
+design, there are several different
+bands or straps you can get. And to swap
+them out, the actual Fitbit Air device
+is inside here. It's just this little
+tiny puck here. The battery life on it
+is rated for 7 days. And from my
+experience, I got almost exactly 7 days
+with this. You'll see that there's no
+display. That's kind of the whole point
+of this. You're not going to get
+notifications. You're not going to get
+any feedback on this with two small
+exceptions. One, there's a small LED
+light on the side that can tell you when
+the battery is low. So, if you double
+tap it, it'll blink. It'll blink white.
+That means the battery is like over 20
+or 50% or whatever. I'll show you on
+screen. It blinks amber if it's under
+20% and it flashes if it's like 1%
+pretty much dead. The other thing this
+can do is it has a small haptic motor in
+there. So, the vibrating motor is going
+to be used for a low battery alert, but
+mainly it's going to be used to wake you
+up in the morning if you want to use
+this as an alarm. But it's not just a
+regular alarm. You can actually set this
+as a smartwe alarm. So, you can set it
+and say, I want to wake up at 6:00, but
+wake me up at the optimal time based on
+my sleep that is just before 6:00. And
+in my experience, the haptic motor is
+very clean. It's plenty strong for
+myself, and I find it a really pleasant
+way to wake up. You simply tap the band
+and that'll turn off the alarm. So,
+there are three different bands or loops
+as Fitbit's calling them that you can
+put on here. And uh there's going to be
+more, I'm sure, aftermarket, but at
+least at launch right now. The one that
+I've been using for the past 2 weeks,
+which I absolutely love, is called the
+performance loop. That's this one right
+here. There's also elevated modern. I
+don't actually have that one. And there
+is the silicone one, which is called the
+active band. But looking at this one
+right here, like I said, this is very,
+very comfortable. Of all the fitness
+trackers I've ever worn, this is very
+likely the most comfortable one, which
+is kind of the whole point of this in
+the first place. People say, "Why do you
+want a fitness tracker with no display,
+the main thing is you want a long
+battery life and you want a small, very
+comfortable device that can track your
+sleep and track your health 24/7." So,
+when you put this on, the first thing
+that I mentioned in my original uh first
+impressions video is it's a little
+tricky to uh put it on, but I've really
+gotten the knack for it now. All you do
+is use one finger to hold the loop down
+and then wrap it around. So, it covers
+the band. It covers the Fitbit itself.
+And I find that from most angles, you
+cannot tell that it is a fitness
+tracker. Some people were worried that
+when you hold your wrist straight on,
+there's small gaps. I personally don't
+wear these things particularly tight. I
+find that they're perfectly accurate
+when they're a little bit more loose and
+I get a lot less fatigue. But if you
+really tightened it down, you can very
+easily have essentially no gap on your
+wrist on the edges there. But I I don't
+think most people even see that anyway.
+Also, because you're not taking this
+off, some people may not even take it
+off when you shower. It is rated for
+water. You're good to swim with this.
+You're good to wash your hands and
+shower and everything. And the band
+actually dries rather quickly. In fact,
+significantly faster than the band on my
+Whoop, which I'm talking about in a full
+comparison in another video. I've
+actually been wearing this with several
+other bands for the past two weeks. I've
+been wearing the Whoop MG, the Polar
+Loop 2, and the Amaze Fit Helio. All of
+those are really an interesting
+comparison. And if you want to see the
+full in-depth comparison, be sure to
+subscribe. That video is coming out in
+the next couple days. I'm just wrapping
+up the final touches on that data.
+Anyway, back to the design here. Two
+thumbs up. The only thing that I can
+complain is the charger for this is a
+unique and new charger. It's not the
+same charger as the Pixel Watch or
+really anything else, which means if
+you're charging this once a week, I'm
+almost definitely going to be losing
+this little charger. So, I'll probably
+have to buy some more to have around or
+maybe just keep it in one spot and hope
+I don't lose it. But I do appreciate the
+magnet strong enough and this is light
+enough that you can charge it. It could
+hang off of something. Uh I threw it in
+my backpack and had it charging and it I
+didn't have problems with it coming off.
+I think that overall it did a good job.
+I do wish it had, you know, a little
+USBC thing on there or something, but
+hey, if that's what keeps it smaller,
+I'm fine with that. But let's talk about
+the accuracy. After really wearing this
+for 2 weeks, how accurate is it? The
+first thing I want to look at before
+getting into sleep tracking is going to
+be the heart rate accuracy during
+workouts. If you go for a run with this,
+how's it going to do? Honestly, I have
+really nothing bad to say. This did an
+excellent job with an R value of 99 and
+an R squared of 98. That's a a
+correlation. So, in statistics, higher
+value closer to 1.0 is better. And this
+one being 0.98 is absolutely incredible.
+I was comparing this to an ECG. It's a
+Polar H10 heart rate strap. Goes around
+your chest. It is much much more
+accurate than most uh optical heart rate
+sensors. And so seeing this perform so
+closely to that, I think is very, very
+reassuring. You'll notice that there are
+some slight delays with intervals,
+especially when starting and stopping,
+that's very typical for optical heart
+rate sensors. And this lag is probably
+best visualized with the gap chart. So
+looking at this, you'll see there are
+some spikes upwards of like 20 or 21
+beats per minute, but very, very brief.
+And that's really only when your heart
+rate changes drastically because you
+just started or stopped an interval or a
+run. I've also tried this with
+weightlifting, cycling, and many other
+workouts. And from my experience, it
+actually does a really good job. It
+stays on very well. And despite having
+such a simple little sensor array on the
+back, it seems to do a really good job.
+As far as GPS accuracy, well, this one
+is actually not related to the band at
+all. A lot of people might wonder, how
+do you track your workouts with GPS? And
+the thing is, you're going to have your
+phone with you. You can use this without
+your phone. You can leave your phone at
+home. It's going to track steps and
+movement, but you won't have any
+tracking of distance and where you're
+actually going unless you bring your
+phone with you. So, GPS accuracy is
+going to depend entirely on which phone
+you have. The good thing is a lot of
+phones are fairly accurate these days.
+As far as step tracking accuracy, this
+is something that I actually don't
+usually do with a lot of smart watches,
+but because this thing, I think people
+wearing this are going to care a lot
+about getting your 10,000 steps a day,
+more of the basic everyday health stuff.
+And I have some interesting observations
+with the step counting. First of all, I
+woke up every day uh with some steps on
+the clock. This morning, I woke up with
+80 steps. I don't walk in my sleep. It
+should be zero. So, there are some
+phantom steps like where it detects a
+step that it's not actually a step.
+Also, I tracked 1,000 steps. I did this
+test twice. I just counted 1,00 steps.
+And the first time this registered 967,
+so a little bit of a discrepancy there.
+The second time was almost deadon at 994
+steps, which I think is really quite
+positive. And as far as the entire day
+of walking and just tracking my steps, I
+found that I mean, comparing to this to
+the other three fitness trackers, like I
+said, full in-depth video coming soon.
+But a little sneak peek here, this band
+was never the highest or the lowest. It
+was always in the middle, which I think
+is generally a good sign, and I suspect
+that it is fairly accurate in counting
+steps. Now, so far, we've had almost
+nothing negative to say about this. very
+accurate heart rate, very comfortable,
+good battery life. Uh, step counting
+seems to be pretty good as well. The
+sleep tracking, this is a little bit
+more interesting. So, comfort, the
+sleeping with this, awesome, great
+experience. I never even realize it's on
+my wrist. But as far as tracking goes,
+like I said, I've done a lot in the past
+couple weeks that really test out the
+sleeping. Sometimes maybe I tested it
+more than I should have, but the good
+news is when I'm at home, it actually
+tracked really well and it accurately
+depicted when I was asleep, when I was
+awake. It had the overall time also uh I
+don't know if you can hear in my voice I
+feel good today. I might have like a
+little bit of lingering like congestion.
+I I feel fine but probably two or three
+days like literally the past two or
+three days I was not doing well at all.
+And looking at this you can see we have
+two different metrics that I like to
+look at. We've got the sleep scores and
+the readiness score. So the readiness
+score I think did a much better job of
+actually tracking how I felt in the
+morning which makes sense. And if we
+look at that in the past week, it says
+mostly low, which is true. And you can
+see the four days where I was pretty
+sick. I was down bad really. Um, and one
+thing that I think is interesting though
+is I felt like I was progressively
+getting better every day. Like I I
+probably Saturday and Sunday were the
+worst two days, but Monday and Tuesday,
+I felt like I was feeling a little bit
+better in the morning. And yet, this
+showed a very consistent just level 15
+recovery score every single day. So, I
+don't know if it's not really as
+granular as I would like or if I just
+didn't recover as well. And maybe I was
+getting used to not feeling so great.
+Uh, but that was kind of weird to me
+that it didn't slowly move up as I
+expected it would. Also, in the sleep
+tracking, you'll see it gave me
+surprisingly good sleep scores. So,
+sleep is going to be prioritizing
+different things than the recovery.
+Recovery is a lot more based on your
+heart rate and your heart rate
+variability, which if we look at those,
+small tangent here, if I go into heart
+rate and heart rate variability, that
+did exactly what I thought it did.
+That's what it felt like where was kind
+of gradually getting a little bit
+better. my heart rate v variability was
+improving as I was healing a little bit.
+And same thing with resting heart rate
+that was gradually going back down as I
+was starting to feel a little bit better
+or recover from my sickness. But the
+recovery score as a whole again kind of
+flatlined at 15 and then jumped up today
+to a much higher score. As far as the
+sleep score goes, this is like I said
+prioritizing very different things here.
+If I look at my oneweek trend, it's kind
+of all over the place. It prioritizes
+much more like what time you go to bed,
+how regular that timing is, and how long
+you were sleeping. So, looking at this
+right here, you can see apparently I was
+in bed for long enough and I was not too
+restless or anything. Except last night,
+even though I feel so much better today,
+last night was not as good of a sleep
+score as the previous two nights when I
+was more sick and felt less healthy, but
+I stayed in bed a little bit longer. So,
+I guess what I'm saying here is for me,
+I would put so much more value on the
+readiness score than I would on the
+sleep score. I think a lot of people
+care about sleep, but the sleep score, I
+got I'm a little bit iffy about it to be
+honest. And I guess this is kind of a
+good segue into the app in general. I'm
+going to show you a lot more about the
+app throughout this video, but if I tap
+on sleep, uh I can then go down to the
+sleep quality, and I really like these
+four metrics. It shows me the time to
+sound sleep, it gives me my average
+range, and you can see right now I'm in
+the middle of that, 14 minutes. That's
+good. You can also see sound sleep. So,
+this is going to be like your deep sleep
+and your REM sleep. It adds up and shows
+like again that was in rain so it's
+green. It shows you restlessness which
+is kind of a good like I like how it
+summarizes this and these are really
+useful metrics so you can say all right
+maybe I was more restless because it was
+too hot or the bed's not comfortable or
+maybe I had more interruptions last
+night. It really explains why you might
+not have a good sleep score and what you
+can improve in your sleep just from
+these right here. Maybe time to sound
+sleep is because you ate before you went
+to bed or something like that. Uh, one
+more aspect to sleep tracking that was
+not a particularly strong point for this
+device is nap tracking. If you take a
+nap, it usually works, but not always
+that well. A lot of times if you take a
+nap for like 25 minutes, it might only
+capture like 15 minutes of that. It
+might not even record it at all. I found
+this was a big problem when I was
+traveling and I was sleeping on planes
+like, you know, redeye flights. It was
+kind of like a nap here and there. Uh,
+it really didn't do a great job with
+that. In fact, traveling in general with
+this was kind of a disaster. As I went
+through different time zones, I crossed
+the date line. I went from uh
+Pennsylvania to Japan. So, I was
+interested to see how this watch would
+handle it. And it literally just deleted
+some of my sleep on the plane. It didn't
+know when to count certain things. There
+were nights that it gave me zero sleep,
+other nights it gave me good sleep when
+I actually didn't sleep. Uh, I think
+that it was kind of a big miss. And like
+I said, I talk about that a lot more
+compared to the other devices. Most
+devices struggled with that. There was
+one device that actually did a
+surprisingly good job. So, if you travel
+a lot, this is not going to be very good
+at that. In fact, it also didn't know
+what to do with times. It said that my
+sleep was very consistent even though I
+was on a 12-h hour time zone difference.
+Like, it just did not really account for
+time zones. Now, when it comes to
+tracking workouts, I mostly did a lot of
+walking. Like I said, I was traveling in
+Japan and uh many of the walks were
+tracked and it gave me nice insights in
+that. It knew my speed. is able to give
+really interesting insights into that
+and say, for example, like I'm coming
+off a torn hamstring and uh it's saying
+like, oh, you're walking faster than you
+did last week when you're just casually
+walking around indicating your hamstring
+is probably recovering. And I thought
+that's really interesting because I
+would have never looked into that those
+data and it's that's the kind of thing
+that AI is actually very helpful to tell
+me. It learns from what you do also. And
+so if you're doing a lot of different
+types of exercises, it'll automatically
+start tracking a number of different
+types of workouts. But again, it's going
+to learn more from your specific habits
+and what type of workouts you do. And
+you can also give it feedback. And if it
+tracked one and it was wrong, you can go
+in the app and very easily change that.
+What I do for any kind of lifting or
+running though is I go in and I manually
+start it. So, if I tap on start, I
+simply choose which one I want, but it
+doesn't let me like get ready. Like, as
+soon as I tap on it, just starts right
+away. Counts down from three and it
+starts going. I wish it was like a
+loading page where you could then tap
+start when you're ready, like get your
+music ready, choose the right kind of
+workout. Uh, it doesn't do that. Also,
+when you're done, if you accidentally
+started the wrong workout, you can't
+just like discard the workout. So, I
+have this connected to Strava, which is
+a little bit awkward. When I
+accidentally start a workout, uh, and
+I'm like, "Oh, no, that's not the right
+one." And I stop it. Well, now you just
+recorded a 5-second run that's
+definitely getting published to Strava.
+All your friends and followers are like,
+"What? What's going on with that?" Uh,
+most other devices, if it's any kind of
+workout of any duration, when you stop
+it, it says, "Do you want to save it or
+do you want to discard it?" You don't
+have that option with this. This is kind
+of an odd quirk. And I guess while we're
+here, I might as well go through the
+rest of the app. There's a lot that I
+really like, some things that I really
+don't like. Starting off with the very
+top. I love this right here. Having the
+charts, you can customize what this
+shows based on what your goals are.
+Whether that's weight loss, uh just
+getting more active, training for like a
+marathon or something. I think most
+people training for marathons would
+probably use a different device, but a
+benefit of of Google Health here is that
+you're able to port in a lot of
+different data from many different
+sources. So maybe, for example, I want
+to look at like my heart rate. I can go
+into readiness score. I can then go down
+to my heart rate variability and on the
+top right I can tap on the three dots
+say view sources and it shows me all the
+different sources that are connected to
+this and I can choose all right maybe I
+just want to look at only the Fitbit air
+data I could do that if you have maybe
+an eightle mattress or anything from a
+mazefit all these different different uh
+platforms they can all connect to this
+and you can aggregate your data in one
+location and you can choose which data
+you're actually looking at so I think
+that is a huge positive of the app also
+like I said I love the charts up top
+I've got my steps, my readiness, and my
+sleep. That's what I really care about.
+Uh, I can then swipe through. It kind of
+swipes a little fast. You have like, you
+know, a number of other things. You have
+your calories, the floors you go up and
+down. This device just is not capable of
+tracking floors. It just always says
+zero every day. So, a little bit of a
+downside. I wish this was able to count
+staircases, but I actually don't know
+how they normally do that. I always
+assumed it's accelerometer, but maybe it
+is barometric pressure. That's the main
+thing I really like about the app.
+Scrolling down then on this little today
+tab. Uh it's kind of a lot of like AI
+paragraphs. Some of these insights are
+very useful. Like I said, it could say
+like uh I told it that I had hamstring
+injury and it said, "All right, well,
+you know, it's really hot out. Make sure
+you drink a lot of water." Yeah, I
+already kind of know that. That's AI.
+Whatever. Um it tells me maybe you want
+to slow down because you already did a
+lot of working out today. Um scrolling
+down past that, you get another little
+block of like useful graphics. So, I
+kind of wish this was above the insight.
+Or I wish the insight was smaller. I
+don't know. I feel like this is just
+like a clumsy cluttered UI in my
+opinion. Like it asks me like, "Oh, how
+are you feeling right now?" And you have
+to say like, "Oh, it's feeling a little
+better." Or whatever. You can reply and
+talk to AI. That feels like I don't want
+that there. I don't know why it's there.
+Anyway, useful charts down here. But
+look at this quirk. You have last
+night's sleep and then last night's
+resting heart rate and heart rate
+variability. But if I scroll down even
+further, you get the night before with
+the night before sleep and sleep score,
+but last night's heart rate and heart
+rate variability. Like these numbers
+don't match. You think this would be the
+heart rate and heart rate variability
+from two nights ago as the sleep scores
+from two nights ago, but it's not. It's
+last night's heart rate and heart rate
+variability, if that makes sense. It's a
+mismatch on what it's actually showing.
+So, that's redundant data there, and I
+don't know why they're showing that.
+Also, you saw I had to scroll past a
+number of other just paragraphs. Some
+people may really like these insights. I
+think that you should at least like
+collapse them and get rid of them. This
+just feels like kind of just like AI
+slop to me where you just have non-stop
+paragraphs. Like I'm not going to go and
+read through all of this when I'm trying
+to get a quick idea of what my health is
+like for the day. Also across the bottom
+then if we go to fitness, you can see
+this is actually pretty good. I like
+this. They've got your workout library
+there. If you want to go through one of
+their kind of exercise programs, you can
+start a workout. On the top we have the
+recent workouts you did. So you can go
+and tap into like today's run or today's
+lifting. And within each one, not a ton
+of data here, at least not with
+weightlifting, but I mean it shows me
+enough. It shows me pretty much
+everything I would really expect. It's
+not doing like rep tracking necessarily.
+Uh but nonetheless, it's showing me, you
+know, some pretty decent data. Going
+down, you've got your key metrics in
+terms of cardio fitness, calories
+burned, your resting heart rate, your V2
+max, running distance, like all these
+different things. I think this is pretty
+well done. I actually really do like
+this tab. I just wish I could get rid of
+the workout library. I'm not personally
+a user of that and I would like to
+customize this a little more and just
+get rid of that. In case you can't tell,
+I really like the numbers and the
+charts. I love this stuff right here. I
+want more of that and I want less of not
+that. Basically, if we go into sleep
+tracking, again, this is pretty solid. I
+think that this tab is pretty good. Uh
+at the bottom, just like some general
+videos and meditation stuff I guess you
+could do. I'm never going to do that.
+Uh, but you know, it's there. I think
+this is actually the best way AI should
+be implemented. I like how they have a
+small paragraph at the top kind of
+explaining what's going on and what you
+should do. And then you can scroll down
+and just get all data and graphics. Over
+in health, again, this one, all
+graphics. You already know I'm going to
+like this page. That's really solid. The
+last thing I want to talk about in the
+app is at the top left. Uh, you can tap
+on that and you get some basic settings
+to see if your device is connected and
+make sure it's synced. Now, there is a
+subscription optional for this. You may
+have seen from the headlines or maybe
+from my previous video. The device
+itself is $99. You may pay extra for
+another one of the bands or whatever,
+but you own the device and all the data
+that you're getting from the device. But
+you do potentially have to pay $99 a
+year if you want to get the AI stuff
+integrated into this. Personally, I
+cannot wait to get rid of the AI. I I'm
+so excited to get rid of this little
+free trial subscription so I can get rid
+of all these paragraphs. And I really
+hope you just have a simplified
+interface with just numbers and charts.
+I would absolutely love that. And while
+it's useful for some people to ask
+questions about your health, I just feel
+like this is a little bit overdone. I'd
+rather have the chat in the corner and
+just ask questions. I think Whoop does a
+great job of balancing AI that's helpful
+without being in your face. So this is a
+fairly simple device. Google added a lot
+of AI and a lot of features into the
+app. Some things I really like. There's
+a lot to really like about this, but
+there are also some weird bugs, some
+weird quirks that I think Google kind of
+needs to work out. Like I showed you
+with where it shows last night's heart
+rate when it's trying to show last
+night's sleep score. Like some things
+are mismatched like that. I think that's
+kind of weird that it does that. Also,
+TCX files. So, you can export your
+workouts. I really appreciate that. But
+you can only do it if it's like a run or
+something outside that moves and has GPS
+data associated. If you're lifting
+indoors, you can still go on the app and
+you can still export it, but it's just
+an empty file. Like, you won't have any
+heart rate data in there at all. I don't
+know why. The other quirk, like I said,
+is the inability to discard workouts at
+the end. You have to save the workout
+and then you can go back and delete it
+later. Another weird quirk. But this
+device as a whole, I think that for
+Fitbit people, people who want to track
+their steps, track their health, and
+just kind of keep general tabs on how
+their sleep is, this is the perfect
+Fitbit device. I know so many people
+that have a little small watch like an
+old school Fitbit or a Mi Band. And
+they're great that they show you time
+and display and everything like that,
+but I think a lot of people would be
+perfectly happy sleeping with this as
+something subtle and comfortable and
+lasting about a week and then seeing all
+the data in an app and then maybe on
+their other wrist they can wear, you
+know, a regular watch or something
+that's more stylistic of whatever they
+really like or maybe even just an Apple
+Watch that they only wear during the
+day. So, I'm a big fan of the Fitbit
+Air, but is it actually the best
+alternative to Whoop? Well, you're going
+to see in that video. I think I think
+most people are going to be surprised. I
+think you actually would be surprised by
+the verdict I have in that video. So,
+thanks for watching, guys. I'm really
+excited to see you in that next video.
+Be sure to subscribe so you don't miss
+it.
+
+https://www.youtube.com/watch?v=hlY1cGQMF2Q
+How are my dear technophanatics
+and technophanic? Today we go
+with the revision of the Fitby Air. Come on
+with the video.
+Then approximately two weeks of
+being using the new Fit the Air is
+one of the most complete bands of the
+market. You can welcome
+our daily activities when
+we slept and it handles an app well
+complete. We're going to have practically it
+essential in terms of the data that we
+you can give for free, either
+our heart rate, oxygen level
+in the blood, the ratio of our
+breathing, the variability of the
+heart rate, the steps that
+we perform, calories burned and we will
+have a variety of exercises for
+follow up. Now, if you want to leave
+for something more complete, we have a
+service from 99 a year where
+we will have artificial intelligence
+to practically have a coach, in
+where we can give you information about it
+that we want to work and it can give us
+a routine depending on the part of the
+body you want to work on, analyzing
+every detail of your activities
+previous. This way it can give us
+a better understanding of our body
+and the activity we need to do.
+The advantage of this service is that the
+egg of each exercise can give us
+a small evaluation of what we have
+done and based on that it gives us some
+recommendations. As for the battery,
+which is important, it can give us about 7
+days if we do about five exercises
+12% battery arriving per week
+on the seventh day. But they do exercise
+like I do, which is between 10 to 12 a
+the week can give approximately
+between 5 to 6 days. So that they can give one
+idea, I do between 80 to 90 minutes
+daily cardio and 30 minutes of weights
+three times a week, so
+mine is intense. Be careful, the battery charges
+from 0 to 100% in a matter of 90 minutes and
+5 minutes of charging gives us a day of use.
+Now, we are not going to have one
+screen, so we won't have it
+distraction. It can be positive for
+some as negative for others.
+We have several band options for
+exchange and the best thing is that it is good
+lightweight, only 12g counting band. is
+water resistant up to 50 m
+depth. But let's see, why eh me
+I'm switching from the Apple Watch Series 11
+Fitby Air? It's very simple. I am
+a person who likes to use
+classic watches and unfortunately
+I don't use them because I need them
+a device that gives me a good
+amount of information, both from me
+health, heart rate or oxygen
+the blood, which eh follow up on
+my daily activities when I sleep,
+but I couldn't find a band that would suit me
+you can deliver that amount of data to the
+level like the Apple Watch does. He
+point is that now that we have the huh
+Fitby Air, we can see what we
+delivers a good amount of
+information, manage intelligence
+artificial, I can have my own coach
+and we will notice that there are some
+differences. It's true, it's not going to be huh
+something that distracts me so much, since no
+the FitB AR has a screen like it
+it has the Apple Watch Series 11, but it will
+depend, as I say, on the person who
+you are going to acquire it. I mean, do you want something
+where I have a screen that you
+notify, that you receive messages, that
+you can see the person calling you in huh
+your doll? The Apple Watch is one
+excellent alternative. Do you want something that
+don't be distracted, but do it
+track your daily activities
+when you sleep? at the same time have a coach
+what does he tell you when you finish your
+exercises that you rest or have done
+a good job, anyway, I mean, that you
+say more or less the information of how
+your heart rate has gone during the
+exercise process. All of this is
+incredible and Fitbi gives it to you,
+say, the application. Be careful, for it
+it's true we're going to have to pay $99
+a year if we want the coach or
+I can simply tell the
+application through this
+artificial intelligence at FitB that
+for example, I made a routine for myself
+do weights, work your arms,
+work the chest eh for eh 3 days a
+the week and he's going to give me a routine and
+he is also going to give me the exercises that
+I can make the video so I can
+improve. the way I do them
+parts. So let's see what it is
+the application is more complicated in that one
+aspect. I know the Apple Watch inside
+we also have a coach and the application
+that also has a service and a
+cost, right? In case you
+they want to use it, but I see it as more viable
+in my case, as I say, on a personal basis
+the eh FitB Air. Well let's see what
+in those aspects it fulfills almost the same
+purpose that we are going to see in Apple
+Watch and the Fitness application
+compared to the FitB application
+Air, which in this case you will have too
+artificial intelligence and it will be able to
+generate an exercise routine
+depending on what you want
+do. Inside the app too
+the plates of food that can go up can go up
+you are eh ingesting so that
+this way you can also place the eh
+the eh calories they are entering
+your body along with the calories that
+you guys burn during the
+exercises. So, let's see what
+this application is really good
+complete. We'll be able to go up until huh
+hey the date of hey what when we went to the
+doctor and the records that we
+we have, right? All that information or
+you will be able to get all that data
+also upload to the application. I haven't
+done. There are some steps that must be taken
+continue to be able to receive or let's say
+hey, upload all that data, right? All those
+medical results that you have
+they will be able to do it, but there is a process
+hey for that. Hey, like I say, I mean, I see
+that this application in this case is fine
+complete. There are, there are faults, there are faults,
+like for example, how he gave a screen
+for those who might want to see
+like heart rate, all of it or stop
+being able to activate an exercise, although the
+exercise will also be activated
+automatically at the time of that
+you are doing it. I mean, no
+they necessarily have to be with him
+cell phone, but the eh the band is going to
+being able to detect that you are doing a
+exercise and start recording
+those calories that you are
+burning. Something that I loved
+also, which I already mentioned, is the
+battery. It can enter us around
+between 5 to 7 days, depending on
+amount of exercises that you do
+daily, as I say, I do between 10
+at 12, therefore, and it is an hour and
+average, 2 hours of daily exercise, per
+therefore the battery is going to
+wear out more during the week. Is for
+that lasts between 5 or 6 days for me
+depending on the number of exercises
+what to do during that time or during
+that period. But hey, you do
+three exercises a week eh more or
+the 7 days will last less and less
+leaving a remaining percentage, but the
+advantage is that you do it every 7 days
+they can carry, they can sleep with it
+clock, with the clock, no, with the band on
+this case. And the other thing is that it's good
+lightweight, 12g, 5g price without lavender
+and 12 ganda. outside of that you are going to
+have a variety of bands a
+I, for example, am going to buy one
+which is the silicone one, since this one
+here, being a fabric-like material, eh
+it absorbs sweat and that's what I don't
+liked. I mean, I'm going to have to
+wash it anyway, but hey when
+you bathe with the band, well
+they are going to moisten and it is not as if it were the
+silicone that automatically goes to
+dry much faster than when it is
+fabric type material. So huh
+I consider that in my case the one of eh the
+silicone is going to be the most
+recommended, so that's what I'm going for
+buy me now. Their prices range between
+39.99 to 49.99, which is the most luxurious,
+which is the one I am going to acquire, which has
+been the most comfortable after the
+I tried it at the eh Google event.
+So, there are some advantages. Something that
+I think they could improve, for example
+when you enter the application,
+which is something that we are with Apple
+Watch, just what we do is
+enter the part of your exercises,
+you choose the exercise that you
+they want to do it, but something that is
+smart on the Apple Watch is that
+know what exercises are
+you do it constantly and you are the
+first options that you are going to
+have on the watch. In the case of him
+Fitbe, when you enter the
+application, I have been doing
+elliptical practically almost all
+days, but the application always
+keeps at the bottom, then
+I have to go, I mean, let's say the
+exercises that are not my daily routine
+I'll find them in the part
+superior. It would be ideal that having
+artificial intelligence analyze which ones
+they are my exercises that I do the most and the
+keep on top. But is
+it's one of the details, practically
+the only detail I have been able to find
+when using the Fir.
+Okay, I know a lot of people have
+been comparing Wop versus FitB
+Air because they are smart bands and
+both have annual service, one
+it's $200, the other one is $100, right? In the
+case of Fit the Air. Now, when
+let's go to the data that you can give us
+in real time, I have been
+comparing with the Apple Watch. To what
+I have noticed and when I have compared it to
+other bands are on the Apple Watch
+I burn more calories, that is, it appears as
+that I burn more calories. Yes, the same as
+it happens with the FitB Air, where we are going to
+see that the sensor that detects detects the
+heart rate is even, between 164, 165
+hey beats per minute, but when
+let's go to the calories burned, let's go to
+see that on the one hand in the Fitby it is 736
+more or less and on the other at Apple
+Watch, it's going to be 900, right?
+So, let's see what there is
+difference in what it is
+calories that one burns during the
+exercise, but as far as
+sensor in heart rate, let's see
+which is very similar between these two
+devices.
+A low point that we could mention in
+the Fit the Air does not handle GPS.
+To do this you are going to connect with your
+mobile device to be able to perform
+that follow-up. And if you want to see
+the map of the route that you have
+fact, well they will depend on your
+mobile device. So this could
+be maybe a low point that we are going to
+find at Fit the Air. Stop it
+finish, for $99.99
+what does this band cost, you are going to
+acquire a product that will help us
+deliver a good amount of data
+free way. And if you want
+maybe have a coach to be able to
+perform certain exercises to be able to
+work different areas of your body,
+whether it's the arms, whether it's the chest,
+abdominal, among other things, will
+having this coach, they will be able to go up
+also uh uh your medical results. huh
+they will be able to upload images of what
+they're eating to make them count like huh
+calories that you have ingested. In
+end, that is, let's see what
+indeed it is a good application
+complete and at the same time gives us one
+good variety of exercises for you
+you can follow up, like
+also when sleeping.
+So, for me that is essential within
+what a smart product is
+that eh is compared, right?, with Apple
+Watch or others on the market. AND
+like I say, this one here has a price
+well accessible and if you already want it
+premium service, well they are going to have to
+pay in this case $99
+per year or $9.99 and 99 per month. So
+it is highly recommended, especially if
+you are one of those who use watches
+classics and that maybe you don't want
+use an Apple Watch, but
+you want to go to a smart band, the
+Fitby Air is an excellent alternative
+what you are going to find in it
+market. I'm going to leave the link in the
+description in case you are interested.
+If you liked this little video, I liked it
+delighted, don't forget the lito
+barria, don't forget to subscribe to
+this channel. My name is José
+Technophanatic. See you in the next one
+video. Ciao.
+
+https://www.youtube.com/watch?v=rBRUpu0sBtk
+Hello, friends of Esana. Today it comes out
+on sale the Google Fitbit Air, a
+device that I have bought, I have
+spent in '99 € and which also opens
+new era for Google, as it has launched
+at that developer conference
+Google IO, which was a couple of years ago
+weeks your new health suite and
+sport Google Health, a suite that us
+now Yemina is integrated and be careful with this
+it is paid, that is, we have Google
+Fitbit Air coming to compete
+obviously with the UP, with the Amaz Outfit
+Elliot Trap with other alternatives that
+there is on the market and she tells herself
+you don't have subscriptions, okay? that
+this is something I have seen as
+sales claim, but it is true
+that they keep an ace up their sleeve, that
+the user does want to access
+the whole intelligence thing
+artificial Yemini as a coach, like
+coach, not only on a sporting level,
+but also at the level of pure health, this
+well we have to go through software to
+have this possibility. 9.99€ per month,
+100 € in the case of subscription
+annual. It's been possible for a few days now
+find in the United States and in fact
+some analysts have already spoken of
+them today. In fact, he got up
+however, I understand the units because
+I know absolutely nothing about this.
+Some have also been able to publish eh
+let's say the accounting as it is
+exactly, okay? There is also a channel that
+you should continue if you like all this
+song called The Quantified a
+Scientist and he is a guy who tests,
+he's from Austria if I'm not mistaken, but
+the reviews, the analyzes are in English
+and although I have disagreed on some
+occasions with him as to what I
+I found, I mean a few years ago
+reviews, let's say, very accurate or it looks
+let the guy test, let's say
+all devices, right? And now I know
+he just also published that video with
+the analytics and data that has
+given. And be careful, they have been very
+promising. I mean, basically it
+what Google has done is release a
+device without screen, without any
+intelligent capacity type. This very
+in quotes because the bracelet itself
+he's pretty smart. Very light, 12
+g, be careful, it is very little compared to the
+GP. 12g with strap included. Of
+in fact, it's practically half of
+size. He is a pebel, which is how they have him
+called, which would be translated from English to
+spanish. Pebble. The UP with the strap and
+everything is 26.5 g and lafit helium, which
+I also analyzed here, well ago
+a matter of a year, out there, out there,
+but even the sensors themselves that
+they have equipped are the same as the
+Fitbit Spire 3, which already has this one
+kind of eh photodiodes, so to speak
+on the market, about 2 3 4 years. Here the
+magic is in what Google has known
+bring out and squeeze the potential that already exists
+at the time it had Fitbit that it bought at
+2021 and that has polished them a lot
+algorithms and therefore I was
+when I tried it, I looked around because
+I got the Pixel Watch 4 when I tried it
+the Pixels have always given me some eh
+parameters at the level of rhythm metrics
+cardiac, sleep,
+electrocardiogram, which in this case the
+Fitbit Air doesn't have it, but as for
+pristine health accuracy. Important
+one thing, even if it's called Google Fitbit,
+this bracelet is compatible with both
+iOS, with iPhone devices like
+also with Google. I don't know about Google here
+they've found a little girl, she knows that Apple is going
+to get nothing like it, therefore, they have
+released this application and this
+specific device is compatible
+both with iOS devices and also
+with android. But let's go a little bit
+depth at the hardware level, okay?
+What does it give us? It's a bracelet
+that's the only point he has,
+let's say, interactivity or
+communicating with the outside is a small thing
+LED on the side that
+we activate with a double press to
+give us feedback on the battery that
+has. There is no need to leave that way
+to the application and see it. The theory is
+that he is counting us 247, although
+of course, this bracelet has autonomy
+between 5 and 7 days, it depends on the
+reviews that I have been seeing, that of some
+I gave it a little more, some a
+little less. As I tell you, for
+of course, there is going to be an in-depth analysis
+from this device here, but me
+they sent an email today telling me
+that there was no stock, that I was going to have it
+what to expect after buying it,
+spend almost 100 € Well, within
+that fits is not too much for this guy
+of products. At the level of weerables me
+I mean, I mean, 100 € is money, but
+that I had to wait, I think it was
+between June 10 and 15 to power
+receive it. So well, I take advantage
+to tell you if you like this guy
+of content and you want to see the analysis
+let YouTube notify you when it
+come up, subscribe, ring the bell
+to support this project. This
+bracelet no longer has, let's say, any
+more type of interaction. Yes, it counts
+with a vibration motor that I when
+I was trying the Amat Fit Heli Strap
+he did comment, "Hey, I'd love to
+that in the end at least had one
+vibration." Okay, here we have it for you
+hey let's say an alarm clock that
+smart that we can select the
+option, that is, when it detects that
+we are in a not so sleep phase
+deep, because it begins to wake us up,
+close, obviously, to the time at which
+we have told him what we want
+wake up and then aside eh we can
+set a time as is and let it begin
+to vibrate at the time that way, one
+silent alarm. Another important thing
+that many of you asked me on the Amazon
+what they released later, this Fitbit
+Air seems to not have and will not have
+never, let's say, a bicep bracelet.
+Why do I say it seems like it's not going to
+never have? Because apparently they have
+asked directly to spokespersons
+Google, to developers of this
+project and has told them that it is not their
+I intend to take it out and if not
+they would have taken it from the beginning. That
+it doesn't mean that other brands, let's say
+get a compatibility, okay? But
+not by Google itself, because the
+algorithms and the precision itself so
+good that it has is associated with that
+count on the wrist part,
+OK? The moment you take it out
+from there it will be much more unsuccessful. This
+it does that for some sports, like
+for his own, for example, very common
+Crossfit, well there are already people who don't
+see so clearly, you would like to have the
+biceps, right? Which is normally one of
+the things that were most often asked of him,
+as I say, to the Afit Eliostrap
+Wop, which has always come out normally
+with that kind of bit accessory. AND
+besides we have a total of five
+sensors. The first would be the sensor
+optical, which as I told you shares with the
+Pirbis Inspire 3 and some other model
+bracelet that I don't remember right now but
+basic, but everyone has, let's say, this one
+same this same type of sensors,
+OK? It's not that this one is releasing it
+Fitbit Air. Secondly, oxygen
+in blood that this one is also going to give us
+fact, the bracelet itself. We don't have that
+yes, electrocardiogram, forget it here.
+Then we have both the accelerometer, the
+gyroscope and then a thermometer that we
+it will measure the variation of the skin.
+What is this going to be used for? For
+measure our temperature and comfort
+while we are sleeping. First
+place and thus give us more metrics
+advanced. And secondly too
+for menstruation. Women when
+they will get the period they are capable of
+tell him with some advance notice
+function of small variations that exist
+in skin temperature when well
+the cycle is going to come. Well this is it
+quite useful. They put it here
+also in the sensors of this Fitbit.
+We will have to see, in my case, just to
+the theme of the dream, but we will have to see
+how it works. It does not have an altimeter or
+barometer, it doesn't come with GPS either, okay?
+But this is not a criticism, that is, it is
+more or less normal. What you do have
+what to keep in mind is that if you want
+this eh bracelet at the end for what you
+it will help if you want to go running
+with her, if you want to go out and do
+hiking, cycling, whatever you're going to do
+being able to do is detect you
+automatically the activity and then
+I counted it for you and told you the rhythm
+cardiac. That is, upon detecting that
+you are, for example, running, well
+start measuring yourself more frequently
+heart rate, right? It also measures you
+steps, cadence, etc., but you don't
+measure GPS. If you want to have control
+of the location, of the positioning, of
+the speed and more accurately
+also the mileage you do, you will
+having to start the activity
+directly in Google Health or
+directly through Strava and put
+as an accountant for this bracelet
+because Strava and Google Health have
+directly compatibility, okay? But
+really what I see as most interesting
+with the presentation of this Google Air,
+although I tell you, it is not just exclusive
+for her, it can be done with
+anyone, I thought at first
+yes, if you have a Pixel Watch 4, of course
+once done you can try it, a Pixel
+Watch 3, you also download the
+google Health app, you pay it
+la, well, I think there are two months huh
+free to try it, okay? But
+basically it is having Yemini integrated and
+already drinking directly from the data
+what it collects from your bracelet or from you
+smartwatch to go that way
+advising you. For example, I want
+run x distance in x time, x days,
+well, it makes you a parameter, right? Or you
+he does a series of training sessions, but
+suddenly you feel more tired
+you notice that you have slept less or him
+it directly detects it. You tell him,
+"Hey, reprogram me. Today because
+I feel very tired. What can I do
+so as not to lose, let's say, the day of
+training? to condition it,
+let's say, to the conditions, right? What
+have. Well, theoretically everything
+he's going to give you this. Apart too
+advice on both nutrition and
+health tips on how to sleep better.
+All of these are features that, like
+I tell you, we have in Health Premium.
+In normal Health it will give us the
+basic sleep and rhythm data
+cardiac, etcetera, etcetera, everything
+that would come normally. Yeah
+we want to get the full potential out of it
+final a la parte de que Google esté
+detrás de este proyecto y toda la parte
+de inteligencia artificial y Gemini,
+tenemos que pasar por caja, bueno, esos
+dos meses no que tienes gratuitos al
+principio, pero ya os cont, por cierto,
+los datos van directamente a los
+servidores de Google, ¿vale? Google eh
+tiene, digamos, en la propia web cuando
+he comprado la pulsera pone que
+teóricamente no va a entrenar ya, no va
+a entrenar, digamos, nada, ni va a
+servirse de esos datos para tampoco la
+parte publicitaria ni nada. Han sido muy
+cuidadosos y muy cautelosos con ese
+tema, como viendo venir la perspicacia
+de algún usuario y lo han dejado ahí
+claro en la web. Desde luego un
+dispositivo superinesante que ya os
+digo, analizaré por aquí por el canal,
+le daré semanas de uso y os contaré más
+por aquí porque no me cabe ninguna duda
+that he is the great competitor of the UP
+that little by little or that little by little it has gone
+gaining many fans and a lot of people
+also to open a new market because
+before the Woup there really were no marks
+he had set his sights on doing what this is
+in quotes so simple. Me
+I would love to know what you think, if you
+that you are watching the video there from him
+another side, that you left it down here
+in the comments, subscribe
+and you hit the bell to support
+this type of content. A like
+also to help it reach more
+people. A hug and see you in it
+next video.
+
+https://www.youtube.com/watch?v=eA8cVuM3cw8&t=33s
+Is Fitbit Air the best fitness tracker for the
+price point? We're about to find out. Hey friends,
+I'm Tasia Custode and Google sent me the all new
+Fitbit Air to test for you. And I've been testing
+Fitbit Air along with Google Health Coach for
+just over 2 weeks now. And I've been testing it
+in a couple of different ways. I've been comparing
+it along with my old Apple Watch and with my Pixel
+Watch 4. All of this in concert with the Google
+Health app and Google Health Coach. I've been
+putting it through its paces to give you the most
+accurate and thorough review. So, can Fitbit Air
+live up to the big kids on the block in terms of a
+reliable fitness tracker? We're about to find out.
+And we're going to start with a quick review, but
+important review of the specs. You may very well
+know by now that Google Fitbit Air is, well, a
+smart bracelet of sorts designed for comfort and
+wearability. It's a super slim, feather light,
+screenless design with a band. It weighs just
+about 12 g. I'm telling you, it really does feel
+very light on the wrist, and you can swap bands
+really easily. To do so, you just gently push on
+the Pebble device itself to pop it out from the
+band. You can see and feel how small and light
+the Pebble really is. It's just 5 g. Then, you
+can pop that Pebble back into the new band. You'll
+actually hear a snap and you'll feel it lock into
+place. There's even a little line there. It really
+couldn't be easier. And regardless of the band,
+the Google Fitbit Air does pack a lot of punch
+in its lightweight size. It is water resistant,
+by the way, up to 50 meters, but you're definitely
+going to want to dry the band after getting it
+wet. And speaking of bands, I actually don't
+typically work out in this performance loop
+band. It's a material design and you really do
+need to keep it clean. So, if you sweat a lot,
+I would move over to the active band. By the way,
+Google says you can clean this band with fresh
+water and hypoallergenic soap if necessary. But,
+I do find it easier to clean the active band. So,
+that's what I've been using to work out and then
+I just switch back to my performance band. And by
+the way, this colorway that I have is fog and
+I just love it. There are a couple of other
+bands as well, but let's move on to everything
+Fitbit Air will do for you at a base level with
+no subscription. Just you've made the purchase
+and this is what you get right out of the box.
+For comparison, Whoop is $50, but then you need
+a $300 a year subscription for it to do well,
+actually anything. It's essentially a brick if you
+don't have the subscription. Whereas with Fitbit
+Air, it's $99 for the device, but you get step
+tracking, 24/7 heart rate tracking, so you can get
+notified if your heart rates above or below your
+typical range. There's sleep tracking, there's
+calorie tracking, and your health and wellness
+logging. You can actually find everything that's
+included with Fitbit Air in the Google Health
+app, which I'm going to touch on later, along
+with what a premium subscription gets you. And
+at least as of right now, you get three months of
+Google Health Premium with the purchase of Fitbit
+Air. So that means three months of Google Health
+Coach. And Fitbit Air and Google Health app work
+on both Android and iOS. So it's a great option
+for those of us with an iPhone or even an Apple
+Watch. We can indeed use the Google Health app to
+track everything we need right on device. Plus,
+the Google Health app syncs with Apple Health,
+which I'm going to touch a little bit more on
+later. Any screens you'll see today are from the
+Health app on iOS, but things function in the same
+way on Android. But this cross-platform capability
+is really one of Fitbit Air's standout strengths
+because it's not about necessarily replacing a
+current device that you have, whether you have
+an Apple Watch or a Garmin or a Pixel Watch or
+what have you. It's about working in concert with
+what you already have or working by itself. The
+idea is to work cohesively in the environment
+you're already in. or you could simply choose
+to have Fitbit Air as your solo device if you
+want something completely distraction-f free to
+track your activity in the background for you. So,
+let's talk a little bit more about how Fitbit Air
+complements your existing wearable. In terms of
+automatic activity detection and the accuracy of
+the tracking so far, my favorite feature of Fitbit
+Air besides its lightweight, comfortable design,
+is that automatic activity detection. It'll
+track your exercise sessions seamlessly in the
+background without you needing to do anything,
+which of course it has to because well there is
+no screen. Now you can of course manually start a
+workout from Pixel Watch or from the Google Health
+app, but I have been testing this both ways and I
+have to say the accuracy of the automatic activity
+detection has been quite impressive so far. So
+when I've been going for walks, I'll just let
+it do its thing. I don't manually track that I'm
+walking. What's nice about the Google Health app
+is that shortly after the activity's ended, it
+sends a notification regarding the activity it
+logged. Now, if it is inaccurate or you want
+to label the activity as a different workout,
+you do have the ability to do so in app. But like
+I said, it's been nailing that automatic activity
+detection for me, if not somewhat delayed
+sometimes. So, depending on the activity,
+it's pretty normal what I've noticed for it
+to take anywhere from 20 to sometimes even 40
+minutes for that activity to come through. but
+it does come through. There are even times when
+I've been bike riding or did a strength training
+workout and I didn't think it had tracked because
+I didn't actually get a notification right away.
+But lo and behold, it did indeed track for me. So,
+here's what I mean. Heading into that fitness tab
+in the Google Health app, I can actually see that
+it has indeed logged my workouts automatically.
+And it's nice that it even shows me how the
+activity was logged. So, what was the source?
+So, as an example here, this one was from Apple
+Health. And then you can see this one here was
+Fitbit Air only. And then this one here was Pixel
+Watch. And then of course, like I mentioned, you
+can add further details for more accurate tracking
+if you like. And in terms of that accuracy of
+activity logged, you know, we're talking things
+like heart rate monitor and calories burned.
+Whether I set up a workout via the app or Pixel
+Watch 4 or Apple Watch, all the activity stats
+logged, I've noticed, are nearly exactly on par
+with both Apple Watch and Pixel Watch 4 in terms
+of accuracy for my heart rate and calories burned
+during the exercise. I've been really happy
+with the seamless tracking of Fitbit Air. And
+while we're on the topic of tracking, let's talk
+about sleep tracking. Because my biggest beef,
+if you will, about any of these wearables is that
+they're too bulky to wear to bed. I don't even
+sleep with any jewelry on, let alone a ginormous
+watch. What can I say? I'm a side sleeper and no,
+I don't have a smart ring. So, I've essentially
+never been able to track my sleep. So, I was
+a little bit skeptical going in that I'd be able
+to go from nothing to wearing anything, no matter
+how light to bed. But, I have to say I have been
+wearing this every single night for over 2 weeks
+to bed and I completely forget that it's there.
+Side sleeping and all. This alone has been a game
+changer for me to have something to actually track
+my sleep at night. What's nice with Google Health
+app is that you can set an alarm for Fitbit Air
+as well. So, I like doing this if I have something
+really important going on and I need to make sure
+I've set a second alarm. I could use Fitbit Air as
+that second alarm. It's going to enable a silent
+vibrating alarm. And then in order to wake up,
+you know, maybe feeling your most refreshed, you
+can actually enable Smartwake for an alarm in the
+app. So, this uses your sleep movement and heart
+rate to trigger a gentle vibration when you're
+maybe in a lighter stage of sleep up to 30 minutes
+before your scheduled alarm time. I actually just
+toggle this on because I tend to kind of start
+waking up a little bit before my alarm anyway
+and then I very silly decide to stay in bed. I'm
+just going to sleep that extra 15 minutes and it
+never works out well because then I wake up more
+tired than I was the first time I had woken up. I
+should just gotten out of the bed. So, I'm trying
+to avoid that with Smartwake. So, I will keep you
+posted in a future video if and when it works
+for me. Now, in terms of the accuracy of sleep
+tracking, because it's not really like I have
+something I could compare it to from the past,
+I'm not really sure how accurate it is because
+sometimes I feel like I haven't slept as well
+as it's telling me I've slept. But luckily, I can
+pop into the Google Health app and I simply talk
+to Google Health Coach about that. But before we
+jump into Health Coach, let's talk about battery
+life. I have been wearing Google Fitbit Air for
+exactly two weeks and two days now as the day I
+am shooting this very video and I have charged
+my Fitbit Air twice and that's only because I
+was going on two different trips and I wanted to
+make sure I didn't have to bring the charger with
+me. So, I gave it a quick zap before I left. When
+Google says this device will hold its charge for 7
+days, they're not lying. Now, like I mentioned,
+I've been really travelheavy for 2 weeks. So,
+my schedule is off from normal, but it's been
+really nice not having to take a charger for
+Fitbit Air with me on my trips, each of which
+were under 4 days of travel each. And not to sound
+like a broken record here, but I've been wearing
+Fitbit Air literally every single day. All day,
+every day. And the only time I take it off is
+when I'm in the shower, which is a perfect time
+to charge it. I've done all my workouts with it
+on and I typically work out five days a week.
+I'm talking actual dedicated strength training
+workouts 5 days a week on top of maybe bike riding
+or walking the dog and whatnot. And I did notice
+the battery is slightly more drained on really
+heavy or long workout weeks, but I was still
+getting 6 to 7 days even in those longer weeks
+and with all of my travel and work commitments.
+So, typically what I've noticed with my use is
+that at the end of about 5 days, I'm still sitting
+anywhere from 55 to 65% battery, which would mean
+more than a week's worth of charge. And Fitbit
+Air is also fast charging. So, in just about 5
+minutes, you'll get a full day of charge for
+Fitbit Air. If you leave it on 90 minutes,
+it'll go from zero, completely dead, to fully
+charged. When you have 1 day remaining of battery,
+you will get a push notification letting you know
+it's time to charge the device. Plus, the device
+itself will also notify you with a vibration if
+it's less than 20% remaining for the charge. And
+there's also an LED indicator as well. Firmly
+double tap the device to see the status light.
+White is over 20%, blinking red means less than
+20%, and solid red means she's got no life. And
+I do mean you have to firmly tap the device. So,
+battery life is a big win for me. But as promised,
+let's talk about Google Health Coach because this
+comes with Google Fitbit premium. And by the way,
+if you want to learn more about the Google Health
+app in general, you can do so by watching this
+video right here. But premium members will get
+access to a Gemini powered AI health coach.
+Google Health Coach delivers personalized guidance
+tailored to you and your needs, no matter how they
+change over time. And this goes beyond adaptive
+fitness plans. This isn't just tracking. It's
+really about smart evolving fitness strategies
+designed for your unique lifestyle. I've noticed
+that Health Coach really dials in on how you're
+feeling in that day, what you need to get done,
+what you did the day previously. Essentially, it
+encompasses everything from workout intensity to
+your overall well-being and rest. So, as an
+example, May 20th was the day after a very
+busy Google IO. I had every intention of getting
+in an early workout before crushing another day
+at Google Shoreline campus. But I woke up feeling
+well kind of sore and kind of tired even though
+I did get about eight hours of sleep. Take a look
+at what Google Health Coach told me literally that
+I've needed a breather. It told me why I needed
+to give my body a rest and that my resting heart
+rate was higher than normal throughout the night.
+Probably because my nervous system was working
+through the busy day still. And then it suggested
+what I could do instead of a heavy workout. I'm
+telling you, I do not like missing workouts.
+But as I was testing this for you and for me,
+I decided to listen to my Google health coach
+and the strangest thing happened. I actually
+found myself feeling better as the day went on. I
+had more energy. I was less sore. I actually had
+an incredibly productive day with less lingering
+fatigue. I think the biggest difference for me is
+that it was telling me why I needed the rest. So
+after I crushed the workday, I went for a light
+bike ride and coach let me know what a smart
+decision that was for my recovery. And this is
+all happening because I'm sharing my habits and
+my personal routines with this AI coach. And then
+it's adapting to my lifestyle. So you'll most
+likely get very different AI coaching than me,
+then the next person, and so on because it is
+indeed tailored exactly to you and your needs,
+what you need in the moment and for your
+lifestyle goals. I found coach really
+helpful so far and it's only been like I said two
+weeks and two days. The more you work with coach,
+the more you share with coach, the longer you wear
+the device, the better the results. To give you
+another quick example, remember I told you I've
+been traveling a little more than usual these
+last couple of weeks. Well, my sleep has kind of
+been all over the place. My movement's been all
+over the place and coach noticed. So, I got some
+information here about my shifting bedtime and
+how this can affect my internal clock. And then
+I can follow up here with Google Health Coach
+in a couple of different ways. Because the health
+coach is available 24/7, I can tap that ask coach
+button in the bottom right and chat with coach
+about literally anything. Or in this case, I can
+tap on reply and let coach know why my schedule
+is so off and what I'm anticipating with further
+travel as well. My coach then gets to work. And it
+actually gave me a pretty comprehensive plan for
+how to stay on track through the travel so that
+I'm good to tackle Wednesday when I get back,
+which is today by the way, which we both know
+I'm slaying. But you can see how easy it is to
+follow up with your health coach. So in this
+interaction, coach, let me know. It's going
+to monitor my sleep schedule. And continuing a
+chat with your health coach is always a tap away.
+One of the things I noticed right away with Google
+Health Coach is that it's been very positive with
+me. It's been gentle, if you will. So, Google must
+have done some type of research on maybe positive
+reinforcement or positive motivation. And I have
+to say, I'm here for it. Not once has Google
+Health Coach shamed me for not getting enough
+steps or my sleep being off or my travel schedule
+being crazy. Not once. And by the way, the initial
+setup of Google Health Coach took me literally
+less than 5 minutes. So, it's not something
+that you have to dedicate a ton of time to,
+but there's obviously a lot you can do with Coach,
+including the ability to snap a photo of what you
+ate and have your coach log the meal complete
+with nutrition facts, which I mean, come on,
+it can't get any easier. And Coach will even
+recommend custom workouts for you in the app.
+And again, this is all about providing a more
+well-rounded, holistic experience. Remember,
+Google Health Coach is for premium members and
+everything's optin. You don't have to use it
+if you don't want to. I think the real strength
+with Google Health Coach here is accessibility.
+Meaning, if you're somebody that can't afford a
+personal trainer, but could really benefit from
+a little more tailored guidance about an overall
+holistic approach to your lifestyle, Google Health
+Coach is a real win. So, at the risk of us being
+together here all day talking about Fitbit Air,
+do I think that Fitbit Air is really one of the
+best wearables for the price point? Yes. In fact,
+I would argue that Fitbit Air is well-rounded
+enough and has enough of a robust feature set
+to take on even some of the bigger players. I've
+really tried to find a bunch of negatives or
+things that went wrong or that I didn't like while
+testing, and I really couldn't come up with much.
+The only thing I would like that I think could be
+improved upon. I really wish we had a universal
+charger. I don't know how this would be possible,
+but that's what I'd like to see. It's not the
+biggest deal because the battery life, as we've
+seen, is easily a week, but just something to
+think about. Now, in terms of positives,
+if you've stuck it through to this point,
+there are many. I'm so happy with the lightweight,
+distractionfree design, the battery life that
+allows me to take it on long weekend trips with
+no charger, that automatic activity detection,
+and the accuracy of the tracking. It's been
+spoton, and I really didn't think I would like
+or use Google Health Coach as much as I do, but
+I'm really here for that positive reinforcement.
+And the biggest win for me is Fitbit Air working
+in concert with other devices, whether that be
+Pixel Watch 4, Garmin, or Apple Watch. It really
+makes this experience not just cohesive, but
+really frictionless. It's a quick, seamless setup
+go. So, when I think about who Fitbit Air is for,
+it's kind of wide ranging, to be honest. It's
+maybe for your parents that are brand new to any
+wearable device and just need something they can
+quickly set up and forget about. Easy peasy, done.
+Maybe it's for someone like me or you that works
+across platform and you just want something that
+syncs with the platform in which you already live
+and breathe. Again, easy, seamless. Or maybe you
+yourself are new to wearables or you just want to
+have a single lightweight distraction-free device
+that you can travel with without worrying about
+bringing along chargers. Whatever the reason,
+from the inapp experience to the wearability,
+Fitbit Air is a winner winner chicken dinner.
+And now I want to hear from you. What do you
+think of Fitbit Air? Will you snag one? And
+what do you think of Google Health Coach? Let
+everyone know in the comments below. As always,
+thank you so much for watching. If you like this
+video, well, I want to know. So, give it a like,
+a share, or leave that comment below. You can
+click right about here to subscribe to my channel
+and here and here for even more content just like
+this. Thanks for watching. See you next time.
+
+
