@@ -31,6 +31,14 @@ class TimelineState {
   /// per-date feed shimmer so the jump isn't a blank flash. Null when idle.
   final String? loadingDate;
 
+  /// True while [loadMorePast] is fetching an older page (drives the
+  /// "Show earlier" footer spinner in the multi-day timeline).
+  final bool isLoadingMore;
+
+  /// True once a [loadMorePast] page came back with no new days — there's no
+  /// more history to load, so the "Show earlier" footer hides.
+  final bool reachedEndPast;
+
   const TimelineState({
     this.days = const [],
     this.filter = TimelineFilter.all,
@@ -38,6 +46,8 @@ class TimelineState {
     this.isLoading = false,
     this.error,
     this.loadingDate,
+    this.isLoadingMore = false,
+    this.reachedEndPast = false,
   });
 
   TimelineState copyWith({
@@ -49,6 +59,8 @@ class TimelineState {
     bool clearError = false,
     String? loadingDate,
     bool clearLoadingDate = false,
+    bool? isLoadingMore,
+    bool? reachedEndPast,
   }) {
     return TimelineState(
       days: days ?? this.days,
@@ -57,6 +69,8 @@ class TimelineState {
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
       loadingDate: clearLoadingDate ? null : (loadingDate ?? this.loadingDate),
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+      reachedEndPast: reachedEndPast ?? this.reachedEndPast,
     );
   }
 }
@@ -96,9 +110,24 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
     }
   }
 
-  /// Append the next page of past days (infinite scroll).
+  /// Whether an initial history page has already been requested (so the
+  /// multi-day timeline doesn't re-trigger it on every rebuild).
+  bool _initialHistoryRequested = false;
+
+  /// Load the first window of PAST days once today's feed is present, so the
+  /// timeline shows multiple days (today + the past week) instead of just
+  /// today. Idempotent — runs at most once per notifier.
+  Future<void> ensureInitialHistory({int days = 7}) async {
+    if (_disposed || _initialHistoryRequested) return;
+    if (state.days.isEmpty) return; // wait until today is loaded
+    _initialHistoryRequested = true;
+    await loadMorePast(additionalDays: days);
+  }
+
+  /// Append the next page of past days (infinite scroll). Sets [isLoadingMore]
+  /// while in flight and [reachedEndPast] when a page returns no new days.
   Future<void> loadMorePast({int additionalDays = 7}) async {
-    if (_disposed || state.days.isEmpty) return;
+    if (_disposed || state.days.isEmpty || state.isLoadingMore) return;
     final apiClient = _ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
     if (userId == null) return;
@@ -110,6 +139,7 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
         .toIso8601String()
         .substring(0, 10);
 
+    state = state.copyWith(isLoadingMore: true);
     try {
       final repo = _ref.read(timelineRepositoryProvider);
       final response = await repo.fetch(
@@ -120,13 +150,18 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
       if (_disposed) return;
       // Merge: keep existing days + append the new ones (skip duplicates).
       final existingDates = state.days.map((d) => d.date).toSet();
-      final merged = [
-        ...state.days,
-        ...response.days.where((d) => !existingDates.contains(d.date)),
-      ];
-      state = state.copyWith(days: merged);
+      final fresh =
+          response.days.where((d) => !existingDates.contains(d.date)).toList();
+      state = state.copyWith(
+        days: [...state.days, ...fresh],
+        isLoadingMore: false,
+        // No new days came back → we've hit the bottom of the history.
+        reachedEndPast: fresh.isEmpty ? true : null,
+      );
     } catch (e) {
       debugPrint('⚠️ [Timeline] loadMorePast failed: $e');
+      if (_disposed) return;
+      state = state.copyWith(isLoadingMore: false);
     }
   }
 

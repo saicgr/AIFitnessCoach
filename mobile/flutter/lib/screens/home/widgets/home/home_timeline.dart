@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,7 +8,6 @@ import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/models/timeline_entry.dart';
 import '../../../../data/models/workout.dart';
 import '../../../../data/providers/fasting_provider.dart';
-import '../../../../data/providers/home_sections_provider.dart' show selectedHomeDateProvider;
 import '../../../../data/providers/sleep_detail_provider.dart';
 import '../../../../data/providers/timeline_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
@@ -39,103 +36,113 @@ class HomeTimeline extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ref.colors(context);
 
-    final selectedDate = ref.watch(selectedHomeDateProvider);
     final today = _dateOnly(DateTime.now());
-    final selDay = _dateOnly(selectedDate);
-    final isToday = selDay == today;
-    final isPast = selDay.isBefore(today);
-    final isFuture = selDay.isAfter(today);
-
     final timelineState = ref.watch(timelineProvider);
-    final selDayYmd = _ymd(selDay);
+    final sleepHistory = ref.watch(sleepHistoryProvider).valueOrNull;
 
-    // Selected day's summary (drives the totals strip). Null until that day's
-    // feed is loaded.
-    TimelineSummary? selSummary;
-    for (final d in timelineState.days) {
-      if (d.date == selDayYmd) {
-        selSummary = d.summary;
-        break;
-      }
+    // Multi-day view: once today's feed is present, pull in the past week so
+    // the timeline spans several days (Today → Yesterday → …). Idempotent —
+    // the notifier guards against re-requesting.
+    if (timelineState.days.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(timelineProvider.notifier).ensureInitialHistory();
+      });
     }
 
-    // Selected day's sleep from real Health Connect history (the backend
-    // timeline has no reliable sleep source). Feeds both the totals "sleep"
-    // pill and an injected sleep row in the feed below.
-    final sleepNight =
-        ref.watch(sleepHistoryProvider).valueOrNull?.nightFor(selDay);
-    final hasSleep = sleepNight != null && sleepNight.hasData;
-    final selSleepMinutes = hasSleep ? sleepNight.totalAsleepMinutes : 0;
-    // Wake time anchors the injected sleep row in the gutter; fall back to a
-    // morning time on the selected day if Health didn't report a wake stamp.
-    final DateTime? sleepWakeTime = hasSleep
-        ? (sleepNight.mainSleep.wakeTime ??
-            DateTime(selDay.year, selDay.month, selDay.day, 7))
-        : null;
-
-    // True while a date-picker / week-strip jump to an as-yet-unloaded day is
-    // in flight — show the feed skeleton instead of a misleading empty state.
-    final isJumpLoading = timelineState.loadingDate == selDayYmd;
-
-    // --- Build the body depending on the timeline feed state. -------------
-    // Each branch carries a ValueKey so the AnimatedSwitcher below cross-fades
-    // skeleton→content (and error→content) instead of hard-popping.
+    // --- Build the body. Cold-start skeleton / error keep their old states;
+    // otherwise render ONE section per loaded day, newest first, each with a
+    // dated header so days are easy to tell apart. ------------------------
     Widget body;
     if (timelineState.isLoading && timelineState.days.isEmpty) {
-      // Cold start, no cached feed yet → per-row shimmer skeletons.
       body = const _SkeletonList(key: ValueKey('tl-skeleton'));
     } else if (timelineState.error != null && timelineState.days.isEmpty) {
-      // Feed failed and we have nothing cached → tile-level error + retry.
       body = _ErrorTile(
         key: const ValueKey('tl-error'),
         c: c,
         onRetry: () => ref.read(timelineProvider.notifier).refresh(),
       );
     } else {
-      final events = _buildEvents(
-        context: context,
-        ref: ref,
-        c: c,
-        timelineState: timelineState,
-        selectedDay: selDay,
-        isToday: isToday,
-        isPast: isPast,
-        isFuture: isFuture,
-        sleepMinutes: selSleepMinutes,
-        sleepWakeTime: sleepWakeTime,
-      );
-      if (events.isEmpty) {
-        // Mid-jump to a day we haven't fetched yet → skeleton, not "nothing".
-        body = isJumpLoading
-            ? const _SkeletonList(key: ValueKey('tl-skeleton'))
-            : Padding(
-                key: const ValueKey('tl-empty'),
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text(
-                  isFuture
-                      ? AppLocalizations.of(context).homeTimelineNothingPlannedForThis
-                      : AppLocalizations.of(context).homeTimelineNothingLoggedOrPlanned,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: c.textSecondary,
-                  ),
-                ),
-              );
-      } else {
-        body = Column(
-          key: const ValueKey('tl-list'),
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (int i = 0; i < events.length; i++)
-              _TimelineRow(
-                event: events[i],
-                isLast: i == events.length - 1,
-                c: c,
-              ),
-          ],
+      final children = <Widget>[];
+      for (var di = 0; di < timelineState.days.length; di++) {
+        final day = timelineState.days[di];
+        final parsed = DateTime.tryParse(day.date);
+        if (parsed == null) continue;
+        final dayDate = _dateOnly(parsed);
+        final isToday = dayDate == today;
+        final isPast = dayDate.isBefore(today);
+        final isFuture = dayDate.isAfter(today);
+
+        // Per-day sleep from Health history (no backend sleep table).
+        final night = sleepHistory?.nightFor(dayDate);
+        final hasSleep = night != null && night.hasData;
+        final sleepMin = hasSleep ? night.totalAsleepMinutes : 0;
+        final wake = hasSleep
+            ? (night.mainSleep.wakeTime ??
+                DateTime(dayDate.year, dayDate.month, dayDate.day, 7))
+            : null;
+
+        final events = _buildEvents(
+          context: context,
+          ref: ref,
+          c: c,
+          timelineState: timelineState,
+          selectedDay: dayDate,
+          isToday: isToday,
+          isPast: isPast,
+          isFuture: isFuture,
+          sleepMinutes: sleepMin,
+          sleepWakeTime: wake,
         );
+
+        children.add(_dayHeader(c, dayDate, today, first: di == 0));
+        // Per-day totals strip — only when the day actually has logged
+        // entries, so empty past days don't render a row of zeros.
+        if (day.entries.isNotEmpty) {
+          children.add(const SizedBox(height: 8));
+          children.add(TimelineTotalsStrip(
+            summary: day.summary,
+            c: c,
+            sleepMinutes: sleepMin,
+          ));
+        }
+        children.add(const SizedBox(height: 10));
+        if (events.isEmpty) {
+          children.add(Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Text(
+              AppLocalizations.of(context).homeTimelineNothingLoggedOrPlanned,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: c.textSecondary,
+              ),
+            ),
+          ));
+        } else {
+          for (int i = 0; i < events.length; i++) {
+            children.add(_TimelineRow(
+              event: events[i],
+              isLast: i == events.length - 1,
+              c: c,
+            ));
+          }
+        }
       }
+
+      // "Show earlier" footer — loads the previous page of days.
+      if (!timelineState.reachedEndPast) {
+        children.add(_ShowEarlierButton(
+          c: c,
+          loading: timelineState.isLoadingMore,
+          onTap: () => ref.read(timelineProvider.notifier).loadMorePast(),
+        ));
+      }
+
+      body = Column(
+        key: const ValueKey('tl-multiday'),
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      );
     }
 
     return Padding(
@@ -160,7 +167,7 @@ class HomeTimeline extends ConsumerWidget {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    _sectionTitle(selDay, isToday).toUpperCase(),
+                    'TIMELINE',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
@@ -184,34 +191,12 @@ class HomeTimeline extends ConsumerWidget {
                       ),
                     ),
                   ),
-                // Quick return to today — only when scrubbed off the current day.
-                if (!isToday)
-                  _TodayChip(
-                    c: c,
-                    onTap: () {
-                      HapticService.selection();
-                      ref.read(selectedHomeDateProvider.notifier).state = today;
-                    },
-                  ),
-                // Jump to any date.
-                _DateIconButton(
-                  c: c,
-                  onTap: () => _pickDate(context, ref, selDay, today),
-                ),
               ],
             ),
             const SizedBox(height: 12),
             // Trend rail — global last-14-day metric sparklines (self-hides
             // when there's no data). Reads its own providers.
             const TimelineTrendsRail(),
-            if (selSummary != null) ...[
-              const SizedBox(height: 10),
-              TimelineTotalsStrip(
-                summary: selSummary,
-                c: c,
-                sleepMinutes: selSleepMinutes,
-              ),
-            ],
             const SizedBox(height: 12),
             Divider(height: 1, thickness: 1, color: c.cardBorder),
             const SizedBox(height: 12),
@@ -235,43 +220,47 @@ class HomeTimeline extends ConsumerWidget {
     );
   }
 
-  /// Open the OS date picker and jump the timeline to the chosen day. Bounds:
-  /// 2 years back (a safe floor without an account-creation lookup) to 14 days
-  /// ahead (so scheduled workouts are viewable). Selecting a day both moves the
-  /// shared [selectedHomeDateProvider] and asks the feed to load that day if it
-  /// isn't already in memory.
-  Future<void> _pickDate(
-    BuildContext context,
-    WidgetRef ref,
-    DateTime selDay,
-    DateTime today,
-  ) async {
-    HapticService.selection();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: selDay,
-      firstDate: DateTime(today.year - 2, today.month, today.day),
-      lastDate: today.add(const Duration(days: 14)),
+  /// A dated separator above each day's block so days are easy to tell apart:
+  /// a bold "Today" / "Yesterday" / "Mon, May 27" label + a hairline rule.
+  Widget _dayHeader(
+    ThemeColors c,
+    DateTime day,
+    DateTime today, {
+    required bool first,
+  }) {
+    return Padding(
+      padding: EdgeInsets.only(top: first ? 0 : 18, bottom: 2),
+      child: Row(
+        children: [
+          Text(
+            _dayLabel(day, today),
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              letterSpacing: -0.2,
+              color: c.textPrimary,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Divider(height: 1, thickness: 1, color: c.cardBorder),
+          ),
+        ],
+      ),
     );
-    if (picked == null) return;
-    final day = _dateOnly(picked);
-    ref.read(selectedHomeDateProvider.notifier).state = day;
-    // Past days outside the initially-loaded window need an on-demand fetch.
-    if (day.isBefore(today)) {
-      unawaited(ref.read(timelineProvider.notifier).loadDate(day));
-    }
   }
 
-  /// Dynamic section title — "Today's Timeline" vs e.g. "Mon, May 12".
-  String _sectionTitle(DateTime selDay, bool isToday) {
-    if (isToday) return "Today's Timeline";
+  String _dayLabel(DateTime day, DateTime today) {
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final dow = days[selDay.weekday - 1];
-    return '$dow, ${months[selDay.month - 1]} ${selDay.day}';
+    const dows = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final dow = dows[day.weekday - 1];
+    return '$dow, ${months[day.month - 1]} ${day.day}';
   }
 
   // ----------------------------------------------------------------------
@@ -624,12 +613,6 @@ class HomeTimeline extends ConsumerWidget {
   }
 
   static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
-
-  /// `YYYY-MM-DD` for matching a local day against backend `TimelineDay.date`.
-  static String _ymd(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
-      '${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
 
   /// Timeline entry ids look like `workout:uuid` — strip the `type:` prefix
   /// so a logged `workout` entry can be matched against a `Workout.id` uuid.
@@ -1182,56 +1165,57 @@ class _ErrorTile extends StatelessWidget {
   }
 }
 
-/// Small "Today" chip in the header — only shown when the user has scrubbed
-/// off the current day; tap returns to today.
-class _TodayChip extends StatelessWidget {
+/// Footer pill at the bottom of the multi-day timeline — loads the previous
+/// page of days. Shows a spinner while a page is in flight; the parent hides
+/// it once there's no more history.
+class _ShowEarlierButton extends StatelessWidget {
   final ThemeColors c;
+  final bool loading;
   final VoidCallback onTap;
-  const _TodayChip({required this.c, required this.onTap});
+  const _ShowEarlierButton({
+    required this.c,
+    required this.loading,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(
-          color: c.accent.withValues(alpha: 0.14),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          'Today',
-          style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w800,
-            color: c.accent,
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Center(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: loading
+              ? null
+              : () {
+                  HapticService.selection();
+                  onTap();
+                },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+            decoration: BoxDecoration(
+              color: c.glassSurface,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: c.cardBorder),
+            ),
+            child: loading
+                ? SizedBox(
+                    width: 14,
+                    height: 14,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 1.6,
+                      valueColor: AlwaysStoppedAnimation(c.textMuted),
+                    ),
+                  )
+                : Text(
+                    'Show earlier days',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: c.textSecondary,
+                    ),
+                  ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Calendar icon button in the header — opens the date picker to jump the
-/// timeline to any day.
-class _DateIconButton extends StatelessWidget {
-  final ThemeColors c;
-  final VoidCallback onTap;
-  const _DateIconButton({required this.c, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        child: Icon(
-          Icons.calendar_today_rounded,
-          size: 16,
-          color: c.textMuted,
         ),
       ),
     );
