@@ -91,8 +91,13 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId == null || !mounted) return;
     _userId = userId;
-    // Fire the refreshes without awaiting them together — each provider update
-    // repaints the card on its own; the slowest never blocks the others.
+    // On the Nutrition screen (embedded), the screen ITSELF owns these loads.
+    // Double-fetching here raced the screen's own loadTodaySummary/initialize
+    // (shared notifiers) and added redundant network calls. The card watches
+    // these providers, so it already reflects the screen's data — just skip.
+    if (widget.embedded) return;
+    // Home: fire the refreshes without awaiting them together — each provider
+    // update repaints the card on its own; the slowest never blocks the others.
     unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
     unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
     unawaited(ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
@@ -306,7 +311,11 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.info_outline, size: 11, color: accent),
+                              // Not an info button — this badge marks a dynamic
+                              // (training/rest-day) target adjustment. Use a bolt
+                              // so it doesn't read as a second "i" next to the
+                              // header info button.
+                              Icon(Icons.bolt_rounded, size: 12, color: accent),
                               const SizedBox(width: 4),
                               Text(
                                 _adjustmentLabel(dynamicTargets),

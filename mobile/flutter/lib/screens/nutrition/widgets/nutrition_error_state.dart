@@ -60,6 +60,29 @@ class NutritionErrorState extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+            // Surface the ACTUAL error so the cause is visible on-device when
+            // console logs aren't (release builds strip debugPrint). e.g. a
+            // 401, a FormatException (parse), or a SocketException (offline).
+            if (error.trim().isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: errorColor.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  error.length > 240 ? '${error.substring(0, 240)}…' : error,
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.3,
+                    color: textSecondary,
+                    fontFamily: 'monospace',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: onRetry,
