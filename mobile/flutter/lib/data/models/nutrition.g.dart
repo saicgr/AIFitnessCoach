@@ -7,7 +7,9 @@ part of 'nutrition.dart';
 // **************************************************************************
 
 FoodItem _$FoodItemFromJson(Map<String, dynamic> json) => FoodItem(
-  name: json['name'] as String,
+  // Defensive: a single food item with a null/missing name must never throw
+  // and crash the whole nutrition screen (hand-edited; build_runner is forbidden).
+  name: json['name'] as String? ?? '',
   amount: json['amount'] as String?,
   calories: (json['calories'] as num?)?.toInt(),
   proteinG: (json['protein_g'] as num?)?.toDouble(),
@@ -43,10 +45,12 @@ Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
 };
 
 FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
-  id: json['id'] as String,
-  userId: json['user_id'] as String,
-  mealType: json['meal_type'] as String,
-  loggedAt: DateTime.parse(json['logged_at'] as String),
+  // Defensive (hand-edited; build_runner forbidden): a meal row missing any of
+  // these required fields must degrade, not throw and blank the whole screen.
+  id: json['id'] as String? ?? '',
+  userId: json['user_id'] as String? ?? '',
+  mealType: json['meal_type'] as String? ?? 'snack',
+  loggedAt: _parseDateTimeOrNow(json['logged_at'] as String?),
   foodItems:
       (json['food_items'] as List<dynamic>?)
           ?.map((e) => FoodItem.fromJson(e as Map<String, dynamic>))

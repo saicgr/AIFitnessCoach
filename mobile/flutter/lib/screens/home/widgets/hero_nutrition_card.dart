@@ -475,7 +475,7 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     // childAspectRatio 3.55) — its height scales with the available width, so
     // compute it per-layout instead of hard-coding (a fixed value clipped the
     // grid on wide screens / iPad and left a gap on narrow ones).
-    const double page1Height = 114; // ring/pill stack
+    const double page1Height = 120; // ring/pill stack (3×36 pill + 2×6 gaps)
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
@@ -569,11 +569,11 @@ class _MacrosPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Calorie ring — sized to match the compact 3-pill stack height
-          // (3 × 34 + 2 × 6 = 114) so the ring and pills stay vertically
-          // balanced after the page-1 shortening (issue 2).
+          // (3 × 36 + 2 × 6 = 120) so the ring and pills stay vertically
+          // balanced with the unified micro-tile-style pills.
           SizedBox(
-            width: 114,
-            height: 114,
+            width: 120,
+            height: 120,
             child: AnimatedBuilder(
               animation: entrance,
               builder: (context, _) {
@@ -750,24 +750,26 @@ class _MacroPill extends StatelessWidget {
       child: Transform.translate(
         offset: Offset(0, 8 * (1 - local)),
         child: Container(
-          height: 34,
+          height: 36,
           decoration: BoxDecoration(
             color: tile,
-            borderRadius: BorderRadius.circular(12),
+            // Match the micronutrient tiles (page 2/3): 16px radius + 42px emoji
+            // chip so all three carousel pages read as one consistent card.
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: color.withValues(alpha: 0.22)),
           ),
           child: Row(
             children: [
               Container(
-                width: 34,
+                width: 42,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: chipBg,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
                 ),
-                child: Text(emoji, style: const TextStyle(fontSize: 15)),
+                child: Text(emoji, style: const TextStyle(fontSize: 16)),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 9),
               // Compact inline layout: LABEL · consumed / goal on one row so
               // the pill is 34px tall (issue 2) instead of the old 2-line 42px.
               Expanded(
@@ -780,7 +782,7 @@ class _MacroPill extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 9.5,
+                        fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.3,
                         color: labelColor,
@@ -794,7 +796,7 @@ class _MacroPill extends StatelessWidget {
                       builder: (context, v, _) => Text(
                         '$v',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 17,
                           fontWeight: FontWeight.w800,
                           height: 1.0,
                           color: color,
@@ -807,7 +809,7 @@ class _MacroPill extends StatelessWidget {
                       suffix: 'g',
                       onCommit: onEditGoal,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: labelColor,
                       ),
@@ -815,7 +817,7 @@ class _MacroPill extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
             ],
           ),
         ),

@@ -76,20 +76,38 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   ///
   /// Keys lowercased; both `type` and `focusGroup` strings route through
   /// `_typeIllustrationFor` which normalizes synonyms.
+  // ONLY map keys whose PNG actually ships under assets/images/workout_types/.
+  // A key pointing at a missing file makes Image.asset throw "Asset not found"
+  // every build (caught by the errorBuilder, but it spams the console). Types
+  // without bundled art (upper / lower / push / pull / legs / full_body / core)
+  // are intentionally absent: `_typeIllustrationFor` returns null for them and
+  // the card falls through to the per-exercise image, then the accent gradient.
+  // Bundled files on disk: cardio, hiit, mobility, strength, yoga, saved.
   static const Map<String, String> _workoutTypeIllustrations = {
-    'upper': 'assets/images/workout_types/upper.png',
-    'lower': 'assets/images/workout_types/lower.png',
-    'push': 'assets/images/workout_types/push.png',
-    'pull': 'assets/images/workout_types/pull.png',
-    'legs': 'assets/images/workout_types/lower.png',
-    'full_body': 'assets/images/workout_types/full_body.png',
     'cardio': 'assets/images/workout_types/cardio.png',
     'hiit': 'assets/images/workout_types/hiit.png',
     'mobility': 'assets/images/workout_types/mobility.png',
     'yoga': 'assets/images/workout_types/yoga.png',
     'strength': 'assets/images/workout_types/strength.png',
     'recovery': 'assets/images/workout_types/mobility.png',
-    'core': 'assets/images/workout_types/core.png',
+    // Resistance-training splits all reuse the bundled strength art so a
+    // "Leg Day" / "Push" / "Upper" workout shows an image instead of the bare
+    // orange gradient. (Only maps to PNGs that actually ship on disk.)
+    'legs': 'assets/images/workout_types/strength.png',
+    'push': 'assets/images/workout_types/strength.png',
+    'pull': 'assets/images/workout_types/strength.png',
+    'upper': 'assets/images/workout_types/strength.png',
+    'lower': 'assets/images/workout_types/strength.png',
+    'upper_body': 'assets/images/workout_types/strength.png',
+    'lower_body': 'assets/images/workout_types/strength.png',
+    'full_body': 'assets/images/workout_types/strength.png',
+    'fullbody': 'assets/images/workout_types/strength.png',
+    'core': 'assets/images/workout_types/strength.png',
+    'arms': 'assets/images/workout_types/strength.png',
+    'chest': 'assets/images/workout_types/strength.png',
+    'back': 'assets/images/workout_types/strength.png',
+    'shoulders': 'assets/images/workout_types/strength.png',
+    'glutes': 'assets/images/workout_types/strength.png',
   };
 
   String? _typeIllustrationFor(Workout w) {
