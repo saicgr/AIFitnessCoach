@@ -130,6 +130,12 @@ class ChatMessage extends Equatable {
   @JsonKey(name: 'media_refs')
   final List<Map<String, dynamic>>? mediaRefs;
 
+  /// Generic in-chat structured blocks (inline metric cards, charts, stat
+  /// grids, etc.) emitted by the AI coach. Each block is a raw map matching
+  /// the backend contract: `{"type": str, "title"?: str, "spec": Map}`.
+  /// Parsed defensively; null/empty on legacy messages.
+  final List<Map<String, dynamic>>? blocks;
+
   /// Transient local file path for showing user's own photo before S3 URL is available
   @JsonKey(includeFromJson: false, includeToJson: false)
   final String? localFilePath;
@@ -198,6 +204,7 @@ class ChatMessage extends Equatable {
     this.mediaUrl,
     this.mediaType,
     this.mediaRefs,
+    this.blocks,
     this.localFilePath,
     this.status = MessageStatus.sent,
     this.isPinned = false,
@@ -258,7 +265,7 @@ class ChatMessage extends Equatable {
       actionData?['form_check_result'] as Map<String, dynamic>?;
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs, source, sourceSurface, insightId];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, blocks, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs, source, sourceSurface, insightId];
 
   /// Check if this is a voice message
   bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
@@ -277,6 +284,7 @@ class ChatMessage extends Equatable {
       mediaUrl: mediaUrl,
       mediaType: mediaType,
       mediaRefs: mediaRefs,
+      blocks: blocks,
       localFilePath: localFilePath,
       status: status,
       isPinned: isPinned,
@@ -305,6 +313,7 @@ class ChatMessage extends Equatable {
     String? mediaUrl,
     String? mediaType,
     List<Map<String, dynamic>>? mediaRefs,
+    List<Map<String, dynamic>>? blocks,
     String? localFilePath,
     MessageStatus? status,
     bool? isPinned,
@@ -328,6 +337,7 @@ class ChatMessage extends Equatable {
       mediaUrl: mediaUrl ?? this.mediaUrl,
       mediaType: mediaType ?? this.mediaType,
       mediaRefs: mediaRefs ?? this.mediaRefs,
+      blocks: blocks ?? this.blocks,
       localFilePath: localFilePath ?? this.localFilePath,
       status: status ?? this.status,
       isPinned: isPinned ?? this.isPinned,
@@ -570,6 +580,11 @@ class ChatResponse {
   @JsonKey(name: 'similar_questions')
   final List<String>? similarQuestions;
 
+  /// Generic in-chat structured blocks emitted alongside the text reply.
+  /// Forwarded onto the assistant [ChatMessage] so the live reply renders
+  /// inline metric cards / charts. See [ChatMessage.blocks].
+  final List<Map<String, dynamic>>? blocks;
+
   const ChatResponse({
     required this.message,
     this.intent,
@@ -577,6 +592,7 @@ class ChatResponse {
     this.actionData,
     this.ragContextUsed,
     this.similarQuestions,
+    this.blocks,
   });
 
   factory ChatResponse.fromJson(Map<String, dynamic> json) =>
@@ -608,6 +624,10 @@ class ChatHistoryItem {
   @JsonKey(name: 'media_type')
   final String? mediaType;
 
+  /// Generic in-chat structured blocks persisted with this history turn.
+  /// See [ChatMessage.blocks]. Null on legacy rows.
+  final List<Map<String, dynamic>>? blocks;
+
   const ChatHistoryItem({
     this.id,
     required this.role,
@@ -621,6 +641,7 @@ class ChatHistoryItem {
     this.coachPersonaId,
     this.mediaUrl,
     this.mediaType,
+    this.blocks,
   });
 
   factory ChatHistoryItem.fromJson(Map<String, dynamic> json) =>
@@ -641,5 +662,6 @@ class ChatHistoryItem {
         coachPersonaId: coachPersonaId,
         mediaUrl: mediaUrl,
         mediaType: mediaType,
+        blocks: blocks,
       );
 }

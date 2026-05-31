@@ -372,6 +372,14 @@ class ChatResponse(BaseModel):
                     "Echoed back so a client that sent no session_id adopts the "
                     "server-created one for subsequent turns."
     )
+    blocks: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Grounded inline UI blocks (metric cards / charts / stat "
+                    "grids) the client renders beneath the text reply. Built "
+                    "only from the user's real DB data; None when none apply. "
+                    "Each block = {type, title?, spec}. Best-effort decoration: "
+                    "absence is normal and never an error."
+    )
 
 
 class ChatMessage(BaseModel):

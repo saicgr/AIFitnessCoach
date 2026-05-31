@@ -20,6 +20,9 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   mediaRefs: (json['media_refs'] as List<dynamic>?)
       ?.map((e) => e as Map<String, dynamic>)
       .toList(),
+  blocks: (json['blocks'] as List<dynamic>?)
+      ?.map((e) => Map<String, dynamic>.from(e as Map))
+      .toList(),
   isPinned: json['isPinned'] as bool? ?? false,
   audioUrl: json['audio_url'] as String?,
   audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
@@ -42,6 +45,7 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'media_url': instance.mediaUrl,
       'media_type': instance.mediaType,
       'media_refs': instance.mediaRefs,
+      'blocks': instance.blocks,
       'isPinned': instance.isPinned,
       'audio_url': instance.audioUrl,
       'audio_duration_ms': instance.audioDurationMs,
@@ -111,6 +115,9 @@ ChatResponse _$ChatResponseFromJson(Map<String, dynamic> json) => ChatResponse(
   similarQuestions: (json['similar_questions'] as List<dynamic>?)
       ?.map((e) => e as String)
       .toList(),
+  blocks: (json['blocks'] as List<dynamic>?)
+      ?.map((e) => Map<String, dynamic>.from(e as Map))
+      .toList(),
 );
 
 Map<String, dynamic> _$ChatResponseToJson(ChatResponse instance) =>
@@ -121,6 +128,7 @@ Map<String, dynamic> _$ChatResponseToJson(ChatResponse instance) =>
       'action_data': instance.actionData,
       'rag_context_used': instance.ragContextUsed,
       'similar_questions': instance.similarQuestions,
+      'blocks': instance.blocks,
     };
 
 ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
@@ -137,6 +145,9 @@ ChatHistoryItem _$ChatHistoryItemFromJson(Map<String, dynamic> json) =>
       coachPersonaId: json['coach_persona_id'] as String?,
       mediaUrl: json['media_url'] as String?,
       mediaType: json['media_type'] as String?,
+      blocks: (json['blocks'] as List<dynamic>?)
+          ?.map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
     );
 
 Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
@@ -153,4 +164,5 @@ Map<String, dynamic> _$ChatHistoryItemToJson(ChatHistoryItem instance) =>
       'coach_persona_id': instance.coachPersonaId,
       'media_url': instance.mediaUrl,
       'media_type': instance.mediaType,
+      'blocks': instance.blocks,
     };

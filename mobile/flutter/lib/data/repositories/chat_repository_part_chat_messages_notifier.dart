@@ -782,6 +782,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData,
+        blocks: response.blocks,
         coachPersonaId: currentAISettings.coachPersonaId,
       );
 
@@ -1042,19 +1043,19 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
                 : kind == 'log_pre_workout_snack'
                     ? 'pre_workout'
                     : 'post_workout';
-            _router.push('/nutrition?slot=$slot');
+            _router.go('/nutrition?slot=$slot');
             await confirm('Opening meal log…');
             break;
           }
         case 'plan_tomorrow_meals':
-          _router.push('/nutrition');
+          _router.go('/nutrition');
           await confirm('Pulling up tomorrow’s plan…');
           break;
         case 'start_wind_down':
           // Wind-down state is owned by the home workout card; routing
           // back to /home triggers its resolver to re-render in
           // windDown mode. No dedicated endpoint exists today.
-          _router.push('/home');
+          _router.go('/home');
           await confirm('Wind down it is. Lights low, screens off in 30.');
           break;
         case 'start_workout_now':
@@ -1063,7 +1064,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             if (wid != null && wid.isNotEmpty) {
               _router.push('/workout/$wid');
             } else {
-              _router.push('/workouts');
+              _router.go('/workouts');
             }
             await confirm('Opening your session.');
             break;
@@ -1083,7 +1084,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             break;
           }
         case 'add_bonus_workout':
-          _router.push('/workouts');
+          _router.go('/workouts');
           await confirm('Pick a bonus session from the list.');
           break;
         case 'mark_rest_day':
@@ -1114,7 +1115,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             if (wid != null && wid.isNotEmpty) {
               _router.push('/workout/$wid');
             } else {
-              _router.push('/workouts');
+              _router.go('/workouts');
             }
             await confirm('PR target locked, lift smart.');
             break;
@@ -1473,6 +1474,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         agentType: response.agentType,
         createdAt: DateTime.now().toIso8601String(),
         actionData: response.actionData,
+        blocks: response.blocks,
         coachPersonaId: currentAISettings.coachPersonaId,
       );
 

@@ -29,6 +29,7 @@ from services.langgraph_agents.hydration_agent import build_hydration_agent_grap
 from services.langgraph_agents.cycle_agent import build_cycle_agent_graph
 from services.langgraph_agents.coach_agent import build_coach_agent_graph
 from services.langgraph_agents.tools.suggestion_tools import inject_suggested_actions
+from services.coach.chat_blocks import build_blocks_for_response
 
 from core.logger import get_logger
 from core.anonymize import anonymize_user_data
@@ -1335,6 +1336,22 @@ class LangGraphCoachService:
                 action_data, message_str, selected_agent, final_state
             )
 
+            # ADDITIVE: grounded inline UI blocks (metric cards / charts).
+            # Best-effort decoration — built from the user's real DB data only,
+            # never fabricated, and never allowed to break the reply. Any
+            # failure yields no blocks (None on the response).
+            blocks = None
+            try:
+                blocks = await build_blocks_for_response(
+                    message=request.message,
+                    user_id=request.user_id,
+                    intent=intent,
+                    agent_type=selected_agent,
+                )
+            except Exception as block_err:
+                logger.warning(f"[LangGraph Service] block build failed (non-fatal): {block_err}")
+                blocks = None
+
             response = ChatResponse(
                 message=message_str,
                 intent=intent,
@@ -1342,6 +1359,7 @@ class LangGraphCoachService:
                 action_data=action_data,
                 rag_context_used=final_state.get("rag_context_used", rag_used),
                 similar_questions=final_state.get("similar_questions", similar_questions),
+                blocks=blocks if blocks else None,
             )
 
             logger.info(f"Response: intent={intent.value}, agent={selected_agent.value}, action_data={action_data is not None}")
@@ -1639,6 +1657,20 @@ class LangGraphCoachService:
             action_data, message_str, selected_agent, final_state
         )
 
+        # ADDITIVE: grounded inline UI blocks (metric cards / charts) — same
+        # best-effort, never-fabricate, never-fatal contract as the sync path.
+        blocks = None
+        try:
+            blocks = await build_blocks_for_response(
+                message=request.message,
+                user_id=request.user_id,
+                intent=intent,
+                agent_type=selected_agent,
+            )
+        except Exception as block_err:
+            logger.warning(f"[LangGraph Service] block build failed (stream, non-fatal): {block_err}")
+            blocks = None
+
         # Emit the buffered reply as a single token event so the client renders
         # it through the same incremental path, then the action card (if any).
         yield {"type": "token", "delta": message_str}
@@ -1652,4 +1684,5 @@ class LangGraphCoachService:
             "rag_context_used": final_state.get("rag_context_used", rag_used),
             "similar_questions": final_state.get("similar_questions", similar_questions),
             "action_data": action_data,
+            "blocks": blocks if blocks else None,
         }

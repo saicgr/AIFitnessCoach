@@ -37,7 +37,7 @@ import json
 import time
 import uuid
 from fastapi import APIRouter, HTTPException, Depends, Request, BackgroundTasks, Query, UploadFile, File, Form
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from models.chat import ChatRequest, ChatResponse
 from services.gemini_service import GeminiService
@@ -102,7 +102,7 @@ def get_rag_service() -> RAGService:
     return rag_service
 
 
-def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None, assistant_message_id: Optional[str] = None, session_id: Optional[str] = None):
+def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, response_blocks: Optional[List[Dict[str, Any]]] = None, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None, assistant_message_id: Optional[str] = None, session_id: Optional[str] = None):
     """Background task: Save chat message to database for persistence.
 
     `assistant_message_id` (when provided) is used as the row PK so the
@@ -120,6 +120,10 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
         }
         if response_action_data:
             context_dict["action_data"] = response_action_data
+        if response_blocks:
+            # Persist the grounded inline blocks so they re-render on history
+            # reload. Old rows simply have no "blocks" key → None (back-compat).
+            context_dict["blocks"] = response_blocks
         if coach_persona_id:
             context_dict["coach_persona_id"] = coach_persona_id
 
@@ -652,6 +656,7 @@ async def send_message(
                 response.agent_type,
                 response.rag_context_used,
                 response.action_data,
+                response.blocks,
                 _coach_persona_id,
                 _media_url,
                 _media_type,
@@ -760,6 +765,7 @@ class ChatHistoryItem(BaseModel):
     coach_persona_id: Optional[str] = None  # Which coach persona sent this message
     media_url: Optional[str] = None  # Public S3 URL for image/video messages
     media_type: Optional[str] = None  # 'image' or 'video'
+    blocks: Optional[List[Dict[str, Any]]] = None  # Grounded inline UI blocks (assistant only); None for old rows
 
 
 @router.get("/history/{user_id}", response_model=List[ChatHistoryItem])
@@ -802,6 +808,7 @@ async def get_chat_history(
             action_data = None
             agent_type = None
             coach_persona_id = None
+            blocks = None
             if row.get("context_json"):
                 try:
                     raw_ctx = row.get("context_json")
@@ -810,6 +817,9 @@ async def get_chat_history(
                     action_data = context.get("action_data")
                     agent_type = context.get("agent_type")
                     coach_persona_id = context.get("coach_persona_id")
+                    # Grounded inline blocks — absent on rows written before the
+                    # feature shipped (back-compat → stays None).
+                    blocks = context.get("blocks")
                     if action_data:
                         logger.debug(f"Loaded action_data from history: {action_data.get('action')}")
                 except Exception as e:
@@ -848,6 +858,7 @@ async def get_chat_history(
                     action_data=action_data,
                     is_pinned=is_pinned,
                     coach_persona_id=coach_persona_id,
+                    blocks=blocks,
                 ))
 
         logger.info(f"Returning {len(messages)} chat messages for user {user_id}")
@@ -1069,6 +1080,7 @@ async def send_message_stream(
         final_intent = None
         final_agent_type = None
         final_rag_used = False
+        final_blocks = None
 
         try:
             # Consume the LangGraph streaming pipeline. Each yielded dict is one
@@ -1100,6 +1112,9 @@ async def send_message_stream(
                     final_rag_used = bool(evt.get("rag_context_used"))
                     if evt.get("action_data") is not None:
                         final_action_data = evt.get("action_data")
+                    # Grounded inline blocks (best-effort decoration). Absent /
+                    # None is normal — old clients ignore the key.
+                    final_blocks = evt.get("blocks")
                     # Prefer the service's canonical message; fall back to the
                     # concatenated token stream if it was empty.
                     svc_message = evt.get("message") or "".join(full_reply_parts)
@@ -1144,6 +1159,7 @@ async def send_message_stream(
                     "agent_type": _agent_type_str,
                     "rag_context_used": final_rag_used,
                     "action_data": final_action_data,
+                    "blocks": final_blocks,
                 },
             }
             yield f"data: {json.dumps(done_evt)}\n\n"
@@ -1210,6 +1226,7 @@ async def send_message_stream(
                     final_agent_type,
                     final_rag_used,
                     final_action_data,
+                    final_blocks,
                     _stream_coach_persona_id,
                     _stream_media_url,
                     _stream_media_type,

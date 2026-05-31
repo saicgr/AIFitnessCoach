@@ -13,6 +13,7 @@ import '../../../data/models/cosmetic.dart';
 import '../../../data/providers/cosmetics_provider.dart';
 import '../../../widgets/coach_avatar.dart';
 import 'food_analysis_inline_card.dart';
+import 'generic_blocks_renderer.dart';
 import 'food_analysis_result_card.dart';
 import 'form_check_result_card.dart';
 import 'form_comparison_result_card.dart';
@@ -462,6 +463,15 @@ class ChatMessageBubble extends ConsumerWidget {
               prompt: message.suggestedActionsPrompt,
               excludeIds: _suppressedSuggestionIds,
               onAttachFormVideo: onAttachFormVideo,
+            ),
+          // ── Generic in-chat blocks (metric cards, charts, stat grids) ──
+          // Backend-driven structured blocks the coach emits alongside its
+          // text reply. Rendered only for assistant messages that carry a
+          // non-empty `blocks` list; legacy messages (null) skip this entirely.
+          if (!isUser && message.blocks != null && message.blocks!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: GenericBlocksRenderer(blocks: message.blocks!),
             ),
           // ── Inline "go-to" deep-link pills ────────────────────────────
           // When the coach references an entity (exercise, PR/progress,
