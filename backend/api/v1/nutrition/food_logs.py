@@ -1,4 +1,5 @@
 """Food log CRUD endpoints."""
+import asyncio
 from core.db import get_supabase_db
 from datetime import date, datetime, time as dt_time, timedelta
 from typing import List, Optional
@@ -73,12 +74,17 @@ async def list_food_logs(
         else:
             tz_to = to_date
 
-        logs = db.list_food_logs(
-            user_id=user_id,
-            from_date=tz_from,
-            to_date=tz_to,
-            meal_type=meal_type,
-            limit=limit
+        # Synchronous Supabase call — offload to a thread so the blocking DB
+        # round-trip doesn't stall this async worker's event loop under load.
+        logs = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: db.list_food_logs(
+                user_id=user_id,
+                from_date=tz_from,
+                to_date=tz_to,
+                meal_type=meal_type,
+                limit=limit,
+            ),
         )
 
         # Format response

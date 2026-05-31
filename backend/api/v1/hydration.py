@@ -9,6 +9,7 @@ ENDPOINTS:
 - PUT /api/v1/hydration/goal/{user_id} - Update daily hydration goal
 - GET /api/v1/hydration/goal/{user_id} - Get user's hydration goal
 """
+import asyncio
 from core.db import get_supabase_db
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from typing import List, Optional
@@ -178,37 +179,44 @@ async def get_daily_hydration(
 
         target_date_str = target_date.isoformat()
 
-        # Try filtering by local_date first (timezone-correct)
-        # Fall back to logged_at range if column doesn't exist or no results
-        result = None
-        try:
-            result = db.client.table("hydration_logs").select("*").eq(
-                "user_id", user_id
-            ).eq(
-                "local_date", target_date_str
-            ).order("logged_at", desc=True).execute()
-        except Exception as local_date_err:
-            if "local_date" in str(local_date_err):
-                # Column doesn't exist yet (migration not applied)
-                logger.debug("local_date column not available, using logged_at range")
-                result = None
-            else:
-                raise
+        # Try filtering by local_date first (timezone-correct), fall back to a
+        # logged_at UTC range if the column is missing or returns nothing. The
+        # Supabase client is synchronous, so run the whole fetch (including the
+        # fallback) in a thread to keep this async worker's event loop free
+        # under concurrent load.
+        #
+        # The fallback window MUST be the user's LOCAL midnight->midnight day
+        # converted to UTC — a naive datetime.combine() is treated as UTC by
+        # Supabase, which for a UTC-offset user leaks the previous local
+        # evening's logs into "today" (e.g. water logged 10pm CST = ~4am UTC).
+        def _fetch_hydration_rows():
+            res = None
+            try:
+                res = db.client.table("hydration_logs").select("*").eq(
+                    "user_id", user_id
+                ).eq(
+                    "local_date", target_date_str
+                ).order("logged_at", desc=True).execute()
+            except Exception as local_date_err:
+                if "local_date" in str(local_date_err):
+                    logger.debug("local_date column not available, using logged_at range")
+                    res = None
+                else:
+                    raise
+            if res is None or not res.data:
+                start_utc, end_utc = local_date_to_utc_range(target_date_str, user_tz)
+                res = db.client.table("hydration_logs").select("*").eq(
+                    "user_id", user_id
+                ).gte(
+                    "logged_at", start_utc
+                ).lte(
+                    "logged_at", end_utc
+                ).order("logged_at", desc=True).execute()
+            return res
 
-        # Fall back to logged_at range for legacy data or missing column.
-        # The window MUST be the user's LOCAL midnight->midnight day converted
-        # to UTC — a naive datetime.combine() is treated as UTC by Supabase,
-        # which for a UTC-offset user leaks the previous local evening's logs
-        # into "today" (e.g. water logged 10pm CST = ~4am UTC next day).
-        if result is None or not result.data:
-            start_utc, end_utc = local_date_to_utc_range(target_date_str, user_tz)
-            result = db.client.table("hydration_logs").select("*").eq(
-                "user_id", user_id
-            ).gte(
-                "logged_at", start_utc
-            ).lte(
-                "logged_at", end_utc
-            ).order("logged_at", desc=True).execute()
+        result = await asyncio.get_event_loop().run_in_executor(
+            None, _fetch_hydration_rows
+        )
 
         logs = [row_to_hydration_log(row) for row in (result.data or [])]
 

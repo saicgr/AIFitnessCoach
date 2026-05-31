@@ -1,4 +1,5 @@
 """Daily/weekly nutrition summaries and targets endpoints."""
+import asyncio
 from core.db import get_supabase_db
 from datetime import datetime, timedelta, date, timezone
 from typing import List, Optional, Set
@@ -87,8 +88,14 @@ async def get_daily_summary(
 
         logger.info(f"Getting daily nutrition summary for user {user_id}, date={date}, tz={user_tz}")
 
-        # Get summary (timezone-aware) — includes meals, no need to query again
-        summary = db.get_daily_nutrition_summary(user_id, date, timezone_str=user_tz)
+        # Get summary (timezone-aware) — includes meals, no need to query again.
+        # The Supabase client is synchronous; run it in a thread so the blocking
+        # DB round-trip doesn't stall this async worker's event loop (which, under
+        # concurrent load, would serialize every other request on the worker).
+        summary = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: db.get_daily_nutrition_summary(user_id, date, timezone_str=user_tz),
+        )
 
         meal_responses = []
         for log in (summary.get("meals") or [])[:20]:

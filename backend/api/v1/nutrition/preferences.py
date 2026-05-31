@@ -1,4 +1,5 @@
 """Nutrition preferences and dynamic targets endpoints."""
+import asyncio
 from core.db import get_supabase_db
 from datetime import datetime
 from typing import List, Optional
@@ -31,11 +32,16 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
     try:
         db = get_supabase_db()
 
-        result = db.client.table("nutrition_preferences")\
-            .select("*")\
-            .eq("user_id", user_id)\
-            .maybe_single()\
-            .execute()
+        # Synchronous Supabase call — offload to a thread so it doesn't block
+        # this async worker's event loop under concurrent load.
+        result = await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: db.client.table("nutrition_preferences")
+            .select("*")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute(),
+        )
 
         if not result or not result.data:
             # Return default preferences
@@ -50,7 +56,14 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
         # goal_weight_kg is stored as target_weight_kg in the users table
         goal_weight_kg = None
         try:
-            user_result = db.client.table("users").select("target_weight_kg").eq("id", user_id).maybe_single().execute()
+            user_result = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: db.client.table("users")
+                .select("target_weight_kg")
+                .eq("id", user_id)
+                .maybe_single()
+                .execute(),
+            )
             if user_result and user_result.data:
                 goal_weight_kg = user_result.data.get("target_weight_kg")
         except Exception:
