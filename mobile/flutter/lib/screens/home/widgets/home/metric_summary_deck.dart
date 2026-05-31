@@ -103,10 +103,10 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     return Padding(
       padding: kHomeHPad,
       child: SizedBox(
-        // Height fits a 3-row × 2-col "more" grid (3×60 + 2×9 ≈ 198) plus the
-        // overlaid dots+gear footer strip (~24). The Summary page (ring + 4
-        // tiles) centers within this with a little breathing room.
-        height: 224,
+        // Height fits a 3-row × 2-col "more" grid (3×56 + 2×9 = 186) + a 40px
+        // footer strip for the centered dots + gear button. The Summary page
+        // (ring + 4 tiles) centers within this with breathing room.
+        height: 228,
         child: Stack(
           children: [
             // The cards fill the full height; their content centers, leaving a
@@ -123,9 +123,9 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
             // dots + a borderless tune glyph) sits centered within it, so the
             // generous tap targets don't enlarge the footer's apparent height.
             Positioned(
-              left: 14,
-              right: 8,
-              bottom: 2,
+              left: 16,
+              right: 16,
+              bottom: 8,
               child: _indicatorRow(c, pages.length),
             ),
           ],
@@ -150,76 +150,74 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
   //   • Single page → the dots are hidden entirely (nothing to page through),
   //     so the footer is just the gear in its corner.
   Widget _indicatorRow(ThemeColors c, int pageCount) {
-    const gearGlyph = 18.0;
-    const gearPad = 14.0; // glyph + 2×pad ≈ 46px hit target (>= 44)
-    const gearBox = gearGlyph + gearPad * 2;
     final showDots = pageCount > 1;
-
+    // A fixed-height footer bar. A Stack guarantees the dots are TRULY centered
+    // under the card (independent of the gear, which is pinned right) — the old
+    // leading-spacer trick left them visibly off-centre. The gear is a small,
+    // clearly-tappable circular button (soft fill, no hard border) so it reads
+    // as an intentional control, not a stray glyph floating in the corner.
     return SizedBox(
-      height: gearBox,
-      child: Row(
+      height: 28,
+      child: Stack(
+        alignment: Alignment.center,
         children: [
-          // Leading spacer mirrors the gear's box so the dots stay optically
-          // centered beneath the card.
-          const SizedBox(width: gearBox),
-          Expanded(
-            child: Center(
-              child: showDots
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        for (var i = 0; i < pageCount; i++)
-                          GestureDetector(
-                            onTap: () {
-                              HapticService.light();
-                              _controller.animateToPage(
-                                i,
-                                duration: const Duration(milliseconds: 260),
-                                curve: Curves.easeOutCubic,
-                              );
-                            },
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              // Pad the hit area without enlarging the dot.
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 12),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 200),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 3),
-                                width: _page == i ? 16 : 5,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: _page == i
-                                      ? c.accent
-                                      : c.textMuted.withValues(alpha: 0.35),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    )
-                  : const SizedBox.shrink(),
+          if (showDots)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 0; i < pageCount; i++)
+                  GestureDetector(
+                    onTap: () {
+                      HapticService.light();
+                      _controller.animateToPage(
+                        i,
+                        duration: const Duration(milliseconds: 260),
+                        curve: Curves.easeOutCubic,
+                      );
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 3),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        width: _page == i ? 16 : 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: _page == i
+                              ? c.accent
+                              : c.textMuted.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-          ),
-          Tooltip(
-            message: 'Customize metrics',
-            child: Semantics(
-              button: true,
-              label: 'Customize metrics',
-              child: GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  showMetricSettingsSheet(context, ref);
-                },
-                behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.all(gearPad),
-                  child: Icon(
-                    Icons.tune_rounded,
-                    size: gearGlyph,
-                    color: c.textMuted,
+          Align(
+            alignment: Alignment.centerRight,
+            child: Tooltip(
+              message: 'Customize metrics',
+              child: Semantics(
+                button: true,
+                label: 'Customize metrics',
+                child: GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    showMetricSettingsSheet(context, ref);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: c.textMuted.withValues(alpha: 0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.tune_rounded,
+                      size: 15,
+                      color: c.textSecondary,
+                    ),
                   ),
                 ),
               ),
@@ -335,7 +333,8 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     return Align(
       alignment: Alignment.topCenter,
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 24),
+        // Clears the ~36px footer bar (dots + gear) so it never sits on a tile.
+        padding: const EdgeInsets.only(bottom: 40),
         child: GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -343,8 +342,8 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
             crossAxisCount: 2,
             mainAxisSpacing: 9,
             crossAxisSpacing: 9,
-            // 60 so 3 rows (3×60 + 2×9 = 198) fit above the footer strip.
-            mainAxisExtent: 60,
+            // 56 so 3 rows (3×56 + 2×9 = 186) fit above the footer strip.
+            mainAxisExtent: 56,
           ),
           children: [
             for (final kind in tiles)
