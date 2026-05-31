@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,27 +77,25 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
   }
 
   Future<void> _loadData() async {
-    final existingNutrition = ref.read(nutritionProvider).todaySummary;
-    final existingPrefs = ref.read(nutritionPreferencesProvider).currentCalorieTarget;
-    if (existingNutrition != null && existingPrefs > 0 && _isLoading) {
+    // INSTANT-FIRST (feedback_instant_data): render the card immediately from
+    // whatever the providers already hold (disk cache / a prior load) instead
+    // of blocking behind a 3-way network Future.wait — that wait was what made
+    // the card sit as a long gray placeholder on a cold open. The build()
+    // watches these providers, so the ring + pills fill in reactively as each
+    // refresh lands; no spinner gate on the slowest call.
+    if (_isLoading && mounted) {
       setState(() => _isLoading = false);
       _animController.forward();
     }
 
-    final apiClient = ref.read(apiClientProvider);
-    final userId = await apiClient.getUserId();
-    if (userId != null && mounted) {
-      _userId = userId;
-      await Future.wait([
-        ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
-        ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
-        ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
-      ]);
-      if (mounted && _isLoading) {
-        setState(() => _isLoading = false);
-        _animController.forward();
-      }
-    }
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+    _userId = userId;
+    // Fire the refreshes without awaiting them together — each provider update
+    // repaints the card on its own; the slowest never blocks the others.
+    unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
+    unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
+    unawaited(ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
   }
 
   String _adjustmentLabel(DynamicNutritionTargets dt) {

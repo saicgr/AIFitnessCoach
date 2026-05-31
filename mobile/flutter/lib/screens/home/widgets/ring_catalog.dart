@@ -340,11 +340,13 @@ extension RingKindX on RingKind {
         RingKind.nourish,
         RingKind.move,
         RingKind.sleep,
-        // "More" page (next 4) — fills a clean 2×2 grid by default.
+        // "More" page (next 6) — fills a clean 3-row × 2-column grid by default.
         RingKind.activeEnergy,
         RingKind.recovery,
         RingKind.hydration,
         RingKind.weight,
+        RingKind.heartRate,
+        RingKind.protein,
       ];
 
   /// The subset of [defaultOrder] that is [isCore] (cannot be hidden). Used by

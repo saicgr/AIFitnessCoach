@@ -52,15 +52,15 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     final visible = ref.watch(ringVisibilityProvider);
 
     // Summary = Today ring + first 4 enabled tiles. More = the remainder,
-    // chunked into pages of 4 (2 rows) so no page overflows the deck height.
+    // chunked into pages of 6 → a clean 3 rows × 2 columns grid per page.
     final summaryTiles = visible.take(4).toList();
     final moreTiles = visible.length > 4 ? visible.sublist(4) : <RingKind>[];
     final moreChunks = <List<RingKind>>[];
-    for (var i = 0; i < moreTiles.length; i += 4) {
+    for (var i = 0; i < moreTiles.length; i += 6) {
       moreChunks.add(
         moreTiles.sublist(
           i,
-          i + 4 > moreTiles.length ? moreTiles.length : i + 4,
+          i + 6 > moreTiles.length ? moreTiles.length : i + 6,
         ),
       );
     }
@@ -103,12 +103,10 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     return Padding(
       padding: kHomeHPad,
       child: SizedBox(
-        // The dot indicator + customize gear sit INSIDE the card footer
-        // (overlaid at the bottom) instead of in a separate row below it. The
-        // card content is vertically centered, so the height here is sized to
-        // leave a clean ~30px bottom strip for the footer. Net height (198) is
-        // still well under the old layout (176 card + 8 gap + 32 row = 216).
-        height: 198,
+        // Height fits a 3-row × 2-col "more" grid (3×60 + 2×9 ≈ 198) plus the
+        // overlaid dots+gear footer strip (~24). The Summary page (ring + 4
+        // tiles) centers within this with a little breathing room.
+        height: 224,
         child: Stack(
           children: [
             // The cards fill the full height; their content centers, leaving a
@@ -345,7 +343,8 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
             crossAxisCount: 2,
             mainAxisSpacing: 9,
             crossAxisSpacing: 9,
-            mainAxisExtent: 62,
+            // 60 so 3 rows (3×60 + 2×9 = 198) fit above the footer strip.
+            mainAxisExtent: 60,
           ),
           children: [
             for (final kind in tiles)
