@@ -54,12 +54,23 @@ class HomeTimeline extends ConsumerWidget {
     // dated header so days are easy to tell apart. ------------------------
     Widget body;
     if (timelineState.isLoading && timelineState.days.isEmpty) {
+      // Genuine first load only — never a permanent skeleton, since `refresh()`
+      // always resolves to a terminal (loaded / empty / error) state.
       body = const _SkeletonList(key: ValueKey('tl-skeleton'));
     } else if (timelineState.error != null && timelineState.days.isEmpty) {
       body = _ErrorTile(
         key: const ValueKey('tl-error'),
         c: c,
         onRetry: () => ref.read(timelineProvider.notifier).refresh(),
+      );
+    } else if (timelineState.days.isEmpty) {
+      // Loaded successfully but the endpoint returned no days (a brand-new user
+      // with nothing logged yet) → a friendly empty state, NOT a skeleton or a
+      // blank card. Tapping it jumps to Nutrition to log a first meal.
+      body = _EmptyTile(
+        key: const ValueKey('tl-empty'),
+        c: c,
+        onTap: () => _open(context, '/nutrition'),
       );
     } else {
       final children = <Widget>[];
@@ -1161,6 +1172,66 @@ class _ErrorTile extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Loaded-but-empty state — the endpoint returned no days at all (a brand-new
+/// user who hasn't logged anything). A gentle, tappable nudge instead of a
+/// blank card or a perpetual skeleton.
+class _EmptyTile extends StatelessWidget {
+  final ThemeColors c;
+  final VoidCallback onTap;
+  const _EmptyTile({super.key, required this.c, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticService.selection();
+        onTap();
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: c.success.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: LineIcon('nutrition', size: 17, color: c.success),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context).homeTimelineNothingLoggedYetToday,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: c.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  AppLocalizations.of(context).homeTimelineLogYourMeals,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: c.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, size: 18, color: c.textMuted),
+        ],
+      ),
     );
   }
 }

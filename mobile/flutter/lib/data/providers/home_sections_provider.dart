@@ -225,13 +225,12 @@ const List<HomeSection> _defaultOrder = [
   // slot vacated when the deck's Log / Trends / Start strip was removed
   // (issue 1), which is where the user expects those shortcuts to live.
   HomeSection.quickActions,
-  // v32 (issue 5): the Workout card is the day's PRIMARY ACTION, so it sits
-  // high — right under the deck's quick-actions, above the Coach card.
-  // Glance (deck) → quick actions → act (workout) → context (coach). Only
-  // affects users on the default layout; My Space reorders are preserved.
-  HomeSection.workoutCard,
-  // Coach Hero now sits BELOW the deck (issue 1).
+  // v34 (user request): Coach card sits ABOVE the Workout card — the coach
+  // frames the day, then the workout is the action. Glance (deck) → quick
+  // actions → coach (framing) → workout (act). Only affects users on the
+  // default layout; My Space reorders are preserved.
   HomeSection.coachHero,
+  HomeSection.workoutCard,
   HomeSection.strainCoach,
   HomeSection.nutritionCard,
   // The Cycle card self-hides unless menstrual tracking is enabled, so it is

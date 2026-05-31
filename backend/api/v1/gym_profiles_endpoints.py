@@ -34,6 +34,94 @@ from core.supabase_client import get_supabase
 from services.user_context_service import user_context_service, EventType
 
 router = APIRouter()
+
+
+async def _post_update_side_effects(
+    *,
+    user_id: str,
+    profile_id: str,
+    profile_name: str,
+    workout_days: list,
+    should_regen: bool,
+    user_tz,
+    changes: list,
+) -> None:
+    """Run ALL post-commit work for a gym-profile PUT off the response path.
+
+    This executes in a FastAPI BackgroundTask AFTER the response has been sent,
+    so nothing here can stall the request or surface to the client as an error.
+    Every block is independently guarded — a failure in one step must not skip
+    the others, and no failure here ever affects the already-returned profile.
+
+    Steps:
+      1. (if schedule/equipment changed on the active profile) invalidate stale
+         upcoming workouts + today/profile/user caches, then enqueue a 14-day
+         schedule top-up so the next /today regenerates with the new config.
+      2. log the update to user_context (analytics/feature-interaction event).
+    """
+    # ── Step 1: cache invalidation + workout regen (only when relevant) ──────
+    if should_regen:
+        try:
+            from api.v1.workouts.today import (
+                invalidate_today_workout_cache,
+                _gym_profile_cache,
+                _user_record_cache,
+                enqueue_schedule_top_up,
+            )
+            from api.v1.workouts.utils import invalidate_upcoming_workouts
+
+            # Drop pre-generated future workouts under the old config so the
+            # next /today + top-up regenerate them with new days/equipment.
+            try:
+                deleted = invalidate_upcoming_workouts(
+                    user_id=user_id,
+                    gym_profile_id=profile_id,
+                    reason="profile_updated",
+                )
+                logger.info(f"[GymProfile] Invalidated {deleted} upcoming workouts after profile edit")
+            except Exception as inv_err:
+                logger.warning(f"[GymProfile] Upcoming-workout invalidation failed (non-fatal): {inv_err}", exc_info=True)
+
+            try:
+                await _gym_profile_cache.delete(user_id)
+                await _user_record_cache.delete(user_id)
+                await invalidate_today_workout_cache(user_id, profile_id)
+            except Exception as cache_err:
+                logger.warning(f"[GymProfile] Cache invalidation failed (non-fatal): {cache_err}", exc_info=True)
+
+            if workout_days and user_tz is not None:
+                try:
+                    await enqueue_schedule_top_up(
+                        user_id=user_id,
+                        gym_profile_id=profile_id,
+                        workout_days=workout_days,
+                        user_tz=user_tz,
+                        horizon_days=14,
+                    )
+                    logger.info(f"📅 [GymProfile] Queued post-edit pre-gen for '{profile_name}'")
+                except Exception as regen_err:
+                    logger.warning(f"[GymProfile] Post-edit pre-gen enqueue failed (non-fatal): {regen_err}", exc_info=True)
+        except Exception as gen_err:
+            logger.warning(f"[GymProfile] Post-edit invalidation/regen block failed (non-fatal): {gen_err}", exc_info=True)
+
+    # ── Step 2: user-context analytics event ────────────────────────────────
+    try:
+        await user_context_service.log_event(
+            user_id=user_id,
+            event_type=EventType.FEATURE_INTERACTION,
+            event_data={
+                "feature": "gym_profile",
+                "action": "updated",
+                "profile_id": profile_id,
+                "profile_name": profile_name,
+                "changes": changes,
+            },
+            context={"source": "gym_profiles_api"},
+        )
+    except Exception as log_err:
+        logger.warning(f"[GymProfile] user_context log_event failed (non-fatal): {log_err}", exc_info=True)
+
+
 @router.put("/{profile_id}", response_model=GymProfile)
 async def update_gym_profile(
     profile_id: str, update: GymProfileUpdate,
@@ -121,10 +209,21 @@ async def update_gym_profile(
         if not result.data:
             raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
+        # ── COMMIT POINT ─────────────────────────────────────────────────────
+        # The DB write has persisted. Everything below this line is post-commit
+        # side-effect work (user-context logging, cache invalidation, workout
+        # regen enqueue). NONE of it may block or fail the response — it is all
+        # pushed onto background_tasks so the handler returns to the client
+        # immediately after the update().execute() succeeds.
+        logger.info(
+            f"✅ [GymProfile] Persisted update for profile {profile_id} "
+            f"(user {old_profile.get('user_id')}, fields={list(update_data.keys())})"
+        )
+
         from .gym_profiles import row_to_gym_profile
         updated_profile = row_to_gym_profile(result.data[0])
 
-        # Log changes
+        # Log changes (cheap, in-memory — fine to compute on the response path).
         changes = []
         if update.name and update.name != old_profile.get("name"):
             changes.append(f"name: {old_profile.get('name')} → {update.name}")
@@ -136,10 +235,8 @@ async def update_gym_profile(
         if changes:
             logger.info(f"🔄 [GymProfile] Updated {profile_id}: {', '.join(changes)}")
 
-        # If schedule-impacting fields changed AND this is the active profile,
-        # invalidate stale future workouts (not started, not completed) and
-        # refill the 14-day horizon. Today's already-started workout is left
-        # alone via the is_completed=False + status checks in the helper.
+        # Schedule-change detection stays on the response path (pure comparison,
+        # no I/O); its SIDE-EFFECTS run in the background.
         schedule_changed = (
             update.workout_days is not None
             and list(update.workout_days or []) != list(old_profile.get("workout_days") or [])
@@ -148,58 +245,31 @@ async def update_gym_profile(
             (update.equipment is not None and update.equipment != old_profile.get("equipment"))
             or (update.equipment_details is not None and update.equipment_details != old_profile.get("equipment_details"))
         )
-        if (schedule_changed or equipment_changed) and updated_profile.is_active:
+
+        user_id_val = old_profile["user_id"]
+        should_regen = (schedule_changed or equipment_changed) and updated_profile.is_active
+
+        # Resolve timezone on the request path (needs the live `request`); the
+        # actual regen + cache work runs in the background.
+        user_tz = None
+        if should_regen:
             try:
-                from api.v1.workouts.today import (
-                    invalidate_today_workout_cache,
-                    _gym_profile_cache,
-                    _user_record_cache,
-                    enqueue_schedule_top_up,
-                )
-                from api.v1.workouts.utils import invalidate_upcoming_workouts
+                db = get_supabase_db()
+                user_tz = resolve_timezone(request, db, user_id_val)
+            except Exception as tz_err:
+                logger.warning(f"[GymProfile] Timezone resolve failed (non-fatal): {tz_err}")
 
-                user_id_val = old_profile["user_id"]
-                # Drop pre-generated future workouts under the old config so
-                # the next /today + top-up regenerate them with new days/equipment.
-                deleted = invalidate_upcoming_workouts(
-                    user_id=user_id_val,
-                    gym_profile_id=profile_id,
-                    reason="profile_updated",
-                )
-                logger.info(f"[GymProfile] Invalidated {deleted} upcoming workouts after profile edit")
-
-                await _gym_profile_cache.delete(user_id_val)
-                await _user_record_cache.delete(user_id_val)
-                await invalidate_today_workout_cache(user_id_val, profile_id)
-
-                workout_days = updated_profile.workout_days or []
-                if workout_days:
-                    db = get_supabase_db()
-                    user_tz = resolve_timezone(request, db, user_id_val)
-                    background_tasks.add_task(
-                        enqueue_schedule_top_up,
-                        user_id=user_id_val,
-                        gym_profile_id=profile_id,
-                        workout_days=workout_days,
-                        user_tz=user_tz,
-                        horizon_days=14,
-                    )
-                    logger.info(f"📅 [GymProfile] Queued post-edit pre-gen for '{updated_profile.name}'")
-            except Exception as gen_err:
-                logger.warning(f"[GymProfile] Post-edit invalidation/regen failed (non-fatal): {gen_err}", exc_info=True)
-
-        # Log to user context
-        await user_context_service.log_event(
-            user_id=old_profile["user_id"],
-            event_type=EventType.FEATURE_INTERACTION,
-            event_data={
-                "feature": "gym_profile",
-                "action": "updated",
-                "profile_id": profile_id,
-                "profile_name": updated_profile.name,
-                "changes": changes,
-            },
-            context={"source": "gym_profiles_api"}
+        # Push ALL post-commit work onto background_tasks. Wrapped so a failure
+        # here can never affect the response the client already received.
+        background_tasks.add_task(
+            _post_update_side_effects,
+            user_id=user_id_val,
+            profile_id=profile_id,
+            profile_name=updated_profile.name,
+            workout_days=list(updated_profile.workout_days or []),
+            should_regen=should_regen,
+            user_tz=user_tz,
+            changes=changes,
         )
 
         return updated_profile

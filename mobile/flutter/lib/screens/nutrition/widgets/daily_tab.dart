@@ -18,6 +18,8 @@ import 'edit_targets_sheet.dart';
 import 'hydration_summary_block.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
+import '../../home/widgets/hero_nutrition_card.dart';
+import '../../home/widgets/components/quick_actions_row.dart' show buildQuickActionWidget;
 import 'schedule_meal_sheet.dart' show SchedulePreset;
 import 'goal_row.dart';
 import 'nutrition_stats_section.dart';
@@ -432,13 +434,34 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 //     Only appears when the user has batch-cooked recipes remaining.
                 _LeftoversCarousel(userId: widget.userId, isDark: widget.isDark),
 
-                // 2. MEAL SECTIONS with hero-row summary at top of card.
+                // 2. HERO — swipeable Google-Fit-style nutrition card (macros +
+                //    micronutrient pages + living mascot). Today-only: it reads
+                //    today's logged totals via its own providers, so for past
+                //    dates we fall back to the date-scoped calorie-ring hero
+                //    inside LoggedMealsSection (showHero below mirrors this).
+                if (widget.isViewingToday) ...[
+                  // Nutrition quick-actions (issue 12) — a nutrition-relevant
+                  // slot set built on the shared home quick-action widgets so
+                  // routing/launch behaviour matches the home row exactly.
+                  // Today-only (gated by isViewingToday above).
+                  _NutritionQuickActionsRow(isDark: widget.isDark),
+                  const SizedBox(height: 12),
+                  // Embedded mode self-sizes (fixed-height carousel + intrinsic
+                  // footer) and drops its own horizontal padding so it aligns
+                  // with the meal cards below. No external height bound needed.
+                  const HeroNutritionCard(embedded: true),
+                  const SizedBox(height: 12),
+                ],
+
+                // 3. MEAL SECTIONS with (date-scoped) hero-row summary at top.
                 //    Daily Goals card removed — the 4 macro rings + goal-config strip
                 //    now live on the Profile screen (Nutrition & Fasting card).
-                //    Calorie remaining + macro progress is now the hero of this card.
+                //    On today, the hero row is suppressed (the HeroNutritionCard
+                //    above replaces it); on other dates it shows the date's totals.
                 Builder(builder: (ctx) {
                   final prefs = ref.watch(nutritionPreferencesProvider);
                   return LoggedMealsSection(
+                    showHero: !widget.isViewingToday,
                     meals: widget.summary?.meals ?? [],
                     onDeleteMeal: widget.onDeleteMeal,
                     onCopyMeal: widget.onCopyMeal,
@@ -1278,6 +1301,53 @@ class _PendingSyncBar extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Nutrition-screen quick-actions row (issue 12). Reuses the shared home
+/// [buildQuickActionWidget] tiles so every action routes / launches exactly
+/// like the home grid, but with a fixed nutrition-relevant slot set rather
+/// than the user's global configured order:
+///
+///   Log Food · Scan Menu · Water · Weight · Snap Food · Meditate
+///
+/// Laid out as a single horizontally scrollable row (Oura-style peek) mirroring
+/// the home `_ScrollableQuickRow`: 64pt cells × 80pt tall. On a 390pt iPhone
+/// 5 cells show fully with the 6th peeking; on SE 4 show with the 5th peeking;
+/// on iPad the row simply doesn't fill the width (no overflow either way).
+class _NutritionQuickActionsRow extends ConsumerWidget {
+  final bool isDark;
+  const _NutritionQuickActionsRow({required this.isDark});
+
+  // Order is intentional: logging actions first, then tracking, then mindful.
+  static const List<String> _slotIds = [
+    'food',
+    'scan_menu',
+    'water',
+    'weight',
+    'photo_food',
+    'meditate',
+  ];
+
+  // Matches the home row's chip cell sizing (quick_actions_row.dart).
+  static const double _chipWidth = 64;
+  static const double _rowHeight = 80;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      height: _rowHeight,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.zero,
+        itemCount: _slotIds.length,
+        itemBuilder: (context, i) => SizedBox(
+          width: _chipWidth,
+          child: buildQuickActionWidget(_slotIds[i], isDark, context, ref),
         ),
       ),
     );

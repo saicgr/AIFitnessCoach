@@ -59,6 +59,11 @@ class LoggedMealsSection extends StatelessWidget {
   final String userId;
   final VoidCallback onFoodSaved;
   final int? calorieTarget;
+
+  /// When false, the old in-card calorie-ring hero row is suppressed so the
+  /// caller can render the swipeable [HeroNutritionCard] above instead. The
+  /// meal sections still render. Defaults true (legacy behavior elsewhere).
+  final bool showHero;
   final int totalCaloriesEaten;
   // Hero summary extras — macro targets and consumed values (passed from daily_tab).
   final int proteinTarget;
@@ -100,6 +105,7 @@ class LoggedMealsSection extends StatelessWidget {
     required this.userId,
     required this.onFoodSaved,
     this.calorieTarget,
+    this.showHero = true,
     required this.totalCaloriesEaten,
     this.proteinTarget = 0,
     this.carbsTarget = 0,
@@ -139,8 +145,12 @@ class LoggedMealsSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Hero summary (calories remaining + progress + macro mini-bars)
-          _buildHeroRow(context),
-          Divider(height: 1, color: cardBorder),
+          //    Suppressed when the swipeable HeroNutritionCard is shown above
+          //    this card (showHero=false) so we don't double up two heros.
+          if (showHero) ...[
+            _buildHeroRow(context),
+            Divider(height: 1, color: cardBorder),
+          ],
           // ── Meal sections (each a self-managed _MealSection for expand state)
           ..._mealTypes.asMap().entries.map((entry) {
             final index = entry.key;

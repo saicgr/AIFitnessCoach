@@ -102,93 +102,133 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
 
     return Padding(
       padding: kHomeHPad,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // No more Summary/Metrics/Trends tab bar — the deck is a pure
-          // swipeable carousel now. Page position is shown by the dot
-          // indicator below (tap a dot to jump), and the customize gear sits
-          // in that same slim row. The card height (176) is unchanged.
-          SizedBox(
-            height: 176,
-            child: PageView(
-              controller: _controller,
-              onPageChanged: (i) => setState(() => _page = i),
-              children: pages,
+      child: SizedBox(
+        // The dot indicator + customize gear sit INSIDE the card footer
+        // (overlaid at the bottom) instead of in a separate row below it. The
+        // card content is vertically centered, so the height here is sized to
+        // leave a clean ~30px bottom strip for the footer. Net height (198) is
+        // still well under the old layout (176 card + 8 gap + 32 row = 216).
+        height: 198,
+        child: Stack(
+          children: [
+            // The cards fill the full height; their content centers, leaving a
+            // bottom strip the indicator overlays so it reads as a card footer.
+            Positioned.fill(
+              child: PageView(
+                controller: _controller,
+                onPageChanged: (i) => setState(() => _page = i),
+                children: pages,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          _indicatorRow(c, pages.length),
-        ],
+            // Dot indicator + customize gear, overlaid inside the card footer.
+            // The row is a ~46px tall hit strip whose VISUAL content (small
+            // dots + a borderless tune glyph) sits centered within it, so the
+            // generous tap targets don't enlarge the footer's apparent height.
+            Positioned(
+              left: 14,
+              right: 8,
+              bottom: 2,
+              child: _indicatorRow(c, pages.length),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // ---- carousel dot indicator + customize gear (replaces the tab bar) ----
-  // Dots are centered (tap one to jump to that page); the gear sits at the
-  // right and opens the metric customize sheet ("ADD METRIC" lists every
-  // available metric). The leading spacer matches the gear width so the dots
-  // stay optically centered under the card.
+  // ---- carousel dot indicator + customize gear (the card footer) ----
+  //
+  // Issue 3: the gear used to be a heavy 32px bordered circle that floated
+  // over the content. It now reads as an intentional, lightweight part of the
+  // card footer:
+  //   • The gear is borderless (no circle / no surface fill) — just a muted
+  //     tune glyph — so it sits quietly in the corner instead of stamping a
+  //     button over the card.
+  //   • Dots and gear share one baseline (the Row is height-bounded and both
+  //     are vertically centered), with the dots optically centered via a
+  //     leading spacer that matches the gear's footprint.
+  //   • The gear keeps a ≥44px hit target (12px padding around a 16px glyph)
+  //     even though the visual is small.
+  //   • Single page → the dots are hidden entirely (nothing to page through),
+  //     so the footer is just the gear in its corner.
   Widget _indicatorRow(ThemeColors c, int pageCount) {
-    return Row(
-      children: [
-        const SizedBox(width: 32),
-        Expanded(
-          child: Center(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (var i = 0; i < pageCount; i++)
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      _controller.animateToPage(
-                        i,
-                        duration: const Duration(milliseconds: 260),
-                        curve: Curves.easeOutCubic,
-                      );
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: _page == i ? 18 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: _page == i ? c.accent : c.cardBorder,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-              ],
+    const gearGlyph = 18.0;
+    const gearPad = 14.0; // glyph + 2×pad ≈ 46px hit target (>= 44)
+    const gearBox = gearGlyph + gearPad * 2;
+    final showDots = pageCount > 1;
+
+    return SizedBox(
+      height: gearBox,
+      child: Row(
+        children: [
+          // Leading spacer mirrors the gear's box so the dots stay optically
+          // centered beneath the card.
+          const SizedBox(width: gearBox),
+          Expanded(
+            child: Center(
+              child: showDots
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (var i = 0; i < pageCount; i++)
+                          GestureDetector(
+                            onTap: () {
+                              HapticService.light();
+                              _controller.animateToPage(
+                                i,
+                                duration: const Duration(milliseconds: 260),
+                                curve: Curves.easeOutCubic,
+                              );
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              // Pad the hit area without enlarging the dot.
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 3),
+                                width: _page == i ? 16 : 5,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: _page == i
+                                      ? c.accent
+                                      : c.textMuted.withValues(alpha: 0.35),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
             ),
           ),
-        ),
-        Tooltip(
-          message: 'Customize metrics',
-          child: Semantics(
-            button: true,
-            label: 'Customize metrics',
-            child: GestureDetector(
-              onTap: () {
-                HapticService.light();
-                showMetricSettingsSheet(context, ref);
-              },
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: c.surface,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: c.cardBorder),
+          Tooltip(
+            message: 'Customize metrics',
+            child: Semantics(
+              button: true,
+              label: 'Customize metrics',
+              child: GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  showMetricSettingsSheet(context, ref);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(gearPad),
+                  child: Icon(
+                    Icons.tune_rounded,
+                    size: gearGlyph,
+                    color: c.textMuted,
+                  ),
                 ),
-                child:
-                    Icon(Icons.tune_rounded, size: 16, color: c.textSecondary),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -275,8 +315,18 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     );
   }
 
-  // ---- More page: size-aware row packing. Small tiles pair 2-per-row;
-  // Wide/Large tiles take a full-width row (honoring the My Space size). ----
+  // ---- More page: size-aware row packing.
+  //
+  // The deck pages every page after the Summary with up to 4 tiles. The goal
+  // (issue 4) is a clean, FILLED 2×2 grid — no lonely single tile and no
+  // awkward half-width Spacer when an even count is available. So:
+  //   • Small (default) tiles pack 2-per-row.
+  //   • A genuine odd tile (e.g. an odd metric count, or the trailing tile of
+  //     an odd page) gets a FULL-WIDTH row rather than a half-row with an empty
+  //     Spacer beside it — it reads as intentional, not broken.
+  //   • Wide/Large tiles (My-Space size) always take a full-width row.
+  // With the enriched default set the "More" page is exactly 4 small tiles →
+  // a tidy 2×2.
   Widget _gridPage(ThemeColors c, List<RingKind> tiles) {
     final layout = ref.watch(metricLayoutProvider.notifier);
     bool isFull(RingKind k) {
@@ -284,17 +334,24 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
       return s == MetricSize.wide || s == MetricSize.large;
     }
 
+    Widget fullRow(RingKind k) => SizedBox(
+          height: 66,
+          child: Row(
+            children: [
+              Expanded(child: MetricTile(key: ValueKey('tile_${k.id}'), kind: k)),
+            ],
+          ),
+        );
+
     final rows = <Widget>[];
     var i = 0;
     while (i < tiles.length) {
       final a = tiles[i];
       if (isFull(a)) {
-        rows.add(SizedBox(
-          height: 66,
-          child: MetricTile(key: ValueKey('tile_${a.id}'), kind: a),
-        ));
+        rows.add(fullRow(a));
         i += 1;
       } else if (i + 1 < tiles.length && !isFull(tiles[i + 1])) {
+        // Two consecutive small tiles → a paired 2-up row.
         final b = tiles[i + 1];
         rows.add(
           SizedBox(
@@ -310,18 +367,9 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         );
         i += 2;
       } else {
-        rows.add(
-          SizedBox(
-            height: 66,
-            child: Row(
-              children: [
-                Expanded(child: MetricTile(key: ValueKey('tile_${a.id}'), kind: a)),
-                const SizedBox(width: 9),
-                const Spacer(),
-              ],
-            ),
-          ),
-        );
+        // A lone trailing small tile: give it the full width so it doesn't sit
+        // beside an empty half (no orphaned half-Spacer — issue 4).
+        rows.add(fullRow(a));
         i += 1;
       }
     }

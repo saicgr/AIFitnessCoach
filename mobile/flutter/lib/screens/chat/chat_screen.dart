@@ -41,7 +41,6 @@ import 'widgets/food_analysis_result_card.dart';
 import 'widgets/form_check_result_card.dart';
 import 'widgets/form_comparison_result_card.dart';
 import 'widgets/fullscreen_image_viewer.dart';
-import 'widgets/chat_search_overlay.dart';
 import 'widgets/pinned_message_bar.dart';
 import 'widgets/media_picker_helper.dart';
 import 'widgets/media_preview_strip.dart';
@@ -294,6 +293,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         _streamingBubbleRef!.addListener(_onStreamingTransition);
         // Sync initial state in case a stream was already in flight.
         _onStreamingTransition();
+      }
+      // Issue 11a — the coach FAB (and any generic chat entry tagged
+      // source=coach_fab) ALWAYS opens a fresh conversation rather than
+      // resuming the last session the notifier was primed with. We reset
+      // local state to empty here, BEFORE loadHistory() runs below; since
+      // startNewChat() nulls _currentSessionId, the subsequent loadHistory()
+      // never fetches the previous session and the open-state ladder gets a
+      // clean empty chat to decorate.
+      //
+      // Deep-link / notification opens that target a SPECIFIC turn carry an
+      // insight_id (seeded below) and history-list taps pre-set
+      // currentChatSessionProvider via switchToSession — neither is forced
+      // new. startNewChat() only resets local state (no server write), so an
+      // opened-but-unsent chat never creates an empty session row.
+      if (mounted &&
+          widget.source == 'coach_fab' &&
+          (widget.insightId == null || widget.insightId!.isEmpty) &&
+          (widget.initialMessage == null || widget.initialMessage!.isEmpty)) {
+        ref.read(chatMessagesProvider.notifier).startNewChat();
       }
       if (widget.initialMessage != null &&
           widget.initialMessage!.isNotEmpty &&
@@ -573,6 +591,138 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     });
   }
 
+  /// Issue 11b — exiting the chat always lands on the conversation history
+  /// list (`/chat/sessions`), never the arbitrary previous screen. We use
+  /// pushReplacement so the chat is swapped FOR history (history doesn't stack
+  /// on top of the chat the user just left), keeping the back stack sane:
+  ///   * from the home/tab → chat → back → history (then back → tab).
+  ///   * arrived FROM history → chat → back → history (consistent — a fresh
+  ///     history screen replaces the chat).
+  ///   * deep-link → chat → back → history (same).
+  /// Android system-back routes here too via the PopScope on the Scaffold, so
+  /// the hardware button and the in-app back button behave identically.
+  void _exitToHistory() {
+    if (!mounted) return;
+    try {
+      context.pushReplacement('/chat/sessions');
+    } catch (_) {
+      // Fallback: if the router can't replace (e.g. chat was the root of the
+      // stack), at least try to pop so the user isn't trapped.
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/chat/sessions');
+      }
+    }
+  }
+
+  /// Issue 11d — the 3-dot overflow, now also carrying the "Usage info" entry
+  /// that used to be a standalone header (i) button. Mirrors the items in the
+  /// base `_showOptionsMenu` (New chat / Report a problem / Change coach /
+  /// Clear history / About) and prepends Usage info. Defined here (not in the
+  /// shared ext file) so the header relocation lives entirely in chat_screen.
+  void _showOptionsMenuWithUsageInfo(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    showGlassSheet(
+      context: context,
+      builder: (context) => GlassSheet(
+        child: SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Usage info — relocated from the old standalone (i) button.
+              ListTile(
+                leading: const Icon(Icons.info_outline_rounded,
+                    color: AppColors.cyan),
+                title: const Text('Usage info'),
+                subtitle: Text(
+                  'See your remaining messages and limits',
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.light();
+                  _showUsageInfoSheet(context);
+                },
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.add_comment_outlined,
+                    color: AppColors.cyan),
+                title: const Text('New chat'),
+                subtitle: Text(
+                  'Start a fresh conversation',
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.selection();
+                  ref.read(chatMessagesProvider.notifier).startNewChat();
+                },
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.bug_report_outlined,
+                    color: AppColors.orange),
+                title: Text(l10n.chatScreenExtReportAProblem),
+                subtitle: Text(
+                  l10n.chatScreenExtEmailOurSupportTeam,
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.selection();
+                  launchUrl(
+                    Uri.parse(
+                        'mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Bug Report'),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading: const Icon(Icons.swap_horiz, color: AppColors.purple),
+                title: Text(l10n.coachSelectionScreenChangeCoach),
+                subtitle: Text(
+                  l10n.chatScreenExtSwitchToADifferent,
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textSecondary),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  HapticService.selection();
+                  context.push('/coach-selection?fromSettings=true');
+                },
+              ),
+              const Divider(height: 1, indent: 16, endIndent: 16),
+              ListTile(
+                leading:
+                    const Icon(Icons.delete_outline, color: AppColors.error),
+                title: Text(l10n.chatScreenExtClearChatHistory),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showClearConfirmation();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline),
+                title: Text(l10n.chatScreenExtAboutAiCoach),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showAboutDialog();
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _scrollToMessage(String messageId) {
     final messages = ref.read(chatMessagesProvider).valueOrNull ?? [];
     final idx = messages.indexWhere((m) => m.id == messageId);
@@ -672,7 +822,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ? Colors.amber
             : AppColors.success;
 
-    return Scaffold(
+    return PopScope(
+      // Issue 11b — intercept Android system-back so it lands on the chat
+      // history list, identical to the in-app back button. canPop:false stops
+      // the default pop; onPopInvoked then routes to /chat/sessions.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _exitToHistory();
+      },
+      child: Scaffold(
       backgroundColor: backgroundColor,
       body: Stack(
         children: [
@@ -813,11 +972,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   }
 
                   final hasMore = ref.read(chatMessagesProvider.notifier).hasMoreMessages;
-                  // The newest slot (index 0) exists while a send is loading
-                  // OR while a streaming bubble is present (a dropped reply
-                  // outlives the loading state — the partial text must stay
-                  // visible until the user retries, C2).
-                  final hasNewestSlot = _isLoading || _streamingSlotVisible;
+                  // Issue 10 — the newest slot (index 0, the typing indicator)
+                  // must only appear once the user's turn is COMMITTED to the
+                  // list and we're awaiting the coach reply — never during the
+                  // pre-append window (where it would render below the OLD
+                  // conversation, so the just-sent message then pops in ABOVE
+                  // it) and never during media upload/analyze (the notifier
+                  // already shows its own in-list "Uploading…/Analyzing…"
+                  // system bubble, so a second free-floating indicator reads as
+                  // misplaced).
+                  //
+                  // Concretely the indicator shows when EITHER:
+                  //   * a streaming bubble is present (a dropped reply outlives
+                  //     the loading state — partial text stays until retry, C2), OR
+                  //   * a send is in flight AND the newest message in the list is
+                  //     the user's own turn (text path) — i.e. the user message
+                  //     landed and no system placeholder / assistant reply has
+                  //     yet been appended after it.
+                  final newest = messages.isNotEmpty ? messages.last : null;
+                  final awaitingReplyToUser =
+                      _isLoading && newest != null && newest.role == 'user';
+                  final hasNewestSlot = _streamingSlotVisible || awaitingReplyToUser;
                   final extraItems = (hasNewestSlot ? 1 : 0) + (hasMore ? 1 : 0);
 
                   return ListView.builder(
@@ -1086,7 +1261,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             GestureDetector(
               onTap: () {
                 HapticService.light();
-                context.pop();
+                _exitToHistory();
               },
               child: Container(
                 height: 44,
@@ -1192,55 +1367,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
             ),
             const SizedBox(width: 8),
-            // Usage info button circle
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                _showUsageInfoSheet(context);
-              },
-              child: Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: topBarColor,
-                  borderRadius: BorderRadius.circular(22),
-                  border: topBarBorder,
-                  boxShadow: [topBarShadow],
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Icon(
-                      Icons.info_outline_rounded,
-                      color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
-                      size: 20,
-                    ),
-                    // Warning dot when messages are running low
-                    Builder(builder: (context) {
-                      final remaining = ref.watch(usageTrackingProvider).limits[_kAiChatMessages];
-                      final left = remaining?.remaining ?? remaining?.limit;
-                      if (left != null && left <= 5 && left > 0) {
-                        return Positioned(
-                          top: 8,
-                          right: 8,
-                          child: Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: AppColors.warning,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    }),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            // Search + More pill
+            // Issue 11d — header trimmed to History + 3-dot. The standalone
+            // info (i) button was relocated INTO the 3-dot overflow as a
+            // "Usage info" entry (_showOptionsMenuWithUsageInfo), and the
+            // in-chat search icon was removed entirely (session search lives
+            // in the history screen). The "messages running low" warning dot
+            // — previously on the info button — now rides the 3-dot icon so
+            // the at-a-glance low-usage cue survives the relocation.
+            // History (all sessions) + More pill
             Container(
               height: 44,
               decoration: BoxDecoration(
@@ -1252,38 +1386,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      final messagesData = ref.read(chatMessagesProvider).valueOrNull ?? [];
-                      Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => ChatSearchOverlay(
-                          messages: messagesData,
-                          onScrollToMessage: (messageId) {
-                            Navigator.of(context).pop();
-                            _scrollToMessage(messageId);
-                          },
-                        ),
-                      ));
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Icon(
-                        Icons.search_rounded,
-                        color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 20,
-                    color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
-                  ),
-                  // History (all sessions) — distinct from search (within the
-                  // current chat). Opens the ChatGPT/Gemini-style conversation
-                  // list.
+                  // History (all sessions) — opens the ChatGPT/Gemini-style
+                  // conversation list (this is also where session search lives).
                   GestureDetector(
                     onTap: () {
                       HapticService.light();
@@ -1307,15 +1411,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   GestureDetector(
                     onTap: () {
                       HapticService.light();
-                      _showOptionsMenu(context);
+                      _showOptionsMenuWithUsageInfo(context);
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Icon(
-                        Icons.more_vert_rounded,
-                        color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
-                        size: 20,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        clipBehavior: Clip.none,
+                        children: [
+                          Icon(
+                            Icons.more_vert_rounded,
+                            color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+                            size: 20,
+                          ),
+                          // Warning dot when chat messages are running low —
+                          // moved here from the (now-removed) info button.
+                          Builder(builder: (context) {
+                            final remaining = ref.watch(usageTrackingProvider).limits[_kAiChatMessages];
+                            final left = remaining?.remaining ?? remaining?.limit;
+                            if (left != null && left <= 5 && left > 0) {
+                              return Positioned(
+                                top: -2,
+                                right: -2,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.warning,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          }),
+                        ],
                       ),
                     ),
                   ),
@@ -1327,6 +1458,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       ),
     ],
   ),
+),
 );
   }
 

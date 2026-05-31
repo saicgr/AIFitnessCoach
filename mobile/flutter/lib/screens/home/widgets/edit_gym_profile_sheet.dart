@@ -168,8 +168,14 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     // Initialize time preference from existing profile
     _selectedTimeSlot = widget.profile.preferredTimeSlot;
     _timeAutoSwitchEnabled = widget.profile.timeAutoSwitchEnabled;
-    // Initialize training preferences from existing profile
-    _selectedTrainingSplit = widget.profile.trainingSplit;
+    // Initialize training preferences from existing profile.
+    // Default to "Let AI Decide" (nothing_structured) ONLY when the profile
+    // has no saved split yet — never override a user's saved choice. An empty
+    // string is treated the same as null (unset) so a blank DB value still
+    // preselects the AI-Decide option.
+    final savedSplit = widget.profile.trainingSplit;
+    _selectedTrainingSplit =
+        (savedSplit == null || savedSplit.isEmpty) ? 'nothing_structured' : savedSplit;
     _selectedWorkoutDays = List.from(widget.profile.workoutDays);
     _selectedDuration = widget.profile.durationMinutes;
     // Per-day focus override lives on the gym profile but the GymProfile
@@ -1039,63 +1045,14 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
               ),
             ),
 
-            // Bottom buttons
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                border: Border(
-                  top: BorderSide(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.1)
-                        : Colors.black.withOpacity(0.1),
-                  ),
-                ),
-              ),
-              child: SafeArea(
-                child: Row(
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: Text(
-                        AppLocalizations.of(context).buttonCancel,
-                        style: TextStyle(color: textSecondary),
-                      ),
-                    ),
-                    const Spacer(),
-                    ElevatedButton(
-                      onPressed: _hasChanges && !_isLoading
-                          ? _saveChanges
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: selectedColorObj,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: selectedColorObj.withOpacity(0.3),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : Text(
-                              AppLocalizations.of(context).vacationModeSaveChanges,
-                              style: TextStyle(fontWeight: FontWeight.w600),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
+            // Sticky bottom footer — pinned below the Expanded scroll body so
+            // the Cancel / Save actions are always visible regardless of scroll
+            // position, and lift above the keyboard when it's open (issue 15).
+            _buildStickyFooter(
+              isDark: isDark,
+              backgroundColor: backgroundColor,
+              textSecondary: textSecondary,
+              selectedColorObj: selectedColorObj,
             ),
           ],
         ),

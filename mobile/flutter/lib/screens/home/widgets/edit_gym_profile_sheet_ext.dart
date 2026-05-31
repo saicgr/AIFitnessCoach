@@ -63,6 +63,10 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
 
 
   Future<void> _saveChanges() async {
+    // Double-tap guard: a save is already in flight — ignore re-entry so we
+    // never fire duplicate writes or stack timeouts.
+    if (_isLoading) return;
+
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).editGymProfilePleaseEnterAName)),
@@ -108,9 +112,17 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
               },
       );
 
+      // Timeout-cap every network await so a stalled request can never wedge
+      // the spinner forever (issue 14). On timeout the TimeoutException
+      // propagates to the catch below → "Failed to save" snackbar, and the
+      // finally block re-enables the button while KEEPING the user's input
+      // (we don't pop the sheet on error).
+      const saveTimeout = Duration(seconds: 20);
+
       await ref
           .read(gymProfilesProvider.notifier)
-          .updateProfile(widget.profile.id, update);
+          .updateProfile(widget.profile.id, update)
+          .timeout(saveTimeout);
 
       // Sync training split to user preferences so it's consistent across screens
       if (_selectedTrainingSplit != null) {
@@ -128,9 +140,12 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
             if (_selectedExperience != null) 'training_experience': _selectedExperience,
             if (_selectedFocusAreas.isNotEmpty) 'focus_areas': _selectedFocusAreas,
           },
-        );
+        ).timeout(saveTimeout);
         // Refresh user so UI reflects new experience/focus areas immediately
-        await ref.read(authStateProvider.notifier).refreshUser();
+        await ref
+            .read(authStateProvider.notifier)
+            .refreshUser()
+            .timeout(saveTimeout);
       }
       // Save weekly variety
       ref.read(variationProvider.notifier).setVariation(_selectedVarietyPct);
@@ -317,129 +332,162 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     required Color textSecondary,
     required Color selectedColorObj,
   }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        // Time slot options
-        ...TimeSlot.values.map((slot) {
-          final isSelected = _selectedTimeSlot == slot.value;
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                // Toggle off if already selected
-                if (_selectedTimeSlot == slot.value) {
-                  _selectedTimeSlot = null;
-                } else {
-                  _selectedTimeSlot = slot.value;
-                }
-              });
-              _markChanged();
-              HapticService.light();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? selectedColorObj.withOpacity(0.15)
-                    : (isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.black.withOpacity(0.03)),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isSelected
-                      ? selectedColorObj
-                      : Colors.transparent,
+    // Even 2-per-row grid (same treatment as the training-split selector):
+    // each tile is exactly half the available width minus the column gap, so
+    // the 5 time slots + optional Clear tile lay out cleanly with no overflow
+    // on any device (feedback_no_overflow_adaptive_screens).
+    const spacing = 8.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileWidth = (constraints.maxWidth - spacing) / 2;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            // Time slot options
+            ...TimeSlot.values.map((slot) {
+              final isSelected = _selectedTimeSlot == slot.value;
+              return SizedBox(
+                width: tileWidth,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      // Toggle off if already selected
+                      if (_selectedTimeSlot == slot.value) {
+                        _selectedTimeSlot = null;
+                      } else {
+                        _selectedTimeSlot = slot.value;
+                      }
+                    });
+                    _markChanged();
+                    HapticService.light();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? selectedColorObj.withOpacity(0.15)
+                          : (isDark
+                              ? Colors.white.withOpacity(0.05)
+                              : Colors.black.withOpacity(0.03)),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? selectedColorObj : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          slot.icon,
+                          size: 22,
+                          color: isSelected ? selectedColorObj : textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                slot.shortLabel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected
+                                      ? FontWeight.w600
+                                      : FontWeight.w400,
+                                  color:
+                                      isSelected ? selectedColorObj : textPrimary,
+                                ),
+                              ),
+                              Text(
+                                slot.timeRange,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: isSelected
+                                      ? selectedColorObj.withOpacity(0.8)
+                                      : textSecondary.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+            // Clear option (only show if a time is selected)
+            if (_selectedTimeSlot != null)
+              SizedBox(
+                width: tileWidth,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _selectedTimeSlot = null);
+                    _markChanged();
+                    HapticService.light();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.05)
+                          : Colors.black.withOpacity(0.03),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.clear_rounded,
+                          size: 22,
+                          color: textSecondary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context).vacationModeClear,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  color: textSecondary,
+                                ),
+                              ),
+                              Text(
+                                AppLocalizations.of(context).editGymProfileNoPref,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: textSecondary.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    slot.icon,
-                    size: 24,
-                    color: isSelected
-                        ? selectedColorObj
-                        : textSecondary,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    slot.shortLabel,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                      color: isSelected
-                          ? selectedColorObj
-                          : textPrimary,
-                    ),
-                  ),
-                  Text(
-                    slot.timeRange,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: isSelected
-                          ? selectedColorObj.withOpacity(0.8)
-                          : textSecondary.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-        // Clear option (only show if a time is selected)
-        if (_selectedTimeSlot != null)
-          GestureDetector(
-            onTap: () {
-              setState(() => _selectedTimeSlot = null);
-              _markChanged();
-              HapticService.light();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: isDark
-                    ? Colors.white.withOpacity(0.05)
-                    : Colors.black.withOpacity(0.03),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.clear_rounded,
-                    size: 24,
-                    color: textSecondary,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    AppLocalizations.of(context).vacationModeClear,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: textSecondary,
-                    ),
-                  ),
-                  Text(
-                    AppLocalizations.of(context).editGymProfileNoPref,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: textSecondary.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
+          ],
+        );
+      },
     );
   }
 
@@ -450,77 +498,97 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     required Color textSecondary,
     required Color selectedColorObj,
   }) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _EditGymProfileSheetState._trainingSplitOptions.map((split) {
-        final isSelected = _selectedTrainingSplit == split['id'];
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              // Toggle off if already selected
-              if (_selectedTrainingSplit == split['id']) {
-                _selectedTrainingSplit = null;
-              } else {
-                _selectedTrainingSplit = split['id'] as String;
-              }
-            });
-            _markChanged();
-            HapticService.light();
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? selectedColorObj.withOpacity(0.15)
-                  : (isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.black.withOpacity(0.03)),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? selectedColorObj : Colors.transparent,
+    // Even 2-per-row grid. We size each tile to exactly half the available
+    // width (minus the inter-column gap) inside a Wrap, so tiles stay uniform
+    // and wrap cleanly from iPhone SE → iPad with NO overflow
+    // (feedback_no_overflow_adaptive_screens). LayoutBuilder gives us the
+    // real constraint width rather than guessing.
+    const spacing = 8.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tileWidth = (constraints.maxWidth - spacing) / 2;
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: _EditGymProfileSheetState._trainingSplitOptions.map((split) {
+            final isSelected = _selectedTrainingSplit == split['id'];
+            return SizedBox(
+              width: tileWidth,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    // Toggle off if already selected
+                    if (_selectedTrainingSplit == split['id']) {
+                      _selectedTrainingSplit = null;
+                    } else {
+                      _selectedTrainingSplit = split['id'] as String;
+                    }
+                  });
+                  _markChanged();
+                  HapticService.light();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? selectedColorObj.withOpacity(0.15)
+                        : (isDark
+                            ? Colors.white.withOpacity(0.05)
+                            : Colors.black.withOpacity(0.03)),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? selectedColorObj : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        split['icon'] as IconData,
+                        size: 18,
+                        color: isSelected ? selectedColorObj : textSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              split['label'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight:
+                                    isSelected ? FontWeight.w600 : FontWeight.w500,
+                                color: isSelected ? selectedColorObj : textPrimary,
+                              ),
+                            ),
+                            Text(
+                              split['desc'] as String,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: isSelected
+                                    ? selectedColorObj.withOpacity(0.8)
+                                    : textSecondary.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  split['icon'] as IconData,
-                  size: 18,
-                  color: isSelected ? selectedColorObj : textSecondary,
-                ),
-                const SizedBox(width: 6),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      split['label'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? selectedColorObj : textPrimary,
-                      ),
-                    ),
-                    Text(
-                      split['desc'] as String,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: isSelected
-                            ? selectedColorObj.withOpacity(0.8)
-                            : textSecondary.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
 

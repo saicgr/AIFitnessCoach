@@ -161,9 +161,18 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
           ],
         ),
         // Membership slimmed to just the referral tile (user feedback) — the
-        // usage-cap upsell + premium-preview were dropped from home. Rendered
-        // directly (no section header) since it's a lone self-hiding card.
-        const ReferralGiftTile(),
+        // usage-cap upsell + premium-preview were dropped from home. It now
+        // sits under a lightweight self-hiding section header (issue 6) so it
+        // isn't an orphaned, header-less card floating between groups. The
+        // header only paints when the tile itself renders (the tile self-hides
+        // when there's no referral offer), so a hidden tile leaves no orphan
+        // header.
+        _HomeCardSection(
+          title: 'Refer & earn',
+          children: const [
+            ReferralGiftTile(),
+          ],
+        ),
         // Devices & setup minimized to ONLY the "Connect Health Connect /
         // Apple Health" prompt (MissingDataChip → activity gap), which unlocks
         // the empty steps/activity tiles. The wearable-battery / scale-sync /

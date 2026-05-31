@@ -320,8 +320,37 @@ extension RingKindX on RingKind {
     return null;
   }
 
-  /// Canonical default order shown on first launch. Core 4 only.
+  /// Canonical default order shown on first launch.
+  ///
+  /// Used in two ways: (1) the *visible* default set for a brand-new user who
+  /// has never customized their rings (the deck reads this so pages 2+ fill a
+  /// 2×2 grid like Google Health rather than sitting near-empty — issue 4), and
+  /// (2) the core-completion source for [_ensureCorePresent]. Only the first 4
+  /// (train/nourish/move/sleep) are [isCore] and so are guaranteed-present; the
+  /// rest are the most broadly-useful additional metrics. Each one renders its
+  /// own Connect/empty CTA when it has no wearable/log data, so adding them by
+  /// default never shows a blank tile.
+  ///
+  /// CRITICAL: this is the default ONLY. A user who has saved ANY ring
+  /// customization loads their persisted order verbatim (see [_load]) — this
+  /// list never overrides them. New defaults reach only untouched users.
   static List<RingKind> get defaultOrder => const [
+        // Summary page (first 4) — the core contributors.
+        RingKind.train,
+        RingKind.nourish,
+        RingKind.move,
+        RingKind.sleep,
+        // "More" page (next 4) — fills a clean 2×2 grid by default.
+        RingKind.activeEnergy,
+        RingKind.recovery,
+        RingKind.hydration,
+        RingKind.weight,
+      ];
+
+  /// The subset of [defaultOrder] that is [isCore] (cannot be hidden). Used by
+  /// [_ensureCorePresent] so enriching the visible default set above doesn't
+  /// accidentally make the new (optional) metrics un-hideable.
+  static List<RingKind> get coreOrder => const [
         RingKind.train,
         RingKind.nourish,
         RingKind.move,
@@ -453,7 +482,10 @@ class RingVisibilityNotifier extends StateNotifier<List<RingKind>> {
     for (final k in input) {
       if (seen.add(k)) result.add(k);
     }
-    for (final core in RingKindX.defaultOrder) {
+    // Re-add only the genuinely CORE rings (not the enriched default extras),
+    // so the optional default metrics (active energy / recovery / hydration /
+    // weight) stay removable via the customize sheet.
+    for (final core in RingKindX.coreOrder) {
       if (seen.add(core)) result.add(core);
     }
     return result;

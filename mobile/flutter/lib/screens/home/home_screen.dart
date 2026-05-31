@@ -1144,36 +1144,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         .where((s) => !(s == HomeSection.cycle && !menstrualEnabled))
         .toList(growable: true);
 
-    // Intent-aware ordering (issue 2): the Workout card is the day's primary
-    // ACTION, the Coach card is the framing. On a scheduled training day,
-    // surface the workout first. On a rest day — or whenever the coach is
-    // raising a high-priority (health-alert) nudge — surface the coach first.
-    final isTrainingDay = ref.watch(
-      todayWorkoutProvider.select((v) {
-        final r = v.valueOrNull;
-        return r != null &&
-            (r.hasWorkoutToday ||
-                r.todayWorkout != null ||
-                r.completedToday);
-      }),
-    );
-    final hasHighPriorityInsight = ref.watch(
-      contextualNudgeProvider.select(
-        (nudges) =>
-            nudges.any((n) => n.priorityTier == NudgePriorityTier.healthAlert),
-      ),
-    );
-    final coachFirst = !isTrainingDay || hasHighPriorityInsight;
-    final iWorkout = visible.indexOf(HomeSection.workoutCard);
-    final iCoach = visible.indexOf(HomeSection.coachHero);
-    if (iWorkout >= 0 && iCoach >= 0) {
-      final workoutIsFirst = iWorkout < iCoach;
-      // Swap their slots only when the current order disagrees with intent.
-      if (coachFirst == workoutIsFirst) {
-        visible[iWorkout] = HomeSection.coachHero;
-        visible[iCoach] = HomeSection.workoutCard;
-      }
-    }
+    // Coach card sits ABOVE the workout card (user request). We no longer
+    // auto-swap their order by training-day intent — the coach frames the day,
+    // the workout follows. The order comes straight from `visible` (the default
+    // now lists coachHero before workoutCard; a user's My Space reorder is
+    // preserved as-is).
 
     final slivers = <Widget>[];
 

@@ -69,15 +69,28 @@ async def list_sessions(
     offset: int = Query(0, ge=0),
     current_user: dict = Depends(get_current_user),
 ):
-    db = get_supabase_db()
     uid = current_user["id"]
-    if q and q.strip():
-        rows = db.sessions.search_sessions(uid, q.strip(), limit=limit)
-    else:
-        rows = db.sessions.list_sessions(uid, include_archived=include_archived,
-                                         limit=limit, offset=offset)
-    items = [_to_item(r) for r in rows]
-    return SessionListResponse(total=len(items), items=items)
+    try:
+        db = get_supabase_db()
+        if q and q.strip():
+            rows = db.sessions.search_sessions(uid, q.strip(), limit=limit)
+        else:
+            rows = db.sessions.list_sessions(uid, include_archived=include_archived,
+                                             limit=limit, offset=offset)
+        items = [_to_item(r) for r in rows]
+        return SessionListResponse(total=len(items), items=items)
+    except Exception as e:
+        # Never surface an opaque 500 to the client for the session LIST — the
+        # chat-history screen should show an empty list ("No chats yet"), not a
+        # "Couldn't load your chats" error, on an unexpected backend failure.
+        # Log the full traceback so the real cause is traceable (issue 11c).
+        logger.error(
+            f"[coach/sessions] list_sessions failed for user {uid} "
+            f"(q={q!r}, include_archived={include_archived}, limit={limit}, "
+            f"offset={offset}): {e}",
+            exc_info=True,
+        )
+        return SessionListResponse(total=0, items=[])
 
 
 @router.post("/sessions", response_model=SessionItem)

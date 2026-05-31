@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/constants/api_constants.dart';
 import '../models/timeline_entry.dart';
 import '../repositories/auth_repository.dart' show authStateProvider;
 import '../repositories/timeline_repository.dart';
@@ -124,6 +125,24 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
     }
   }
 
+  /// Read the stored user id with a hard timeout cap. `getUserId()` reads
+  /// FlutterSecureStorage, which can stall on a locked keychain / wedged
+  /// platform channel; an uncapped await would leave any caller hung
+  /// indefinitely (the root cause of the infinite-skeleton bug, issue 7).
+  /// On timeout or error this returns null so every caller resolves to its
+  /// own terminal/no-user branch. Mirrors `ApiConstants.tokenRefreshTimeout`
+  /// (`feedback_auth_refresh_timeout`).
+  static Future<String?> _userIdCapped(ApiClient apiClient) async {
+    try {
+      return await apiClient
+          .getUserId()
+          .timeout(ApiConstants.tokenRefreshTimeout, onTimeout: () => null);
+    } catch (e) {
+      debugPrint('⚠️ [Timeline] getUserId failed: $e');
+      return null;
+    }
+  }
+
   /// Read the live user id straight from Supabase's session (never a cached
   /// field — see the JWT-expiry rule in project memory). Used to scope the
   /// disk cache slot per user.
@@ -171,7 +190,12 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
   Future<void> refresh({bool showLoading = true}) async {
     if (_disposed) return;
     final apiClient = _ref.read(apiClientProvider);
-    final userId = await apiClient.getUserId();
+    // Timeout-cap the user-id read so a hung keychain/platform-channel read
+    // can't leave the notifier at `isLoading: true` forever (the infinite
+    // skeleton, issue 7). On timeout/error this is null → the terminal
+    // no-user branch below runs.
+    final userId = await _userIdCapped(apiClient);
+    if (_disposed) return;
     if (userId == null) {
       // Preserve any seeded/cached days on a transient signed-out read (e.g.
       // the logout teardown window) — only surface the error when empty, so a
@@ -234,8 +258,8 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
   Future<void> loadMorePast({int additionalDays = 7}) async {
     if (_disposed || state.days.isEmpty || state.isLoadingMore) return;
     final apiClient = _ref.read(apiClientProvider);
-    final userId = await apiClient.getUserId();
-    if (userId == null) return;
+    final userId = await _userIdCapped(apiClient);
+    if (_disposed || userId == null) return;
 
     // Anchor on the oldest currently-loaded day, fetch the previous N
     final oldestDate = state.days.last.date; // days are DESC
@@ -281,8 +305,8 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
     if (dateStr == state.loadingDate) return; // already in flight
     if (state.days.any((d) => d.date == dateStr)) return; // already loaded
     final apiClient = _ref.read(apiClientProvider);
-    final userId = await apiClient.getUserId();
-    if (userId == null) return;
+    final userId = await _userIdCapped(apiClient);
+    if (_disposed || userId == null) return;
     state = state.copyWith(loadingDate: dateStr);
     try {
       final repo = _ref.read(timelineRepositoryProvider);
@@ -422,7 +446,10 @@ class TimelineTrendsNotifier extends StateNotifier<TimelineTrendsState> {
   Future<void> refresh() async {
     if (_disposed) return;
     final apiClient = _ref.read(apiClientProvider);
-    final userId = await apiClient.getUserId();
+    // Capped read (mirrors the event-feed notifier) so a stalled keychain read
+    // can't freeze the trend rail at `isLoading: true`.
+    final userId = await TimelineNotifier._userIdCapped(apiClient);
+    if (_disposed) return;
     if (userId == null) {
       state = state.copyWith(isLoading: false);
       return;

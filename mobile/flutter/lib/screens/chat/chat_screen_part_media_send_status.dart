@@ -300,12 +300,21 @@ class _InputBarState extends State<_InputBar> {
     final colors = ThemeColors.of(context);
     final isDark = colors.isDark;
 
+    // Single safe-area-aware bottom inset. On a notched device the home
+    // indicator already provides spacing, so we DON'T also add a constant
+    // pad on top of it (that double-counting was the oversized gap, issue 8).
+    // When there is no safe-area inset (non-notched / keyboard open, where
+    // viewInsets — not viewPadding — owns the gap) we add a small 8pt pad so
+    // the input never sits flush against the screen edge.
+    final safeBottom = MediaQuery.of(context).viewPadding.bottom;
+    final bottomInset = safeBottom > 0 ? safeBottom : 8.0;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
         0,
         16,
-        MediaQuery.of(context).padding.bottom + 12,
+        bottomInset,
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.nearBlack : Colors.white,

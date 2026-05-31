@@ -64,14 +64,30 @@ class SessionsDB(BaseDB):
         q = self.client.table("chat_sessions").select(_COLS).eq("user_id", user_id)
         if not include_archived:
             q = q.eq("is_archived", False)
-        q = q.order("last_message_at", desc=True).range(offset, offset + limit - 1)
+        # Order newest-activity-first. nullslast guards against rows whose
+        # last_message_at is NULL (e.g. a freshly created, never-messaged
+        # session) so they sort to the end instead of breaking ordering.
+        q = q.order("last_message_at", desc=True, nullsfirst=False).range(
+            offset, offset + limit - 1
+        )
         sessions = q.execute().data or []
         if not sessions:
             return []
-        ids = [s["id"] for s in sessions]
-        previews = self._latest_previews(user_id, ids)
-        for s in sessions:
-            s["preview"] = previews.get(s["id"], "")
+        # Preview enrichment is best-effort: if it fails, return the sessions
+        # WITHOUT previews rather than 500-ing the whole list (issue 11c).
+        try:
+            ids = [s["id"] for s in sessions]
+            previews = self._latest_previews(user_id, ids)
+            for s in sessions:
+                s["preview"] = previews.get(s["id"], "")
+        except Exception as e:
+            logger.error(
+                f"[SessionsDB] preview enrichment failed for user {user_id}; "
+                f"returning sessions without previews: {e}",
+                exc_info=True,
+            )
+            for s in sessions:
+                s.setdefault("preview", "")
         return sessions
 
     def _latest_previews(self, user_id: str, session_ids: List[str]) -> Dict[str, str]:
@@ -79,15 +95,24 @@ class SessionsDB(BaseDB):
         relevant turns, newest first; first seen per session wins."""
         if not session_ids:
             return {}
-        rows = (
-            self.client.table("chat_history")
-            .select("session_id, user_message, timestamp")
-            .eq("user_id", user_id)
-            .in_("session_id", session_ids)
-            .order("timestamp", desc=True)
-            .limit(max(50, len(session_ids) * 4))
-            .execute()
-        ).data or []
+        try:
+            rows = (
+                self.client.table("chat_history")
+                .select("session_id, user_message, timestamp")
+                .eq("user_id", user_id)
+                .in_("session_id", session_ids)
+                .order("timestamp", desc=True)
+                .limit(max(50, len(session_ids) * 4))
+                .execute()
+            ).data or []
+        except Exception as e:
+            # Never let a preview query break the caller — return empty so the
+            # caller falls back to no-preview sessions (issue 11c).
+            logger.error(
+                f"[SessionsDB] _latest_previews query failed for user {user_id}: {e}",
+                exc_info=True,
+            )
+            return {}
         out: Dict[str, str] = {}
         for r in rows:
             sid = r.get("session_id")
@@ -180,12 +205,22 @@ class SessionsDB(BaseDB):
             ).data or []
             for s in extra:
                 found[s["id"]] = s
+        # `last_message_at` may be NULL; `or ""` keeps the sort total-order-safe.
         sessions = sorted(
             found.values(), key=lambda s: s.get("last_message_at") or "", reverse=True
         )[:limit]
-        previews = self._latest_previews(user_id, [s["id"] for s in sessions])
-        for s in sessions:
-            s["preview"] = previews.get(s["id"], "")
+        # Best-effort previews — failures degrade to no-preview, not a 500.
+        try:
+            previews = self._latest_previews(user_id, [s["id"] for s in sessions])
+            for s in sessions:
+                s["preview"] = previews.get(s["id"], "")
+        except Exception as e:
+            logger.error(
+                f"[SessionsDB] search preview enrichment failed for user {user_id}: {e}",
+                exc_info=True,
+            )
+            for s in sessions:
+                s.setdefault("preview", "")
         return sessions
 
     def latest_session(self, user_id: str) -> Optional[Dict[str, Any]]:
