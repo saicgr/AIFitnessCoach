@@ -216,6 +216,16 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
     required int responseTimeMs,
   }) async {
     final cleaned = _stripActionDataFromMessage(fullContent);
+    // Grounded inline blocks (metric cards / charts) ride on the done-event
+    // metadata; thread them onto the final streamed message so charts render
+    // on the default (streaming) reply path, not just sync sends.
+    final rawBlocks = metadata?['blocks'];
+    final blocks = rawBlocks is List
+        ? rawBlocks
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList()
+        : null;
     final assistantMessage = ChatMessage(
       id: messageId,
       role: 'assistant',
@@ -226,6 +236,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       actionData: actionData,
       coachPersonaId: coachPersonaId,
       responseTimeMs: responseTimeMs,
+      blocks: blocks,
     );
 
     final before = state.valueOrNull ?? const <ChatMessage>[];
