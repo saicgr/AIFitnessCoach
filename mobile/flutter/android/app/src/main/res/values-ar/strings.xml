@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Zealova</string>
-    <string name="widget_title_today">Today's Workout</string>
+    <string name="widget_title_today">Today\'s Workout</string>
     <string name="widget_body_rest_day">Rest day — recover well</string>
     <string name="live_activity_workout_active">Workout in progress</string>
     <string name="live_activity_rest_timer">Rest timer: %s</string>
