@@ -416,7 +416,19 @@ class ApiClient with WidgetsBindingObserver {
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
       client.idleTimeout = const Duration(seconds: 30);
-      client.maxConnectionsPerHost = 6;
+      // 32, not 6. We reverted from the HTTP/2 adapter (which multiplexed all
+      // parallel requests onto ONE connection) back to HTTP/1.1, where every
+      // in-flight request needs its own connection. Home + Nutrition fan out
+      // 12+ requests on mount, several of them slow LLM calls (coach insight,
+      // breakfast/training insight, nutrition AI feedback) that hold a
+      // connection for many seconds up to aiReceiveTimeout (2 min). With a cap
+      // of 6, those slow calls saturated the pool and the fast
+      // /nutrition/summary/daily request could never acquire a socket — it died
+      // with DioException[connectionTimeout] at 25s ("nutrition not loading"),
+      // while a one-off direct call always connected. 32 comfortably exceeds the
+      // realistic concurrent burst so fast data requests never queue behind slow
+      // AI ones. (dart:io's default is unlimited; 6 was an arbitrary throttle.)
+      client.maxConnectionsPerHost = 32;
       client.autoUncompress = true;
       return client;
     };

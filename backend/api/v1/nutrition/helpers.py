@@ -31,17 +31,30 @@ _REGIONAL_KEYWORDS = frozenset([
 ])
 
 
+_s3_client = None
+
+
 def get_s3_client():
-    """Get S3 client with configured credentials."""
-    import boto3
-    from core.config import get_settings
-    settings = get_settings()
-    return boto3.client(
-        's3',
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
-        region_name=settings.aws_default_region,
-    )
+    """Get a process-wide cached S3 client with configured credentials.
+
+    Cached as a module-level singleton: the daily-summary read path presigns
+    one image URL per logged meal (resign_food_image_url, called in a loop), and
+    building a fresh boto3 client per call adds real per-request latency on the
+    async event loop. boto3 clients are thread-safe for these calls, so a single
+    lazily-initialized instance is safe to share.
+    """
+    global _s3_client
+    if _s3_client is None:
+        import boto3
+        from core.config import get_settings
+        settings = get_settings()
+        _s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.aws_access_key_id,
+            aws_secret_access_key=settings.aws_secret_access_key,
+            region_name=settings.aws_default_region,
+        )
+    return _s3_client
 
 
 async def upload_food_image_to_s3(

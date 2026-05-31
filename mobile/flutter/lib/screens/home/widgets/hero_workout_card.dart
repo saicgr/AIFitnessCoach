@@ -159,14 +159,25 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
     final exercises = widget.workout.exercises;
     if (exercises.isEmpty) return;
-    final exerciseName = exercises.first.name;
+    final first = exercises.first;
+    final exerciseName = first.name;
     if (exerciseName.isEmpty || exerciseName == 'Exercise') return;
+    // The exact library row id — drives `?exercise_id=` below. Without it the
+    // lookup is a name-only ilike that 404s / hits the wrong dupe, leaving
+    // _backgroundImageUrl null so the hero falls back to the generic per-type
+    // art forever (the "no exercise image" report).
+    final exerciseId = first.exerciseId ?? first.libraryId;
 
-    final cachedUrl = ImageUrlCache.get(exerciseName);
+    // Key the URL cache by id when available (matches ExerciseImage) so two
+    // exercises sharing a display name don't pollute each other's cache.
+    final cacheKey = (exerciseId != null && exerciseId.isNotEmpty)
+        ? exerciseId
+        : exerciseName;
+    final cachedUrl = ImageUrlCache.get(cacheKey);
     if (cachedUrl != null) {
       _backgroundImageUrl = cachedUrl;
     } else {
-      _fetchBackgroundImage(exerciseName);
+      _fetchBackgroundImage(exerciseName, exerciseId);
     }
   }
 
@@ -175,17 +186,32 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   /// instead of fetching the per-exercise image. See `_typeIllustrationFor`.
   String? _typeAssetPath;
 
-  Future<void> _fetchBackgroundImage(String exerciseName) async {
+  Future<void> _fetchBackgroundImage(String exerciseName,
+      [String? exerciseId]) async {
     try {
       final apiClient = ref.read(apiClientProvider);
+      // Pass exercise_id so the backend resolves the EXACT library row (matches
+      // ExerciseImage). A name-only lookup ilikes the name and 404s / picks the
+      // wrong dupe — that's why the real illustration never loaded.
+      final queryParams = <String, dynamic>{};
+      if (exerciseId != null && exerciseId.isNotEmpty) {
+        queryParams['exercise_id'] = exerciseId;
+      }
       final response = await apiClient.get(
         '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+        queryParameters: queryParams.isEmpty ? null : queryParams,
       );
 
       if (response.statusCode == 200 && response.data != null) {
         final url = response.data['url'] as String?;
         if (url != null && mounted) {
-          await ImageUrlCache.set(exerciseName, url);
+          final cacheKey = (exerciseId != null && exerciseId.isNotEmpty)
+              ? exerciseId
+              : exerciseName;
+          await ImageUrlCache.set(cacheKey, url);
+          if (cacheKey != exerciseName) {
+            await ImageUrlCache.set(exerciseName, url);
+          }
           setState(() {
             _backgroundImageUrl = url;
             _isLoadingImage = false;
@@ -193,7 +219,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
           return;
         }
       }
-    } catch (_) {}
+      debugPrint(
+          '🏋️ [HeroWorkoutCard] no per-exercise image for "$exerciseName" '
+          '(id=$exerciseId, status=${response.statusCode}) — using type art');
+    } catch (e) {
+      debugPrint(
+          '🏋️ [HeroWorkoutCard] image fetch failed for "$exerciseName" '
+          '(id=$exerciseId): $e');
+    }
 
     if (mounted) setState(() => _isLoadingImage = false);
   }
