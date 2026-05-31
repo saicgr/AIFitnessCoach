@@ -223,59 +223,117 @@ async def get_notification_preferences(user_id: str, current_user: dict = Depend
         raise safe_internal_error(e, "get_notification_preferences")
 
 
-@router.put("/preferences/{user_id}", response_model=NotificationPreferences)
-async def update_notification_preferences(user_id: str, prefs: NotificationPreferencesUpdate, current_user: dict = Depends(get_current_user)):
-    """Update notification preferences for a user."""
+# Canonical-JSONB key -> legacy notification_preferences TABLE column. The
+# device sends the full canonical push-pref set (the keys the push_nudge_cron
+# reads from users.notification_preferences JSONB); we mirror the handful the
+# legacy table still owns so GET /preferences and any table readers stay current.
+_JSONB_TO_TABLE_COLUMN = {
+    "push_notifications_enabled": "push_notifications_enabled",
+    "workout_reminders": "push_workout_reminders",
+    "streak_alerts": "push_achievement_alerts",
+    "weekly_summary": "push_weekly_summary",
+    "hydration_reminders": "push_hydration_reminders",
+    "weekly_summary_time": "weekly_summary_time",
+    "weekly_summary_day_name": "weekly_summary_day",  # device sends string form
+    "quiet_hours_start": "quiet_hours_start",
+    "quiet_hours_end": "quiet_hours_end",
+    "timezone": "timezone",
+}
+
+
+@router.put("/preferences/{user_id}")
+async def update_notification_preferences(
+    user_id: str, request: Request, current_user: dict = Depends(get_current_user)
+):
+    """Update a user's notification preferences.
+
+    CANONICAL STORE: ``users.notification_preferences`` (JSONB). This is the
+    single source of truth the server-side cron jobs read
+    (``push_nudge_cron``, ``weekly_wrapped_cron``, ...). The device posts the
+    full canonical key set via ``NotificationPreferences.toJson()``; we merge
+    it into the JSONB so every per-type toggle, delivery time, intensity, and
+    the master push switch actually reach the cron.
+
+    LEGACY MIRROR: the small overlapping set of columns on the
+    ``notification_preferences`` table is kept in sync for backward compat
+    (the GET endpoint + a couple of table readers). Email-only columns on that
+    table are owned by the email-preferences surface and left untouched here.
+    """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Updating notification preferences for user: {user_id}")
 
     try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=422, detail="Body must be a JSON object")
+
+    # Only persist keys the device actually sent (never overwrite with None).
+    incoming = {k: v for k, v in body.items() if v is not None}
+
+    try:
         db = get_supabase_db()
 
-        # Build update dict (only non-None values)
-        update_data = {k: v for k, v in prefs.dict().items() if v is not None}
-        update_data["updated_at"] = datetime.utcnow().isoformat()
+        # 1) CANONICAL: merge into users.notification_preferences JSONB.
+        #    Read-merge-write so a partial payload never clobbers existing keys.
+        try:
+            urow = (
+                db.client.table("users")
+                .select("notification_preferences")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            existing_jsonb = (
+                (urow.data[0].get("notification_preferences") if urow.data else None)
+                or {}
+            )
+            if not isinstance(existing_jsonb, dict):
+                existing_jsonb = {}
+        except Exception as e:
+            logger.warning(f"[prefs] JSONB read failed for {user_id}, starting fresh: {e}")
+            existing_jsonb = {}
 
-        # Check if preferences exist
-        existing = db.client.table("notification_preferences").select("id").eq(
-            "user_id", user_id
-        ).execute()
+        merged = {**existing_jsonb, **incoming}
+        # `weekly_summary_day_name` is a TABLE-only convenience; keep the JSONB
+        # carrying the canonical int under `weekly_summary_day`.
+        merged.pop("weekly_summary_day_name", None)
 
-        if existing.data:
-            result = db.client.table("notification_preferences").update(
-                update_data
-            ).eq("user_id", user_id).execute()
-        else:
-            update_data["user_id"] = user_id
-            result = db.client.table("notification_preferences").insert(
-                update_data
-            ).execute()
+        db.client.table("users").update(
+            {"notification_preferences": merged}
+        ).eq("id", user_id).execute()
 
-        if not result.data:
-            raise safe_internal_error(ValueError("Failed to update preferences"), "summaries")
+        # 2) LEGACY MIRROR: map the overlapping keys to the table columns.
+        table_update = {
+            col: incoming[jsonb_key]
+            for jsonb_key, col in _JSONB_TO_TABLE_COLUMN.items()
+            if jsonb_key in incoming
+        }
+        # `weekly_summary` (push) also flips the table's weekly_summary_enabled.
+        if "weekly_summary" in incoming:
+            table_update["weekly_summary_enabled"] = bool(incoming["weekly_summary"])
 
-        np = result.data[0]
-        return NotificationPreferences(
-            id=str(np["id"]),
-            user_id=np["user_id"],
-            weekly_summary_enabled=np.get("weekly_summary_enabled", True),
-            weekly_summary_day=np.get("weekly_summary_day", "sunday"),
-            weekly_summary_time=np.get("weekly_summary_time", "09:00"),
-            email_notifications_enabled=np.get("email_notifications_enabled", True),
-            email_workout_reminders=np.get("email_workout_reminders", True),
-            email_achievement_alerts=np.get("email_achievement_alerts", True),
-            email_weekly_summary=np.get("email_weekly_summary", True),
-            email_motivation_messages=np.get("email_motivation_messages", False),
-            push_notifications_enabled=np.get("push_notifications_enabled", False),
-            push_workout_reminders=np.get("push_workout_reminders", True),
-            push_achievement_alerts=np.get("push_achievement_alerts", True),
-            push_weekly_summary=np.get("push_weekly_summary", False),
-            push_hydration_reminders=np.get("push_hydration_reminders", False),
-            quiet_hours_start=np.get("quiet_hours_start", "22:00"),
-            quiet_hours_end=np.get("quiet_hours_end", "07:00"),
-            timezone=np.get("timezone", "America/New_York")
-        )
+        if table_update:
+            table_update["updated_at"] = datetime.utcnow().isoformat()
+            existing = (
+                db.client.table("notification_preferences")
+                .select("id")
+                .eq("user_id", user_id)
+                .execute()
+            )
+            if existing.data:
+                db.client.table("notification_preferences").update(
+                    table_update
+                ).eq("user_id", user_id).execute()
+            else:
+                table_update["user_id"] = user_id
+                db.client.table("notification_preferences").insert(
+                    table_update
+                ).execute()
+
+        return {"success": True, "notification_preferences": merged}
 
     except HTTPException:
         raise

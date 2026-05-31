@@ -114,6 +114,11 @@ class NotificationPrefsKeys {
   // Style preferences
   static const notificationEmoji = 'notif_emoji_enabled';
   static const notificationVibration = 'notif_vibration_enabled';
+  // Master push toggle (item 6a) — gates ALL server-sent push.
+  static const pushNotificationsEnabled = 'notif_push_enabled';
+  // Evening recap (flagship moment; morning readiness reuses dailyBriefing*).
+  static const eveningRecapNudge = 'notif_evening_recap_nudge';
+  static const eveningRecapTime = 'notif_evening_recap_time';
   // ── Cycle tracking reminders (Phase E) ──────────────────────────
   // Each cycle reminder type has its OWN toggle so the user has granular
   // control (per project notification-control rule). All cycle reminders
@@ -608,6 +613,10 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       cycleReminderTimeOfDay: _prefs.getString(NotificationPrefsKeys.cycleReminderTimeOfDay) ?? '09:00',
       cyclePeriodApproachingLeadDays: _prefs.getInt(NotificationPrefsKeys.cyclePeriodApproachingLeadDays) ?? 2,
       cycleTrackingMode: _prefs.getString(NotificationPrefsKeys.cycleTrackingMode) ?? 'tracking',
+      // Master push toggle (item 6a) + evening recap (flagship moment).
+      pushNotificationsEnabled: _prefs.getBool(NotificationPrefsKeys.pushNotificationsEnabled) ?? true,
+      eveningRecapNudge: _prefs.getBool(NotificationPrefsKeys.eveningRecapNudge) ?? true,
+      eveningRecapTime: _prefs.getString(NotificationPrefsKeys.eveningRecapTime) ?? '20:00',
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -917,6 +926,29 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setDailyBriefingTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.dailyBriefingTime, time);
     state = state.copyWith(dailyBriefingTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  /// Evening recap (flagship moment) — server-side cron nudge.
+  Future<void> setEveningRecapNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.eveningRecapNudge, value);
+    state = state.copyWith(eveningRecapNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setEveningRecapTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.eveningRecapTime, time);
+    state = state.copyWith(eveningRecapTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  /// Master push toggle (item 6a) — gates ALL server-sent push. Persisted to
+  /// the same `notif_push_enabled` key the local post-meal reminder reads, and
+  /// synced to the backend as `push_notifications_enabled` (every server nudge
+  /// job short-circuits when false).
+  Future<void> setPushNotificationsEnabled(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.pushNotificationsEnabled, value);
+    state = state.copyWith(pushNotificationsEnabled: value);
     await _syncPreferencesToBackend();
   }
 
@@ -1247,24 +1279,26 @@ class NotificationPrefsSync {
         return;
       }
 
-      // Convert preferences to backend format
+      // Send the FULL canonical preference set under the exact snake_case keys
+      // the backend cron reads from `users.notification_preferences` (JSONB).
+      //
+      // Previously this hand-built a 16-field `push_*` payload that the backend
+      // wrote to the `notification_preferences` TABLE — but every server nudge
+      // job reads the `users.notification_preferences` JSONB, which nothing
+      // wrote post-onboarding. So the user's time/intensity/per-type choices
+      // never reached the cron (morning briefing fired at a hardcoded 08:00,
+      // toggles did nothing). `toJson()` already emits every canonical key the
+      // cron expects (workout_reminders, missed_workout_nudge, daily_briefing_*,
+      // accountability_intensity, evening_recap_*, push_notifications_enabled,
+      // ...); we send it verbatim plus the live timezone.
       final backendPrefs = {
-        'push_notifications_enabled': true,
-        'push_workout_reminders': prefs.workoutReminders,
-        'push_achievement_alerts': prefs.streakAlerts,
-        'push_weekly_summary': prefs.weeklySummary,
-        'push_hydration_reminders': prefs.hydrationReminders,
-        'push_ai_coach_messages': prefs.aiCoachMessages,
-        'push_nutrition_reminders': prefs.nutritionReminders,
-        'push_billing_reminders': prefs.billingReminders,
-        'push_live_chat_messages': prefs.liveChatMessages,
-        'weekly_summary_enabled': prefs.weeklySummary,
-        'weekly_summary_day': _dayIntToString(prefs.weeklySummaryDay),
-        'weekly_summary_time': prefs.weeklySummaryTime,
-        'quiet_hours_start': prefs.quietHoursStart,
-        'quiet_hours_end': prefs.quietHoursEnd,
+        ...prefs.toJson(),
+        // Live IANA timezone — the cron groups users by zone for local-time
+        // scheduling, so this must always reflect the device's current zone.
         'timezone': tz.local.name,
-        'frequency_preset': prefs.frequencyPreset,
+        // Weekly-summary day also sent as a string for the legacy
+        // notification_preferences table column (JSONB carries the int).
+        'weekly_summary_day_name': _dayIntToString(prefs.weeklySummaryDay),
       };
 
       await _apiClient.put(

@@ -142,6 +142,12 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
       final previousMs = prefs.getInt(_kLastAppOpenTsKey);
       await prefs.setInt(_kLastAppOpenTsKey, nowMs);
 
+      // Smart timing (item 1a): feed the rolling 14-day app-open log that
+      // _calculateOptimalHour() reads when scheduling workout reminders. This
+      // call was previously missing, so the optimal-hour computation never had
+      // any data and smart timing was effectively dead.
+      unawaited(NotificationServiceScheduled.recordAppOpen());
+
       if (previousMs == null) {
         // First-ever open on this install — no gap exists. Capture the
         // baseline ts above; future resumes will have something to compare.

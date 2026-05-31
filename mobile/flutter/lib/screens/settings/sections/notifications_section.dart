@@ -62,6 +62,48 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
       ),
       child: Column(
         children: [
+          // ─── Master push toggle (item 6a) ─────────────────
+          // A single off-switch for ALL server-sent push. Synced to the
+          // backend as push_notifications_enabled; every server nudge job
+          // short-circuits when off, and the local post-meal reminder reads
+          // the same notif_push_enabled key.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Row(
+              children: [
+                Icon(
+                  notifPrefs.pushNotificationsEnabled
+                      ? Icons.notifications_active
+                      : Icons.notifications_off_outlined,
+                  color: notifPrefs.pushNotificationsEnabled ? accent : textMuted,
+                  size: 22,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Push notifications',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Master switch for all coach pushes and reminders',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: notifPrefs.pushNotificationsEnabled,
+                  onChanged: (value) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setPushNotificationsEnabled(value),
+                  activeThumbColor: accent,
+                  activeTrackColor: activeTrack,
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: cardBorder),
           // ─── Frequency Preset Picker ─────────────────────
           Padding(
             padding: const EdgeInsets.all(16),
@@ -421,36 +463,52 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   textSecondary: textSecondary,
                   textMuted: textMuted,
                   isDark: isDark,
-                  timeWidget: Column(
-                    children: [
-                      TimePickerTile(
-                        label: AppLocalizations.of(context).quickLogOverlayBreakfast,
-                        time: notifPrefs.nutritionBreakfastTime,
-                        onTimeChanged: (time) {
-                          ref.read(notificationPreferencesProvider.notifier).setNutritionBreakfastTime(time);
-                        },
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 8),
-                      TimePickerTile(
-                        label: AppLocalizations.of(context).quickLogOverlayLunch,
-                        time: notifPrefs.nutritionLunchTime,
-                        onTimeChanged: (time) {
-                          ref.read(notificationPreferencesProvider.notifier).setNutritionLunchTime(time);
-                        },
-                        isDark: isDark,
-                      ),
-                      const SizedBox(height: 8),
-                      TimePickerTile(
-                        label: AppLocalizations.of(context).quickLogOverlayDinner,
-                        time: notifPrefs.nutritionDinnerTime,
-                        onTimeChanged: (time) {
-                          ref.read(notificationPreferencesProvider.notifier).setNutritionDinnerTime(time);
-                        },
-                        isDark: isDark,
-                      ),
-                    ],
-                  ),
+                  // Item 2 fix: in bundle mode (minimal/balanced) the per-meal
+                  // times don't drive scheduling — breakfast rolls into the
+                  // Morning Brief, lunch into the Midday Check, dinner into the
+                  // Evening Wrap. Showing 3 dead time pickers there was
+                  // misleading. Show the individual pickers ONLY in full_coach
+                  // mode (where scheduleNutritionReminders actually reads them);
+                  // in bundle mode show an accurate one-line hint instead.
+                  timeWidget: isBundleMode
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(50, 4, 16, 4),
+                          child: Text(
+                            'Meal timing follows your Morning, Midday and Evening '
+                            'bundle times above.',
+                            style: TextStyle(fontSize: 12, color: textMuted),
+                          ),
+                        )
+                      : Column(
+                          children: [
+                            TimePickerTile(
+                              label: AppLocalizations.of(context).quickLogOverlayBreakfast,
+                              time: notifPrefs.nutritionBreakfastTime,
+                              onTimeChanged: (time) {
+                                ref.read(notificationPreferencesProvider.notifier).setNutritionBreakfastTime(time);
+                              },
+                              isDark: isDark,
+                            ),
+                            const SizedBox(height: 8),
+                            TimePickerTile(
+                              label: AppLocalizations.of(context).quickLogOverlayLunch,
+                              time: notifPrefs.nutritionLunchTime,
+                              onTimeChanged: (time) {
+                                ref.read(notificationPreferencesProvider.notifier).setNutritionLunchTime(time);
+                              },
+                              isDark: isDark,
+                            ),
+                            const SizedBox(height: 8),
+                            TimePickerTile(
+                              label: AppLocalizations.of(context).quickLogOverlayDinner,
+                              time: notifPrefs.nutritionDinnerTime,
+                              onTimeChanged: (time) {
+                                ref.read(notificationPreferencesProvider.notifier).setNutritionDinnerTime(time);
+                              },
+                              isDark: isDark,
+                            ),
+                          ],
+                        ),
                 ),
                 Divider(height: 1, color: cardBorder, indent: 50),
                 // Hydration Reminders
@@ -565,7 +623,7 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   sectionKey: 'daily_briefing',
                   icon: Icons.wb_twilight,
                   iconColor: const Color(0xFFFB923C),
-                  title: 'Daily Briefing',
+                  title: 'Morning readiness',
                   subtitle: AppLocalizations.of(context).notificationsMorningReadinessCheckIn,
                   value: notifPrefs.dailyBriefingNudge,
                   onChanged: (value) {
@@ -581,6 +639,33 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     onTimeChanged: (time) {
                       ref.read(notificationPreferencesProvider.notifier)
                           .setDailyBriefingTime(time);
+                    },
+                    isDark: isDark,
+                  ),
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                // Evening recap — reflective end-of-day coaching push, with a
+                // delivery time control. Pairs with Morning readiness.
+                _buildNotificationToggleWithTime(
+                  sectionKey: 'evening_recap',
+                  icon: Icons.nightlight_round,
+                  iconColor: const Color(0xFFA78BFA),
+                  title: 'Evening recap',
+                  subtitle: 'A look back at your day and a setup for tomorrow',
+                  value: notifPrefs.eveningRecapNudge,
+                  onChanged: (value) {
+                    ref.read(notificationPreferencesProvider.notifier)
+                        .setEveningRecapNudge(value);
+                  },
+                  textSecondary: textSecondary,
+                  textMuted: textMuted,
+                  isDark: isDark,
+                  timeWidget: TimePickerTile(
+                    label: AppLocalizations.of(context).notificationsDeliveryTime,
+                    time: notifPrefs.eveningRecapTime,
+                    onTimeChanged: (time) {
+                      ref.read(notificationPreferencesProvider.notifier)
+                          .setEveningRecapTime(time);
                     },
                     isDark: isDark,
                   ),

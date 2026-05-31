@@ -253,6 +253,8 @@ extension NotificationServiceScheduled on NotificationService {
         await scheduleWorkoutReminder(
           prefs.workoutReminderTime,
           smartTimingEnabled: prefs.smartTimingEnabled,
+          vibrate: prefs.notificationVibration,
+          emoji: prefs.notificationEmoji,
         );
       }
 
@@ -261,6 +263,8 @@ extension NotificationServiceScheduled on NotificationService {
           prefs.nutritionBreakfastTime,
           prefs.nutritionLunchTime,
           prefs.nutritionDinnerTime,
+          vibrate: prefs.notificationVibration,
+          emoji: prefs.notificationEmoji,
         );
       }
 
@@ -269,6 +273,8 @@ extension NotificationServiceScheduled on NotificationService {
           prefs.hydrationStartTime,
           prefs.hydrationEndTime,
           prefs.hydrationIntervalMinutes,
+          vibrate: prefs.notificationVibration,
+          emoji: prefs.notificationEmoji,
         );
       }
 
@@ -279,11 +285,20 @@ extension NotificationServiceScheduled on NotificationService {
 
     // Always schedule these regardless of preset
     if (prefs.streakAlerts) {
-      await scheduleStreakAlert(prefs.streakAlertTime);
+      await scheduleStreakAlert(
+        prefs.streakAlertTime,
+        vibrate: prefs.notificationVibration,
+        emoji: prefs.notificationEmoji,
+      );
     }
 
     if (prefs.weeklySummary) {
-      await scheduleWeeklySummary(prefs.weeklySummaryDay, prefs.weeklySummaryTime);
+      await scheduleWeeklySummary(
+        prefs.weeklySummaryDay,
+        prefs.weeklySummaryTime,
+        vibrate: prefs.notificationVibration,
+        emoji: prefs.notificationEmoji,
+      );
     }
 
     // Cycle tracking reminders (Phase E). Independent of the frequency preset
@@ -302,7 +317,12 @@ extension NotificationServiceScheduled on NotificationService {
   }
 
   /// Schedule daily workout reminder with template rotation and smart timing
-  Future<void> scheduleWorkoutReminder(String time, {bool smartTimingEnabled = false}) async {
+  Future<void> scheduleWorkoutReminder(
+    String time, {
+    bool smartTimingEnabled = false,
+    bool vibrate = true,
+    bool emoji = true,
+  }) async {
     var (hour, minute) = _parseTime(time);
 
     // Smart timing: override hour if enabled and enough data
@@ -326,14 +346,15 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
+      enableVibration: vibrate,
     );
 
     // Coach-personalized template rotation
     final dayIndex = _getDayOfYear();
     final coachId = await _getCachedCoachId();
     final t = CoachNotificationTemplates.get(coachId, NotificationType.workout, dayIndex);
-    var title = t.title;
-    var body = t.body;
+    var title = _applyEmojiPref(t.title, emoji);
+    var body = _applyEmojiPref(t.body, emoji);
 
     // Personalize with cached user context
     final userName = await _getCachedUserName();
@@ -360,8 +381,10 @@ extension NotificationServiceScheduled on NotificationService {
   Future<void> scheduleNutritionReminders(
     String breakfastTime,
     String lunchTime,
-    String dinnerTime,
-  ) async {
+    String dinnerTime, {
+    bool vibrate = true,
+    bool emoji = true,
+  }) async {
     final channelConfig = NotificationService._channelConfigs['nutrition_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
@@ -371,6 +394,7 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
+      enableVibration: vibrate,
     );
 
     final dayIndex = _getDayOfYear();
@@ -378,47 +402,53 @@ extension NotificationServiceScheduled on NotificationService {
 
     // Breakfast
     final bT = CoachNotificationTemplates.get(coachId, NotificationType.breakfast, dayIndex);
+    final bTitle = _applyEmojiPref(bT.title, emoji);
+    final bBody = _applyEmojiPref(bT.body, emoji);
     final (bHour, bMinute) = _parseTime(breakfastTime);
     await _localNotifications.zonedSchedule(
       _nutritionBreakfastId,
-      bT.title,
-      bT.body,
+      bTitle,
+      bBody,
       _nextInstanceOfTime(bHour, bMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: _richPayload('nutrition_reminder', bT.title, bT.body),
+      payload: _richPayload('nutrition_reminder', bTitle, bBody),
     );
 
     // Lunch
     final lT = CoachNotificationTemplates.get(coachId, NotificationType.lunch, dayIndex);
+    final lTitle = _applyEmojiPref(lT.title, emoji);
+    final lBody = _applyEmojiPref(lT.body, emoji);
     final (lHour, lMinute) = _parseTime(lunchTime);
     await _localNotifications.zonedSchedule(
       _nutritionLunchId,
-      lT.title,
-      lT.body,
+      lTitle,
+      lBody,
       _nextInstanceOfTime(lHour, lMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: _richPayload('nutrition_reminder', lT.title, lT.body),
+      payload: _richPayload('nutrition_reminder', lTitle, lBody),
     );
 
     // Dinner
     final dT = CoachNotificationTemplates.get(coachId, NotificationType.dinner, dayIndex);
+    final dTitle = _applyEmojiPref(dT.title, emoji);
+    final dBody = _applyEmojiPref(dT.body, emoji);
     final (dHour, dMinute) = _parseTime(dinnerTime);
     await _localNotifications.zonedSchedule(
       _nutritionDinnerId,
-      dT.title,
-      dT.body,
+      dTitle,
+      dBody,
       _nextInstanceOfTime(dHour, dMinute),
       NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-      payload: _richPayload('nutrition_reminder', dT.title, dT.body),
+      payload: _richPayload('nutrition_reminder', dTitle, dBody),
     );
 
     debugPrint('🔔 [Schedule] Nutrition reminders scheduled: Breakfast=$breakfastTime, Lunch=$lunchTime, Dinner=$dinnerTime');
@@ -428,8 +458,10 @@ extension NotificationServiceScheduled on NotificationService {
   Future<void> scheduleHydrationReminders(
     String startTime,
     String endTime,
-    int intervalMinutes,
-  ) async {
+    int intervalMinutes, {
+    bool vibrate = true,
+    bool emoji = true,
+  }) async {
     final channelConfig = NotificationService._channelConfigs['hydration_reminder']!;
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
@@ -439,6 +471,7 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
+      enableVibration: vibrate,
     );
 
     final (startHour, startMinute) = _parseTime(startTime);
@@ -459,17 +492,19 @@ extension NotificationServiceScheduled on NotificationService {
       // Combine day + index for varied rotation across reminders in a day
       final templateIndex = dayIndex + notificationIndex;
       final hT = CoachNotificationTemplates.get(coachId, NotificationType.hydration, templateIndex);
+      final hTitle = _applyEmojiPref(hT.title, emoji);
+      final hBody = _applyEmojiPref(hT.body, emoji);
 
       await _localNotifications.zonedSchedule(
         _hydrationBaseId + notificationIndex,
-        hT.title,
-        hT.body,
+        hTitle,
+        hBody,
         _nextInstanceOfTime(hour, minute),
         NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        payload: _richPayload('hydration_reminder', hT.title, hT.body),
+        payload: _richPayload('hydration_reminder', hTitle, hBody),
       );
       notificationIndex++;
     }
@@ -478,7 +513,7 @@ extension NotificationServiceScheduled on NotificationService {
   }
 
   /// Schedule daily streak alert with template rotation and personalization
-  Future<void> scheduleStreakAlert(String time) async {
+  Future<void> scheduleStreakAlert(String time, {bool vibrate = true, bool emoji = true}) async {
     final (hour, minute) = _parseTime(time);
     final scheduledDate = _nextInstanceOfTime(hour, minute);
 
@@ -491,14 +526,15 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
+      enableVibration: vibrate,
     );
 
     // Coach-personalized template rotation
     final dayIndex = _getDayOfYear();
     final coachId = await _getCachedCoachId();
     final sT = CoachNotificationTemplates.get(coachId, NotificationType.streak, dayIndex);
-    final title = sT.title;
-    var body = sT.body;
+    final title = _applyEmojiPref(sT.title, emoji);
+    var body = _applyEmojiPref(sT.body, emoji);
 
     // Personalize with cached streak count
     final streak = await _getCachedStreak();
@@ -522,7 +558,7 @@ extension NotificationServiceScheduled on NotificationService {
   }
 
   /// Schedule weekly summary notification with template rotation
-  Future<void> scheduleWeeklySummary(int day, String time) async {
+  Future<void> scheduleWeeklySummary(int day, String time, {bool vibrate = true, bool emoji = true}) async {
     final (hour, minute) = _parseTime(time);
     // Convert day (0=Sunday) to DateTime weekday (1=Monday, 7=Sunday)
     final weekday = day == 0 ? DateTime.sunday : day;
@@ -537,14 +573,15 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
+      enableVibration: vibrate,
     );
 
     // Coach-personalized template rotation (use week number for weekly notifications)
     final weekIndex = _getDayOfYear() ~/ 7;
     final coachId = await _getCachedCoachId();
     final wT = CoachNotificationTemplates.get(coachId, NotificationType.weeklySummary, weekIndex);
-    final title = wT.title;
-    final body = wT.body;
+    final title = _applyEmojiPref(wT.title, emoji);
+    final body = _applyEmojiPref(wT.body, emoji);
 
     await _localNotifications.zonedSchedule(
       _weeklySummaryId,
@@ -785,6 +822,7 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
+      enableVibration: prefs.notificationVibration,
     );
 
     // Calculate number of hourly reminders to schedule
@@ -799,17 +837,19 @@ extension NotificationServiceScheduled on NotificationService {
       final minute = minutes % 60;
 
       final mT = CoachNotificationTemplates.get(coachId, NotificationType.movement, reminderIndex);
+      final mTitle = _applyEmojiPref(mT.title, prefs.notificationEmoji);
+      final mBody = _applyEmojiPref(mT.body, prefs.notificationEmoji);
 
       await _localNotifications.zonedSchedule(
         _movementReminderBaseId + reminderIndex,
-        mT.title,
-        mT.body,
+        mTitle,
+        mBody,
         _nextInstanceOfTime(hour, minute),
         NotificationDetails(android: androidDetails, iOS: const DarwinNotificationDetails()),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         matchDateTimeComponents: DateTimeComponents.time,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-        payload: _richPayload('movement_reminder', mT.title, mT.body),
+        payload: _richPayload('movement_reminder', mTitle, mBody),
       );
       reminderIndex++;
     }
@@ -988,7 +1028,7 @@ extension NotificationServiceScheduled on NotificationService {
   }
 
   /// AndroidNotificationDetails for the shared cycle reminder channel.
-  AndroidNotificationDetails _cycleAndroidDetails() {
+  AndroidNotificationDetails _cycleAndroidDetails({bool vibrate = true}) {
     final cfg = NotificationService._channelConfigs['cycle_reminder']!;
     return AndroidNotificationDetails(
       cfg.id,
@@ -998,6 +1038,7 @@ extension NotificationServiceScheduled on NotificationService {
       priority: Priority.high,
       icon: '@drawable/ic_launcher_monochrome',
       color: cfg.color,
+      enableVibration: vibrate,
     );
   }
 
@@ -1058,7 +1099,7 @@ extension NotificationServiceScheduled on NotificationService {
       body,
       fireAt,
       NotificationDetails(
-        android: _cycleAndroidDetails(),
+        android: _cycleAndroidDetails(vibrate: prefs.notificationVibration),
         iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -1092,7 +1133,7 @@ extension NotificationServiceScheduled on NotificationService {
       body,
       _nextInstanceOfTime(hour, minute),
       NotificationDetails(
-        android: _cycleAndroidDetails(),
+        android: _cycleAndroidDetails(vibrate: prefs.notificationVibration),
         iOS: const DarwinNotificationDetails(),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,

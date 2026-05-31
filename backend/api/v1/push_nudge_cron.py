@@ -349,6 +349,11 @@ async def _send_nudge(
     local_date = _get_user_local_date(tz_str)
     prefs = user.get("notification_preferences") or {}
 
+    # Master push toggle (item 6a) — a single off-switch for ALL server push.
+    # Default True so users who predate the synced flag are unaffected.
+    if not prefs.get("push_notifications_enabled", True):
+        return False
+
     # 0. Global suppression gate (vacation + comeback). Checked BEFORE dedup so
     # suppressed nudges don't burn dedup slots or daily cap quota.
     suppression = should_suppress_notification(user, nudge_type, channel="push")
@@ -2189,6 +2194,10 @@ async def _send_health_coaching_nudge(
     local_date = _get_user_local_date(tz_str)
     prefs = user.get("notification_preferences") or {}
 
+    # Master push toggle (item 6a) — a single off-switch for ALL server push.
+    if not prefs.get("push_notifications_enabled", True):
+        return False
+
     # 1. Global suppression gate (vacation + comeback). Checked BEFORE dedup so
     #    a suppressed nudge doesn't consume its once/day dedup slot.
     suppression = should_suppress_notification(user, nudge_type, channel="push")
@@ -2363,13 +2372,47 @@ async def _job_daily_readiness(supabase, notif_svc, users: List[dict]) -> int:
         if not briefing.get("has_message"):
             continue  # No wearable / no consent — skip silently (no mock data).
 
-        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+
+        # Deterministic briefing is the honest, number-safe baseline. Try the
+        # data-grounded LLM briefing first (synthesized narrative + an insight
+        # title + calibrated action bullets, the way a coach who remembers you
+        # would write it). If Gemini is unavailable OR cites any ungrounded
+        # number, generate_smart_briefing returns None and we keep the
+        # deterministic copy — never a fabricated stat.
+        title = f"{coach_name}'s morning briefing"
+        message = briefing["message"]
+        facts = briefing.get("facts") or {}
+        try:
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, today_workout,
+                moment="morning_readiness",
+                first_name=(user.get("name") or "").split(" ")[0] or "there",
+                time_of_day="morning",
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+            )
+            if smart and smart.get("has_message"):
+                # The insight IS the title (not a generic "morning briefing").
+                title = smart["title"]
+                message = smart["message"]
+                facts = {**facts, **(smart.get("facts") or {})}
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] smart briefing failed for {user_id}, "
+                f"using deterministic: {e}"
+            )
+
         success = await _send_health_coaching_nudge(
             supabase, notif_svc, user, "daily_readiness",
-            title=f"{coach_name}'s morning briefing",
-            message=briefing["message"],
+            title=title,
+            message=message,
             route="/health/sleep",
-            facts=briefing.get("facts") or {},
+            facts=facts,
         )
         if success:
             sent += 1
@@ -2605,6 +2648,92 @@ async def _job_activity_goal(supabase, notif_svc, users: List[dict]) -> int:
     return sent
 
 
+async def _job_evening_recap(supabase, notif_svc, users: List[dict]) -> int:
+    """Flagship EVENING recap — a reflective, data-grounded coaching push.
+
+    Pairs with the morning readiness briefing. Fires once per day at the
+    user's local ``evening_recap_time`` (default 20:00). Reflects on how today
+    actually went (steps, workout, recent training) and sets up tomorrow.
+
+    This moment is LLM-only by design: there is no deterministic evening-recap
+    template, so when Gemini is unavailable / cites an ungrounded number /
+    there is no wearable data, we SKIP silently rather than ship filler. Never
+    fabricates a stat.
+
+    Gates (mirror daily_readiness): per-type pref ``evening_recap_nudge`` on;
+    account >= 3 days; local hour == recap hour; not in quiet hours.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("evening_recap_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        recap_hour = _parse_time_hour(prefs.get("evening_recap_time", "20:00"))
+        if local_hour != recap_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        user_today = _get_user_local_date(tz_str)
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] evening_recap snapshot failed for {user_id}: {e}"
+            )
+            continue
+
+        if not snapshot or not snapshot.get("has_data"):
+            continue  # No wearable / no consent — skip silently.
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+        today_workout = _today_workout_row(supabase, user_id, user_today)
+
+        try:
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, today_workout,
+                moment="evening_recap",
+                first_name=(user.get("name") or "").split(" ")[0] or "there",
+                time_of_day="evening",
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] evening_recap build failed for {user_id}: {e}"
+            )
+            continue
+
+        if not smart or not smart.get("has_message"):
+            continue  # No grounded recap to send — skip (never fabricate).
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "evening_recap",
+            title=smart["title"],
+            message=smart["message"],
+            route="/home",
+            facts=smart.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
 # ─── Main Cron Endpoint ─────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -2683,6 +2812,8 @@ async def run_push_nudge_cron(
         ("daily_readiness", _job_daily_readiness(supabase, notif_svc, users)),
         ("health_anomaly", _job_health_anomaly(supabase, notif_svc, users)),
         ("activity_goal", _job_activity_goal(supabase, notif_svc, users)),
+        # ── Flagship evening recap (data-grounded, LLM) ──
+        ("evening_recap", _job_evening_recap(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]
@@ -2759,6 +2890,8 @@ async def test_nudge(
         "week1_day1", "week1_day3_completed", "week1_day3_stalled", "week1_day5", "week1_day7",
         # Proactive health coaching (Phase C2)
         "daily_readiness", "health_anomaly", "activity_goal",
+        # Flagship evening recap (data-grounded, LLM)
+        "evening_recap",
     }
     if nudge_type not in allowed_nudge_types:
         raise HTTPException(status_code=400, detail=f"Invalid nudge_type. Allowed: {sorted(allowed_nudge_types)}")
@@ -2768,7 +2901,7 @@ async def test_nudge(
     #    Each is exercised here against the real Phase-B1 snapshot — no mock
     #    data; if the test user has no wearable / no consent the builder
     #    returns has_message=False and the test reports that honestly.
-    if nudge_type in ("daily_readiness", "health_anomaly", "activity_goal"):
+    if nudge_type in ("daily_readiness", "health_anomaly", "activity_goal", "evening_recap"):
         supabase = get_supabase()
         notif_svc = get_notification_service()
         try:
@@ -2795,15 +2928,42 @@ async def test_nudge(
         snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
         coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
 
-        if nudge_type == "daily_readiness":
-            from services.health_coaching import build_daily_briefing
+        ai = user.get("_ai_settings") or {}
+        tz_str = user.get("timezone") or "UTC"
+        today_workout = _today_workout_row(
+            supabase, user_id, _get_user_local_date(tz_str)
+        )
 
-            tz_str = user.get("timezone") or "UTC"
-            today_workout = _today_workout_row(
-                supabase, user_id, _get_user_local_date(tz_str)
+        if nudge_type in ("daily_readiness", "evening_recap"):
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            moment = (
+                "morning_readiness" if nudge_type == "daily_readiness" else "evening_recap"
             )
-            built = build_daily_briefing(snapshot, today_workout=today_workout)
-            title, route = f"{coach_name}'s morning briefing", "/health/sleep"
+            # Exercise the real upgraded path: data-grounded LLM briefing.
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, today_workout,
+                moment=moment,
+                first_name=(user.get("name") or "").split(" ")[0] or "there",
+                time_of_day=("morning" if moment == "morning_readiness" else "evening"),
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+            )
+            if smart and smart.get("has_message"):
+                built = smart
+                title, route = smart["title"], (
+                    "/health/sleep" if moment == "morning_readiness" else "/home"
+                )
+            elif nudge_type == "daily_readiness":
+                # Morning has a deterministic fallback; evening does not.
+                from services.health_coaching import build_daily_briefing
+
+                built = build_daily_briefing(snapshot, today_workout=today_workout)
+                title, route = f"{coach_name}'s morning briefing", "/health/sleep"
+            else:
+                built = {"has_message": False, "reason": "no_grounded_recap"}
+                title, route = "", "/home"
         elif nudge_type == "health_anomaly":
             from services.health_coaching import build_health_anomaly
 

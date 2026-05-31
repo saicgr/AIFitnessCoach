@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -162,6 +163,15 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
       }
 
       await ref.read(authStateProvider.notifier).updateUserProfile(updates);
+
+      // Item 6b: mirror the enabled flag into the local `notif_vacation_mode`
+      // key that the on-device post-meal check-in reminder reads to suppress
+      // itself. Without this, the page wrote only the backend column and the
+      // local reminder's vacation gate never flipped.
+      if (_stagedEnabled != null) {
+        final localPrefs = await SharedPreferences.getInstance();
+        await localPrefs.setBool('notif_vacation_mode', _stagedEnabled!);
+      }
 
       if (!mounted) return;
       HapticService.success();

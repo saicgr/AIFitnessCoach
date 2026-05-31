@@ -289,6 +289,11 @@ extension NotificationServiceCore on NotificationService {
   }) async {
     final channelConfig = _getChannelConfig(notificationType);
 
+    // Multi-line expansion: the data-grounded coach briefings carry a 2-4
+    // sentence narrative plus action bullets. Without BigTextStyle the Android
+    // tray truncates them to a single line (defeating the whole point); with
+    // it, the body expands on the lock screen like a Google-Health insight.
+    // iOS expands long bodies natively on long-press.
     final androidDetails = AndroidNotificationDetails(
       channelConfig.id,
       channelConfig.name,
@@ -298,12 +303,18 @@ extension NotificationServiceCore on NotificationService {
       icon: '@drawable/ic_launcher_monochrome',
       color: channelConfig.color,
       playSound: true,
+      styleInformation: BigTextStyleInformation(
+        body,
+        contentTitle: title,
+      ),
     );
 
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      // Group expanded content; iOS shows the full body on long-press.
+      threadIdentifier: 'coach',
     );
 
     final details = NotificationDetails(

@@ -85,6 +85,21 @@ class NotificationPreferences {
   final bool notificationEmoji;
   final bool notificationVibration;
 
+  // ── Master push toggle (item 6a) ─────────────────────────────────
+  // The single on/off for ALL server-sent push. Read by the backend cron as
+  // `push_notifications_enabled` (every server nudge job short-circuits when
+  // false) and by the local post-meal reminder. Previously this was hardcoded
+  // `true` in the sync payload with no UI — now it is a real, user-controlled
+  // pref that gates the whole push system.
+  final bool pushNotificationsEnabled;
+
+  // ── Evening recap (flagship moment, pairs with the morning readiness
+  //    briefing which reuses `dailyBriefingNudge`/`dailyBriefingTime`) ──────
+  // A user-local evening reflection on the day + tomorrow's setup. Read by the
+  // backend cron as `evening_recap_nudge` / `evening_recap_time`.
+  final bool eveningRecapNudge;
+  final String eveningRecapTime;
+
   // ── Cycle tracking reminders (Phase E) ──────────────────────────
   // `cycleRemindersMaster` gates the whole group; each sub-type has its own
   // toggle. All cycle reminders respect the global quiet hours. The
@@ -189,6 +204,11 @@ class NotificationPreferences {
     // Style preferences
     this.notificationEmoji = true,
     this.notificationVibration = true,
+    // Master push toggle (item 6a) — default ON.
+    this.pushNotificationsEnabled = true,
+    // Evening recap (flagship) — default ON, user-local evening.
+    this.eveningRecapNudge = true,
+    this.eveningRecapTime = '20:00',
     // Cycle tracking reminders (Phase E) — default ON when the cycle feature
     // is enabled; the group is also gated by `cycleRemindersMaster`.
     this.cycleRemindersMaster = true,
@@ -281,6 +301,10 @@ class NotificationPreferences {
     // Style preferences
     bool? notificationEmoji,
     bool? notificationVibration,
+    // Master push toggle + evening recap
+    bool? pushNotificationsEnabled,
+    bool? eveningRecapNudge,
+    String? eveningRecapTime,
     // Cycle tracking reminders (Phase E)
     bool? cycleRemindersMaster,
     bool? cyclePeriodApproaching,
@@ -371,6 +395,11 @@ class NotificationPreferences {
       // Style preferences
       notificationEmoji: notificationEmoji ?? this.notificationEmoji,
       notificationVibration: notificationVibration ?? this.notificationVibration,
+      // Master push toggle + evening recap
+      pushNotificationsEnabled:
+          pushNotificationsEnabled ?? this.pushNotificationsEnabled,
+      eveningRecapNudge: eveningRecapNudge ?? this.eveningRecapNudge,
+      eveningRecapTime: eveningRecapTime ?? this.eveningRecapTime,
       // Cycle tracking reminders (Phase E)
       cycleRemindersMaster: cycleRemindersMaster ?? this.cycleRemindersMaster,
       cyclePeriodApproaching:
@@ -468,6 +497,12 @@ class NotificationPreferences {
         // Style preferences
         'notification_emoji': notificationEmoji,
         'notification_vibration': notificationVibration,
+        // Master push toggle (item 6a) — gates ALL server push.
+        'push_notifications_enabled': pushNotificationsEnabled,
+        // Evening recap (flagship) — keys consumed by the push_nudge_cron
+        // evening_recap job. Morning readiness reuses daily_briefing_*.
+        'evening_recap_nudge': eveningRecapNudge,
+        'evening_recap_time': eveningRecapTime,
         // Cycle tracking reminders (Phase E). Synced so the backend can also
         // suppress its server-side cycle nudges per the user's choice — only
         // CONTENT-FREE booleans / times leave the device, never cycle data.
