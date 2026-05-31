@@ -52,7 +52,10 @@ if [ -n "$SENTRY_DSN" ]; then
     echo -e "${CYAN}Overriding SENTRY_DSN from env var${NC}"
 fi
 
-$FLUTTER_PATH build appbundle --${BUILD_MODE} --dart-define=ENV=prod --dart-define=REVENUECAT_GOOGLE_KEY=$REVENUECAT_GOOGLE_KEY $SENTRY_DEFINE
+# --no-tree-shake-icons: habit_detail_screen builds IconData from a persisted
+# runtime code point (a user's saved habit icon), which can't be const — the
+# icon tree-shaker would otherwise abort the release build.
+$FLUTTER_PATH build appbundle --${BUILD_MODE} --no-tree-shake-icons --dart-define=ENV=prod --dart-define=REVENUECAT_GOOGLE_KEY=$REVENUECAT_GOOGLE_KEY $SENTRY_DEFINE
 
 # Locate the output
 if [ "$BUILD_MODE" = "release" ]; then

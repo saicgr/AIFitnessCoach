@@ -108,8 +108,11 @@ RC_GOOGLE_KEY="${REVENUECAT_GOOGLE_KEY:-goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq}"
 DART_DEFINES=("--dart-define=REVENUECAT_GOOGLE_KEY=$RC_GOOGLE_KEY")
 [[ -n "${REVENUECAT_APPLE_KEY:-}" ]] && DART_DEFINES+=("--dart-define=REVENUECAT_APPLE_KEY=$REVENUECAT_APPLE_KEY")
 
-# Build and run on target device in PROFILE mode (AOT — real performance)
+# Build and run on target device in PROFILE mode (AOT — real performance).
+# --no-tree-shake-icons: habit_detail_screen builds IconData from a persisted
+# runtime code point (a user's saved habit icon), so it can't be const and the
+# icon tree-shaker (active in profile/release, NOT debug) aborts the build.
 echo -e "${GREEN}Building and running app in PROFILE mode on $TARGET_DEVICE...${NC}"
-$FLUTTER_PATH run --profile -d "$TARGET_DEVICE" "${DART_DEFINES[@]}"
+$FLUTTER_PATH run --profile --no-tree-shake-icons -d "$TARGET_DEVICE" "${DART_DEFINES[@]}"
 
 echo -e "${GREEN}=== Done! ===${NC}"
