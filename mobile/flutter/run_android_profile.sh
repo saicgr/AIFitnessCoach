@@ -108,11 +108,23 @@ RC_GOOGLE_KEY="${REVENUECAT_GOOGLE_KEY:-goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq}"
 DART_DEFINES=("--dart-define=REVENUECAT_GOOGLE_KEY=$RC_GOOGLE_KEY")
 [[ -n "${REVENUECAT_APPLE_KEY:-}" ]] && DART_DEFINES+=("--dart-define=REVENUECAT_APPLE_KEY=$REVENUECAT_APPLE_KEY")
 
-# Build and run on target device in PROFILE mode (AOT — real performance).
-# --no-tree-shake-icons: habit_detail_screen builds IconData from a persisted
-# runtime code point (a user's saved habit icon), so it can't be const and the
-# icon tree-shaker (active in profile/release, NOT debug) aborts the build.
-echo -e "${GREEN}Building and running app in PROFILE mode on $TARGET_DEVICE...${NC}"
-$FLUTTER_PATH run --profile --no-tree-shake-icons -d "$TARGET_DEVICE" "${DART_DEFINES[@]}"
+# Build, install, then attach — we can't use `flutter run --profile` directly
+# because it rejects --no-tree-shake-icons (that flag exists only on `flutter
+# build`), yet the profile run still tree-shakes icons and would abort on
+# habit_detail_screen's runtime-built IconData (a user's saved habit icon, not
+# const). So: build the APK WITH the flag, install it, launch it, then
+# `flutter attach` for the same logs/DevTools workflow `run` gives.
+echo -e "${GREEN}Building PROFILE APK (--no-tree-shake-icons) ...${NC}"
+$FLUTTER_PATH build apk --profile --no-tree-shake-icons "${DART_DEFINES[@]}"
+
+APK_PATH="$PROJECT_DIR/build/app/outputs/flutter-apk/app-profile.apk"
+echo -e "${YELLOW}Installing $APK_PATH on $TARGET_DEVICE...${NC}"
+$ADB_PATH -s "$TARGET_DEVICE" install -r "$APK_PATH"
+
+echo -e "${YELLOW}Launching app...${NC}"
+$ADB_PATH -s "$TARGET_DEVICE" shell monkey -p com.aifitnesscoach.app -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
+
+echo -e "${GREEN}Attaching Flutter (profile logs + DevTools)...${NC}"
+$FLUTTER_PATH attach -d "$TARGET_DEVICE"
 
 echo -e "${GREEN}=== Done! ===${NC}"
