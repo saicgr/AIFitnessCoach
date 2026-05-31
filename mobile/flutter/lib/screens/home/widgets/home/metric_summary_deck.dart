@@ -328,61 +328,34 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
   // With the enriched default set the "More" page is exactly 4 small tiles →
   // a tidy 2×2.
   Widget _gridPage(ThemeColors c, List<RingKind> tiles) {
-    final layout = ref.watch(metricLayoutProvider.notifier);
-    bool isFull(RingKind k) {
-      final s = layout.configFor(k).size;
-      return s == MetricSize.wide || s == MetricSize.large;
-    }
-
-    Widget fullRow(RingKind k) => SizedBox(
-          height: 66,
-          child: Row(
-            children: [
-              Expanded(child: MetricTile(key: ValueKey('tile_${k.id}'), kind: k)),
-            ],
+    // UNIFORM 2-column grid: every tile the same compact size, 2 per row, in a
+    // clean 2xN grid. We intentionally ignore the My-Space wide/large size here
+    // — those full-width rows belong to the full home grid, not the compact
+    // deck, and were what made this page look "broken" (a 2-up row then two
+    // lonely full-width tiles). The bottom inset leaves a clear strip for the
+    // overlaid dots + gear footer so it never sits on a tile.
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: GridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 9,
+            crossAxisSpacing: 9,
+            mainAxisExtent: 62,
           ),
-        );
-
-    final rows = <Widget>[];
-    var i = 0;
-    while (i < tiles.length) {
-      final a = tiles[i];
-      if (isFull(a)) {
-        rows.add(fullRow(a));
-        i += 1;
-      } else if (i + 1 < tiles.length && !isFull(tiles[i + 1])) {
-        // Two consecutive small tiles → a paired 2-up row.
-        final b = tiles[i + 1];
-        rows.add(
-          SizedBox(
-            height: 66,
-            child: Row(
-              children: [
-                Expanded(child: MetricTile(key: ValueKey('tile_${a.id}'), kind: a)),
-                const SizedBox(width: 9),
-                Expanded(child: MetricTile(key: ValueKey('tile_${b.id}'), kind: b)),
-              ],
-            ),
-          ),
-        );
-        i += 2;
-      } else {
-        // A lone trailing small tile: give it the full width so it doesn't sit
-        // beside an empty half (no orphaned half-Spacer — issue 4).
-        rows.add(fullRow(a));
-        i += 1;
-      }
-    }
-
-    return SingleChildScrollView(
-      physics: const NeverScrollableScrollPhysics(),
-      child: Column(
-        children: [
-          for (var r = 0; r < rows.length; r++) ...[
-            if (r > 0) const SizedBox(height: 9),
-            rows[r],
+          children: [
+            for (final kind in tiles)
+              MetricTile(
+                key: ValueKey('tile_${kind.id}'),
+                kind: kind,
+                compact: true,
+              ),
           ],
-        ],
+        ),
       ),
     );
   }

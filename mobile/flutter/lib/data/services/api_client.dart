@@ -1046,14 +1046,54 @@ class ApiClient with WidgetsBindingObserver {
     await _storage.write(key: _tokenKey, value: token);
   }
 
+  /// In-memory cache + coalescing latch for the user id.
+  ///
+  /// getUserId() sits on MANY hot paths (every metric tile, the nutrition hero
+  /// card, the chat-history + timeline + nutrition notifiers, the auth
+  /// interceptor). FlutterSecureStorage serializes all reads through a single
+  /// platform channel, so a burst of concurrent getUserId() calls (e.g. the
+  /// home deck's tiles + cards all mounting at once) contend and can stall —
+  /// which wedges every authed load simultaneously (skeletons that never
+  /// resolve, "couldn't load" errors). The id is immutable for a session, so:
+  ///   * we read storage AT MOST ONCE and serve every later caller from memory;
+  ///   * concurrent first-callers share ONE in-flight read (no stampede);
+  ///   * the read is timeout-capped so a wedged keychain can never hang callers.
+  String? _cachedUserId;
+  Future<String?>? _userIdReadInFlight;
+
   /// Save user ID
   Future<void> setUserId(String userId) async {
+    _cachedUserId = userId;
     await _storage.write(key: _userIdKey, value: userId);
   }
 
-  /// Get stored user ID
+  /// Get stored user ID (memory-cached, coalesced, timeout-capped).
   Future<String?> getUserId() async {
-    return _storage.read(key: _userIdKey);
+    final cached = _cachedUserId;
+    if (cached != null) return cached;
+    final inFlight = _userIdReadInFlight;
+    if (inFlight != null) return inFlight;
+    final future = _readUserIdFromStorage();
+    _userIdReadInFlight = future;
+    try {
+      return await future;
+    } finally {
+      _userIdReadInFlight = null;
+    }
+  }
+
+  Future<String?> _readUserIdFromStorage() async {
+    try {
+      final id = await _storage
+          .read(key: _userIdKey)
+          .timeout(const Duration(seconds: 5));
+      if (id != null) _cachedUserId = id;
+      return id;
+    } catch (_) {
+      // Wedged / timed-out keychain read → null; the 401 path recovers auth if
+      // the id was genuinely lost. Never hang the caller.
+      return null;
+    }
   }
 
   /// Get stored auth token
@@ -1063,6 +1103,8 @@ class ApiClient with WidgetsBindingObserver {
 
   /// Clear auth data
   Future<void> clearAuth() async {
+    _cachedUserId = null;
+    _userIdReadInFlight = null;
     await _storage.delete(key: _tokenKey);
     await _storage.delete(key: _userIdKey);
   }
