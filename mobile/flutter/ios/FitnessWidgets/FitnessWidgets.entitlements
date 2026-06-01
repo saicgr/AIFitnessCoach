@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shared container with the host Runner app. The Flutter app writes
+	     widget data here (home_widget → WidgetService._appGroupId) and this
+	     WidgetKit extension reads it (WidgetDataProvider suiteName). MUST match
+	     the identifier in ios/Runner/Runner.entitlements. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.aifitnesscoach.widgets</string>
+	</array>
+</dict>
+</plist>

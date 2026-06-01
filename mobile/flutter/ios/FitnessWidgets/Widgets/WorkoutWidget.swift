@@ -207,7 +207,7 @@ struct WorkoutWidgetLargeView: View {
                     // Start button
                     HStack {
                         Spacer()
-                        Link(destination: WidgetDeepLinks.startWorkout(id: entry.data.id ?? "") ?? URL(string: "aifitnesscoach://workout")!) {
+                        Link(destination: WidgetDeepLinks.startWorkout(id: entry.data.id ?? "") ?? URL(string: "fitwiz://workout")!) {
                             HStack {
                                 Image(systemName: "play.fill")
                                 Text("Start Workout")

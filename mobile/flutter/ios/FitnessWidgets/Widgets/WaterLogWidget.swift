@@ -42,19 +42,25 @@ struct WaterLogWidgetSmallView: View {
                 // Droplet progress
                 WaterDropletProgress(percent: entry.data.percent, size: 50)
 
-                // Quick add button
-                Link(destination: WidgetDeepLinks.addWater(amount: 250) ?? URL(string: "aifitnesscoach://hydration")!) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.caption2.weight(.bold))
-                        Text("250ml")
-                            .font(.caption2.weight(.semibold))
+                // Quick add button — hidden when water tracking is off (Gap 6);
+                // uses the first saved custom bottle when present (Gap 5).
+                if entry.data.enabled {
+                    let firstBottle = entry.data.bottles.first
+                    let amount = firstBottle?.ml ?? 250
+                    let label = firstBottle?.label ?? "250ml"
+                    Link(destination: WidgetDeepLinks.addWater(amount: amount) ?? URL(string: "fitwiz://hydration")!) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                                .font(.caption2.weight(.bold))
+                            Text(label)
+                                .font(.caption2.weight(.semibold))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(WidgetGradients.water)
+                        .foregroundColor(.white)
+                        .clipShape(Capsule())
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(WidgetGradients.water)
-                    .foregroundColor(.white)
-                    .clipShape(Capsule())
                 }
             }
         }
@@ -77,21 +83,49 @@ struct WaterLogWidgetMediumView: View {
                 }
                 .frame(width: 80)
 
-                // Right - Quick add buttons
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Quick Add")
-                        .font(.caption.weight(.medium))
-                        .foregroundColor(.widgetText.opacity(0.7))
+                // Right - Quick add buttons (Gap 6 — hidden when tracking off;
+                // Gap 5 — saved custom bottles take priority over default sizes).
+                if entry.data.enabled {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Quick Add")
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.widgetText.opacity(0.7))
 
-                    HStack(spacing: 8) {
-                        WaterQuickAddButton(amount: 250)
-                        WaterQuickAddButton(amount: 500)
-                        WaterQuickAddButton(amount: 750)
-                        WaterQuickAddButton(amount: 1000, label: "1L")
+                        HStack(spacing: 8) {
+                            if entry.data.bottles.isEmpty {
+                                WaterQuickAddButton(amount: 250)
+                                WaterQuickAddButton(amount: 500)
+                                WaterQuickAddButton(amount: 750)
+                                WaterQuickAddButton(amount: 1000, label: "1L")
+                            } else {
+                                ForEach(entry.data.bottles) { b in
+                                    WaterQuickAddButton(amount: b.ml, label: b.label)
+                                }
+                            }
+                        }
                     }
+                } else {
+                    WaterTrackingOffView()
                 }
             }
         }
+    }
+}
+
+/// Gap 6 — muted placeholder shown when the user has turned water tracking off.
+struct WaterTrackingOffView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Image(systemName: "slash.circle")
+                .foregroundColor(.widgetText.opacity(0.4))
+            Text("Water tracking is off")
+                .font(.caption)
+                .foregroundColor(.widgetText.opacity(0.5))
+            Text("Turn it on in Nutrition settings")
+                .font(.caption2)
+                .foregroundColor(.widgetText.opacity(0.35))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -136,33 +170,45 @@ struct WaterLogWidgetLargeView: View {
                 Divider()
                     .background(Color.white.opacity(0.2))
 
-                // Quick add section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Quick Add")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(.widgetText.opacity(0.7))
+                // Quick add section (Gap 6 hide / Gap 5 custom bottles).
+                if entry.data.enabled {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Quick Add")
+                            .font(.subheadline.weight(.medium))
+                            .foregroundColor(.widgetText.opacity(0.7))
 
-                    HStack(spacing: 12) {
-                        WaterQuickAddButton(amount: 250, style: .large)
-                        WaterQuickAddButton(amount: 500, style: .large)
-                        WaterQuickAddButton(amount: 750, style: .large)
-                        WaterQuickAddButton(amount: 1000, label: "1L", style: .large)
+                        HStack(spacing: 12) {
+                            if entry.data.bottles.isEmpty {
+                                WaterQuickAddButton(amount: 250, style: .large)
+                                WaterQuickAddButton(amount: 500, style: .large)
+                                WaterQuickAddButton(amount: 750, style: .large)
+                                WaterQuickAddButton(amount: 1000, label: "1L", style: .large)
+                            } else {
+                                ForEach(entry.data.bottles) { b in
+                                    WaterQuickAddButton(amount: b.ml, label: b.label, style: .large)
+                                }
+                            }
+                        }
                     }
+                } else {
+                    WaterTrackingOffView()
                 }
 
                 Spacer()
 
-                // Drink type selector placeholder
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Drink Type")
-                        .font(.caption.weight(.medium))
-                        .foregroundColor(.widgetText.opacity(0.7))
+                // Drink type selector placeholder (hidden when tracking off).
+                if entry.data.enabled {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Drink Type")
+                            .font(.caption.weight(.medium))
+                            .foregroundColor(.widgetText.opacity(0.7))
 
-                    HStack(spacing: 12) {
-                        DrinkTypeButton(icon: "drop.fill", label: "Water", isSelected: true)
-                        DrinkTypeButton(icon: "cup.and.saucer.fill", label: "Coffee", isSelected: false)
-                        DrinkTypeButton(icon: "leaf.fill", label: "Tea", isSelected: false)
-                        DrinkTypeButton(icon: "bolt.fill", label: "Sports", isSelected: false)
+                        HStack(spacing: 12) {
+                            DrinkTypeButton(icon: "drop.fill", label: "Water", isSelected: true)
+                            DrinkTypeButton(icon: "cup.and.saucer.fill", label: "Coffee", isSelected: false)
+                            DrinkTypeButton(icon: "leaf.fill", label: "Tea", isSelected: false)
+                            DrinkTypeButton(icon: "bolt.fill", label: "Sports", isSelected: false)
+                        }
                     }
                 }
             }
@@ -182,7 +228,7 @@ struct WaterQuickAddButton: View {
     }
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.addWater(amount: amount) ?? URL(string: "aifitnesscoach://hydration")!) {
+        Link(destination: WidgetDeepLinks.addWater(amount: amount) ?? URL(string: "fitwiz://hydration")!) {
             VStack(spacing: 2) {
                 Text("+")
                     .font(.system(size: style == .large ? 14 : 10, weight: .bold))

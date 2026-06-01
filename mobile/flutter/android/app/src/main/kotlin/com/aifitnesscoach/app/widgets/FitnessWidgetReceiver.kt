@@ -41,11 +41,11 @@ class WorkoutWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_workout)
 
             // Set click action for Start button -> open workout
-            val startIntent = createDeepLinkIntent(context, "aifitnesscoach://workout/start", widgetId)
+            val startIntent = createDeepLinkIntent(context, "fitwiz://workout/start", widgetId)
             views.setOnClickPendingIntent(R.id.workout_start_button, startIntent)
 
             // Whole widget click -> open schedule
-            val widgetIntent = createDeepLinkIntent(context, "aifitnesscoach://schedule", widgetId + 1000)
+            val widgetIntent = createDeepLinkIntent(context, "fitwiz://schedule", widgetId + 1000)
             views.setOnClickPendingIntent(R.id.workout_name, widgetIntent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -67,7 +67,7 @@ class StreakWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_streak)
 
             // Click -> open achievements/stats
-            val intent = createDeepLinkIntent(context, "aifitnesscoach://achievements", widgetId)
+            val intent = createDeepLinkIntent(context, "fitwiz://achievements", widgetId)
             views.setOnClickPendingIntent(R.id.streak_count, intent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -85,12 +85,23 @@ class WaterWidgetReceiver : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences
     ) {
+        val data = WidgetDataProvider(context).getWaterData()
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_water)
+            views.setTextViewText(R.id.water_percent, "${data.percent}%")
 
-            // Click add button -> quick add water
-            val addIntent = createDeepLinkIntent(context, "aifitnesscoach://hydration/add?amount=250", widgetId)
-            views.setOnClickPendingIntent(R.id.water_add_button, addIntent)
+            if (data.enabled) {
+                views.setViewVisibility(R.id.water_add_button, android.view.View.VISIBLE)
+                // Gap 5 — quick-add the user's first saved bottle when present.
+                val amount = data.bottles.firstOrNull()?.ml ?: 250
+                val addIntent = createDeepLinkIntent(
+                    context, "fitwiz://hydration/add?amount=$amount", widgetId
+                )
+                views.setOnClickPendingIntent(R.id.water_add_button, addIntent)
+            } else {
+                // Gap 6 — water tracking off: hide quick-add; tap opens the app.
+                views.setViewVisibility(R.id.water_add_button, android.view.View.GONE)
+            }
 
             appWidgetManager.updateAppWidget(widgetId, views)
         }
@@ -139,7 +150,7 @@ class StatsWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_stats)
 
             // Whole widget click -> open stats
-            val intent = createDeepLinkIntent(context, "aifitnesscoach://stats", widgetId)
+            val intent = createDeepLinkIntent(context, "fitwiz://stats", widgetId)
             views.setOnClickPendingIntent(R.id.stats_container, intent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -161,7 +172,7 @@ class SocialWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_social)
 
             // Click share button -> open social share
-            val shareIntent = createDeepLinkIntent(context, "aifitnesscoach://social/share", widgetId)
+            val shareIntent = createDeepLinkIntent(context, "fitwiz://social/share", widgetId)
             views.setOnClickPendingIntent(R.id.share_workout_btn, shareIntent)
 
             // Whole widget click -> also open social share
@@ -186,7 +197,7 @@ class ChallengesWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_challenges)
 
             // Whole widget click -> open challenges
-            val intent = createDeepLinkIntent(context, "aifitnesscoach://challenges", widgetId)
+            val intent = createDeepLinkIntent(context, "fitwiz://challenges", widgetId)
             views.setOnClickPendingIntent(R.id.challenges_container, intent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -208,7 +219,7 @@ class AchievementsWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_achievements)
 
             // Whole widget click -> open achievements
-            val intent = createDeepLinkIntent(context, "aifitnesscoach://achievements", widgetId)
+            val intent = createDeepLinkIntent(context, "fitwiz://achievements", widgetId)
             views.setOnClickPendingIntent(R.id.achievements_container, intent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -230,7 +241,7 @@ class GoalsWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_goals)
 
             // Whole widget click -> open goals
-            val intent = createDeepLinkIntent(context, "aifitnesscoach://goals", widgetId)
+            val intent = createDeepLinkIntent(context, "fitwiz://goals", widgetId)
             views.setOnClickPendingIntent(R.id.goals_container, intent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -252,7 +263,7 @@ class CalendarWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_calendar)
 
             // Whole widget click -> open schedule
-            val intent = createDeepLinkIntent(context, "aifitnesscoach://schedule", widgetId)
+            val intent = createDeepLinkIntent(context, "fitwiz://schedule", widgetId)
             views.setOnClickPendingIntent(R.id.calendar_container, intent)
 
             appWidgetManager.updateAppWidget(widgetId, views)
@@ -274,7 +285,7 @@ class AICoachWidgetReceiver : HomeWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_ai_coach)
 
             // Click ask button -> open AI chat
-            val chatIntent = createDeepLinkIntent(context, "aifitnesscoach://chat", widgetId)
+            val chatIntent = createDeepLinkIntent(context, "fitwiz://chat", widgetId)
             views.setOnClickPendingIntent(R.id.ai_ask_button, chatIntent)
 
             // Whole widget click -> also open chat

@@ -75,10 +75,20 @@ class WidgetDataProvider {
             return WaterWidgetData.placeholder
         }
 
+        var bottles: [WaterBottle] = []
+        if let rawBottles = json["bottles"] as? [[String: Any]] {
+            bottles = rawBottles.compactMap { b in
+                guard let ml = b["ml"] as? Int, ml > 0 else { return nil }
+                let label = (b["label"] as? String) ?? "Bottle"
+                return WaterBottle(label: label, ml: ml)
+            }
+        }
         return WaterWidgetData(
             currentMl: json["current"] as? Int ?? 0,
             goalMl: json["goal"] as? Int ?? 2500,
-            percent: json["percent"] as? Int ?? 0
+            percent: json["percent"] as? Int ?? 0,
+            enabled: json["enabled"] as? Bool ?? true,
+            bottles: bottles
         )
     }
 
@@ -312,15 +322,28 @@ struct StreakWidgetData {
     )
 }
 
+/// Gap 5 — a saved custom bottle surfaced as a widget quick-add option.
+struct WaterBottle: Identifiable {
+    let id = UUID()
+    let label: String
+    let ml: Int
+}
+
 struct WaterWidgetData {
     let currentMl: Int
     let goalMl: Int
     let percent: Int
+    // Gap 6 — false hides quick-add + shows a muted "tracking off" state.
+    let enabled: Bool
+    // Gap 5 — user's saved bottles (may be empty → fall back to default sizes).
+    let bottles: [WaterBottle]
 
     static let placeholder = WaterWidgetData(
         currentMl: 1500,
         goalMl: 2500,
-        percent: 60
+        percent: 60,
+        enabled: true,
+        bottles: []
     )
 }
 

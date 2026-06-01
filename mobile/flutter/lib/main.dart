@@ -27,11 +27,11 @@ import 'data/repositories/auth_repository.dart';
 import 'data/services/prewarmer_boot.dart';
 import 'data/local/database.dart' show AppDatabase;
 import 'data/local/database_provider.dart';
-// Meal-suggestion widget (see coming_soon_screen.dart) — code is staged
-// but not yet wired. When bringing live, uncomment these imports and the
-// init block further down in _initNonCriticalServices.
+// Home-screen widgets (workout / water / food / streak / …) — pipeline live.
+import 'data/services/widget_service.dart';
+// Meal-suggestion widget (see coming_soon_screen.dart) remains staged
+// (Coming Soon) — its imports + init stay commented until that feature ships.
 // import 'data/services/api_client.dart';
-// import 'data/services/widget_service.dart';
 // import 'services/meal_suggestion_widget_service.dart';
 // import 'package:home_widget/home_widget.dart';
 // FlutterGemma import removed -- initialization deferred to OnDeviceGemmaService.ensureInitialized()
@@ -374,28 +374,22 @@ Future<void> _initNonCriticalServices(
     category: 'app.lifecycle',
   );
 
-  // Meal-suggestion widget (one-tap "what should I eat?") — currently
-  // listed under Settings → Coming Soon. Implementation is staged but not
-  // live because the iOS widget needs an App Group entitlement added to
-  // Runner.entitlements + a re-signed provisioning profile, which is a
-  // manual Xcode step. To enable: (1) add the capability in Xcode, (2)
-  // uncomment the imports at the top of this file, (3) uncomment the
-  // block below. See project_widget_infra.md memory note for full details.
-  //
-  // try {
-  //   await WidgetService.initialize();
-  //   final apiClient = container.read(apiClientProvider);
-  //   MealSuggestionWidgetService.init(apiClient);
-  //   HomeWidget.registerInteractivityCallback(
-  //     MealSuggestionWidgetService.handleWidgetCallback,
-  //   );
-  //   Future<void>.delayed(const Duration(seconds: 2), () {
-  //     MealSuggestionWidgetService.instance.refreshIfStale();
-  //   });
-  //   debugPrint('✅ MealSuggestionWidgetService initialized');
-  // } catch (e) {
-  //   debugPrint('⚠️ MealSuggestionWidgetService initialization failed: $e');
-  // }
+  // Home-screen widgets (workout / water / food / streak / goals / …) — set
+  // the shared App Group id so widget data writes are readable by the native
+  // extensions. Safe + cheap; no-ops gracefully if the group isn't configured.
+  // NOTE (iOS): rendering also requires the App Group capability on
+  // Runner.entitlements + a re-signed provisioning profile (manual Xcode step,
+  // see project_widget_infra.md). Android works via SharedPreferences without it.
+  try {
+    await WidgetService.initialize();
+    debugPrint('✅ WidgetService initialized (home-screen widget pipeline live)');
+  } catch (e) {
+    debugPrint('⚠️ WidgetService initialization failed: $e');
+  }
+
+  // Meal-suggestion widget (one-tap "what should I eat?") stays Coming Soon —
+  // its MealSuggestionWidgetService init + interactivity callback remain staged
+  // until that feature ships (imports at top of file kept commented).
 
   // FlutterGemma is deferred to when user accesses on-device AI settings.
   // It performs heavy native library loading and ML runtime setup that can

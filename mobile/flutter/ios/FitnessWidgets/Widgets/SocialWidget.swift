@@ -42,7 +42,7 @@ struct SocialWidgetSmallView: View {
                     .font(.title)
                     .foregroundStyle(WidgetGradients.primary)
 
-                Link(destination: WidgetDeepLinks.shareWorkout() ?? URL(string: "aifitnesscoach://social")!) {
+                Link(destination: WidgetDeepLinks.shareWorkout() ?? URL(string: "fitwiz://social")!) {
                     Text("Share Workout")
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 12)
@@ -135,7 +135,7 @@ struct SocialWidgetLargeView: View {
                 Spacer()
 
                 // View all button
-                Link(destination: WidgetDeepLinks.social ?? URL(string: "aifitnesscoach://social")!) {
+                Link(destination: WidgetDeepLinks.social ?? URL(string: "fitwiz://social")!) {
                     Text("View All Activity")
                         .font(.caption.weight(.semibold))
                         .frame(maxWidth: .infinity)
@@ -157,7 +157,7 @@ struct ShareOptionButton: View {
     let type: String
 
     var body: some View {
-        Link(destination: URL(string: "aifitnesscoach://social/share?type=\(type)") ?? URL(string: "aifitnesscoach://social")!) {
+        Link(destination: URL(string: "fitwiz://social/share?type=\(type)") ?? URL(string: "fitwiz://social")!) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.title3)
@@ -180,7 +180,7 @@ struct LargeShareButton: View {
     let type: String
 
     var body: some View {
-        Link(destination: URL(string: "aifitnesscoach://social/share?type=\(type)") ?? URL(string: "aifitnesscoach://social")!) {
+        Link(destination: URL(string: "fitwiz://social/share?type=\(type)") ?? URL(string: "fitwiz://social")!) {
             VStack(spacing: 6) {
                 Image(systemName: icon)
                     .font(.title2)

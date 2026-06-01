@@ -146,7 +146,7 @@ struct GoalsWidgetLargeView: View {
                     Spacer()
 
                     // View all button
-                    Link(destination: WidgetDeepLinks.goals ?? URL(string: "aifitnesscoach://goals")!) {
+                    Link(destination: WidgetDeepLinks.goals ?? URL(string: "fitwiz://goals")!) {
                         Text("View All Goals")
                             .font(.caption.weight(.semibold))
                             .frame(maxWidth: .infinity)

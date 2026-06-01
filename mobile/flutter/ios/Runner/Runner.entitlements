@@ -33,6 +33,13 @@
 		     here; the host app reads on launch via receive_sharing_intent.
 		     The SAME identifier MUST be added to ShareExtension.entitlements. -->
 		<string>group.com.zealova.app.share</string>
+		<!-- Home-screen widgets (FitnessWidgets WidgetKit extension). The
+		     Flutter app writes widget data into this shared container via the
+		     home_widget plugin (WidgetService._appGroupId) and the extension
+		     reads it (WidgetDataProvider suiteName). SAME identifier lives in
+		     FitnessWidgets/FitnessWidgets.entitlements. Automatic signing
+		     (team G9RL26P89Q) registers this group at build time. -->
+		<string>group.com.aifitnesscoach.widgets</string>
 	</array>
 	<key>aps-environment</key>
 	<string>production</string>

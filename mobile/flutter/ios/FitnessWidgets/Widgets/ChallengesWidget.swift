@@ -189,7 +189,7 @@ struct ChallengesWidgetLargeView: View {
                     Spacer()
 
                     // View all button
-                    Link(destination: WidgetDeepLinks.challenges ?? URL(string: "aifitnesscoach://challenges")!) {
+                    Link(destination: WidgetDeepLinks.challenges ?? URL(string: "fitwiz://challenges")!) {
                         Text("View All Challenges")
                             .font(.caption.weight(.semibold))
                             .frame(maxWidth: .infinity)

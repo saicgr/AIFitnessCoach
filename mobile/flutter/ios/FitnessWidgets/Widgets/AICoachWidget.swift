@@ -58,7 +58,7 @@ struct AICoachWidgetSmallView: View {
                 }
 
                 // Ask button
-                Link(destination: WidgetDeepLinks.chat() ?? URL(string: "aifitnesscoach://chat")!) {
+                Link(destination: WidgetDeepLinks.chat() ?? URL(string: "fitwiz://chat")!) {
                     Text("Ask Coach")
                         .font(.caption.weight(.semibold))
                         .padding(.horizontal, 14)
@@ -153,7 +153,7 @@ struct AICoachWidgetLargeView: View {
                         .foregroundColor(.widgetText.opacity(0.7))
 
                     ForEach(entry.data.quickPrompts, id: \.self) { prompt in
-                        Link(destination: WidgetDeepLinks.chat(prompt: prompt) ?? URL(string: "aifitnesscoach://chat")!) {
+                        Link(destination: WidgetDeepLinks.chat(prompt: prompt) ?? URL(string: "fitwiz://chat")!) {
                             HStack {
                                 Image(systemName: iconForPrompt(prompt))
                                     .foregroundStyle(WidgetGradients.primary)
@@ -209,7 +209,7 @@ struct AICoachWidgetLargeView: View {
                 }
 
                 // Open chat button
-                Link(destination: WidgetDeepLinks.chat() ?? URL(string: "aifitnesscoach://chat")!) {
+                Link(destination: WidgetDeepLinks.chat() ?? URL(string: "fitwiz://chat")!) {
                     HStack {
                         Image(systemName: "message.fill")
                         Text("Open Chat")
@@ -250,7 +250,7 @@ struct QuickPromptLink: View {
     let prompt: String
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.chat(prompt: prompt) ?? URL(string: "aifitnesscoach://chat")!) {
+        Link(destination: WidgetDeepLinks.chat(prompt: prompt) ?? URL(string: "fitwiz://chat")!) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.caption)
@@ -273,7 +273,7 @@ struct AgentButton: View {
     let color: Color
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.chat(agent: agent) ?? URL(string: "aifitnesscoach://chat")!) {
+        Link(destination: WidgetDeepLinks.chat(agent: agent) ?? URL(string: "fitwiz://chat")!) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.caption)

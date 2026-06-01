@@ -81,10 +81,17 @@ class WidgetService {
   }
 
   /// Update Quick Water Log widget data
+  ///
+  /// [enabled] (Gap 6) — when false the native widget renders a muted
+  /// "Water tracking off" state and suppresses quick-add, mirroring the in-app
+  /// hide. [bottles] (Gap 5) — the user's saved custom bottles ({'label','ml'})
+  /// so the widget's quick-add can offer them instead of only the default sizes.
   static Future<void> updateWaterWidget({
     required int currentMl,
     required int goalMl,
     List<WaterLogEntry>? todayLogs,
+    bool enabled = true,
+    List<Map<String, dynamic>>? bottles,
   }) async {
     try {
       final data = {
@@ -92,6 +99,9 @@ class WidgetService {
         'goal': goalMl,
         'percent': goalMl > 0 ? (currentMl / goalMl * 100).round() : 0,
         'logs': todayLogs?.map((e) => e.toJson()).toList() ?? [],
+        'enabled': enabled,
+        // Cap so a long bottle list can't bloat the widget payload.
+        'bottles': (bottles ?? const []).take(4).toList(),
         'updatedAt': Tz.timestamp(),
       };
       await HomeWidget.saveWidgetData(keyWater, jsonEncode(data));

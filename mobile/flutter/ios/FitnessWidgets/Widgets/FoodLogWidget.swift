@@ -49,7 +49,7 @@ struct FoodLogWidgetSmallView: View {
                     .foregroundColor(.widgetText.opacity(0.7))
 
                 // Smart meal button (changes by time)
-                Link(destination: WidgetDeepLinks.logFood(meal: entry.data.mealTypeForCurrentTime.lowercased(), mode: "text") ?? URL(string: "aifitnesscoach://nutrition")!) {
+                Link(destination: WidgetDeepLinks.logFood(meal: entry.data.mealTypeForCurrentTime.lowercased(), mode: "text") ?? URL(string: "fitwiz://nutrition")!) {
                     HStack(spacing: 4) {
                         Image(systemName: entry.data.mealIconForCurrentTime)
                             .font(.caption2)
@@ -204,7 +204,7 @@ struct MealTypeButton: View {
     let meal: String
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.logFood(meal: meal, mode: "text") ?? URL(string: "aifitnesscoach://nutrition")!) {
+        Link(destination: WidgetDeepLinks.logFood(meal: meal, mode: "text") ?? URL(string: "fitwiz://nutrition")!) {
             VStack(spacing: 2) {
                 Image(systemName: icon)
                     .font(.caption)
@@ -225,7 +225,7 @@ struct LargeMealTypeButton: View {
     let meal: String
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.logFood(meal: meal, mode: "text") ?? URL(string: "aifitnesscoach://nutrition")!) {
+        Link(destination: WidgetDeepLinks.logFood(meal: meal, mode: "text") ?? URL(string: "fitwiz://nutrition")!) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.title3)
@@ -246,7 +246,7 @@ struct InputMethodButton: View {
     let mode: String
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.logFood(meal: "auto", mode: mode) ?? URL(string: "aifitnesscoach://nutrition")!) {
+        Link(destination: WidgetDeepLinks.logFood(meal: "auto", mode: mode) ?? URL(string: "fitwiz://nutrition")!) {
             Image(systemName: icon)
                 .font(.caption)
                 .frame(width: 28, height: 28)
@@ -263,7 +263,7 @@ struct LargeInputMethodButton: View {
     let mode: String
 
     var body: some View {
-        Link(destination: WidgetDeepLinks.logFood(meal: "auto", mode: mode) ?? URL(string: "aifitnesscoach://nutrition")!) {
+        Link(destination: WidgetDeepLinks.logFood(meal: "auto", mode: mode) ?? URL(string: "fitwiz://nutrition")!) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.title3)

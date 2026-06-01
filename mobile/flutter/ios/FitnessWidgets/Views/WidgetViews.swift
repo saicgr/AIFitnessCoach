@@ -394,7 +394,7 @@ struct LargeWidgetView<Content: View>: View {
 // MARK: - Deep Link URLs
 
 struct WidgetDeepLinks {
-    static let baseURL = "aifitnesscoach://"
+    static let baseURL = "fitwiz://"
 
     static func workout(id: String?) -> URL? {
         if let id = id {

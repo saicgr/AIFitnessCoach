@@ -72,10 +72,20 @@ class WidgetDataProvider(private val context: Context) {
         val jsonString = prefs.getString(KEY_WATER, null) ?: return WaterWidgetData.placeholder
         return try {
             val json = JSONObject(jsonString)
+            val bottles = mutableListOf<WaterBottle>()
+            json.optJSONArray("bottles")?.let { arr ->
+                for (i in 0 until arr.length()) {
+                    val b = arr.optJSONObject(i) ?: continue
+                    val ml = b.optInt("ml", 0)
+                    if (ml > 0) bottles.add(WaterBottle(b.optString("label", "Bottle"), ml))
+                }
+            }
             WaterWidgetData(
                 currentMl = json.optInt("current", 0),
                 goalMl = json.optInt("goal", 2500),
-                percent = json.optInt("percent", 0)
+                percent = json.optInt("percent", 0),
+                enabled = json.optBoolean("enabled", true),
+                bottles = bottles
             )
         } catch (e: Exception) {
             WaterWidgetData.placeholder
@@ -193,10 +203,17 @@ data class StreakWidgetData(
     }
 }
 
+/** Gap 5 — a saved custom bottle surfaced as a widget quick-add option. */
+data class WaterBottle(val label: String, val ml: Int)
+
 data class WaterWidgetData(
     val currentMl: Int,
     val goalMl: Int,
-    val percent: Int
+    val percent: Int,
+    // Gap 6 — false hides quick-add + shows a muted "tracking off" state.
+    val enabled: Boolean = true,
+    // Gap 5 — user's saved bottles (empty → default quick-add amount).
+    val bottles: List<WaterBottle> = emptyList()
 ) {
     companion object {
         val placeholder = WaterWidgetData(

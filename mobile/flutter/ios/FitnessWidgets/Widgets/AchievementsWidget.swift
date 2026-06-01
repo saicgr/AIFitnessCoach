@@ -206,7 +206,7 @@ struct AchievementsWidgetLargeView: View {
                 Spacer()
 
                 // View all button
-                Link(destination: WidgetDeepLinks.achievements ?? URL(string: "aifitnesscoach://achievements")!) {
+                Link(destination: WidgetDeepLinks.achievements ?? URL(string: "fitwiz://achievements")!) {
                     Text("View All Badges")
                         .font(.caption.weight(.semibold))
                         .frame(maxWidth: .infinity)

@@ -201,7 +201,7 @@ struct CalendarWidgetLargeView: View {
                 Spacer()
 
                 // View schedule button
-                Link(destination: WidgetDeepLinks.schedule ?? URL(string: "aifitnesscoach://schedule")!) {
+                Link(destination: WidgetDeepLinks.schedule ?? URL(string: "fitwiz://schedule")!) {
                     Text("View Full Schedule")
                         .font(.caption.weight(.semibold))
                         .frame(maxWidth: .infinity)
