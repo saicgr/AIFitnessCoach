@@ -45,6 +45,7 @@ class HydrationSummaryBlock extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(

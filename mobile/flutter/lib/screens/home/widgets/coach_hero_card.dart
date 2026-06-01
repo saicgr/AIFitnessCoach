@@ -625,11 +625,13 @@ class _CoachNudgeStackState extends ConsumerState<_CoachNudgeStack> {
     final settings = ref.watch(coachUiSettingsProvider);
     final shownToday = ref.watch(subCardShownTodayProvider);
 
+    // #18: cap the home action cards to the top 4 (already priority-ranked) so
+    // the stack never becomes an endless swipe of nudges.
     final ranked = rankWithCoachUiSettings(
       candidates: raw,
       settings: settings,
       shownTodayDedupKeys: shownToday,
-    );
+    ).take(4).toList();
     if (ranked.isEmpty) return const SizedBox.shrink();
 
     final pageCount =
