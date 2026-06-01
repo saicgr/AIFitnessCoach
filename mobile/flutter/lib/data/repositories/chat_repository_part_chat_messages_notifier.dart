@@ -1184,6 +1184,45 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
             }
             break;
           }
+        // ── WS-B: injury recovery check-in chip actions ──────────────
+        // Each posts to POST /coach/injury-action with the chip's injury
+        // context (body_part / injury_id), then threads a confirmation turn.
+        // Deterministic server-side; no LLM. No silent fallback — a backend
+        // error surfaces via the catch block's error turn.
+        case 'injury_resolved':
+        case 'injury_extend':
+        case 'start_rehab':
+          {
+            final bodyPart = actionData['body_part'] as String?;
+            final injuryId = actionData['injury_id'] as String?;
+            if ((bodyPart == null || bodyPart.isEmpty) &&
+                (injuryId == null || injuryId.isEmpty)) {
+              throw StateError('$kind: missing injury context');
+            }
+            final resp = await _apiClient.injuryAction(
+              action: kind,
+              bodyPart: bodyPart,
+              injuryId: injuryId,
+            );
+            final serverMessage = (resp['message'] as String?)?.trim();
+            if (kind == 'start_rehab') {
+              final wid = resp['workout_id'] as String?;
+              if (wid != null && wid.isNotEmpty) {
+                _refreshTodayWorkout();
+                _router.push('/workout/$wid');
+              }
+            }
+            await confirm(
+              serverMessage != null && serverMessage.isNotEmpty
+                  ? serverMessage
+                  : (kind == 'injury_resolved'
+                      ? "Great. I'll ease that area back in over the next few sessions."
+                      : kind == 'injury_extend'
+                          ? "Got it, I'll keep training around it and check back soon."
+                          : 'Opening your rehab session.'),
+            );
+            break;
+          }
         default:
           debugPrint('🎯 [Chat] Unhandled workout-card chip kind: $kind');
       }

@@ -42,7 +42,19 @@ class InsightChip {
   final String label;
   final String? route;
   final String? action;
-  const InsightChip({required this.label, this.route, this.action});
+
+  /// Optional action context the backend attaches to a chip (e.g. the injury
+  /// recovery check-in carries `body_part` / `injury_id` so the chip handler
+  /// knows which injury to act on). Forwarded verbatim into the action payload
+  /// on dispatch. Empty for the common route / label-only chips.
+  final Map<String, dynamic> actionContext;
+
+  const InsightChip({
+    required this.label,
+    this.route,
+    this.action,
+    this.actionContext = const {},
+  });
 
   factory InsightChip.fromJson(Map<String, dynamic> json) {
     String? clean(Object? v) {
@@ -51,10 +63,21 @@ class InsightChip {
       return s.trim();
     }
 
+    // Collect any extra string/num context keys (body_part, injury_id, …) the
+    // backend attached alongside label/route/action.
+    const reserved = {'label', 'route', 'action', 'kind', 'route_or_action'};
+    final ctx = <String, dynamic>{};
+    json.forEach((k, v) {
+      if (!reserved.contains(k) && (v is String || v is num || v is bool)) {
+        ctx[k] = v;
+      }
+    });
+
     return InsightChip(
       label: (json['label'] as String?)?.trim() ?? '',
       route: clean(json['route']),
       action: clean(json['action']),
+      actionContext: ctx,
     );
   }
 }

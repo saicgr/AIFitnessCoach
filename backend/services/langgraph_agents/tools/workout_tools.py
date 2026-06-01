@@ -292,8 +292,16 @@ def replace_all_exercises(
         user = db.get_user(user_id) if user_id else None
         user_equipment, user_fitness_level, dumbbell_count, kettlebell_count = _get_user_equipment_info(user)
         user_goals = user.get("goals", []) if user else []
-        user_injuries = user.get("active_injuries", []) if user else []
-        injury_body_parts = _parse_injuries(user_injuries)
+        # PHASE-AWARE: only fully protect acute/subacute injuries; recovering /
+        # reintroducing ones ease back in (and healed ones drop out) instead of
+        # blocking the body part forever.
+        try:
+            from services.coach.injury_directives import resolve_injury_directives
+            injury_body_parts = resolve_injury_directives(
+                user.get("active_injuries") if user else None
+            ).get("hard_avoid_parts", [])
+        except Exception:
+            injury_body_parts = _parse_injuries(user.get("active_injuries", []) if user else [])
 
         # Map muscle group to focus area
         focus_area_map = {
@@ -632,6 +640,38 @@ def generate_quick_workout(
     """
     logger.info(f"Tool: Generating quick {duration_minutes}min {workout_type} workout for user {user_id}")
 
+    # ── DURABLE AUTO-CAPTURE (D) ──────────────────────────────────────────────
+    # If the request mentions a NEW injury ("my back hurts, give me a workout"),
+    # persist it (deduped, mild) BEFORE generating so this same workout — and all
+    # future ones — honor it. Mere soreness (DOMS) is left transient. Non-fatal.
+    try:
+        from services.langgraph_agents.tools.injury_tools import (
+            capture_pain_from_text, detect_red_flag, red_flag_safety_response,
+            report_injury as _report_injury,
+        )
+        # RED-FLAG SAFETY (F3): numbness / radiating pain / can't-bear-weight etc.
+        # → do NOT auto-generate a gentle workout; recommend a professional and
+        # protect the area going forward. Deterministic, never an LLM call.
+        _is_red, _rf_part = detect_red_flag(constraints_text or "")
+        if _is_red:
+            if _rf_part:
+                try:
+                    _report_injury.invoke({
+                        "user_id": str(user_id), "body_part": _rf_part,
+                        "severity": "severe", "notes": "red-flag symptoms reported",
+                    })
+                except Exception:
+                    pass
+            return {
+                "success": True,
+                "action": "injury_red_flag",
+                "workout_id": None,
+                "message": red_flag_safety_response(_rf_part),
+            }
+        capture_pain_from_text(str(user_id), constraints_text or "")
+    except Exception as _cap_err:
+        logger.debug(f"[Quick Workout] injury auto-capture/red-flag skipped: {_cap_err}")
+
     # ── NO-RESTRICTIONS path (ADDITIVE) ───────────────────────────────────────
     # If the user named an implement/movement the Exercise Library can't cover
     # ("hay bale", "tire", "sandbag", a made-up object), AUTHOR the session with
@@ -778,8 +818,16 @@ def generate_quick_workout(
         user = db.get_user(user_id) if user_id else None
         user_equipment, user_fitness_level, dumbbell_count, kettlebell_count = _get_user_equipment_info(user)
         user_goals = user.get("goals", []) if user else []
-        user_injuries = user.get("active_injuries", []) if user else []
-        injury_body_parts = _parse_injuries(user_injuries)
+        # PHASE-AWARE: only fully protect acute/subacute injuries; recovering /
+        # reintroducing ones ease back in (and healed ones drop out) instead of
+        # blocking the body part forever.
+        try:
+            from services.coach.injury_directives import resolve_injury_directives
+            injury_body_parts = resolve_injury_directives(
+                user.get("active_injuries") if user else None
+            ).get("hard_avoid_parts", [])
+        except Exception:
+            injury_body_parts = _parse_injuries(user.get("active_injuries", []) if user else [])
 
         # Map workout type to focus area
         focus_area_map = {

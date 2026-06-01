@@ -142,23 +142,32 @@ def _resolve_user_context(user: Optional[dict]) -> Dict[str, Any]:
     }
 
 
-def _sore_to_avoided(sore_areas: List[str], profile_injuries: List[str]) -> Tuple[Dict[str, List[str]], List[str]]:
-    """Merge transient sore areas with persistent profile injuries (both avoided).
-    Returns ({'avoid': [...], 'reduce': []}, injuries_body_parts)."""
+def _sore_to_avoided(sore_areas: List[str], directives: Dict[str, Any]) -> Tuple[Dict[str, List[str]], List[str]]:
+    """Merge transient sore areas (always HARD-avoid for this one workout) with
+    PHASE-AWARE persistent injury directives: acute/subacute injuries hard-avoid,
+    recovering/reintroducing injuries only REDUCE (ease back in).
+    Returns ({'avoid': [...], 'reduce': [...]}, injury_body_parts_for_rag)."""
     avoid_muscles: List[str] = []
-    injuries: List[str] = list(profile_injuries)
-    for raw in list(sore_areas) + list(profile_injuries):
+    # Transient sore areas from today's message → hard avoid.
+    for raw in list(sore_areas or []):
         key = str(raw).strip().lower()
-        if key in SORE_TO_MUSCLES:
-            avoid_muscles.extend(SORE_TO_MUSCLES[key])
-        elif key:
-            avoid_muscles.append(key)
+        avoid_muscles.extend(SORE_TO_MUSCLES.get(key, [key] if key else []))
+    # Persistent injuries, phase-aware.
+    avoid_muscles.extend(directives.get("hard_avoid_muscles", []))
+    reduce_muscles = list(directives.get("reduce_muscles", []))
+
+    avoid_unique = list(dict.fromkeys(m for m in avoid_muscles if m))
+    reduce_unique = [m for m in dict.fromkeys(reduce_muscles) if m not in avoid_unique]
+
+    # RAG injuries= applies its own contraindication filter — pass only the
+    # parts we want fully protected (hard-avoid injuries + transient sore areas),
+    # NOT recovering parts (those should ease back, not be filtered out).
+    injuries: List[str] = list(directives.get("hard_avoid_parts", []))
+    for raw in list(sore_areas or []):
+        key = str(raw).strip().lower()
         if key and key not in [i.lower() for i in injuries]:
-            injuries.append(raw)
-    # dedup preserving order
-    seen = set()
-    avoid_unique = [m for m in avoid_muscles if not (m in seen or seen.add(m))]
-    return ({"avoid": avoid_unique, "reduce": []}, injuries)
+            injuries.append(key)
+    return ({"avoid": avoid_unique, "reduce": reduce_unique}, injuries)
 
 
 def _primary_focus_area(focus_areas: List[str], active_recovery: bool) -> str:
@@ -315,7 +324,17 @@ async def build_adapted_workout(params: WorkoutBuildParams, user: Optional[dict]
             params.focus_areas = ["mobility"]
 
     focus_area = _primary_focus_area(params.focus_areas, params.active_recovery)
-    avoided_muscles, injuries = _sore_to_avoided(params.sore_areas, ctx["injuries"])
+    # Phase-aware injury directives (acute hard-avoid → recovery reduce → gone).
+    from services.coach.injury_directives import resolve_injury_directives
+    injury_directives = resolve_injury_directives((user or {}).get("active_injuries"))
+    avoided_muscles, injuries = _sore_to_avoided(params.sore_areas, injury_directives)
+    # A RECOVERING / reintroducing injury (only `reduce`, no hard-avoid) must NOT
+    # filter the body part out (that produced empty workouts) — instead keep the
+    # session but make it GENTLE: cap intensity to light so the area eases back
+    # in. Hard-avoid (acute/subacute) injuries still filter via RAG below.
+    if avoided_muscles.get("reduce") and not avoided_muscles.get("avoid"):
+        if params.intensity != "intense":  # respect an explicit "go hard"
+            params.intensity = "light"
     equipment = params.equipment if params.equipment else ctx["equipment"]
     count = _exercise_count(params)
 

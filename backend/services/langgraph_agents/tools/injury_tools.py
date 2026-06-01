@@ -5,12 +5,13 @@ Contains tools for reporting, clearing, and tracking injuries.
 """
 
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 from langchain_core.tools import tool
 
 from services.injury_service import get_injury_service, Injury
+from services.coach.injury_directives import REINTRO_GRACE_DAYS
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.timezone_utils import get_user_today
@@ -160,15 +161,48 @@ def report_injury(
                     except json.JSONDecodeError:
                         current_injuries = []
 
+                # DEDUP + REINJURY-ADAPTIVE (F2): a fresh report of the SAME body
+                # part REPLACES the old entry — the new reported_at resets it to
+                # acute (re-protected) and drops any reintroduction_until. If the
+                # old entry was already RECOVERING/reintroducing, the recurrence
+                # is escalated one severity level (it came back, take it more
+                # seriously). Also fixes the prior no-dedup bug.
+                _order = ["mild", "moderate", "severe"]
+                _eff_severity = severity.lower()
+                _old = next((i for i in current_injuries if isinstance(i, dict)
+                             and (i.get("body_part") or "").lower() == body_part.lower()), None)
+                if _old:
+                    _was_recovering = bool(_old.get("reintroduction_until"))
+                    _old_sev = (_old.get("severity") or "mild").lower()
+                    _base = max(_order.index(_eff_severity) if _eff_severity in _order else 0,
+                                _order.index(_old_sev) if _old_sev in _order else 0)
+                    if _was_recovering:
+                        _base = min(_base + 1, len(_order) - 1)
+                    _eff_severity = _order[_base]
+                current_injuries = [
+                    i for i in current_injuries
+                    if not (isinstance(i, dict)
+                            and (i.get("body_part") or "").lower() == body_part.lower())
+                ]
                 current_injuries.append({
                     "id": injury_id,
                     "body_part": body_part.lower(),
-                    "severity": severity.lower(),
+                    "severity": _eff_severity,
                     "reported_at": reported_at.isoformat(),
                     "expected_recovery_date": expected_recovery_date.isoformat()
                 })
 
                 db.update_user(user_id, {"active_injuries": current_injuries})
+                # Resolve any older still-active injury_history rows for this
+                # body part so get_active_injuries doesn't return duplicates.
+                try:
+                    db.client.table("injury_history").update({"is_active": False}).eq(
+                        "user_id", user_id
+                    ).eq("body_part", body_part.lower()).eq("is_active", True).neq(
+                        "id", injury_id
+                    ).execute()
+                except Exception:
+                    pass
         except Exception as user_update_error:
             logger.warning(f"Failed to update user active injuries: {user_update_error}", exc_info=True)
 
@@ -263,10 +297,13 @@ def clear_injury(
         reported_at = injury_record.get("reported_at")
         planned_weeks = injury_record.get("duration_planned_weeks")
 
-        # Calculate actual duration
-        actual_recovery_date = datetime.now()
+        # Calculate actual duration (normalize to tz-aware UTC — DB timestamps
+        # are offset-aware, datetime.now() is naive; subtracting mixes raised).
+        actual_recovery_date = datetime.now(timezone.utc)
         if isinstance(reported_at, str):
             reported_at = datetime.fromisoformat(reported_at.replace("Z", "+00:00"))
+        if reported_at.tzinfo is None:
+            reported_at = reported_at.replace(tzinfo=timezone.utc)
         actual_days = (actual_recovery_date - reported_at).days
 
         # Determine if early or late recovery
@@ -286,7 +323,11 @@ def clear_injury(
             "user_feedback": user_feedback
         }).eq("id", injury_id).execute()
 
-        # Remove from user's active injuries
+        # Enter REINTRODUCTION instead of hard-removing: keep the entry but stamp
+        # `reintroduction_until` so the next workouts EASE the body part back in
+        # (reduced load) for a grace window, then it auto-drops (resolver returns
+        # it as expired). This is the user-requested "forget it but ease me back".
+        reintro_until = (actual_recovery_date + timedelta(days=REINTRO_GRACE_DAYS)).isoformat()
         try:
             user = db.get_user(user_id)
             if user:
@@ -297,10 +338,16 @@ def clear_injury(
                     except json.JSONDecodeError:
                         current_injuries = []
 
-                updated_injuries = [
-                    inj for inj in current_injuries
-                    if inj.get("id") != injury_id and inj.get("body_part") != cleared_body_part
-                ]
+                updated_injuries = []
+                for inj in current_injuries:
+                    if not isinstance(inj, dict):
+                        continue
+                    same = inj.get("id") == injury_id or (
+                        (inj.get("body_part") or "").lower() == (cleared_body_part or "").lower()
+                    )
+                    if same:
+                        inj["reintroduction_until"] = reintro_until
+                    updated_injuries.append(inj)
                 db.update_user(user_id, {"active_injuries": updated_injuries})
         except Exception as user_update_error:
             logger.warning(f"Failed to update user active injuries: {user_update_error}", exc_info=True)
@@ -315,9 +362,11 @@ def clear_injury(
             "recovery_duration_days": actual_days,
             "planned_duration_weeks": planned_weeks,
             "recovery_status": recovery_status,
-            "message": f"Cleared {cleared_body_part} injury. You were injured for {actual_days} days "
-                       f"(planned: {planned_weeks} weeks). Recovery status: {recovery_status}. "
-                       f"Full exercise capability restored for {cleared_body_part}!"
+            "reintroduction_days": REINTRO_GRACE_DAYS,
+            "message": f"Got it — I'll stop treating your {cleared_body_part} as injured. "
+                       f"To be safe, your next workouts will EASE it back in with lighter, "
+                       f"controlled movements over about {REINTRO_GRACE_DAYS} days before returning "
+                       f"to full loading. (Injured {actual_days} days; planned {planned_weeks} weeks.)"
         }
 
     except Exception as e:
@@ -530,3 +579,103 @@ def update_injury_status(
             "action": "update_injury_status",
             "message": f"Failed to update injury: {str(e)}"
         }
+
+
+# ── Durable auto-capture of pain from a workout request (D) ──────────────────
+# An INJURY word ("hurt/pain/tweaked/strained...") persists; mere SORENESS
+# ("sore/tight/stiff/DOMS") is transient and is left to the one-workout
+# sore_areas path so a normal leg-day DOMS mention never nukes leg training.
+_INJURY_WORDS = (
+    "hurt", "hurts", "pain", "painful", "injured", "injury", "tweaked",
+    "strained", "strain", "pulled", "sprained", "sprain", "sharp", "threw out",
+    "throwing out", "thrown out", "popped", "jacked up", "messed up", "busted",
+)
+_SORENESS_ONLY_WORDS = ("sore", "soreness", "tight", "tightness", "stiff", "stiffness", "doms", "achy", "aching")
+_SEVERE_WORDS = ("severe", "really bad", "agony", "excruciating", "can't move", "cant move", "can't bear", "cant bear", "can't walk", "cant walk")
+
+
+def classify_pain_mention(text: str):
+    """Deterministic: ('injury'|'soreness'|None, body_part|None, severity).
+    No LLM (feedback_no_llm_for_safety_classification)."""
+    if not text:
+        return (None, None, "mild")
+    from services.workout_builder import SORE_TO_MUSCLES
+    t = text.lower()
+    body_part = next((k for k in SORE_TO_MUSCLES if k in t), None)
+    if not body_part:
+        return (None, None, "mild")
+    if any(w in t for w in _INJURY_WORDS):
+        severity = "moderate" if any(w in t for w in _SEVERE_WORDS) else "mild"
+        return ("injury", body_part, severity)
+    if any(w in t for w in _SORENESS_ONLY_WORDS):
+        return ("soreness", body_part, "mild")
+    return (None, body_part, "mild")  # body part named as a focus, not pain
+
+
+def capture_pain_from_text(user_id: str, text: str):
+    """Durably persist a NEW injury mentioned inside a workout request (deduped,
+    'mild' default). Returns the captured body_part or None. Best-effort; never
+    raises and never blocks workout generation."""
+    try:
+        kind, body_part, severity = classify_pain_mention(text or "")
+        if kind != "injury" or not body_part:
+            return None  # soreness / no-pain → handled transiently, not persisted
+        db = get_supabase_db()
+        active = (db.get_user(user_id) or {}).get("active_injuries") or []
+        if isinstance(active, list) and any(
+            isinstance(i, dict) and (i.get("body_part") or "").lower() == body_part
+            for i in active
+        ):
+            return None  # already tracked (report_injury also dedups)
+        report_injury.invoke({
+            "user_id": user_id,
+            "body_part": body_part,
+            "severity": severity,
+            "notes": "auto-captured from a workout request",
+        })
+        logger.info(f"[InjuryCapture] auto-captured {severity} {body_part} from a workout request")
+        return body_part
+    except Exception as e:
+        logger.warning(f"[InjuryCapture] capture failed (non-fatal): {e}")
+        return None
+
+
+# ── Red-flag safety escalation (F3) ──────────────────────────────────────────
+# Symptoms that warrant a professional, not a "gentle workout". Deterministic
+# keyword match (feedback_no_llm_for_safety_classification) — never an LLM call.
+_RED_FLAG_PHRASES = (
+    "numb", "numbness", "tingling", "tingl", "radiating", "shoots down",
+    "shooting down", "shooting pain", "can't bear weight", "cant bear weight",
+    "can't put weight", "cant put weight", "can't walk", "cant walk",
+    "can't feel", "cant feel", "loss of feeling", "gave out", "gave way",
+    "heard a pop", "popped", "locked up", "dislocat", "severe swelling",
+    "can't move", "cant move", "shooting", "pins and needles",
+)
+
+
+def detect_red_flag(text: str):
+    """Return (True, body_part|None) if the text contains a red-flag symptom
+    that should pause workout generation and recommend a professional."""
+    if not text:
+        return (False, None)
+    t = text.lower()
+    if not any(p in t for p in _RED_FLAG_PHRASES):
+        return (False, None)
+    try:
+        from services.workout_builder import SORE_TO_MUSCLES
+        bp = next((k for k in SORE_TO_MUSCLES if k in t), None)
+    except Exception:
+        bp = None
+    return (True, bp)
+
+
+def red_flag_safety_response(body_part):
+    """Standard safety message returned instead of auto-generating a workout."""
+    area = f"your {body_part}" if body_part else "that area"
+    return (
+        f"Those symptoms around {area} (numbness, tingling, shooting/radiating "
+        f"pain, or not being able to bear weight) are red flags I shouldn't "
+        f"train through. Please get it checked by a doctor or physio before your "
+        f"next session. I'll hold off on loading {area} until you're cleared. "
+        f"This is general guidance, not medical advice."
+    )

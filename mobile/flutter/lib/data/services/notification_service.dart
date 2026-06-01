@@ -125,6 +125,8 @@ class NotificationPrefsKeys {
   static const rhrTrendNudge = 'notif_rhr_trend_nudge';
   static const proteinTrendNudge = 'notif_protein_trend_nudge';
   static const volumeBalanceNudge = 'notif_volume_balance_nudge';
+  // Injury recovery check-in (WS-B).
+  static const injuryCheckinNudge = 'notif_injury_checkin_nudge';
   // ── Cycle tracking reminders (Phase E) ──────────────────────────
   // Each cycle reminder type has its OWN toggle so the user has granular
   // control (per project notification-control rule). All cycle reminders
@@ -629,6 +631,8 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       rhrTrendNudge: _prefs.getBool(NotificationPrefsKeys.rhrTrendNudge) ?? true,
       proteinTrendNudge: _prefs.getBool(NotificationPrefsKeys.proteinTrendNudge) ?? true,
       volumeBalanceNudge: _prefs.getBool(NotificationPrefsKeys.volumeBalanceNudge) ?? true,
+      // Injury recovery check-in (WS-B) — default ON.
+      injuryCheckinNudge: _prefs.getBool(NotificationPrefsKeys.injuryCheckinNudge) ?? true,
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -1013,6 +1017,12 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setVolumeBalanceNudge(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.volumeBalanceNudge, value);
     state = state.copyWith(volumeBalanceNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setInjuryCheckinNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.injuryCheckinNudge, value);
+    state = state.copyWith(injuryCheckinNudge: value);
     await _syncPreferencesToBackend();
   }
 

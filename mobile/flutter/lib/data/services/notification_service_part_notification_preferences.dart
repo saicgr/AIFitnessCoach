@@ -110,6 +110,13 @@ class NotificationPreferences {
   final bool proteinTrendNudge;   // under protein target multiple days
   final bool volumeBalanceNudge;  // weekly training-volume swing
 
+  // ── Injury recovery check-in (WS-B) ─────────────────────────────
+  // Gates _job_injury_recovery: the recovery-phase "still bothering you?"
+  // check-in carrying All-better / Still-sore / (when rehab exists) rehab
+  // chips. Low-frequency (only fires near a logged injury's recovery window,
+  // 4-day cooldown). Synced to the backend JSONB key `injury_checkin_nudge`.
+  final bool injuryCheckinNudge;
+
   // ── Cycle tracking reminders (Phase E) ──────────────────────────
   // `cycleRemindersMaster` gates the whole group; each sub-type has its own
   // toggle. All cycle reminders respect the global quiet hours. The
@@ -226,6 +233,9 @@ class NotificationPreferences {
     this.rhrTrendNudge = true,
     this.proteinTrendNudge = true,
     this.volumeBalanceNudge = true,
+    // Injury recovery check-in (WS-B) — default ON (low-frequency, cooldown +
+    // daily-cap bounded; only fires near a logged injury's recovery window).
+    this.injuryCheckinNudge = true,
     // Cycle tracking reminders (Phase E) — default ON when the cycle feature
     // is enabled; the group is also gated by `cycleRemindersMaster`.
     this.cycleRemindersMaster = true,
@@ -328,6 +338,8 @@ class NotificationPreferences {
     bool? rhrTrendNudge,
     bool? proteinTrendNudge,
     bool? volumeBalanceNudge,
+    // Injury recovery check-in (WS-B)
+    bool? injuryCheckinNudge,
     // Cycle tracking reminders (Phase E)
     bool? cycleRemindersMaster,
     bool? cyclePeriodApproaching,
@@ -429,6 +441,8 @@ class NotificationPreferences {
       rhrTrendNudge: rhrTrendNudge ?? this.rhrTrendNudge,
       proteinTrendNudge: proteinTrendNudge ?? this.proteinTrendNudge,
       volumeBalanceNudge: volumeBalanceNudge ?? this.volumeBalanceNudge,
+      // Injury recovery check-in (WS-B)
+      injuryCheckinNudge: injuryCheckinNudge ?? this.injuryCheckinNudge,
       // Cycle tracking reminders (Phase E)
       cycleRemindersMaster: cycleRemindersMaster ?? this.cycleRemindersMaster,
       cyclePeriodApproaching:
@@ -540,6 +554,8 @@ class NotificationPreferences {
         'rhr_trend_nudge': rhrTrendNudge,
         'protein_trend_nudge': proteinTrendNudge,
         'volume_balance_nudge': volumeBalanceNudge,
+        // Injury recovery check-in (WS-B) — gates _job_injury_recovery.
+        'injury_checkin_nudge': injuryCheckinNudge,
         // Cycle tracking reminders (Phase E). Synced so the backend can also
         // suppress its server-side cycle nudges per the user's choice — only
         // CONTENT-FREE booleans / times leave the device, never cycle data.

@@ -207,10 +207,9 @@ class UserDB(BaseDB):
         Returns:
             List of injury history records
         """
-        query = self.client.table("injury_history").select(
-            "id, user_id, injury_type, body_part, severity, is_active, "
-            "reported_at, resolved_at, notes"
-        ).eq("user_id", user_id)
+        # select("*") — the table has no injury_type/resolved_at/notes columns
+        # (schema drift); naming them 42703s. See project_supabase_schema_drift.
+        query = self.client.table("injury_history").select("*").eq("user_id", user_id)
 
         if is_active is not None:
             query = query.eq("is_active", is_active)
@@ -230,10 +229,7 @@ class UserDB(BaseDB):
         """
         result = (
             self.client.table("injury_history")
-            .select(
-                "id, user_id, injury_type, body_part, severity, is_active, "
-                "reported_at, resolved_at, notes"
-            )
+            .select("*")  # no injury_type/resolved_at/notes columns (schema drift)
             .eq("user_id", user_id)
             .eq("is_active", True)
             .order("reported_at", desc=True)

@@ -1241,6 +1241,37 @@ class ApiClient with WidgetsBindingObserver {
     );
   }
 
+  /// Execute an injury recovery check-in chip action (WS-B).
+  ///
+  /// [action] is one of `injury_resolved` / `injury_extend` / `start_rehab`.
+  /// One of [bodyPart] / [injuryId] identifies the injury (the check-in chip
+  /// carries both). Returns the server payload — `message` (a confirmation
+  /// line) and, for `start_rehab`, `workout_id` to route to the rehab session.
+  Future<Map<String, dynamic>> injuryAction({
+    required String action,
+    String? bodyPart,
+    String? injuryId,
+  }) async {
+    final res = await _dio.post<dynamic>(
+      '/coach/injury-action',
+      data: <String, dynamic>{
+        'action': action,
+        if (bodyPart != null && bodyPart.isNotEmpty) 'body_part': bodyPart,
+        if (injuryId != null && injuryId.isNotEmpty) 'injury_id': injuryId,
+      },
+    );
+    final body = res.data;
+    if (body is Map<String, dynamic>) {
+      return body;
+    }
+    if (body is Map) {
+      return Map<String, dynamic>.from(body);
+    }
+    throw StateError(
+      'injuryAction: unexpected response shape ${body.runtimeType}',
+    );
+  }
+
   /// Upload file using multipart form data
   Future<Response<dynamic>> uploadFile(
     String path,

@@ -813,6 +813,23 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   textMuted: textMuted,
                 ),
                 Divider(height: 1, color: cardBorder, indent: 50),
+                // Injury recovery check-in (WS-B) — a "still bothering you?"
+                // follow-up near a logged injury's recovery window, with
+                // one-tap All better / Still sore / rehab actions.
+                _buildSimpleToggleRow(
+                  icon: Icons.healing_outlined,
+                  iconColor: const Color(0xFF14B8A6),
+                  title: 'Injury recovery check-ins',
+                  subtitle: 'A follow-up as a logged injury nears recovery',
+                  value: notifPrefs.injuryCheckinNudge,
+                  onChanged: (v) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setInjuryCheckinNudge(v),
+                  accent: accent,
+                  activeTrack: activeTrack,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
                 // ─── Cycle Reminders (Phase E) ──────────────────────
                 // Shown only when cycle tracking is enabled
                 // (`menstrual_tracking_enabled`). The full per-type cycle

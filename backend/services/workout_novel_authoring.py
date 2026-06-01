@@ -142,31 +142,31 @@ def _library_covers(db: Any, implement: str, threshold: int = 2) -> bool:
         return False
 
 
-def _injury_clause(user: Optional[Dict[str, Any]]) -> str:
-    """A hard-avoidance clause built from the user's active injuries."""
-    if not user:
+def _injury_clause(directives: Dict[str, Any]) -> str:
+    """A PHASE-AWARE safety clause from resolved injury directives:
+    acute/subacute parts are avoided entirely; recovery/reintroduction parts are
+    eased back in with light, controlled, reduced-load movements."""
+    if not directives:
         return ""
-    raw = user.get("active_injuries") or user.get("injuries") or []
-    parts: List[str] = []
-    if isinstance(raw, str):
-        try:
-            raw = json.loads(raw)
-        except Exception:
-            raw = []
-    for inj in raw or []:
-        if isinstance(inj, dict):
-            bp = inj.get("body_part") or inj.get("name")
-            if bp:
-                parts.append(str(bp))
-        elif isinstance(inj, str):
-            parts.append(inj)
-    if not parts:
-        return ""
-    return (
-        f"HARD SAFETY CONSTRAINT: the user has these active injuries/areas to "
-        f"protect: {', '.join(parts)}. Do NOT include any movement that loads or "
-        f"strains them; choose alternatives. This overrides everything else."
-    )
+    avoid_parts = list(directives.get("hard_avoid_parts") or [])
+    ease_parts = [
+        a["body_part"] for a in directives.get("active", [])
+        if a.get("phase") in ("recovery", "reintroduction")
+    ]
+    lines: List[str] = []
+    if avoid_parts:
+        lines.append(
+            f"HARD SAFETY CONSTRAINT: the user is protecting an injured "
+            f"{', '.join(avoid_parts)}. Do NOT include ANY movement that loads or "
+            f"strains it; choose alternatives. This overrides everything else."
+        )
+    if ease_parts:
+        lines.append(
+            f"The user's {', '.join(ease_parts)} is recovering — EASE it back in "
+            f"with light, controlled, low-load movements only (no heavy loading, "
+            f"jumping, or end-range strain on it)."
+        )
+    return "\n".join(lines)
 
 
 def _exercise_count_for(duration_minutes: int) -> int:
@@ -247,9 +247,21 @@ def _author(
     except Exception:
         user = None
 
+    # Phase-aware injury directives drive BOTH the prompt clause and the
+    # deterministic post-generation safety backstop below.
+    try:
+        from services.coach.injury_directives import (
+            resolve_injury_directives, contraindicated_for,
+        )
+        injury_directives = resolve_injury_directives((user or {}).get("active_injuries"))
+    except Exception as e:
+        logger.debug(f"[NovelAuthoring] injury directives failed: {e}")
+        injury_directives = {}
+        contraindicated_for = None  # type: ignore
+
     n = _exercise_count_for(duration_minutes)
     focus_clause = f" The session should bias toward: {focus}." if focus else ""
-    injury_clause = _injury_clause(user)
+    injury_clause = _injury_clause(injury_directives)
     intensity_key = (intensity or "moderate").lower()
     if intensity_key not in ("light", "moderate", "intense"):
         intensity_key = "moderate"
@@ -344,6 +356,31 @@ Rules:
 
     if not exercises:
         return None
+
+    # DETERMINISTIC SAFETY BACKSTOP (E): the LLM was prompted to avoid the
+    # injury, but novel exercises have no safety classifier — so independently
+    # drop any authored move whose NAME is contraindicated for an actively
+    # protected body part (reuses injury_service.CONTRAINDICATIONS via
+    # contraindicated_for). Never an LLM safety call. Keep warmup/cooldown and
+    # never strip the session to empty (feedback_no_preflight_rejection...).
+    if injury_directives and injury_directives.get("active") and contraindicated_for:
+        safe, dropped = [], []
+        for e in exercises:
+            term = contraindicated_for(e.get("name", ""), injury_directives)
+            if term and e.get("section") == "main":
+                dropped.append((e.get("name"), term))
+            else:
+                safe.append(e)
+        main_left = [e for e in safe if e.get("section") == "main"]
+        if dropped and main_left:  # only apply if a real main session remains
+            logger.info(f"[NovelAuthoring] dropped {len(dropped)} contraindicated novel moves: {dropped}")
+            exercises = safe
+        elif dropped:
+            logger.warning(
+                f"[NovelAuthoring] backstop would empty the main session for an "
+                f"injury; keeping authored moves (LLM clause still applied): {dropped}"
+            )
+
     # Stable sort into warmup → main → cooldown without reordering within a band.
     exercises.sort(key=lambda e: _SECTION_ORDER.get(e.get("section", "main"), 1))
 

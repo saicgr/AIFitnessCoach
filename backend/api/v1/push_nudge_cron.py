@@ -39,6 +39,7 @@ Edge cases handled:
 """
 import asyncio
 import hmac
+import json
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any, Tuple
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -2820,6 +2821,16 @@ _SLEEP_DEBT_COOLDOWN_DAYS = 4
 _RHR_TREND_COOLDOWN_DAYS = 5
 _PROTEIN_TREND_COOLDOWN_DAYS = 4
 _VOLUME_BALANCE_COOLDOWN_DAYS = 6
+# WS-B injury check-in: a recovery-phase injury check-in must never nag. A logged
+# injury sits in recovery/reintroduction for several days, so without a cooldown
+# the job would re-ask the same "still bothering you?" question every day it runs.
+# 4 days mirrors the sleep-debt cadence — long enough to feel like a thoughtful
+# follow-up, short enough that a tapped "Still sore" gets re-checked within the
+# week.
+_INJURY_CHECKIN_COOLDOWN_DAYS = 4
+# Local hour the injury check-in fires at (user-local). Mid-morning (10:00) so it
+# lands in waking hours but after the morning readiness briefing.
+_INJURY_CHECKIN_HOUR = 10
 
 # A protein day "under target" means below this fraction of the daily target.
 _PROTEIN_UNDER_FRACTION = 0.8
@@ -3416,6 +3427,355 @@ async def _job_volume_balance(supabase, notif_svc, users: List[dict]) -> int:
     return sent
 
 
+# ─── WS-B: Injury recovery lifecycle check-in ────────────────────────────────
+# A logged injury decays through recovery phases (services/injury_service.py +
+# services/coach/injury_directives.py). When it reaches the recovery /
+# reintroduction window the coach sends ONE grounded check-in carrying action
+# chips so the user can close the loop in one tap — All better (resolve + ease
+# back in), Still sore (extend the window), and, when the phase has rehab
+# exercises, Do a rehab session (F1 rehab-as-workout). This job also performs
+# the lazy auto-expire: any injury past its reintroduction grace window is
+# dropped from active_injuries and its injury_history row is closed.
+
+# Body-part display names so the title reads naturally (lower_back -> "lower
+# back"). Falls back to the stored token with underscores spaced out.
+def _injury_part_label(body_part: str) -> str:
+    bp = (body_part or "").strip().lower()
+    return {
+        "lower_back": "lower back",
+        "upper_back": "upper back",
+    }.get(bp, bp.replace("_", " "))
+
+
+async def _send_injury_checkin_nudge(
+    supabase,
+    notif_svc,
+    user: dict,
+    title: str,
+    message: str,
+    chips: List[Dict[str, str]],
+    facts: dict,
+) -> bool:
+    """Send the injury recovery check-in — mirrors _send_health_coaching_nudge
+    but ALSO carries action chips (All better / Still sore / Do a rehab
+    session) on both the persisted chat message and the FCM payload so the
+    coach surface can render them as one-tap shortcuts.
+
+    The copy is deterministic (no fabricated numbers, no LLM) — the caller
+    builds it from the real injury record. Full gate stack identical to the
+    other proactive senders: master toggle, vacation/comeback suppression,
+    daily cap, atomic once/day dedup, best-effort chat mirror, FCM push.
+    """
+    user_id = str(user["id"])
+    tz_str = user.get("timezone") or "UTC"
+    local_date = _get_user_local_date(tz_str)
+    prefs = user.get("notification_preferences") or {}
+    nudge_type = "injury_recovery"
+
+    # Master push toggle.
+    if not prefs.get("push_notifications_enabled", True):
+        return False
+
+    # Global suppression (vacation + comeback) — before dedup.
+    suppression = should_suppress_notification(user, nudge_type, channel="push")
+    if suppression:
+        logger.debug(f"🔕 [InjuryNudge] Suppressed for {user_id}: {suppression}")
+        return False
+
+    # Daily cap (shared across all nudge types).
+    daily_limit = prefs.get("daily_nudge_limit", 2)
+    if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
+        return False
+
+    # Atomic once/day dedup. (The 4-day cooldown is checked by the caller via
+    # _sent_within_days; this is the belt-and-suspenders same-day guard.)
+    if not _try_dedup_insert(supabase, user_id, nudge_type, local_date):
+        return False
+
+    # Mirror into chat_history so the coach chat shows the check-in with its
+    # chips (best-effort — a failed mirror still pushes).
+    coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+    chat_message_id = None
+    try:
+        chat_msg = supabase.client.table("chat_history").insert({
+            "user_id": user_id,
+            "user_message": "",
+            "ai_response": message,
+            "context_json": {
+                "nudge_type": nudge_type,
+                "proactive": True,
+                "coach_name": coach_name,
+                "chips": chips,
+                **{k: v for k, v in facts.items()
+                   if isinstance(v, (str, int, float, bool))},
+            },
+        }).execute()
+        if chat_msg.data:
+            chat_message_id = chat_msg.data[0].get("id")
+    except Exception as e:
+        logger.warning(
+            f"⚠️ [InjuryNudge] chat_history insert failed for {user_id}: {e}",
+            exc_info=True,
+        )
+
+    if chat_message_id:
+        try:
+            supabase.client.table("push_nudge_log") \
+                .update({"chat_message_id": str(chat_message_id)}) \
+                .eq("user_id", user_id) \
+                .eq("nudge_type", nudge_type) \
+                .eq("nudge_date", local_date) \
+                .execute()
+        except Exception:
+            pass  # Non-critical.
+
+    fcm_token = user.get("fcm_token")
+    if not fcm_token:
+        logger.debug(f"⏭️ [InjuryNudge] {user_id} — no FCM token")
+        return False
+
+    from services.notification_service_helpers import NotificationService
+
+    try:
+        success = await notif_svc.send_notification(
+            fcm_token=fcm_token,
+            title=title,
+            body=message,
+            notification_type=NotificationService.TYPE_AI_COACH,
+            data={
+                "nudge_type": nudge_type,
+                "notif_id": f"{nudge_type}_{local_date}",
+                "route": "/chat",
+                "chat_message_id": str(chat_message_id) if chat_message_id else "",
+                "proactive": "true",
+                # FCM data values must be strings — chips are JSON-encoded so
+                # the client can decode the action payload on tap.
+                "chips": json.dumps(chips),
+            },
+        )
+    except Exception as e:
+        logger.error(
+            f"❌ [InjuryNudge] send failed for {user_id}: {e}", exc_info=True
+        )
+        return False
+
+    if success:
+        logger.info(f"✅ [InjuryNudge] injury_recovery sent to {user_id}")
+    return bool(success)
+
+
+def _expire_injuries(supabase, user_id: str, active: list, expired_ids: list) -> None:
+    """Lazy auto-expire: drop injuries past their reintroduction window from
+    active_injuries and close their injury_history rows. Best-effort; a failure
+    never blocks the check-in. Mirrors the resolver's contract — `expired_ids`
+    comes from resolve_injury_directives."""
+    if not expired_ids:
+        return
+    expired = set(expired_ids)
+    try:
+        remaining = [
+            inj for inj in active
+            if not (isinstance(inj, dict) and inj.get("id") in expired)
+        ]
+        if len(remaining) != len(active):
+            supabase.client.table("users").update(
+                {"active_injuries": remaining}
+            ).eq("id", user_id).execute()
+        for inj_id in expired:
+            if not inj_id:
+                continue
+            try:
+                supabase.client.table("injury_history").update({
+                    "is_active": False,
+                    "recovery_phase": "healed",
+                    "actual_recovery_date": datetime.now(ZoneInfo("UTC")).isoformat(),
+                }).eq("id", inj_id).eq("is_active", True).execute()
+            except Exception:
+                pass
+        logger.info(
+            f"🩹 [InjuryNudge] auto-expired {len(expired)} injuries for {user_id}"
+        )
+    except Exception as e:
+        logger.warning(
+            f"⚠️ [InjuryNudge] auto-expire failed for {user_id}: {e}"
+        )
+
+
+async def _job_injury_recovery(supabase, notif_svc, users: List[dict]) -> int:
+    """Recovery-phase injury check-in + lazy auto-expire (Workstream B).
+
+    For each user with logged injuries, resolve phase-aware directives. Any
+    injury in the `recovery` or `reintroduction` phase (i.e. near / at its
+    expected recovery) gets ONE grounded "still bothering you?" check-in
+    carrying All-better / Still-sore chips, plus a Do-a-rehab-session chip when
+    the phase has rehab exercises (F1). Injuries past the reintroduction grace
+    window are auto-resolved (dropped from active_injuries + injury_history
+    closed) — no notification, just cleanup.
+
+    Gates (mirror the WS3 jobs): per-type pref `injury_checkin_nudge` (default
+    True); account >= 3 days; user-local hour == _INJURY_CHECKIN_HOUR (10:00);
+    not quiet hours; not within the 4-day cooldown. Only ONE check-in per run
+    even with multiple injuries (the most-progressed one) so we never stack
+    pushes — the daily cap + dedup back this up.
+
+    Deterministic throughout (no LLM): copy is built from the real injury
+    record, phase from injury_directives.compute_phase.
+    """
+    if not users:
+        return 0
+
+    # Eligible candidates first (cheap gates) so we only fetch active_injuries
+    # for users who could actually receive a check-in this hour.
+    candidates = []
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("injury_checkin_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        if local_hour != _INJURY_CHECKIN_HOUR:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+        candidates.append(user)
+
+    if not candidates:
+        return 0
+
+    # Batch-fetch active_injuries for the candidates (not in the bulk user
+    # select). A user with no injuries is skipped silently.
+    candidate_ids = [str(u["id"]) for u in candidates]
+    injuries_by_user: Dict[str, list] = {}
+    try:
+        rows = supabase.client.table("users") \
+            .select("id, active_injuries") \
+            .in_("id", candidate_ids[:500]) \
+            .execute()
+        for r in (rows.data or []):
+            ai = r.get("active_injuries")
+            if isinstance(ai, str):
+                try:
+                    ai = json.loads(ai)
+                except json.JSONDecodeError:
+                    ai = []
+            injuries_by_user[str(r["id"])] = ai if isinstance(ai, list) else []
+    except Exception as e:
+        logger.error(f"❌ [InjuryNudge] active_injuries fetch failed: {e}")
+        return 0
+
+    try:
+        from services.coach.injury_directives import (
+            resolve_injury_directives,
+            compute_phase,
+        )
+    except Exception as e:
+        logger.error(f"❌ [InjuryNudge] injury_directives import failed: {e}")
+        return 0
+
+    sent = 0
+    for user in candidates:
+        user_id = str(user["id"])
+        active = injuries_by_user.get(user_id) or []
+        if not active:
+            continue
+
+        directives = resolve_injury_directives(active)
+
+        # Lazy auto-expire FIRST (no notification) — keeps active_injuries and
+        # injury_history in sync even on a quiet hour where no check-in fires.
+        _expire_injuries(supabase, user_id, active, directives.get("expired_ids") or [])
+
+        # Cooldown: never re-ask within the window even across multiple injuries.
+        if _sent_within_days(
+            supabase, user_id, "injury_recovery", _INJURY_CHECKIN_COOLDOWN_DAYS
+        ):
+            continue
+
+        # Pick the single injury to check in on: the most-progressed one in the
+        # recovery / reintroduction window (reintroduction is closest to done).
+        checkin_injury = None
+        checkin_phase = None
+        for inj in active:
+            if not isinstance(inj, dict):
+                continue
+            body_part = str(inj.get("body_part") or "").lower().strip()
+            if not body_part:
+                continue
+            phase = compute_phase(
+                reported_at=inj.get("reported_at"),
+                severity=str(inj.get("severity") or "moderate").lower(),
+                reintroduction_until=inj.get("reintroduction_until"),
+            )
+            if phase not in ("recovery", "reintroduction"):
+                continue
+            # Prefer reintroduction (nearest to resolved); otherwise first match.
+            if checkin_injury is None or (
+                phase == "reintroduction" and checkin_phase != "reintroduction"
+            ):
+                checkin_injury = inj
+                checkin_phase = phase
+
+        if checkin_injury is None:
+            continue
+
+        body_part = str(checkin_injury.get("body_part") or "").lower().strip()
+        injury_id = checkin_injury.get("id")
+        part_label = _injury_part_label(body_part)
+
+        ai = user.get("_ai_settings") or {}
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
+
+        # ── Grounded copy (no fabricated numbers) ────────────────────────────
+        title = f"Is your {part_label} still bothering you?"
+        if checkin_phase == "reintroduction":
+            message = (
+                f"Hey {first_name}, your {part_label} has been easing back in. "
+                f"How's it feeling now? Let me know so I can set your next "
+                f"workouts right."
+            )
+        else:
+            message = (
+                f"Hey {first_name}, it's been a little while since you flagged "
+                f"your {part_label}. How's it feeling now? Your answer tells me "
+                f"how hard to push your next workouts."
+            )
+
+        # ── Chips carry the injury context (body_part + injury_id) so the
+        #    action handler knows which injury to act on. ────────────────────
+        ctx = {"body_part": body_part}
+        if injury_id:
+            ctx["injury_id"] = str(injury_id)
+        chips = [
+            {"label": "All better", "action": "injury_resolved", **ctx},
+            {"label": "Still sore", "action": "injury_extend", **ctx},
+        ]
+        # F1 rehab-as-workout: only when the phase actually has rehab exercises.
+        has_rehab = any(
+            isinstance(e, dict) and e.get("body_part") == body_part and e.get("rehab_exercises")
+            for e in (directives.get("ease_in") or [])
+        )
+        if has_rehab:
+            chips.append(
+                {"label": "Do a rehab session", "action": "start_rehab", **ctx}
+            )
+
+        facts = {
+            "body_part": body_part,
+            "phase": checkin_phase,
+            "injury_id": str(injury_id) if injury_id else "",
+        }
+
+        success = await _send_injury_checkin_nudge(
+            supabase, notif_svc, user, title, message, chips, facts
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
 # ─── Main Cron Endpoint ─────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -3502,6 +3862,8 @@ async def run_push_nudge_cron(
         ("rhr_trend", _job_rhr_trend(supabase, notif_svc, users)),
         ("protein_trend", _job_protein_trend(supabase, notif_svc, users)),
         ("volume_balance", _job_volume_balance(supabase, notif_svc, users)),
+        # ── Injury recovery lifecycle check-in + auto-expire (WS-B) ──
+        ("injury_recovery", _job_injury_recovery(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]

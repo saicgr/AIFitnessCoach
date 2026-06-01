@@ -77,6 +77,10 @@ _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 _VALID_CHIP_ACTIONS = {
     "log_water_now", "log_breakfast", "plan_tomorrow_meals",
     "start_wind_down", "start_workout_now",
+    # WS-B injury recovery check-in chips. The client dispatches these through
+    # the chat chip handler, which calls POST /coach/injury-action with the
+    # chip's body_part / injury_id context.
+    "injury_resolved", "injury_extend", "start_rehab",
 }
 
 
@@ -1284,3 +1288,248 @@ async def daily_insight(
         raise
     except Exception as e:
         raise safe_internal_error(e, "coach_daily_insight")
+
+
+# ---------------------------------------------------------------------------
+# WS-B: Injury recovery check-in chip actions
+# ---------------------------------------------------------------------------
+# The recovery check-in push (_job_injury_recovery in push_nudge_cron.py) carries
+# action chips. When the user taps one in the coach chat, the Flutter chip
+# handler calls this endpoint with the chip's body_part / injury_id context.
+# Everything here is DETERMINISTIC (no LLM) — eligibility and the chosen action
+# are decided by the chip the user tapped, not by inference.
+#
+#   injury_resolved → clear_injury (enters reintroduction / ease-in)
+#   injury_extend   → push expected_recovery_date out a week + clear any
+#                     reintroduction_until so the part keeps being protected
+#   start_rehab     → persist a rehab workout from injury_service.REHAB_EXERCISES
+#                     for the body part's current phase, return its id so the
+#                     client routes to the existing workout card / start flow
+
+_INJURY_ACTIONS = {"injury_resolved", "injury_extend", "start_rehab"}
+_INJURY_EXTEND_DAYS = 7
+
+
+class InjuryActionRequest(BaseModel):
+    action: str
+    body_part: Optional[str] = None
+    injury_id: Optional[str] = None
+
+
+class InjuryActionResponse(BaseModel):
+    success: bool
+    action: str
+    message: str
+    body_part: Optional[str] = None
+    workout_id: Optional[str] = None
+
+
+def _find_active_injury(active: list, *, body_part: Optional[str], injury_id: Optional[str]) -> Optional[dict]:
+    """Match an active_injuries entry by injury_id first, then body_part."""
+    if not isinstance(active, list):
+        return None
+    if injury_id:
+        for inj in active:
+            if isinstance(inj, dict) and str(inj.get("id")) == str(injury_id):
+                return inj
+    if body_part:
+        bp = body_part.lower().strip()
+        for inj in active:
+            if isinstance(inj, dict) and (inj.get("body_part") or "").lower() == bp:
+                return inj
+    return None
+
+
+@router.post("/injury-action", response_model=InjuryActionResponse)
+async def injury_action(
+    payload: InjuryActionRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Execute a recovery check-in chip action (All better / Still sore / Do a
+    rehab session). Deterministic — the tapped chip selects the action."""
+    try:
+        sb = get_supabase_db()
+        user_id = current_user["id"]
+        action = (payload.action or "").strip()
+        body_part = (payload.body_part or "").lower().strip() or None
+        injury_id = payload.injury_id or None
+
+        if action not in _INJURY_ACTIONS:
+            raise HTTPException(400, f"Unsupported injury action: {action}")
+        if not body_part and not injury_id:
+            raise HTTPException(400, "body_part or injury_id is required")
+
+        # ── injury_resolved → clear (reuses the tool's reintroduction logic) ──
+        if action == "injury_resolved":
+            from services.langgraph_agents.tools.injury_tools import clear_injury
+
+            result = clear_injury.invoke({
+                "user_id": user_id,
+                "body_part": body_part,
+                "injury_id": injury_id,
+                "user_feedback": "Resolved via recovery check-in (All better)",
+            })
+            if not result.get("success"):
+                # No active injury to clear (already auto-expired) is not an
+                # error from the user's perspective — confirm gracefully.
+                return InjuryActionResponse(
+                    success=True,
+                    action=action,
+                    body_part=body_part,
+                    message="Glad to hear it. I've already cleared that one.",
+                )
+            return InjuryActionResponse(
+                success=True,
+                action=action,
+                body_part=result.get("body_part") or body_part,
+                message=result.get("message")
+                or "Great. I'll ease that area back in over the next few sessions.",
+            )
+
+        # ── injury_extend → keep protecting it; push the window out a week ────
+        if action == "injury_extend":
+            user = sb.get_user(user_id) or {}
+            active = user.get("active_injuries") or []
+            if isinstance(active, str):
+                try:
+                    active = json.loads(active)
+                except json.JSONDecodeError:
+                    active = []
+            inj = _find_active_injury(active, body_part=body_part, injury_id=injury_id)
+            if not inj:
+                return InjuryActionResponse(
+                    success=True,
+                    action=action,
+                    body_part=body_part,
+                    message="No problem, I'll keep an eye on it. Tell me anytime it changes.",
+                )
+            new_recovery = datetime.now(timezone.utc) + timedelta(days=_INJURY_EXTEND_DAYS)
+            updated = []
+            target_id = inj.get("id")
+            target_bp = (inj.get("body_part") or "").lower()
+            cleared_part = inj.get("body_part") or body_part
+            for entry in active:
+                if not isinstance(entry, dict):
+                    continue
+                same = (target_id and entry.get("id") == target_id) or (
+                    not target_id and (entry.get("body_part") or "").lower() == target_bp
+                )
+                if same:
+                    entry["expected_recovery_date"] = new_recovery.isoformat()
+                    # Stay protected: drop any reintroduction stamp so generation
+                    # keeps avoiding (not easing in) the part.
+                    entry.pop("reintroduction_until", None)
+                updated.append(entry)
+            sb.update_user(user_id, {"active_injuries": updated})
+
+            # Keep the injury_history row open + reflect the extended window.
+            if target_id:
+                try:
+                    sb.client.table("injury_history").update({
+                        "is_active": True,
+                        "expected_recovery_date": new_recovery.isoformat(),
+                    }).eq("id", target_id).execute()
+                except Exception as e:
+                    logger.warning(f"[injury_action] history extend failed: {e}")
+
+            part_label = (cleared_part or "that area").replace("_", " ")
+            return InjuryActionResponse(
+                success=True,
+                action=action,
+                body_part=cleared_part,
+                message=f"Got it, I'll keep training around your {part_label} and "
+                        f"check back in about a week.",
+            )
+
+        # ── start_rehab → persist a rehab workout for the current phase (F1) ──
+        # (action == "start_rehab")
+        from services.coach.injury_directives import compute_phase
+        from services import injury_service as _injury_service_mod
+
+        injury_service = (
+            _injury_service_mod.get_injury_service()
+            if hasattr(_injury_service_mod, "get_injury_service")
+            else _injury_service_mod
+        )
+
+        user = sb.get_user(user_id) or {}
+        active = user.get("active_injuries") or []
+        if isinstance(active, str):
+            try:
+                active = json.loads(active)
+            except json.JSONDecodeError:
+                active = []
+        inj = _find_active_injury(active, body_part=body_part, injury_id=injury_id)
+        if not inj:
+            raise HTTPException(404, "No active injury found for a rehab session")
+
+        bp = (inj.get("body_part") or body_part or "").lower().strip()
+        phase = compute_phase(
+            reported_at=inj.get("reported_at"),
+            severity=str(inj.get("severity") or "moderate").lower(),
+            reintroduction_until=inj.get("reintroduction_until"),
+        )
+        # Reintroduction reuses the recovery rehab block (mirrors the resolver).
+        rehab_phase = "recovery" if phase == "reintroduction" else phase
+        rehab = (injury_service.REHAB_EXERCISES.get(bp, {}) or {}).get(rehab_phase, [])
+        if not rehab:
+            # Acute back (rest only) or a body part with no rehab entry for this
+            # phase — never fabricate exercises; tell the user honestly.
+            raise HTTPException(
+                422,
+                f"No rehab session is available for your {bp.replace('_', ' ')} "
+                f"in the {rehab_phase} phase yet.",
+            )
+
+        # Mirror generate_quick_workout's persisted exercise shape so the
+        # existing /workout/{id} card + start flow render it unchanged.
+        exercises = []
+        for ex in rehab:
+            if not isinstance(ex, dict):
+                continue
+            exercises.append({
+                "name": ex.get("name", "Rehab Exercise"),
+                "sets": ex.get("sets", 2),
+                "reps": ex.get("reps", "10"),
+                "rest_seconds": 45,
+                "duration_seconds": None,
+                "muscle_group": bp,
+                "equipment": "Bodyweight",
+                "notes": ex.get("notes", ""),
+                "gif_url": "",
+                "video_url": "",
+                "image_url": "",
+                "library_id": "",
+            })
+
+        part_label = bp.replace("_", " ")
+        workout_name = f"{part_label.title()} Rehab ({rehab_phase})"
+        today_utc = datetime.now(timezone.utc).date().isoformat()
+        created = sb.create_workout({
+            "user_id": user_id,
+            "name": workout_name,
+            "type": "rehab",
+            "difficulty": "light",
+            "scheduled_date": today_utc,
+            "exercises_json": exercises,
+            "duration_minutes": 12,
+            "is_completed": False,
+            "generation_method": "injury_rehab",
+            "generation_source": "injury_checkin",
+        })
+        if not created or not created.get("id"):
+            raise HTTPException(500, "Failed to create rehab workout")
+
+        return InjuryActionResponse(
+            success=True,
+            action=action,
+            body_part=bp,
+            workout_id=str(created["id"]),
+            message=f"Here's a gentle {part_label} rehab block for your "
+                    f"{rehab_phase} phase. Take it slow.",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "coach_injury_action")

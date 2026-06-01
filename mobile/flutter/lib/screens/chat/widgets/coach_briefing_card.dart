@@ -162,6 +162,9 @@ class CoachBriefingCard extends StatelessWidget {
       onActionTap(chip.action!, {
         if (insight.insightId != null) 'insight_id': insight.insightId,
         'source_surface': insight.source,
+        // Forward any chip-attached action context (e.g. the injury recovery
+        // check-in's body_part / injury_id) so the handler can act on it.
+        ...chip.actionContext,
       });
       return;
     }
@@ -304,6 +307,12 @@ class _BriefingChip extends StatelessWidget {
         return Icons.bedtime_outlined;
       case 'start_workout_now':
         return Icons.fitness_center_outlined;
+      case 'injury_resolved':
+        return Icons.check_circle_outline;
+      case 'injury_extend':
+        return Icons.healing_outlined;
+      case 'start_rehab':
+        return Icons.self_improvement_outlined;
       default:
         return Icons.bolt_outlined;
     }
