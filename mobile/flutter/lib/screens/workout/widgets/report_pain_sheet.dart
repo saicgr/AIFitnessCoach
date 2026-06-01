@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/providers/avoided_provider.dart';
+import '../../../data/services/api_client.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -70,17 +71,25 @@ const _windows = <_Window>[
 class ReportPainSheet extends ConsumerStatefulWidget {
   final String exerciseName;
   final String? exerciseId;
+  // The exercise's primary muscle/body area. When present AND the pain is
+  // sharp/severe (a real injury, not exercise-specific discomfort), we ALSO
+  // file a provisional body-part injury into the phase-aware injury system so
+  // the whole area is protected and enters the recovery lifecycle — not just
+  // this one exercise avoided.
+  final String? bodyPart;
 
   const ReportPainSheet({
     super.key,
     required this.exerciseName,
     this.exerciseId,
+    this.bodyPart,
   });
 
   static Future<bool> show(
     BuildContext context, {
     required String exerciseName,
     String? exerciseId,
+    String? bodyPart,
   }) async {
     final result = await showGlassSheet<bool>(
       context: context,
@@ -88,6 +97,7 @@ class ReportPainSheet extends ConsumerStatefulWidget {
         child: ReportPainSheet(
           exerciseName: exerciseName,
           exerciseId: exerciseId,
+          bodyPart: bodyPart,
         ),
       ),
     );
@@ -103,6 +113,19 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
   int _windowIdx = 1; // default = 2 weeks
   bool _submitting = false;
 
+  /// Map the pain sheet's severity (mild|sharp|severe) to an injury severity.
+  /// Mild pain stays exercise-specific (no body-part injury filed).
+  String? _injurySeverityFor(String painApiValue) {
+    switch (painApiValue) {
+      case 'sharp':
+        return 'moderate';
+      case 'severe':
+        return 'severe';
+      default:
+        return null;
+    }
+  }
+
   Future<void> _confirm() async {
     final severity = _severity;
     if (severity == null || _submitting) return;
@@ -115,6 +138,24 @@ class _ReportPainSheetState extends ConsumerState<ReportPainSheet> {
           severity: severity.apiValue,
           duration: _windows[_windowIdx].duration,
         );
+
+    // F4 integration: for sharp/severe pain on a known body area, ALSO file a
+    // provisional body-part injury so the phase-aware engine protects the whole
+    // area + the recovery lifecycle (check-in, ease-in) kicks in. Mild pain
+    // stays exercise-specific (avoid only). Best-effort — never blocks the flow.
+    final injurySeverity = _injurySeverityFor(severity.apiValue);
+    final part = widget.bodyPart?.trim();
+    if (ok && injurySeverity != null && part != null && part.isNotEmpty) {
+      try {
+        await ref.read(apiClientProvider).injuryAction(
+              action: 'report_pain',
+              bodyPart: part,
+              severity: injurySeverity,
+            );
+      } catch (_) {
+        // Non-fatal: the exercise is already avoided; injury filing is a bonus.
+      }
+    }
 
     if (!mounted) return;
     if (ok) {

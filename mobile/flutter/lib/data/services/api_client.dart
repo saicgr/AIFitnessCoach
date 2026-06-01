@@ -1251,6 +1251,7 @@ class ApiClient with WidgetsBindingObserver {
     required String action,
     String? bodyPart,
     String? injuryId,
+    String? severity,
   }) async {
     final res = await _dio.post<dynamic>(
       '/coach/injury-action',
@@ -1258,6 +1259,7 @@ class ApiClient with WidgetsBindingObserver {
         'action': action,
         if (bodyPart != null && bodyPart.isNotEmpty) 'body_part': bodyPart,
         if (injuryId != null && injuryId.isNotEmpty) 'injury_id': injuryId,
+        if (severity != null && severity.isNotEmpty) 'severity': severity,
       },
     );
     final body = res.data;

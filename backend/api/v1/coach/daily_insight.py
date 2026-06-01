@@ -1306,7 +1306,7 @@ async def daily_insight(
 #                     for the body part's current phase, return its id so the
 #                     client routes to the existing workout card / start flow
 
-_INJURY_ACTIONS = {"injury_resolved", "injury_extend", "start_rehab"}
+_INJURY_ACTIONS = {"injury_resolved", "injury_extend", "start_rehab", "report_pain"}
 _INJURY_EXTEND_DAYS = 7
 
 
@@ -1314,6 +1314,7 @@ class InjuryActionRequest(BaseModel):
     action: str
     body_part: Optional[str] = None
     injury_id: Optional[str] = None
+    severity: Optional[str] = "moderate"
 
 
 class InjuryActionResponse(BaseModel):
@@ -1358,6 +1359,27 @@ async def injury_action(
             raise HTTPException(400, f"Unsupported injury action: {action}")
         if not body_part and not injury_id:
             raise HTTPException(400, "body_part or injury_id is required")
+
+        # ── report_pain (F4) → file a provisional body-part injury into the
+        # phase-aware system (active_injuries) when the user flags pain on an
+        # exercise mid-workout. Deduped + phase-managed by report_injury. ──
+        if action == "report_pain":
+            if not body_part:
+                raise HTTPException(400, "body_part is required for report_pain")
+            from services.langgraph_agents.tools.injury_tools import report_injury
+            sev = (payload.severity or "moderate").lower()
+            if sev not in ("mild", "moderate", "severe"):
+                sev = "moderate"
+            result = report_injury.invoke({
+                "user_id": user_id, "body_part": body_part, "severity": sev,
+                "notes": "Reported during a workout (this hurts)",
+            })
+            return InjuryActionResponse(
+                success=bool(result.get("success", True)),
+                action=action,
+                message=result.get("message", f"Got it — I'll protect your {body_part} and ease it back in as it recovers."),
+                body_part=body_part,
+            )
 
         # ── injury_resolved → clear (reuses the tool's reintroduction logic) ──
         if action == "injury_resolved":

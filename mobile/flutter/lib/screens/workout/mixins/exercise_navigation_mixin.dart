@@ -600,6 +600,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           context,
           exerciseName: exercise.name,
           exerciseId: exercise.id ?? exercise.libraryId,
+          // Pass the worked area so sharp/severe pain also files a body-part
+          // injury into the phase-aware system (not just avoiding this exercise).
+          bodyPart: exercise.muscleGroup ?? exercise.bodyPart,
         );
       },
     );
