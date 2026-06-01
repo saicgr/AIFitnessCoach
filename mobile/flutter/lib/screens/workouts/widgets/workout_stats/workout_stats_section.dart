@@ -197,15 +197,10 @@ class _WorkoutStatsSectionState extends ConsumerState<WorkoutStatsSection> {
         ..add(pad(_StatsZeroState(isDark: isDark, accent: accent)))
         ..add(const SizedBox(height: 8));
     } else {
-      // C. AI insight strip first (self-hides when empty; when it hides it is
-      // the only always-first element, so no orphan gap before A).
-      children.add(pad(_AiInsightStrip(isDark: isDark, accent: accent)));
-
       // A. Compact stat strip — the one always-present element for a user with
       // sessions (sets/volume this week · consistency · top-lift e1RM delta).
-      children
-        ..add(gap)
-        ..add(pad(_ScalarStrip(isDark: isDark, accent: accent)));
+      // (The old AI "momentum" insight strip was removed from this section.)
+      children.add(pad(_ScalarStrip(isDark: isDark, accent: accent)));
 
       // B. Muscle balance with the productive band — only when there are sets.
       if (hasMuscleBalance) {

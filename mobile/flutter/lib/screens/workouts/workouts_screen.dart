@@ -344,21 +344,44 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Plain bold title — slimmed from the old frosted pill so the
-                // header reads as one clean row and can't overflow. Secondary
-                // destinations (Library / Gym / Preferences) moved into the
-                // floating launcher bar.
-                Expanded(
-                  child: Text(
-                    AppLocalizations.of(context).workoutListTitle,
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                      letterSpacing: -0.3,
-                    ),
+                // The Gym profile switcher ("My Gym ▼") IS the header title now,
+                // replacing the static "Workouts" text. It anchors the screen to
+                // the active gym profile and stays a tap target for switching.
+                const Expanded(
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: GymProfileSwitcher(),
                   ),
                 ),
+                // Trailing action cluster: Stats, Custom Trends, then the
+                // settings gear at the far right. Each uses the same circular
+                // glass button styling.
+                _GlassmorphicButton(
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/stats');
+                  },
+                  isDark: isDark,
+                  child: Icon(
+                    Icons.bar_chart_rounded,
+                    color: accentColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _GlassmorphicButton(
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/trends/custom');
+                  },
+                  isDark: isDark,
+                  child: Icon(
+                    Icons.show_chart_rounded,
+                    color: accentColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 // Surface 2.1 — header consolidated to title + gear only.
                 // Import workouts moves into Workout Settings → Import row.
                 // Week-strip collapse toggle moves into Workout Settings
@@ -417,20 +440,14 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     // the heavy below-fold widgets (WorkoutStatsSection et al.) only build as
     // they scroll into view, instead of all on the first frame.
     final children = <Widget>[
-        // Gym profile switcher + calendar tune-menu share one row — the
-        // switcher fills the former empty band below the title bar, and the
-        // tune icon sits inline on its right instead of wasting its own
-        // line. The week strip then sits directly beneath, no gap.
+        // The gym-profile switcher moved up into the header (it is the title
+        // now), so this band carries the calendar tune-menu alone, aligned to
+        // the trailing edge. The week strip sits directly beneath, no gap.
         Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 12, 2),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const Expanded(
-                child: Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: GymProfileSwitcher(),
-                ),
-              ),
               WorkoutTuneMenu(
                 tint: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.textMuted

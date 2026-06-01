@@ -10,6 +10,10 @@ part of 'workout_stats_section.dart';
 /// No fabricated copy: only the provider's real headline is shown. The
 /// `isFallback` flag is surfaced as a subtle "auto" marker so a deterministic
 /// fallback headline is honestly distinguished from an AI-authored one.
+///
+/// NOTE: no longer rendered in the section (the "momentum" card was removed
+/// from [WorkoutStatsSection]). Kept for reference / potential reuse.
+// ignore: unused_element
 class _AiInsightStrip extends ConsumerWidget {
   final bool isDark;
   final Color accent;

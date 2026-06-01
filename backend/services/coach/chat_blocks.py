@@ -122,6 +122,28 @@ def _detect_topic(message: str) -> Optional[str]:
     return None
 
 
+# Phrases that signal the user wants to see a metric's movement OVER TIME (a
+# trend), as opposed to a single current value. When present we make sure a
+# grounded `chart` block (built from the metric's real timeseries) leads the
+# block list and is never trimmed by the cap. Kept as substrings so natural
+# phrasings ("how's my weight trending", "weight over the last 30 days",
+# "am I making progress") all match.
+_TREND_PHRASES: tuple = (
+    "trend", "trending", "over time", "over the last", "over the past",
+    "last 30 days", "last 7 days", "last week", "last month",
+    "past week", "past month", "history", "chart", "graph", "progress",
+    "progressing", "going up", "going down", "changed", "change over",
+)
+
+
+def _is_trend_query(message: str) -> bool:
+    """True when the message asks about a metric's movement over time."""
+    if not message:
+        return False
+    text = message.lower()
+    return any(p in text for p in _TREND_PHRASES)
+
+
 # -----------------------------------------------------------------------------
 # Public entrypoint
 # -----------------------------------------------------------------------------
@@ -168,9 +190,22 @@ async def build_blocks_for_response(
             return []
 
         blocks = builder(db, user_id) or []
-        # Defensive: enforce the cap and drop anything that isn't a dict.
-        blocks = [b for b in blocks if isinstance(b, dict)][:_MAX_BLOCKS]
-        return blocks
+        # Defensive: drop anything that isn't a dict before any reordering.
+        blocks = [b for b in blocks if isinstance(b, dict)]
+
+        # #19 — when the user explicitly asked about a TREND over time, make
+        # sure a grounded `chart` block (built above from the metric's real
+        # timeseries — weight_logs / daily_activity / performance_logs) LEADS
+        # the list and is never trimmed by the cap. The numbers are unchanged
+        # (still straight from DB rows); we only reorder so the timeseries the
+        # user asked to see is the first thing rendered.
+        if _is_trend_query(message or ""):
+            charts = [b for b in blocks if b.get("type") == "chart"]
+            if charts:
+                rest = [b for b in blocks if b.get("type") != "chart"]
+                blocks = charts + rest
+
+        return blocks[:_MAX_BLOCKS]
     except Exception as e:
         # Decoration is strictly best-effort — swallow everything.
         logger.warning(f"chat_blocks: build failed (returning no blocks): {e}")

@@ -564,9 +564,20 @@ class _MacrosPage extends StatelessWidget {
     // Ring is a fixed square (== the 3-pill stack height) so the pills keep
     // their width — an AspectRatio in a Row would derive width from the tall
     // bounded height and crush the pills.
-    return Center(
+    //
+    // TOP-ALIGN (not Center): the carousel SizedBox is sized to the TALLEST
+    // page (the 2-col micro grid, which is taller than the 120px ring+pill
+    // stack on the embedded Nutrition card). Centering pushed the ring + pills
+    // down into the vertical middle, leaving a large empty gap ABOVE the ring.
+    // Aligning to topCenter parks the natural-height ring+pill row at the top
+    // so the leftover height sits harmlessly BELOW it. The Row hugs its content
+    // (mainAxisSize.min on the cross axis via the fixed-height ring), so the
+    // 3 macro pills always render at full width instead of being squeezed.
+    return Align(
+      alignment: Alignment.topCenter,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.max,
         children: [
           // Calorie ring — sized to match the compact 3-pill stack height
           // (3 × 36 + 2 × 6 = 120) so the ring and pills stay vertically

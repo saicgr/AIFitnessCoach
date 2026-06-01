@@ -65,6 +65,38 @@ List<SuggestedReplyChip> chipsForWorkoutMode(
     };
   }
 
+  // ── Metric / measurement origin (#19) ──────────────────────────────────
+  // A chat opened from a measurement / metric screen (body weight, steps,
+  // sleep, calories, hydration, heart rate, or any custom tracked metric)
+  // gets origin-aware chips: see the trend, set a goal, log a new value.
+  // Two shapes are accepted, both routed through the same builder so any
+  // metric name works without a hardcoded whitelist:
+  //   * 'metric_weight'  (legacy / explicit per-metric mode)
+  //   * 'metric:<name>'  (generic — <name> is the human metric label)
+  String? metricName;
+  if (mode == 'metric_weight') {
+    metricName = 'weight';
+  } else if (mode != null && mode.startsWith('metric:')) {
+    metricName = mode.substring('metric:'.length).trim();
+  }
+  if (metricName != null && metricName.isNotEmpty) {
+    // Capitalize the first letter for the "Log <Metric>" label only.
+    final pretty = metricName[0].toUpperCase() + metricName.substring(1);
+    // These chips SEND a natural-language user turn rather than firing a
+    // workout-card action_data kind: the metric/goal/log vocabulary isn't in
+    // the chat notifier's chip-action switch (which would silently no-op,
+    // violating feedback_no_silent_fallbacks). Sending the phrasing also lets
+    // the backend ground a real trend chart for the "Show <metric> trend"
+    // message (see chat_blocks.build_blocks_for_response, #19). The labels
+    // double as the sent message text — phrased so the coach + chat_blocks
+    // both read them correctly.
+    return [
+      SuggestedReplyChip(label: 'Show my $metricName trend'),
+      SuggestedReplyChip(label: 'Set a $metricName goal'),
+      SuggestedReplyChip(label: 'Log $pretty'),
+    ];
+  }
+
   switch (mode) {
     case 'windDown':
       return [

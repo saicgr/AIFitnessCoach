@@ -199,26 +199,39 @@ class _ScalarStrip extends ConsumerWidget {
 
     return StatCardShell(
       isDark: isDark,
-      child: Wrap(
-        spacing: 24,
-        runSpacing: 18,
-        children: tiles,
+      // The whole strip is a tap target into the full Stats screen, matching
+      // the section's "See all" affordance. InkWell sits inside the card so the
+      // ripple is clipped to the card's rounded shape by StatCardShell.
+      child: InkWell(
+        onTap: () {
+          HapticService.light();
+          context.push('/stats');
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Wrap(
+          spacing: 24,
+          runSpacing: 18,
+          children: tiles,
+        ),
       ),
     );
   }
 }
 
-/// A scalar tile constrained to a sensible min width so [Wrap] reflows to 2x2
-/// on small screens (two ~120px tiles + 24 spacing fits an SE's ~328px body).
+/// A scalar tile that fills the available width so the strip reads as a single
+/// full-width card (matching the cards above it) rather than a cluster of
+/// narrow chips. The [Wrap] then lays the tiles out one per row.
 class _ScalarTile extends StatelessWidget {
   final Widget child;
   const _ScalarTile({required this.child});
 
   @override
   Widget build(BuildContext context) {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 120, maxWidth: 160),
-      child: child,
+    return LayoutBuilder(
+      builder: (context, constraints) => SizedBox(
+        width: constraints.maxWidth,
+        child: child,
+      ),
     );
   }
 }

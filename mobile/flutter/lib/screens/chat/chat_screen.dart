@@ -467,6 +467,91 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         CoachPersona.defaultCoach;
   }
 
+  /// True when this screen mount is an ORGANIC open of a fresh chat — no
+  /// deep-link insight to seed and no initialMessage to auto-send. Used to
+  /// decide whether a transient `AsyncValue.loading()` (the brief flash while
+  /// loadHistory resolves an empty new chat) should render the living empty /
+  /// greeting state instead of a bare spinner (#20 — slow open).
+  bool get _isOrganicOpen =>
+      (widget.insightId == null || widget.insightId!.isEmpty) &&
+      (widget.initialMessage == null || widget.initialMessage!.isEmpty);
+
+  /// The empty/greeting state shown before any message exists. Renders the
+  /// time-aware living greeting when the open-state ladder resolved one,
+  /// otherwise the default EnhancedEmptyState. Extracted so the SAME surface
+  /// can paint immediately during the transient loadHistory loading flash
+  /// (#20) AND in the resolved `data([])` branch — the daily briefing is
+  /// fetched async by _runOpenStateLadder and swapped in when it resolves,
+  /// never blocking first paint.
+  Widget _buildEmptyOrGreeting(CoachPersona coach) {
+    final Widget base;
+    final greeting = _openStateInsight;
+    if (greeting != null && greeting.isGreeting) {
+      base = CoachGreetingView(
+        key: const ValueKey('greeting'),
+        greeting: greeting,
+        coach: coach,
+        onSuggestionTap: (suggestion) {
+          _textController.text = suggestion;
+          _sendMessage();
+        },
+        onRouteTap: (route) {
+          try {
+            context.push(route);
+          } catch (_) {}
+        },
+      );
+    } else {
+      base = EnhancedEmptyState(
+        key: const ValueKey('empty'),
+        coach: coach,
+        onSuggestionTap: (suggestion) {
+          _textController.text = suggestion;
+          _sendMessage();
+        },
+      );
+    }
+
+    // #19 — when chat was opened FROM a measurement / metric screen
+    // (cardMode 'metric_weight' or generic 'metric:<name>'), surface
+    // origin-aware chips below the empty/greeting state so the first thing
+    // the user can do is see the trend, set a goal, or log a value for that
+    // exact metric. chipsForWorkoutMode returns [] for non-metric modes, so
+    // this is a no-op for every other origin.
+    final mode = widget.cardMode;
+    final isMetricMode = mode != null &&
+        (mode == 'metric_weight' || mode.startsWith('metric:'));
+    if (!isMetricMode) return base;
+    final chips = chipsForWorkoutMode(mode);
+    if (chips.isEmpty) return base;
+    return Column(
+      key: const ValueKey('empty_metric'),
+      children: [
+        Expanded(child: base),
+        SuggestedReplyChips(
+          chips: chips,
+          onMessageTap: (label) {
+            _textController.text = label;
+            _sendMessage();
+          },
+          onActionTap: (kind, p) {
+            unawaited(
+              ref
+                  .read(chatMessagesProvider.notifier)
+                  .dispatchWorkoutCardAction(kind, p),
+            );
+          },
+          onRouteTap: (route) {
+            try {
+              context.push(route);
+            } catch (_) {}
+          },
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
   /// Build the chip strip rendered below a seeded coach turn. Maps the
   /// home card's `mode` (from the deep link) to the §1c.5 chip set, then
   /// wires each chip's tap to either send a user turn, fire a workout-card
@@ -591,27 +676,42 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     });
   }
 
-  /// Issue 11b — exiting the chat always lands on the conversation history
-  /// list (`/chat/sessions`), never the arbitrary previous screen. We use
-  /// pushReplacement so the chat is swapped FOR history (history doesn't stack
-  /// on top of the chat the user just left), keeping the back stack sane:
-  ///   * from the home/tab → chat → back → history (then back → tab).
-  ///   * arrived FROM history → chat → back → history (consistent — a fresh
-  ///     history screen replaces the chat).
-  ///   * deep-link → chat → back → history (same).
-  /// Android system-back routes here too via the PopScope on the Scaffold, so
-  /// the hardware button and the in-app back button behave identically.
+  /// #21 — Back from chat returns to where the user came FROM, not the Chats
+  /// list. The chat was opened from one of two kinds of origin:
+  ///   * the sessions list itself (source == 'chat_sessions') — back should
+  ///     land back on `/chat/sessions` (the history list).
+  ///   * any OTHER origin (home, coach_fab, a measurement / metric screen, a
+  ///     deep-link card, …) — back should return to THAT origin: pop the chat
+  ///     off the stack if we can, else fall back to `/home`.
+  ///
+  /// The session is still persisted in the background (loadHistory / the
+  /// notifier save it server-side), so it appears in the Chats list later —
+  /// we simply don't FORCE-navigate there. Both the app-bar back button and
+  /// the Android system back route through here so they behave identically.
   void _exitToHistory() {
     if (!mounted) return;
+    final fromSessions = widget.source == 'chat_sessions';
     try {
-      context.pushReplacement('/chat/sessions');
-    } catch (_) {
-      // Fallback: if the router can't replace (e.g. chat was the root of the
-      // stack), at least try to pop so the user isn't trapped.
+      if (fromSessions) {
+        // Opened from the Chats list → return to it. Replace so the chat is
+        // swapped FOR history rather than stacking history on top of it.
+        context.pushReplacement('/chat/sessions');
+        return;
+      }
+      // Opened from a non-history origin → go back to that origin.
       if (context.canPop()) {
         context.pop();
       } else {
-        context.go('/chat/sessions');
+        // Chat was the root of the stack (e.g. a cold deep-link) — there is
+        // no origin to pop to, so land on Home rather than trapping the user.
+        context.go('/home');
+      }
+    } catch (_) {
+      // Last-ditch: never trap the user on the chat screen.
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/home');
       }
     }
   }
@@ -823,9 +923,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             : AppColors.success;
 
     return PopScope(
-      // Issue 11b — intercept Android system-back so it lands on the chat
-      // history list, identical to the in-app back button. canPop:false stops
-      // the default pop; onPopInvoked then routes to /chat/sessions.
+      // #21 — intercept Android system-back so it routes through the same
+      // origin-aware exit as the in-app back button (return to the chat's
+      // origin, or the Chats list only when opened from it). canPop:false
+      // stops the default pop; onPopInvoked then calls _exitToHistory.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop) return;
@@ -863,10 +964,21 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 child: child,
               ),
               child: messagesState.when(
-                loading: () => const Center(
-                  key: ValueKey('loading'),
-                  child: CircularProgressIndicator(color: AppColors.cyan),
-                ),
+                // #20 — On an organic open (no deep-link insight, no
+                // initialMessage) the chat is a fresh/empty conversation: the
+                // brief AsyncValue.loading() flash while loadHistory resolves
+                // an empty new chat must NOT show a bare spinner. Paint the
+                // living empty/greeting state IMMEDIATELY; the daily briefing
+                // is fetched async by _runOpenStateLadder and swapped in when
+                // it resolves. Non-organic opens (deep-link turn / pending
+                // initialMessage) still show the spinner while the targeted
+                // history loads.
+                loading: () => _isOrganicOpen
+                    ? _buildEmptyOrGreeting(coach)
+                    : const Center(
+                        key: ValueKey('loading'),
+                        child: CircularProgressIndicator(color: AppColors.cyan),
+                      ),
                 error: (e, _) {
                   // Collapse noisy transport errors (DioException [connection
                   // timeout / connection error / receive timeout]) into a
@@ -944,31 +1056,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     // Living open state — when the open-ladder resolved a
                     // light greeting payload, render the time-aware greeting
                     // view. Otherwise fall back to the organic empty state.
-                    final greeting = _openStateInsight;
-                    if (greeting != null && greeting.isGreeting) {
-                      return CoachGreetingView(
-                        key: const ValueKey('greeting'),
-                        greeting: greeting,
-                        coach: coach,
-                        onSuggestionTap: (suggestion) {
-                          _textController.text = suggestion;
-                          _sendMessage();
-                        },
-                        onRouteTap: (route) {
-                          try {
-                            context.push(route);
-                          } catch (_) {}
-                        },
-                      );
-                    }
-                    return EnhancedEmptyState(
-                      key: const ValueKey('empty'),
-                      coach: coach,
-                      onSuggestionTap: (suggestion) {
-                        _textController.text = suggestion;
-                        _sendMessage();
-                      },
-                    );
+                    // (Shared with the organic-open loading branch above so
+                    // the surface never flickers between spinner and empty.)
+                    return _buildEmptyOrGreeting(coach);
                   }
 
                   final hasMore = ref.read(chatMessagesProvider.notifier).hasMoreMessages;
@@ -1280,9 +1370,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
               ),
             ),
             const SizedBox(width: 12),
-            // Coach name + status — expanded pill
+            // Coach name + status — expanded pill. #22 — tapping it opens the
+            // coach switcher (same route the 3-dot "Change coach" entry uses),
+            // so the header avatar/name is a discoverable shortcut to swap
+            // coaches mid-conversation.
             Expanded(
-              child: Container(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  HapticService.selection();
+                  context.push('/coach-selection?fromSettings=true');
+                },
+                child: Container(
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
@@ -1364,6 +1463,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                     ),
                   ],
                 ),
+              ),
               ),
             ),
             const SizedBox(width: 8),

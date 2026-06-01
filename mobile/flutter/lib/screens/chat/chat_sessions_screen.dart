@@ -52,7 +52,7 @@ class _ChatSessionsScreenState extends ConsumerState<ChatSessionsScreen> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/chat');
+      context.go('/chat?source=chat_sessions');
     }
   }
 
@@ -63,7 +63,7 @@ class _ChatSessionsScreenState extends ConsumerState<ChatSessionsScreen> {
     if (context.canPop()) {
       context.pop();
     } else {
-      context.go('/chat');
+      context.go('/chat?source=chat_sessions');
     }
   }
 
