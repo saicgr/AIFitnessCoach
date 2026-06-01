@@ -519,6 +519,20 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
 
 
   Widget _buildPlaceholder(Color glassSurface, Color textMuted) {
+    // AI-authored exercises (e.g. "hay bale" moves) have no library
+    // illustration — show their representative emoji instead of a generic
+    // dumbbell so the thumbnail is never empty/broken (Google-Health style).
+    final emoji = widget.exercise.emoji;
+    if (emoji != null && emoji.trim().isNotEmpty) {
+      return Container(
+        color: glassSurface,
+        alignment: Alignment.center,
+        child: Text(
+          emoji.trim(),
+          style: const TextStyle(fontSize: 26),
+        ),
+      );
+    }
     return Container(
       color: glassSurface,
       child: Icon(

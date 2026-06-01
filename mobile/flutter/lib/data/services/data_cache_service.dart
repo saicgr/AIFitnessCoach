@@ -32,6 +32,14 @@ class DataCacheService {
   static const String dailyActivityKey = 'cache_daily_activity';
   static const String coachInsightKey = 'cache_coach_insight';
   static const String nutritionDailyKey = 'cache_nutrition_daily';
+  // "Ask Coach" conversation list — paints instantly on open, then silently
+  // revalidates. NOT tz-sensitive (sessions aren't a "today" surface).
+  static const String chatSessionsKey = 'cache_chat_sessions';
+  // Combined Health hub history (35-day daily-activity window). Backs the Home
+  // metric deck (steps streak / zone minutes) AND the Combined Health screen.
+  // tz-sensitive: the most-recent day is "today", so a calendar rollover must
+  // invalidate it even before the TTL fires.
+  static const String combinedHealthKey = 'cache_combined_health';
 
   /// Shared prefix for all below-the-fold stat aggregates (nutrition stats
   /// strip, workout stats section). Any key starting with this picks up
@@ -63,6 +71,7 @@ class DataCacheService {
     dailyActivityKey,
     coachInsightKey,
     nutritionDailyKey,
+    combinedHealthKey,
   };
 
   /// Counter for unscoped writes — incremented every time `_scopedKey` falls
@@ -91,6 +100,8 @@ class DataCacheService {
     dailyActivityKey: _dailyActivityTtlMs,
     coachInsightKey: _statsTtlMs,
     nutritionDailyKey: _firstPaintTtlMs,
+    chatSessionsKey: _firstPaintTtlMs, // 24h — survives overnight reopens; always revalidated
+    combinedHealthKey: _dailyActivityTtlMs, // 6h — step/zone data drifts intraday
   };
 
   DataCacheService._();
@@ -357,6 +368,7 @@ class DataCacheService {
         dailyActivityKey,
         coachInsightKey,
         nutritionDailyKey,
+        combinedHealthKey,
       ];
       // Remove the legacy unscoped form, plus every `<base>:<userId>` slot,
       // plus every stat-aggregate slot (shared `cache_stats_` prefix).

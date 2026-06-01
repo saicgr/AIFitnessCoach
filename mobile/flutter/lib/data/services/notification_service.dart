@@ -119,6 +119,12 @@ class NotificationPrefsKeys {
   // Evening recap (flagship moment; morning readiness reuses dailyBriefing*).
   static const eveningRecapNudge = 'notif_evening_recap_nudge';
   static const eveningRecapTime = 'notif_evening_recap_time';
+  // Data-grounded coach moments (WS3) — per-type toggles, no local times.
+  static const weeklyRecapNudge = 'notif_weekly_recap_nudge';
+  static const sleepDebtNudge = 'notif_sleep_debt_nudge';
+  static const rhrTrendNudge = 'notif_rhr_trend_nudge';
+  static const proteinTrendNudge = 'notif_protein_trend_nudge';
+  static const volumeBalanceNudge = 'notif_volume_balance_nudge';
   // ── Cycle tracking reminders (Phase E) ──────────────────────────
   // Each cycle reminder type has its OWN toggle so the user has granular
   // control (per project notification-control rule). All cycle reminders
@@ -617,6 +623,12 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       pushNotificationsEnabled: _prefs.getBool(NotificationPrefsKeys.pushNotificationsEnabled) ?? true,
       eveningRecapNudge: _prefs.getBool(NotificationPrefsKeys.eveningRecapNudge) ?? true,
       eveningRecapTime: _prefs.getString(NotificationPrefsKeys.eveningRecapTime) ?? '20:00',
+      // Data-grounded coach moments (WS3) — default ON.
+      weeklyRecapNudge: _prefs.getBool(NotificationPrefsKeys.weeklyRecapNudge) ?? true,
+      sleepDebtNudge: _prefs.getBool(NotificationPrefsKeys.sleepDebtNudge) ?? true,
+      rhrTrendNudge: _prefs.getBool(NotificationPrefsKeys.rhrTrendNudge) ?? true,
+      proteinTrendNudge: _prefs.getBool(NotificationPrefsKeys.proteinTrendNudge) ?? true,
+      volumeBalanceNudge: _prefs.getBool(NotificationPrefsKeys.volumeBalanceNudge) ?? true,
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -967,6 +979,40 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setActivityNudgeTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.activityNudgeTime, time);
     state = state.copyWith(activityNudgeTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  // ─── Data-grounded coach moment setters (WS3) ───────────────────
+  // All five are server-side cron nudges, so syncing the JSONB to the backend
+  // is what actually toggles them.
+
+  Future<void> setWeeklyRecapNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.weeklyRecapNudge, value);
+    state = state.copyWith(weeklyRecapNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setSleepDebtNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.sleepDebtNudge, value);
+    state = state.copyWith(sleepDebtNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setRhrTrendNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.rhrTrendNudge, value);
+    state = state.copyWith(rhrTrendNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setProteinTrendNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.proteinTrendNudge, value);
+    state = state.copyWith(proteinTrendNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setVolumeBalanceNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.volumeBalanceNudge, value);
+    state = state.copyWith(volumeBalanceNudge: value);
     await _syncPreferencesToBackend();
   }
 

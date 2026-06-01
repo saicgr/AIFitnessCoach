@@ -2,22 +2,46 @@ part of 'chat_repository.dart';
 
 /// Lists "Ask Coach" chat sessions with instant cache load + silent refresh.
 ///
-/// Per feedback_instant_data: paint cached sessions synchronously-ish (first
-/// disk read), then refresh from the server in the background and swap in the
-/// fresh list. Never shows a pull-to-refresh control — the screen calls
-/// [refresh] silently when it opens.
+/// Per feedback_instant_data + project_tab_instant_perf: paint the last-known
+/// list on the SAME frame (in-memory cache, else a raced disk read), then
+/// revalidate from the server in the background and swap in the fresh list.
+/// A loading shimmer appears only on a true cold start (no cache anywhere).
+/// Never shows a pull-to-refresh control — the screen calls [refresh] silently.
+///
+/// Mirrors the proven `todayWorkoutProvider` pattern (static in-memory cache
+/// surviving provider invalidation + parallel disk/network race).
 class ChatSessionsNotifier
     extends StateNotifier<AsyncValue<List<ChatSession>>> {
   final ChatRepository _repository;
   final ApiClient _apiClient;
 
-  ChatSessionsNotifier(this._repository, this._apiClient)
-      : super(const AsyncValue.loading()) {
-    _restoreFromCacheThenRefresh();
+  /// STATIC in-memory cache — survives provider invalidation (auth token
+  /// refresh recreates the notifier) so reopening "Ask Coach" paints instantly
+  /// with zero disk I/O. Scoped to [_inMemoryOwnerUserId]; wiped on real
+  /// account change by [resetInMemoryCache] (called from the provider) so one
+  /// user never sees another's conversations.
+  static List<ChatSession>? _inMemoryCache;
+  static String? _inMemoryOwnerUserId;
+
+  /// The user_id the static in-memory cache currently belongs to.
+  static String? get inMemoryOwnerUserId => _inMemoryOwnerUserId;
+
+  /// Wipe the in-memory cache on a real user-id change (sign-out → sign-in).
+  /// Sets the new owner so the next paint can't inherit stale cross-user data.
+  static void resetInMemoryCache(String newOwnerUserId) {
+    _inMemoryCache = null;
+    _inMemoryOwnerUserId = newOwnerUserId;
   }
 
-  /// Disk cache key for the (non-archived) session list.
-  static String _cacheKey(String userId) => 'cache_chat_sessions_$userId';
+  ChatSessionsNotifier(this._repository, this._apiClient)
+      : super(
+          // Instant paint from in-memory cache when present, else cold loading.
+          _inMemoryCache != null
+              ? AsyncValue.data(_inMemoryCache!)
+              : const AsyncValue.loading(),
+        ) {
+    _restoreFromCacheThenRefresh();
+  }
 
   bool _includeArchived = false;
   String _query = '';
@@ -27,26 +51,60 @@ class ChatSessionsNotifier
   String get query => _query;
   bool get includeArchived => _includeArchived;
 
+  /// Decode cached/raw JSON into sessions, skipping any malformed entry so a
+  /// schema drift in one cached row can never crash the whole list.
+  List<ChatSession> _decodeSessions(List<Map<String, dynamic>> raw) {
+    final out = <ChatSession>[];
+    for (final j in raw) {
+      try {
+        out.add(ChatSession.fromJson(j));
+      } catch (e) {
+        debugPrint('⚠️ [ChatSessions] skipping malformed cached session: $e');
+      }
+    }
+    return out;
+  }
+
   Future<void> _restoreFromCacheThenRefresh() async {
     final userId = await _apiClient.getUserId();
     if (userId == null || !mounted) {
-      state = const AsyncValue.data([]);
+      if (mounted) state = const AsyncValue.data([]);
       return;
     }
-    // 1. Instant paint from cache (no q filter — cache holds the full list).
+
+    // Already painted from in-memory cache for THIS user → just revalidate.
+    if (_inMemoryCache != null && _inMemoryOwnerUserId == userId) {
+      await refresh();
+      return;
+    }
+
+    // Race: fire the network refresh immediately, read the disk cache in
+    // PARALLEL, and paint whichever arrives first. The disk read is only
+    // allowed to paint if the network hasn't already delivered fresh data.
+    final refreshFuture = refresh();
     try {
-      final cached =
-          await DataCacheService.instance.getCachedList(_cacheKey(userId));
-      if (cached != null && cached.isNotEmpty && mounted) {
-        final sessions =
-            cached.map((j) => ChatSession.fromJson(j)).toList();
-        state = AsyncValue.data(sessions);
+      final cached = await DataCacheService.instance.getCachedList(
+        DataCacheService.chatSessionsKey,
+        userId: userId,
+        // Stale-while-revalidate: show last-known sessions even past TTL —
+        // the refresh already in flight will swap in fresh data.
+        returnExpiredOnMiss: true,
+      );
+      if (cached != null &&
+          cached.isNotEmpty &&
+          mounted &&
+          state.valueOrNull == null) {
+        final sessions = _decodeSessions(cached);
+        if (sessions.isNotEmpty) {
+          _inMemoryCache = sessions;
+          _inMemoryOwnerUserId = userId;
+          state = AsyncValue.data(sessions);
+        }
       }
     } catch (e) {
       debugPrint('❌ [ChatSessions] cache restore failed: $e');
     }
-    // 2. Silent background refresh.
-    await refresh();
+    await refreshFuture;
   }
 
   /// Re-fetch the session list from the server using the current query +
@@ -62,8 +120,8 @@ class ChatSessionsNotifier
     try {
       final userId = await _apiClient.getUserId();
       if (userId == null || !mounted) return;
-      // Show a spinner only on a truly cold start (no data yet).
-      if (state.valueOrNull == null) {
+      // Show a spinner ONLY on a true cold start (nothing painted, no cache).
+      if (state.valueOrNull == null && _inMemoryCache == null) {
         state = const AsyncValue.loading();
       }
       final sessions = await _repository.listSessions(
@@ -75,9 +133,12 @@ class ChatSessionsNotifier
       // Only cache the unfiltered, non-archived list so the instant-paint on
       // next open reflects the default view.
       if (_query.isEmpty && !_includeArchived) {
+        _inMemoryCache = sessions;
+        _inMemoryOwnerUserId = userId;
         await DataCacheService.instance.cacheList(
-          _cacheKey(userId),
+          DataCacheService.chatSessionsKey,
           sessions.map((s) => s.toJson()).toList(),
+          userId: userId,
         );
       }
     } catch (e, st) {
@@ -137,11 +198,21 @@ class ChatSessionsNotifier
         .map((s) => s.id == session.id ? session : s)
         .toList(growable: false);
     state = AsyncValue.data(next);
+    _syncInMemory(next);
   }
 
   void _remove(String sessionId) {
     final current = state.valueOrNull ?? const <ChatSession>[];
-    state = AsyncValue.data(
-        current.where((s) => s.id != sessionId).toList(growable: false));
+    final next = current.where((s) => s.id != sessionId).toList(growable: false);
+    state = AsyncValue.data(next);
+    _syncInMemory(next);
+  }
+
+  /// Keep the static in-memory cache in step with optimistic local mutations
+  /// (rename/archive/delete) so the next instant-paint isn't stale.
+  void _syncInMemory(List<ChatSession> next) {
+    if (_query.isEmpty && !_includeArchived && _inMemoryOwnerUserId != null) {
+      _inMemoryCache = next;
+    }
   }
 }

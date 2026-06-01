@@ -164,6 +164,14 @@ class WorkoutExercise extends Equatable {
   final String? breathingCue; // Breathing pattern
   final String? setup; // Setup instruction
   final String? substitution; // Alternative exercise
+  // Workout section this exercise belongs to: "warmup" | "main" | "cooldown".
+  // Null on legacy/library workouts (rendered as one flat list); set by the
+  // AI novel-authoring path so the preview can group Warm Up / Main / Cool Down.
+  final String? section;
+  // A representative emoji for AI-authored exercises that have no library
+  // illustration (e.g. "hay bale" moves) — shown in the thumbnail so there is
+  // never a broken image, Google-Health style. Null for library exercises.
+  final String? emoji;
 
   const WorkoutExercise({
     this.id,
@@ -210,6 +218,8 @@ class WorkoutExercise extends Equatable {
     this.breathingCue,
     this.setup,
     this.substitution,
+    this.section,
+    this.emoji,
   });
 
   /// Whether the weight is based on user's past workout history
@@ -373,6 +383,7 @@ class WorkoutExercise extends Equatable {
         durationSeconds,
         weight,
         setTargets,
+        section,
       ];
 
   WorkoutExercise copyWith({
@@ -416,6 +427,8 @@ class WorkoutExercise extends Equatable {
     String? breathingCue,
     String? setup,
     String? substitution,
+    String? section,
+    String? emoji,
     bool clearSuperset = false,
   }) {
     return WorkoutExercise(
@@ -459,6 +472,8 @@ class WorkoutExercise extends Equatable {
       breathingCue: breathingCue ?? this.breathingCue,
       setup: setup ?? this.setup,
       substitution: substitution ?? this.substitution,
+      section: section ?? this.section,
+      emoji: emoji ?? this.emoji,
     );
   }
 

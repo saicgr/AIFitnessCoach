@@ -632,6 +632,32 @@ def generate_quick_workout(
     """
     logger.info(f"Tool: Generating quick {duration_minutes}min {workout_type} workout for user {user_id}")
 
+    # ── NO-RESTRICTIONS path (ADDITIVE) ───────────────────────────────────────
+    # If the user named an implement/movement the Exercise Library can't cover
+    # ("hay bale", "tire", "sandbag", a made-up object), AUTHOR the session with
+    # the LLM instead of silently substituting generic library moves. Gated by a
+    # data-driven coverage check; any failure returns None and falls straight
+    # through to the standard library path below (never blocks generation).
+    try:
+        from services.workout_novel_authoring import maybe_author_novel_workout
+        # Use ONLY the user's own words for novel-implement detection. Do NOT
+        # append workout_type — it is a default enum ("full_body") whose
+        # underscore breaks implement extraction and would mask a real implement.
+        _request_text = (constraints_text or focus or "").strip()
+        novel = maybe_author_novel_workout(
+            db_getter=get_supabase_db,
+            user_id=str(user_id),
+            request_text=_request_text,
+            duration_minutes=duration_minutes,
+            focus=focus,
+            intensity=intensity,
+            workout_id=workout_id,
+        )
+        if novel is not None:
+            return novel
+    except Exception as e:
+        logger.warning(f"[Quick Workout] novel-authoring gate failed, using standard path: {e}")
+
     # ── Constraint-aware path (ADDITIVE) ──────────────────────────────────────
     # When the user states a free-text limitation/focus, build via the shared
     # workout engine so pain/injury/time/equipment/impact constraints are
@@ -774,15 +800,22 @@ def generate_quick_workout(
             workout_type_key = "full_body"
         focus_area = focus_area_map[workout_type_key]
 
-        # Determine exercise count based on duration
+        # Determine exercise count based on duration. Extended past 20 min so a
+        # requested 30/45/60-min session is honored with a proportional number
+        # of exercises (the old flat "6 for anything over 20" undercut long
+        # requests).
         if duration_minutes <= 10:
             exercise_count = 3
         elif duration_minutes <= 15:
             exercise_count = 4
         elif duration_minutes <= 20:
             exercise_count = 5
+        elif duration_minutes <= 30:
+            exercise_count = 7
+        elif duration_minutes <= 45:
+            exercise_count = 9
         else:
-            exercise_count = 6
+            exercise_count = 10
 
         intensity_key = intensity.lower()
         if intensity_key not in ["light", "moderate", "intense"]:
@@ -928,7 +961,7 @@ def generate_quick_workout(
                 "difficulty": intensity_key,
                 "scheduled_date": today_utc,
                 "exercises_json": new_exercises,
-                "duration_minutes": min(duration_minutes, 30),
+                "duration_minutes": min(duration_minutes, 90),
                 "is_completed": False,
                 "generation_method": "ai_quick_workout",
                 "generation_source": "chat",
@@ -946,7 +979,7 @@ def generate_quick_workout(
             update_data = {
                 "exercises_json": new_exercises,
                 "name": workout_name,
-                "duration_minutes": min(duration_minutes, 30),
+                "duration_minutes": min(duration_minutes, 90),
                 "difficulty": intensity_key,
                 "type": workout_type_key.replace("_", " "),
                 "generation_method": "ai_quick_workout"
@@ -959,7 +992,7 @@ def generate_quick_workout(
             "action": "generate_quick_workout",
             "workout_id": final_workout_id,
             "workout_name": workout_name,
-            "duration_minutes": min(duration_minutes, 30),
+            "duration_minutes": min(duration_minutes, 90),
             "workout_type": workout_type_key,
             "intensity": intensity_key,
             "exercises_removed": old_exercise_names,

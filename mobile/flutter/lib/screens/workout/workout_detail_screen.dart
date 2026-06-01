@@ -913,6 +913,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                         isPendingPair: isPendingPair,
                         onSupersetDrop: (draggedIndex) => _createSuperset(draggedIndex, exerciseIndex),
                         supersetPairingIndex: _pendingSupersetIndex,
+                        sectionHeader: sectionHeaderForIndex(exercises, exerciseIndex),
                       ),
                   ),
                 ),

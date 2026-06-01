@@ -100,6 +100,16 @@ class NotificationPreferences {
   final bool eveningRecapNudge;
   final String eveningRecapTime;
 
+  // ── Data-grounded coach moments (WS3) ───────────────────────────
+  // Five new per-type toggles, each gating one push_nudge_cron job and synced
+  // to the backend notification_preferences JSONB. weekly_recap reuses the
+  // weekly check-in day + evening recap time, so it carries no time of its own.
+  final bool weeklyRecapNudge;    // Sunday-evening data-grounded week wrap
+  final bool sleepDebtNudge;      // 3+ short nights in a row
+  final bool rhrTrendNudge;       // resting HR creeping above baseline
+  final bool proteinTrendNudge;   // under protein target multiple days
+  final bool volumeBalanceNudge;  // weekly training-volume swing
+
   // ── Cycle tracking reminders (Phase E) ──────────────────────────
   // `cycleRemindersMaster` gates the whole group; each sub-type has its own
   // toggle. All cycle reminders respect the global quiet hours. The
@@ -209,6 +219,13 @@ class NotificationPreferences {
     // Evening recap (flagship) — default ON, user-local evening.
     this.eveningRecapNudge = true,
     this.eveningRecapTime = '20:00',
+    // Data-grounded coach moments (WS3) — all default ON (low-frequency by
+    // nature: weekly / cooldown-gated, bounded by the per-day nudge cap).
+    this.weeklyRecapNudge = true,
+    this.sleepDebtNudge = true,
+    this.rhrTrendNudge = true,
+    this.proteinTrendNudge = true,
+    this.volumeBalanceNudge = true,
     // Cycle tracking reminders (Phase E) — default ON when the cycle feature
     // is enabled; the group is also gated by `cycleRemindersMaster`.
     this.cycleRemindersMaster = true,
@@ -305,6 +322,12 @@ class NotificationPreferences {
     bool? pushNotificationsEnabled,
     bool? eveningRecapNudge,
     String? eveningRecapTime,
+    // Data-grounded coach moments (WS3)
+    bool? weeklyRecapNudge,
+    bool? sleepDebtNudge,
+    bool? rhrTrendNudge,
+    bool? proteinTrendNudge,
+    bool? volumeBalanceNudge,
     // Cycle tracking reminders (Phase E)
     bool? cycleRemindersMaster,
     bool? cyclePeriodApproaching,
@@ -400,6 +423,12 @@ class NotificationPreferences {
           pushNotificationsEnabled ?? this.pushNotificationsEnabled,
       eveningRecapNudge: eveningRecapNudge ?? this.eveningRecapNudge,
       eveningRecapTime: eveningRecapTime ?? this.eveningRecapTime,
+      // Data-grounded coach moments (WS3)
+      weeklyRecapNudge: weeklyRecapNudge ?? this.weeklyRecapNudge,
+      sleepDebtNudge: sleepDebtNudge ?? this.sleepDebtNudge,
+      rhrTrendNudge: rhrTrendNudge ?? this.rhrTrendNudge,
+      proteinTrendNudge: proteinTrendNudge ?? this.proteinTrendNudge,
+      volumeBalanceNudge: volumeBalanceNudge ?? this.volumeBalanceNudge,
       // Cycle tracking reminders (Phase E)
       cycleRemindersMaster: cycleRemindersMaster ?? this.cycleRemindersMaster,
       cyclePeriodApproaching:
@@ -503,6 +532,14 @@ class NotificationPreferences {
         // evening_recap job. Morning readiness reuses daily_briefing_*.
         'evening_recap_nudge': eveningRecapNudge,
         'evening_recap_time': eveningRecapTime,
+        // Data-grounded coach moments (WS3) — keys consumed by the
+        // push_nudge_cron weekly_recap / sleep_debt / rhr_trend /
+        // protein_trend / volume_balance jobs.
+        'weekly_recap_nudge': weeklyRecapNudge,
+        'sleep_debt_nudge': sleepDebtNudge,
+        'rhr_trend_nudge': rhrTrendNudge,
+        'protein_trend_nudge': proteinTrendNudge,
+        'volume_balance_nudge': volumeBalanceNudge,
         // Cycle tracking reminders (Phase E). Synced so the backend can also
         // suppress its server-side cycle nudges per the user's choice — only
         // CONTENT-FREE booleans / times leave the device, never cycle data.

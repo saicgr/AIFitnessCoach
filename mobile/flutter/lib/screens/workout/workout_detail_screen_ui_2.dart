@@ -1,5 +1,33 @@
 part of 'workout_detail_screen.dart';
 
+/// Section label ("Warm Up" / "Main Circuit" / "Cool Down") to render ABOVE the
+/// exercise at [index], or null. Only AI-authored workouts carry a per-exercise
+/// `section`; a workout with no sections (all null) or only one section shows no
+/// headers — keeping library/legacy workouts a flat list (back-compat).
+/// Top-level + pure so it is directly unit-testable.
+String? sectionHeaderForIndex(List<WorkoutExercise> exercises, int index) {
+  if (index < 0 || index >= exercises.length) return null;
+  final sec = exercises[index].section?.toLowerCase().trim();
+  if (sec == null || sec.isEmpty) return null;
+  final distinct = exercises
+      .map((e) => e.section?.toLowerCase().trim())
+      .where((s) => s != null && s.isNotEmpty)
+      .toSet();
+  if (distinct.length < 2) return null; // not a real multi-section workout
+  // Only label the FIRST exercise of each section.
+  for (int i = 0; i < index; i++) {
+    if (exercises[i].section?.toLowerCase().trim() == sec) return null;
+  }
+  const labels = {
+    'warmup': 'Warm Up',
+    'warm_up': 'Warm Up',
+    'main': 'Main Circuit',
+    'cooldown': 'Cool Down',
+    'cool_down': 'Cool Down',
+  };
+  return labels[sec] ?? (sec[0].toUpperCase() + sec.substring(1));
+}
+
 /// Methods extracted from _WorkoutDetailScreenState
 extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
 
@@ -218,12 +246,13 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
     bool isPendingPair = false,
     void Function(int draggedIndex)? onSupersetDrop,
     int? supersetPairingIndex,
+    String? sectionHeader,
   }) {
     // When in superset pairing mode, intercept taps for pairing instead of navigation
     final bool inPairingMode = supersetPairingIndex != null;
     final bool isSelf = supersetPairingIndex == index;
 
-    return ExpandedExerciseCard(
+    final Widget card = ExpandedExerciseCard(
       key: ValueKey(exercise.id ?? index),
       exercise: exercise,
       index: index,
@@ -275,6 +304,43 @@ extension __WorkoutDetailScreenStateExt2 on _WorkoutDetailScreenState {
       },
       onRemove: () => _removeExerciseFromWorkout(exercise, index),
       onNeverRecommend: () => _neverRecommendExercise(exercise),
+    );
+
+    if (sectionHeader == null || sectionHeader.isEmpty) return card;
+    // Render a section label above the first exercise of each section (the
+    // header rides with its card as one reorderable unit, so reorder math is
+    // unaffected).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(6, 14, 6, 4),
+          child: Row(
+            children: [
+              Container(
+                width: 3,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                sectionHeader.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                  color: accentColor,
+                ),
+              ),
+            ],
+          ),
+        ),
+        card,
+      ],
     );
   }
 

@@ -47,10 +47,26 @@ _BASE_STYLE = (
     "3. No em dashes and no en dashes. Use commas or periods.\n"
     "4. Body under 90 words. Each action bullet under 16 words.\n"
     "5. If an active injury is present, reference it naturally and keep the "
-    "relevant caution. Never diagnose; inform and adjust.\n"
+    "relevant caution, naming the specific body part and the recovery phase "
+    "from DATA (for example 'keep skipping bench press while your shoulder "
+    "settles'). Never diagnose; inform and adjust. If NO injury is in DATA, do "
+    "not invent or recall a past injury, and do not tell them to avoid any "
+    "exercise for an injury reason. A healed injury is not in DATA, so you must "
+    "stop referencing it.\n"
     "6. If an open follow-up is provided, you may weave in one brief check-in, "
     "but keep the notification focused.\n"
-    "7. Stay completely in character. Output ONLY the JSON object described.\n"
+    "7. PATTERN over snapshot: when DATA carries a multi-day trend (a field "
+    "named like ``*_trend`` or ``pattern_days``), lead with the PATTERN, not "
+    "today's single number (for example 'your steps have sat under your goal "
+    "three days running' instead of 'you walked 4,000 steps today'). Only claim "
+    "a multi-day span when DATA actually states that span. If only a single "
+    "day of data is present, speak about today, never about 'the last N days'.\n"
+    "8. TIME ANCHOR: anchor every action bullet to the user's actual local "
+    "``time_of_day`` from DATA. In the morning say 'this morning' or 'after "
+    "breakfast'; midday say 'after lunch' or 'this afternoon'; evening say "
+    "'tonight' or 'before bed'. Never say 'after lunch' in an evening "
+    "notification or 'tonight' in a morning one.\n"
+    "9. Stay completely in character. Output ONLY the JSON object described.\n"
 )
 
 _MOMENT_GUIDANCE = {
@@ -66,6 +82,44 @@ _MOMENT_GUIDANCE = {
         "(steps, workout done or missed, nutrition if present), acknowledge the "
         "effort honestly, and set up tomorrow with one small intention. Do not "
         "talk about last night's sleep as if it were tonight."
+    ),
+    "weekly_recap": (
+        "MOMENT: This is the SUNDAY EVENING weekly wrap. Reflect on the WEEK as "
+        "a whole using the weekly aggregates in DATA (active minutes, workouts "
+        "completed, consistency days). Give an honest, warm reflection on how "
+        "the week went, then one or two actions that set up the NEXT week (for "
+        "example an earlier lights-out target or a realistic workout count). If "
+        "the week had zero workouts or very low activity, stay encouraging and "
+        "forward-looking. Never guilt-trip a quiet week, frame the fresh week "
+        "as the opportunity. Anchor actions to the week ahead, not to today."
+    ),
+    "sleep_debt": (
+        "MOMENT: This is a SLEEP DEBT nudge. DATA shows several short nights in "
+        "a row. Name the pattern honestly using the multi-day sleep numbers, "
+        "explain briefly why repeated short sleep blunts recovery and training, "
+        "and give one protective action for TONIGHT (an earlier lights-out, a "
+        "lighter session tomorrow). Be supportive, never alarming."
+    ),
+    "rhr_trend": (
+        "MOMENT: This is an EARLY RECOVERY SIGNAL. DATA shows resting heart "
+        "rate creeping above the user's own baseline across several days. Frame "
+        "it as an early heads up that the body may be carrying fatigue or "
+        "fighting something off, not a diagnosis. Suggest one easy-day or "
+        "extra-recovery action. Inform and reassure, never alarm."
+    ),
+    "protein_trend": (
+        "MOMENT: This is a NUTRITION nudge tied to the user's protein target. "
+        "DATA shows protein has landed under target for several days. Tie it to "
+        "their goal, keep it practical, and give one concrete way to add "
+        "protein at the next meal anchored to the local time of day. No shame, "
+        "just a useful nudge."
+    ),
+    "volume_balance": (
+        "MOMENT: This is a TRAINING LOAD nudge. DATA shows this week's training "
+        "volume swung notably versus the prior week. If volume jumped, suggest "
+        "a lighter or deload day to absorb it. If volume dropped, gently invite "
+        "a push back toward their normal load. Use the volume numbers in DATA "
+        "and tie the suggestion to recovery."
     ),
 }
 

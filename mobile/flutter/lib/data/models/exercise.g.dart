@@ -74,6 +74,8 @@ WorkoutExercise _$WorkoutExerciseFromJson(Map<String, dynamic> json) =>
       breathingCue: json['breathing_cue'] as String?,
       setup: json['setup'] as String?,
       substitution: json['substitution'] as String?,
+      section: json['section'] as String?,
+      emoji: json['emoji'] as String?,
     );
 
 Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
@@ -122,6 +124,8 @@ Map<String, dynamic> _$WorkoutExerciseToJson(WorkoutExercise instance) =>
       'breathing_cue': instance.breathingCue,
       'setup': instance.setup,
       'substitution': instance.substitution,
+      'section': instance.section,
+      'emoji': instance.emoji,
     };
 
 LibraryExercise _$LibraryExerciseFromJson(Map<String, dynamic> json) =>

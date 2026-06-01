@@ -19,6 +19,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/coach_avatar.dart';
+import 'generic_blocks_renderer.dart';
 
 class CoachBriefingCard extends StatelessWidget {
   final DailyCoachInsight insight;
@@ -120,6 +121,14 @@ class CoachBriefingCard extends StatelessWidget {
           for (int i = 0; i < lines.length; i++) ...[
             _BodyLine(line: lines[i], colors: c, accent: accent),
             if (i != lines.length - 1) const SizedBox(height: 6),
+          ],
+
+          // ── Grounded health graphs (sleep ring + recovery signals + steps)
+          // — the Google-Health "here's how you slept" panel. Tappable into
+          // the full metric screens via each block's tap_route.
+          if (insight.blocks.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            GenericBlocksRenderer(blocks: insight.blocks),
           ],
 
           // ── Quick-reply chips ────────────────────────────────────────────

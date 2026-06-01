@@ -57,6 +57,70 @@ def numbers_grounded(text: str, grounded: set) -> bool:
     return True
 
 
+def deterministic_insight_title(
+    snapshot: Optional[Dict[str, Any]],
+    moment: str = "morning_readiness",
+) -> str:
+    """A short, data-grounded INSIGHT title derived from the leading metric.
+
+    Replaces the generic ``"{coach}'s morning briefing"`` label. Picks the most
+    salient real signal in the snapshot (recovery tier, then sleep, then steps)
+    and returns an observation, never a command, never a fabricated number (the
+    title carries NO digits, so it is always grounded by construction). A
+    deterministic small pool keyed off real state keeps it human, not robotic.
+
+    Falls back to a neutral, non-numeric insight when no signal is present, so
+    the title is never the old generic label.
+    """
+    import random
+
+    snap = snapshot or {}
+    recovery = (snap.get("recovery") or {})
+    sleep = (snap.get("last_night_sleep") or {})
+    steps = (snap.get("steps") or {})
+    hr = (snap.get("heart_rate") or {})
+
+    pools: list = []
+
+    tier = recovery.get("tier")
+    if tier in ("high", "optimal", "primed"):
+        pools = [
+            "Your body is primed today",
+            "Recovery is in your favor",
+            "Green light from your recovery",
+        ]
+    elif tier in ("low", "compromised", "poor"):
+        pools = [
+            "Your body is asking for a lighter day",
+            "Recovery says ease in today",
+            "Protect today, recovery is low",
+        ]
+    elif sleep.get("total_minutes"):
+        pools = [
+            "Last night set the tone",
+            "Your sleep is the headline today",
+            "Here is what last night gave you",
+        ]
+    elif hr.get("resting_vs_baseline") is not None:
+        pools = [
+            "Your resting heart rate has a story",
+            "A quick read on your recovery signals",
+        ]
+    elif steps.get("today") is not None:
+        pools = [
+            "Your movement is the story today",
+            "Let's talk about your steps",
+        ]
+
+    if not pools:
+        if moment == "evening_recap":
+            pools = ["How today landed", "Your day, wrapped"]
+        else:
+            pools = ["Your morning read", "Here is today's setup"]
+
+    return random.choice(pools)
+
+
 def parse_json_object(text: str) -> Optional[Dict[str, Any]]:
     """Parse a JSON object from a model response, tolerating ```json fences."""
     if not text:

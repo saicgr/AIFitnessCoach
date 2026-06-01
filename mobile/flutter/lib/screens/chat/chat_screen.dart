@@ -53,6 +53,7 @@ import 'widgets/coach_greeting_view.dart';
 import 'widgets/voice_message_widget.dart';
 import 'widgets/chat_message_bubble.dart';
 import 'widgets/chat_media_widgets.dart';
+import '../../data/repositories/workout_repository.dart' show aiGeneratingWorkoutProvider;
 import '../../core/models/chat_quick_action.dart';
 import '../../core/providers/usage_tracking_provider.dart';
 import '../../core/services/posthog_service.dart';
@@ -1084,6 +1085,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                       _isLoading && newest != null && newest.role == 'user';
                   final hasNewestSlot = _streamingSlotVisible || awaitingReplyToUser;
                   final extraItems = (hasNewestSlot ? 1 : 0) + (hasMore ? 1 : 0);
+                  // Optimistic "building your workout" skeleton — the coach set
+                  // this flag the instant a quick-workout request was detected
+                  // (and clears it in a finally), so the wait feels instant and
+                  // workout-specific instead of a generic spinner.
+                  final isGeneratingWorkout =
+                      ref.watch(aiGeneratingWorkoutProvider);
 
                   return ListView.builder(
                     key: const ValueKey('content'),
@@ -1117,8 +1124,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                 onRetry: _retryStreamingDrop,
                               );
                             }
-                            // No tokens yet — show the existing typing
+                            // No tokens yet. For a workout request show an
+                            // optimistic skeleton workout card so the wait feels
+                            // instant and on-topic; otherwise the typing
                             // indicator with its 1-Hz elapsed label (C5).
+                            if (isGeneratingWorkout) {
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _TypingIndicator(
+                                    statusText: 'Building your workout…',
+                                    elapsedListenable: _elapsedNotifier,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const WorkoutSkeletonCard(),
+                                ],
+                              );
+                            }
                             return _TypingIndicator(
                               statusText: _statusLabel,
                               elapsedListenable: _elapsedNotifier,

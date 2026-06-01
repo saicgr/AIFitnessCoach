@@ -56,6 +56,22 @@ _COLOR_HRV = "#16A085"        # teal
 _COLOR_STEPS = "#0984E3"      # blue
 _COLOR_WEIGHT = "#00B894"     # green
 _COLOR_VOLUME = "#E67E22"     # orange
+_COLOR_PROTEIN = "#8E44AD"    # purple (macro-specific — protein)
+_COLOR_CALORIES = "#F39C12"   # amber
+
+# Tap targets — a data block may deep-link into the full metric screen when
+# tapped (Google-Health style). Detail SUB-routes only (push-safe; NEVER a
+# StatefulShellRoute branch root like /nutrition — see project memory).
+_TOPIC_TAP_ROUTE: Dict[str, str] = {
+    "sleep": "/health/sleep",
+    "recovery": "/health/combined",
+    "heart_rate": "/health/combined",
+    "hrv": "/health/combined",
+    "steps": "/health/combined",
+    "weight": "/metrics",
+    "volume": "/metrics",
+    # "nutrition" intentionally omitted — its screen is a branch root.
+}
 
 # How far back each chart looks. Bounded so the query is cheap and the chart
 # stays readable on a phone.
@@ -105,6 +121,7 @@ _TOPICS: List[tuple] = [
     ("sleep", ("sleep", "slept", "sleeping", "rem", "deep sleep", "bedtime", "rest last night")),
     ("steps", ("steps", "step count", "walking", "walked", "activity", "active", "move", "movement")),
     ("weight", ("weight", "weigh", "bodyweight", "body weight", "lbs", "kgs", "scale", "leaner", "lost weight", "gained weight")),
+    ("nutrition", ("protein", "calorie", "calories", "macro", "macros", "carbs", "kcal", "deficit", "maintenance calories", "how much did i eat", "my diet", "my nutrition", "eating enough")),
     ("recovery", ("recovery", "recovered", "readiness", "recover")),
     ("volume", ("volume", "training", "tonnage", "progress", "progressing", "getting stronger", "strength gains", "lifting more")),
 ]
@@ -185,6 +202,7 @@ async def build_blocks_for_response(
             "steps": _build_steps_blocks,
             "weight": _build_weight_blocks,
             "volume": _build_volume_blocks,
+            "nutrition": _build_nutrition_blocks,
         }.get(topic)
         if builder is None:
             return []
@@ -192,6 +210,16 @@ async def build_blocks_for_response(
         blocks = builder(db, user_id) or []
         # Defensive: drop anything that isn't a dict before any reordering.
         blocks = [b for b in blocks if isinstance(b, dict)]
+
+        # Attach the deep-link route for this topic so the metric/chart blocks
+        # are tappable into the full screen. setdefault never clobbers a route a
+        # builder set itself.
+        route = _TOPIC_TAP_ROUTE.get(topic)
+        if route:
+            for b in blocks:
+                spec = b.get("spec")
+                if b.get("type") in ("metric", "chart", "stat_grid") and isinstance(spec, dict):
+                    spec.setdefault("tap_route", route)
 
         # #19 — when the user explicitly asked about a TREND over time, make
         # sure a grounded `chart` block (built above from the metric's real
@@ -573,3 +601,130 @@ def _build_volume_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
         },
     })
     return blocks
+
+
+def _build_nutrition_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
+    """Protein (bar) + calories (line) over the trailing 7 LOGGED days, plus a
+    latest-day protein-vs-target headline. Grounded in food_logs only."""
+    try:
+        start = (_utc_today() - timedelta(days=6)).isoformat()
+        summaries = db.get_weekly_nutrition_summary(user_id, start) or []
+    except Exception as e:
+        logger.debug(f"chat_blocks(nutrition): query failed: {e}")
+        return []
+    if not summaries:
+        return []
+
+    # Only days the user actually LOGGED food — a 0-meal day means "didn't log",
+    # not "ate nothing", so counting it as a real zero would mislead the trend.
+    logged = [s for s in summaries if (s.get("meal_count") or 0) > 0]
+    if len(logged) < 2:
+        return []
+
+    protein_pts: List[int] = []
+    cal_pts: List[int] = []
+    labels: List[str] = []
+    for s in logged:
+        p = _safe_num(s.get("total_protein_g")) or 0.0
+        c = _safe_num(s.get("total_calories")) or 0.0
+        protein_pts.append(int(round(p)))
+        cal_pts.append(int(round(c)))
+        labels.append(_day_label(s.get("date")))
+
+    # Target protein for the headline (optional — degrade gracefully).
+    target_protein: Optional[float] = None
+    try:
+        targets = db.get_user_nutrition_targets(user_id) or {}
+        target_protein = _safe_num(targets.get("daily_protein_target_g"))
+    except Exception:
+        target_protein = None
+
+    blocks: List[Dict[str, Any]] = []
+
+    today_protein = protein_pts[-1]
+    metric_spec: Dict[str, Any] = {
+        "value": today_protein,
+        "unit": "g",
+        "color": _COLOR_PROTEIN,
+        "subtext": f"{len(protein_pts)} logged days",
+    }
+    if target_protein and target_protein > 0:
+        diff = int(round(today_protein - target_protein))
+        direction = "flat" if abs(diff) < 5 else ("up" if diff > 0 else "down")
+        metric_spec["subtext"] = f"target {int(round(target_protein))} g"
+        metric_spec["delta"] = {"value": abs(diff), "unit": "g", "direction": direction}
+    blocks.append({"type": "metric", "title": "Protein (latest day)", "spec": metric_spec})
+
+    blocks.append({
+        "type": "chart",
+        "title": f"Protein · last {len(protein_pts)} logged days",
+        "spec": {
+            "chart_type": "bar",
+            "color": _COLOR_PROTEIN,
+            "unit": "g",
+            "points": protein_pts,
+            "x_labels": labels,
+            "y_min": 0,
+            "highlight_last": True,
+        },
+    })
+    if any(c > 0 for c in cal_pts):
+        blocks.append({
+            "type": "chart",
+            "title": f"Calories · last {len(cal_pts)} logged days",
+            "spec": {
+                "chart_type": "line",
+                "color": _COLOR_CALORIES,
+                "unit": "kcal",
+                "points": cal_pts,
+                "x_labels": labels,
+                "y_min": 0,
+                "highlight_last": True,
+            },
+        })
+    return blocks
+
+
+def _attach_route(blocks: List[Dict[str, Any]], topic: str) -> List[Dict[str, Any]]:
+    """Stamp the topic's deep-link route onto each tappable block."""
+    route = _TOPIC_TAP_ROUTE.get(topic)
+    if route:
+        for b in blocks:
+            spec = b.get("spec") if isinstance(b, dict) else None
+            if isinstance(spec, dict) and b.get("type") in ("metric", "chart", "stat_grid"):
+                spec.setdefault("tap_route", route)
+    return blocks
+
+
+def build_briefing_blocks(user_id: str) -> List[Dict[str, Any]]:
+    """Grounded blocks for a PROACTIVE daily briefing (morning/evening).
+
+    A briefing has no user question to topic-detect from, so we assemble the
+    same grounded set Google Health's coach view shows: a sleep-duration ring,
+    the recovery signals (resting HR metric + sparkline), and a steps chart.
+    Curated to one-headline-per-topic so the card stays compact. Reuses the same
+    never-fabricate per-topic builders. NEVER raises; returns [] when no data.
+    """
+    try:
+        try:
+            db = get_supabase_db()
+        except Exception as e:
+            logger.debug(f"chat_blocks(briefing): DB unavailable: {e}")
+            return []
+
+        out: List[Dict[str, Any]] = []
+        # Sleep ring (metric only — drop the stage grid to keep the card tight).
+        sleep_bl = [b for b in (_build_sleep_blocks(db, user_id) or [])
+                    if isinstance(b, dict) and b.get("type") == "metric"][:1]
+        out += _attach_route(sleep_bl, "sleep")
+        # Recovery signals (resting-HR metric + sparkline, + HRV if present).
+        out += _attach_route(_build_recovery_blocks(db, user_id) or [], "recovery")
+        # Steps (chart only — the trend, not another headline number).
+        steps_bl = [b for b in (_build_steps_blocks(db, user_id) or [])
+                    if isinstance(b, dict) and b.get("type") == "chart"][:1]
+        out += _attach_route(steps_bl, "steps")
+
+        return [b for b in out if isinstance(b, dict)][:5]
+    except Exception as e:
+        logger.warning(f"chat_blocks: briefing block build failed (no blocks): {e}")
+        return []

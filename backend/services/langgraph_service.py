@@ -57,6 +57,63 @@ def _ensure_str(content) -> str:
     return str(content) if content else ""
 
 
+# A tool-call envelope a confused model sometimes writes as PROSE instead of
+# actually calling the tool — e.g. it narrates "...{\"action_ids\": [\"generate_
+# quick_workout\"], \"prompt\": \"...\"}". The token/action separation only works
+# when the model genuinely calls a tool, so a written-out envelope leaks straight
+# into the visible bubble. This is the server-side safety net that scrubs it.
+_LEAKED_TOOL_JSON_RE = re.compile(
+    r"""
+    \s*
+    (?:```(?:json)?\s*)?          # optional ``` or ```json fence
+    \{                            # opening brace
+    (?=[^{}]*?"(?:action_ids|action|suggested_actions)"\s*:)  # must look like an action envelope
+    [^{}]*                        # body (no nested braces — tool envelopes are flat)
+    \}
+    (?:\s*```)?                   # optional closing fence
+    \s*
+    """,
+    re.VERBOSE | re.DOTALL,
+)
+
+
+def strip_leaked_tool_json(text: str) -> Tuple[str, Optional[Dict[str, Any]]]:
+    """Remove any leaked tool-call JSON envelope from visible reply text.
+
+    Returns (clean_text, recovered_payload). ``recovered_payload`` is the parsed
+    envelope (so callers can fold valid ``action_ids`` back into real
+    ``action_data``) or None when nothing leaked. Defensive: a parse failure
+    still strips the offending block so the user never sees raw JSON.
+    """
+    if not text or "{" not in text:
+        return text, None
+
+    recovered: Optional[Dict[str, Any]] = None
+
+    def _capture(match: "re.Match") -> str:
+        nonlocal recovered
+        blob = match.group(0).strip()
+        # Pull out just the {...} for a parse attempt (drop any code fence).
+        brace_start = blob.find("{")
+        brace_end = blob.rfind("}")
+        if brace_start != -1 and brace_end != -1 and recovered is None:
+            try:
+                import json as _json
+                recovered = _json.loads(blob[brace_start:brace_end + 1])
+            except Exception:
+                recovered = None
+        return " "
+
+    cleaned = _LEAKED_TOOL_JSON_RE.sub(_capture, text)
+    # Collapse the whitespace the substitution may have left behind.
+    cleaned = re.sub(r"[ \t]{2,}", " ", cleaned).strip()
+    if not cleaned:
+        # The leaked envelope was the ENTIRE message — leave a graceful line
+        # rather than an empty bubble (never silently blank).
+        cleaned = "Here's what I put together for you."
+    return cleaned, recovered
+
+
 def _maybe_inline_action(
     existing_action_data: Optional[Dict[str, Any]],
     message_str: str,
@@ -1330,6 +1387,12 @@ class LangGraphCoachService:
             if not message_str.strip():
                 message_str = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
 
+            # SAFETY NET: scrub any tool-call envelope the model wrote as prose
+            # ({"action_ids": ...}) so raw JSON never reaches the bubble.
+            message_str, _leaked = strip_leaked_tool_json(message_str)
+            if _leaked:
+                logger.warning(f"[LangGraph Service] Scrubbed leaked tool JSON from reply: {_leaked}")
+
             # ADDITIVE: attach a deterministic inline go-to action ONLY when the
             # agent emitted no structured action_data of its own.
             action_data = _maybe_inline_action(
@@ -1650,6 +1713,12 @@ class LangGraphCoachService:
         message_str = _ensure_str(raw_response)
         if not message_str.strip():
             message_str = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
+
+        # SAFETY NET: scrub any tool-call envelope the model wrote as prose
+        # ({"action_ids": ...}) so raw JSON never reaches the bubble.
+        message_str, _leaked = strip_leaked_tool_json(message_str)
+        if _leaked:
+            logger.warning(f"[LangGraph Service] Scrubbed leaked tool JSON from reply (stream): {_leaked}")
 
         # ADDITIVE: attach a deterministic inline go-to action ONLY when the
         # agent emitted no structured action_data of its own.

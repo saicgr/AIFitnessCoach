@@ -213,6 +213,10 @@ class DailyInsightResponse(BaseModel):
     generated_at: Optional[str] = None
     # "gemini" on the happy path, "deterministic_fallback" otherwise.
     delivery: str = "gemini"
+    # Grounded inline graphs (sleep ring + recovery signals + steps) for the
+    # rich morning/evening briefings — the GenericBlocksRenderer schema. None
+    # for lightweight sources or when the user has no health data.
+    blocks: Optional[List[Dict[str, Any]]] = None
 
 
 # ---------------------------------------------------------------------------
@@ -1050,6 +1054,20 @@ async def daily_insight(
                 f"source must be one of {sorted(_ALLOWED_SOURCES)}",
             )
         stat_context = context if source == "pillar_stat" else None
+
+        # Grounded inline graphs for the rich daily briefings (sleep ring +
+        # recovery signals + steps), built FRESH from the user's real data so a
+        # cached briefing's graph still reflects today. Best-effort: None on no
+        # data, never fatal. Computed once, attached to every return path.
+        briefing_blocks: Optional[List[Dict[str, Any]]] = None
+        if source in ("morning_brief", "evening_recap", "morning_brief_onboarding"):
+            try:
+                from services.coach.chat_blocks import build_briefing_blocks
+                briefing_blocks = build_briefing_blocks(user_id) or None
+            except Exception as e:
+                logger.warning(f"[daily_insight] briefing blocks build failed: {e}")
+                briefing_blocks = None
+
         if source == "pillar_stat" and not stat_context:
             raise HTTPException(400, "context query param required for source=pillar_stat")
 
@@ -1078,6 +1096,7 @@ async def daily_insight(
                         leading_pillar=row.get("leading_pillar"),
                         generated_at=row.get("generated_at"),
                         delivery="gemini",  # cached rows are only stored on success
+                        blocks=briefing_blocks,
                     )
             except HTTPException:
                 raise
@@ -1259,6 +1278,7 @@ async def daily_insight(
             leading_pillar=payload.get("leading_pillar"),
             generated_at=generated_at_iso,
             delivery=delivery,
+            blocks=briefing_blocks,
         )
     except HTTPException:
         raise

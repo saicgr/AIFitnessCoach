@@ -435,8 +435,8 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
     // try block so the `finally` can see it, but the side-effecting
     // _setAIGenerating call goes inside the try so an exception from the
     // callback cannot leak past the `finally` that clears _isLoading.
-    final messageLower = message.toLowerCase();
-    final isQuickWorkoutRequest = ChatMessagesNotifier._quickWorkoutKeywords.any((kw) => messageLower.contains(kw));
+    final isQuickWorkoutRequest =
+        ChatMessagesNotifier.looksLikeQuickWorkoutRequest(message);
 
     try {
       if (isQuickWorkoutRequest) {

@@ -300,6 +300,13 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'quick workout', 'short workout', 'fast workout',
     'quick exercise', 'something quick', 'something fast',
     '15 minute', '10 minute', '20 minute', '5 minute', '30 minute',
+    // Short forms + equipment/focus phrasings ("10 min workout",
+    // "workout using hay bale", "workout with kettlebell"). These only drive
+    // the optimistic skeleton, so a rare false positive just briefly shows a
+    // workout placeholder — harmless.
+    'min workout', 'minute workout', 'workout using', 'workout with',
+    'workout for', 'do a workout', 'want to workout', 'generate me a workout',
+    'generate workout', 'build me a workout', 'build a workout',
     'give me a quick', 'create a quick', 'need a quick', 'want a quick',
     'no time', 'short on time', 'in a hurry',
     'generate a workout', 'create a workout', 'make me a workout',
@@ -323,6 +330,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'want to do crossfit', 'train like crossfit',
     'train like a fighter', 'want to fight',
   ];
+
+  /// True when a user message looks like a request to GENERATE a workout —
+  /// drives the optimistic "building your workout" skeleton. Intentionally
+  /// permissive (a rare false positive only shows a brief placeholder);
+  /// false negatives just fall back to the normal typing indicator.
+  static bool looksLikeQuickWorkoutRequest(String message) {
+    final lower = message.toLowerCase();
+    return _quickWorkoutKeywords.any((kw) => lower.contains(kw));
+  }
 
   ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData, this._ref)
       : super(const AsyncValue.data([])) {

@@ -76,7 +76,13 @@ final chatSessionsProvider =
         (ref) {
   final repository = ref.watch(chatRepositoryProvider);
   final apiClient = ref.watch(apiClientProvider);
-  ref.watch(authStateProvider.select((s) => s.user?.id));
+  // Watch user_id so the notifier is recreated on sign-out → sign-in. On a
+  // REAL user change, wipe the static in-memory session cache so the new
+  // account never flashes the previous user's conversations (cross-user leak).
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != ChatSessionsNotifier.inMemoryOwnerUserId) {
+    ChatSessionsNotifier.resetInMemoryCache(userId);
+  }
   return ChatSessionsNotifier(repository, apiClient);
 });
 

@@ -737,6 +737,82 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   ),
                 ),
                 Divider(height: 1, color: cardBorder, indent: 50),
+                // ─── Data-grounded coach moments (WS3) ──────────────
+                // Five new per-type toggles for the data-grounded coach
+                // notifications. Each maps to one cron job + one JSONB pref
+                // key. weekly_recap reuses the weekly check-in day + evening
+                // recap time, so it is a plain toggle here. The trend nudges
+                // are event / cooldown driven (no fixed time control).
+                _buildSimpleToggleRow(
+                  icon: Icons.calendar_view_week_outlined,
+                  iconColor: const Color(0xFF8B5CF6),
+                  title: 'Weekly recap',
+                  subtitle: 'Sunday-evening wrap of your training week',
+                  value: notifPrefs.weeklyRecapNudge,
+                  onChanged: (v) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setWeeklyRecapNudge(v),
+                  accent: accent,
+                  activeTrack: activeTrack,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                _buildSimpleToggleRow(
+                  icon: Icons.bedtime_outlined,
+                  iconColor: const Color(0xFF60A5FA),
+                  title: 'Sleep debt alerts',
+                  subtitle: 'A heads up after several short nights in a row',
+                  value: notifPrefs.sleepDebtNudge,
+                  onChanged: (v) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setSleepDebtNudge(v),
+                  accent: accent,
+                  activeTrack: activeTrack,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                _buildSimpleToggleRow(
+                  icon: Icons.favorite_border,
+                  iconColor: const Color(0xFFF43F5E),
+                  title: 'Resting HR trend',
+                  subtitle: 'An early signal if your resting heart rate climbs',
+                  value: notifPrefs.rhrTrendNudge,
+                  onChanged: (v) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setRhrTrendNudge(v),
+                  accent: accent,
+                  activeTrack: activeTrack,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                _buildSimpleToggleRow(
+                  icon: Icons.egg_alt_outlined,
+                  iconColor: const Color(0xFF10B981),
+                  title: 'Protein nudges',
+                  subtitle: 'A reminder when protein lands under target',
+                  value: notifPrefs.proteinTrendNudge,
+                  onChanged: (v) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setProteinTrendNudge(v),
+                  accent: accent,
+                  activeTrack: activeTrack,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                _buildSimpleToggleRow(
+                  icon: Icons.balance_outlined,
+                  iconColor: const Color(0xFFF59E0B),
+                  title: 'Training load balance',
+                  subtitle: 'A deload-or-push tip when your weekly volume swings',
+                  value: notifPrefs.volumeBalanceNudge,
+                  onChanged: (v) => ref
+                      .read(notificationPreferencesProvider.notifier)
+                      .setVolumeBalanceNudge(v),
+                  accent: accent,
+                  activeTrack: activeTrack,
+                  textMuted: textMuted,
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
                 // ─── Cycle Reminders (Phase E) ──────────────────────
                 // Shown only when cycle tracking is enabled
                 // (`menstrual_tracking_enabled`). The full per-type cycle
@@ -1095,6 +1171,50 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
           duration: const Duration(milliseconds: 200),
         ),
       ],
+    );
+  }
+
+  // ─── Plain toggle row (no time control) ─────────────────
+  // Used by the WS3 data-grounded coach moments, which are event / cooldown /
+  // day-of-week driven and so carry no per-row delivery-time picker.
+  Widget _buildSimpleToggleRow({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required Color accent,
+    required Color activeTrack,
+    required Color textMuted,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: value ? iconColor : textMuted, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 15)),
+                Text(
+                  subtitle,
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: accent,
+            activeTrackColor: activeTrack,
+          ),
+        ],
+      ),
     );
   }
 }

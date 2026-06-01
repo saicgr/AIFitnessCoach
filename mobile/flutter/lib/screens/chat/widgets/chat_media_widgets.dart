@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/workout_studio_providers.dart';
+import '../../../data/repositories/chat_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../screens/nutrition/menu_analysis_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -373,6 +374,27 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
   int _thumbs = 0;
   bool _saving = false;
   bool _saved = false;
+  bool _adjusting = false;
+
+  /// Quick-adjust: send a templated tweak to the coach without leaving chat.
+  /// Reuses the same chat send path the input bar uses, so the coach's
+  /// modify-workout tools run and the card updates in place.
+  Future<void> _quickAdjust(String message) async {
+    if (_adjusting) return;
+    setState(() => _adjusting = true);
+    HapticService.selection();
+    try {
+      await ref.read(chatMessagesProvider.notifier).sendMessage(message);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not send. Please try again.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _adjusting = false);
+    }
+  }
 
   Future<void> _save() async {
     if (_saving || _saved) return;
@@ -519,6 +541,41 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
                 ],
               ),
             ),
+          // ── Quick-adjust chips — tweak the workout without leaving chat ──
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+            child: Opacity(
+              opacity: _adjusting ? 0.5 : 1.0,
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _QuickAdjustChip(
+                    icon: Icons.trending_up_rounded,
+                    label: 'Harder',
+                    onTap: () => _quickAdjust('Make this workout harder.'),
+                  ),
+                  _QuickAdjustChip(
+                    icon: Icons.trending_down_rounded,
+                    label: 'Easier',
+                    onTap: () => _quickAdjust('Make this workout easier.'),
+                  ),
+                  _QuickAdjustChip(
+                    icon: Icons.swap_horiz_rounded,
+                    label: 'Swap',
+                    onTap: () => _quickAdjust(
+                        'Swap one of the exercises in this workout for a different one.'),
+                  ),
+                  _QuickAdjustChip(
+                    icon: Icons.event_rounded,
+                    label: 'Schedule',
+                    onTap: () =>
+                        _quickAdjust('Schedule this workout for tomorrow.'),
+                  ),
+                ],
+              ),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
             child: Row(
@@ -572,6 +629,166 @@ class _WorkoutResultCardState extends ConsumerState<WorkoutResultCard> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Optimistic skeleton shown the instant a workout request is detected, while
+/// the coach builds it — shaped like [WorkoutResultCard] (gradient header,
+/// exercise-chip rows, a Start button) with a gentle pulse, so the wait feels
+/// instant and on-topic instead of a generic spinner. Replaced by the real card
+/// the moment generation completes.
+class WorkoutSkeletonCard extends StatefulWidget {
+  const WorkoutSkeletonCard({super.key});
+
+  @override
+  State<WorkoutSkeletonCard> createState() => _WorkoutSkeletonCardState();
+}
+
+class _WorkoutSkeletonCardState extends State<WorkoutSkeletonCard>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    Widget bar(double w, double h) => Container(
+          width: w,
+          height: h,
+          decoration: BoxDecoration(
+            color: cs.onSurface.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(6),
+          ),
+        );
+
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.55, end: 1.0).animate(
+        CurvedAnimation(parent: _c, curve: Curves.easeInOut),
+      ),
+      child: Container(
+        margin: const EdgeInsets.only(top: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.purple.withValues(alpha: 0.25)),
+          color: Theme.of(context).cardColor,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.cyan.withValues(alpha: 0.55),
+                    AppColors.purple.withValues(alpha: 0.55),
+                  ],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 150,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 90,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+              child: Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [bar(72, 24), bar(96, 24), bar(60, 24), bar(84, 24)],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(child: bar(double.infinity, 38)),
+                  const SizedBox(width: 8),
+                  bar(72, 38),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A small outlined pill that sends a one-tap workout tweak to the coach
+/// ("Harder", "Easier", "Swap", "Schedule"). Visually lighter than the primary
+/// Start/Save buttons so it reads as a secondary affordance.
+class _QuickAdjustChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickAdjustChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: cs.outline.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: cs.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

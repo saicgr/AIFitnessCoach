@@ -82,6 +82,11 @@ class DailyCoachInsight {
   /// Quick-reply chips (`chips[]`). Empty when the backend sent none.
   final List<InsightChip> chips;
 
+  /// Grounded inline graph blocks (`blocks[]`) for a RICH briefing — sleep
+  /// ring + recovery signals + steps, rendered by GenericBlocksRenderer.
+  /// Empty for light/home sources or when the user has no health data.
+  final List<Map<String, dynamic>> blocks;
+
   const DailyCoachInsight({
     this.insightId,
     required this.headline,
@@ -92,6 +97,7 @@ class DailyCoachInsight {
     this.isFallback = false,
     this.source = 'home',
     this.chips = const [],
+    this.blocks = const [],
   });
 
   /// True when this is a RICH morning/evening briefing (vs a light greeting
@@ -116,6 +122,13 @@ class DailyCoachInsight {
         }
       }
     }
+    final rawBlocks = json['blocks'];
+    final blocks = <Map<String, dynamic>>[];
+    if (rawBlocks is List) {
+      for (final b in rawBlocks) {
+        if (b is Map) blocks.add(Map<String, dynamic>.from(b));
+      }
+    }
     return DailyCoachInsight(
       insightId: json['insight_id'] as String?,
       headline: (json['headline'] as String?) ?? '',
@@ -131,6 +144,7 @@ class DailyCoachInsight {
           (json['source'] as String?) == 'deterministic_fallback',
       source: (json['source'] as String?) ?? 'home',
       chips: chips,
+      blocks: blocks,
     );
   }
 }
@@ -237,6 +251,8 @@ String chatOpenSourceForHour(int hour) {
 /// re-fetches a new greeting.
 final chatOpenInsightProvider =
     FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
+  // NOTE: intentionally NOT keepAlive — the greeting source rotates server-side
+  // on every call, so each fresh chat open must re-fetch a new greeting.
   final tzState = ref.watch(timezoneProvider);
   if (tzState.isLoading ||
       Supabase.instance.client.auth.currentSession == null) {
@@ -256,6 +272,8 @@ final chatOpenInsightProvider =
 final dailyCoachInsightRefreshProvider =
     FutureProvider.autoDispose
         .family<DailyCoachInsight, DateTime>((ref, date) async {
+  // NOTE: intentionally NOT keepAlive — this is the manual `refresh=true`
+  // cache-buster; pinning it would defeat its purpose.
   final tzState = ref.watch(timezoneProvider);
   if (tzState.isLoading ||
       Supabase.instance.client.auth.currentSession == null) {

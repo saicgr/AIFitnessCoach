@@ -863,16 +863,30 @@ class ChatMessageBubble extends ConsumerWidget {
 
   /// Strip stray legacy action tokens from a message body.
   ///
-  /// Older coach agent prompts sometimes leaked the literal string
-  /// "action navigate destination support" into the message text. With the
-  /// /support route gone (B2) any such fragment must never reach the user.
-  /// We replace the pattern with empty string and trim trailing whitespace.
+  /// Two leak shapes are scrubbed (defense in depth — the backend also strips
+  /// these, but already-stored messages and any future regression must never
+  /// render raw):
+  ///  1. The legacy literal "action navigate destination support" fragment.
+  ///  2. A tool-call envelope the model wrote as PROSE instead of calling the
+  ///     tool — e.g. `{"action_ids": ["generate_quick_workout"], "prompt": ...}`
+  ///     (the kettlebell JSON-leak bug). Only flat `{...}` blocks that look like
+  ///     an action envelope are removed, so ordinary prose with braces (e.g.
+  ///     "a deficit (about 500 kcal)") is left untouched.
   String _scrubLegacyActionTokens(String content) {
-    final pattern = RegExp(
+    final legacy = RegExp(
       r'\baction\s+navigate\s+destination\s+\w+\b',
       caseSensitive: false,
     );
-    final scrubbed = content.replaceAll(pattern, '').trim();
+    final leakedJson = RegExp(
+      r'`{0,3}(?:json)?\s*\{[^{}]*?"(?:action_ids|action|suggested_actions)"\s*:[^{}]*\}\s*`{0,3}',
+      caseSensitive: false,
+      dotAll: true,
+    );
+    final scrubbed = content
+        .replaceAll(leakedJson, ' ')
+        .replaceAll(legacy, '')
+        .replaceAll(RegExp(r'[ \t]{2,}'), ' ')
+        .trim();
     return scrubbed.isEmpty ? content : scrubbed;
   }
 

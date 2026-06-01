@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 /// Renders a list of generic, backend-driven "blocks" inline in an AI-coach
 /// chat bubble — compact metric cards, charts, stat grids, free text, and
@@ -58,13 +59,17 @@ class GenericBlocksRenderer extends StatelessWidget {
         ? Map<String, dynamic>.from(block['spec'] as Map)
         : const <String, dynamic>{};
 
+    final Widget built;
     switch (type) {
       case 'metric':
-        return _MetricBlock(title: title, spec: spec);
+        built = _MetricBlock(title: title, spec: spec);
+        break;
       case 'chart':
-        return _ChartBlock(title: title, spec: spec);
+        built = _ChartBlock(title: title, spec: spec);
+        break;
       case 'stat_grid':
-        return _StatGridBlock(title: title, spec: spec);
+        built = _StatGridBlock(title: title, spec: spec);
+        break;
       case 'text':
         return _TextBlock(spec: spec);
       case 'divider':
@@ -73,6 +78,43 @@ class GenericBlocksRenderer extends StatelessWidget {
         // Forward-compat: unknown block type renders nothing.
         return const SizedBox.shrink();
     }
+
+    // "Improve even further": a data block may carry an optional `tap_route`
+    // (e.g. "/sleep-detail") so tapping the sleep ring / steps chart deep-links
+    // into the full metric screen — like Google Health. Only metric/chart/
+    // stat_grid get the affordance; these are detail SUB-routes (push is
+    // correct; never a StatefulShellRoute branch root — see project memory).
+    final tapRoute = spec['tap_route'];
+    if (tapRoute is String && tapRoute.isNotEmpty) {
+      return _TappableBlock(route: tapRoute, child: built);
+    }
+    return built;
+  }
+}
+
+/// Wraps a data block so tapping it deep-links into the full metric screen.
+class _TappableBlock extends StatelessWidget {
+  final String route;
+  final Widget child;
+
+  const _TappableBlock({required this.route, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          try {
+            context.push(route);
+          } catch (_) {
+            // Never let a bad route crash the chat; degrade to no-op.
+          }
+        },
+        child: child,
+      ),
+    );
   }
 }
 

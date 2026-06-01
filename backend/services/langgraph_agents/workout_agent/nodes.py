@@ -425,6 +425,7 @@ AVAILABLE TOOLS:
 
 CRITICAL INSTRUCTIONS:
 - User ID is: {user_id}
+- NEVER write a tool call, an action object, or any JSON / curly-brace block in your reply text. To trigger an action you CALL the tool — you never type its arguments. If a generation fails, apologize in one plain sentence with NO JSON. (Writing `{{"action_ids": ...}}` or `{{"action": ...}}` as text is a bug, not a response.)
 - For generate_quick_workout: ALWAYS pass user_id="{user_id}". Pass workout_id only if a workout exists.
 - For sport-specific workouts (boxing, hyrox, crossfit, mma, etc.): Use the appropriate workout_type parameter.
 - For other tools: use workout_id from context. Default to today's workout (ID: {workout_id}) if available.
@@ -461,19 +462,60 @@ If they just want information or advice, respond conversationally."""
         response = await llm_with_tools.ainvoke(messages)
     except Exception as e:
         if "thought_signature" in str(e).lower():
-            logger.warning(f"[Workout Agent] Thought signature error, retrying without tool_choice: {e}", exc_info=True)
-            # Retry with basic tool binding (no forced tool choice)
+            logger.warning(f"[Workout Agent] Thought signature error, retrying: {e}", exc_info=True)
             llm_retry = get_langchain_llm(temperature=0.7)
-            llm_with_tools_retry = llm_retry.bind_tools(
-                WORKOUT_TOOLS if is_workout_creation else WORKOUT_QUERY_TOOLS
-            )
-            response = await llm_with_tools_retry.ainvoke(messages)
+            # PRESERVE INTENT: a workout-creation request must STILL be forced to
+            # generate on retry. Previously the retry dropped tool_choice, which
+            # let the model narrate a "little hiccup" and emit the suggest_actions
+            # envelope as PROSE ({"action_ids": [...]}) instead of generating —
+            # the JSON-leak bug. Keep forcing the tool for creation intent.
+            if is_workout_creation:
+                llm_with_tools_retry = llm_retry.bind_tools(
+                    WORKOUT_TOOLS, tool_choice="generate_quick_workout"
+                )
+            else:
+                llm_with_tools_retry = llm_retry.bind_tools(WORKOUT_QUERY_TOOLS)
+            try:
+                response = await llm_with_tools_retry.ainvoke(messages)
+            except Exception as e2:
+                # Second failure (e.g. tool_choice itself trips the signature
+                # bug). Never surface raw model text — fall through to the
+                # deterministic forced-generation backstop below.
+                logger.warning(f"[Workout Agent] Retry also failed: {e2}", exc_info=True)
+                response = AIMessage(content="")
         else:
             raise
 
     logger.info(f"[Workout Agent] LLM response type: {type(response)}")
 
-    if hasattr(response, 'tool_calls') and response.tool_calls:
+    has_tool_calls = bool(getattr(response, "tool_calls", None))
+
+    # BACKSTOP (Google-parity): a "create my workout" request must ALWAYS yield a
+    # workout + tappable card. If the model returned no tool call (it chatted, or
+    # the retry degraded), deterministically force generate_quick_workout from the
+    # user's own words so duration / equipment / focus constraints are honored by
+    # the constraint-aware builder. This is the guarantee that the raw-JSON prose
+    # leak can never reach the user: there is always a real generation instead.
+    if is_workout_creation and not has_tool_calls:
+        logger.warning(
+            "[Workout Agent] Creation intent but no tool_call — forcing "
+            "generate_quick_workout from the user message"
+        )
+        forced_tool_calls = [{
+            "name": "generate_quick_workout",
+            "args": {
+                "user_id": str(user_id),
+                "constraints_text": state.get("user_message", "") or "",
+            },
+            "id": "forced_generate_quick_workout",
+        }]
+        return {
+            "messages": messages + [response],
+            "tool_calls": forced_tool_calls,
+            "ai_response": "",
+        }
+
+    if has_tool_calls:
         logger.info(f"[Workout Agent] Calling {len(response.tool_calls)} tools")
         for tc in response.tool_calls:
             logger.info(f"[Workout Agent] Tool: {tc['name']}")

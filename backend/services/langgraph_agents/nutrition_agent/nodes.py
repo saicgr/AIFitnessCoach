@@ -399,6 +399,8 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
     # Build system message
     tool_prompt = f"""{base_system_prompt}
 
+NEVER write a tool call, an action object, or any JSON / curly-brace block in your reply text. To trigger an action you CALL the tool — you never type its arguments. Writing `{{"action_ids": ...}}` or `{{"action": ...}}` as text is a bug, not a response.
+
 CONTEXT:
 {context}
 

@@ -192,6 +192,21 @@ def _user_account_age_days(user: dict) -> int:
         return 999
 
 
+def _email_prefix(user: dict) -> str:
+    """First-name fallback derived from the email local-part.
+
+    Per the name-personalization rule, every notification addresses the user by
+    a first name. When ``name`` is empty we use the email prefix (e.g.
+    "alex" from "alex@x.com"), capitalized, rather than a generic "there".
+    """
+    email = (user.get("email") or "").strip()
+    if "@" in email:
+        local = email.split("@", 1)[0].split(".")[0].split("+")[0]
+        if local:
+            return local[:1].upper() + local[1:]
+    return "there"
+
+
 def _is_dst_transition_night(timezone_str: str) -> bool:
     """True if the user's location had a DST clock change overnight.
 
@@ -236,6 +251,35 @@ def _try_dedup_insert(supabase, user_id: str, nudge_type: str, nudge_date: str,
         if "duplicate" in str(e).lower() or "unique" in str(e).lower() or "23505" in str(e):
             return False
         logger.error(f"❌ [Nudge] Dedup insert error: {e}", exc_info=True)
+        return False
+
+
+def _sent_within_days(supabase, user_id: str, nudge_type: str, days: int) -> bool:
+    """True if THIS nudge_type was sent to the user within the last ``days``.
+
+    The dedup table keys on (user_id, nudge_type, nudge_date) which guarantees
+    at most once PER DAY. The low-frequency health-trend jobs (sleep_debt,
+    rhr_trend, protein_trend, volume_balance) additionally need a multi-day
+    COOLDOWN so a persisting condition does not fire every single day. This
+    reads the most recent push_nudge_log row for the type and checks its age.
+
+    Fails CLOSED for the cooldown decision is wrong (would mute forever on a
+    glitch), so on any error we return False (allow the send) and let the
+    per-day dedup remain the floor.
+    """
+    try:
+        cutoff = (datetime.utcnow().date() - timedelta(days=days)).isoformat()
+        res = (
+            supabase.client.table("push_nudge_log")
+            .select("nudge_date")
+            .eq("user_id", user_id)
+            .eq("nudge_type", nudge_type)
+            .gte("nudge_date", cutoff)
+            .limit(1)
+            .execute()
+        )
+        return bool(res.data)
+    except Exception:
         return False
 
 
@@ -2381,7 +2425,14 @@ async def _job_daily_readiness(supabase, notif_svc, users: List[dict]) -> int:
         # would write it). If Gemini is unavailable OR cites any ungrounded
         # number, generate_smart_briefing returns None and we keep the
         # deterministic copy — never a fabricated stat.
-        title = f"{coach_name}'s morning briefing"
+        # PUNCHY insight-title fallback: never the generic "<coach>'s morning
+        # briefing" label. Derive a data-grounded insight title from the
+        # leading real signal (carries no digits, so it is grounded by
+        # construction). The LLM path below overrides it with its own insight
+        # title when it succeeds.
+        from services.coach.grounding import deterministic_insight_title
+
+        title = deterministic_insight_title(snapshot, moment="morning_readiness")
         message = briefing["message"]
         facts = briefing.get("facts") or {}
         try:
@@ -2390,7 +2441,7 @@ async def _job_daily_readiness(supabase, notif_svc, users: List[dict]) -> int:
             smart = await generate_smart_briefing(
                 supabase, user_id, snapshot, today_workout,
                 moment="morning_readiness",
-                first_name=(user.get("name") or "").split(" ")[0] or "there",
+                first_name=(user.get("name") or "").split(" ")[0] or _email_prefix(user),
                 time_of_day="morning",
                 coach_name=coach_name,
                 coaching_style=ai.get("coaching_style", "motivational"),
@@ -2655,10 +2706,11 @@ async def _job_evening_recap(supabase, notif_svc, users: List[dict]) -> int:
     user's local ``evening_recap_time`` (default 20:00). Reflects on how today
     actually went (steps, workout, recent training) and sets up tomorrow.
 
-    This moment is LLM-only by design: there is no deterministic evening-recap
-    template, so when Gemini is unavailable / cites an ungrounded number /
-    there is no wearable data, we SKIP silently rather than ship filler. Never
-    fabricates a stat.
+    Primary path is the data-grounded LLM recap. When Gemini is unavailable or
+    cites an ungrounded number, we DO NOT go silent: we fall back to
+    ``build_deterministic_recap`` which composes a recap from REAL snapshot
+    numbers only (no mock data, no fabricated stat). We only skip when there is
+    no wearable data at all, or genuinely nothing real to recap.
 
     Gates (mirror daily_readiness): per-type pref ``evening_recap_nudge`` on;
     account >= 3 days; local hour == recap hour; not in quiet hours.
@@ -2699,14 +2751,16 @@ async def _job_evening_recap(supabase, notif_svc, users: List[dict]) -> int:
         ai = user.get("_ai_settings") or {}
         coach_name = ai.get("coach_name") or "Your Coach"
         today_workout = _today_workout_row(supabase, user_id, user_today)
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
 
+        smart = None
         try:
             from services.coach.smart_briefing import generate_smart_briefing
 
             smart = await generate_smart_briefing(
                 supabase, user_id, snapshot, today_workout,
                 moment="evening_recap",
-                first_name=(user.get("name") or "").split(" ")[0] or "there",
+                first_name=first_name,
                 time_of_day="evening",
                 coach_name=coach_name,
                 coaching_style=ai.get("coaching_style", "motivational"),
@@ -2716,16 +2770,644 @@ async def _job_evening_recap(supabase, notif_svc, users: List[dict]) -> int:
             logger.warning(
                 f"⚠️ [HealthNudge] evening_recap build failed for {user_id}: {e}"
             )
-            continue
+
+        # DETERMINISTIC FALLBACK (no silent drop): if the LLM path returned
+        # nothing, build a grounded recap from real snapshot numbers only.
+        if not smart or not smart.get("has_message"):
+            try:
+                from services.coach.smart_briefing import build_deterministic_recap
+
+                workout_done = None
+                if today_workout is not None:
+                    workout_done = bool(today_workout.get("is_completed"))
+                smart = build_deterministic_recap(
+                    snapshot, first_name, today_workout_done=workout_done
+                )
+            except Exception as e:
+                logger.warning(
+                    f"⚠️ [HealthNudge] evening_recap deterministic fallback "
+                    f"failed for {user_id}: {e}"
+                )
+                smart = None
 
         if not smart or not smart.get("has_message"):
-            continue  # No grounded recap to send — skip (never fabricate).
+            continue  # Genuinely nothing real to recap — skip (never fabricate).
 
         success = await _send_health_coaching_nudge(
             supabase, notif_svc, user, "evening_recap",
             title=smart["title"],
             message=smart["message"],
             route="/home",
+            facts=smart.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+# ─── New data-grounded moments (WS3 Part B) ─────────────────────────────────
+# Each new job mirrors _job_daily_readiness / _job_evening_recap exactly: per-
+# type pref gate · account >= 3 days · user-local hour · quiet hours · the
+# shared generate_smart_briefing + grounding guardrail · dedup. The low-
+# frequency trend jobs add a multi-day COOLDOWN on top of the once/day dedup so
+# a persisting condition never fires daily. All numbers come from real data; a
+# job that lacks its trigger data SKIPS silently (no mock data).
+
+# Cooldown windows (days) for the trend jobs — a persisting condition should
+# not re-ping daily. weekly_recap needs none (it is day-of-week gated).
+_SLEEP_DEBT_COOLDOWN_DAYS = 4
+_RHR_TREND_COOLDOWN_DAYS = 5
+_PROTEIN_TREND_COOLDOWN_DAYS = 4
+_VOLUME_BALANCE_COOLDOWN_DAYS = 6
+
+# A protein day "under target" means below this fraction of the daily target.
+_PROTEIN_UNDER_FRACTION = 0.8
+# Need this many of the trailing days under target before nudging.
+_PROTEIN_UNDER_MIN_DAYS = 3
+# Weekly training volume must swing at least this fraction vs the prior week
+# before volume_balance fires (a deload-or-push signal, not noise).
+_VOLUME_SWING_FRACTION = 0.35
+
+
+def _weekly_training_aggregates(
+    supabase, user_id: str, tz_str: str
+) -> Optional[Dict[str, Any]]:
+    """REAL training aggregates for the trailing 7 local days + the prior 7.
+
+    Reads ``workout_logs`` (completed sessions carry ``completed_at`` +
+    ``total_time_seconds``). Returns active minutes + workout count for this
+    week and last week, plus the consistency-day count. Every value is a real
+    count / sum; returns ``None`` on any error so the caller skips cleanly.
+    """
+    try:
+        now_local = datetime.now(_safe_zone(tz_str))
+        this_week_start = (now_local - timedelta(days=7)).isoformat()
+        prior_week_start = (now_local - timedelta(days=14)).isoformat()
+        rows = (
+            supabase.client.table("workout_logs")
+            .select("completed_at, total_time_seconds")
+            .eq("user_id", user_id)
+            .gte("completed_at", prior_week_start)
+            .order("completed_at", desc=True)
+            .limit(60)
+            .execute()
+        ).data or []
+    except Exception:
+        return None
+
+    this_secs = 0
+    this_count = 0
+    prior_secs = 0
+    prior_count = 0
+    active_days: set = set()
+    for r in rows:
+        ca = r.get("completed_at")
+        if not ca:
+            continue
+        secs = r.get("total_time_seconds") or 0
+        try:
+            secs = int(secs)
+        except (TypeError, ValueError):
+            secs = 0
+        if ca >= this_week_start:
+            this_secs += secs
+            this_count += 1
+            active_days.add(str(ca)[:10])
+        elif ca >= prior_week_start:
+            prior_secs += secs
+            prior_count += 1
+
+    return {
+        "active_minutes_week": round(this_secs / 60),
+        "workouts_completed_week": this_count,
+        "consistency_days": len(active_days),
+        "active_minutes_prior_week": round(prior_secs / 60),
+        "workouts_completed_prior_week": prior_count,
+    }
+
+
+def _protein_under_target_days(
+    supabase, user_id: str, tz_str: str
+) -> Optional[Dict[str, Any]]:
+    """Count trailing days where logged protein landed under target.
+
+    Real data only: target from ``nutrition_preferences.target_protein_g``,
+    intake summed from ``food_logs.protein_g`` grouped by local day. Returns
+    ``{under_days, protein_target_g}`` when at least ``_PROTEIN_UNDER_MIN_DAYS``
+    of the trailing logged days were under target, else ``None`` (skip).
+    """
+    try:
+        pref = (
+            supabase.client.table("nutrition_preferences")
+            .select("target_protein_g")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        ).data
+    except Exception:
+        return None
+    if not pref:
+        return None
+    target = pref[0].get("target_protein_g")
+    try:
+        target = float(target)
+    except (TypeError, ValueError):
+        return None
+    if target <= 0:
+        return None
+
+    try:
+        now_local = datetime.now(_safe_zone(tz_str))
+        window_start = (now_local - timedelta(days=5)).isoformat()
+        logs = (
+            supabase.client.table("food_logs")
+            .select("created_at, protein_g")
+            .eq("user_id", user_id)
+            .gte("created_at", window_start)
+            .limit(500)
+            .execute()
+        ).data or []
+    except Exception:
+        return None
+    if not logs:
+        return None
+
+    by_day: Dict[str, float] = {}
+    for r in logs:
+        ca = r.get("created_at")
+        if not ca:
+            continue
+        day = str(ca)[:10]
+        try:
+            by_day[day] = by_day.get(day, 0.0) + float(r.get("protein_g") or 0)
+        except (TypeError, ValueError):
+            continue
+
+    if not by_day:
+        return None
+    floor = target * _PROTEIN_UNDER_FRACTION
+    under_days = sum(1 for v in by_day.values() if v < floor)
+    if under_days < _PROTEIN_UNDER_MIN_DAYS:
+        return None
+    return {"protein_under_days": under_days, "protein_target_g": round(target)}
+
+
+async def _job_weekly_recap(supabase, notif_svc, users: List[dict]) -> int:
+    """FLAGSHIP Sunday-evening data-grounded WEEK wrap.
+
+    Fires once on the user's configured week-end day (reusing the
+    ``weekly_checkin_day`` pref, default Sunday) at their evening recap hour.
+    Carries the week's REAL aggregates (active minutes, workouts completed,
+    consistency days) via generate_smart_briefing, an honest reflection, then
+    1-2 setup-the-week actions. A zero-active week stays encouraging (the
+    weekly_recap moment guidance enforces no guilt). Distinct from
+    ``_job_weekly_checkin`` (a nutrition reminder).
+
+    Gates: per-type pref ``weekly_recap_nudge`` on; account >= 3 days (new
+    users get no weekly recap); local weekday == configured day; local hour ==
+    evening recap hour; not in quiet hours. Once/week via the day gate + the
+    once/day dedup.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("weekly_recap_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_now = datetime.now(_safe_zone(tz_str))
+        local_hour = local_now.hour
+        local_weekday = local_now.weekday()  # 0=Mon .. 6=Sun
+
+        # Reuse the weekly check-in day pref (0=Sunday convention) so the user's
+        # one week-end-day choice drives both. Convert to Python weekday.
+        pref_day = prefs.get("weekly_checkin_day", 0)
+        python_weekday = 6 if pref_day == 0 else pref_day - 1
+        if local_weekday != python_weekday:
+            continue
+
+        recap_hour = _parse_time_hour(prefs.get("evening_recap_time", "20:00"))
+        if local_hour != recap_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+
+        weekly = _weekly_training_aggregates(supabase, user_id, tz_str)
+        if weekly is None:
+            continue  # No training data source — skip silently.
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] weekly_recap snapshot failed for {user_id}: {e}"
+            )
+            continue
+        if not snapshot or not snapshot.get("has_data"):
+            # Still wrap the training week even without a wearable: build a
+            # minimal grounded snapshot stub so generate_smart_briefing runs on
+            # the real weekly aggregates (no mock numbers added).
+            snapshot = {"has_data": True, "weekly_only": True}
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
+
+        try:
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, None,
+                moment="weekly_recap",
+                first_name=first_name,
+                time_of_day="evening",
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+                extra_facts={"weekly": weekly},
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] weekly_recap build failed for {user_id}: {e}"
+            )
+            continue
+        if not smart or not smart.get("has_message"):
+            continue
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "weekly_recap",
+            title=smart["title"],
+            message=smart["message"],
+            route="/home",
+            facts=smart.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+async def _job_sleep_debt(supabase, notif_svc, users: List[dict]) -> int:
+    """3+ short nights in a row → recovery-protective nudge.
+
+    Multi-night trend (distinct from single-event health_anomaly). The pattern
+    is detected inside generate_smart_briefing (``trend.short_sleep_nights``);
+    here we pre-check the same condition cheaply so we only invoke the LLM when
+    the streak genuinely exists. Cooldown so it does not fire daily.
+
+    Gates: per-type pref ``sleep_debt_nudge`` on; account >= 3 days; waking
+    morning hours (07:00-10:00, user-local, when the short night is fresh); not
+    quiet hours; not within the cooldown window.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("sleep_debt_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        if not (7 <= local_hour <= 10):
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        if _sent_within_days(supabase, user_id, "sleep_debt", _SLEEP_DEBT_COOLDOWN_DAYS):
+            continue
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] sleep_debt snapshot failed for {user_id}: {e}"
+            )
+            continue
+        if not snapshot or not snapshot.get("has_data"):
+            continue
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
+
+        try:
+            from services.coach.smart_briefing import (
+                generate_smart_briefing,
+                _recent_activity_rows,
+                _build_pattern_context,
+            )
+
+            # Cheap pre-check: only fire when a real short-sleep streak exists.
+            pattern = _build_pattern_context(
+                _recent_activity_rows(supabase, user_id),
+                (snapshot.get("steps") or {}).get("goal"),
+                (snapshot.get("heart_rate") or {}).get("resting_baseline"),
+            )
+            if not pattern.get("short_sleep_nights"):
+                continue
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, None,
+                moment="sleep_debt",
+                first_name=first_name,
+                time_of_day="morning",
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] sleep_debt build failed for {user_id}: {e}"
+            )
+            continue
+        if not smart or not smart.get("has_message"):
+            continue
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "sleep_debt",
+            title=smart["title"],
+            message=smart["message"],
+            route="/health/sleep",
+            facts=smart.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+async def _job_rhr_trend(supabase, notif_svc, users: List[dict]) -> int:
+    """Resting HR creeping above baseline across several days → early signal.
+
+    Distinct from the single-spike health_anomaly: this is a multi-day creep
+    (early overtraining / illness signal). Reuses the consecutive-day RHR
+    pre-check, then generate_smart_briefing with the ``rhr_trend`` moment.
+    Cooldown so it does not re-ping daily.
+
+    Gates: per-type pref ``rhr_trend_nudge`` on; account >= 3 days; waking
+    hours (08:00-21:00); not quiet hours; not in cooldown; not in a hard
+    training block (expected fatigue, not a flag).
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("rhr_trend_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        if not (8 <= local_hour <= 21):
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        if _sent_within_days(supabase, user_id, "rhr_trend", _RHR_TREND_COOLDOWN_DAYS):
+            continue
+        if not _rhr_elevated_consecutive_days(supabase, user_id):
+            continue
+        if _is_in_hard_training_block(supabase, user_id):
+            continue
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] rhr_trend snapshot failed for {user_id}: {e}"
+            )
+            continue
+        if not snapshot or not snapshot.get("has_data"):
+            continue
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
+
+        try:
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, None,
+                moment="rhr_trend",
+                first_name=first_name,
+                time_of_day="morning" if local_hour < 12 else (
+                    "afternoon" if local_hour < 17 else "evening"
+                ),
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] rhr_trend build failed for {user_id}: {e}"
+            )
+            continue
+        if not smart or not smart.get("has_message"):
+            continue
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "rhr_trend",
+            title=smart["title"],
+            message=smart["message"],
+            route="/health/combined",
+            facts=smart.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+async def _job_protein_trend(supabase, notif_svc, users: List[dict]) -> int:
+    """Under protein target multiple days → nutrition-grounded nudge.
+
+    Real intake from food_logs vs target from nutrition_preferences. Fires in
+    the user's local late afternoon (a useful moment to influence dinner), with
+    a cooldown so it does not nag daily.
+
+    Gates: per-type pref ``protein_trend_nudge`` on; account >= 3 days; local
+    hour == the afternoon activity-nudge hour (reused, default 15:00) or 16:00
+    fallback window; not quiet hours; not in cooldown; >= N under-target days.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("protein_trend_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        # Late afternoon so the nudge can still shape dinner.
+        if local_hour != 16:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        if _sent_within_days(
+            supabase, user_id, "protein_trend", _PROTEIN_TREND_COOLDOWN_DAYS
+        ):
+            continue
+
+        protein = _protein_under_target_days(supabase, user_id, tz_str)
+        if protein is None:
+            continue  # Not enough under-target days or no target — skip.
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        except Exception:
+            snapshot = None
+        # Protein is independent of wearable sync; a stub snapshot lets the
+        # grounded generator run on the real protein aggregates (no mock data).
+        if not snapshot or not snapshot.get("has_data"):
+            snapshot = {"has_data": True, "nutrition_only": True}
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
+
+        try:
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, None,
+                moment="protein_trend",
+                first_name=first_name,
+                time_of_day="afternoon",
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+                extra_facts={"nutrition": protein},
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] protein_trend build failed for {user_id}: {e}"
+            )
+            continue
+        if not smart or not smart.get("has_message"):
+            continue
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "protein_trend",
+            title=smart["title"],
+            message=smart["message"],
+            route="/nutrition",
+            facts=smart.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+async def _job_volume_balance(supabase, notif_svc, users: List[dict]) -> int:
+    """Weekly training-volume swing → deload-or-push suggestion.
+
+    Compares this week's active training minutes vs the prior week. A large
+    swing (up or down) triggers a load-aware suggestion via the
+    ``volume_balance`` moment. Real minute aggregates only. Long cooldown so it
+    reads as a weekly-rhythm nudge, not a daily one.
+
+    Gates: per-type pref ``volume_balance_nudge`` on; account >= 3 days;
+    local late-morning hour (10:00); not quiet hours; not in cooldown; an
+    actual swing >= _VOLUME_SWING_FRACTION against a non-trivial prior week.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("volume_balance_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        if local_hour != 10:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+        if _sent_within_days(
+            supabase, user_id, "volume_balance", _VOLUME_BALANCE_COOLDOWN_DAYS
+        ):
+            continue
+
+        weekly = _weekly_training_aggregates(supabase, user_id, tz_str)
+        if weekly is None:
+            continue
+        this_min = weekly.get("active_minutes_week", 0)
+        prior_min = weekly.get("active_minutes_prior_week", 0)
+        # Need a meaningful prior week to compare against (avoid 0 -> noise).
+        if prior_min < 30:
+            continue
+        swing = abs(this_min - prior_min) / prior_min
+        if swing < _VOLUME_SWING_FRACTION:
+            continue
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        except Exception:
+            snapshot = None
+        if not snapshot or not snapshot.get("has_data"):
+            snapshot = {"has_data": True, "training_only": True}
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+        first_name = (user.get("name") or "").split(" ")[0] or _email_prefix(user)
+
+        try:
+            from services.coach.smart_briefing import generate_smart_briefing
+
+            smart = await generate_smart_briefing(
+                supabase, user_id, snapshot, None,
+                moment="volume_balance",
+                first_name=first_name,
+                time_of_day="morning",
+                coach_name=coach_name,
+                coaching_style=ai.get("coaching_style", "motivational"),
+                communication_tone=ai.get("communication_tone", "encouraging"),
+                extra_facts={"weekly": weekly},
+            )
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] volume_balance build failed for {user_id}: {e}"
+            )
+            continue
+        if not smart or not smart.get("has_message"):
+            continue
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "volume_balance",
+            title=smart["title"],
+            message=smart["message"],
+            route="/workouts",
             facts=smart.get("facts") or {},
         )
         if success:
@@ -2814,6 +3496,12 @@ async def run_push_nudge_cron(
         ("activity_goal", _job_activity_goal(supabase, notif_svc, users)),
         # ── Flagship evening recap (data-grounded, LLM) ──
         ("evening_recap", _job_evening_recap(supabase, notif_svc, users)),
+        # ── New data-grounded moments (WS3 Part B) ──
+        ("weekly_recap", _job_weekly_recap(supabase, notif_svc, users)),
+        ("sleep_debt", _job_sleep_debt(supabase, notif_svc, users)),
+        ("rhr_trend", _job_rhr_trend(supabase, notif_svc, users)),
+        ("protein_trend", _job_protein_trend(supabase, notif_svc, users)),
+        ("volume_balance", _job_volume_balance(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]
