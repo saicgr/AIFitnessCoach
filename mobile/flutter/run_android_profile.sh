@@ -125,6 +125,10 @@ echo -e "${YELLOW}Launching app...${NC}"
 $ADB_PATH -s "$TARGET_DEVICE" shell monkey -p com.aifitnesscoach.app -c android.intent.category.LAUNCHER 1 >/dev/null 2>&1
 
 echo -e "${GREEN}Attaching Flutter (profile logs + DevTools)...${NC}"
+echo -e "${YELLOW}NOTE: profile builds are AOT-compiled — hot reload (r) and hot${NC}"
+echo -e "${YELLOW}restart (R) are NOT supported and will error with '-32000 Could not${NC}"
+echo -e "${YELLOW}run configuration'. To pick up code changes: press q, then re-run this${NC}"
+echo -e "${YELLOW}script. For fast hot-reload iteration use run_android_debug.sh instead.${NC}"
 $FLUTTER_PATH attach -d "$TARGET_DEVICE"
 
 echo -e "${GREEN}=== Done! ===${NC}"
