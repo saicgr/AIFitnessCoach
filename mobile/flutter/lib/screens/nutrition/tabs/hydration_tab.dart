@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../data/services/custom_bottle_store.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
@@ -89,6 +90,21 @@ class HydrationTab extends ConsumerStatefulWidget {
 class _HydrationTabState extends ConsumerState<HydrationTab> {
   HydrationUnit _selectedUnit = HydrationUnit.ml;
 
+  // Gap 5 — saved custom bottles (e.g. "32oz Stanley"). Persisted locally per
+  // user so they survive restarts; one-tap logs the saved volume.
+  List<CustomBottle> _customBottles = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomBottles();
+  }
+
+  Future<void> _loadCustomBottles() async {
+    final bottles = await CustomBottleStore.load(widget.userId);
+    if (mounted) setState(() => _customBottles = bottles);
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(hydrationProvider);
@@ -160,6 +176,10 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
               onCustom: () => _showCustomAmountDialog(),
               isDark: widget.isDark,
             ).animate().fadeIn(delay: 100.ms),
+            const SizedBox(height: 24),
+
+            // Gap 5 — your saved bottles (one-tap log; long-press to remove).
+            _buildCustomBottles().animate().fadeIn(delay: 120.ms),
             const SizedBox(height: 24),
 
             // Drink type buttons
@@ -366,6 +386,227 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+    }
+  }
+
+  /// Gap 5 — the "Your bottles" section: saved presets as one-tap chips plus
+  /// an "Add bottle" chip. Long-press a chip to remove it. Width-adaptive Wrap
+  /// so it never overflows SE→iPad.
+  Widget _buildCustomBottles() {
+    final textPrimary =
+        widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted =
+        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevated =
+        widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final blue =
+        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.local_drink_outlined, size: 18, color: textMuted),
+            const SizedBox(width: 8),
+            Text(
+              'Your bottles',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final b in _customBottles)
+              GestureDetector(
+                onTap: () => _quickLog(b.ml),
+                onLongPress: () => _confirmDeleteBottle(b),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: blue.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: blue.withValues(alpha: 0.30)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.water_drop_rounded, size: 14, color: blue),
+                      const SizedBox(width: 6),
+                      Text(
+                        b.label,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _selectedUnit.format(b.ml) + _selectedUnit.label,
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            // Add-bottle chip
+            GestureDetector(
+              onTap: _showAddBottleDialog,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: elevated,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: textMuted.withValues(alpha: 0.30)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.add, size: 16, color: textMuted),
+                    const SizedBox(width: 6),
+                    Text(
+                      _customBottles.isEmpty ? 'Save a bottle' : 'Add bottle',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                        color: textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmDeleteBottle(CustomBottle bottle) async {
+    final remove = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text('Remove "${bottle.label}"?'),
+        content: const Text('This only removes the saved bottle, not any logged water.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    if (remove == true) {
+      final next = _customBottles.where((b) => b.id != bottle.id).toList();
+      await CustomBottleStore.save(widget.userId, next);
+      if (mounted) setState(() => _customBottles = next);
+    }
+  }
+
+  Future<void> _showAddBottleDialog() async {
+    final nameController = TextEditingController();
+    final amountController = TextEditingController();
+    final textMuted =
+        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final blue =
+        widget.isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
+
+    final added = await showGlassSheet<bool>(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+              24, 8, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.local_drink_outlined, color: blue, size: 26),
+                  const SizedBox(width: 12),
+                  const Text('Save a bottle',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text('Name it and set its size for one-tap logging.',
+                  style: TextStyle(fontSize: 14, color: textMuted)),
+              const SizedBox(height: 20),
+              TextField(
+                controller: nameController,
+                autofocus: true,
+                textCapitalization: TextCapitalization.words,
+                decoration: const InputDecoration(
+                  labelText: 'Name (e.g. Stanley)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: amountController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Size',
+                  suffixText: 'ml',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: blue,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    final ml = int.tryParse(amountController.text.trim());
+                    final name = nameController.text.trim();
+                    if (ml != null && ml > 0 && ml <= 10000 && name.isNotEmpty) {
+                      Navigator.pop(ctx, true);
+                    }
+                  },
+                  child: const Text('Save bottle',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (added == true) {
+      final ml = int.tryParse(amountController.text.trim());
+      final name = nameController.text.trim();
+      if (ml != null && ml > 0 && name.isNotEmpty) {
+        final bottle = CustomBottle(
+          id: 'b${DateTime.now().microsecondsSinceEpoch}',
+          label: name,
+          ml: ml.clamp(1, 10000),
+        );
+        final next = [..._customBottles, bottle];
+        await CustomBottleStore.save(widget.userId, next);
+        if (mounted) setState(() => _customBottles = next);
+      }
     }
   }
 
@@ -751,3 +992,7 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
     );
   }
 }
+
+// CustomBottle + CustomBottleStore moved to
+// lib/data/services/custom_bottle_store.dart so the home-screen widget sync can
+// read saved bottles without a UI→repository import cycle.

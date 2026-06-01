@@ -62,6 +62,10 @@ enum NudgeId {
   hiddenSugar,
   caffeineCutoff,
   lateSnackAlternative,
+  // Gap 7 — opt-in tracker over-limit nudges (added sugar / caffeine / alcohol).
+  sugarOverLimit,
+  caffeineOverLimit,
+  alcoholOverLimit,
   // Recovery / wearable advanced.
   readinessAlert,
   hrvDrop,

@@ -101,6 +101,14 @@ NutritionPreferences _$NutritionPreferencesFromJson(
       : DateTime.parse(json['last_weekly_checkin_at'] as String),
   weeklyCheckinDismissCount:
       (json['weekly_checkin_dismiss_count'] as num?)?.toInt() ?? 0,
+  hydrationTrackingEnabled:
+      json['hydration_tracking_enabled'] as bool? ?? true,
+  sugarTrackingEnabled: json['sugar_tracking_enabled'] as bool? ?? false,
+  caffeineTrackingEnabled: json['caffeine_tracking_enabled'] as bool? ?? false,
+  alcoholTrackingEnabled: json['alcohol_tracking_enabled'] as bool? ?? false,
+  sugarLimitG: (json['sugar_limit_g'] as num?)?.toInt() ?? 36,
+  caffeineLimitMg: (json['caffeine_limit_mg'] as num?)?.toInt() ?? 400,
+  alcoholLimitUnits: (json['alcohol_limit_units'] as num?)?.toInt() ?? 2,
 );
 
 Map<String, dynamic> _$NutritionPreferencesToJson(
@@ -157,6 +165,13 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'weekly_checkin_enabled': instance.weeklyCheckinEnabled,
   'last_weekly_checkin_at': instance.lastWeeklyCheckinAt?.toIso8601String(),
   'weekly_checkin_dismiss_count': instance.weeklyCheckinDismissCount,
+  'hydration_tracking_enabled': instance.hydrationTrackingEnabled,
+  'sugar_tracking_enabled': instance.sugarTrackingEnabled,
+  'caffeine_tracking_enabled': instance.caffeineTrackingEnabled,
+  'alcohol_tracking_enabled': instance.alcoholTrackingEnabled,
+  'sugar_limit_g': instance.sugarLimitG,
+  'caffeine_limit_mg': instance.caffeineLimitMg,
+  'alcohol_limit_units': instance.alcoholLimitUnits,
 };
 
 WeightLog _$WeightLogFromJson(Map<String, dynamic> json) => WeightLog(

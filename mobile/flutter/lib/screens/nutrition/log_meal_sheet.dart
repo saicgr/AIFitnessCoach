@@ -18,6 +18,8 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
+import '../../data/repositories/hydration_repository.dart';
+import '../../data/models/hydration.dart' show HydrationSource;
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/last_used_service.dart';
@@ -260,6 +262,15 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   /// camera, gallery, barcode, menu_scan, buffet_scan, multi_image_scan,
   /// chat, ai_suggestion, manual, image, copy, watch.
   String _inputType = 'text';
+  // Gap 1 — water-in-text. When a typed/dictated entry ("2 eggs and a glass of
+  // water") includes a beverage, the analyze stream returns {amount_ml,
+  // drink_type} here so the food confirm can log the water to hydration too.
+  // Cleared on edit/reset; consumed once in _handleLog.
+  Map<String, dynamic>? _pendingHydration;
+  // Gap 7 — opt-in tracker inputs ({added_sugar_g, caffeine_mg, alcohol_g})
+  // from the analysis, forwarded to /log-direct on confirm so the
+  // sugar/caffeine/alcohol trackers get real data. Cleared on edit/reset.
+  Map<String, dynamic>? _pendingTrackerMicros;
   String? _capturedImagePath; // Local file path of the photo taken/picked for display in results
   int? _analysisElapsedMs;
 
@@ -400,6 +411,10 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
       _capturedImagePath = null;
       _sourceType = 'text';
       _inputType = 'text';
+      // Gap 1 — drop any detected beverage; the re-analysis re-detects it.
+      _pendingHydration = null;
+      // Gap 7 — drop tracker inputs; re-analysis re-derives them.
+      _pendingTrackerMicros = null;
     });
   }
 

@@ -20,6 +20,8 @@ from api.v1.nutrition.models import (
     DailyNutritionResponse,
     WeeklyNutritionResponse,
     NutritionTargetsResponse,
+    OptionalTrackersResponse,
+    TrackerSeriesPoint,
 )
 
 from core.redis_cache import RedisCache
@@ -158,6 +160,108 @@ async def get_daily_summary(
 
     except Exception as e:
         logger.error(f"Failed to get daily summary: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.get("/optional-trackers/{user_id}", response_model=OptionalTrackersResponse)
+async def get_optional_trackers(
+    user_id: str,
+    request: Request,
+    date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
+    tz: Optional[str] = Query(default=None, description="IANA timezone fallback"),
+    days: int = Query(default=1, ge=1, le=30, description="How many trailing days of history to include in `series`"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Gap 7 — today's added-sugar / caffeine / alcohol totals + the user's
+    per-tracker limits and on/off flags. Sums micronutrients already stored on
+    each food log (no new extraction); the client renders a counter card per
+    enabled tracker with an over-limit nudge. When ``days``>1, also returns a
+    daily `series` (oldest→newest) for the per-tracker detail screen."""
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+        if user_tz == "UTC" and tz:
+            from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
+            if _is_valid_tz(tz):
+                user_tz = tz
+        if date is None:
+            date = get_user_today(user_tz)
+
+        def _sum_day(day_str: str) -> tuple:
+            s = db.get_daily_nutrition_summary(user_id, day_str, timezone_str=user_tz)
+            sug = caf = alc = 0.0
+            for log in (s.get("meals") or []):
+                sug += float(log.get("added_sugar_g") or log.get("sugar_g") or 0)
+                caf += float(log.get("caffeine_mg") or 0)
+                alc += float(log.get("alcohol_g") or 0)
+            return sug, caf, alc
+
+        # Today's totals (always) + optional trailing history.
+        from datetime import date as _date_cls
+        base_day = _date_cls.fromisoformat(date)
+
+        def _build():
+            today = _sum_day(date)
+            hist = []
+            if days > 1:
+                for i in range(days - 1, -1, -1):
+                    d = (base_day - timedelta(days=i)).isoformat()
+                    sug, caf, alc = (today if d == date else _sum_day(d))
+                    hist.append((d, sug, caf, alc))
+            return today, hist
+
+        (sugar_g, caffeine_mg, alcohol_g), history = await asyncio.get_event_loop().run_in_executor(
+            None, _build
+        )
+
+        # Read the user's tracker flags + limits from nutrition_preferences.
+        flags = {}
+        try:
+            res = await asyncio.get_event_loop().run_in_executor(
+                None,
+                lambda: db.client.table("nutrition_preferences")
+                .select(
+                    "sugar_tracking_enabled, caffeine_tracking_enabled, "
+                    "alcohol_tracking_enabled, sugar_limit_g, caffeine_limit_mg, "
+                    "alcohol_limit_units"
+                )
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute(),
+            )
+            flags = (res.data if res and res.data else {}) or {}
+        except Exception as e:
+            logger.debug(f"optional-trackers prefs read fell back to defaults: {e}")
+
+        # 1 US standard drink ≈ 14 g of pure ethanol.
+        def _units(g: float) -> float:
+            return round(g / 14.0, 1) if g else 0.0
+
+        series = [
+            TrackerSeriesPoint(
+                date=d,
+                sugar_g=round(sug, 1),
+                caffeine_mg=round(caf, 1),
+                alcohol_units=_units(alc),
+            )
+            for (d, sug, caf, alc) in history
+        ]
+
+        return OptionalTrackersResponse(
+            date=date,
+            sugar_tracking_enabled=bool(flags.get("sugar_tracking_enabled", False)),
+            caffeine_tracking_enabled=bool(flags.get("caffeine_tracking_enabled", False)),
+            alcohol_tracking_enabled=bool(flags.get("alcohol_tracking_enabled", False)),
+            sugar_g=round(sugar_g, 1),
+            caffeine_mg=round(caffeine_mg, 1),
+            alcohol_units=_units(alcohol_g),
+            sugar_limit_g=int(flags.get("sugar_limit_g") or 36),
+            caffeine_limit_mg=int(flags.get("caffeine_limit_mg") or 400),
+            alcohol_limit_units=int(flags.get("alcohol_limit_units") or 2),
+            series=series,
+        )
+    except Exception as e:
+        logger.error(f"Failed to get optional trackers: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

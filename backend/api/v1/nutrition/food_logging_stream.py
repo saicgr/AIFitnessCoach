@@ -185,6 +185,31 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             db = get_supabase_db()
             cache_service = get_food_analysis_cache_service()
 
+            # Gap 1 — water-in-text. Detect a beverage in the entry concurrently
+            # with the food analysis (language-agnostic Flash-Lite pass). This is
+            # analysis-only: we surface `hydration_detected` in the `done` payload
+            # and the client logs it on confirm via /hydration/log. Gated on the
+            # user's pref so an opted-out user pays zero extra LLM cost (Gap 6).
+            hydration_task = None
+            try:
+                from api.v1.nutrition.food_logging import _is_hydration_tracking_enabled
+                from services.food_analysis.hydration_split import detect_hydration_in_text
+                if _is_hydration_tracking_enabled(db, body.user_id):
+                    hydration_task = asyncio.create_task(
+                        detect_hydration_in_text(body.description, body.user_id)
+                    )
+            except Exception as _hyd_err:
+                logger.debug(f"[ANALYZE-STREAM] hydration detect skipped: {_hyd_err}")
+
+            async def _resolve_hydration_detected():
+                """Await the concurrent hydration task, swallowing any failure."""
+                if hydration_task is None:
+                    return None
+                try:
+                    return await hydration_task
+                except Exception:
+                    return None
+
             # Check if this is a complex/regional food that may take longer
             description_lower = body.description.lower()
             description_words = set(description_lower.split())
@@ -324,6 +349,26 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 food_analysis = analysis_task.result()
 
             if not food_analysis or not food_analysis.get('food_items'):
+                # Gap 1 — a beverage-only entry ("a glass of water") parses to
+                # zero food items. Rather than erroring, emit a hydration-only
+                # `done` so the client can log the water and close.
+                _hyd_only = await _resolve_hydration_detected()
+                if _hyd_only:
+                    yield f"event: done\ndata: " + json.dumps({
+                        "success": True,
+                        "is_analysis_only": True,
+                        "is_hydration_only": True,
+                        "food_items": [],
+                        "total_calories": 0,
+                        "protein_g": 0.0,
+                        "carbs_g": 0.0,
+                        "fat_g": 0.0,
+                        "fiber_g": 0.0,
+                        "source_type": "text",
+                        "total_time_ms": elapsed_ms(),
+                        "hydration_detected": _hyd_only,
+                    }) + "\n\n"
+                    return
                 yield send_error("Could not identify any food items from your description")
                 return
 
@@ -378,6 +423,10 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             # Micronutrients
             sodium_mg = food_analysis.get('sodium_mg')
             sugar_g = food_analysis.get('sugar_g')
+            # Gap 7 — opt-in tracker inputs forwarded to the confirm payload.
+            added_sugar_g = food_analysis.get('added_sugar_g')
+            caffeine_mg = food_analysis.get('caffeine_mg')
+            alcohol_g = food_analysis.get('alcohol_g')
             saturated_fat_g = food_analysis.get('saturated_fat_g')
             cholesterol_mg = food_analysis.get('cholesterol_mg')
             potassium_mg = food_analysis.get('potassium_mg')
@@ -417,6 +466,9 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 # Micronutrients
                 "sodium_mg": sodium_mg,
                 "sugar_g": sugar_g,
+                "added_sugar_g": added_sugar_g,
+                "caffeine_mg": caffeine_mg,
+                "alcohol_g": alcohol_g,
                 "saturated_fat_g": saturated_fat_g,
                 "cholesterol_mg": cholesterol_mg,
                 "potassium_mg": potassium_mg,
@@ -433,6 +485,9 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 # L3 — "Zealova remembered your <food>" affirmation when a
                 # learned correction was auto-applied.
                 "remembered_message": _build_remembered_message(food_items),
+                # Gap 1 — water-in-text. {amount_ml, drink_type} when a beverage
+                # was detected; the client logs it on confirm. None otherwise.
+                "hydration_detected": await _resolve_hydration_detected(),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -666,6 +721,8 @@ async def log_food_from_image_streaming(
                 'vitamin_b6_mg', 'vitamin_b7_ug', 'vitamin_b9_ug', 'vitamin_b12_ug',
                 'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'phosphorus_mg',
                 'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
+                # Gap 7 — opt-in tracker inputs.
+                'caffeine_mg', 'alcohol_g', 'added_sugar_g',
             ]
             for key in micronutrient_keys:
                 value = food_analysis.get(key)
@@ -1084,6 +1141,10 @@ async def analyze_food_from_image_streaming(
             # Micronutrients
             sodium_mg = food_analysis.get('sodium_mg')
             sugar_g = food_analysis.get('sugar_g')
+            # Gap 7 — opt-in tracker inputs forwarded to the confirm payload.
+            added_sugar_g = food_analysis.get('added_sugar_g')
+            caffeine_mg = food_analysis.get('caffeine_mg')
+            alcohol_g = food_analysis.get('alcohol_g')
             saturated_fat_g = food_analysis.get('saturated_fat_g')
             cholesterol_mg = food_analysis.get('cholesterol_mg')
             potassium_mg = food_analysis.get('potassium_mg')
@@ -1147,6 +1208,9 @@ async def analyze_food_from_image_streaming(
                 # Micronutrients
                 "sodium_mg": sodium_mg,
                 "sugar_g": sugar_g,
+                "added_sugar_g": added_sugar_g,
+                "caffeine_mg": caffeine_mg,
+                "alcohol_g": alcohol_g,
                 "saturated_fat_g": saturated_fat_g,
                 "cholesterol_mg": cholesterol_mg,
                 "potassium_mg": potassium_mg,
@@ -1604,6 +1668,9 @@ async def log_food_from_multi_image_streaming(
                 # so the review sheet + saved row both have the complete signal set.
                 inflammation_triggers = analysis_result.get("inflammation_triggers")
                 added_sugar_g = analysis_result.get("added_sugar_g")
+                # Gap 7 — opt-in tracker inputs from a photographed meal.
+                caffeine_mg = analysis_result.get("caffeine_mg")
+                alcohol_g = analysis_result.get("alcohol_g")
                 glycemic_load = analysis_result.get("glycemic_load")
                 fodmap_rating = analysis_result.get("fodmap_rating")
                 fodmap_reason = analysis_result.get("fodmap_reason")
@@ -1634,6 +1701,10 @@ async def log_food_from_multi_image_streaming(
                         "inflammation_score": inflammation_score,
                         "is_ultra_processed": is_ultra_processed,
                         "applied_instruction_note": applied_instruction_note,
+                        # Gap 7 — opt-in tracker inputs for the confirm write.
+                        "added_sugar_g": added_sugar_g,
+                        "caffeine_mg": caffeine_mg,
+                        "alcohol_g": alcohol_g,
                         "image_urls": image_urls,
                         "storage_keys": storage_keys,
                         "total_time_ms": elapsed_ms(),
@@ -1654,6 +1725,9 @@ async def log_food_from_multi_image_streaming(
                     is_ultra_processed=is_ultra_processed,
                     inflammation_triggers=inflammation_triggers,
                     added_sugar_g=added_sugar_g,
+                    # Gap 7 — opt-in tracker inputs.
+                    caffeine_mg=caffeine_mg,
+                    alcohol_g=alcohol_g,
                     glycemic_load=glycemic_load,
                     fodmap_rating=fodmap_rating,
                     fodmap_reason=fodmap_reason,

@@ -11,6 +11,7 @@ import '../../../data/providers/recovery_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/sauna_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
@@ -186,6 +187,12 @@ class _NutritionPill extends ConsumerWidget {
     final hydrationState = ref.watch(hydrationProvider);
     final waterSummary = hydrationState.todaySummary;
     final goalMl = hydrationState.dailyGoalMl;
+    // Gap 6 — hide the water segment when the user turned water tracking off.
+    final showWater = ref
+            .watch(nutritionPreferencesProvider)
+            .preferences
+            ?.hydrationTrackingEnabled ??
+        true;
 
     final bool hasNutrition = summary != null;
     final String calorieText =
@@ -235,17 +242,19 @@ class _NutritionPill extends ConsumerWidget {
                     color: textColor.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.water_drop, size: 13, color: waterColor),
-                const SizedBox(width: 2),
-                Text(
-                  '${currentL.toStringAsFixed(1)}L',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: waterColor,
+                if (showWater) ...[
+                  const SizedBox(width: 8),
+                  Icon(Icons.water_drop, size: 13, color: waterColor),
+                  const SizedBox(width: 2),
+                  Text(
+                    '${currentL.toStringAsFixed(1)}L',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: waterColor,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),

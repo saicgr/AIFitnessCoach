@@ -142,6 +142,33 @@ class WeeklyNutritionResponse(BaseModel):
     total_meals: int
 
 
+class TrackerSeriesPoint(BaseModel):
+    """One day's sugar/caffeine/alcohol totals for the detail-screen history."""
+    date: str
+    sugar_g: float = 0.0
+    caffeine_mg: float = 0.0
+    alcohol_units: float = 0.0
+
+
+class OptionalTrackersResponse(BaseModel):
+    """Gap 7 — today's sugar/caffeine/alcohol totals + per-tracker limits and
+    on/off flags. The underlying micronutrients are captured on every food log;
+    this just aggregates them so the opt-in tracker cards can render."""
+    date: str
+    sugar_tracking_enabled: bool = False
+    caffeine_tracking_enabled: bool = False
+    alcohol_tracking_enabled: bool = False
+    sugar_g: float = 0.0          # added sugar (falls back to total sugar)
+    caffeine_mg: float = 0.0
+    alcohol_units: float = 0.0    # standard drinks (alcohol_g / 14)
+    sugar_limit_g: int = 36
+    caffeine_limit_mg: int = 400
+    alcohol_limit_units: int = 2
+    # Detail-screen history (oldest→newest). Populated only when days>1 is
+    # requested; empty for the at-a-glance strip fetch.
+    series: List[TrackerSeriesPoint] = []
+
+
 class NutritionTargetsResponse(BaseModel):
     """Nutrition targets response."""
     user_id: str
@@ -251,6 +278,11 @@ class LogTextRequest(BaseModel):
     # Distinguishes typed from dictated input. Populates food_logs.input_type.
     # Allowed values match the CHECK constraint added in migration 1960.
     input_type: Optional[str] = Field(default=None, max_length=30)
+    # Gap 1 — when true, skip the water-in-text hydration split. Set by the
+    # recipe builder, which calls /log-text as an analysis-only hack and then
+    # deletes the food log; without this a "1 cup water" ingredient would leave
+    # a stray hydration entry behind.
+    skip_hydration: bool = False
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
@@ -312,6 +344,9 @@ class LogDirectRequest(BaseModel):
     choline_mg: Optional[float] = None
     omega3_g: Optional[float] = None
     omega6_g: Optional[float] = None
+    # Gap 7 — opt-in tracker inputs forwarded from the analyzed meal.
+    caffeine_mg: Optional[float] = None
+    alcohol_g: Optional[float] = None
     # Image storage (from analyze-image-stream S3 upload)
     image_url: Optional[str] = None
     image_storage_key: Optional[str] = None
@@ -390,6 +425,12 @@ class LogFoodResponse(BaseModel):
     # / heavy-meal item was logged inside the user's wind-down window vs their
     # bedtime goal; None otherwise (unknown content is never flagged).
     sleep_risk: Optional[dict] = None
+    # Gap 1 — water-in-text. Present only when a beverage was detected in a
+    # typed/dictated entry ("2 eggs and a glass of water") and logged to
+    # hydration alongside the food. Shape: {amount_ml, drink_type}. None
+    # otherwise. Lets the confirm UI surface "+250 ml water logged" and the
+    # client refresh its hydration providers.
+    hydration_logged: Optional[dict] = None
 
 
 class FoodReviewRequest(BaseModel):
@@ -444,6 +485,16 @@ class NutritionPreferencesResponse(BaseModel):
     weekly_checkin_enabled: bool = True
     last_weekly_checkin_at: Optional[datetime] = None
     weekly_checkin_dismiss_count: int = 0
+    # Gap 6 — hydration tracking on/off (default on preserves current UX).
+    hydration_tracking_enabled: bool = True
+    # Gap 7 — opt-in sugar/caffeine/alcohol daily trackers (off by default) +
+    # their per-tracker daily limits.
+    sugar_tracking_enabled: bool = False
+    caffeine_tracking_enabled: bool = False
+    alcohol_tracking_enabled: bool = False
+    sugar_limit_g: int = 36
+    caffeine_limit_mg: int = 400
+    alcohol_limit_units: int = 2
 
 
 class NutritionPreferencesUpdate(BaseModel):
@@ -475,6 +526,14 @@ class NutritionPreferencesUpdate(BaseModel):
     weekly_checkin_enabled: Optional[bool] = None
     last_weekly_checkin_at: Optional[str] = None
     weekly_checkin_dismiss_count: Optional[int] = None
+    # Gap 6 / Gap 7 — optional-tracker toggles + limits.
+    hydration_tracking_enabled: Optional[bool] = None
+    sugar_tracking_enabled: Optional[bool] = None
+    caffeine_tracking_enabled: Optional[bool] = None
+    alcohol_tracking_enabled: Optional[bool] = None
+    sugar_limit_g: Optional[int] = None
+    caffeine_limit_mg: Optional[int] = None
+    alcohol_limit_units: Optional[int] = None
 
 
 class DynamicTargetsResponse(BaseModel):

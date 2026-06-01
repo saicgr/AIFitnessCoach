@@ -195,6 +195,9 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
         userId: widget.userId,
         description: description,
         mealType: 'snack',
+        // Analysis-only hack (the log is deleted below) — never persist a
+        // stray hydration entry for a water-based ingredient (Gap 1).
+        skipHydration: true,
       );
 
       // Delete the log entry we just created since we only wanted the analysis

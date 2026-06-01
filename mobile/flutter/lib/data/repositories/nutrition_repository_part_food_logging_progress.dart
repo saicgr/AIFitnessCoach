@@ -236,6 +236,23 @@ class FoodLoggingProgress {
   /// normal `done` / `progress` events; set only on the coach_tips event.
   final Map<String, dynamic>? coachTips;
 
+  /// Gap 1 — water-in-text. {amount_ml, drink_type} when the entry's text
+  /// ("2 eggs and a glass of water") contained a beverage that should be logged
+  /// to hydration alongside the food. Carried out-of-band (not on
+  /// LogFoodResponse, whose codegen is pinned off) so the confirm flow can log
+  /// it via the hydration repository. Null when no beverage was detected.
+  final Map<String, dynamic>? hydrationDetected;
+
+  /// Gap 1 — true when the entry was a beverage ONLY (no food items). The sheet
+  /// logs the hydration and closes instead of showing a food confirm.
+  final bool isHydrationOnly;
+
+  /// Gap 7 — opt-in tracker inputs from the analyzed meal ({added_sugar_g,
+  /// caffeine_mg, alcohol_g}). Carried out-of-band (not on LogFoodResponse,
+  /// whose codegen is pinned off) so the confirm path can forward them to
+  /// /log-direct and the sugar/caffeine/alcohol trackers get real data.
+  final Map<String, dynamic>? trackerMicros;
+
   FoodLoggingProgress({
     required this.step,
     required this.totalSteps,
@@ -247,6 +264,9 @@ class FoodLoggingProgress {
     this.hasError = false,
     this.isAnalysisOnly = false,
     this.coachTips,
+    this.hydrationDetected,
+    this.isHydrationOnly = false,
+    this.trackerMicros,
   });
 
   /// True when this event carries late-arriving coaching tips.
@@ -640,6 +660,16 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       // (4) Persist the RECONCILED result to disk for next cold start.
       // Fire-and-forget — never block the UI on disk I/O.
       unawaited(_NutritionDiskCache.write(userId, localDate, summary));
+
+      // Home-screen food widget — push fresh calories + macros vs goal.
+      final t = state.targets;
+      unawaited(WidgetService.updateFoodWidget(
+        caloriesConsumed: summary.totalCalories,
+        calorieGoal: t?.dailyCalorieTarget ?? 2000,
+        proteinGrams: summary.totalProteinG.round(),
+        carbsGrams: summary.totalCarbsG.round(),
+        fatGrams: summary.totalFatG.round(),
+      ));
 
       // Check if protein goal was hit and award XP
       _checkProteinGoal(summary);

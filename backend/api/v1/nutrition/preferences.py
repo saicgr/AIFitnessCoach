@@ -109,6 +109,14 @@ async def get_nutrition_preferences(user_id: str, current_user: dict = Depends(g
             weekly_checkin_enabled=data.get("weekly_checkin_enabled", True),
             last_weekly_checkin_at=datetime.fromisoformat(str(data.get("last_weekly_checkin_at")).replace("Z", "+00:00")) if data.get("last_weekly_checkin_at") else None,
             weekly_checkin_dismiss_count=data.get("weekly_checkin_dismiss_count", 0),
+            # Gap 6 / Gap 7 — optional-tracker toggles + limits.
+            hydration_tracking_enabled=data.get("hydration_tracking_enabled", True),
+            sugar_tracking_enabled=data.get("sugar_tracking_enabled", False),
+            caffeine_tracking_enabled=data.get("caffeine_tracking_enabled", False),
+            alcohol_tracking_enabled=data.get("alcohol_tracking_enabled", False),
+            sugar_limit_g=data.get("sugar_limit_g", 36),
+            caffeine_limit_mg=data.get("caffeine_limit_mg", 400),
+            alcohol_limit_units=data.get("alcohol_limit_units", 2),
         )
 
     except Exception as e:

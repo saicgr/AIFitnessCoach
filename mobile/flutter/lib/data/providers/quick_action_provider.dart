@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/models/quick_action.dart';
+import 'nutrition_preferences_provider.dart';
 
 const _quickActionOrderKey = 'quick_action_order';
 const _quickActionExpandedKey = 'quick_action_expanded';
@@ -121,19 +122,30 @@ class QuickActionsExpandedNotifier extends StateNotifier<bool> {
 /// by the row widget). Two-row mode → first 11 IDs (slot 12 = "More").
 /// "More" is never part of the order list — it is rendered separately in
 /// [quick_actions_row.dart].
-List<String> homeQuickActionSlotIds(List<String> order, {required bool expanded}) {
+List<String> homeQuickActionSlotIds(List<String> order,
+    {required bool expanded, bool hideWater = false}) {
   final visibleCount = expanded ? 11 : 5;
   return order
       .where((id) => quickActionRegistry.containsKey(id))
+      // Gap 6 — drop the water quick-action when hydration tracking is off.
+      .where((id) => !(hideWater && id == 'water'))
       .take(visibleCount)
       .toList();
 }
 
+/// Gap 6 — true when the user has water tracking enabled (default true).
+bool _hydrationEnabled(Ref ref) =>
+    ref.watch(nutritionPreferencesProvider).preferences
+        ?.hydrationTrackingEnabled ??
+    true;
+
 /// Row 1 of the shortcut bar — first 5 actions in the user's order.
 final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
+  final hideWater = !_hydrationEnabled(ref);
   return order
       .where((id) => quickActionRegistry.containsKey(id))
+      .where((id) => !(hideWater && id == 'water'))
       .take(5)
       .map((id) => quickActionRegistry[id]!)
       .toList();
@@ -141,8 +153,10 @@ final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
 
 final orderedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
+  final hideWater = !_hydrationEnabled(ref);
   return order
       .where((id) => quickActionRegistry.containsKey(id))
+      .where((id) => !(hideWater && id == 'water'))
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });

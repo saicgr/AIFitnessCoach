@@ -52,6 +52,82 @@ def row_to_hydration_log(row: dict) -> HydrationLog:
 
 # ==================== Hydration Logging ====================
 
+async def persist_hydration_entry(
+    db,
+    *,
+    user_id: str,
+    amount_ml: int,
+    drink_type: str = "water",
+    local_date: str,
+    source: Optional[str] = None,
+    workout_id: Optional[str] = None,
+    notes: Optional[str] = None,
+) -> dict:
+    """Insert one hydration row + bust dependent caches, returning the row.
+
+    Shared by the REST ``/log`` endpoint and the food text/voice logger (Gap 1:
+    "2 eggs and a glass of water" splits the water out and persists it here).
+    Mirrors the endpoint's graceful degradation for the optional ``local_date``
+    / ``source`` columns. Raises on a hard insert failure.
+    """
+    explicit_source = _normalize_hydration_source(source)
+    # An active workout context is a strong source signal even on older clients.
+    if explicit_source == "manual" and workout_id:
+        explicit_source = "workout"
+
+    log_data = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "drink_type": drink_type,
+        "amount_ml": amount_ml,
+        "workout_id": workout_id,
+        "notes": notes,
+        "logged_at": datetime.utcnow().isoformat(),
+        "source": explicit_source,
+    }
+
+    # Try inserting with local_date if column exists; gracefully degrade for
+    # either missing column (`local_date` or `source`).
+    try:
+        log_data["local_date"] = local_date
+        result = db.client.table("hydration_logs").insert(log_data).execute()
+    except Exception as insert_err:
+        err_str = str(insert_err)
+        if "local_date" in err_str:
+            log_data.pop("local_date", None)
+            try:
+                result = db.client.table("hydration_logs").insert(log_data).execute()
+            except Exception as e2:
+                if "source" in str(e2):
+                    log_data.pop("source", None)
+                    result = db.client.table("hydration_logs").insert(log_data).execute()
+                else:
+                    raise
+        elif "source" in err_str:
+            log_data.pop("source", None)
+            result = db.client.table("hydration_logs").insert(log_data).execute()
+        else:
+            raise
+
+    if not result.data:
+        raise safe_internal_error(ValueError("Failed to log hydration"), "hydration")
+
+    # Invalidate Timeline cache so the home Timeline picks up this water entry
+    # on the next fetch (added 2026-05-10 with the Timeline aggregator).
+    try:
+        from api.v1.timeline_cache import invalidate_timeline_cache
+        await invalidate_timeline_cache(user_id, str(local_date))
+    except Exception:
+        pass
+
+    # Bust the home bootstrap cache so the next bootstrap poll reflects this
+    # hydration entry (bootstrap aggregates the hydration summary).
+    from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+    await invalidate_bootstrap_cache(user_id)
+
+    return result.data[0]
+
+
 @router.post("/log", response_model=HydrationLog)
 async def log_hydration(
     data: HydrationLogCreate, http_request: Request,
@@ -69,64 +145,18 @@ async def log_hydration(
         user_tz = resolve_timezone(http_request, db, data.user_id)
 
         # Use client's local date if provided, otherwise derive from user timezone
-        utc_now = datetime.utcnow()
         local_date = data.local_date or get_user_today(user_tz)
 
-        # Auto-fill source from workout_id when client didn't provide one —
-        # an active workout context is a strong signal even on older clients.
-        explicit_source = _normalize_hydration_source(getattr(data, "source", None))
-        if explicit_source == "manual" and data.workout_id:
-            explicit_source = "workout"
-
-        log_data = {
-            "id": str(uuid.uuid4()),
-            "user_id": data.user_id,
-            "drink_type": data.drink_type,
-            "amount_ml": data.amount_ml,
-            "workout_id": data.workout_id,
-            "notes": data.notes,
-            "logged_at": utc_now.isoformat(),
-            "source": explicit_source,
-        }
-
-        # Try inserting with local_date if column exists; gracefully degrade
-        # for either missing column (`local_date` or `source`).
-        try:
-            log_data["local_date"] = local_date
-            result = db.client.table("hydration_logs").insert(log_data).execute()
-        except Exception as insert_err:
-            err_str = str(insert_err)
-            if "local_date" in err_str:
-                log_data.pop("local_date", None)
-                try:
-                    result = db.client.table("hydration_logs").insert(log_data).execute()
-                except Exception as e2:
-                    if "source" in str(e2):
-                        log_data.pop("source", None)
-                        result = db.client.table("hydration_logs").insert(log_data).execute()
-                    else:
-                        raise
-            elif "source" in err_str:
-                log_data.pop("source", None)
-                result = db.client.table("hydration_logs").insert(log_data).execute()
-            else:
-                raise
-
-        if not result.data:
-            raise safe_internal_error(ValueError("Failed to log hydration"), "hydration")
-
-        # Invalidate Timeline cache so the home Timeline picks up this water
-        # entry on the next fetch (added 2026-05-10 with the Timeline aggregator).
-        try:
-            from api.v1.timeline_cache import invalidate_timeline_cache
-            await invalidate_timeline_cache(data.user_id, str(local_date))
-        except Exception:
-            pass
-
-        # Bust the home bootstrap cache so the next bootstrap poll reflects
-        # this hydration entry (bootstrap aggregates the hydration summary).
-        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
-        await invalidate_bootstrap_cache(data.user_id)
+        row = await persist_hydration_entry(
+            db,
+            user_id=data.user_id,
+            amount_ml=data.amount_ml,
+            drink_type=data.drink_type,
+            local_date=local_date,
+            source=getattr(data, "source", None),
+            workout_id=data.workout_id,
+            notes=data.notes,
+        )
 
         # Log hydration entry
         await log_user_activity(
@@ -141,7 +171,7 @@ async def log_hydration(
             status_code=200
         )
 
-        return row_to_hydration_log(result.data[0])
+        return row_to_hydration_log(row)
 
     except HTTPException:
         raise

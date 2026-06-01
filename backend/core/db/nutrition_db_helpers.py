@@ -70,6 +70,11 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         choline_mg: Optional[float] = None,
         omega3_g: Optional[float] = None,
         omega6_g: Optional[float] = None,
+        # Gap 7 — opt-in tracker inputs. caffeine_mg + alcohol_g were previously
+        # un-persistable (no column param); added so the caffeine/alcohol daily
+        # trackers have a real data source on every log path.
+        caffeine_mg: Optional[float] = None,
+        alcohol_g: Optional[float] = None,
         # Image storage fields
         image_url: Optional[str] = None,
         image_storage_key: Optional[str] = None,
@@ -221,6 +226,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "choline_mg": choline_mg,
             "omega3_g": omega3_g,
             "omega6_g": omega6_g,
+            "caffeine_mg": caffeine_mg,
+            "alcohol_g": alcohol_g,
         }
 
         # Only add non-None micronutrients to data

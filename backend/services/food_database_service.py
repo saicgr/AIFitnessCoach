@@ -235,16 +235,86 @@ class FoodDatabaseService:
 
         # 2. Try Open Food Facts
         result = await self._lookup_open_food_facts(barcode)
+        from_off = result is not None
 
         # 3. If not found, try USDA fallback
         if not result:
             result = await self._lookup_usda_barcode(barcode)
+
+        # 3b. Gap 2 — serving-size arbitration. OFF often reports a flat 100g
+        # default that is not the real label serving; resolve a realistic one
+        # by cross-checking USDA + (only if still ambiguous) a cheap LLM call.
+        # Runs only on a cache MISS with a suspicious serving, then the result
+        # is cached below — so this fires at most once per product.
+        if result:
+            await self._resolve_serving_size(result, barcode, from_off=from_off)
 
         # 4. Cache the result (30-day TTL)
         if result:
             self._cache_barcode_result(barcode, result)
 
         return result
+
+    async def _resolve_serving_size(
+        self, product: "BarcodeProduct", barcode: str, *, from_off: bool
+    ) -> None:
+        """Gap 2 — fix OFF's suspicious ~100g default serving in place.
+
+        No-op when the product already carries a credible (non-100g) serving.
+        Otherwise gathers candidates from the other DB (USDA when the primary
+        was OFF) and resolves deterministically, falling back to one cheap
+        Flash-Lite call only when every candidate is missing/100g. Best-effort:
+        any failure leaves the original serving untouched.
+        """
+        try:
+            from services.food_analysis.serving_arbitration import (
+                _is_suspicious,
+                pick_deterministic_serving,
+                resolve_serving_with_llm,
+            )
+
+            nutr = product.nutrients
+            if not _is_suspicious(nutr.serving_size_g):
+                return  # already a credible label serving — trust it
+
+            candidates = [{
+                "source": "off" if from_off else "usda",
+                "serving_size_g": nutr.serving_size_g,
+                "serving_label": nutr.serving_size,
+            }]
+
+            # Cross-check the OTHER database for a real serving. When the primary
+            # was OFF (the usual case), USDA frequently has the true label serving.
+            if from_off:
+                try:
+                    usda_product = await self._lookup_usda_barcode(barcode)
+                    if usda_product:
+                        candidates.append({
+                            "source": "usda",
+                            "serving_size_g": usda_product.nutrients.serving_size_g,
+                            "serving_label": usda_product.nutrients.serving_size,
+                        })
+                except Exception as e:
+                    logger.debug(f"USDA serving cross-check skipped: {e}")
+
+            resolved = pick_deterministic_serving(candidates)
+            if resolved is None:
+                resolved = await resolve_serving_with_llm(
+                    product_name=product.product_name,
+                    brand=product.brand,
+                    candidates=candidates,
+                    categories=product.categories,
+                )
+            if resolved and resolved.get("serving_size_g"):
+                nutr.serving_size_g = float(resolved["serving_size_g"])
+                if resolved.get("serving_label"):
+                    nutr.serving_size = resolved["serving_label"]
+                logger.info(
+                    f"[ServingArbiter] barcode {barcode}: serving resolved to "
+                    f"{nutr.serving_size_g}g via {resolved.get('source')}"
+                )
+        except Exception as e:
+            logger.warning(f"[ServingArbiter] resolution skipped for {barcode}: {e}")
 
     def _get_cached_barcode(self, barcode: str) -> Optional[BarcodeProduct]:
         """Check food_search_cache for barcode result."""

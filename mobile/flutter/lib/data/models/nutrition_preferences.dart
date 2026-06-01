@@ -137,6 +137,24 @@ class NutritionPreferences {
   @JsonKey(name: 'weekly_checkin_dismiss_count')
   final int weeklyCheckinDismissCount;
 
+  // Gap 6 — hydration tracking on/off (default on preserves current UX).
+  @JsonKey(name: 'hydration_tracking_enabled')
+  final bool hydrationTrackingEnabled;
+  // Gap 7 — opt-in sugar / caffeine / alcohol daily trackers (off by default)
+  // + their per-tracker daily limits.
+  @JsonKey(name: 'sugar_tracking_enabled')
+  final bool sugarTrackingEnabled;
+  @JsonKey(name: 'caffeine_tracking_enabled')
+  final bool caffeineTrackingEnabled;
+  @JsonKey(name: 'alcohol_tracking_enabled')
+  final bool alcoholTrackingEnabled;
+  @JsonKey(name: 'sugar_limit_g')
+  final int sugarLimitG;
+  @JsonKey(name: 'caffeine_limit_mg')
+  final int caffeineLimitMg;
+  @JsonKey(name: 'alcohol_limit_units')
+  final int alcoholLimitUnits;
+
   const NutritionPreferences({
     this.id,
     required this.userId,
@@ -189,6 +207,13 @@ class NutritionPreferences {
     this.weeklyCheckinEnabled = true,
     this.lastWeeklyCheckinAt,
     this.weeklyCheckinDismissCount = 0,
+    this.hydrationTrackingEnabled = true,
+    this.sugarTrackingEnabled = false,
+    this.caffeineTrackingEnabled = false,
+    this.alcoholTrackingEnabled = false,
+    this.sugarLimitG = 36,
+    this.caffeineLimitMg = 400,
+    this.alcoholLimitUnits = 2,
   });
 
   /// Get nutrition goals as enums (multi-select)
@@ -294,6 +319,13 @@ class NutritionPreferences {
     bool? weeklyCheckinEnabled,
     DateTime? lastWeeklyCheckinAt,
     int? weeklyCheckinDismissCount,
+    bool? hydrationTrackingEnabled,
+    bool? sugarTrackingEnabled,
+    bool? caffeineTrackingEnabled,
+    bool? alcoholTrackingEnabled,
+    int? sugarLimitG,
+    int? caffeineLimitMg,
+    int? alcoholLimitUnits,
   }) {
     return NutritionPreferences(
       id: id ?? this.id,
@@ -359,6 +391,17 @@ class NutritionPreferences {
           lastWeeklyCheckinAt ?? this.lastWeeklyCheckinAt,
       weeklyCheckinDismissCount:
           weeklyCheckinDismissCount ?? this.weeklyCheckinDismissCount,
+      hydrationTrackingEnabled:
+          hydrationTrackingEnabled ?? this.hydrationTrackingEnabled,
+      sugarTrackingEnabled:
+          sugarTrackingEnabled ?? this.sugarTrackingEnabled,
+      caffeineTrackingEnabled:
+          caffeineTrackingEnabled ?? this.caffeineTrackingEnabled,
+      alcoholTrackingEnabled:
+          alcoholTrackingEnabled ?? this.alcoholTrackingEnabled,
+      sugarLimitG: sugarLimitG ?? this.sugarLimitG,
+      caffeineLimitMg: caffeineLimitMg ?? this.caffeineLimitMg,
+      alcoholLimitUnits: alcoholLimitUnits ?? this.alcoholLimitUnits,
     );
   }
 }

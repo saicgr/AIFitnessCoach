@@ -187,6 +187,15 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           return;
         }
 
+        // Gap 1 — pure-water entry ("a glass of water"): the analyze stream
+        // returns no food items but a hydration split. Log the water, confirm,
+        // and close — never show an empty food confirm.
+        if (progress.isHydrationOnly && progress.hydrationDetected != null) {
+          _loadingDelayTimer?.cancel();
+          await _logHydrationOnly(progress.hydrationDetected!);
+          return;
+        }
+
         if (progress.isCompleted && progress.foodLog != null) {
           // The `done` event renders the macro card immediately (~2-3s). A
           // late `coach_tips` event (progress.hasCoachTips) may follow a few
@@ -194,6 +203,16 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           // in. We do NOT break on `done` — keep listening so the tip swaps
           // in when it arrives. The shimmer placeholder shows meanwhile.
           final finalResponse = progress.foodLog!;
+          // Stash any detected beverage so _handleLog can log it to hydration
+          // alongside the food on confirm. A late coach_tips re-render carries
+          // null here — keep the first non-null value.
+          if (progress.hydrationDetected != null) {
+            _pendingHydration = progress.hydrationDetected;
+          }
+          // Gap 7 — keep tracker inputs for the confirm → /log-direct write.
+          if (progress.trackerMicros != null) {
+            _pendingTrackerMicros = progress.trackerMicros;
+          }
           response = finalResponse;
           final isTips = progress.hasCoachTips;
           setState(() {
@@ -275,6 +294,40 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
   }
 
+
+  /// Gap 1 — parse {amount_ml, drink_type} into a logHydration call on the
+  /// hydration provider (optimistic + offline-safe). Source = nutrition so the
+  /// entry's badge reflects it came from the food logger.
+  Future<bool> _logHydrationFromMap(Map<String, dynamic> hyd) async {
+    final amountMl = (hyd['amount_ml'] as num?)?.toInt() ?? 0;
+    if (amountMl <= 0) return false;
+    final drinkType = (hyd['drink_type'] as String?) ?? 'water';
+    try {
+      return await ref.read(hydrationProvider.notifier).logHydration(
+            userId: widget.userId,
+            drinkType: drinkType,
+            amountMl: amountMl,
+            source: HydrationSource.nutrition,
+          );
+    } catch (e) {
+      debugPrint('💧 [LogMeal] water-in-text log failed: $e');
+      return false;
+    }
+  }
+
+  /// Gap 1 — pure-water entry: log the water, toast it, and close the sheet.
+  Future<void> _logHydrationOnly(Map<String, dynamic> hyd) async {
+    final amountMl = (hyd['amount_ml'] as num?)?.toInt() ?? 0;
+    await _logHydrationFromMap(hyd);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Logged ${amountMl}ml of water 💧'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    Navigator.of(context).pop();
+  }
 
   void _handleBackToResults() {
     if (_previousResponse != null) {
@@ -634,6 +687,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           loggedAt: loggedAtIso,
           itemEdits: pendingEdits,
           idempotencyKey: idempotencyKey, // (WR9) double-tap / replay guard
+          trackerMicros: _pendingTrackerMicros, // Gap 7 sugar/caffeine/alcohol
         );
         savedLogId = savedResponse.foodLogId;
         // (WR5) The photo's S3 upload finished as part of the POST — swap the
@@ -669,6 +723,15 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }();
     // Swallow the rethrow at the top level — already handled above.
     unawaited(saveFuture.catchError((_) {}));
+
+    // Gap 1 — water-in-text. If the entry also mentioned a beverage, log it to
+    // hydration alongside the food (fire-and-forget; optimistic + offline-safe).
+    // Consume once so a retry of the same response doesn't double-log water.
+    final pendingHydration = _pendingHydration;
+    if (pendingHydration != null) {
+      _pendingHydration = null;
+      unawaited(_logHydrationFromMap(pendingHydration));
+    }
 
     _logAnalyzedFood(response, saveFuture, () => savedLogId, optimisticLogId);
   }
@@ -1520,6 +1583,61 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     );
   }
 
+  /// Gap 4 — the nutrition label is still cut off after [photosSoFar] photo(s)
+  /// (a common case when the panel wraps around a bottle). Offer to capture
+  /// another piece; returns the new photo File, or null if the user declines.
+  Future<File?> _promptAddAnotherLabelPhoto(int photosSoFar) async {
+    if (!mounted) return null;
+    final add = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        return AlertDialog(
+          backgroundColor: colors.isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Icon(Icons.document_scanner_outlined, color: AppColors.waterBlue),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Label cut off')),
+            ],
+          ),
+          content: Text(
+            "Looks like part of the label is cut off (this happens when it wraps "
+            "around a bottle). Add another photo of the rest and we'll stitch "
+            "them together. ($photosSoFar so far)",
+            style: const TextStyle(fontSize: 14.5, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Use what I have'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(ctx, true),
+              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
+              label: const Text('Add photo'),
+            ),
+          ],
+        );
+      },
+    );
+    if (add != true || !mounted) return null;
+
+    final source = await _pickScanImageSource(
+        'Add label photo', const Color(0xFF06B6D4));
+    if (source == null || !mounted) return null;
+    final picker = ImagePicker();
+    final shot = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 90,
+    );
+    if (shot == null) return null;
+    return File(shot.path);
+  }
+
   /// C4 — app-screenshot scan. A screenshot that turns out to be a recipe or
   /// a non-nutrition page is caught by the backend (422) and surfaces here as
   /// a `ScanImportException.routeTo` — we then offer to send the user to the
@@ -1674,6 +1792,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     required File imageFile,
     required String inputType,
     double servingsConsumed = 1.0,
+    /// Gap 4 — accumulated extra label photos (pieces of a wrapped label).
+    /// The first photo is [imageFile]; these are the additional captures.
+    List<File> labelImages = const [],
   }) async {
     setState(() {
       _isLoading = true;
@@ -1709,7 +1830,27 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           caption: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
+          additionalImages: labelImages,
         );
+        // Gap 4 — the panel is still cut off (e.g. wrapped around a bottle).
+        // Offer to add another photo and re-scan the accumulated set, up to a
+        // sane cap. Total photos = 1 (first) + labelImages.
+        final totalPhotos = 1 + labelImages.length;
+        if (mounted && result.needsMorePhotos && totalPhotos < 4) {
+          _loadingDelayTimer?.cancel();
+          final extra = await _promptAddAnotherLabelPhoto(totalPhotos);
+          if (extra != null && mounted) {
+            await _runScanImport(
+              kind: 'label',
+              imageFile: imageFile,
+              inputType: inputType,
+              servingsConsumed: servingsConsumed,
+              labelImages: [...labelImages, extra],
+            );
+            return; // the recursive call renders the (re-scanned) result
+          }
+          // User declined more photos — fall through and show what we have.
+        }
       } else {
         result = await repository.scanAppScreenshot(
           userId: widget.userId,
@@ -2143,6 +2284,14 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             _originalFoodItems = List<FoodItemRanking>.from(parsed!.foodItems);
             _pendingItemEdits.clear();
             _analysisElapsedMs = (payload['total_time_ms'] as num?)?.toInt() ?? _analysisElapsedMs;
+            // Gap 7 — capture tracker inputs from a photographed meal so the
+            // confirm → /log-direct write populates sugar/caffeine/alcohol.
+            final tm = <String, dynamic>{
+              if (payload['added_sugar_g'] != null) 'added_sugar_g': payload['added_sugar_g'],
+              if (payload['caffeine_mg'] != null) 'caffeine_mg': payload['caffeine_mg'],
+              if (payload['alcohol_g'] != null) 'alcohol_g': payload['alcohol_g'],
+            };
+            _pendingTrackerMicros = tm.isEmpty ? null : tm;
           });
           return; // _buildNutritionPreview now renders with review + "Log This Meal"
         }
@@ -2927,6 +3076,25 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                       style: const TextStyle(fontSize: 15, height: 1.35),
                     ),
                     const SizedBox(height: 18),
+                    // Gap 3 — primary recovery: snap the nutrition label. The
+                    // package is already in the user's hand, so the label is
+                    // the highest-accuracy next step when the barcode isn't in
+                    // the database. Reuses the existing label-scan pipeline.
+                    FilledButton.icon(
+                      onPressed: () {
+                        Navigator.pop(sheetCtx);
+                        if (mounted) {
+                          setState(() => _error = null);
+                          // ignore: unawaited_futures
+                          _scanNutritionLabel();
+                        }
+                      },
+                      icon: const Icon(Icons.document_scanner_outlined, size: 18),
+                      label: Text(
+                        AppLocalizations.of(sheetCtx).customFoodBuilderScanLabel,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
@@ -2937,7 +3105,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: FilledButton(
+                          child: OutlinedButton(
                             onPressed: () {
                               Navigator.pop(sheetCtx);
                               if (mounted) {

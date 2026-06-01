@@ -637,10 +637,19 @@ extension NutritionRepositoryExt on NutritionRepository {
 
 
   /// Log food from text description using AI
+  ///
+  /// [onHydrationLogged] (Gap 1) fires when the entry also contained a beverage
+  /// that the backend logged to hydration (returned as `hydration_logged`), so
+  /// the caller can refresh the hydration UI — the food-search quick-log path
+  /// otherwise wouldn't reflect the new water until the next poll.
   Future<LogFoodResponse> logFoodFromText({
     required String userId,
     required String description,
     required String mealType,
+    void Function(Map<String, dynamic> hydration)? onHydrationLogged,
+    /// Gap 1 — recipe builder logs-then-deletes for analysis; pass true so the
+    /// backend doesn't persist a stray hydration entry for a water ingredient.
+    bool skipHydration = false,
   }) async {
     try {
       final response = await _client.post(
@@ -649,11 +658,19 @@ extension NutritionRepositoryExt on NutritionRepository {
           'user_id': userId,
           'description': description,
           'meal_type': mealType,
+          if (skipHydration) 'skip_hydration': true,
         },
         options: Options(
           receiveTimeout: ApiConstants.aiReceiveTimeout,
         ),
       );
+      // Gap 1 — surface any water the backend split out + logged to hydration.
+      if (onHydrationLogged != null && response.data is Map) {
+        final hyd = (response.data as Map)['hydration_logged'];
+        if (hyd is Map) {
+          onHydrationLogged(Map<String, dynamic>.from(hyd));
+        }
+      }
       final result = LogFoodResponse.fromJson(response.data);
 
       // Fire-and-forget: sync meal to Health Connect / HealthKit
@@ -744,6 +761,10 @@ extension NutritionRepositoryExt on NutritionRepository {
     double? cholineMg,
     double? omega3G,
     double? omega6G,
+    // Gap 7 — opt-in tracker inputs (added sugar / caffeine / alcohol).
+    double? addedSugarG,
+    double? caffeineMg,
+    double? alcoholG,
     // Image storage
     String? imageUrl,
     String? imageStorageKey,
@@ -790,6 +811,10 @@ extension NutritionRepositoryExt on NutritionRepository {
           // Micronutrients
           if (sodiumMg != null) 'sodium_mg': sodiumMg,
           if (sugarG != null) 'sugar_g': sugarG,
+          // Gap 7 — opt-in tracker inputs.
+          if (addedSugarG != null) 'added_sugar_g': addedSugarG,
+          if (caffeineMg != null) 'caffeine_mg': caffeineMg,
+          if (alcoholG != null) 'alcohol_g': alcoholG,
           if (saturatedFatG != null) 'saturated_fat_g': saturatedFatG,
           if (cholesterolMg != null) 'cholesterol_mg': cholesterolMg,
           if (potassiumMg != null) 'potassium_mg': potassiumMg,
@@ -923,11 +948,20 @@ extension NutritionRepositoryExt on NutritionRepository {
     /// null, [logAdjustedFood] is called without one; callers that need
     /// double-tap protection should pass [NutritionRepository.newMealIdempotencyKey].
     String? idempotencyKey,
+    /// Gap 7 — opt-in tracker inputs from the analysis ({added_sugar_g,
+    /// caffeine_mg, alcohol_g}), carried out-of-band of LogFoodResponse. Scaled
+    /// by [portionMultiplier] and persisted so the sugar/caffeine/alcohol
+    /// trackers get real data on the streaming-sheet confirm path.
+    Map<String, dynamic>? trackerMicros,
   }) async {
     debugPrint('💾 [Nutrition] Saving analyzed food for $userId');
 
     // Adjust nutrition values by portion multiplier
     final adjustedCalories = (analyzedFood.totalCalories * portionMultiplier).round();
+    double? _scaledTracker(String key) {
+      final v = trackerMicros?[key];
+      return v is num ? v.toDouble() * portionMultiplier : null;
+    }
     final adjustedProtein = (analyzedFood.proteinG * portionMultiplier).round();
     final adjustedCarbs = (analyzedFood.carbsG * portionMultiplier).round();
     final adjustedFat = (analyzedFood.fatG * portionMultiplier).round();
@@ -973,6 +1007,10 @@ extension NutritionRepositoryExt on NutritionRepository {
       loggedAt: loggedAt,
       // Pass micronutrients from AI analysis
       sugarG: adjustedSugar,
+      // Gap 7 — opt-in tracker inputs (scaled by portion).
+      addedSugarG: _scaledTracker('added_sugar_g'),
+      caffeineMg: _scaledTracker('caffeine_mg'),
+      alcoholG: _scaledTracker('alcohol_g'),
       sodiumMg: adjustedSodium,
       cholesterolMg: adjustedCholesterol,
       vitaminAUg: adjustedVitaminA,

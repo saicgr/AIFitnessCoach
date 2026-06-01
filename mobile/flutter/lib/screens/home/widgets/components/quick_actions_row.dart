@@ -7,6 +7,7 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/quick_action_provider.dart';
+import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/services/api_client.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -262,10 +263,17 @@ class CompactQuickActionsRow extends ConsumerWidget {
     // shows EXACTLY 6 user-configured slots + a trailing More chip — never
     // more, never less. 5 fit fully on a 390pt iPhone with the 6th peeking,
     // scroll right to reveal the 6th + More.
+    // Gap 6 — drop the water quick-action when hydration tracking is off.
+    final hideWater = !(ref
+            .watch(nutritionPreferencesProvider)
+            .preferences
+            ?.hydrationTrackingEnabled ??
+        true);
     final slotIds = expanded
-        ? homeQuickActionSlotIds(order, expanded: true)
+        ? homeQuickActionSlotIds(order, expanded: true, hideWater: hideWater)
         : order
             .where((id) => quickActionRegistry.containsKey(id))
+            .where((id) => !(hideWater && id == 'water'))
             .take(6)
             .toList();
 

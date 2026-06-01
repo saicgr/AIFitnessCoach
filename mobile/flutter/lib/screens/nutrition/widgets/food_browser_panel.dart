@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/food_search_service.dart' as search;
 import '../../../data/services/last_used_service.dart';
@@ -185,6 +186,11 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         userId: widget.userId,
         description: description,
         mealType: widget.mealType.value,
+        // Gap 1 — if the entry split out a beverage, refresh hydration so the
+        // home pill / water tab reflect it without waiting for the next poll.
+        onHydrationLogged: (_) => ref
+            .read(hydrationProvider.notifier)
+            .loadTodaySummary(widget.userId, showLoading: false),
       );
       ref.read(xpProvider.notifier).markMealLogged();
       ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
@@ -1086,6 +1092,11 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         userId: widget.userId,
         description: description,
         mealType: widget.mealType.value,
+        // Gap 1 — if the entry split out a beverage, refresh hydration so the
+        // home pill / water tab reflect it without waiting for the next poll.
+        onHydrationLogged: (_) => ref
+            .read(hydrationProvider.notifier)
+            .loadTodaySummary(widget.userId, showLoading: false),
       );
       ref.read(xpProvider.notifier).markMealLogged();
       ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
@@ -1127,6 +1138,9 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         userId: widget.userId,
         description: descriptions.join(', '),
         mealType: widget.mealType.value,
+        onHydrationLogged: (_) => ref
+            .read(hydrationProvider.notifier)
+            .loadTodaySummary(widget.userId, showLoading: false),
       );
       ref.read(xpProvider.notifier).markMealLogged();
       ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);

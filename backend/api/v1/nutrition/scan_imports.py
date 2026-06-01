@@ -26,7 +26,7 @@ Edge cases handled (plan Part C, table C4):
 """
 import asyncio
 import base64
-from typing import Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 
@@ -138,7 +138,8 @@ def _build_response(
 async def scan_nutrition_label(
     request: Request,
     user_id: str = Form(...),
-    image: UploadFile = File(...),
+    image: Optional[UploadFile] = File(None),
+    images: Optional[List[UploadFile]] = File(None),
     servings_consumed: float = Form(1.0),
     caption: Optional[str] = Form(None),
     current_user: dict = Depends(get_current_user),
@@ -154,6 +155,11 @@ async def scan_nutrition_label(
         label serving size differs from the amount eaten.
       - `scan_meta.servings_per_container` / `unreadable_fields` / `unit_notes`
         let the client confirm portion, flag glare, and note kJ/per-100g.
+
+    Gap 4 — multi-photo stitching: accepts either a single `image` (back-compat)
+    or multiple `images` (pieces of the same label, e.g. wrapped around a
+    bottle). When the panel is still cut off, `scan_meta.needs_more_photos` is
+    true so the client can prompt for another photo and re-scan the full set.
     """
     verify_user_ownership(current_user, user_id)
 
@@ -162,13 +168,24 @@ async def scan_nutrition_label(
     # Sanity-clamp absurd portions (C4 multi-serving safety).
     servings_consumed = min(servings_consumed, 50.0)
 
-    image_base64, mime_type = await _read_and_validate_image(image)
+    # Collect every uploaded photo (single `image` and/or multi `images`).
+    uploads = [u for u in ([image] if image else []) + (images or []) if u]
+    if not uploads:
+        raise HTTPException(status_code=400, detail="No image uploaded")
+    if len(uploads) > 5:
+        uploads = uploads[:5]  # bound the stitch set
+    images_base64: list[str] = []
+    mime_type = "image/jpeg"
+    for up in uploads:
+        b64, mt = await _read_and_validate_image(up)
+        images_base64.append(b64)
+        mime_type = mt
 
     try:
         vision_service = get_vision_service()
         analysis = await asyncio.wait_for(
             vision_service.analyze_nutrition_label(
-                image_base64=image_base64,
+                images_base64=images_base64,
                 mime_type=mime_type,
                 servings_consumed=servings_consumed,
                 user_context=caption,
@@ -216,6 +233,10 @@ async def scan_nutrition_label(
             "unreadable_fields": analysis.get("unreadable_fields") or [],
             "unit_notes": analysis.get("unit_notes") or [],
             "low_confidence": bool(analysis.get("low_confidence")),
+            # Gap 4 — the core panel is still cut off; the client can add
+            # another photo and re-scan the accumulated set.
+            "needs_more_photos": not bool(analysis.get("label_complete", True)),
+            "photos_used": len(images_base64),
         }
         return _build_response(analysis, source_type="label_scan", scan_meta=scan_meta)
 

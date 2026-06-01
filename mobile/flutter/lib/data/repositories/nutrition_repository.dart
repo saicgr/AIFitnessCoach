@@ -16,6 +16,7 @@ import '../models/companion_suggestion.dart';
 import '../models/recipe.dart';
 import '../models/ai_suggested_food.dart';
 import '../services/api_client.dart';
+import '../services/widget_service.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
@@ -90,6 +91,26 @@ class NutritionRepository {
     }
     return result;
   }
+
+  // Gap 1 — parallel client cache for the hydration split detected on an
+  // analysis, keyed by the same normalized text. Stored alongside the
+  // LogFoodResponse cache so a client-cache HIT on identical text still logs
+  // the water on confirm. Value: {'hydration': {amount_ml, drink_type},
+  // 'only': bool}.
+  static final Map<String, Map<String, dynamic>> _hydrationCache = {};
+
+  static void _cacheHydration(
+    String key,
+    Map<String, dynamic> hydration,
+    bool hydrationOnly,
+  ) {
+    _hydrationCache[key] = {'hydration': hydration, 'only': hydrationOnly};
+    // Bound it to the analysis cache's key set so it can't grow unbounded.
+    _hydrationCache.removeWhere((k, _) => !_analysisCache.containsKey(k));
+  }
+
+  static Map<String, dynamic>? _getCachedHydration(String key) =>
+      _hydrationCache[key];
 
   /// Generate a client-side idempotency key for a meal-log write (A11).
   ///
@@ -441,6 +462,7 @@ class NutritionRepository {
     final cached = _getCached(cacheKey);
     if (cached != null) {
       debugPrint('✅ [Nutrition] Cache HIT for: "$cacheKey"');
+      final cachedHyd = _getCachedHydration(cacheKey);
       yield FoodLoggingProgress(
         step: 3,
         totalSteps: 3,
@@ -449,6 +471,8 @@ class NutritionRepository {
         foodLog: cached,
         isCompleted: true,
         isAnalysisOnly: true,
+        hydrationDetected: cachedHyd?['hydration'] as Map<String, dynamic>?,
+        isHydrationOnly: cachedHyd?['only'] == true,
       );
       return;
     }
@@ -540,8 +564,28 @@ class NutritionRepository {
                     doneData = data;
                     final foodLog = LogFoodResponse.fromJson(data);
                     debugPrint('✅ [Nutrition-Text] Parsed: ${foodLog.totalCalories} cal, ${foodLog.foodItems.length} items');
-                    // Cache the successful result
+                    // Gap 1 — water-in-text. The backend detected a beverage in
+                    // the entry; carry it out-of-band so the confirm flow logs
+                    // it to hydration. `is_hydration_only` => no food items.
+                    final hyd = data['hydration_detected'];
+                    final hydMap =
+                        hyd is Map ? Map<String, dynamic>.from(hyd) : null;
+                    final hydOnly = data['is_hydration_only'] == true;
+                    // Gap 7 — opt-in tracker inputs to forward on confirm.
+                    final trackerMicros = <String, dynamic>{
+                      if (data['added_sugar_g'] != null)
+                        'added_sugar_g': data['added_sugar_g'],
+                      if (data['caffeine_mg'] != null)
+                        'caffeine_mg': data['caffeine_mg'],
+                      if (data['alcohol_g'] != null)
+                        'alcohol_g': data['alcohol_g'],
+                    };
+                    // Cache the successful result (+ its hydration, so a
+                    // client-cache hit on identical text still logs the water).
                     _cacheResult(cacheKey, foodLog);
+                    if (hydMap != null) {
+                      _cacheHydration(cacheKey, hydMap, hydOnly);
+                    }
                     yield FoodLoggingProgress(
                       step: 3,
                       totalSteps: 3,
@@ -550,6 +594,10 @@ class NutritionRepository {
                       foodLog: foodLog,
                       isCompleted: true,
                       isAnalysisOnly: true,
+                      hydrationDetected: hydMap,
+                      isHydrationOnly: hydOnly,
+                      trackerMicros:
+                          trackerMicros.isEmpty ? null : trackerMicros,
                     );
                   } catch (parseError) {
                     debugPrint('❌ [Nutrition-Text] JSON parse error: $parseError');
@@ -842,6 +890,10 @@ class NutritionRepository {
     required File imageFile,
     double servingsConsumed = 1.0,
     String? caption,
+    /// Gap 4 — extra photos of the SAME label (e.g. wrapped around a bottle).
+    /// Sent as repeated `images` parts; the backend stitches them into one set
+    /// of facts. Empty for the common single-photo case.
+    List<File> additionalImages = const [],
   }) async {
     final formData = FormData.fromMap({
       'user_id': userId,
@@ -851,6 +903,14 @@ class NutritionRepository {
         imageFile.path,
         filename: 'nutrition_label.jpg',
       ),
+      if (additionalImages.isNotEmpty)
+        'images': [
+          for (var i = 0; i < additionalImages.length; i++)
+            await MultipartFile.fromFile(
+              additionalImages[i].path,
+              filename: 'nutrition_label_${i + 1}.jpg',
+            ),
+        ],
     });
     try {
       final response = await _client.post(
@@ -1706,6 +1766,10 @@ class ScanImportResult {
   /// Screenshot: "nutrition_panel" (recipe/not_nutrition are 422'd earlier).
   final String? contentKind;
 
+  /// Gap 4 — label: the core panel is still cut off (e.g. wrapped around a
+  /// bottle); the client should offer to add another photo and re-scan.
+  final bool needsMorePhotos;
+
   const ScanImportResult({
     required this.response,
     required this.kind,
@@ -1717,6 +1781,7 @@ class ScanImportResult {
     this.lowConfidence = false,
     this.sourceApp,
     this.contentKind,
+    this.needsMorePhotos = false,
   });
 
   factory ScanImportResult.fromJson(Map<String, dynamic> json) {
@@ -1740,6 +1805,7 @@ class ScanImportResult {
       lowConfidence: meta['low_confidence'] as bool? ?? false,
       sourceApp: meta['source_app'] as String?,
       contentKind: meta['content_kind'] as String?,
+      needsMorePhotos: meta['needs_more_photos'] as bool? ?? false,
     );
   }
 }

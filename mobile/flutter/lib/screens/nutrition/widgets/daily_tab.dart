@@ -16,6 +16,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
 import 'hydration_summary_block.dart';
+import 'optional_trackers_strip.dart';
 import 'logged_meals_section.dart';
 import '../../home/widgets/hero_nutrition_card.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
@@ -492,12 +493,25 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 // Surface 3.6 — Water tile re-mounts here as a slim tile
                 // below the calorie card. The "Fuel" sub-tab is gone, so
                 // hydration lives in Daily for at-a-glance tracking.
-                if (widget.userId.isNotEmpty)
+                // Gap 6 — hidden entirely when the user turned water tracking off.
+                if (widget.userId.isNotEmpty &&
+                    (ref.watch(nutritionPreferencesProvider).preferences
+                            ?.hydrationTrackingEnabled ??
+                        true)) ...[
                   HydrationSummaryBlock(
                     isDark: widget.isDark,
                     onTap: () => context.push('/hydration'),
                   ),
-                if (widget.userId.isNotEmpty) const SizedBox(height: 12),
+                  const SizedBox(height: 12),
+                ],
+
+                // Gap 7 — opt-in sugar / caffeine / alcohol trackers. Renders
+                // nothing unless the user enabled at least one in Settings.
+                if (widget.userId.isNotEmpty && widget.isViewingToday)
+                  OptionalTrackersStrip(
+                    userId: widget.userId,
+                    isDark: widget.isDark,
+                  ),
 
                 // Week-at-a-glance "Nutrition stats" block. Gated on
                 // isViewingToday so weekly aggregates don't show when the user

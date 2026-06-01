@@ -415,6 +415,83 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
+                  // ── Optional trackers (Gap 6 + Gap 7). Hydration is on by
+                  // default; sugar/caffeine/alcohol are off and stay hidden
+                  // everywhere until turned on here.
+                  _buildSectionHeader(
+                    context,
+                    'Optional Trackers',
+                    Icons.tune_rounded,
+                    AppColors.waterBlue,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Water tracking',
+                        subtitle:
+                            'Log water and see a daily hydration goal. Off hides it everywhere.',
+                        value: preferences.hydrationTrackingEnabled,
+                        onChanged: (value) => _updatePreference(userId, preferences,
+                            hydrationTrackingEnabled: value),
+                        icon: Icons.water_drop_rounded,
+                        iconColor: AppColors.waterBlue,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Added-sugar tracker',
+                        subtitle:
+                            'Show a daily added-sugar counter with a limit (default ${preferences.sugarLimitG}g).',
+                        value: preferences.sugarTrackingEnabled,
+                        onChanged: (value) => _updatePreference(userId, preferences,
+                            sugarTrackingEnabled: value),
+                        icon: Icons.cookie_rounded,
+                        iconColor: AppColors.pink,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Caffeine tracker',
+                        subtitle:
+                            'Show a daily caffeine counter with a limit (default ${preferences.caffeineLimitMg}mg).',
+                        value: preferences.caffeineTrackingEnabled,
+                        onChanged: (value) => _updatePreference(userId, preferences,
+                            caffeineTrackingEnabled: value),
+                        icon: Icons.coffee_rounded,
+                        iconColor: AppColors.orange,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Alcohol tracker',
+                        subtitle:
+                            'Show a daily alcohol counter with a limit (default ${preferences.alcoholLimitUnits} drinks).',
+                        value: preferences.alcoholTrackingEnabled,
+                        onChanged: (value) => _updatePreference(userId, preferences,
+                            alcoholTrackingEnabled: value),
+                        icon: Icons.local_bar_rounded,
+                        iconColor: AppColors.purple,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // ── 10. Food Library — navigation to Saved Foods & Recipes.
                   _buildSectionHeader(
                     context,
@@ -568,6 +645,11 @@ class _NutritionSettingsScreenState
     bool? showMacrosOnLog,
     bool? weeklyCheckinEnabled,
     int? calorieEstimateBias,
+    // Gap 6 / Gap 7 — optional-tracker toggles.
+    bool? hydrationTrackingEnabled,
+    bool? sugarTrackingEnabled,
+    bool? caffeineTrackingEnabled,
+    bool? alcoholTrackingEnabled,
   }) async {
     if (userId == null) return;
 
@@ -585,6 +667,10 @@ class _NutritionSettingsScreenState
         showMacrosOnLog: showMacrosOnLog,
         weeklyCheckinEnabled: weeklyCheckinEnabled,
         calorieEstimateBias: calorieEstimateBias,
+        hydrationTrackingEnabled: hydrationTrackingEnabled,
+        sugarTrackingEnabled: sugarTrackingEnabled,
+        caffeineTrackingEnabled: caffeineTrackingEnabled,
+        alcoholTrackingEnabled: alcoholTrackingEnabled,
       );
 
       await ref.read(nutritionPreferencesProvider.notifier).savePreferences(

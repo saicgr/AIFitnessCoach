@@ -642,6 +642,42 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ),
                   ),
 
+                // Gap 1 — water-in-text. When the entry also mentioned a
+                // beverage, show that it'll be logged to hydration on confirm.
+                if (_pendingHydration != null &&
+                    ((_pendingHydration!['amount_ml'] as num?) ?? 0) > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.waterBlue.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: AppColors.waterBlue.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.water_drop_rounded,
+                              size: 16, color: AppColors.waterBlue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '+${(_pendingHydration!['amount_ml'] as num).toInt()} ml water will be logged',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                height: 1.35,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                 // Estimated Nutrition header — two rows
                 Row(
                   children: [

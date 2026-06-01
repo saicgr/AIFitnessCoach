@@ -8,10 +8,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/hydration.dart';
 import '../services/api_client.dart';
+import '../services/custom_bottle_store.dart';
+import '../services/widget_service.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
 import '../providers/timeline_provider.dart';
+import '../providers/nutrition_preferences_provider.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -351,6 +354,30 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
     debugPrint('🧹 [HydrationProvider] In-memory cache cleared');
   }
 
+  /// Push the latest hydration state to the native home-screen water widget,
+  /// carrying the Gap-6 enabled flag + the Gap-5 saved bottles. Fire-and-forget;
+  /// never throws into the load path.
+  Future<void> _syncWaterWidget(String userId, int currentMl, int goalMl) async {
+    try {
+      final enabled = _ref
+              .read(nutritionPreferencesProvider)
+              .preferences
+              ?.hydrationTrackingEnabled ??
+          true;
+      final bottles = await CustomBottleStore.load(userId);
+      await WidgetService.updateWaterWidget(
+        currentMl: currentMl,
+        goalMl: goalMl,
+        enabled: enabled,
+        bottles: [
+          for (final b in bottles) {'label': b.label, 'ml': b.ml},
+        ],
+      );
+    } catch (e) {
+      debugPrint('💧 [HydrationProvider] water widget sync skipped: $e');
+    }
+  }
+
   @override
   void dispose() {
     _connSub?.cancel();
@@ -492,6 +519,9 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       _hydrationInMemoryCache = state;
       // Write through to disk for the next cold start.
       unawaited(_HydrationDiskCache.write(userId, localDate, summary));
+
+      // Home-screen water widget — push fresh totals + pref + saved bottles.
+      unawaited(_syncWaterWidget(userId, summary.totalMl, summary.goalMl));
 
       _checkHydrationGoal(summary);
     } catch (e) {

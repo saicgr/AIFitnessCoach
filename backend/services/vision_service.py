@@ -1659,16 +1659,38 @@ Guidelines:
         mime_type: str = "image/jpeg",
         servings_consumed: float = 1.0,
         user_context: Optional[str] = None,
+        images_base64: Optional[List[str]] = None,
     ) -> dict:
         """
         Analyze a nutrition facts label from food packaging.
         Reads per-serving macros and multiplies by servings_consumed.
+
+        Gap 4 — multi-photo stitching: when ``images_base64`` carries more than
+        one photo, they are treated as pieces of the SAME label (e.g. a panel
+        wrapped around a bottle) and stitched into one set of facts. The result
+        carries ``label_complete`` — false when key rows are still cut off, so
+        the client can prompt for another photo.
         """
         suggested_meal = self._get_suggested_meal_type()
 
+        # Normalize to a list of photos. images_base64 (multi) wins; else the
+        # single image_base64; else an s3_key resolved below.
+        photos_b64 = [b for b in (images_base64 or []) if b]
+        if not photos_b64 and image_base64:
+            photos_b64 = [image_base64]
+        is_multi = len(photos_b64) > 1
+
+        multi_note = (
+            f"\nYou are given {len(photos_b64)} photos. They are pieces of the "
+            "SAME nutrition label captured separately (e.g. the panel wraps "
+            "around a bottle). Stitch them into ONE complete set of facts — do "
+            "NOT add them together as if they were different products.\n"
+            if is_multi else ""
+        )
+
         prompt = f"""You are an expert OCR system for nutrition facts labels.
 Analyze this nutrition facts label from food packaging.
-
+{multi_note}
 TASKS:
 1. Read the product name and brand if visible
 2. Extract serving size and servings per container
@@ -1683,6 +1705,10 @@ TASKS:
    do NOT fabricate a precise number you cannot read.
 7. MULTI-SERVING: always report "servings_per_container" so the app can
    confirm the user did not log the whole package by mistake.
+8. COMPLETENESS: set "label_complete" to false if the core panel (calories +
+   the macro rows: protein, carbs, fat) is still partly cut off or unreadable
+   across ALL provided photos — i.e. another photo would meaningfully help.
+   Set it true when the essential facts are fully captured.
 
 {f'User says: "{user_context}"' if user_context else ''}
 
@@ -1696,6 +1722,7 @@ Return ONLY valid JSON with this exact structure:
     "unreadable_fields": ["names of glared/cut-off fields, empty if clean"],
     "unit_notes": ["e.g. kj_converted, per_100g_normalized — empty if none"],
     "low_confidence": <true if the label is hard to read>,
+    "label_complete": <true if the core panel is fully captured, false if another photo would help>,
     "meal_type": "{suggested_meal}",
     "food_items": [
         {{
@@ -1722,21 +1749,31 @@ Guidelines:
 - Keep output strictly to the JSON — no prose, no commentary"""
 
         try:
-            logger.info(f"Analyzing nutrition label ({servings_consumed} servings) with Gemini OCR")
+            logger.info(
+                f"Analyzing nutrition label ({servings_consumed} servings, "
+                f"{len(photos_b64) or 1} photo(s)) with Gemini OCR"
+            )
 
-            # Resolve image bytes
-            if image_base64:
-                image_bytes = base64.b64decode(image_base64)
+            # Resolve image bytes for every provided photo (multi-photo stitch).
+            image_parts = []
+            if photos_b64:
+                for b64 in photos_b64:
+                    image_parts.append(
+                        types.Part.from_bytes(
+                            data=base64.b64decode(b64), mime_type=mime_type
+                        )
+                    )
             elif s3_key:
                 image_bytes = await self._download_image_from_s3(s3_key)
+                image_parts.append(
+                    types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                )
             else:
-                raise ValueError("Either image_base64 or s3_key must be provided")
-
-            image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+                raise ValueError("Either image_base64/images_base64 or s3_key must be provided")
 
             response = await gemini_generate_with_retry(
                 model=self.model,
-                contents=[prompt, image_part],
+                contents=[prompt, *image_parts],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=1200,
@@ -1762,6 +1799,9 @@ Guidelines:
             result.setdefault("unreadable_fields", [])
             result.setdefault("unit_notes", [])
             result.setdefault("low_confidence", False)
+            # Gap 4 — default to complete so a model that omits the field never
+            # nags the user for more photos; only an explicit false prompts one.
+            result.setdefault("label_complete", True)
             result.setdefault("total_fiber_g", 0.0)
             result.setdefault("health_score", 5)
             if not result.get("health_score_reasons"):

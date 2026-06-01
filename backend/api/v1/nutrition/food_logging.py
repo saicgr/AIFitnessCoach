@@ -32,6 +32,8 @@ _MICRONUTRIENT_KEYS = [
     'potassium_mg', 'sodium_mg', 'phosphorus_mg', 'copper_mg', 'manganese_mg', 'iodine_ug',
     # Fatty acids & other
     'omega3_g', 'omega6_g', 'sugar_g', 'cholesterol_mg', 'caffeine_mg',
+    # Gap 7 — opt-in tracker inputs (now extracted by the nutrition prompt).
+    'alcohol_g', 'added_sugar_g',
 ]
 
 
@@ -43,6 +45,68 @@ def _extract_micronutrients(food_analysis: dict) -> dict:
         if value is not None:
             micros[key] = value
     return micros
+
+
+def _is_hydration_tracking_enabled(db, user_id: str) -> bool:
+    """Whether the user has hydration tracking on (Gap 6 preference).
+
+    Defaults to True (preserves current always-on behavior) when the preference
+    row or column is missing, so this is safe to call before the Gap 6 migration
+    has run. When False, the food text/voice logger skips its hydration pre-pass
+    entirely — no extra LLM call, matching Amy's opt-out-to-save-cost design.
+    """
+    try:
+        res = (
+            db.client.table("nutrition_preferences")
+            .select("hydration_tracking_enabled")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        if res and res.data and res.data.get("hydration_tracking_enabled") is not None:
+            return bool(res.data["hydration_tracking_enabled"])
+    except Exception as e:
+        logger.debug(f"hydration_tracking_enabled read fell back to default: {e}")
+    return True
+
+
+async def _await_and_persist_text_hydration(
+    db, hydration_task, user_id: str, user_tz: Optional[str]
+) -> Optional[dict]:
+    """Await the Gap-1 hydration detection task and persist any beverage found.
+
+    Returns ``{amount_ml, drink_type}`` when a hydration entry was written, else
+    ``None``. Never raises — a hydration failure must not break the food log.
+    """
+    if hydration_task is None:
+        return None
+    try:
+        detected = await hydration_task
+    except Exception as e:
+        logger.warning(f"[HydrationSplit] task await failed: {e}")
+        return None
+    if not detected:
+        return None
+    try:
+        from api.v1.hydration import persist_hydration_entry
+        from core.timezone_utils import get_user_today
+
+        local_date = get_user_today(user_tz) if user_tz else None
+        if not local_date:
+            from datetime import date as _date
+            local_date = _date.today().isoformat()
+        await persist_hydration_entry(
+            db,
+            user_id=user_id,
+            amount_ml=detected["amount_ml"],
+            drink_type=detected.get("drink_type", "water"),
+            local_date=local_date,
+            source="nutrition",
+        )
+        return detected
+    except Exception as e:
+        logger.warning(f"[HydrationSplit] persist failed: {e}")
+        return None
 
 
 from services.gemini_service import GeminiService
@@ -433,6 +497,19 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
     try:
         db = get_supabase_db()
 
+        # Gap 1 — water-in-text. When hydration tracking is on, kick off a
+        # language-agnostic Flash-Lite pass that detects a beverage in the entry
+        # ("2 eggs and a glass of water" / "deux oeufs et un verre d'eau"). It
+        # runs concurrently with the food analysis below so it adds no latency;
+        # we await it after the food log is created. Gated on the user's pref so
+        # an opted-out user pays zero extra LLM cost (see Gap 6).
+        hydration_task = None
+        if not getattr(body, "skip_hydration", False) and _is_hydration_tracking_enabled(db, body.user_id):
+            from services.food_analysis.hydration_split import detect_hydration_in_text
+            hydration_task = asyncio.create_task(
+                detect_hydration_in_text(body.description, body.user_id)
+            )
+
         # Fetch user goals and nutrition targets for personalized analysis
         user_goals = None
         nutrition_targets = None
@@ -516,6 +593,26 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             )
 
         if not food_analysis or not food_analysis.get('food_items'):
+            # Gap 1 — a beverage-only entry ("a glass of water") parses to zero
+            # food items. Instead of 400-ing, log the hydration and return a
+            # success with empty food_items so the client shows "water logged".
+            user_tz_water = resolve_timezone(request, db, body.user_id) if request else None
+            hydration_only = await _await_and_persist_text_hydration(
+                db, hydration_task, body.user_id, user_tz_water
+            )
+            if hydration_only:
+                return LogFoodResponse(
+                    success=True,
+                    food_log_id="hydration_only",
+                    food_items=[],
+                    total_calories=0,
+                    protein_g=0.0,
+                    carbs_g=0.0,
+                    fat_g=0.0,
+                    fiber_g=0.0,
+                    source_type="text",
+                    hydration_logged=hydration_only,
+                )
             raise HTTPException(
                 status_code=400,
                 detail="Could not parse any food items from the description"
@@ -678,8 +775,14 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
 
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
-        sleep_risk = _compute_sleep_risk_flag(
-            body.user_id, food_items, resolve_timezone(request, db, body.user_id)
+        _tz_for_flags = resolve_timezone(request, db, body.user_id)
+        sleep_risk = _compute_sleep_risk_flag(body.user_id, food_items, _tz_for_flags)
+
+        # Gap 1 — water-in-text. Await the concurrent hydration detection and
+        # persist any beverage found ("...and a glass of water") so a single
+        # entry logs both food and hydration.
+        hydration_logged = await _await_and_persist_text_hydration(
+            db, hydration_task, body.user_id, _tz_for_flags
         )
 
         return LogFoodResponse(
@@ -703,6 +806,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             confidence_level=confidence_level,
             source_type="text",
             sleep_risk=sleep_risk,
+            hydration_logged=hydration_logged,
         )
 
     except HTTPException:
@@ -785,6 +889,9 @@ async def log_food_direct(
             'vitamin_b7_ug', 'vitamin_b9_ug', 'vitamin_b12_ug',
             'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'phosphorus_mg',
             'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
+            # Gap 7 — caffeine + alcohol from the analyzed meal (added_sugar_g is
+            # passed explicitly to create_food_log below).
+            'caffeine_mg', 'alcohol_g',
         ]
         for field in micronutrient_fields:
             value = getattr(body, field, None)
@@ -1169,6 +1276,8 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                 'vitamin_b6_mg', 'vitamin_b7_ug', 'vitamin_b9_ug', 'vitamin_b12_ug',
                 'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'phosphorus_mg',
                 'copper_mg', 'manganese_mg', 'selenium_ug', 'choline_mg', 'omega3_g', 'omega6_g',
+                # Gap 7 — opt-in tracker inputs.
+                'caffeine_mg', 'alcohol_g', 'added_sugar_g',
             ]
             for key in micronutrient_keys:
                 value = food_analysis.get(key)

@@ -47,6 +47,8 @@ import '../models/contextual_nudge.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/hydration_repository.dart';
 import '../repositories/nutrition_repository.dart';
+import '../../screens/nutrition/widgets/optional_trackers_strip.dart'
+    show optionalTrackersProvider;
 import '../services/notification_service.dart';
 import 'ai_settings_provider.dart';
 import 'breakfast_suggestion_provider.dart';
@@ -403,6 +405,10 @@ final contextualNudgeProvider =
   // schema drift doesn't poison the whole stack — see `_fastingNudges()`.
   out.addAll(_fastingNudges(ref, now));
 
+  // Gap 7 — opt-in sugar/caffeine/alcohol over-limit nudges. Surfaces only the
+  // trackers the user enabled, and only once over their daily limit.
+  out.addAll(_optionalTrackerNudges(ref, now));
+
   // ------------------------------------------------------------------
   // F3.51 — Achievement-near-unlock chip (passive).
   // F3.2  — Streak-at-risk pre-warning. (Banner variant in
@@ -608,6 +614,82 @@ DateTime? _parseDate(String? iso) {
 /// F3.89 / F3.90 / F3.95 / F3.96 — fasting state nudges. Each is wrapped in
 /// a try/catch so a fastingProvider schema drift can't poison the whole
 /// contextual-nudge stack.
+/// Gap 7 — emit an over-limit nudge for each enabled opt-in tracker (added
+/// sugar / caffeine / alcohol) once today's total crosses the user's limit.
+/// Reads the same `optionalTrackersProvider` the Daily-tab cards use; returns
+/// nothing until the data resolves or while every tracker is under limit. The
+/// dedupKey buckets the over-amount so it re-ranks (not re-spams) as intake rises.
+List<ContextualNudge> _optionalTrackerNudges(Ref ref, DateTime now) {
+  final userId = ref.watch(authStateProvider).user?.id;
+  if (userId == null || userId.isEmpty) return const [];
+  final t = ref.watch(optionalTrackersProvider(userId)).valueOrNull;
+  if (t == null) return const [];
+
+  final endOfDay = DateTime(now.year, now.month, now.day, 23, 59);
+  final out = <ContextualNudge>[];
+
+  void addOver({
+    required NudgeId id,
+    required String icon,
+    required String label,
+    required double value,
+    required double limit,
+    required String unit,
+  }) {
+    if (limit <= 0 || value <= limit) return;
+    final over = value - limit;
+    final overStr = over >= 10 ? over.round().toString() : over.toStringAsFixed(1);
+    out.add(ContextualNudge(
+      id: id,
+      icon: icon,
+      title: 'Over your $label limit',
+      body: '$overStr$unit over today (${value.round()}$unit / ${limit.round()}$unit).',
+      ctaLabel: 'View',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.navigateRoute,
+        args: {'route': '/nutrition'},
+      ),
+      priorityTier: NudgePriorityTier.habit,
+      category: NudgeCategory.healthAlert,
+      perishesAt: endOfDay,
+      // Bucket so a tiny additional sip doesn't re-fire; re-ranks per whole unit.
+      dedupKey: '${id.name}_${over.round()}',
+    ));
+  }
+
+  if (t.sugarEnabled) {
+    addOver(
+      id: NudgeId.sugarOverLimit,
+      icon: '🍬',
+      label: 'added sugar',
+      value: t.sugarG,
+      limit: t.sugarLimitG.toDouble(),
+      unit: 'g',
+    );
+  }
+  if (t.caffeineEnabled) {
+    addOver(
+      id: NudgeId.caffeineOverLimit,
+      icon: '☕',
+      label: 'caffeine',
+      value: t.caffeineMg,
+      limit: t.caffeineLimitMg.toDouble(),
+      unit: 'mg',
+    );
+  }
+  if (t.alcoholEnabled) {
+    addOver(
+      id: NudgeId.alcoholOverLimit,
+      icon: '🍷',
+      label: 'alcohol',
+      value: t.alcoholUnits,
+      limit: t.alcoholLimitUnits.toDouble(),
+      unit: t.alcoholUnits == 1 ? ' drink' : ' drinks',
+    );
+  }
+  return out;
+}
+
 List<ContextualNudge> _fastingNudges(Ref ref, DateTime now) {
   final list = <ContextualNudge>[];
   try {
