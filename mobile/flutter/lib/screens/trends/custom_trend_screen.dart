@@ -8,6 +8,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
+import '../../data/providers/saved_trends_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../widgets/glass_back_button.dart';
@@ -196,6 +197,11 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       _kSavedTrendsPrefsKey,
       _saved.map((t) => jsonEncode(t.toJson())).toList(),
     );
+    // #11: the home carousel's Trends page watches `savedTrendsProvider`, a
+    // FutureProvider that reads prefs ONCE. Without this invalidation a newly
+    // saved (or deleted) trend never appeared on the home carousel until an app
+    // restart — which read as "I can't add my trend to the home screen."
+    if (mounted) ref.invalidate(savedTrendsProvider);
   }
 
   Future<void> _saveCurrent() async {
