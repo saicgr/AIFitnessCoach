@@ -259,8 +259,10 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
             behavior: HitTestBehavior.opaque,
             onTap: () => context.push('/stats'),
             child: SegmentedScoreRing(
-            size: 118,
-            strokeWidth: 11,
+            // Slightly smaller than before (was 118) so the 4 contributor tiles
+            // beside it widen toward the page-2 tile proportions (#6 follow-up).
+            size: 104,
+            strokeWidth: 10,
             segments: segments,
             center: Column(
               mainAxisSize: MainAxisSize.min,
@@ -295,12 +297,11 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                // Fixed tile HEIGHT (not aspect ratio): two rows then fit the
-                // deck identically on every width (SE..Pro Max). Aspect-ratio
-                // sizing made wide screens clip the bottom row (issue 3).
-                mainAxisExtent: 62,
+                // Match page-2 (_gridPage) exactly so the tiles read as the same
+                // component across slides (#6): same 9px gaps + 56px height.
+                mainAxisSpacing: 9,
+                crossAxisSpacing: 9,
+                mainAxisExtent: 56,
               ),
               children: [
                 for (final kind in tiles)
