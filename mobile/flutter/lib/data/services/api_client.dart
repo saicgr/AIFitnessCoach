@@ -425,10 +425,11 @@ class ApiClient with WidgetsBindingObserver {
       // of 6, those slow calls saturated the pool and the fast
       // /nutrition/summary/daily request could never acquire a socket — it died
       // with DioException[connectionTimeout] at 25s ("nutrition not loading"),
-      // while a one-off direct call always connected. 32 comfortably exceeds the
-      // realistic concurrent burst so fast data requests never queue behind slow
-      // AI ones. (dart:io's default is unlimited; 6 was an arbitrary throttle.)
-      client.maxConnectionsPerHost = 32;
+      // while a one-off direct call always connected. 64 comfortably exceeds the
+      // realistic concurrent burst (~12-20) so fast data requests never queue
+      // behind slow AI ones. (dart:io's default is unlimited; 6 was an arbitrary
+      // throttle.)
+      client.maxConnectionsPerHost = 64;
       client.autoUncompress = true;
       return client;
     };

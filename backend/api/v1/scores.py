@@ -592,47 +592,10 @@ async def submit_readiness_checkin(
     )
 
 
-@router.get("/readiness/{score_date}", response_model=Optional[ReadinessResponse], tags=["Readiness"])
-async def get_readiness_for_date(
-    score_date: date,
-    user_id: str = Query(...),
-    current_user: dict = Depends(get_current_user),
-):
-    """Get readiness score for a specific date."""
-    verify_user_ownership(current_user, user_id)
-    db = get_supabase_db()
-
-    response = db.client.table("readiness_scores").select("*").eq(
-        "user_id", user_id
-    ).eq(
-        "score_date", score_date.isoformat()
-    ).maybe_single().execute()
-
-    if not response or not response.data:
-        return None
-
-    record = response.data
-    return ReadinessResponse(
-        id=record["id"],
-        user_id=record["user_id"],
-        score_date=date.fromisoformat(record["score_date"]),
-        sleep_quality=record["sleep_quality"],
-        fatigue_level=record["fatigue_level"],
-        stress_level=record["stress_level"],
-        muscle_soreness=record["muscle_soreness"],
-        mood=record.get("mood"),
-        energy_level=record.get("energy_level"),
-        hooper_index=record["hooper_index"],
-        readiness_score=record["readiness_score"],
-        readiness_level=record["readiness_level"],
-        ai_workout_recommendation=record.get("ai_workout_recommendation"),
-        recommended_intensity=record.get("recommended_intensity"),
-        ai_insight=record.get("ai_insight"),
-        submitted_at=datetime.fromisoformat(record["submitted_at"]),
-        created_at=datetime.fromisoformat(record["created_at"]),
-    )
-
-
+# NOTE: `/readiness/history` MUST be declared BEFORE `/readiness/{score_date}`.
+# FastAPI matches routes in definition order; if the param route comes first it
+# captures "history" and tries to parse it as a date → 422
+# ("score_date input 'history' is too short").
 @router.get("/readiness/history", response_model=ReadinessHistoryResponse, tags=["Readiness"])
 async def get_readiness_history(
     http_request: Request,
@@ -695,6 +658,48 @@ async def get_readiness_history(
         trend=trend_data["trend"],
         days_above_60=trend_data["days_above_60"],
         total_days=len(readiness_scores),
+    )
+
+
+# Declared AFTER /readiness/history so the literal route wins (see note above).
+@router.get("/readiness/{score_date}", response_model=Optional[ReadinessResponse], tags=["Readiness"])
+async def get_readiness_for_date(
+    score_date: date,
+    user_id: str = Query(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Get readiness score for a specific date."""
+    verify_user_ownership(current_user, user_id)
+    db = get_supabase_db()
+
+    response = db.client.table("readiness_scores").select("*").eq(
+        "user_id", user_id
+    ).eq(
+        "score_date", score_date.isoformat()
+    ).maybe_single().execute()
+
+    if not response or not response.data:
+        return None
+
+    record = response.data
+    return ReadinessResponse(
+        id=record["id"],
+        user_id=record["user_id"],
+        score_date=date.fromisoformat(record["score_date"]),
+        sleep_quality=record["sleep_quality"],
+        fatigue_level=record["fatigue_level"],
+        stress_level=record["stress_level"],
+        muscle_soreness=record["muscle_soreness"],
+        mood=record.get("mood"),
+        energy_level=record.get("energy_level"),
+        hooper_index=record["hooper_index"],
+        readiness_score=record["readiness_score"],
+        readiness_level=record["readiness_level"],
+        ai_workout_recommendation=record.get("ai_workout_recommendation"),
+        recommended_intensity=record.get("recommended_intensity"),
+        ai_insight=record.get("ai_insight"),
+        submitted_at=datetime.fromisoformat(record["submitted_at"]),
+        created_at=datetime.fromisoformat(record["created_at"]),
     )
 
 

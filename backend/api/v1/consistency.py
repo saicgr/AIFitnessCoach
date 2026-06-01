@@ -871,8 +871,11 @@ async def get_day_detail(
         muscles_set = set()
 
         if workout_log_id:
+            # NOTE: performance_logs has NO is_pr column (it lives on
+            # strength_records). Selecting it 500s with 42703. PR status is
+            # resolved per-exercise from strength_records below.
             perf_response = db.client.table("performance_logs").select(
-                "exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, set_type, is_pr"
+                "exercise_name, exercise_id, set_number, reps_completed, weight_kg, rpe, rir, set_type"
             ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()
 
             # Group by exercise
@@ -893,14 +896,22 @@ async def get_day_detail(
                     exercise_muscles[ex["name"]] = primary[0] if primary else "Other"
                     muscles_set.update(primary)
 
-            # Get PRs for this workout
-            pr_response = db.client.table("strength_records").select(
-                "exercise_name, is_pr, pr_type"
-            ).eq("workout_log_id", workout_log_id).eq("is_pr", True).execute()
-
+            # Get PRs for this workout. strength_records has NO workout_log_id or
+            # pr_type column — match PRs to this workout by user + exercise + the
+            # workout's completion DATE instead (both columns selected above 500'd).
             exercise_prs = {}
-            for pr in (pr_response.data or []):
-                exercise_prs[pr["exercise_name"]] = pr.get("pr_type", "weight")
+            completed_at = log_data.get("completed_at")
+            if exercise_names and completed_at:
+                day = str(completed_at)[:10]
+                pr_response = db.client.table("strength_records").select(
+                    "exercise_name, achieved_at"
+                ).eq("user_id", user_id).eq("is_pr", True).in_(
+                    "exercise_name", exercise_names
+                ).gte("achieved_at", f"{day}T00:00:00").lte(
+                    "achieved_at", f"{day}T23:59:59.999999"
+                ).execute()
+                for pr in (pr_response.data or []):
+                    exercise_prs[pr["exercise_name"]] = "weight"
 
             # Build exercise data
             for ex_name, sets in exercise_sets.items():
@@ -925,7 +936,9 @@ async def get_day_detail(
                         "weight_kg": weight,
                         "rpe": rpe,
                         "rir": rir,
-                        "is_pr": s.get("is_pr", False),
+                        # Per-set PR isn't tracked in performance_logs; the
+                        # exercise-level has_pr/pr_type (below) carries the signal.
+                        "is_pr": False,
                         "set_type": s.get("set_type", "working"),
                     })
 
