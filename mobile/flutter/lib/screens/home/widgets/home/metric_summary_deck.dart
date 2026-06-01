@@ -253,7 +253,12 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
       padding: const EdgeInsets.all(13),
       child: Row(
         children: [
-          SegmentedScoreRing(
+          // The score ring was decorative — tapping it did nothing (#15). Wrap
+          // it so tapping the daily score opens the training-stats breakdown.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => context.push('/stats'),
+            child: SegmentedScoreRing(
             size: 118,
             strokeWidth: 11,
             segments: segments,
@@ -281,6 +286,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
                 ),
               ],
             ),
+          ),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -704,8 +710,11 @@ class MetricTile extends ConsumerWidget {
         // Sleep-derived metrics live on the Sleep detail screen.
         context.push('/health/sleep');
       case RingKind.weight:
+        // Open the weight metric's OWN detail (graph + history) directly, not
+        // the measurements LIST (issue #8 — tapping weight dumped you on the list).
+        context.push('/measurements/weight');
       case RingKind.bodyFat:
-        context.push('/measurements');
+        context.push('/measurements/bodyFat');
       case RingKind.stepStreak:
         context.push('/neat');
       case RingKind.cardioDistance:
