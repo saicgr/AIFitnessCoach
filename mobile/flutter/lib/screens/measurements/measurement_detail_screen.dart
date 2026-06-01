@@ -102,12 +102,6 @@ class _MeasurementDetailScreenState
     final filteredHistory = _filterByPeriod(history);
     final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
     final latest = measurementsState.summary?.latestByType[_type];
-    // G7a: only surface a "from previous" delta when at least 2 real entries
-    // exist in the selected range. On a single data point the delta is
-    // meaningless ("↑ 28.5 from previous" against nothing).
-    final change = filteredHistory.length >= 2
-        ? measurementsState.summary?.changeFromPrevious[_type]
-        : null;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -192,11 +186,14 @@ class _MeasurementDetailScreenState
                     ),
                   ),
 
-                  // Current value card
+                  // Range-aware hero: average over the selected range + the
+                  // change across the period (Google-Health style). Computed
+                  // from filteredHistory so it tracks the selected pill, not a
+                  // single "latest" snapshot.
                   SliverToBoxAdapter(
-                    child: _buildCurrentValueCard(
+                    child: _buildHeroCard(
+                  filteredHistory,
                   latest: latest,
-                  change: change,
                   unit: unit,
                   isDark: isDark,
                   elevated: elevated,
@@ -267,7 +264,7 @@ class _MeasurementDetailScreenState
                 ).animate().fadeIn(delay: 200.ms),
               ),
 
-              // Stats summary
+              // Stats summary (MIN / AVG / MAX) — only honest with ≥2 entries.
               SliverToBoxAdapter(
                 child: _buildStatsSection(
                   filteredHistory,
@@ -277,6 +274,20 @@ class _MeasurementDetailScreenState
                   textMuted: textMuted,
                   cyan: cyan,
                 ).animate().fadeIn(delay: 250.ms),
+              ),
+
+              // Period breakdown — weekly (30D+) or daily (≤7D) sub-period
+              // averages, mirroring Google Health's weekly breakdown list.
+              SliverToBoxAdapter(
+                child: _buildPeriodBreakdown(
+                  filteredHistory,
+                  unit: unit,
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ).animate().fadeIn(delay: 255.ms),
               ),
 
               // Rate of change
@@ -354,6 +365,17 @@ class _MeasurementDetailScreenState
                 cyan: cyan,
               ),
 
+              // About <metric> — short, accurate explainer.
+              SliverToBoxAdapter(
+                child: _buildAboutSection(
+                  isDark: isDark,
+                  elevated: elevated,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cyan: cyan,
+                ).animate().fadeIn(delay: 320.ms),
+              ),
+
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
@@ -399,9 +421,16 @@ class _MeasurementDetailScreenState
     );
   }
 
-  Widget _buildCurrentValueCard({
+  /// Range-aware hero. Big number = the AVERAGE across the selected range
+  /// (Google-Health "98.7 kg avg"); the sub-line states the change across the
+  /// period ("0.8 kg lost over period"), coloured by direction.
+  ///
+  /// Honest single-point state: with exactly one entry in the range there is
+  /// no average and no trend, so we show that lone value with a "log more to
+  /// see a trend" hint — never a fabricated avg/delta.
+  Widget _buildHeroCard(
+    List<MeasurementEntry> history, {
     required MeasurementEntry? latest,
-    required double? change,
     required String unit,
     required bool isDark,
     required Color elevated,
@@ -409,104 +438,168 @@ class _MeasurementDetailScreenState
     required Color textMuted,
     required Color cyan,
   }) {
+    final values = history.map((e) => e.getValueInUnit(_isMetric)).toList();
+    final hasData = values.isNotEmpty;
+    final isSingle = values.length == 1;
+
+    // Big number: the range average when we have a trend; the lone value when
+    // there's a single entry; the all-time latest when the range is empty.
+    final double? heroValue = hasData
+        ? (isSingle
+            ? values.first
+            : values.reduce((a, b) => a + b) / values.length)
+        : latest?.getValueInUnit(_isMetric);
+
+    final String heroLabel = !hasData
+        ? 'No entries in this range'
+        : isSingle
+            ? '1 entry — log more to see a trend'
+            : '${_formatValue(heroValue!)} $unit avg · ${_rangeLabel()}';
+
+    // Period change = newest minus oldest within the range. history is
+    // newest-first, so .first is newest, .last is oldest.
+    final double? periodChange = history.length >= 2
+        ? history.first.getValueInUnit(_isMetric) -
+            history.last.getValueInUnit(_isMetric)
+        : null;
+
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
           colors: [
-            cyan.withOpacity(0.15),
-            cyan.withOpacity(0.05),
+            cyan.withValues(alpha: 0.15),
+            cyan.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cyan.withOpacity(0.3)),
+        border: Border.all(color: cyan.withValues(alpha: 0.3)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Big value + unit on one consistent baseline.
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                latest != null
-                    ? _formatValue(latest.getValueInUnit(_isMetric))
-                    : '--',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: cyan,
+              Flexible(
+                child: Text(
+                  heroValue != null ? _formatValue(heroValue) : '--',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 46,
+                    height: 1.0,
+                    fontWeight: FontWeight.bold,
+                    color: cyan,
+                  ),
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding:
+                    const EdgeInsetsDirectional.only(bottom: 8, start: 6),
                 child: Text(
-                  ' $unit',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color: textMuted,
-                  ),
+                  unit,
+                  style: TextStyle(fontSize: 18, color: textMuted),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          if (latest != null)
+          Text(
+            heroLabel,
+            style: TextStyle(fontSize: 13, color: textMuted),
+          ),
+          if (periodChange != null && periodChange.abs() >= 0.05) ...[
+            const SizedBox(height: 12),
+            _buildPeriodChangeIndicator(periodChange, unit, isDark: isDark),
+          ] else if (latest != null && hasData) ...[
+            const SizedBox(height: 8),
             Text(
-              'Last updated ${DateFormat('MMM d, yyyy').format(latest.recordedAt)}',
+              'Last logged ${DateFormat('MMM d, yyyy').format(latest.recordedAt)}',
               style: TextStyle(
-                fontSize: 13,
-                color: textMuted,
+                fontSize: 12,
+                color: textMuted.withValues(alpha: 0.8),
               ),
             ),
-          if (change != null && change.abs() >= 0.1) ...[
-            const SizedBox(height: 12),
-            _buildChangeIndicator(change, isDark: isDark),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildChangeIndicator(double change, {required bool isDark}) {
-    final isPositive = change > 0;
-    final isNegative = change < 0;
+  /// Human-readable label for the active range pill (e.g. "last 30 days").
+  String _rangeLabel() {
+    switch (_selectedPeriod) {
+      case '1d':
+        return 'today';
+      case '3d':
+        return 'last 3 days';
+      case '7d':
+        return 'last 7 days';
+      case '30d':
+        return 'last 30 days';
+      case '90d':
+        return 'last 90 days';
+      case '6m':
+        return 'last 6 months';
+      case 'ytd':
+        return 'year to date';
+      case '1y':
+        return 'last year';
+      default:
+        return 'all time';
+    }
+  }
 
-    // For weight and body fat, decrease is usually good
-    final isGoodChange =
-        (_type == MeasurementType.weight || _type == MeasurementType.bodyFat)
-            ? isNegative
-            : isPositive;
+  /// Directional "X gained/lost over period" pill. Uses a verb that reads
+  /// naturally per metric, and colours by whether the direction is desirable.
+  Widget _buildPeriodChangeIndicator(double change, String unit,
+      {required bool isDark}) {
+    final isUp = change > 0;
+    // For weight and body fat a decrease is the desirable direction.
+    final isDecreaseGood =
+        _type == MeasurementType.weight || _type == MeasurementType.bodyFat;
+    final isGoodChange = isDecreaseGood ? !isUp : isUp;
 
-    final color = change.abs() < 0.1
-        ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
-        : isGoodChange
-            ? AppColors.success
-            : AppColors.error;
+    final color = isGoodChange ? AppColors.success : AppColors.error;
+
+    // Verb pool keeps copy human: weight/fat read "lost/gained"; girths read
+    // "down/up". Exact magnitude is substituted, never rounded to theatre.
+    final String verb;
+    if (isDecreaseGood) {
+      verb = isUp ? 'gained' : 'lost';
+    } else {
+      verb = isUp ? 'up' : 'down';
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+            isUp ? Icons.arrow_upward : Icons.arrow_downward,
             size: 16,
             color: color,
           ),
           const SizedBox(width: 4),
-          Text(
-            '${_formatValue(change.abs())} from previous',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: color,
+          Flexible(
+            child: Text(
+              '${_formatValue(change.abs())} $unit $verb over ${_rangeLabel()}',
+              maxLines: 2,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -533,7 +626,7 @@ class _MeasurementDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).progressChartsTrends,
+            '${_type.displayName} over time',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -541,35 +634,113 @@ class _MeasurementDetailScreenState
             ),
           ),
           const SizedBox(height: 16),
-          history.isEmpty
-                ? SizedBox(
-                    height: 220,
-                    child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.show_chart, size: 40, color: textMuted),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocalizations.of(context).trendChartNoDataInThis,
-                          style: TextStyle(color: textMuted),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          AppLocalizations.of(context).measurementDetailTrySelectingAWider,
-                          style: TextStyle(color: textMuted.withValues(alpha: 0.6), fontSize: 12),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () => _showAddMeasurementSheet(context),
-                          child: Text(AppLocalizations.of(context).metricsDashboardAddEntry, style: TextStyle(color: cyan)),
-                        ),
-                      ],
+          if (history.isEmpty)
+            SizedBox(
+              height: 220,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.show_chart, size: 40, color: textMuted),
+                    const SizedBox(height: 8),
+                    Text(
+                      AppLocalizations.of(context).trendChartNoDataInThis,
+                      style: TextStyle(color: textMuted),
                     ),
-                  ))
-                : _buildChart(history, cyan: cyan, textMuted: textMuted, isDark: isDark),
+                    const SizedBox(height: 4),
+                    Text(
+                      AppLocalizations.of(context)
+                          .measurementDetailTrySelectingAWider,
+                      style: TextStyle(
+                          color: textMuted.withValues(alpha: 0.6),
+                          fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    TextButton(
+                      onPressed: () => _showAddMeasurementSheet(context),
+                      child: Text(
+                          AppLocalizations.of(context).metricsDashboardAddEntry,
+                          style: TextStyle(color: cyan)),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (history.length < 2)
+            // A single point can't form a trend line. Show the lone value as a
+            // marker with an honest "not enough to chart" affordance rather
+            // than a broken single-tick axis.
+            _buildSinglePointChart(
+              history.first,
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+              cyan: cyan,
+            )
+          else
+            _buildChart(history,
+                cyan: cyan, textMuted: textMuted, isDark: isDark),
         ],
+      ),
+    );
+  }
+
+  /// Single-entry chart affordance: a centred dot marker carrying the lone
+  /// value + date, with a one-line "log again to start a trend" hint. No axis,
+  /// no fake second point.
+  Widget _buildSinglePointChart(
+    MeasurementEntry entry, {
+    required bool isDark,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: cyan,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: cyan.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '${_formatValue(entry.getValueInUnit(_isMetric))} $unit',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              DateFormat('MMM d, yyyy').format(entry.recordedAt),
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Log this again to start a trend line.',
+              style: TextStyle(
+                  fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -646,7 +817,10 @@ class _MeasurementDetailScreenState
     required Color textMuted,
     required Color cyan,
   }) {
-    if (history.isEmpty) return const SizedBox.shrink();
+    // MIN/AVG/MAX only mean something with at least 2 entries. With one entry
+    // all three collapse to the same value ("100/100/100" theatre) — suppress
+    // it; the hero card already shows the lone value honestly.
+    if (history.length < 2) return const SizedBox.shrink();
 
     final values = history.map((e) => e.getValueInUnit(_isMetric)).toList();
     final min = values.reduce((a, b) => a < b ? a : b);
@@ -655,7 +829,7 @@ class _MeasurementDetailScreenState
     final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,

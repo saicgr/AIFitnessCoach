@@ -119,13 +119,23 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         _ActivityStreakCard(history: history, isDark: isDark),
         const SizedBox(height: 12),
         // ── Per-metric sections
+        //
+        // When the SELECTED day has no reading for a metric but the recent
+        // week does, we don't dead-end on "No data for this day": we surface
+        // the recent 7-day trend line instead (mirrors the home pill's
+        // sparkline summary). Honest null is kept only when the metric has no
+        // data anywhere in the loaded window — see [_metricValueLine].
         MetricHistoryCard(
           title: l10n.combinedHealthSteps,
           icon: Icons.directions_walk_rounded,
           color: AppColors.success,
-          valueText: day != null && day.steps > 0
-              ? '${_grouped(day.steps)} steps'
-              : null,
+          valueText: _metricValueLine(
+            history: history,
+            dayValue: (day != null && day.steps > 0) ? day.steps.toDouble() : null,
+            extract: (d) => d.steps > 0 ? d.steps.toDouble() : null,
+            formatDay: (v) => '${_grouped(v.round())} steps',
+            formatAvg: (v) => '${_grouped(v.round())} steps/day avg',
+          ),
           metric: TrendMetric.steps,
           isDark: isDark,
         ),
@@ -134,9 +144,15 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
           title: l10n.combinedHealthActiveEnergy,
           icon: Icons.local_fire_department_rounded,
           color: AppColors.orange,
-          valueText: day != null && day.caloriesBurned > 0
-              ? '${day.caloriesBurned.round()} cal'
-              : null,
+          valueText: _metricValueLine(
+            history: history,
+            dayValue: (day != null && day.caloriesBurned > 0)
+                ? day.caloriesBurned
+                : null,
+            extract: (d) => d.caloriesBurned > 0 ? d.caloriesBurned : null,
+            formatDay: (v) => '${v.round()} cal',
+            formatAvg: (v) => '${v.round()} cal/day avg',
+          ),
           metric: TrendMetric.activeCalories,
           isDark: isDark,
         ),
@@ -145,9 +161,13 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
           title: l10n.combinedHealthRestingHeartRate,
           icon: Icons.favorite_rounded,
           color: AppColors.error,
-          valueText: day?.restingHeartRate != null
-              ? '${day!.restingHeartRate} bpm'
-              : null,
+          valueText: _metricValueLine(
+            history: history,
+            dayValue: day?.restingHeartRate?.toDouble(),
+            extract: (d) => d.restingHeartRate?.toDouble(),
+            formatDay: (v) => '${v.round()} bpm',
+            formatAvg: (v) => '${v.round()} bpm avg',
+          ),
           subtitleText: _hrRangeLine(day),
           metric: TrendMetric.restingHeartRate,
           isDark: isDark,
@@ -157,14 +177,25 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
           title: l10n.combinedHealthSleep,
           icon: Icons.bedtime_rounded,
           color: AppColors.purple,
-          valueText: day?.sleepMinutes != null && day!.sleepMinutes! > 0
-              ? '${day.sleepMinutes! ~/ 60}h ${day.sleepMinutes! % 60}m'
-              : null,
+          valueText: _metricValueLine(
+            history: history,
+            dayValue: (day?.sleepMinutes != null && day!.sleepMinutes! > 0)
+                ? day.sleepMinutes!.toDouble()
+                : null,
+            extract: (d) =>
+                (d.sleepMinutes != null && d.sleepMinutes! > 0)
+                    ? d.sleepMinutes!.toDouble()
+                    : null,
+            formatDay: (v) => '${v.round() ~/ 60}h ${v.round() % 60}m',
+            formatAvg: (v) => '${v.round() ~/ 60}h ${v.round() % 60}m/night avg',
+          ),
           metric: TrendMetric.sleepHours,
           isDark: isDark,
         ),
         const SizedBox(height: 12),
         // Water has no trend metric source — value only, no fabricated chart.
+        // No chart below, so a recent-week fallback would be misleading; keep
+        // the day value or an honest null.
         MetricHistoryCard(
           title: l10n.combinedHealthWater,
           icon: Icons.water_drop_rounded,
@@ -180,6 +211,42 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         _ActivityGoalsCard(isDark: isDark),
       ],
     );
+  }
+
+  /// Builds the per-metric header value line.
+  ///
+  /// Priority:
+  ///  1. The selected day's reading, if present → e.g. "8,412 steps".
+  ///  2. Otherwise, if the recent 7 days (ending on the selected day) have
+  ///     any readings → the recent average → e.g. "7,940 steps/day avg".
+  ///     This keeps the header consistent with the trend chart right below it
+  ///     and the home pill's sparkline, instead of dead-ending on
+  ///     "No data for this day" while a full week sits in the chart.
+  ///  3. Otherwise (no data anywhere in the window) → null, so
+  ///     [MetricHistoryCard] shows its honest per-metric empty state.
+  String? _metricValueLine({
+    required CombinedHealthHistory history,
+    required double? dayValue,
+    required double? Function(DailyActivity) extract,
+    required String Function(double) formatDay,
+    required String Function(double) formatAvg,
+  }) {
+    if (dayValue != null) return formatDay(dayValue);
+
+    // Recent window: the 7 calendar days ending on the selected day.
+    final windowStart =
+        _selectedDate.subtract(const Duration(days: 6));
+    final recent = <double>[];
+    for (final d in history.days) {
+      final key = DateTime(d.date.year, d.date.month, d.date.day);
+      if (key.isBefore(windowStart) || key.isAfter(_selectedDate)) continue;
+      final v = extract(d);
+      if (v != null) recent.add(v);
+    }
+    if (recent.isEmpty) return null;
+
+    final avg = recent.reduce((a, b) => a + b) / recent.length;
+    return formatAvg(avg);
   }
 
   /// Resting + avg/min/max HR breakdown line for the HR section subtitle.

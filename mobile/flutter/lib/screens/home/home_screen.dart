@@ -69,7 +69,7 @@ import 'widgets/home/reports_recap_row.dart';
 import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
-import 'widgets/cycle_status_card.dart';
+import 'widgets/cards/cycle_summary_card.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
@@ -1242,9 +1242,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // summary deck (segmented ring + live tiles + Log/Trends/Start).
         return const MetricSummaryDeck();
       case HomeSection.cycle:
-        // Self-hides (returns SizedBox.shrink) unless menstrual tracking
-        // is enabled — no extra gate needed here.
-        return const CycleStatusCard();
+        // Self-hides unless menstrual tracking is enabled. Renders the merged
+        // "Your Cycle" card (#12) — phase + day, next-period countdown, PMS-prep,
+        // in-period symptom log, Log/View actions — replacing the old
+        // CycleStatusCard + the separate extended-stack cycle tiles.
+        return const CycleSummaryCard();
       case HomeSection.readiness:
         // SLICE_READINESS Recovery Readiness tile. Self-hides on
         // calibration window (<14d) and after a "Building baseline"

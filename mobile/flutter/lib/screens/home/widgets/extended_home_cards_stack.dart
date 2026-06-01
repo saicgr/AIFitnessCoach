@@ -24,10 +24,7 @@ import 'cards/app_anniversary_card.dart';
 import 'cards/birthday_card.dart';
 import 'cards/body_comp_milestone_card.dart';
 import 'cards/busy_week_compressed_card.dart';
-import 'cards/cycle_phase_chip.dart';
 import 'cards/daily_strain_target_tile.dart';
-import 'cards/day_of_week_skip_card.dart';
-import 'cards/equipment_preflight_banner.dart';
 import 'cards/evening_sleep_story_tile.dart';
 import 'cards/fast_streak_tile.dart';
 import 'cards/fast_zone_strip.dart';
@@ -39,27 +36,19 @@ import 'cards/injury_workaround_banner.dart';
 import 'cards/jet_lag_adjust_card.dart';
 import 'cards/macro_pattern_callout.dart';
 import 'cards/micronutrient_gap_chip.dart';
-import 'cards/missing_data_chip.dart';
 import 'cards/one_rm_recompute_banner.dart';
-import 'cards/period_prediction_tile.dart';
-import 'cards/period_symptom_log_tile.dart';
+import 'cards/plan_adjustments_card.dart';
 import 'cards/planned_vs_actual_card.dart';
-import 'cards/pms_prep_card.dart';
 import 'cards/postworkout_mood_strip.dart';
 import 'cards/postworkout_progress_photo_prompt.dart';
 import 'cards/postworkout_tomorrow_adjust_card.dart';
-import 'cards/preworkout_rpe_chip.dart';
-import 'cards/preworkout_t30_card.dart';
-import 'cards/preworkout_warmup_card.dart';
 import 'cards/recovery_countdown_tile.dart';
 import 'cards/referral_gift_tile.dart';
 import 'cards/return_to_exercise_card.dart';
 import 'cards/rhr_delta_card.dart';
-import 'cards/smart_reschedule_banner.dart';
 import 'cards/smoothed_weight_trend_chip.dart';
 import 'cards/stand_reminder_chip.dart';
 import 'cards/step_streak_tile.dart';
-import 'cards/strain_recovery_mismatch_card.dart';
 import 'cards/training_effect_card.dart';
 import 'cards/weekly_plan_strip.dart';
 import 'cards/weigh_in_day_chip.dart';
@@ -112,21 +101,21 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             SmoothedWeightTrendChip(),
           ],
         ),
-        _HomeCardSection(
-          title: 'Your cycle',
-          children: const [
-            CyclePhaseChip(),
-            PeriodPredictionTile(),
-            PmsPrepCard(),
-            PeriodSymptomLogTile(),
-          ],
-        ),
+        // #12 — the four cycle tiles (CyclePhaseChip / PeriodPredictionTile /
+        // PmsPrepCard / PeriodSymptomLogTile) are consolidated into ONE
+        // expandable "Your Cycle" card (CycleSummaryCard). It renders in the
+        // dedicated HomeSection.cycle slot (home_screen.dart) — NOT here too —
+        // so cycle shows exactly once. The separate tiles are gone from home.
+        // #13 — DeloadRecommendationCard, SmartRescheduleBanner,
+        // DayOfWeekSkipCard and StrainRecoveryMismatchCard are consolidated
+        // into the single PlanAdjustmentsCard, which lists only the currently
+        // active adjustments (each a row with its own CTA). The four cards are
+        // no longer rendered separately on home.
         _HomeCardSection(
           title: 'Plan & adjustments',
           children: const [
             WeeklyPlanStrip(),
-            SmartRescheduleBanner(),
-            DayOfWeekSkipCard(),
+            PlanAdjustmentsCard(),
             ReturnToExerciseCard(),
             InjuryWorkaroundBanner(),
             JetLagAdjustCard(),
@@ -138,7 +127,6 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
           children: const [
             WorkoutSleepCorrelationCard(),
             MacroPatternCallout(),
-            StrainRecoveryMismatchCard(),
           ],
         ),
         _HomeCardSection(
@@ -173,12 +161,10 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             ReferralGiftTile(),
           ],
         ),
-        // Devices & setup minimized to ONLY the "Connect Health Connect /
-        // Apple Health" prompt (MissingDataChip → activity gap), which unlocks
-        // the empty steps/activity tiles. The wearable-battery / scale-sync /
-        // tutorial / recalibration cards were dropped from home (user
-        // feedback). Lone self-hiding card → no section header.
-        const MissingDataChip(),
+        // #14 — the standalone "Connect Health Connect / Apple Health" preflight
+        // (MissingDataChip) was removed from home; the user prefers reaching
+        // these via the timeline + workout card. The MissingDataChip widget
+        // file stays in place, unused.
         _HomeCardSection(
           title: 'Fasting',
           children: const [
@@ -186,14 +172,14 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             FastStreakTile(),
           ],
         ),
+        // #14 — the pre-workout prep cards (PreWorkoutT30Card,
+        // PreWorkoutWarmupCard, PreWorkoutRpeChip, EquipmentPreflightBanner)
+        // are no longer rendered on home; the timeline + workout card cover
+        // pre-workout prep. The widget files stay in place, unused.
         _HomeCardSection(
           title: 'Around your workout',
           children: const [
-            PreWorkoutT30Card(),
-            PreWorkoutWarmupCard(),
-            PreWorkoutRpeChip(),
             DailyStrainTargetTile(),
-            EquipmentPreflightBanner(),
             TrainingEffectCard(),
             RecoveryCountdownTile(),
             PlannedVsActualCard(),

@@ -39,6 +39,10 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
 
     return TrendChart(
       accent: cyan,
+      // We own the hero (avg + period change), the honest MIN/AVG/MAX stat
+      // row and the period breakdown, so suppress TrendChart's built-in
+      // legend + stat row to avoid showing MIN/AVG/MAX twice.
+      showBuiltInChrome: false,
       primary: TrendChartSeries(
         label: AppLocalizations.of(context)!.measurementDetailScreenUiTrend(_type.displayName),
         unit: unit,
@@ -93,7 +97,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(AppLocalizations.of(context).progressChartsTrends, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+          Text('Rate of change', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -488,6 +492,227 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
         childCount: history.length,
       ),
     );
+  }
+
+  /// Period breakdown — averages per sub-period across the selected range,
+  /// mirroring Google Health's weekly breakdown. Buckets are weekly for
+  /// ranges ≥ 30 days and daily for the shorter ranges (≤7D). Each row shows
+  /// the bucket label and its average value; empty buckets are omitted (no
+  /// fabricated zeros).
+  Widget _buildPeriodBreakdown(
+    List<MeasurementEntry> history, {
+    required String unit,
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    // Needs at least 2 entries spanning ≥ 2 buckets to be meaningful.
+    if (history.length < 2) return const SizedBox.shrink();
+
+    final daily = _selectedPeriod == '1d' ||
+        _selectedPeriod == '3d' ||
+        _selectedPeriod == '7d';
+
+    // Bucket key → list of values (in the user's unit).
+    final buckets = <DateTime, List<double>>{};
+    DateTime keyFor(DateTime d) {
+      if (daily) return DateTime(d.year, d.month, d.day);
+      // Week bucket anchored to Monday (ISO week start).
+      final dayOnly = DateTime(d.year, d.month, d.day);
+      return dayOnly.subtract(Duration(days: dayOnly.weekday - 1));
+    }
+
+    for (final e in history) {
+      final k = keyFor(e.recordedAt);
+      (buckets[k] ??= []).add(e.getValueInUnit(_isMetric));
+    }
+    if (buckets.length < 2) return const SizedBox.shrink();
+
+    // Newest bucket first, to match the history list ordering.
+    final sortedKeys = buckets.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+
+    String labelFor(DateTime start) {
+      if (daily) {
+        return DateFormat('EEE, MMM d').format(start);
+      }
+      final end = start.add(const Duration(days: 6));
+      // Same-month weeks read "May 24–30"; cross-month "May 28 – Jun 3".
+      if (start.month == end.month) {
+        return '${DateFormat('MMM d').format(start)}–${DateFormat('d').format(end)}';
+      }
+      return '${DateFormat('MMM d').format(start)} – ${DateFormat('MMM d').format(end)}';
+    }
+
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            daily ? 'Daily breakdown' : 'Weekly breakdown',
+            style: TextStyle(
+                fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary),
+          ),
+          const SizedBox(height: 4),
+          for (var i = 0; i < sortedKeys.length; i++) ...[
+            if (i > 0)
+              Divider(height: 1, color: cardBorder.withValues(alpha: 0.6)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      labelFor(sortedKeys[i]),
+                      style: TextStyle(fontSize: 14, color: textPrimary),
+                    ),
+                  ),
+                  Text(
+                    '${_formatValue(_avg(buckets[sortedKeys[i]]!))} $unit',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: cyan,
+                    ),
+                  ),
+                  if (!daily && buckets[sortedKeys[i]]!.length > 1) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      '${buckets[sortedKeys[i]]!.length}×',
+                      style: TextStyle(fontSize: 11, color: textMuted),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  double _avg(List<double> v) => v.reduce((a, b) => a + b) / v.length;
+
+  /// "About [metric]" — a short, accurate explainer. Per-metric copy that is
+  /// technique/health-correct, never generic filler.
+  Widget _buildAboutSection({
+    required bool isDark,
+    required Color elevated,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cyan,
+  }) {
+    final body = _aboutCopyFor(_type);
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 18, color: cyan),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'About ${_type.displayName}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            body,
+            style: TextStyle(fontSize: 13, height: 1.5, color: textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Per-metric explainer copy. Cited to ACE / CDC / WHO norms where a
+  /// numeric range is stated; girth metrics share a tape-measure technique
+  /// note keyed by body site so each reads correctly.
+  String _aboutCopyFor(MeasurementType type) {
+    switch (type) {
+      case MeasurementType.weight:
+        return 'Body weight naturally swings 1–2 kg (2–4 lb) day to day from '
+            'water, food in transit, and glycogen. Weigh under the same '
+            'conditions — first thing in the morning, after the bathroom, '
+            'before eating — and read the trend line, not any single day.';
+      case MeasurementType.bodyFat:
+        return 'Body-fat percentage is the share of your weight that is fat '
+            'mass. ACE reference ranges put male athletes around 6–13% and '
+            'fitness 14–17%; female athletes 14–20% and fitness 21–24%. '
+            'Home scales and calipers vary, so track your own trend rather '
+            'than chasing an exact number.';
+      case MeasurementType.waist:
+        return 'Waist circumference is a strong marker of abdominal fat and '
+            'metabolic risk. CDC/WHO flag raised risk above 94 cm (37 in) for '
+            'men and 80 cm (31.5 in) for women. Measure at the midpoint '
+            'between the lowest rib and the top of the hip bone, after a '
+            'normal exhale — do not suck in.';
+      case MeasurementType.hips:
+        return 'Hip circumference is measured at the widest point of the '
+            'buttocks with the tape level all the way around. Paired with '
+            'waist it gives the waist-to-hip ratio, another fat-distribution '
+            'marker. Keep the tape snug but not compressing the skin.';
+      case MeasurementType.chest:
+        return 'Chest circumference is measured around the fullest part of '
+            'the chest, tape level under the armpits, at the end of a normal '
+            'breath. Useful for tracking upper-body size changes from '
+            'training.';
+      case MeasurementType.shoulders:
+        return 'Shoulder circumference wraps around the widest point of the '
+            'deltoids with arms relaxed at your sides. It tracks upper-body '
+            'width gained from pressing and pulling work.';
+      case MeasurementType.neck:
+        return 'Neck circumference is measured just below the larynx (Adam\'s '
+            'apple) with the tape level. It feeds the U.S. Navy body-fat '
+            'estimate alongside waist and height.';
+      case MeasurementType.bicepsLeft:
+      case MeasurementType.bicepsRight:
+        return 'Upper-arm circumference is measured at the midpoint between '
+            'shoulder and elbow. Measure relaxed for a consistent baseline, '
+            'or flexed if you prefer — just stay consistent. Tracking left '
+            'and right separately surfaces side-to-side imbalances.';
+      case MeasurementType.forearmLeft:
+      case MeasurementType.forearmRight:
+        return 'Forearm circumference is measured at the thickest point below '
+            'the elbow with the arm relaxed and palm up. Tracking each side '
+            'separately helps catch grip or imbalance issues.';
+      case MeasurementType.thighLeft:
+      case MeasurementType.thighRight:
+        return 'Thigh circumference is measured at the midpoint between hip '
+            'and knee, or a fixed distance above the kneecap — pick one and '
+            'stay consistent. Logging each leg separately reveals asymmetry '
+            'common after injury.';
+      case MeasurementType.calfLeft:
+      case MeasurementType.calfRight:
+        return 'Calf circumference is measured at the widest point of the '
+            'lower leg with the muscle relaxed. Measure both legs at the same '
+            'point each time to track growth and balance.';
+    }
   }
 
 }

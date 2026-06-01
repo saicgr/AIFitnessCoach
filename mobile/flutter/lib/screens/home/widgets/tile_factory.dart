@@ -8,7 +8,6 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
 import 'cards/cards.dart';
-import 'cards/deload_recommendation_card.dart';
 import 'cards/health_insight_card.dart';
 import 'cards/smart_insight_card.dart';
 // import 'cards/roi_summary_card.dart'; // Coming soon
@@ -84,13 +83,10 @@ class TileFactory {
         // rendered ABOVE the Personal Records tile: it self-hides whenever
         // the user does not need a deload, so attaching it here costs
         // nothing when there's nothing to show.
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            DeloadRecommendationCard(isDark: isDark),
-            PersonalRecordsCard(size: tile.size, isDark: isDark),
-          ],
-        );
+        // DeloadRecommendationCard is now folded into the merged
+        // PlanAdjustmentsCard (#13), so it is no longer rendered here — only the
+        // Personal Records tile remains in this slot.
+        return PersonalRecordsCard(size: tile.size, isDark: isDark);
       case TileType.aiCoachTip:
         // The smart-insight card (Phase D1) has no dedicated TileType —
         // adding an enum value would require regenerating the committed
