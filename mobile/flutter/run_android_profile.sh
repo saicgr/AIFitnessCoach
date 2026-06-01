@@ -59,7 +59,16 @@ done
 
 if [ "$AVD_ALREADY_RUNNING" = false ]; then
     echo -e "${YELLOW}Launching emulator: $TARGET_AVD${NC}"
-    $EMULATOR_PATH -avd "$TARGET_AVD" -no-snapshot-save -gpu auto &
+    # -gpu host: Metal-backed rendering on Apple Silicon (the 'bad color buffer
+    #   handle' freeze is a known -gpu auto glitch on M-series; if it still
+    #   freezes, swap to -gpu swiftshader_indirect for software rendering).
+    # -no-snapshot: full COLD boot — never load a (possibly corrupt) snapshot
+    #   that can leave the GPU/window layer wedged.
+    # Output redirected to a log so the QEventPoint/VkInstance/color-buffer noise
+    #   doesn't flood the terminal where you read the app's flutter logs.
+    #   Tail it with:  tail -f /tmp/zealova-emulator.log
+    $EMULATOR_PATH -avd "$TARGET_AVD" -no-snapshot -no-boot-anim -gpu host \
+        > /tmp/zealova-emulator.log 2>&1 &
 
     # Wait for the new emulator to appear
     echo -e "${YELLOW}Waiting for emulator to boot...${NC}"
