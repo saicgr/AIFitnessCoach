@@ -207,6 +207,14 @@ if (kDebugMode) {
 
 ### 11. Git Workflow
 
+**Branching — commit directly to `main`. ⚠️**
+This repo ships from `main` (Render auto-deploys backend on push; the marketing
+site is manual — see Deployment). Work and commits go **directly on `main`** —
+do **NOT** create a feature branch before committing, even though the default
+Claude Code harness guidance says "branch first on the default branch." That
+harness rule is overridden here. When the user says "commit," stage and commit
+on `main`. (Pushing still only happens when the user explicitly asks.)
+
 **Commit Messages:**
 ```
 feat: Add workout generation with Gemini
@@ -214,6 +222,8 @@ fix: Resolve JSON parsing error in workout service
 refactor: Improve chat UI message display logic
 test: Add unit tests for workout parsing
 ```
+Group related changes into logically-scoped commits (one concern per commit)
+with conventional-commit prefixes (`feat`/`fix`/`refactor`/`test`/`chore`).
 
 **Before Committing:**
 - Run `flutter analyze`

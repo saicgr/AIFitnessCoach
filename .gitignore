@@ -119,3 +119,6 @@ docs/planning/redesign-2026-05/backup/
 # Ephemeral Claude Code machine-local state
 .claude/worktrees/
 .claude/scheduled_tasks.lock
+
+
+IMG*.PNG
