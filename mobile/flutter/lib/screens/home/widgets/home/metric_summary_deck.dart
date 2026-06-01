@@ -103,10 +103,12 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     return Padding(
       padding: kHomeHPad,
       child: SizedBox(
-        // Height fits a 3-row × 2-col "more" grid (3×56 + 2×9 = 186) + a 40px
-        // footer strip for the centered dots + gear button. The Summary page
-        // (ring + 4 tiles) centers within this with breathing room.
-        height: 228,
+        // ALL pages are now the same boxed card with full-width tiles (#6):
+        // page 1 STACKS the ring on top of a 2×2 full-width grid; page 2 is a
+        // 3×2 full-width grid. Card inner height = 268 − 12 top − 38 bottom
+        // (footer) = 218, which fits page 1 (80 ring + 10 gap + 121 grid = 211)
+        // and page 2 (186 grid) alike.
+        height: 268,
         child: Stack(
           children: [
             // The cards fill the full height; their content centers, leaving a
@@ -248,70 +250,69 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         ),
     ];
 
+    // Same boxed card as the other pages; bottom pad clears the footer strip.
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.all(13),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 38),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // The score ring was decorative — tapping it did nothing (#15). Wrap
-          // it so tapping the daily score opens the training-stats breakdown.
+          // Score ring STACKED on top (was beside the tiles, which squeezed them
+          // narrower than page 2 — #6). Tapping opens the stats breakdown (#15).
           GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () => context.push('/stats'),
             child: SegmentedScoreRing(
-            // Slightly smaller than before (was 118) so the 4 contributor tiles
-            // beside it widen toward the page-2 tile proportions (#6 follow-up).
-            size: 104,
-            strokeWidth: 10,
-            segments: segments,
-            center: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${score.score}',
-                  style: TextStyle(
-                    fontSize: 34,
-                    height: 1,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -1.5,
-                    color: c.textPrimary,
+              size: 80,
+              strokeWidth: 9,
+              segments: segments,
+              center: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${score.score}',
+                    style: TextStyle(
+                      fontSize: 26,
+                      height: 1,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -1,
+                      color: c.textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  'TODAY',
-                  style: TextStyle(
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.7,
-                    color: c.textMuted,
+                  Text(
+                    'TODAY',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                      color: c.textMuted,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: GridView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                // Match page-2 (_gridPage) exactly so the tiles read as the same
-                // component across slides (#6): same 9px gaps + 56px height.
-                mainAxisSpacing: 9,
-                crossAxisSpacing: 9,
-                mainAxisExtent: 56,
+                ],
               ),
-              children: [
-                for (final kind in tiles)
-                  MetricTile(
-                    key: ValueKey('tile_${kind.id}'),
-                    kind: kind,
-                    compact: true,
-                  ),
-              ],
             ),
+          ),
+          const SizedBox(height: 10),
+          // Full-width 2-col grid — IDENTICAL delegate to _gridPage, so page-1
+          // tiles are the exact same size/shape as page 2 (#6).
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 9,
+              crossAxisSpacing: 9,
+              mainAxisExtent: 56,
+            ),
+            children: [
+              for (final kind in tiles)
+                MetricTile(
+                  key: ValueKey('tile_${kind.id}'),
+                  kind: kind,
+                  compact: true,
+                ),
+            ],
           ),
         ],
       ),
@@ -337,11 +338,13 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     // deck, and were what made this page look "broken" (a 2-up row then two
     // lonely full-width tiles). The bottom inset leaves a clear strip for the
     // overlaid dots + gear footer so it never sits on a tile.
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Padding(
-        // Clears the ~36px footer bar (dots + gear) so it never sits on a tile.
-        padding: const EdgeInsets.only(bottom: 40),
+    // Same boxed card as the Summary + Trends pages (#6 — page 2 used to float
+    // without a box). Bottom pad clears the overlaid dots + gear footer.
+    return Container(
+      decoration: _cardDecoration(c),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 38),
+      child: Align(
+        alignment: Alignment.topCenter,
         child: GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
