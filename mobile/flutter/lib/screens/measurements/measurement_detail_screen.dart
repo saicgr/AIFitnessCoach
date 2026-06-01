@@ -397,18 +397,40 @@ class _MeasurementDetailScreenState
             // share_report_helper.shareReportScreen).
             PositionedDirectional(top: 8,
               end: 8,
-              child: _ShareIconButton(
-                onTap: () {
-                  HapticService.light();
-                  shareReportScreen(
-                    context: context,
-                    repaintKey: _shareRepaintKey,
-                    caption: '${_type.displayName} trend'
-                        '${latest != null ? ' — ${latest.value.toStringAsFixed(1)} $unit' : ''}',
-                    subject: '${Branding.appName} ${_type.displayName}',
-                  );
-                },
-                isDark: isDark,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // #19 — Ask the AI coach about THIS metric. Opens chat with the
+                  // metric as origin context (source + mode + label) so the
+                  // coach's quick-reply chips ("Show my <metric> trend", "Set a
+                  // goal", "Log <metric>") and inline trend charts reference it.
+                  _AiCoachIconButton(
+                    accent: cyan,
+                    isDark: isDark,
+                    onTap: () {
+                      HapticService.light();
+                      final n = _type.name;
+                      context.push(
+                        '/chat?source=metric_$n&mode=metric:$n'
+                        '&context=${Uri.encodeComponent(_type.displayName)}',
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _ShareIconButton(
+                    onTap: () {
+                      HapticService.light();
+                      shareReportScreen(
+                        context: context,
+                        repaintKey: _shareRepaintKey,
+                        caption: '${_type.displayName} trend'
+                            '${latest != null ? ' — ${latest.value.toStringAsFixed(1)} $unit' : ''}',
+                        subject: '${Branding.appName} ${_type.displayName}',
+                      );
+                    },
+                    isDark: isDark,
+                  ),
+                ],
               ),
             ),
           ],
@@ -1235,6 +1257,43 @@ class _ShareIconButton extends StatelessWidget {
           ),
           alignment: Alignment.center,
           child: Icon(Icons.ios_share_rounded, size: 18, color: fg),
+        ),
+      ),
+    );
+  }
+}
+
+/// Accent-tinted "ask the AI coach" sparkle button — the consistent AI-chat
+/// affordance (#19), mirroring the share button's circle so the header reads as
+/// a symmetric cluster. Opens chat scoped to the metric being viewed.
+class _AiCoachIconButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isDark;
+  final Color accent;
+
+  const _AiCoachIconButton({
+    required this.onTap,
+    required this.isDark,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: accent.withValues(alpha: 0.35), width: 1),
+          ),
+          alignment: Alignment.center,
+          child: Icon(Icons.auto_awesome_rounded, size: 18, color: accent),
         ),
       ),
     );

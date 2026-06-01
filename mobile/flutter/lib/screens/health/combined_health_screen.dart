@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/providers/combined_health_provider.dart';
 import '../../data/providers/recovery_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
@@ -72,6 +74,21 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
                       fontWeight: FontWeight.w800,
                       color: textPrimary,
                     ),
+                  ),
+                  const Spacer(),
+                  // #19 — Ask the AI coach about your health metrics, scoped to
+                  // this hub (recovery is the hero), so the chat surfaces
+                  // metric quick-replies + inline trend charts.
+                  _HealthAiCoachButton(
+                    accent: ref.colors(context).accent,
+                    isDark: isDark,
+                    onTap: () {
+                      HapticService.light();
+                      context.push(
+                        '/chat?source=health_hub&mode=metric:recovery'
+                        '&context=Health',
+                      );
+                    },
                   ),
                 ],
               ),
@@ -759,6 +776,42 @@ class _ErrorEmpty extends StatelessWidget {
               style: TextStyle(fontSize: 13, color: textMuted),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Accent-tinted "ask the AI coach" sparkle button for the Health hub header
+/// (#19) — the consistent AI-chat affordance, opening chat scoped to health.
+class _HealthAiCoachButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isDark;
+  final Color accent;
+
+  const _HealthAiCoachButton({
+    required this.onTap,
+    required this.isDark,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: accent.withValues(alpha: 0.35), width: 1),
+          ),
+          alignment: Alignment.center,
+          child: Icon(Icons.auto_awesome_rounded, size: 18, color: accent),
         ),
       ),
     );
