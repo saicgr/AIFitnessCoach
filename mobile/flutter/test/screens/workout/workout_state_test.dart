@@ -94,51 +94,11 @@ void main() {
     });
   });
 
-  group('defaultWarmupExercises', () {
-    test('has 5 exercises', () {
-      expect(defaultWarmupExercises.length, 5);
-    });
-
-    test('all exercises have valid data', () {
-      for (final exercise in defaultWarmupExercises) {
-        expect(exercise.name, isNotEmpty);
-        expect(exercise.duration, greaterThan(0));
-        expect(exercise.icon, isNotNull);
-      }
-    });
-
-    test('has expected exercises', () {
-      final names = defaultWarmupExercises.map((e) => e.name).toList();
-      expect(names, contains('Jumping Jacks'));
-      expect(names, contains('Arm Circles'));
-      expect(names, contains('Hip Circles'));
-      expect(names, contains('Leg Swings'));
-      expect(names, contains('Light Cardio'));
-    });
-  });
-
-  group('defaultStretchExercises', () {
-    test('has 5 exercises', () {
-      expect(defaultStretchExercises.length, 5);
-    });
-
-    test('all exercises have valid data', () {
-      for (final exercise in defaultStretchExercises) {
-        expect(exercise.name, isNotEmpty);
-        expect(exercise.duration, greaterThan(0));
-        expect(exercise.icon, isNotNull);
-      }
-    });
-
-    test('has expected exercises', () {
-      final names = defaultStretchExercises.map((e) => e.name).toList();
-      expect(names, contains('Quad Stretch'));
-      expect(names, contains('Hamstring Stretch'));
-      expect(names, contains('Shoulder Stretch'));
-      expect(names, contains('Chest Opener'));
-      expect(names, contains('Cat-Cow Stretch'));
-    });
-  });
+  // The `defaultWarmupExercises` / `defaultStretchExercises` consts were
+  // intentionally removed — warmup & stretch sets are now backend-generated and
+  // personalized to workout type / injuries / staple preferences, so there is no
+  // static default to assert. The WarmupExerciseData / StretchExerciseData models
+  // remain covered by the warmup_phase_screen / stretch_phase_screen tests.
 
   group('RestInterval', () {
     test('creates with required parameters', () {

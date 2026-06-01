@@ -4,7 +4,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_fitness_coach/flavors/client/reppora_client_config.dart';
+import 'package:fitwiz/flavors/client/reppora_client_config.dart';
 
 void main() {
   group('RepporaClientConfig', () {

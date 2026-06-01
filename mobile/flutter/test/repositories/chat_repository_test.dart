@@ -145,10 +145,10 @@ void main() {
           userId: 'user-123',
         );
 
-        expect(response.message, 'I can help you with that!');
-        expect(response.intent, 'assistance');
-        expect(response.agentType, AgentType.coach);
-        expect(response.actionData, isNull);
+        expect(response.response.message, 'I can help you with that!');
+        expect(response.response.intent, 'assistance');
+        expect(response.response.agentType, AgentType.coach);
+        expect(response.response.actionData, isNull);
       });
 
       test('should send user profile and workout context', () async {
@@ -235,10 +235,10 @@ void main() {
           userId: 'user-123',
         );
 
-        expect(response.actionData, isNotNull);
-        expect(response.actionData!['action'], 'change_setting');
-        expect(response.actionData!['setting_name'], 'dark_mode');
-        expect(response.actionData!['setting_value'], true);
+        expect(response.response.actionData, isNotNull);
+        expect(response.response.actionData!['action'], 'change_setting');
+        expect(response.response.actionData!['setting_name'], 'dark_mode');
+        expect(response.response.actionData!['setting_value'], true);
       });
 
       test('should throw on non-200 status', () async {

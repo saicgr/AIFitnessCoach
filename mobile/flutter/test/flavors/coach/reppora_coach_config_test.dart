@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ai_fitness_coach/flavors/coach/reppora_coach_config.dart';
+import 'package:fitwiz/flavors/coach/reppora_coach_config.dart';
 
 void main() {
   group('RepporaCoachConfig', () {

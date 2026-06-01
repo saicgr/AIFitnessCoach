@@ -3,6 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/workout/widgets/stretch_phase_screen.dart';
 import 'package:fitwiz/screens/workout/models/workout_state.dart';
 
+// Local fixture — `defaultStretchExercises` was intentionally removed (stretch
+// sets are now backend-generated). This test only needs a representative list.
+const List<StretchExerciseData> _stretchFixture = [
+  StretchExerciseData(name: 'Quad Stretch', duration: 30, icon: Icons.self_improvement),
+  StretchExerciseData(name: 'Hamstring Stretch', duration: 30, icon: Icons.self_improvement),
+  StretchExerciseData(name: 'Chest Opener', duration: 30, icon: Icons.self_improvement),
+];
+
 void main() {
   Widget buildTestWidget({
     int workoutSeconds = 1800,
@@ -16,7 +24,7 @@ void main() {
         workoutSeconds: workoutSeconds,
         onSkipAll: onSkipAll ?? () {},
         onStretchComplete: onStretchComplete ?? () {},
-        exercises: exercises ?? defaultStretchExercises,
+        exercises: exercises ?? _stretchFixture,
       ),
     );
   }

@@ -77,7 +77,7 @@ void main() {
       testWidgets('noWorkouts should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.noWorkouts(),
+            child: Builder(builder: (context) => EmptyState.noWorkouts(context)),
           ),
         );
 
@@ -91,7 +91,7 @@ void main() {
 
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.noWorkouts(onAction: () => called = true),
+            child: Builder(builder: (context) => EmptyState.noWorkouts(context, onAction: () => called = true)),
           ),
         );
 
@@ -102,7 +102,7 @@ void main() {
       testWidgets('noExercises should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.noExercises(),
+            child: Builder(builder: (context) => EmptyState.noExercises(context)),
           ),
         );
 
@@ -114,7 +114,7 @@ void main() {
       testWidgets('noHistory should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.noHistory(),
+            child: Builder(builder: (context) => EmptyState.noHistory(context)),
           ),
         );
 
@@ -127,7 +127,7 @@ void main() {
       testWidgets('noResults should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.noResults(),
+            child: Builder(builder: (context) => EmptyState.noResults(context)),
           ),
         );
 
@@ -139,7 +139,7 @@ void main() {
       testWidgets('offline should display correct content', (tester) async {
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.offline(),
+            child: Builder(builder: (context) => EmptyState.offline(context)),
           ),
         );
 
@@ -153,7 +153,7 @@ void main() {
 
         await tester.pumpWidget(
           createWidgetUnderTest(
-            child: EmptyState.offline(onRetry: () => retried = true),
+            child: Builder(builder: (context) => EmptyState.offline(context, onRetry: () => retried = true)),
           ),
         );
 

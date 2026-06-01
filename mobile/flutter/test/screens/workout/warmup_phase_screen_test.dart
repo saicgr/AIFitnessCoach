@@ -3,6 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fitwiz/screens/workout/widgets/warmup_phase_screen.dart';
 import 'package:fitwiz/screens/workout/models/workout_state.dart';
 
+// Local fixture — the hardcoded `defaultWarmupExercises` const was intentionally
+// removed (warmup sets are now backend-generated, personalized to workout type /
+// injuries / staples). This test only needs a representative list to render the
+// screen, so it defines its own instead of depending on removed app data.
+const List<WarmupExerciseData> _warmupFixture = [
+  WarmupExerciseData(name: 'Jumping Jacks', duration: 30, icon: Icons.directions_run),
+  WarmupExerciseData(name: 'Arm Circles', duration: 30, icon: Icons.accessibility_new),
+  WarmupExerciseData(name: 'Light Cardio', duration: 60, icon: Icons.favorite),
+];
+
 void main() {
   Widget buildTestWidget({
     int workoutSeconds = 120,
@@ -18,7 +28,7 @@ void main() {
         onSkipWarmup: onSkipWarmup ?? () {},
         onWarmupComplete: onWarmupComplete ?? () {},
         onQuitRequested: onQuitRequested ?? () {},
-        exercises: exercises ?? defaultWarmupExercises,
+        exercises: exercises ?? _warmupFixture,
       ),
     );
   }
