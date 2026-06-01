@@ -141,15 +141,27 @@ class MetricDisplayConfig {
           chart: MetricChart.line,
           range: MetricRange.d30,
         );
-      case RingKind.recovery:
       case RingKind.cycle:
+        // Cycle-day progress reads naturally as a ring (day N of the cycle).
+        return const MetricDisplayConfig(
+          size: MetricSize.small,
+          chart: MetricChart.ring,
+          range: MetricRange.d30,
+        );
+      case RingKind.recovery:
       case RingKind.sleepLatency:
       case RingKind.wakeConsistency:
       case RingKind.bedtimeWindow:
       case RingKind.activeEnergy:
+        // #6: these were `number` (flat, no graph behind), which made the
+        // carousel look inconsistent next to the sparkline tiles the user
+        // likes. They're all daily timeseries, so default to a line sparkline
+        // so every metric tile carries the same "graph behind" treatment on
+        // both carousel pages. (Falls back to flat only when <2 data points
+        // exist — honest, not forced.)
         return const MetricDisplayConfig(
           size: MetricSize.small,
-          chart: MetricChart.number,
+          chart: MetricChart.line,
           range: MetricRange.d30,
         );
     }

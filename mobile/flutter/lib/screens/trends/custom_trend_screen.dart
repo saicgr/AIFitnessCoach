@@ -257,29 +257,30 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             _header(colors),
             Expanded(
               child: ListView(
+                // Single consistent 16px left/right margin for every section —
+                // cards, section labels, and chip rows all align to it. 12px
+                // inter-card gap on the measurement-detail 8px grid.
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 40),
                 children: [
                   // ── 1. The chart — graph-first, top of screen ──────────
                   _chartCard(colors),
-                  const SizedBox(height: 16),
-                  // ── 2. Legend + add metric ─────────────────────────────
+                  const SizedBox(height: 12),
+                  // ── 2. Metrics (primary + overlays + add) ──────────────
                   _legendSection(colors),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   // ── 3. Event overlays ──────────────────────────────────
                   _eventOverlaySection(colors),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   // ── 4. Time range ──────────────────────────────────────
-                  _sectionLabel(colors, 'TIME RANGE'),
-                  const SizedBox(height: 8),
-                  _rangeSelector(colors),
-                  const SizedBox(height: 16),
+                  _timeRangeSection(colors),
+                  const SizedBox(height: 12),
                   // ── 5. Stats ───────────────────────────────────────────
                   _statsSection(colors),
                   // ── 6. Correlation ─────────────────────────────────────
                   _correlationSection(colors),
                   // ── 7. AI insight ──────────────────────────────────────
                   _aiInsightSection(colors),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   // ── Save + saved list ──────────────────────────────────
                   _saveButton(colors),
                   if (_saved.isNotEmpty) ...[
@@ -288,6 +289,9 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                     const SizedBox(height: 10),
                     for (final t in _saved) _savedRow(colors, t),
                   ],
+                  // ── About — explainer card, bottom of screen ───────────
+                  const SizedBox(height: 24),
+                  _aboutSection(colors),
                 ],
               ),
             ),
@@ -345,38 +349,50 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         ? null
         : ref.watch(trendEventsProvider(_range));
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: colors.cardBorder),
-      ),
-      // CacheFirstView swaps a layout-matched SKELETON chart (true first-ever
-      // open only) for the real chart — never a blocking CircularProgress.
-      // On every later open the cached series renders instantly. After the
-      // first successful load it records the screen as seen.
-      child: CacheFirstView<TrendSeries>(
-        value: primaryAsync,
-        isFirstEver: _isFirstEver,
-        traceLabel: 'custom_trends_chart',
-        skeletonBuilder: (context) => _chartSkeleton(colors),
-        errorBuilder: (context, _, __) =>
-            _chartError(colors, _primary.displayName),
-        contentBuilder: (context, primary) {
-          // Mark the screen seen once real content has rendered, so future
-          // opens skip the skeleton entirely.
-          if (_isFirstEver) {
-            CacheFirstView.markSeen(_kScreenKey);
-          }
+    return _card(
+      colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Clear, data-driven title — "<Primary> [vs <Overlay>] over time".
+          _cardTitle(colors, _chartTitle()),
+          const SizedBox(height: 16),
+          // CacheFirstView swaps a layout-matched SKELETON chart (true
+          // first-ever open only) for the real chart — never a blocking
+          // CircularProgress. On every later open the cached series renders
+          // instantly. After the first successful load it records the screen
+          // as seen.
+          CacheFirstView<TrendSeries>(
+            value: primaryAsync,
+            isFirstEver: _isFirstEver,
+            traceLabel: 'custom_trends_chart',
+            skeletonBuilder: (context) => _chartSkeleton(colors),
+            errorBuilder: (context, _, __) =>
+                _chartError(colors, _primary.displayName),
+            contentBuilder: (context, primary) {
+              // Mark the screen seen once real content has rendered, so future
+              // opens skip the skeleton entirely.
+              if (_isFirstEver) {
+                CacheFirstView.markSeen(_kScreenKey);
+              }
 
-          // Honest empty-state: nothing logged in this range at all.
-          if (primary.points.isEmpty) {
-            return _honestEmpty(colors, primary);
-          }
+              // Honest empty-state: nothing logged in this range at all.
+              if (primary.points.isEmpty) {
+                return _honestEmpty(colors, primary);
+              }
 
-          return _memoizedChart(colors, primary, overlayAsyncs, eventsAsync);
-        },
+              // Honest single-point state: one logged day can't form a trend
+              // line — show it as a single marker with a "log more" hint,
+              // mirroring the measurement-detail single-point treatment.
+              if (primary.points.length == 1) {
+                return _singlePointChart(colors, primary);
+              }
+
+              return _memoizedChart(
+                  colors, primary, overlayAsyncs, eventsAsync);
+            },
+          ),
+        ],
       ),
     );
   }
@@ -672,6 +688,65 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     );
   }
 
+  /// Honest single-entry affordance — a centred glowing dot carrying the lone
+  /// value + date and a "log again to start a trend" hint. No axis, no
+  /// fabricated second point. Mirrors the measurement-detail single-point
+  /// treatment so the two screens read identically when data is sparse.
+  Widget _singlePointChart(ThemeColors colors, TrendSeries primary) {
+    final point = primary.points.first;
+    final unit = primary.unit;
+    return SizedBox(
+      height: 200,
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: colors.accent,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.accent.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              unit.isEmpty
+                  ? _fmtNum(point.value)
+                  : '${_fmtNum(point.value)} $unit',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _fmtDate(point.date),
+              style: TextStyle(fontSize: 12, color: colors.textMuted),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              '${_primary.displayName} logged on 1 day in this range — '
+              'log it again to start a trend line.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: colors.textMuted.withValues(alpha: 0.7)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   static String _fmtDate(DateTime d) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -703,9 +778,12 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   }
 
   Widget _legendSection(ThemeColors colors) {
-    // Collect per-metric honesty notes for sparse/empty series.
+    // Collect per-metric honesty notes for sparse/empty OVERLAY series. The
+    // primary's single-point / empty state is already communicated inside the
+    // chart card (single-point marker or empty placeholder), so listing it
+    // again here would double up — only overlays get a legend note.
     final notes = <String>[
-      for (final m in [_primary, ..._overlays])
+      for (final m in _overlays)
         if (_seriesNote(m) case final note?) note,
     ];
     return Column(
@@ -1101,6 +1179,19 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   // ── 4. Range selector ───────────────────────────────────────────────────
 
+  /// Labeled "TIME RANGE" section — the uppercase muted header above the
+  /// scrollable range pills, consistent with METRICS / EVENT OVERLAYS.
+  Widget _timeRangeSection(ThemeColors colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionLabel(colors, 'TIME RANGE'),
+        const SizedBox(height: 8),
+        _rangeSelector(colors),
+      ],
+    );
+  }
+
   Widget _rangeSelector(ThemeColors colors) {
     return SizedBox(
       height: 38,
@@ -1166,35 +1257,33 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             children: [
               Text(label,
                   style: TextStyle(
-                      fontSize: 10,
-                      letterSpacing: 0.6,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
                       color: colors.textMuted)),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text('${_fmtNum(v)} $unit',
                   style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
                       color: c)),
             ],
           ),
         );
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.cardBorder),
-      ),
-      child: Row(
-        children: [
-          cell('MIN', minV, colors.success),
-          Container(width: 1, height: 28, color: colors.cardBorder),
-          cell('AVG', avgV, colors.accent),
-          Container(width: 1, height: 28, color: colors.cardBorder),
-          cell('MAX', maxV, colors.error),
-        ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: _card(
+        colors,
+        child: Row(
+          children: [
+            cell('MIN', minV, colors.success),
+            Container(width: 1, height: 40, color: colors.cardBorder),
+            cell('AVG', avgV, colors.accent),
+            Container(width: 1, height: 40, color: colors.cardBorder),
+            cell('MAX', maxV, colors.error),
+          ],
+        ),
       ),
     );
   }
@@ -1229,7 +1318,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         return const SizedBox.shrink();
       }
       return Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: 12),
         child: _correlationChip(
           colors,
           aName: primary.metric.displayName,
@@ -1239,38 +1328,34 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       );
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.grid_view_rounded,
-                  size: 16, color: colors.accent),
-              const SizedBox(width: 8),
-              Text(
-                  'Correlation vs ${primary.metric.displayName}',
-                  style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          for (final o in overlayData)
-            _correlationMatrixRow(
-              colors,
-              o.metric.displayName,
-              pearsonCorrelation(primary.points, o.points),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: _card(
+        colors,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.grid_view_rounded, size: 18, color: colors.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _cardTitle(
+                    colors,
+                    'Correlation vs ${primary.metric.displayName}',
+                  ),
+                ),
+              ],
             ),
-        ],
+            const SizedBox(height: 12),
+            for (final o in overlayData)
+              _correlationMatrixRow(
+                colors,
+                o.metric.displayName,
+                pearsonCorrelation(primary.points, o.points),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1366,7 +1451,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: chipColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: chipColor.withValues(alpha: 0.4)),
       ),
       child: Row(
@@ -1468,9 +1553,52 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           side: BorderSide(color: colors.cardBorder),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
+      ),
+    );
+  }
+
+  // ── About — bottom explainer card ───────────────────────────────────────
+
+  /// "About custom trends" explainer card — mirrors the measurement-detail
+  /// About card (info icon + title + height-1.5 body), grounding the screen
+  /// with a short, honest description of what the multi-metric overlay does.
+  Widget _aboutSection(ThemeColors colors) {
+    return _card(
+      colors,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.info_outline_rounded, size: 18, color: colors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'About custom trends',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: colors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Plot one primary metric in its real units, then layer up to '
+            '$_kMaxOverlays more on a shared 0–100 index so different scales '
+            'stay readable on one chart. Toggle event overlays to see how '
+            'workouts, rest days, or fasting line up with the trend, and read '
+            'the correlation as a relationship, not proof of cause. Save a set '
+            'to pin it to your home screen for quick check-ins.',
+            style: TextStyle(
+                fontSize: 13, height: 1.5, color: colors.textMuted),
+          ),
+        ],
       ),
     );
   }
@@ -1481,11 +1609,16 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         : '+ ${t.overlays.map((m) => m.displayName).join(', ')}';
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      child: Material(
+      decoration: BoxDecoration(
         color: colors.elevated,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
           onTap: () {
             HapticService.light();
             setState(() {
@@ -1540,14 +1673,63 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   // ── Shared bits ─────────────────────────────────────────────────────────
 
+  /// Uppercase muted section label — matched to the measurement-detail
+  /// redesign (fontSize 12 / w600 / letterSpacing 1.5) so every section header
+  /// across the two screens reads identically.
   Widget _sectionLabel(ThemeColors colors, String text) => Text(
         text,
         style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.1,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1.5,
             color: colors.textMuted),
       );
+
+  /// Shared card shell — the single source of truth for the redesign's card
+  /// language (elevated fill, 16px radius, hairline border, 16px padding). All
+  /// cards on this screen route through here so radius/border/padding never
+  /// drift, exactly mirroring `_buildChartSection` et al. on the measurement
+  /// detail screen.
+  Widget _card(
+    ThemeColors colors, {
+    required Widget child,
+    EdgeInsetsGeometry padding = const EdgeInsets.all(16),
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: padding,
+      decoration: BoxDecoration(
+        color: colors.elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: child,
+    );
+  }
+
+  /// A card title in the measurement-detail voice (fontSize 16 / w600).
+  Widget _cardTitle(ThemeColors colors, String text) => Text(
+        text,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: colors.textPrimary,
+        ),
+      );
+
+  /// Human-readable chart title that names the series being plotted, e.g.
+  /// "Weight over time" or "Weight vs Sleep over time". Built from the live
+  /// metric selection so the copy always tracks what's on screen.
+  String _chartTitle() {
+    final primaryName = _primary.displayName;
+    if (_overlays.isEmpty) {
+      return '$primaryName over time';
+    }
+    if (_overlays.length == 1) {
+      return '$primaryName vs ${_overlays.first.displayName} over time';
+    }
+    return '$primaryName vs ${_overlays.length} metrics over time';
+  }
 
   static String _fmtNum(double v) {
     if (v.abs() >= 1000) {
