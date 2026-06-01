@@ -59,15 +59,19 @@ done
 
 if [ "$AVD_ALREADY_RUNNING" = false ]; then
     echo -e "${YELLOW}Launching emulator: $TARGET_AVD${NC}"
-    # -gpu host: Metal-backed rendering on Apple Silicon (the 'bad color buffer
-    #   handle' freeze is a known -gpu auto glitch on M-series; if it still
-    #   freezes, swap to -gpu swiftshader_indirect for software rendering).
-    # -no-snapshot: full COLD boot — never load a (possibly corrupt) snapshot
-    #   that can leave the GPU/window layer wedged.
-    # Output redirected to a log so the QEventPoint/VkInstance/color-buffer noise
-    #   doesn't flood the terminal where you read the app's flutter logs.
-    #   Tail it with:  tail -f /tmp/zealova-emulator.log
-    $EMULATOR_PATH -avd "$TARGET_AVD" -no-snapshot -no-boot-anim -gpu host \
+    # -gpu swiftshader_indirect: SOFTWARE rendering. The 'bad color buffer
+    #   handle' freeze is a host-GPU-passthrough bug in the Android emulator on
+    #   Apple Silicon; software rendering avoids it entirely, so the emulator
+    #   stops getting stuck. Trade-off: frame rendering is slower than a real
+    #   device, BUT the Dart/CPU + data-load timings profile mode measures are
+    #   unaffected — so load-speed numbers stay accurate. For a final frame-rate
+    #   check, swap this to `-gpu host` (or test on a physical phone).
+    # -no-snapshot: full COLD boot — never load a corrupt snapshot that wedges
+    #   the GPU/window layer.
+    # Output → logfile so QEventPoint/VkInstance noise doesn't flood the terminal
+    #   (tail it with: tail -f /tmp/zealova-emulator.log).
+    $EMULATOR_PATH -avd "$TARGET_AVD" -no-snapshot -no-boot-anim \
+        -gpu swiftshader_indirect \
         > /tmp/zealova-emulator.log 2>&1 &
 
     # Wait for the new emulator to appear
