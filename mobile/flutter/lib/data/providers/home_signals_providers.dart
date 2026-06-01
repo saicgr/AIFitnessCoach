@@ -163,6 +163,7 @@ class WearableBattery {
 
 final wearableBatteryProvider =
     FutureProvider.autoDispose<WearableBattery?>((ref) async {
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   try {
     final api = ref.read(apiClientProvider);
@@ -198,6 +199,7 @@ class ProposedRescheduleSlot {
 final proposedRescheduleSlotProvider =
     FutureProvider.autoDispose.family<ProposedRescheduleSlot?, String>(
         (ref, workoutId) async {
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   try {
     final api = ref.read(apiClientProvider);

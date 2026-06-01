@@ -658,6 +658,11 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       // entry actually appears without pull-to-refresh.
       // ignore: unawaited_futures
       _ref.read(timelineProvider.notifier).refresh();
+      // The home trends rail's WATER tile reads timelineTrendsProvider (a
+      // separate 14-day metrics_only fetch), so it must be refreshed too or it
+      // shows a stale total (0.5L) while the Today pill shows the fresh 1.0L.
+      // ignore: unawaited_futures
+      _ref.read(timelineTrendsProvider.notifier).refresh();
       return true;
     } catch (e) {
       // Online but the write failed — roll back the optimistic change.
@@ -723,6 +728,9 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       // Refresh Today's Journal so the new entry appears immediately.
       // ignore: unawaited_futures
       _ref.read(timelineProvider.notifier).refresh();
+      // Keep the home trends rail's WATER tile (timelineTrendsProvider) in sync.
+      // ignore: unawaited_futures
+      _ref.read(timelineTrendsProvider.notifier).refresh();
       return true;
     } catch (e) {
       _rollback(snapshot, e);
@@ -738,6 +746,11 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       await _repository.updateGoal(userId, goalMl);
       // Refresh in background
       await loadTodaySummary(userId, showLoading: false);
+      // The goal is the "/2.4L" denominator the trends rail renders, so a goal
+      // change must refresh that provider too (the Today timeline reads the
+      // goal from the summary load above).
+      // ignore: unawaited_futures
+      _ref.read(timelineTrendsProvider.notifier).refresh();
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
@@ -749,6 +762,12 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       await _repository.deleteLog(logId);
       // Refresh in background (no loading indicator)
       await loadTodaySummary(userId, showLoading: false);
+      // Removing a water entry must drop BOTH home water displays (the Today
+      // timeline pill and the trends-rail WATER tile), not just the summary.
+      // ignore: unawaited_futures
+      _ref.read(timelineProvider.notifier).refresh();
+      // ignore: unawaited_futures
+      _ref.read(timelineTrendsProvider.notifier).refresh();
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }

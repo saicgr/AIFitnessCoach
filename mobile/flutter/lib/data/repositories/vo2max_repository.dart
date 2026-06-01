@@ -145,6 +145,7 @@ final vo2MaxRepositoryProvider = Provider<Vo2MaxRepository>((ref) {
 /// frees the cache.
 final vo2MaxHistoryProvider =
     FutureProvider.autoDispose<List<Vo2MaxPoint>>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(vo2MaxRepositoryProvider);
   return repo.history(days: 180);
 });
@@ -152,6 +153,7 @@ final vo2MaxHistoryProvider =
 /// Latest VO2max snapshot — drives the hero block.
 final vo2MaxLatestProvider =
     FutureProvider.autoDispose<Vo2MaxLatest>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(vo2MaxRepositoryProvider);
   return repo.latest();
 });

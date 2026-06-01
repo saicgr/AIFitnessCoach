@@ -4,10 +4,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/widgets/skeleton/skeleton_box.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../widgets/pill_app_bar.dart';
 
 final progressionPaceProvider = StateNotifierProvider<ProgressionPaceNotifier, ProgressionPaceState>((ref) => ProgressionPaceNotifier());
+
+/// Layout-matched skeleton shown while settings load, instead of a bare
+/// full-screen spinner. Width-adaptive (stretch) — no overflow SE→iPad.
+class _SettingsFormSkeleton extends StatelessWidget {
+  const _SettingsFormSkeleton();
+  @override
+  Widget build(BuildContext context) => const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SkeletonBox(height: 96, radius: 16),
+            SizedBox(height: 24),
+            SkeletonBox(height: 20, width: 160, radius: 8),
+            SizedBox(height: 12),
+            SkeletonBox(height: 120, radius: 16),
+            SizedBox(height: 24),
+            SkeletonBox(height: 120, radius: 16),
+          ],
+        ),
+      );
+}
 
 class ProgressionPaceState {
   final String pace;
@@ -54,7 +78,7 @@ class _ProgressionPaceScreenState extends ConsumerState<ProgressionPaceScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(title: AppLocalizations.of(context).progressionPaceProgressionPace),
-      body: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      body: st.isLoading ? const _SettingsFormSkeleton() : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _buildInfoCard(context, d, tp, tm),
         const SizedBox(height: 24),
         _section(AppLocalizations.of(context).progressionPaceProgressionSpeed, tp),

@@ -48,6 +48,7 @@ class MicronutrientGap {
 
 final micronutrientGapProvider =
     FutureProvider.autoDispose<MicronutrientGap>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res = await api.get<Map<String, dynamic>>(
     '/nutrition/micros/today-gap',

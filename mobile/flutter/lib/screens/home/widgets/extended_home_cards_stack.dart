@@ -25,7 +25,6 @@ import 'cards/birthday_card.dart';
 import 'cards/body_comp_milestone_card.dart';
 import 'cards/busy_week_compressed_card.dart';
 import 'cards/daily_strain_target_tile.dart';
-import 'cards/evening_sleep_story_tile.dart';
 import 'cards/fast_streak_tile.dart';
 import 'cards/fast_zone_strip.dart';
 import 'cards/first_of_month_card.dart';
@@ -78,14 +77,8 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // Readiness, HRV, Stress, VO₂max, Bedtime, Wake consistency and Sleep
         // latency moved OUT of standalone home cards and INTO the metric deck
         // as selectable metric tiles (user feedback) — readiness == the
-        // existing Recovery ring. Only the evening sleep-story narrative (no
-        // metric equivalent) remains here.
-        _HomeCardSection(
-          title: 'Sleep',
-          children: const [
-            EveningSleepStoryTile(),
-          ],
-        ),
+        // existing Recovery ring. The evening sleep-story tile was removed from
+        // home (user feedback); the widget still exists, just unmounted here.
         _HomeCardSection(
           title: 'Activity',
           children: const [

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_colors.dart';
 import '../data/services/haptic_service.dart';
+import 'coach_spark_icon.dart';
 
 /// Canonical floating tab / options bar.
 ///
@@ -372,11 +373,9 @@ class _FloatingTabBarCoachSlot extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.auto_awesome,
+              child: const CoachSparkIcon(
                 size: 18,
                 color: Colors.white,
-                semanticLabel: 'Ask coach',
               ),
             ),
           ),

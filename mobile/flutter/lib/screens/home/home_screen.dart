@@ -19,6 +19,7 @@ import '../../data/providers/home_layout_provider.dart';
 import '../../data/services/home_prewarmer.dart';
 import 'refresh_home.dart';
 import '../../data/providers/local_layout_provider.dart';
+import '../../data/providers/secondary_tile_providers.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -314,6 +315,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
         // Check mounted after async operation
         if (!mounted) return;
+
+        // Refresh the kept-alive secondary tiles (metric deck, home insights/
+        // patterns, achievement + content rows) on resume. They don't refetch
+        // on their own because they're keepAlive'd, so a long background gap
+        // (incl. crossing midnight) would otherwise leave them stale. The
+        // tz-sensitive combinedHealth disk key returns a date-miss on rollover,
+        // so the refetch picks up "today" rather than re-serving yesterday.
+        for (final p in secondaryTileProviders) {
+          ref.invalidate(p);
+        }
 
         // L9: The refresh() call above already updates provider state internally,
         // so we avoid a redundant ref.invalidate(workoutsProvider) which would

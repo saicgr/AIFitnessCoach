@@ -994,6 +994,27 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             ),
           ),
           const SizedBox(width: 6),
+          // Custom trends — quick entry to the personal-trends builder, sitting
+          // right before settings (mirrors the Workouts header's trends icon).
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              context.push('/trends/custom');
+            },
+            child: Tooltip(
+              message: 'Custom trends',
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(Icons.show_chart_rounded, size: 18, color: textSecondary),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
           // Settings
           GestureDetector(
             onTap: () {

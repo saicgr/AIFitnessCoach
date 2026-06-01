@@ -12,7 +12,6 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
-import '../../../data/repositories/nutrition_preferences_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
 import '../../nutrition/widgets/nutrition_goals_card.dart' show showNutritionCalculationSheet;
@@ -85,6 +84,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     // refresh lands; no spinner gate on the slowest call.
     if (_isLoading && mounted) {
       setState(() => _isLoading = false);
+    }
+    // Always kick the entrance animation forward (idempotent on a completed
+    // controller). The staggered macro pills read this controller for their
+    // fade-in; if it never advanced past 0 they'd stay invisible — so don't
+    // gate the forward() behind the _isLoading flip.
+    if (!_animController.isCompleted) {
       _animController.forward();
     }
 
@@ -101,19 +106,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
     unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
     unawaited(ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
-  }
-
-  String _adjustmentLabel(DynamicNutritionTargets dt) {
-    switch (dt.adjustmentReason) {
-      case 'training_day':
-        return 'Training day (+${dt.calorieAdjustment} kcal)';
-      case 'rest_day':
-        return 'Rest day (${dt.calorieAdjustment} kcal)';
-      case 'fasting_day':
-        return 'Fasting day';
-      default:
-        return '';
-    }
   }
 
   /// Persist an edited goal. [key] is one of: calories, protein, carbs, fat.
@@ -196,7 +188,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
     final prefsState = ref.watch(nutritionPreferencesProvider);
-    final dynamicTargets = prefsState.dynamicTargets;
     final hydrationState = ref.watch(hydrationProvider);
     final waterConsumedMl = hydrationState.todaySummary?.totalMl ?? 0;
     final waterGoalMl = hydrationState.todaySummary?.goalMl ?? hydrationState.dailyGoalMl;
@@ -297,40 +288,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                         ),
                       ),
 
-                    // Training/rest-day adjustment badge (kept above the carousel)
-                    if (dynamicTargets != null &&
-                        dynamicTargets.adjustmentReason != 'base_targets') ...[
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.14),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Not an info button — this badge marks a dynamic
-                              // (training/rest-day) target adjustment. Use a bolt
-                              // so it doesn't read as a second "i" next to the
-                              // header info button.
-                              Icon(Icons.bolt_rounded, size: 12, color: accent),
-                              const SizedBox(width: 4),
-                              Text(
-                                _adjustmentLabel(dynamicTargets),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: accent,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                    ],
+                    // (Removed the training/rest-day "bolt" adjustment badge —
+                    // user feedback: it read as a cryptic icon. Dynamic-target
+                    // context still lives in the (i) info sheet.)
 
                     // ===== swipeable carousel =====
                     // Home: Expanded fills the flexible hero area. Embedded:
@@ -752,16 +712,9 @@ class _MacroPill extends StatelessWidget {
     final chipBg = color.withValues(alpha: isDark ? 0.28 : 0.18);
     final labelColor = (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary);
 
-    // Staggered entrance.
-    final start = 0.25 + order * 0.08;
-    final local = ((entrance.value - start) / (1 - start)).clamp(0.0, 1.0);
-
-    return Opacity(
-      opacity: local,
-      child: Transform.translate(
-        offset: Offset(0, 8 * (1 - local)),
-        child: Container(
-          height: 36,
+    // The pill body, built once.
+    final body = Container(
+      height: 36,
           decoration: BoxDecoration(
             color: tile,
             // Match the micronutrient tiles (page 2/3): 16px radius + 42px emoji
@@ -831,8 +784,28 @@ class _MacroPill extends StatelessWidget {
               const SizedBox(width: 6),
             ],
           ),
-        ),
-      ),
+        ); // end `final body = Container(...)`
+
+    // Drive the staggered entrance via AnimatedBuilder so the pill fades in as
+    // the controller animates AND stays visible once it settles. Previously the
+    // build read `entrance.value` once without listening, so a build that ran
+    // before the animation started left the pill stuck at opacity 0 forever —
+    // only a later external rebuild (e.g. the tour overlay) revealed it. That
+    // was the "macro pills only show during the tooltip" bug (plan #6).
+    return AnimatedBuilder(
+      animation: entrance,
+      child: body,
+      builder: (context, child) {
+        final start = 0.25 + order * 0.08;
+        final local = ((entrance.value - start) / (1 - start)).clamp(0.0, 1.0);
+        return Opacity(
+          opacity: local,
+          child: Transform.translate(
+            offset: Offset(0, 8 * (1 - local)),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

@@ -382,6 +382,16 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
+                // Calendar display options (week start / show synced). Moved up
+                // from a standalone full-width band below the header that ate a
+                // whole line; now a glass circle in the cluster, before the gear.
+                // _GlassmorphicButton with a null onTap lets the inner
+                // PopupMenuButton own the tap.
+                _GlassmorphicButton(
+                  isDark: isDark,
+                  child: WorkoutTuneMenu(tint: accentColor),
+                ),
+                const SizedBox(width: 8),
                 // Surface 2.1 — header consolidated to title + gear only.
                 // Import workouts moves into Workout Settings → Import row.
                 // Week-strip collapse toggle moves into Workout Settings
@@ -440,24 +450,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     // the heavy below-fold widgets (WorkoutStatsSection et al.) only build as
     // they scroll into view, instead of all on the first frame.
     final children = <Widget>[
-        // The gym-profile switcher moved up into the header (it is the title
-        // now), so this band carries the calendar tune-menu alone, aligned to
-        // the trailing edge. The week strip sits directly beneath, no gap.
-        Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 12, 2),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              WorkoutTuneMenu(
-                tint: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.textMuted
-                    : AppColorsLight.textMuted,
-              ),
-            ],
-          ),
-        ),
-
-        // Date strip + workout carousel — moved here from the home screen.
+        // Date strip + workout carousel — sits directly under the header now
+        // that the calendar tune-menu moved up into the header cluster, so the
+        // gap that the old standalone full-width tune band created is gone.
         KeyedSubtree(
           key: _planSectionKey,
           child: const WorkoutPlannerSection(),

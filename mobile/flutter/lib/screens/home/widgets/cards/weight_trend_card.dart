@@ -10,6 +10,7 @@ import '../../../../data/models/hormonal_health.dart';
 import '../../../../data/providers/hormonal_health_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/services/api_client.dart';
+import '../../../../data/services/data_cache_service.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../../widgets/charts/cycle_phase_chart_overlay.dart';
@@ -201,8 +202,16 @@ class CycleAwareWeightData {
 /// Returns null (a clean no-op) for users without cycle tracking enabled or
 /// when the endpoint is unavailable — the card then renders exactly as the
 /// pre-cycle version did. Never throws into the widget tree.
+final _cycleAwareWeightCacheKey =
+    '${DataCacheService.statsKeyPrefix}cycle_aware_weight';
+
 final cycleAwareWeightProvider =
     FutureProvider.autoDispose<CycleAwareWeightData?>((ref) async {
+  // Survive Home tab switches so the weight tile doesn't re-hit the endpoint on
+  // every return. Re-runs automatically when cycle-tracking / user changes
+  // (watched below); invalidated after a body-measurement write (see write path).
+  ref.keepAlive();
+
   // Gate on the cycle-tracking flag — no request at all when it is off.
   final tracksCycle = ref.watch(hasHormonalTrackingProvider);
   if (!tracksCycle) return null;
@@ -210,13 +219,29 @@ final cycleAwareWeightProvider =
   final user = ref.watch(currentUserProvider).value;
   if (user == null) return null;
 
+  // Cache-first (fresh-only, 12h via statsKeyPrefix): paint last-known cycle
+  // weight instantly on cold start. Stale/missing falls through to the network.
+  final cached = await DataCacheService.instance
+      .getCached(_cycleAwareWeightCacheKey, userId: user.id);
+  if (cached != null) {
+    try {
+      return CycleAwareWeightData.fromJson(cached);
+    } catch (e) {
+      debugPrint('⚠️ [WeightTrendCard] cycle cache parse failed, refetching: $e');
+    }
+  }
+
   final api = ref.watch(apiClientProvider);
   try {
     final Response<dynamic> resp =
         await api.get('/nutrition/adaptive/${user.id}/cycle-aware');
     final data = resp.data;
     if (data is Map) {
-      return CycleAwareWeightData.fromJson(Map<String, dynamic>.from(data));
+      final map = Map<String, dynamic>.from(data);
+      // Write-through only a real payload (empty-guard).
+      await DataCacheService.instance
+          .cache(_cycleAwareWeightCacheKey, map, userId: user.id);
+      return CycleAwareWeightData.fromJson(map);
     }
     return null;
   } catch (e) {

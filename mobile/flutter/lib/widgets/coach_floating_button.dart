@@ -21,6 +21,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/theme/theme_colors.dart';
 import '../data/services/haptic_service.dart';
+import 'coach_spark_icon.dart';
 
 /// Whether the FAB is in extended ("Ask coach" pill) state. Owned by
 /// `MainShell` (NotificationListener writes it on scroll threshold cross);
@@ -113,11 +114,9 @@ class CoachFloatingButton extends ConsumerWidget {
                 width: 36,
                 height: 36,
                 child: Center(
-                  child: Icon(
-                    Icons.auto_awesome,
+                  child: CoachSparkIcon(
                     size: 18,
                     color: c.accentContrast,
-                    semanticLabel: 'Ask coach',
                   ),
                 ),
               ),

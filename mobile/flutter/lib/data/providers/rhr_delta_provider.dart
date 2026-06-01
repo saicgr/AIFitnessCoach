@@ -42,6 +42,7 @@ class RhrDelta {
 }
 
 final rhrDeltaProvider = FutureProvider.autoDispose<RhrDelta?>((ref) async {
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   final api = ref.read(apiClientProvider);
   try {

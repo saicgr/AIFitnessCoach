@@ -160,8 +160,10 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     final userId = widget.userId;
     if (userId == null) return;
 
-    // Always force a fresh fetch from Supabase
-    await ref.read(measurementsProvider.notifier).forceRefresh(userId);
+    // Cache-first: paints instantly from the notifier's in-memory/disk cache
+    // and refreshes silently in the background. (Previously called forceRefresh,
+    // which bypassed all 3 cache tiers and blocked first paint on every open.)
+    await ref.read(measurementsProvider.notifier).loadAllMeasurements(userId);
 
     final state = ref.read(measurementsProvider);
     final weightHistory = state.historyByType[MeasurementType.weight] ?? [];

@@ -46,6 +46,7 @@ class MasteryEntry {
 /// Badge Hub doesn't hold the response in memory — it's a read-mostly
 /// screen and re-fetching on return is fine.
 final masteriesProvider = FutureProvider.autoDispose<List<MasteryEntry>>((ref) async {
+  ref.keepAlive();
   final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   if (userId == null) return const [];
 

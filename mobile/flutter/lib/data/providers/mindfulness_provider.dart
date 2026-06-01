@@ -13,6 +13,7 @@ import '../services/mindfulness_service.dart';
 /// can render an honest empty/error state rather than a fabricated 0.
 final mindfulnessTodayProvider =
     FutureProvider.autoDispose<MindfulnessToday?>((ref) async {
+  ref.keepAlive();
   final apiClient = ref.watch(apiClientProvider);
   final userId = await apiClient.getUserId();
   if (userId == null) return null;

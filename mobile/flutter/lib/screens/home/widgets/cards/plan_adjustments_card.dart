@@ -31,11 +31,23 @@ import 'day_of_week_skip_card.dart' show dayOfWeekSkipSignalProvider;
 import 'strain_recovery_mismatch_card.dart'
     show strainRecoveryMismatchProvider;
 
-class PlanAdjustmentsCard extends ConsumerWidget {
+class PlanAdjustmentsCard extends ConsumerStatefulWidget {
   const PlanAdjustmentsCard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PlanAdjustmentsCard> createState() =>
+      _PlanAdjustmentsCardState();
+}
+
+class _PlanAdjustmentsCardState extends ConsumerState<PlanAdjustmentsCard> {
+  /// Collapsed by default (user feedback): the card opens to just its header
+  /// row (the "N plan adjustments" summary) and expands on tap. The flag lives
+  /// on the State so it survives the frequent provider-watch rebuilds — a
+  /// ConsumerState is not recreated when a watched provider changes.
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
 
     // Build the active-adjustment rows, in priority order. Each row block
@@ -113,26 +125,56 @@ class PlanAdjustmentsCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Icon(Icons.tune_rounded, size: 18, color: c.accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    rows.length == 1
-                        ? 'Plan adjustment'
-                        : '${rows.length} plan adjustments',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: c.textPrimary,
+            // Header — tap anywhere toggles expand/collapse. The chevron
+            // signals the card is collapsible; collapsed is the default.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Row(
+                children: [
+                  Icon(Icons.tune_rounded, size: 18, color: c.accent),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      rows.length == 1
+                          ? 'Plan adjustment'
+                          : '${rows.length} plan adjustments',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: c.textPrimary,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  AnimatedRotation(
+                    duration: const Duration(milliseconds: 200),
+                    turns: _expanded ? 0.5 : 0,
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 20,
+                      color: c.textMuted,
+                      semanticLabel: _expanded ? 'Collapse' : 'Expand',
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            ...children,
+            // Body — revealed only when expanded.
+            AnimatedCrossFade(
+              duration: const Duration(milliseconds: 200),
+              crossFadeState: _expanded
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              firstChild: const SizedBox(width: double.infinity, height: 0),
+              secondChild: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 12),
+                  ...children,
+                ],
+              ),
+            ),
           ],
         ),
       ),

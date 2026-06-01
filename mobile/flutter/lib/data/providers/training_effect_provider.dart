@@ -40,6 +40,7 @@ class TrainingEffect {
 /// Family-keyed on workout_id (the parent `workouts.id`, not workout_log id).
 final trainingEffectProvider = FutureProvider.autoDispose
     .family<TrainingEffect?, String>((ref, workoutId) async {
+  ref.keepAlive();
   if (workoutId.isEmpty) return null;
   if (Supabase.instance.client.auth.currentSession == null) return null;
   final api = ref.read(apiClientProvider);

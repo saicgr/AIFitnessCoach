@@ -18,6 +18,7 @@ import '../../../data/repositories/consistency_repository.dart';
 import '../../../data/repositories/milestones_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/activity_heatmap.dart';
 import '../../../widgets/exercise_search_results.dart';
@@ -845,9 +846,20 @@ class QuickActionButton extends ConsumerWidget {
 /// renders nothing rather than surfacing a spinner or error on the hub.
 final _overviewActiveGoalsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  // Survive Stats tab switches so the Active Goals section doesn't re-fetch on
+  // every return. Invalidated after a body-measurement / goal write.
+  ref.keepAlive();
   final apiClient = ref.read(apiClientProvider);
   final userId = await apiClient.getUserId();
   if (userId == null) return const [];
+  const cacheKey = '${DataCacheService.statsKeyPrefix}overview_active_goals';
+  // Cache-first (fresh-only, 12h): paint last-known active goals instantly on a
+  // cold start; stale/missing falls through to the network.
+  final cached = await DataCacheService.instance
+      .getCachedList(cacheKey, userId: userId);
+  if (cached != null && cached.isNotEmpty) {
+    return cached;
+  }
   final service = PersonalGoalsService(apiClient);
   final data = await service.getCurrentGoals(userId: userId);
   final raw = data['goals'];
@@ -861,6 +873,11 @@ final _overviewActiveGoalsProvider =
         goals.add(map);
       }
     }
+  }
+  // Empty-guard: only persist a real (non-empty) result so a transient empty
+  // never poisons the cache.
+  if (goals.isNotEmpty) {
+    await DataCacheService.instance.cacheList(cacheKey, goals, userId: userId);
   }
   return goals;
 });

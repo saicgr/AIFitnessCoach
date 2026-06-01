@@ -9,12 +9,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton_box.dart';
 import '../../data/models/allergen.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+
+/// Shared loading placeholder for the preference sub-screens. Keeps the app bar
+/// (back button + title) visible instantly and shows a layout-matched skeleton
+/// list instead of a bare full-screen spinner while `preferences` resolves.
+Widget _prefsLoadingScaffold(String title) => Scaffold(
+      appBar: PillAppBar(title: title),
+      body: const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SkeletonBox(height: 72, radius: 16),
+            SizedBox(height: 12),
+            SkeletonBox(height: 72, radius: 16),
+            SizedBox(height: 12),
+            SkeletonBox(height: 72, radius: 16),
+            SizedBox(height: 12),
+            SkeletonBox(height: 72, radius: 16),
+          ],
+        ),
+      ),
+    );
 class NutritionPreferencesScreen extends ConsumerWidget {
   const NutritionPreferencesScreen({super.key});
 
@@ -84,7 +108,7 @@ class _DietAndAllergensScreenState extends ConsumerState<DietAndAllergensScreen>
   Widget build(BuildContext context) {
     final prefs = ref.watch(nutritionPreferencesProvider).preferences;
     if (prefs == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return _prefsLoadingScaffold(AppLocalizations.of(context).nutritionPreferencesDietAllergens);
     }
     return Scaffold(
       appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesDietAllergens),
@@ -168,7 +192,7 @@ class FoodsToAvoidScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final prefs = ref.watch(nutritionPreferencesProvider).preferences;
     if (prefs == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return _prefsLoadingScaffold(AppLocalizations.of(context).nutritionPreferencesFoodsToAvoid);
     }
     return Scaffold(
       appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesFoodsToAvoid),
@@ -283,7 +307,7 @@ class InflammationToleranceScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final prefs = ref.watch(nutritionPreferencesProvider).preferences;
     if (prefs == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return _prefsLoadingScaffold(AppLocalizations.of(context).nutritionPreferencesInflammationTolerance);
     }
     return Scaffold(
       appBar: PillAppBar(title: AppLocalizations.of(context).nutritionPreferencesInflammationTolerance),

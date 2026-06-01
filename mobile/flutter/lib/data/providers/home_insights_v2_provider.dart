@@ -50,6 +50,7 @@ class JetLagApi {
 }
 
 final jetLagApiProvider = FutureProvider.autoDispose<JetLagApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final tz = ref.read(timezoneProvider).timezone;
   final res = await api.get<Map<String, dynamic>>(
@@ -96,6 +97,7 @@ class BusyWeekDensityApi {
 
 final busyWeekDensityApiProvider =
     FutureProvider.autoDispose<BusyWeekDensityApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/insights/busy-week-density');
@@ -134,6 +136,7 @@ class RefeedProposalApi {
 
 final refeedProposalApiProvider =
     FutureProvider.autoDispose<RefeedProposalApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/insights/refeed-proposal');
@@ -165,6 +168,7 @@ class ElectrolyteNeedApi {
 
 final electrolyteNeedApiProvider =
     FutureProvider.autoDispose<ElectrolyteNeedApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/insights/electrolyte-need');
@@ -186,6 +190,7 @@ class KudosUnreadApi {
 
 final kudosUnreadProvider =
     FutureProvider.autoDispose<KudosUnreadApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res = await api.get<Map<String, dynamic>>('/social/kudos-unread');
   final data = res.data;
@@ -230,6 +235,7 @@ class WeighInDayPrefApi {
 
 final weighInDayPrefApiProvider =
     FutureProvider.autoDispose<WeighInDayPrefApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/insights/weigh-in-day-pref');

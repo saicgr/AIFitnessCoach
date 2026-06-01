@@ -43,6 +43,7 @@ class DiscoveryInsightApi {
 
 final discoveryInsightProvider =
     FutureProvider.autoDispose<DiscoveryInsightApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res = await api.get<Map<String, dynamic>>('/insights/discovery');
   final data = res.data;

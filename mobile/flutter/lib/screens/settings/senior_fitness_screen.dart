@@ -3,10 +3,34 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton_box.dart';
 import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 final seniorSettingsProvider = StateNotifierProvider<SeniorSettingsNotifier, SeniorSettingsState>((ref) => SeniorSettingsNotifier());
+
+/// Layout-matched skeleton shown while settings load, instead of a full-screen
+/// spinner. Width-adaptive (stretch) — no overflow SE→iPad.
+class _SettingsFormSkeleton extends StatelessWidget {
+  const _SettingsFormSkeleton();
+  @override
+  Widget build(BuildContext context) => const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SkeletonBox(height: 96, radius: 16),
+            SizedBox(height: 24),
+            SkeletonBox(height: 20, width: 160, radius: 8),
+            SizedBox(height: 12),
+            SkeletonBox(height: 120, radius: 16),
+            SizedBox(height: 24),
+            SkeletonBox(height: 120, radius: 16),
+          ],
+        ),
+      );
+}
 
 class SeniorSettingsState {
   final double recoveryMultiplier;
@@ -54,7 +78,7 @@ class _SeniorFitnessScreenState extends ConsumerState<SeniorFitnessScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(title: AppLocalizations.of(context).seniorFitnessSeniorFitness),
-      body: st.isLoading ? const Center(child: CircularProgressIndicator()) : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      body: st.isLoading ? const _SettingsFormSkeleton() : SingleChildScrollView(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         _buildInfoCard(d, tp, tm, el),
         const SizedBox(height: 24),
         _section('Recovery Settings', tp),

@@ -14,6 +14,7 @@ import 'demo_health_mode_provider.dart';
 /// Provider that fetches last night's sleep data from Health Connect.
 /// Returns null if Health Connect is not connected.
 final sleepProvider = FutureProvider.autoDispose<SleepSummary?>((ref) async {
+  ref.keepAlive();
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return null;
 
@@ -78,6 +79,7 @@ class ObjectiveRecoveryScore {
 /// Returns null if Health Connect is not connected.
 final recoveryProvider =
     FutureProvider.autoDispose<ObjectiveRecoveryScore?>((ref) async {
+  ref.keepAlive();
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return null;
 

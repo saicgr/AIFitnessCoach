@@ -63,6 +63,7 @@ class DailyLessonApi {
 
 final dailyLessonProvider =
     FutureProvider.autoDispose<DailyLessonApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/discover/daily-lesson');
@@ -125,6 +126,7 @@ class KnowledgeCardApi {
 
 final knowledgeCardsProvider =
     FutureProvider.autoDispose<List<KnowledgeCardApi>>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/discover/knowledge-cards');
@@ -176,6 +178,7 @@ class MeditationPickApi {
 
 final dailyMeditationProvider =
     FutureProvider.autoDispose<MeditationPickApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res = await api.get<Map<String, dynamic>>('/meditation/today');
   final data = res.data;
@@ -218,6 +221,7 @@ class SleepStoryApi {
 
 final sleepStoryTodayProvider =
     FutureProvider.autoDispose<SleepStoryApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/sleep-stories/today');
@@ -272,6 +276,7 @@ class PremiumPreviewRotationApi {
 
 final premiumPreviewRotationProvider =
     FutureProvider.autoDispose<PremiumPreviewRotationApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res =
       await api.get<Map<String, dynamic>>('/home/premium-preview-rotation');

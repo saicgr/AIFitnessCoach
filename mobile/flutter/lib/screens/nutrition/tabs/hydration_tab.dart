@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/models/hydration.dart';
@@ -96,8 +97,35 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
         : AppColorsLight.waterBlue;
 
     if (state.isLoading) {
-      return Center(
-        child: CircularProgressIndicator(color: electricBlue),
+      // Layout-matched skeleton instead of a full-screen spinner, so the tab
+      // structure paints instantly and fills in when the (disk-cached) summary
+      // resolves. Width-adaptive (stretch/Expanded) — no overflow SE→iPad.
+      return const SingleChildScrollView(
+        physics: NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(height: 8),
+            SkeletonBox(height: 28, width: 160, radius: 8),
+            SizedBox(height: 24),
+            Center(child: SkeletonCircle(size: 180)),
+            SizedBox(height: 24),
+            SkeletonBox(height: 56, radius: 16),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: SkeletonBox(height: 64, radius: 16)),
+                SizedBox(width: 12),
+                Expanded(child: SkeletonBox(height: 64, radius: 16)),
+                SizedBox(width: 12),
+                Expanded(child: SkeletonBox(height: 64, radius: 16)),
+              ],
+            ),
+            SizedBox(height: 24),
+            SkeletonBox(height: 120, radius: 16),
+          ],
+        ),
       );
     }
 

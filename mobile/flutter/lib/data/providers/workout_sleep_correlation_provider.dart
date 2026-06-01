@@ -41,6 +41,7 @@ class WorkoutSleepCorrelationApi {
 
 final workoutSleepCorrelationApiProvider =
     FutureProvider.autoDispose<WorkoutSleepCorrelationApi>((ref) async {
+  ref.keepAlive();
   final api = ref.read(apiClientProvider);
   final res = await api.get<Map<String, dynamic>>(
     '/insights/workout-sleep-correlation',

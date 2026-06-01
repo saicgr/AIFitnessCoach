@@ -346,6 +346,31 @@ class DataCacheService {
     }
   }
 
+  /// Suffixes (under [statsKeyPrefix]) of the disk caches written by the
+  /// kept-alive secondary tiles. Kept here so the bust below and the providers
+  /// that write them stay in one place.
+  static const List<String> _secondaryTileStatsSuffixes = [
+    'cycle_aware_weight',
+    'home_workout_milestones',
+    'home_day_of_week_skip',
+    'home_macro_pattern',
+    'overview_active_goals',
+  ];
+
+  /// Bust every disk cache written by a kept-alive secondary tile provider for
+  /// [userId]. Because those providers are fresh-cache-first, a plain
+  /// `ref.invalidate` re-serves the still-fresh disk snapshot — so a hard
+  /// refresh (pull-to-refresh) or a write event (workout completed) must clear
+  /// the disk here first, then invalidate the providers, for the re-run to
+  /// actually re-hit the network. (Resume does NOT call this — serving a
+  /// <TTL disk snapshot on resume is fine.)
+  Future<void> invalidateSecondaryTileCaches(String userId) async {
+    await invalidate(combinedHealthKey, userId: userId);
+    for (final suffix in _secondaryTileStatsSuffixes) {
+      await invalidate('$statsKeyPrefix$suffix', userId: userId);
+    }
+  }
+
   /// Clear all cached data (on logout). Wipes BOTH the legacy global keys and
   /// every user-scoped slot (`<key>:<anything>`) on this device, regardless of
   /// which user owned them. Safe because logout means nobody owns the data

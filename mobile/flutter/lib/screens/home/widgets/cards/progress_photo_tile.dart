@@ -11,6 +11,10 @@ import '../../../../l10n/generated/app_localizations.dart';
 
 /// Provider to load recent progress photos for the tile
 final _recentPhotosProvider = FutureProvider.autoDispose<List<dynamic>>((ref) async {
+  // Survive Home tab switches so the tile doesn't re-fetch photos on every
+  // return. (keepAlive-only, no disk cache: photo URLs are signed/expiring and
+  // a cached row could point at a since-deleted photo — refetch on cold start.)
+  ref.keepAlive();
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return [];
   final repo = ref.watch(progressPhotosRepositoryProvider);

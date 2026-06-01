@@ -16,6 +16,10 @@ import 'habit_card.dart';
 import '../../../l10n/generated/app_localizations.dart';
 /// Provider to fetch custom habits for home section
 final customHabitsHomeProvider = FutureProvider.autoDispose<List<HabitWithStatus>>((ref) async {
+  // Survive Home tab switches so the habits row doesn't re-fetch on every
+  // return. (keepAlive-only: invalidated explicitly after a habit is toggled —
+  // see refreshAllHome / habit write path — so the row stays correct.)
+  ref.keepAlive();
   final authState = ref.watch(authStateProvider);
   final userId = authState.user?.id;
   if (userId == null || userId.isEmpty) return [];

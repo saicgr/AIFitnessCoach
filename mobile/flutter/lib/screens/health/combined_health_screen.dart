@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/widgets/skeleton/skeleton_box.dart';
 import '../../data/providers/combined_health_provider.dart';
 import '../../data/providers/recovery_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
@@ -98,8 +99,11 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
             else
               Expanded(
                 child: historyAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                  // Layout-matched skeleton instead of a full-screen spinner.
+                  // With combinedHealthHistoryProvider now disk-cached + kept
+                  // alive, this rarely shows (warm = instant); it only covers a
+                  // true cold start.
+                  loading: () => const _CombinedHealthSkeleton(),
                   error: (_, __) => _ErrorEmpty(isDark: isDark),
                   data: (history) =>
                       _buildBody(context, isDark, history),
@@ -750,6 +754,33 @@ class _ConnectHealthEmpty extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Layout-matched loading placeholder for the Combined Health hub — a date
+/// strip + a few metric-section cards — so a true cold start paints structure
+/// instantly instead of a centered spinner. Width-adaptive, no overflow.
+class _CombinedHealthSkeleton extends StatelessWidget {
+  const _CombinedHealthSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SingleChildScrollView(
+      physics: NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SkeletonBox(height: 64, radius: 16),
+          SizedBox(height: 16),
+          SkeletonBox(height: 120, radius: 16),
+          SizedBox(height: 12),
+          SkeletonBox(height: 120, radius: 16),
+          SizedBox(height: 12),
+          SkeletonBox(height: 120, radius: 16),
+        ],
       ),
     );
   }

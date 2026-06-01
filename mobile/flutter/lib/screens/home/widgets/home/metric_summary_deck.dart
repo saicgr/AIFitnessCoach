@@ -103,12 +103,12 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     return Padding(
       padding: kHomeHPad,
       child: SizedBox(
-        // ALL pages are now the same boxed card with full-width tiles (#6):
-        // page 1 STACKS the ring on top of a 2×2 full-width grid; page 2 is a
-        // 3×2 full-width grid. Card inner height = 268 − 12 top − 38 bottom
-        // (footer) = 218, which fits page 1 (80 ring + 10 gap + 121 grid = 211)
-        // and page 2 (186 grid) alike.
-        height: 268,
+        // ALL pages share this one height so the deck reads at a constant size
+        // as you swipe. Page 1 is now ring-LEFT + a 2×2 grid on the RIGHT
+        // (vertically centered); page 2 is a 3×2 grid. Inner height = 240 − 12
+        // top − 38 bottom (footer) = 190, which fits the centered page-1 row
+        // (~121) and the page-2 grid (3×56 + 2×9 = 186) alike.
+        height: 240,
         child: Stack(
           children: [
             // The cards fill the full height; their content centers, leaving a
@@ -250,71 +250,76 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         ),
     ];
 
-    // Same boxed card as the other pages; bottom pad clears the footer strip.
+    // Ring on the LEFT, the 4 metric tiles as a 2×2 grid on the RIGHT (was a
+    // ring stacked ON TOP of the grid). The row is vertically centered in the
+    // shared-height card so slides 2 & 3 read at the exact same height.
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 38),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Score ring STACKED on top (was beside the tiles, which squeezed them
-          // narrower than page 2 — #6). Tapping opens the stats breakdown (#15).
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => context.push('/stats'),
-            child: SegmentedScoreRing(
-              size: 80,
-              strokeWidth: 9,
-              segments: segments,
-              center: Column(
-                mainAxisSize: MainAxisSize.min,
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 38),
+      child: Center(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Score ring (left). Tapping opens the stats breakdown (#15).
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => context.push('/stats'),
+              child: SegmentedScoreRing(
+                size: 88,
+                strokeWidth: 9,
+                segments: segments,
+                center: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${score.score}',
+                      style: TextStyle(
+                        fontSize: 28,
+                        height: 1,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -1,
+                        color: c.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'TODAY',
+                      style: TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                        color: c.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 14),
+            // 4 tiles in a 2×2 grid on the right — same compact tile delegate as
+            // page 2 so the shapes stay consistent across the deck.
+            Expanded(
+              child: GridView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 9,
+                  crossAxisSpacing: 9,
+                  mainAxisExtent: 56,
+                ),
                 children: [
-                  Text(
-                    '${score.score}',
-                    style: TextStyle(
-                      fontSize: 26,
-                      height: 1,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -1,
-                      color: c.textPrimary,
+                  for (final kind in tiles)
+                    MetricTile(
+                      key: ValueKey('tile_${kind.id}'),
+                      kind: kind,
+                      compact: true,
                     ),
-                  ),
-                  Text(
-                    'TODAY',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.6,
-                      color: c.textMuted,
-                    ),
-                  ),
                 ],
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          // Full-width 2-col grid — IDENTICAL delegate to _gridPage, so page-1
-          // tiles are the exact same size/shape as page 2 (#6).
-          GridView(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 9,
-              crossAxisSpacing: 9,
-              mainAxisExtent: 56,
-            ),
-            children: [
-              for (final kind in tiles)
-                MetricTile(
-                  key: ValueKey('tile_${kind.id}'),
-                  kind: kind,
-                  compact: true,
-                ),
-            ],
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

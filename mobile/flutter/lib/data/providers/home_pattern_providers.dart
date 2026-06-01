@@ -15,6 +15,44 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
+
+/// Cache-first fetch for the small raw-JSON home aggregates: serve a non-expired
+/// per-user disk snapshot instantly (so the card paints on a cold start without
+/// a spinner), else fetch + write-through. `returnExpiredOnMiss` defaults to
+/// false so a stale entry falls through to the network (no frozen-stale). The
+/// payload is the endpoint's raw map; re-`fromJson`'d on read. Used only for the
+/// slow-moving aggregates — NOT `recoveryHours` (a time-sensitive countdown).
+Future<T> _cacheFirstAggregate<T>(
+  Ref ref,
+  String cacheSuffix,
+  String endpoint,
+  T Function(Map<String, dynamic>) fromJson,
+) async {
+  final api = ref.watch(apiClientProvider);
+  final userId = await api.getUserId();
+  final key = '${DataCacheService.statsKeyPrefix}$cacheSuffix';
+  if (userId != null) {
+    final cached =
+        await DataCacheService.instance.getCached(key, userId: userId);
+    if (cached != null) {
+      try {
+        return fromJson(cached);
+      } catch (_) {
+        // schema-drifted/corrupt envelope — fall through to a fresh fetch.
+      }
+    }
+  }
+  final resp = await api.get<Map<String, dynamic>>(endpoint);
+  final data = resp.data;
+  if (data == null) {
+    throw StateError('$endpoint returned empty body');
+  }
+  if (userId != null) {
+    await DataCacheService.instance.cache(key, data, userId: userId);
+  }
+  return fromJson(data);
+}
 
 // ============================================================================
 // Models
@@ -148,40 +186,28 @@ class RecoveryHoursData {
 
 final workoutMilestoneProvider =
     FutureProvider.autoDispose<WorkoutMilestonesData>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final resp = await api.get<Map<String, dynamic>>('/workouts/milestones');
-  final data = resp.data;
-  if (data == null) {
-    throw StateError('workouts/milestones returned empty body');
-  }
-  return WorkoutMilestonesData.fromJson(data);
+  ref.keepAlive();
+  return _cacheFirstAggregate(ref, 'home_workout_milestones',
+      '/workouts/milestones', WorkoutMilestonesData.fromJson);
 });
 
 final dayOfWeekSkipProvider =
     FutureProvider.autoDispose<DayOfWeekSkipData>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final resp =
-      await api.get<Map<String, dynamic>>('/insights/day-of-week-skip');
-  final data = resp.data;
-  if (data == null) {
-    throw StateError('insights/day-of-week-skip returned empty body');
-  }
-  return DayOfWeekSkipData.fromJson(data);
+  ref.keepAlive();
+  return _cacheFirstAggregate(ref, 'home_day_of_week_skip',
+      '/insights/day-of-week-skip', DayOfWeekSkipData.fromJson);
 });
 
 final macroPatternProvider =
     FutureProvider.autoDispose<MacroPatternData>((ref) async {
-  final api = ref.watch(apiClientProvider);
-  final resp = await api.get<Map<String, dynamic>>('/insights/macro-pattern');
-  final data = resp.data;
-  if (data == null) {
-    throw StateError('insights/macro-pattern returned empty body');
-  }
-  return MacroPatternData.fromJson(data);
+  ref.keepAlive();
+  return _cacheFirstAggregate(
+      ref, 'home_macro_pattern', '/insights/macro-pattern', MacroPatternData.fromJson);
 });
 
 final recoveryHoursProvider =
     FutureProvider.autoDispose<RecoveryHoursData>((ref) async {
+  ref.keepAlive();
   final api = ref.watch(apiClientProvider);
   final resp =
       await api.get<Map<String, dynamic>>('/health/recovery-hours-remaining');

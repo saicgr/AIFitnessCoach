@@ -104,6 +104,7 @@ class UserHistorySnapshot {
 /// back to client-only resolution". Errors are swallowed → null.
 final userHistorySnapshotProvider =
     FutureProvider.autoDispose<UserHistorySnapshot?>((ref) async {
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) return null;
   final api = ref.read(apiClientProvider);
   try {

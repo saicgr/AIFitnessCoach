@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../services/activity_service.dart';
 import '../services/api_client.dart';
+import '../services/data_cache_service.dart';
 import '../services/health_service.dart';
 
 /// How far back the Combined Health hub loads daily-activity history.
@@ -95,6 +96,13 @@ class CombinedHealthHistory {
 /// fabricated rows.
 final combinedHealthHistoryProvider =
     FutureProvider.autoDispose<CombinedHealthHistory>((ref) async {
+  // Survive Home tab switches. Without this, the metric-deck tiles (steps
+  // streak / zone minutes) dispose this provider when Home unmounts and it
+  // re-hits `/activity/history` (a 35-day window) on EVERY tab return. A
+  // change to `healthSyncProvider` (connect/disconnect) still re-runs it via
+  // the watch below, so keepAlive doesn't freeze the connected-state.
+  ref.keepAlive();
+
   // This provider already sources from the backend `/activity/history`
   // endpoint, so the disclosed reviewer demo needs no separate code path:
   // `healthSyncProvider` reports `isConnected: true` for the allowlisted
@@ -109,6 +117,27 @@ final combinedHealthHistoryProvider =
   final userId = await apiClient.getUserId();
   if (userId == null) return CombinedHealthHistory.empty;
 
+  // Cache-first (fresh-only): paint a non-expired disk snapshot instantly so a
+  // cold start shows the streak/zone tiles without a spinner. `returnExpiredOnMiss`
+  // is false so we never freeze on a stale entry (the FutureProvider frozen-stale
+  // trap); an expired/missing entry falls through to the network fetch below.
+  // The 6h TTL + tz-rollover invalidation are enforced by DataCacheService for
+  // `combinedHealthKey` (so an app left open past midnight refetches "today").
+  final cachedList = await DataCacheService.instance.getCachedList(
+    DataCacheService.combinedHealthKey,
+    userId: userId,
+  );
+  if (cachedList != null && cachedList.isNotEmpty) {
+    try {
+      final days = cachedList.map((m) => DailyActivity.fromJson(m)).toList();
+      if (days.isNotEmpty) return CombinedHealthHistory(days: days);
+    } catch (e) {
+      // Corrupt / schema-drifted envelope (e.g. after an app update) — drop it
+      // and fall through to a fresh fetch rather than crashing the tile.
+      debugPrint('⚠️ [CombinedHealth] Cache parse failed, refetching: $e');
+    }
+  }
+
   try {
     final now = DateTime.now();
     final from = now.subtract(const Duration(days: kCombinedHealthDays));
@@ -118,6 +147,16 @@ final combinedHealthHistoryProvider =
           fromDate: from,
           toDate: now,
         );
+    // Empty-guard (mirror today_workout `_saveToCache`): never write-through an
+    // empty result. No-synced-days-yet or a transient failure must NOT poison
+    // the cache and show "no data" instantly even after the user syncs.
+    if (days.isNotEmpty) {
+      await DataCacheService.instance.cacheList(
+        DataCacheService.combinedHealthKey,
+        days.map((d) => d.toJson()).toList(),
+        userId: userId,
+      );
+    }
     return CombinedHealthHistory(days: days);
   } catch (e) {
     debugPrint('❌ [CombinedHealth] Error loading activity history: $e');

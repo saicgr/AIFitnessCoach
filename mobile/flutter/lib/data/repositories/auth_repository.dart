@@ -29,6 +29,7 @@ import '../providers/gym_profile_provider.dart';
 import '../providers/nutrition_preferences_provider.dart';
 import '../providers/referral_provider.dart';
 import '../providers/scores_provider.dart';
+import '../providers/secondary_tile_providers.dart';
 import '../providers/today_workout_provider.dart';
 import '../providers/xp_provider.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
@@ -1535,6 +1536,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // stale userXp/lastLevelUp would survive logout and cause false
       // level-up animations on re-login.
       _ref.read(xpProvider.notifier).resetState();
+      // Same hazard for the kept-alive secondary tile providers (metric deck,
+      // home insights/patterns, etc.): their in-memory keepAlive value survives
+      // DataCacheService.clearAll(), so without this user B could inherit user
+      // A's deck on a logout→login without an app restart. Invalidate them all.
+      for (final p in secondaryTileProviders) {
+        _ref.invalidate(p);
+      }
       state = const AuthState(status: AuthStatus.unauthenticated);
     } catch (e) {
       state = AuthState(

@@ -61,6 +61,7 @@ final trainingLoadRepositoryProvider =
 /// window length is needed by the caller.
 final trainingLoadHistoryProvider =
     FutureProvider.autoDispose<List<TrainingLoadDayPoint>>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(trainingLoadRepositoryProvider);
   return repo.fetchHistory(days: 120);
 });
@@ -68,6 +69,7 @@ final trainingLoadHistoryProvider =
 /// Latest training-load state — drives the hero number + classification.
 final trainingLoadCurrentProvider =
     FutureProvider.autoDispose<TrainingLoadState>((ref) async {
+  ref.keepAlive();
   final repo = ref.watch(trainingLoadRepositoryProvider);
   return repo.fetchCurrent();
 });

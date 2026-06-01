@@ -193,6 +193,7 @@ class SleepMonthlySummary {
 /// fabricated nights.
 final sleepHistoryProvider =
     FutureProvider.autoDispose<SleepHistory>((ref) async {
+  ref.keepAlive();
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return SleepHistory.empty;
 

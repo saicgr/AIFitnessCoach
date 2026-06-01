@@ -83,6 +83,7 @@ class DataGapsResult {
 
 final dataGapsProvider =
     FutureProvider.autoDispose<DataGapsResult>((ref) async {
+  ref.keepAlive();
   if (Supabase.instance.client.auth.currentSession == null) {
     return DataGapsResult.empty;
   }

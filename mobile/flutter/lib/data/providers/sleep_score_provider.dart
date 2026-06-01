@@ -33,6 +33,7 @@ class SleepScoreSnapshot {
 /// HealthKit is not linked at all — caller shows "Connect" CTA.
 final sleepScoreProvider =
     FutureProvider.autoDispose<SleepScoreSnapshot?>((ref) async {
+  ref.keepAlive();
   // Health Connect / HealthKit linkage is the precondition. If the user
   // hasn't connected at all, the home tile should show "Connect Health" and
   // the Today Score should treat Sleep as non-applicable (renormalize out).

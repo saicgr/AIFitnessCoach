@@ -21,11 +21,13 @@ import '../../data/repositories/cardio_pr_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
+import '../../data/services/data_cache_service.dart';
 import '../../data/services/personal_goals_service.dart';
 import '../../data/services/workout_completion_prewarmer.dart';
 import '../../data/providers/discover_provider.dart';
 import '../../data/providers/fitness_profile_provider.dart';
 import '../../data/providers/fitness_shape_history_provider.dart';
+import '../../data/providers/secondary_tile_providers.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 import '../../data/providers/xp_provider.dart';
@@ -204,13 +206,28 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     // Silently invalidate leaderboard-derived providers so Discover and the
     // fitness radar reflect this workout immediately on the next visit. No
     // user action required — data just updates.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       ref.invalidate(discoverSnapshotProvider);
       ref.invalidate(fitnessProfileProvider);
       ref.invalidate(fitnessShapeHistoryProvider);
       // Also capture a fresh snapshot for today (debounced 1x/day internally).
       ref.read(fitnessSnapshotServiceProvider).ensureToday();
+      // The Home metric deck + insight tiles (milestones, PRs, training load,
+      // masteries, recovery, etc.) are keepAlive'd, so they won't pick up this
+      // workout on their own. Bust their disk caches FIRST (they're fresh-cache-
+      // first, so a bare invalidate would re-serve the stale disk snapshot),
+      // THEN invalidate so returning to Home shows a fresh streak / PR / load
+      // instead of a stale kept value (EC1). Providers aren't watched here (Home
+      // not visible), so they re-run only on return — after this bust lands.
+      final uid = await ref.read(apiClientProvider).getUserId();
+      if (!mounted) return;
+      if (uid != null) {
+        await DataCacheService.instance.invalidateSecondaryTileCaches(uid);
+      }
+      for (final p in secondaryTileProviders) {
+        ref.invalidate(p);
+      }
     });
     // W1: fire the First Workout Forecast sheet ~2 seconds after mount
     // so confetti has started and the user sees their receipt briefly first.
