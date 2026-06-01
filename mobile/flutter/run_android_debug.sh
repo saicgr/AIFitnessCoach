@@ -43,7 +43,14 @@ done
 
 if [ "$AVD_ALREADY_RUNNING" = false ]; then
     echo -e "${YELLOW}Launching emulator: $TARGET_AVD${NC}"
-    $EMULATOR_PATH -avd "$TARGET_AVD" -no-snapshot-save -gpu auto &
+    # -gpu swiftshader_indirect: software rendering. The 'bad color buffer
+    #   handle' freeze is a host-GPU-passthrough bug in the Android emulator on
+    #   Apple Silicon; software rendering avoids it so the emulator stops getting
+    #   stuck. -no-snapshot: cold boot (never load a corrupt snapshot). Output to
+    #   a logfile so the QEventPoint/VkInstance noise doesn't flood the terminal.
+    $EMULATOR_PATH -avd "$TARGET_AVD" -no-snapshot -no-boot-anim \
+        -gpu swiftshader_indirect \
+        > /tmp/zealova-emulator.log 2>&1 &
 
     # Wait for the new emulator to appear
     echo -e "${YELLOW}Waiting for emulator to boot...${NC}"
