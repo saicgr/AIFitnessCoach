@@ -15,7 +15,6 @@ import '../../../data/providers/nutrition_stats_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../log_meal_sheet.dart';
 import '../../../data/providers/fueling_split_provider.dart';
-import '../../../data/providers/trend_series_provider.dart';
 import '../../../widgets/charts/mini_sparkline.dart';
 import '../../../widgets/stats/big_stat.dart';
 import '../../../widgets/stats/stat_delta_chip.dart';
@@ -105,11 +104,8 @@ class NutritionStatsSection extends ConsumerWidget {
           title: 'Nutrition stats',
           isDark: isDark,
           onSeeAll: () => context.push('/stats'),
-          // Custom-trends entry, collapsed from the old full-width card into a
-          // compact icon beside "See all". Pre-seeds the builder with calories.
-          trendsAccent: accent,
-          onTrendsTap: () =>
-              context.push('/trends/custom', extra: TrendMetric.calories),
+          // Custom Trends is reachable from the app-bar trends icon; the
+          // duplicate per-section entry was removed to avoid two buttons.
         ),
         const SizedBox(height: 12),
 

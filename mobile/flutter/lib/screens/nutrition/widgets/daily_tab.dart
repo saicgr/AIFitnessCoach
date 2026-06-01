@@ -387,8 +387,21 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 // appears above the calorie card only while a fast is in
                 // progress; idle = hidden. Saved is reachable via the
                 // Nutrition header kebab and the Recipes sub-tab.
+                // Secondary CTA row: Log Water + Fasting, sitting above the
+                // calorie card whose footer is the PRIMARY "Log Meal" button —
+                // so the tab reads as 3 actions (Water / Fasting / Log Meal)
+                // without demoting Log Meal (feedback_augment_dont_replace_ui).
                 if (widget.userId.isNotEmpty && widget.isViewingToday)
-                  const _FastingActiveBar(),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Expanded(child: _LogWaterButton()),
+                        const SizedBox(width: 10),
+                        const Expanded(child: _FastingActiveBar()),
+                      ],
+                    ),
+                  ),
 
                 // 0. PENDING SYNC — a logged meal that hasn't reached the server
                 //    yet (offline queue). Surfaced so a stranded write is never
@@ -660,6 +673,56 @@ class _LeftoversCarousel extends ConsumerWidget {
 /// model that powers the Fasting Guide — 7 live metabolic stages from Fed
 /// through Deep Autophagy). Resolving the stage is a const-table lookup
 /// against `elapsedHours`; no network call.
+/// Secondary "Log Water" CTA — half-width sibling of the fasting bar. Mirrors
+/// the fasting bar's outlined-tile styling; taps into the hydration screen.
+class _LogWaterButton extends ConsumerWidget {
+  const _LogWaterButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = ref.colors(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => context.push('/hydration'),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.cardBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.water_drop_outlined,
+                    size: 16, color: colors.textSecondary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Log Water',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ),
+                Icon(Icons.arrow_forward_rounded,
+                    size: 18, color: colors.textMuted),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _FastingActiveBar extends ConsumerWidget {
   const _FastingActiveBar();
 

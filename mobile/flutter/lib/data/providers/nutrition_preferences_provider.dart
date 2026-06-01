@@ -211,6 +211,11 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   // hammering the 4-endpoint init at frame rate (HTTP 429 storm).
   Future<void>? _inFlightInit;
   bool _initAttempted = false;
+  // True when the LAST preferences fetch threw (timeout / 5xx) rather than
+  // cleanly returning null (404 = genuinely-new user). A transient error must
+  // NOT stick the user at the hardcoded 2000/150/200/65 default all session —
+  // so we allow the next initialize() to retry. See _runInitialize.
+  bool _prefsLoadErrored = false;
 
   NutritionPreferencesNotifier(this._repository)
       : super(_nutritionPrefsInMemoryCache ?? const NutritionPreferencesState());
@@ -248,7 +253,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       // Already attempted at least once this session and prefs are still
       // null (user has no row). Don't re-fetch unless forceRefresh — caller
       // must opt in to a retry.
-      if (_initAttempted) {
+      // Skip only if a PRIOR attempt cleanly completed (prefs genuinely null =
+      // new user). If the last attempt ERRORED (timeout/5xx), allow a retry so
+      // a transient failure never sticks the card at the 2000 default.
+      if (_initAttempted && !_prefsLoadErrored) {
         debugPrint('🥗 [NutritionPrefsProvider] Init already attempted, skipping (use forceRefresh to retry)');
         return;
       }
@@ -284,12 +292,20 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       }
     }
 
+    _prefsLoadErrored = false;
     try {
       debugPrint('🥗 [NutritionPrefsProvider] Initializing for $userId');
 
-      // Load core data in parallel
+      // Load core data in parallel. getPreferences carries the TARGETS, so a
+      // transient failure here must NOT reject the whole init (which would wipe
+      // targets to the 2000 default). On error, keep the disk-seeded prefs (or
+      // null) and flag a retry — mirroring the .catchError on the other three.
       final results = await Future.wait([
-        _repository.getPreferences(userId),
+        _repository.getPreferences(userId).catchError((e) {
+          _prefsLoadErrored = true;
+          debugPrint('⚠️ [NutritionPrefsProvider] getPreferences failed, keeping cached targets + will retry: $e');
+          return state.preferences;
+        }),
         _repository.getStreak(userId).catchError((_) => NutritionStreak(
               userId: userId,
               currentStreakDays: 0,

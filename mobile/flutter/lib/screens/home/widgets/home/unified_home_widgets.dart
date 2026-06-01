@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/app_colors.dart';
@@ -608,6 +609,21 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
     if (mounted) setState(() => _loadingImage = false);
   }
 
+  /// Status label for a non-today, non-completed workout: the scheduled
+  /// DAY/DATE instead of a generic "SCHEDULED" (e.g. "WED, JUN 3", "TOMORROW").
+  /// Safe on null/malformed dates and uses the user's local calendar day.
+  String _scheduledLabel(String? iso) {
+    final dt = DateTime.tryParse(iso ?? '');
+    if (dt == null) return 'SCHEDULED';
+    final local = dt.toLocal();
+    final now = DateTime.now();
+    final dayDiff = DateTime(local.year, local.month, local.day)
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays;
+    if (dayDiff == 1) return 'TOMORROW';
+    return DateFormat('EEE, MMM d').format(local).toUpperCase(); // "WED, JUN 3"
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = ref.colors(context);
@@ -617,8 +633,9 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
     final type = (workout.type ?? 'strength').toUpperCase();
     final mins = workout.durationMinutes ?? workout.durationMinutesMax ?? 0;
     final exCount = workout.exerciseCount;
-    final prefix =
-        widget.completed ? 'DONE' : (widget.isToday ? 'TODAY' : 'SCHEDULED');
+    final prefix = widget.completed
+        ? 'DONE'
+        : (widget.isToday ? 'TODAY' : _scheduledLabel(workout.scheduledDate));
     final meta = '$prefix · $type'
         '${mins > 0 ? ' · ${mins}m' : ''}'
         '${exCount > 0 ? ' · $exCount exercises' : ''}';
