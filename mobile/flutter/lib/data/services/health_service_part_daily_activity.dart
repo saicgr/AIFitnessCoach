@@ -443,7 +443,10 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
 
     try {
       final steps = await _healthService.getTodaySteps();
-      final activityData = await _healthService.getActivitySummary(days: 1);
+      // Active energy over the SAME since-midnight window as steps (the old
+      // getActivitySummary(days: 1) summed a rolling 24h window, inflating
+      // "today's" calories with up to a day of prior activity).
+      final activeEnergy = await _healthService.getTodayActiveEnergy();
       final heartRateData = await _healthService.getHeartRateData(days: 1);
       final sleepData = await _healthService.getSleepData(days: 1);
       final vitalsData = await _healthService.getTodayVitals();
@@ -457,28 +460,9 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         }
       }
 
-      // Suppress internally-contradictory sample/garbage Health data before it
-      // reaches ANY surface. An emulator (or a device with stuck sample data)
-      // reports e.g. 5,090 steps with 2,179 kcal "active energy" — ~10× what
-      // those steps could physically burn (~0.04 kcal/step). Real humans never
-      // hit >8× with a meaningful step count, so we treat the whole day as
-      // no-activity rather than showing bogus numbers on Home (MOVE ring +
-      // score), Today's Health, and NEAT. The step floor keeps legit low-step
-      // high-calorie cardio (cycling/swimming) untouched.
-      final rawCalories = (activityData['calories'] as num?)?.toDouble() ?? 0;
-      final bogusActivity =
-          steps >= 2000 && rawCalories > steps * 0.04 * 8;
-      if (bogusActivity) {
-        debugPrint('⚠️ [Activity] Implausible Health data (steps=$steps, '
-            'activeCal=$rawCalories ≈ ${(rawCalories / (steps * 0.04)).toStringAsFixed(1)}× '
-            'the step estimate) — suppressing today as unreliable');
-      }
-      final effectiveSteps = bogusActivity ? 0 : steps;
-      final effectiveCalories = bogusActivity ? 0.0 : rawCalories;
-
       final today = DailyActivity(
-        steps: effectiveSteps,
-        caloriesBurned: effectiveCalories,
+        steps: steps,
+        caloriesBurned: activeEnergy,
         restingHeartRate: restingHR,
         sleepMinutes: sleepData.hasData ? sleepData.totalMinutes : null,
         deepSleepMinutes: sleepData.hasData ? sleepData.deepMinutes : null,

@@ -391,6 +391,34 @@ class HealthService {
     }
   }
 
+  /// Active energy (kcal) burned since LOCAL midnight today — the SAME window
+  /// as [getTodaySteps]. The old path summed ACTIVE_ENERGY_BURNED over a
+  /// rolling 24h window (`getActivitySummary(days: 1)` = now − 24h → now), so
+  /// "today's Active Energy" was inflated with up to a full day of prior
+  /// activity and never lined up with today's step count (e.g. 2,179 kcal shown
+  /// next to since-midnight steps). Querying the same midnight→now window keeps
+  /// the two figures consistent.
+  Future<double> getTodayActiveEnergy() async {
+    try {
+      final now = DateTime.now();
+      final midnight = DateTime(now.year, now.month, now.day);
+      final raw = await _health.getHealthDataFromTypes(
+        startTime: midnight,
+        endTime: now,
+        types: [HealthDataType.ACTIVE_ENERGY_BURNED],
+      );
+      final data = _health.removeDuplicates(raw);
+      double total = 0;
+      for (final point in data) {
+        total += (point.value as NumericHealthValue).numericValue.toDouble();
+      }
+      return total;
+    } catch (e) {
+      debugPrint('❌ Error getting today active energy: $e');
+      return 0;
+    }
+  }
+
   /// Get total steps for an arbitrary [start, end] range. Used by the
   /// 30-day backfill (Issue 12) so days like "April 23" populate the
   /// synced-workouts grid even if the user wasn't running the app then.

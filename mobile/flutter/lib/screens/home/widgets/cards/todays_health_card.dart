@@ -131,13 +131,7 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
     final progress = stepGoal == 0 ? 0.0 : (steps / stepGoal).clamp(0.0, 1.0);
     final remaining = (stepGoal - steps).clamp(0, stepGoal);
 
-    // Sanity-guarded so the "Active Energy" figure agrees with the NEAT
-    // screen's step-derived calories and never shows an implausible platform
-    // value (e.g. emulator sample data reporting 2,179 kcal for 5,090 steps).
-    final activeCal = trustedActiveCalories(
-      steps: steps,
-      rawActiveCalories: activity?.caloriesBurned,
-    );
+    final activeCal = activity?.caloriesBurned.round();
     final avgHr = activity?.avgHeartRate;
     final minHr = activity?.minHeartRate;
     final maxHr = activity?.maxHeartRate;

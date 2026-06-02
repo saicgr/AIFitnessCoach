@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
-import '../../data/providers/activity_history_provider.dart'
-    show activitySignalLooksReliable;
 import '../../data/providers/neat_provider.dart' as real_neat;
 import '../../data/services/api_client.dart';
 import '../../data/services/health_service.dart' show dailyActivityProvider;
@@ -254,37 +252,17 @@ class NeatNotifier extends StateNotifier<NeatState> {
       final stepGoal = realState.stepGoal;
       final backendScore = realState.todayScoreValue;
 
-      // Reconcile with on-device Health Connect / HealthKit — the SAME source
-      // the Home "MOVE" card reads. The backend /neat/dashboard row lags the
-      // device→backend activity sync, so this screen showed 0 while Home
-      // correctly showed today's real step count. Prefer the freshest value so
-      // the two surfaces never disagree.
-      final deviceActivity = _ref.read(dailyActivityProvider).today;
-      final deviceSteps = deviceActivity?.steps ?? 0;
+      // Reconcile the STEP COUNT with on-device Health Connect / HealthKit —
+      // the SAME source the Home "MOVE" card reads — so the two surfaces never
+      // disagree (the backend /neat/dashboard row lags the device→backend sync).
+      // The NEAT SCORE stays the backend's honest movement-quality computation;
+      // we deliberately do NOT synthesize a score from the step total alone (a
+      // bare daily total with no synced intraday data isn't a 100/EXCELLENT day).
+      final deviceSteps = _ref.read(dailyActivityProvider).today?.steps ?? 0;
       final totalSteps = deviceSteps > backendSteps ? deviceSteps : backendSteps;
 
-      // Only DERIVE a step-based score when the activity data has corroborating
-      // intraday signal. A bare step total with 0 active hours + an empty hourly
-      // breakdown (the emulator / sample-data shape) must NOT be celebrated as a
-      // perfect 100 — that's a fake achievement. In that case we keep the honest
-      // backend score (the real movement-quality computation) and let the screen
-      // read "lots of reported steps but no movement signal" rather than
-      // "100 · EXCELLENT · Amazing!".
-      final hourlyHasData = hourlyActivity.any((h) => h.steps > 0);
-      final reliable = activitySignalLooksReliable(
-        steps: totalSteps,
-        activeHours: activeHours,
-        hourlyHasData: hourlyHasData,
-        rawActiveCalories: deviceActivity?.caloriesBurned,
-      );
-      int neatScoreValue = backendScore;
-      if (reliable && totalSteps > backendSteps && stepGoal > 0) {
-        final stepPct = (totalSteps / stepGoal * 100).round().clamp(0, 100);
-        if (stepPct > neatScoreValue) neatScoreValue = stepPct;
-      }
-
       final score = NeatScore(
-        score: neatScoreValue.clamp(0, 100),
+        score: backendScore.clamp(0, 100),
         steps: totalSteps,
         stepGoal: stepGoal,
         activeHours: activeHours,
