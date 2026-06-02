@@ -240,6 +240,16 @@ class WorkoutRepository {
   /// Get a single workout.
   /// Checks in-memory cache first for instant display, then fetches from API.
   Future<Workout?> getWorkout(String workoutId) async {
+    // The "View plan" coach CTA deep-links to /workout/today. The sentinel id
+    // "today" is NOT a real workout uuid — routing it through the generic
+    // `/workouts/{id}` GET both 422s (that endpoint needs user_id) AND returns a
+    // TodayWorkoutResponse shape that Workout.fromJson can't parse. Resolve it
+    // through the proper today endpoint and hand back the real Workout.
+    if (workoutId == 'today') {
+      final resp = await getTodayWorkout();
+      return resp?.todayWorkout?.toWorkout() ?? resp?.nextWorkout?.toWorkout();
+    }
+
     // Try in-memory cache first for instant display
     if (_workoutsInMemoryCache != null) {
       final cached = _workoutsInMemoryCache!.where((w) => w.id == workoutId).firstOrNull;

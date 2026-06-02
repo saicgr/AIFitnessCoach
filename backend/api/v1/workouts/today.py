@@ -865,7 +865,7 @@ async def enqueue_schedule_top_up(
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
     request: Request,
-    user_id: str = Query(..., description="User ID"),
+    user_id: Optional[str] = Query(None, description="User ID (defaults to the authenticated user)"),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     current_user: dict = Depends(get_current_user),
 ) -> TodayWorkoutResponse:
@@ -885,6 +885,15 @@ async def get_today_workout(
 
     This endpoint is optimized for the Quick Start widget on the home screen.
     """
+    # The /workout/today deep-link (coach "View plan" CTA) hits this without a
+    # user_id query param; derive it from the authenticated JWT rather than
+    # 422-ing on a missing/null query field. Auth is still required (the
+    # get_current_user dependency above), so this does not weaken any gate.
+    if not user_id:
+        user_id = current_user.get("id") or current_user.get("sub") or ""
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
     logger.info(f"Fetching today's workout for user {user_id}")
 
     try:
