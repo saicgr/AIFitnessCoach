@@ -11,7 +11,6 @@ class WidgetService {
   // entitlements. Changing this string requires updating Xcode capabilities
   // and the provisioning profile — don't change casually.
   static const String _appGroupId = 'group.com.aifitnesscoach.widgets';
-  static const String _androidWidgetName = 'FitnessWidgetReceiver';
 
   // Widget data keys
   static const String keyWorkout = 'workout_data';
@@ -273,48 +272,40 @@ class WidgetService {
   }
 
   /// Trigger widget refresh on iOS and Android
+  // Each entry is (iOSName, AndroidReceiver). The Android name is the package-
+  // RELATIVE class under com.aifitnesscoach.app — the home_widget plugin
+  // resolves it as "<packageName>.<androidName>", so it MUST include the
+  // `widgets.` subpackage to match the manifest-registered receivers. The old
+  // single 'FitnessWidgetReceiver' resolved to com.aifitnesscoach.app.<name>
+  // (no `.widgets`) AND isn't registered → ClassNotFoundException on every
+  // refresh ("No Widget found with Name FitnessWidgetReceiver").
+  static const List<List<String>> _widgetTargets = [
+    ['WorkoutWidget', 'widgets.WorkoutWidgetReceiver'],
+    ['StreakWidget', 'widgets.StreakWidgetReceiver'],
+    ['WaterLogWidget', 'widgets.WaterWidgetReceiver'],
+    ['FoodLogWidget', 'widgets.FoodWidgetReceiver'],
+    ['StatsWidget', 'widgets.StatsWidgetReceiver'],
+    ['ChallengesWidget', 'widgets.ChallengesWidgetReceiver'],
+    ['AchievementsWidget', 'widgets.AchievementsWidgetReceiver'],
+    ['GoalsWidget', 'widgets.GoalsWidgetReceiver'],
+    ['CalendarWidget', 'widgets.CalendarWidgetReceiver'],
+    ['AICoachWidget', 'widgets.AICoachWidgetReceiver'],
+  ];
+
   static Future<void> _updateWidgets() async {
-    // iOS - Update all widget families
-    await HomeWidget.updateWidget(
-      iOSName: 'WorkoutWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'StreakWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'WaterLogWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'FoodLogWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'StatsWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'ChallengesWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'AchievementsWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'GoalsWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'CalendarWidget',
-      androidName: _androidWidgetName,
-    );
-    await HomeWidget.updateWidget(
-      iOSName: 'AICoachWidget',
-      androidName: _androidWidgetName,
-    );
+    // Ping every widget family. Per-call try/catch so one unpinned / unregistered
+    // receiver can't abort the rest or spam a fatal-looking stack trace.
+    for (final t in _widgetTargets) {
+      try {
+        await HomeWidget.updateWidget(iOSName: t[0], androidName: t[1]);
+      } catch (e) {
+        // A widget the user hasn't placed simply isn't found — that's normal,
+        // not an error. Keep it quiet.
+        if (kDebugMode) {
+          debugPrint('[Widget] refresh skipped for ${t[1]}: $e');
+        }
+      }
+    }
   }
 
   /// Handle deep link from widget tap

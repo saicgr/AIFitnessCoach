@@ -119,6 +119,9 @@ extension HealthServiceExt on HealthService {
       // session with no stage breakdown. `_getAvailableTypes` drops it on
       // iOS automatically (HealthKit has no session-envelope record).
       final sleepTypes = _getAvailableTypes(_sleepQueryTypes);
+      // Skip when READ_SLEEP isn't granted — avoids the plugin SecurityException
+      // spam (it logs internally before we can catch it).
+      if (!await hasReadAccess(sleepTypes)) return const SleepSummary();
 
       final data = await _health.getHealthDataFromTypes(
         startTime: start,
@@ -163,6 +166,7 @@ extension HealthServiceExt on HealthService {
     try {
       await _ensureConfigured();
       final sleepTypes = _getAvailableTypes(_sleepQueryTypes);
+      if (!await hasReadAccess(sleepTypes)) return const SleepSummary();
 
       final data = await _health.getHealthDataFromTypes(
         startTime: start,
@@ -202,6 +206,7 @@ extension HealthServiceExt on HealthService {
       final start = now.subtract(Duration(days: days));
 
       final sleepTypes = _getAvailableTypes(_sleepQueryTypes);
+      if (!await hasReadAccess(sleepTypes)) return [];
       final data = await _health.getHealthDataFromTypes(
         startTime: start,
         endTime: now,

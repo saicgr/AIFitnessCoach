@@ -92,10 +92,15 @@ class SentryService {
           options.sendDefaultPii = false;
           options.enableAutoSessionTracking = true;
 
-          // Rich breadcrumbs: touch events + native (iOS/Android) events so
-          // we can reconstruct what the user did before the error.
-          options.enableUserInteractionBreadcrumbs = true;
-          options.enableUserInteractionTracing = true;
+          // Rich breadcrumbs: native (iOS/Android) + lifecycle events so we can
+          // reconstruct what the user did before the error.
+          // User-INTERACTION breadcrumbs/tracing are OFF: the Android SDK spams
+          // "Unable to find scroll target. No breadcrumb captured." on every
+          // scroll (our scrollables aren't tagged with Sentry keys), which is
+          // pure log noise for near-zero diagnostic value. The lifecycle +
+          // native + screen breadcrumbs below still reconstruct the session.
+          options.enableUserInteractionBreadcrumbs = false;
+          options.enableUserInteractionTracing = false;
           options.enableAutoNativeBreadcrumbs = true;
           options.enableAppLifecycleBreadcrumbs = true;
           options.enableWindowMetricBreadcrumbs = true;

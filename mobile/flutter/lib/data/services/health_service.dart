@@ -578,10 +578,35 @@ class HealthService {
   // Workout Sessions
   // ============================================
 
+  /// True unless Health Connect EXPLICITLY denies READ for [types].
+  ///
+  /// `hasPermissions` returns: true (granted), false (denied), or null
+  /// (unknown — common on iOS where READ grants aren't introspectable). We
+  /// only BLOCK on an explicit `false`, so iOS keeps working and Android skips
+  /// reads for scopes the user/Play-policy hasn't granted — which is what
+  /// prevents the `FLUTTER_HEALTH SecurityException: Caller doesn't have
+  /// READ_SLEEP/READ_EXERCISE` spam (the plugin logs that internally before we
+  /// could ever catch it, so the only fix is to not attempt the read).
+  Future<bool> hasReadAccess(List<HealthDataType> types) async {
+    if (types.isEmpty) return true;
+    try {
+      final ok = await _health.hasPermissions(
+        types,
+        permissions: List.filled(types.length, HealthDataAccess.READ),
+      );
+      return ok != false;
+    } catch (_) {
+      return true; // never block a read because the permission probe failed
+    }
+  }
+
   /// Get workout sessions from Health Connect
   Future<List<HealthDataPoint>> getWorkoutSessions({int days = 7}) async {
     try {
       await _ensureConfigured();
+      // Skip entirely when EXERCISE read isn't granted — avoids the plugin's
+      // internal SecurityException log spam.
+      if (!await hasReadAccess([HealthDataType.WORKOUT])) return [];
       final now = DateTime.now();
       final start = now.subtract(Duration(days: days));
 
