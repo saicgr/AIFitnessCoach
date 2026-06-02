@@ -101,6 +101,16 @@ class SentryService {
           // native + screen breadcrumbs below still reconstruct the session.
           options.enableUserInteractionBreadcrumbs = false;
           options.enableUserInteractionTracing = false;
+          // Silence the native SDK's verbose debug logging. `options.debug`
+          // defaults to kDebugMode, so on debug/profile builds the Android
+          // native SDK floods logcat with "D/Sentry: Unable to find scroll
+          // target. No breadcrumb captured.", "Serializing object: {…}" dumps,
+          // and per-route/http breadcrumb spam — none of which reach the
+          // dashboard, they're pure local noise. Turning debug off (and raising
+          // the diagnostic threshold) stops all of it WITHOUT disabling crash /
+          // error capture (those are independent of the debug logger).
+          options.debug = false;
+          options.diagnosticLevel = SentryLevel.warning;
           options.enableAutoNativeBreadcrumbs = true;
           options.enableAppLifecycleBreadcrumbs = true;
           options.enableWindowMetricBreadcrumbs = true;
