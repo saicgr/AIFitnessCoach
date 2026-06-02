@@ -52,6 +52,46 @@ class ActivityHistoryDay {
   }
 }
 
+/// Sanity-guarded "active energy" calories, shared so every surface shows the
+/// SAME number. Emulator / sample Health data routinely reports an active-energy
+/// figure wildly inconsistent with steps (e.g. 2,179 kcal for 5,090 steps, when
+/// ~0.04 kcal/step implies ~200). When the platform value is implausibly high vs
+/// the step-derived estimate, fall back to the estimate so the figure is
+/// consistent across the Today's Health card + NEAT screen and bogus platform
+/// data is never presented as fact. Returns null only when there's no data at
+/// all (so the UI can show "—").
+int? trustedActiveCalories({required int steps, double? rawActiveCalories}) {
+  final hasRaw = rawActiveCalories != null && rawActiveCalories > 0;
+  if (steps <= 0 && !hasRaw) return null;
+  final stepEst = (steps * 0.04).round();
+  if (!hasRaw) return stepEst;
+  // Plausible ceiling: up to ~10× the step estimate (cycling/other cardio adds
+  // calories without steps), floored at 800 so low-step days aren't over-strict.
+  final ceil = (stepEst * 10).clamp(800, 100000).toDouble();
+  if (rawActiveCalories > ceil) {
+    return stepEst > 0 ? stepEst : rawActiveCalories.round();
+  }
+  return rawActiveCalories.round();
+}
+
+/// Whether a day's activity has CORROBORATING intraday signal, or is just a
+/// bare daily total with no supporting evidence (the emulator/sample-data
+/// shape: a step total but 0 active hours + an empty hourly breakdown + an
+/// implausible calorie figure). Surfaces use this to avoid celebrating a high
+/// NEAT score off untrustworthy data.
+bool activitySignalLooksReliable({
+  required int steps,
+  required int activeHours,
+  required bool hourlyHasData,
+  double? rawActiveCalories,
+}) {
+  if (activeHours > 0 || hourlyHasData) return true;
+  // No intraday evidence at all → reliable only if there's simply no data to
+  // doubt (steps 0). A non-zero step total with zero intraday signal is the
+  // tell-tale sample-data shape → treat as unreliable.
+  return steps <= 0;
+}
+
 /// Last-30-day activity history, sorted OLDEST → NEWEST (chart-friendly).
 /// `keepAlive` so scrolling Home / switching tabs doesn't refetch; the device
 /// sync keeps the underlying rows fresh.
