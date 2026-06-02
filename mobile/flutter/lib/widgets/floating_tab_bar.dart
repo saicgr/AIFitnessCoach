@@ -36,7 +36,11 @@ import 'coach_spark_icon.dart';
 ///
 /// Dock it as a `Positioned` child stacked over the screen body, e.g.
 /// `bottom: MediaQuery.of(context).viewPadding.bottom + 68`.
-const double kFloatingTabBarHeight = 56;
+// Slimmer (was 56) so the sub-tab view-switcher reads as a distinct, lighter
+// strip and doesn't visually compete with the main floating bottom nav. Safe to
+// shrink: each tab's icon+label is wrapped in a FittedBox(scaleDown), so the
+// content auto-scales to the reduced height with no clipping on any device.
+const double kFloatingTabBarHeight = 48;
 
 /// Horizontal screen gutter on each side (total inset = 2× this).
 ///
