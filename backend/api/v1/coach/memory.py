@@ -153,6 +153,82 @@ async def resolve_memory(memory_id: str, current_user: dict = Depends(get_curren
     return _to_item(resolved or existing)
 
 
+# --------------------------------------------------------------------------- correct the coach (Gap 14)
+class CorrectionBody(BaseModel):
+    """A user 'no, that's wrong' correction.
+
+    `correction` is what's TRUE (free text). `target_id` is the wrong memory the
+    coach was acting on (optional — when the correction targets a specific
+    remembered fact). `category` optionally re-classifies (e.g. 'dietary').
+    """
+    correction: str
+    target_id: Optional[str] = None
+    category: Optional[str] = None
+
+
+@router.post("/memory/correct", response_model=MemoryItem)
+async def correct_memory(
+    body: CorrectionBody,
+    current_user: dict = Depends(get_current_user),
+):
+    """User-driven 'grain of salt' loop (Gap 14).
+
+    Turns a correction into a real memory mutation so the coach STOPS repeating
+    a wrong assumption — not just a logged report. When `target_id` is given we
+    CONTRADICT (supersede the wrong fact with the corrected one, keeping an audit
+    trail); otherwise we ADD a high-salience corrected fact. Reuses the same
+    `apply_operations` resolver the nightly extractor uses, so corrections flow
+    through the identical, audited path.
+    """
+    db = get_supabase_db()
+    user_id = current_user["id"]
+    text = (body.correction or "").strip()
+    if not text:
+        raise HTTPException(422, "correction text is required")
+
+    from services.coach.memory.resolver import apply_operations
+    from services.coach.memory.schemas import OP_ADD, OP_CONTRADICT
+
+    existing_by_id: dict = {}
+    op: dict = {
+        "op": OP_ADD,
+        "content": text[:600],
+        # User-stated corrections are highly salient AND fully trusted (the user
+        # said it directly) — high confidence keeps it 'active', not provisional.
+        "salience": 0.9,
+        "confidence": 0.97,
+        "category": (body.category or "correction")[:60],
+    }
+    if body.target_id:
+        target = db.memory.get_memory(body.target_id, user_id)
+        if not target:
+            raise HTTPException(404, "Target memory not found")
+        existing_by_id[body.target_id] = target
+        op["op"] = OP_CONTRADICT
+        op["target_id"] = body.target_id
+        if not body.category and target.get("category"):
+            op["category"] = target["category"]
+
+    try:
+        counts = apply_operations(
+            user_id=user_id,
+            operations=[op],
+            existing_by_id=existing_by_id,
+        )
+    except Exception as e:
+        logging.getLogger(__name__).error(f"[memory.correct] failed: {e}", exc_info=True)
+        raise HTTPException(500, "Could not apply correction")
+
+    # Return the newest matching memory so the client can confirm.
+    newest = db.memory.list_memories(user_id, limit=1)
+    if newest:
+        return _to_item(newest[0])
+    return MemoryItem(
+        id="", content=text, category=op["category"], memory_type="semantic",
+        status="active", salience=0.9, sensitive=False,
+    )
+
+
 # --------------------------------------------------------------------------- delete one
 @router.delete("/memory/{memory_id}")
 async def delete_memory(

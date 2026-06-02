@@ -24,6 +24,8 @@ from api.v1 import features  # Feature voting system (Robinhood-style)
 from api.v1 import custom_goals  # Custom training goals with AI keywords
 from api.v1 import fasting  # Intermittent fasting tracking and timer
 from api.v1 import sauna  # Sauna session logging
+from api.v1 import recovery_modalities  # Cold plunge / contrast / massage logging (Gap 8)
+from api.v1 import race  # Race/event goal + periodization (Gap 11)
 from api.v1 import progress_photos  # Progress photos with before/after comparisons
 from api.v1 import scores  # Strength scores, readiness scores, personal records
 from api.v1 import workout_history  # Manual workout history import for AI learning
@@ -279,6 +281,8 @@ router.include_router(fasting.router, prefix="/fasting", tags=["Fasting"])
 
 # Sauna session logging (duration + calorie estimation)
 router.include_router(sauna.router, prefix="/sauna", tags=["Sauna"])
+router.include_router(recovery_modalities.router, prefix="/recovery-modalities", tags=["Recovery"])
+router.include_router(race.router, prefix="/race", tags=["Race"])
 
 # Progress photos with before/after comparisons
 router.include_router(progress_photos.router, prefix="/progress-photos", tags=["Progress Photos"])

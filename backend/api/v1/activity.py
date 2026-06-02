@@ -315,6 +315,75 @@ async def sync_daily_activity(input: DailyActivityInput, background_tasks: Backg
     return row_to_activity_response(result)
 
 
+class ActivityOverrideInput(BaseModel):
+    """Gap 5 — a manual correction to a day's Health-Connect activity/sleep.
+
+    Only the fields the user actually edits are sent; each becomes a LOCKED
+    override that future automatic syncs must not overwrite. Use 0 (not null)
+    to assert "I wasn't wearing it" (e.g. sleep_minutes=0).
+    """
+    user_id: str = Field(..., max_length=100)
+    activity_date: date
+    steps: Optional[int] = Field(default=None, ge=0, le=200000)
+    active_calories: Optional[int] = Field(default=None, ge=0, le=20000)
+    sleep_minutes: Optional[int] = Field(default=None, ge=0, le=1440)
+    deep_sleep_minutes: Optional[int] = Field(default=None, ge=0, le=1440)
+    rem_sleep_minutes: Optional[int] = Field(default=None, ge=0, le=1440)
+    light_sleep_minutes: Optional[int] = Field(default=None, ge=0, le=1440)
+    resting_heart_rate: Optional[int] = Field(default=None, ge=20, le=260)
+
+
+@router.patch("/override", response_model=Optional[DailyActivityResponse])
+async def override_daily_activity(
+    input: ActivityOverrideInput,
+    current_user: dict = Depends(get_current_user),
+):
+    """Manually correct a day's activity/sleep — "you can edit anything" (Gap 5).
+
+    Writes the edited fields with ``source=manual`` and records them in
+    ``manual_override_fields`` so a later wearable re-sync can never silently
+    overwrite the correction (see `upsert_daily_activity`).
+    """
+    if str(current_user["id"]) != str(input.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    _require_health_consent(str(input.user_id))
+
+    db = get_supabase_db()
+    candidate = {
+        "steps": input.steps,
+        "active_calories": input.active_calories,
+        "sleep_minutes": input.sleep_minutes,
+        "deep_sleep_minutes": input.deep_sleep_minutes,
+        "rem_sleep_minutes": input.rem_sleep_minutes,
+        "light_sleep_minutes": input.light_sleep_minutes,
+        "resting_heart_rate": input.resting_heart_rate,
+    }
+    edited = {k: v for k, v in candidate.items() if v is not None}
+    if not edited:
+        raise HTTPException(status_code=422, detail="No fields to override")
+
+    # Merge the edited fields onto any existing locks so prior overrides persist.
+    existing = db.get_daily_activity(str(input.user_id), input.activity_date.isoformat()) or {}
+    prior_locks = set(existing.get("manual_override_fields") or [])
+    prior_locks.update(edited.keys())
+
+    data = {
+        "user_id": input.user_id,
+        "activity_date": input.activity_date.isoformat(),
+        "source": "manual",
+        "manual_override_fields": sorted(prior_locks),
+        **edited,
+    }
+    result = db.upsert_daily_activity(data)
+    if not result:
+        raise safe_internal_error(ValueError("Failed to override activity"), "activity")
+    logger.info(
+        f"Activity override for {input.user_id} on {input.activity_date}: "
+        f"{sorted(edited.keys())}"
+    )
+    return row_to_activity_response(result)
+
+
 @router.get("/today/{user_id}", response_model=Optional[DailyActivityResponse])
 async def get_today_activity(user_id: str, request: Request, current_user: dict = Depends(get_current_user)):
     """Get today's activity for a user."""

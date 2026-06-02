@@ -39,6 +39,52 @@ class ActivityDB(BaseDB):
         if isinstance(data.get("activity_date"), datetime):
             data["activity_date"] = data["activity_date"].strftime("%Y-%m-%d")
 
+        # Gap 13 — multi-device reconciliation. A plain upsert is last-writer-
+        # wins, so a less-complete source syncing later (e.g. an Oura ring after
+        # an Apple Watch) could OVERWRITE the day's totals DOWNWARD. For
+        # cumulative whole-day metrics we instead keep the MAX across sources:
+        # the device that captured the most of your day is the most complete,
+        # and MAX (never SUM) avoids double-counting the same steps twice. Only
+        # applies when an existing row already has a higher value.
+        uid = data.get("user_id")
+        adate = data.get("activity_date")
+        # A manual edit / user override (Gap 5) must WIN — never clamp it up to a
+        # stale wearable reading. Only reconcile-by-max for automatic syncs.
+        _src = str(data.get("source") or data.get("source_app") or "").lower()
+        _is_manual = _src in ("manual", "user", "override", "user_override")
+        if uid and adate and not _is_manual:
+            try:
+                existing = self.get_daily_activity(uid, adate)
+            except Exception:
+                existing = None
+            if existing:
+                # Gap 5 — user-locked columns win over any automatic sync. A
+                # manual edit recorded these in `manual_override_fields`; an
+                # auto-sync must preserve them exactly (and keep the lock).
+                locked = existing.get("manual_override_fields") or []
+                if locked:
+                    for key in locked:
+                        if key in existing:
+                            data[key] = existing[key]
+                    data["manual_override_fields"] = locked
+
+                _CUMULATIVE_MAX_KEYS = (
+                    "steps", "calories_burned", "active_calories",
+                    "distance_meters", "floors_climbed", "exercise_minutes",
+                )
+                for key in _CUMULATIVE_MAX_KEYS:
+                    if key in locked:
+                        continue  # locked columns already pinned above
+                    new_v = data.get(key)
+                    old_v = existing.get(key)
+                    if new_v is None:
+                        continue
+                    try:
+                        if old_v is not None and float(old_v) > float(new_v):
+                            data[key] = old_v
+                    except (TypeError, ValueError):
+                        pass
+
         result = self.client.table("daily_activity").upsert(
             data, on_conflict="user_id,activity_date"
         ).execute()

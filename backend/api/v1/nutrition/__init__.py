@@ -50,6 +50,8 @@ from api.v1.nutrition import (
     tdee_adherence,
     food_reports,
     quick_suggestion,
+    usual_meal,
+    glucose_insights,
     companions,
     # Recipes Tab v1 additions
     recipe_imports,
@@ -79,6 +81,8 @@ router.include_router(barcode.router)
 router.include_router(food_search.router)
 router.include_router(food_logging.router)
 router.include_router(food_logging_stream.router)
+router.include_router(usual_meal.router)  # Gap 16 — proactive "your usual?"
+router.include_router(glucose_insights.router)  # Gap 15 — glucose↔food correlation
 # Parity A2 — direct label-scan / app-screenshot-scan (non-chat OCR import)
 router.include_router(scan_imports.router)
 router.include_router(menu_analyses.router)
