@@ -1160,7 +1160,14 @@ async def _call_gemini_for_insight(
                 temperature=0.5,
             ),
             user_id=user_id,
-            timeout=12.0,
+            # The insight is cached (12h) and rendered async, so it's
+            # latency-tolerant — give Gemini a wider timeout + an extra retry so
+            # a transient blip recovers to a real, personalized insight instead
+            # of dropping to the generic deterministic fallback (issue #8). The
+            # fallback is still never persisted, so this never traps a user on
+            # generic copy: the next open re-attempts generation.
+            timeout=20.0,
+            max_retries=4,
             method_name="daily_insight",
         )
         text = getattr(response, "text", None)
@@ -1308,6 +1315,24 @@ async def daily_insight(
                 raise
             except Exception as e:
                 logger.warning(f"[daily_insight] cache read failed (continuing): {e}")
+
+        # ---- Historical-date guard ----------------------------------------
+        # For a PAST date with no stored row, do NOT generate a fresh insight:
+        # generation runs against the user's *current* snapshot, which would
+        # fabricate a "that day's tip" from today's data — a lie when replayed
+        # in the timeline. Only today (and future, for previews) may compute on
+        # a cache miss. Past days simply have no recorded tip → 404, which the
+        # client renders as "no tip for that day" (graphs still show).
+        if not refresh:
+            try:
+                today_local = user_today_date(request, sb, user_id)
+            except Exception:
+                today_local = local_date
+            if local_date < today_local:
+                raise HTTPException(
+                    status_code=404,
+                    detail="No coach insight was recorded for this date.",
+                )
 
         # ---- Assemble snapshot + context ----------------------------------
         # Schema reality: users.first_name doesn't exist. Just `name` (full).

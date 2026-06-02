@@ -19,6 +19,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/contextual_nudge.dart';
 import '../../repositories/auth_repository.dart';
+import '../../../screens/home/widgets/cards/injury_workaround_banner.dart'
+    show InjuryWorkaroundSignal, injuryWorkaroundSignalProvider;
 
 /// Build the Phase P/Q/R/S/T nudge bundle. Caller (the master
 /// contextualNudgeProvider) is responsible for de-duping against tier-1
@@ -131,24 +133,46 @@ List<ContextualNudge> phasePqrstNudges(Ref ref, DateTime now) {
 
   // ── F3.79 — Injury workaround acknowledgement (morning-only) ─────────
   // Light reminder that today's plan was adjusted; the full banner lives
-  // as a card. Chip variant fires once in the morning so the user sees it
-  // before starting.
-  if (now.hour >= 6 && now.hour < 10) {
-    out.add(ContextualNudge(
-      id: NudgeId.discoveryInsight,
-      icon: '🩹',
-      title: 'Adjusted around your limits',
-      body: "Today's session swaps risky moves for safer ones.",
-      ctaLabel: 'View plan',
-      action: const ContextualNudgeAction(
-        kind: ContextualNudgeActionKind.navigateRoute,
-        args: {'route': '/workout/today'},
-      ),
-      priorityTier: NudgePriorityTier.healthAlert,
-      category: NudgeCategory.healthAlert,
-      perishesAt: DateTime(now.year, now.month, now.day, 12, 0),
-      dedupKey: 'phase_pqrst_f379_$isoDay',
-    ));
+  // as a card. ONLY fires when there is a REAL injury-workaround signal with
+  // applied substitutions — previously it fired every morning regardless, so
+  // users with no injury saw a misleading "adjusted around your limits" chip
+  // whose explainer was generic boilerplate. Now it carries the real injury
+  // label + substitution count, and the explainer/why are specific.
+  if (now.hour >= 6 && now.hour < 12) {
+    InjuryWorkaroundSignal? injury;
+    try {
+      injury = ref.read(injuryWorkaroundSignalProvider);
+    } catch (_) {
+      injury = null;
+    }
+    if (injury != null && injury.substitutionsApplied > 0) {
+      final n = injury.substitutionsApplied;
+      final label = injury.injuryLabel.trim();
+      final swapWord = n == 1 ? 'exercise' : 'exercises';
+      out.add(ContextualNudge(
+        id: NudgeId.discoveryInsight,
+        icon: '🩹',
+        title: 'Adjusted around your limits',
+        body: "Today's session swaps $n $swapWord to protect your $label.",
+        ctaLabel: 'View plan',
+        explainerOverride:
+            "Because you flagged your $label, today's plan automatically "
+            "swapped $n $swapWord that load it for safer alternatives that "
+            "train the same muscles. You can review or undo each swap on the "
+            "plan screen.",
+        whyOverride:
+            "You have an active limitation logged for your $label, and "
+            "$n planned $swapWord would have loaded it.",
+        action: const ContextualNudgeAction(
+          kind: ContextualNudgeActionKind.navigateRoute,
+          args: {'route': '/workout/today'},
+        ),
+        priorityTier: NudgePriorityTier.healthAlert,
+        category: NudgeCategory.healthAlert,
+        perishesAt: DateTime(now.year, now.month, now.day, 12, 0),
+        dedupKey: 'phase_pqrst_f379_$isoDay',
+      ));
+    }
   }
 
   // ── F3.86 — Day-N tutorial chip ──────────────────────────────────────

@@ -773,13 +773,23 @@ class _CoachNudgeExplainerCard extends StatelessWidget {
           body: '',
           trigger: '',
         );
-    // Fallback chain: server override → local long-form copy → the short row
-    // body. The row body is always non-empty, so the sheet never renders
-    // blank even for a nudge id added later without explainer copy.
+    // Body fallback chain (most-specific first): a server/nudge explainer
+    // override → the nudge's OWN row body (real, data-driven) → the local
+    // long-form copy keyed by id (generic, evergreen) as the last resort.
+    // Previously the generic local copy beat the nudge's real body, so a
+    // specific nudge ("Today's session swaps 2 exercises to protect your knee")
+    // showed boilerplate ("A pattern in your own data…") in the modal.
     final override = nudge.explainerOverride?.trim();
+    final nudgeBody = nudge.body.trim();
     final longBody = (override != null && override.isNotEmpty)
         ? override
-        : (copy.body.isNotEmpty ? copy.body : nudge.body.trim());
+        : (nudgeBody.isNotEmpty ? nudgeBody : copy.body);
+    // "Why this fired": a nudge-supplied real reason wins over the generic
+    // local trigger string.
+    final whyOverride = nudge.whyOverride?.trim();
+    final triggerText = (whyOverride != null && whyOverride.isNotEmpty)
+        ? whyOverride
+        : copy.trigger;
 
     // Health-alert nudges can be hidden for today but never permanently
     // muted — a genuine safety signal should always be able to resurface.
@@ -862,7 +872,7 @@ class _CoachNudgeExplainerCard extends StatelessWidget {
                                 ),
                               ),
                             ],
-                            if (copy.trigger.isNotEmpty) ...[
+                            if (triggerText.isNotEmpty) ...[
                               const SizedBox(height: 14),
                               Text(
                                 'Why this fired',
@@ -875,7 +885,7 @@ class _CoachNudgeExplainerCard extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                copy.trigger,
+                                triggerText,
                                 style: TextStyle(
                                   fontSize: 12.5,
                                   height: 1.4,

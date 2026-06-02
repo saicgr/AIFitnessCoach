@@ -251,6 +251,40 @@ final dailyCoachInsightProvider =
   return _fetchInsight(ref, args, cacheKey: DataCacheService.coachInsightKey);
 });
 
+/// Historical coach insight for a SPECIFIC past day, used by the Home timeline
+/// to replay "the tip that fired that day". Returns null when no insight was
+/// recorded for [day] — the backend 404s past dates with no stored row (see the
+/// historical-date guard in daily_insight.py). It deliberately does NOT fall
+/// back to a client-synthesized insight: a made-up tip for a past day would be
+/// a lie. `.family` by day, kept alive so scrolling the timeline doesn't refetch.
+final coachInsightForDateProvider = FutureProvider.autoDispose
+    .family<DailyCoachInsight?, DateTime>((ref, day) async {
+  ref.keepAlive();
+  if (Supabase.instance.client.auth.currentSession == null) return null;
+  final tzState = ref.watch(timezoneProvider);
+  if (tzState.isLoading) return null;
+  final d = DateTime(day.year, day.month, day.day);
+  final dateStr =
+      '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  try {
+    final api = ref.read(apiClientProvider);
+    final res = await api.get<Map<String, dynamic>>(
+      '/coach/daily-insight',
+      queryParameters: {
+        'date': dateStr,
+        'tz': tzState.timezone,
+        'source': 'home',
+      },
+    );
+    final data = res.data;
+    if (data is Map<String, dynamic>) return DailyCoachInsight.fromJson(data);
+    return null;
+  } catch (_) {
+    // 404 (no recorded tip) or any transient error → no historical tip.
+    return null;
+  }
+});
+
 /// Picks the open-state source for Ask Coach based on the user's LOCAL hour:
 ///   * 05:00–10:59 → `morning_brief` (RICH briefing)
 ///   * 18:00–21:59 → `evening_recap` (RICH briefing)

@@ -287,6 +287,13 @@ class ContextualNudge {
   /// When null, the row falls back to the local string keyed by [id].
   final String? explainerOverride;
 
+  /// Optional concrete "why this fired" reason specific to THIS user's data
+  /// (e.g. "You flagged right-knee pain — 2 exercises were swapped today").
+  /// When set, the explainer modal shows this instead of the generic local
+  /// trigger string, so the card never presents a real, data-driven nudge with
+  /// boilerplate copy.
+  final String? whyOverride;
+
   /// Priority tier — drives ordering inside the F4 SubCardRanker pyramid.
   /// Default `habit` if a nudge omits it (back-compat with older call sites).
   final NudgePriorityTier priorityTier;
@@ -313,6 +320,7 @@ class ContextualNudge {
     required this.ctaLabel,
     required this.action,
     this.explainerOverride,
+    this.whyOverride,
     this.priorityTier = NudgePriorityTier.habit,
     this.category = NudgeCategory.habit,
     this.perishesAt,
@@ -328,6 +336,7 @@ class ContextualNudge {
     String? ctaLabel,
     ContextualNudgeAction? action,
     String? explainerOverride,
+    String? whyOverride,
     NudgePriorityTier? priorityTier,
     NudgeCategory? category,
     DateTime? perishesAt,
@@ -341,6 +350,7 @@ class ContextualNudge {
       ctaLabel: ctaLabel ?? this.ctaLabel,
       action: action ?? this.action,
       explainerOverride: explainerOverride ?? this.explainerOverride,
+      whyOverride: whyOverride ?? this.whyOverride,
       priorityTier: priorityTier ?? this.priorityTier,
       category: category ?? this.category,
       perishesAt: perishesAt ?? this.perishesAt,

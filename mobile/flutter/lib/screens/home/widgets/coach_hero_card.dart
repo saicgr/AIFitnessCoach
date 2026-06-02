@@ -106,10 +106,12 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   }) {
     final insight = insightDynamic as DailyCoachInsight;
 
-    // When minimized, render only the eyebrow + headline so the card
-    // shrinks to a compact summary row the user can re-expand via the
-    // chevron. No body, no CTAs, no nudge stack.
+    // When minimized, render the eyebrow + headline + a one-line preview of
+    // the insight body so the collapsed card still carries the actual
+    // recommendation (not just a bare headline). Re-expand via the chevron for
+    // the full body, CTAs, and nudge stack.
     if (isMinimized) {
+      final preview = insight.body.replaceAll('\n', ' ').replaceAll('  ', ' ').trim();
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisSize: MainAxisSize.min,
@@ -130,6 +132,20 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               color: c.textPrimary,
             ),
           ),
+          if (preview.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              preview,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                height: 1.25,
+                color: c.textSecondary,
+              ),
+            ),
+          ],
         ],
       );
     }
