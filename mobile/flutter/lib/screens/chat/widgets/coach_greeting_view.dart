@@ -19,6 +19,7 @@ import '../../../data/models/coach_persona.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/coach_avatar.dart';
+import 'generic_blocks_renderer.dart';
 
 class CoachGreetingView extends StatelessWidget {
   final DailyCoachInsight greeting;
@@ -100,6 +101,13 @@ class CoachGreetingView extends StatelessWidget {
                 color: c.textSecondary,
               ),
             ),
+
+          // Grounded inline graphs (sleep ring / recovery / steps) — Fix 3:
+          // the coach opening now shows the user's real data, not just a prompt.
+          if (greeting.blocks.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            GenericBlocksRenderer(blocks: greeting.blocks),
+          ],
           const SizedBox(height: 28),
 
           // Suggestion chips as full-width tappable rows.

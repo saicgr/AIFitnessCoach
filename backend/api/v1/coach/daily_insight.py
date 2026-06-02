@@ -108,44 +108,137 @@ _GREETING_BODIES = (
     "Your plan adapts to your life, not the other way around. Want to:",
     "Coaching that actually remembers you. Here's where we could go:",
 )
+# Data-lead-in tails — used when we have real numbers to recap (vs the generic
+# "what are we working on"). Variant pool per feedback_dynamic_copy_not_robotic.
+_GREETING_DATA_TAILS = (
+    "here's where you stand.",
+    "here's your day so far.",
+    "I've been keeping track.",
+    "here's the picture.",
+)
+
+
+def _fmt_sleep(minutes: int) -> str:
+    h, m = minutes // 60, minutes % 60
+    return f"{h}h {m}m" if m else f"{h}h"
+
+
+def _grounded_greeting_lines(
+    snapshot: Dict[str, Any], next_workout: Optional[Dict[str, Any]]
+) -> List[str]:
+    """Build 1-3 human-voice, snapshot-backed recap sentences (today + week +
+    cycle/injury/streak). Only includes sub-facts that have real data — every
+    number comes straight from the snapshot, so it can never fabricate."""
+    lines: List[str] = []
+
+    # --- Today: weave the logged facts into one natural sentence. ---
+    nourish = snapshot.get("nourish") or {}
+    move = snapshot.get("move") or {}
+    sleep = snapshot.get("sleep") or {}
+    today_bits: List[str] = []
+    cal = nourish.get("calories_logged")
+    if cal:
+        cal_t = nourish.get("calorie_target")
+        today_bits.append(f"logged {cal:,} kcal" + (f" of {cal_t:,}" if cal_t else ""))
+    sleep_min = sleep.get("total_minutes")
+    if sleep_min:
+        today_bits.append(f"slept {_fmt_sleep(int(sleep_min))}")
+    steps = move.get("steps")
+    if steps:
+        today_bits.append(f"hit {steps:,} steps")
+    if today_bits:
+        if len(today_bits) == 1:
+            lines.append(f"Today you've {today_bits[0]}.")
+        else:
+            lines.append("Today you've " + ", ".join(today_bits[:-1]) + f" and {today_bits[-1]}.")
+
+    # --- Today's workout. ---
+    if next_workout:
+        nm = next_workout.get("name") or "your session"
+        if next_workout.get("completed"):
+            lines.append(f"Nice work finishing {nm}.")
+        else:
+            lines.append(f"{nm} is on the plan today.")
+
+    # --- This week. ---
+    weekly = snapshot.get("weekly") or {}
+    wk_bits: List[str] = []
+    wc = weekly.get("workouts_completed")
+    if wc:
+        wk_bits.append(f"{wc} workout{'s' if wc != 1 else ''}")
+    avg_sleep = weekly.get("avg_sleep_minutes")
+    if avg_sleep:
+        wk_bits.append(f"averaging {_fmt_sleep(int(avg_sleep))} sleep")
+    if wk_bits:
+        lines.append("This week: " + ", ".join(wk_bits) + ".")
+
+    # --- Cycle / injury / streak (qualitative, no fabricated numbers). ---
+    phase = snapshot.get("cycle_phase")
+    if phase in ("menstrual", "follicular", "ovulation", "luteal"):
+        lines.append(f"You're in your {phase} phase right now.")
+    streak = snapshot.get("streak_days")
+    if streak and streak >= 2:
+        lines.append(f"{streak}-day streak going. 🔥")
+    return lines
 
 
 def _build_greeting(
     *, first_name: str, bucket: str, snapshot: Dict[str, Any],
     next_workout: Optional[Dict[str, Any]], local_date_iso: str, rotate: int,
 ) -> Dict[str, Any]:
-    """Deterministic, context-weighted light greeting (no LLM, no cost) — the
-    Ask-Coach open state when there's no heavy briefing to show. `rotate` is a
-    caller-supplied integer (e.g. minute-of-day) so suggestions vary per open
-    without server randomness leaking into tests."""
+    """Deterministic DATA-GROUNDED open state (no LLM, no cost). When the user
+    has logged data it recaps today + this week across nutrition/sleep/steps/
+    workout/cycle; otherwise it falls back to a friendly generic invite. `rotate`
+    varies phrasing/chips per open without server randomness leaking into tests."""
     word = _greeting_word(bucket)
-    tail = _GREETING_TAILS[rotate % len(_GREETING_TAILS)]
-    body = _GREETING_BODIES[rotate % len(_GREETING_BODIES)]
+    grounded = _grounded_greeting_lines(snapshot, next_workout)
+
+    if grounded:
+        tail = _GREETING_DATA_TAILS[rotate % len(_GREETING_DATA_TAILS)]
+        # Lead with the recap; cap at 3 sentences so the card stays scannable.
+        body = " ".join(grounded[:3])
+    else:
+        tail = _GREETING_TAILS[rotate % len(_GREETING_TAILS)]
+        body = _GREETING_BODIES[rotate % len(_GREETING_BODIES)]
     headline = f"{word}, {first_name}! {tail[0].upper()}{tail[1:]}"
 
-    # Context-weighted suggestion pool — each entry is a label-only reply chip
-    # (sends the label as a coach message). Ordered by relevance, rotated, top 3.
+    # --- Data-derived suggestion chips (label-only reply chips). ---
+    injury = snapshot.get("injury") or {}
+    nourish = snapshot.get("nourish") or {}
+    sleep = snapshot.get("sleep") or {}
     pool: List[Dict[str, Any]] = []
-    has_workout_today = bool(next_workout)
-    if has_workout_today:
+    # Most-contextual chip first (pinned).
+    if next_workout and next_workout.get("completed"):
+        pool.append({"label": "🍎 What should I eat to recover?"})
+    elif next_workout:
         pool.append({"label": "🏋️ What's my workout today?"})
     else:
         pool.append({"label": "🏋️ Build me a workout for today"})
+    if injury.get("body_part"):
+        pool.append({"label": f"🩹 How's my {injury['body_part']} feeling?"})
+    if not nourish.get("calories_logged"):
+        pool.append({"label": "🍽️ Log what I ate and break it down"})
+    if sleep.get("applicable", True) and sleep.get("total_minutes"):
+        pool.append({"label": "😴 How was my recovery last night?"})
+    # Evergreen extras to round out / rotate.
     pool.append({"label": "🍎 What should I eat after my workout?"})
-    pool.append({"label": "🍽️ Log what I ate and break down its nutrition"})
     pool.append({"label": "🎯 Set up a health goal that fits my life"})
-    pool.append({"label": "😴 How was my recovery last night?"})
-    pool.append({"label": "📸 Scan a menu and tell me what to order"})
     pool.append({"label": "💬 I have a question about my plan"})
 
-    # Rotate the non-first entries so the trio changes per open while keeping
-    # the most contextual suggestion (index 0) pinned first.
     rest = pool[1:]
     if rest:
         off = rotate % len(rest)
         rest = rest[off:] + rest[:off]
-    chips = [pool[0]] + rest
-    chips = chips[:3]
+    # Dedup by label, keep first 3.
+    chips: List[Dict[str, Any]] = []
+    seen = set()
+    for c in [pool[0]] + rest:
+        if c["label"] in seen:
+            continue
+        chips.append(c)
+        seen.add(c["label"])
+        if len(chips) >= 3:
+            break
 
     return {
         "headline": headline[:90],
@@ -406,6 +499,90 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
             snapshot["chronic_load"] = int(round(st.chronic_load))
     except Exception as e:
         logger.debug(f"[daily_insight] training load lookup skipped: {e}")
+
+    # --- This week (last 7 days) — so the coach opening references recent
+    # history, not just today. Each sub-block best-effort. -------------------
+    weekly: Dict[str, Any] = {}
+    try:
+        from datetime import date as _date, timedelta as _td
+        base = _date.fromisoformat(local_date_iso)
+        wk_start_iso = (base - _td(days=6)).isoformat()
+        wk_start_utc = f"{wk_start_iso}T00:00:00+00:00"
+        # Workouts completed this week.
+        try:
+            wkw = sb.client.table("workouts").select("id", count="exact").eq(
+                "user_id", user_id
+            ).eq("is_completed", True).gte("completed_at", wk_start_utc).execute()
+            weekly["workouts_completed"] = int(wkw.count or 0) if wkw.count is not None else len(wkw.data or [])
+        except Exception as e:
+            logger.debug(f"[daily_insight] weekly workouts skipped: {e}")
+        # daily_activity: avg steps + avg sleep across the week.
+        try:
+            wda = sb.client.table("daily_activity").select(
+                "steps, sleep_minutes, activity_date"
+            ).eq("user_id", user_id).gte("activity_date", wk_start_iso).execute()
+            rows = wda.data or []
+            steps = [int(r.get("steps") or 0) for r in rows if (r.get("steps") or 0) > 0]
+            sleeps = [int(r.get("sleep_minutes") or 0) for r in rows if (r.get("sleep_minutes") or 0) > 0]
+            if steps:
+                weekly["avg_steps"] = int(round(sum(steps) / len(steps)))
+            if sleeps:
+                weekly["avg_sleep_minutes"] = int(round(sum(sleeps) / len(sleeps)))
+        except Exception as e:
+            logger.debug(f"[daily_insight] weekly activity skipped: {e}")
+        # Days with a food log this week.
+        try:
+            wfl = sb.client.table("food_logs").select("logged_at").eq(
+                "user_id", user_id
+            ).gte("logged_at", wk_start_utc).is_("deleted_at", "null").execute()
+            days_logged = {str(r.get("logged_at"))[:10] for r in (wfl.data or []) if r.get("logged_at")}
+            if days_logged:
+                weekly["nutrition_days_logged"] = len(days_logged)
+        except Exception as e:
+            logger.debug(f"[daily_insight] weekly nutrition skipped: {e}")
+        if weekly:
+            snapshot["weekly"] = weekly
+    except Exception as e:
+        logger.debug(f"[daily_insight] weekly block skipped: {e}")
+
+    # --- Active injury (phase) — so the opening can ask a check-in ----------
+    try:
+        from services.coach.injury_directives import resolve_injury_directives
+        u = sb.client.table("users").select("active_injuries").eq(
+            "id", user_id
+        ).maybe_single().execute()
+        raw_inj = (u.data or {}).get("active_injuries") if u and u.data else None
+        if raw_inj:
+            d = resolve_injury_directives(raw_inj)
+            active = d.get("active") or []
+            if active:
+                a0 = active[0]
+                snapshot["injury"] = {
+                    "body_part": a0.get("body_part"),
+                    "phase": a0.get("phase"),
+                }
+    except Exception as e:
+        logger.debug(f"[daily_insight] injury block skipped: {e}")
+
+    # --- Current workout streak --------------------------------------------
+    try:
+        us = sb.client.table("user_streaks").select(
+            "current_streak, last_activity_date"
+        ).eq("user_id", user_id).eq("streak_type", "workout").maybe_single().execute()
+        if us and us.data:
+            from datetime import date as _date2
+            last = us.data.get("last_activity_date")
+            stored = int(us.data.get("current_streak") or 0)
+            # A streak is only "current" if the last activity was within ~1 day.
+            if last and stored > 0:
+                try:
+                    last_d = _date2.fromisoformat(str(last)[:10])
+                    if (_date2.fromisoformat(local_date_iso) - last_d).days <= 1:
+                        snapshot["streak_days"] = stored
+                except Exception:
+                    pass
+    except Exception as e:
+        logger.debug(f"[daily_insight] streak block skipped: {e}")
 
     return snapshot, next_workout
 
@@ -1085,8 +1262,11 @@ async def daily_insight(
         # recovery signals + steps), built FRESH from the user's real data so a
         # cached briefing's graph still reflects today. Best-effort: None on no
         # data, never fatal. Computed once, attached to every return path.
+        # Fix 3: the light `greeting` (shown the rest of the day, incl. the
+        # user's late-night open) now also carries grounded graphs so the coach
+        # opening always shows real data, not a canned prompt.
         briefing_blocks: Optional[List[Dict[str, Any]]] = None
-        if source in ("morning_brief", "evening_recap", "morning_brief_onboarding"):
+        if source in ("morning_brief", "evening_recap", "morning_brief_onboarding", "greeting"):
             try:
                 from services.coach.chat_blocks import build_briefing_blocks
                 briefing_blocks = build_briefing_blocks(user_id) or None
@@ -1206,6 +1386,7 @@ async def daily_insight(
                 leading_pillar=None,
                 generated_at=datetime.now(timezone.utc).isoformat(),
                 delivery="deterministic",
+                blocks=briefing_blocks,
             )
 
         # ---- Cost cap check -----------------------------------------------
