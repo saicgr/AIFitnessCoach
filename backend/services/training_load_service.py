@@ -90,6 +90,62 @@ DEFAULT_RESTING_HR = 60
 DEFAULT_MAX_HR = 190  # ~Tanaka for 30y
 DEFAULT_GENDER = "male"
 
+# Gap 9 — intensity-aware fallback. The final no-HR/no-RPE/no-calorie fallback
+# used to credit EVERY minute at a fixed ~Zone-2 rate (5.0/min), so a 60-min
+# easy walk or a restorative yoga class inflated ACWR like a hard interval
+# session. These per-minute TRIMP factors are loose MET-aligned proxies (NOT a
+# medical/safety classification — a deterministic table, never an LLM, per
+# feedback_no_llm_for_safety_classification) applied ONLY in the final fallback;
+# whenever HR / RPE / calories exist, the real intensity is used instead. Keyed
+# by normalized activity_type substring. Unknown types keep the 5.0 default.
+_FALLBACK_INTENSITY_PER_MIN: Dict[str, float] = {
+    # Low — restorative / very light
+    "yoga": 2.0,
+    "stretch": 1.5,
+    "mobility": 1.5,
+    "flexibility": 1.5,
+    "pilates": 3.0,
+    "walk": 3.0,
+    "walking": 3.0,
+    "hike": 4.0,
+    "hiking": 4.0,
+    # Moderate (≈ the old default)
+    "cycle": 5.0,
+    "cycling": 5.0,
+    "bike": 5.0,
+    "elliptical": 5.0,
+    "row": 5.5,
+    "rowing": 5.5,
+    "swim": 6.0,
+    "swimming": 6.0,
+    # High — vigorous
+    "run": 6.5,
+    "running": 6.5,
+    "jog": 5.5,
+    "hiit": 8.0,
+    "interval": 8.0,
+    "spin": 7.0,
+    "sprint": 8.5,
+}
+_DEFAULT_FALLBACK_PER_MIN = 5.0
+
+
+def _fallback_intensity_per_min(activity_type: Optional[str]) -> float:
+    """Per-minute TRIMP credit for the duration-only fallback, by activity type.
+
+    Substring match on the normalized type so 'trail_run', 'outdoor walk',
+    'Vinyasa Yoga' all resolve. Unknown / missing → the historical 5.0 default.
+    """
+    if not activity_type:
+        return _DEFAULT_FALLBACK_PER_MIN
+    t = str(activity_type).strip().lower()
+    if not t:
+        return _DEFAULT_FALLBACK_PER_MIN
+    for key, factor in _FALLBACK_INTENSITY_PER_MIN.items():
+        if key in t:
+            return factor
+    return _DEFAULT_FALLBACK_PER_MIN
+
 
 # ---------------------------------------------------------------------------
 # TRIMP per session
@@ -104,12 +160,17 @@ def compute_session_trimp(
     gender: str = DEFAULT_GENDER,
     rpe: Optional[float] = None,
     calories: Optional[float] = None,
+    activity_type: Optional[str] = None,
 ) -> float:
     """Banister HR-weighted TRIMP for a single session.
 
     Returns 0.0 if duration is non-positive — every other branch yields a
     positive value (we deliberately do not silently zero out cardio that
     lacks HR; the RPE / calorie / final fallback always fires).
+
+    `activity_type` (Gap 9) only affects the FINAL duration-only fallback —
+    when real intensity (HR / RPE / calories) is present it is always used
+    instead, so a hard run with HR is never down-weighted.
     """
     if duration_minutes is None or duration_minutes <= 0:
         return 0.0
@@ -140,8 +201,10 @@ def compute_session_trimp(
     if calories is not None and calories > 0:
         return float(calories) / 10.0
 
-    # 4) Final fallback — assume Zone 2 effort.
-    return float(duration_minutes) * 5.0
+    # 4) Final fallback — intensity-weighted by activity type (Gap 9). An easy
+    # walk / yoga no longer counts like a Zone-2 cardio block; unknown types
+    # keep the historical 5.0/min so behavior is unchanged where we can't tell.
+    return float(duration_minutes) * _fallback_intensity_per_min(activity_type)
 
 
 # ---------------------------------------------------------------------------
@@ -181,6 +244,7 @@ class _RawSession:
     avg_hr: Optional[float]
     rpe: Optional[float]
     calories: Optional[float]
+    activity_type: Optional[str] = None  # Gap 9 — intensity-weights the fallback
 
 
 def _to_date(value: Any) -> Optional[date]:
@@ -220,6 +284,7 @@ def _aggregate_daily_trimp(
             gender=gender,
             rpe=s.rpe,
             calories=s.calories,
+            activity_type=s.activity_type,
         )
     return by_day
 
@@ -378,7 +443,8 @@ def _load_sessions(db, user_id: str, since: datetime) -> List[_RawSession]:
         res = (
             db.client.table("cardio_logs")
             .select(
-                "performed_at, duration_seconds, avg_heart_rate, rpe, calories"
+                "performed_at, duration_seconds, avg_heart_rate, rpe, calories, "
+                "activity_type"
             )
             .eq("user_id", user_id)
             .gte("performed_at", since.isoformat())
@@ -396,6 +462,7 @@ def _load_sessions(db, user_id: str, since: datetime) -> List[_RawSession]:
                     avg_hr=row.get("avg_heart_rate"),
                     rpe=row.get("rpe"),
                     calories=row.get("calories"),
+                    activity_type=row.get("activity_type"),
                 )
             )
     except Exception as e:
@@ -540,6 +607,7 @@ def compute_history_from_sessions(
                 avg_hr=s.get("avg_hr"),
                 rpe=s.get("rpe"),
                 calories=s.get("calories"),
+                activity_type=s.get("activity_type"),
             )
         )
 

@@ -153,6 +153,33 @@ class HealthActivityMixin:
         score = sum(w * s for w, s in components) / total_weight
         return int(round(max(0.0, min(100.0, score))))
 
+    @staticmethod
+    def _recovery_modalities_today(db, user_id: str, today) -> List[str]:
+        """Distinct recovery modalities logged today (Gap 8).
+
+        Best-effort: returns [] if the table is absent (pre-migration) or on any
+        error, so recovery scoring never breaks. Also folds in sauna (its own
+        table) so a sauna session counts as recovery work too.
+        """
+        out: List[str] = []
+        today_str = today.isoformat()
+        try:
+            res = db.client.table("recovery_modality_logs").select(
+                "modality"
+            ).eq("user_id", user_id).eq("local_date", today_str).execute()
+            out = [r.get("modality") for r in (res.data or []) if r.get("modality")]
+        except Exception:
+            out = []
+        try:
+            s = db.client.table("sauna_logs").select("id").eq(
+                "user_id", user_id
+            ).eq("local_date", today_str).limit(1).execute()
+            if s and s.data:
+                out.append("sauna")
+        except Exception:
+            pass
+        return list(dict.fromkeys(out))
+
     # -------------------------------------------------------------------------
     # Snapshot
     # -------------------------------------------------------------------------
@@ -308,12 +335,29 @@ class HealthActivityMixin:
             if (sleep_row is not None and not sleep_is_stale)
             else None
         )
+
+        # Gap 8 — recovery-modality credit. Logging a cold plunge / contrast /
+        # massage today gives a small, BOUNDED perceived-recovery bonus on top
+        # of the sleep-derived score (parasympathetic / DOMS benefit). Capped at
+        # +6 and clamped 0-100 so it can never manufacture a "great" night from a
+        # poor one; only applied when a real modality was logged today. Also
+        # surfaced as `modalities_today` so the coach can ease next-day load.
+        modalities_today: List[str] = []
+        try:
+            modalities_today = self._recovery_modalities_today(db, user_id, to_date)
+        except Exception as e:
+            logger.debug(f"health_activity: modality fetch skipped for {user_id}: {e}")
+        if recovery_score is not None and modalities_today:
+            bonus = min(6, 2 + 2 * len(modalities_today))  # 1 mod → +4, 2+ → +6
+            recovery_score = int(max(0, min(100, recovery_score + bonus)))
+
         tier = map_recovery_to_tier(recovery_score)
         recovery = {
             "score": recovery_score,
             "tier": tier["tier"] if tier else None,
             "volume_multiplier": tier["volume_multiplier"] if tier else None,
             "adjustment": tier["adjustment"] if tier else None,
+            "modalities_today": modalities_today,
         }
 
         # --- steps / active calories (today + trailing average) --------------
@@ -543,6 +587,12 @@ class HealthActivityMixin:
                 f"- Recovery {recovery['score']}/100 ({recovery['tier']}); "
                 f"training guidance: {recovery['adjustment']}."
             )
+        # Gap 8 — recovery work logged today (cold plunge / contrast / massage /
+        # sauna). Lets the coach acknowledge it and ease next-day load.
+        mods = recovery.get("modalities_today") or []
+        if mods:
+            pretty = ", ".join(m.replace("_", " ") for m in mods)
+            lines.append(f"- Recovery work logged today: {pretty}.")
 
         # --- steps -----------------------------------------------------------
         steps = snapshot.get("steps") or {}

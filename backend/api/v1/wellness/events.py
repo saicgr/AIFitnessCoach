@@ -47,6 +47,9 @@ ALLOWED_DOMAINS = {
     "workout", "food", "water", "sleep", "weight", "mood",
     # Phase 6 — universal natural-language logging additions.
     "measurement", "habit", "sauna", "fasting",
+    # Gap 8 — cold plunge / contrast / massage (undo routing only; the extractor
+    # still emits the "sauna" domain, which _write_sauna re-routes here).
+    "recovery_modality",
 }
 
 # Default fasting protocol when the user doesn't name one ("started my fast").
@@ -517,6 +520,41 @@ async def _write_sauna(db, user_id: str, source: str, occurred_at: str, payload:
     with zero extra wiring.
     """
     duration_minutes = int(payload.get("duration_minutes") or 0)
+
+    # Gap 8 — cold plunge / ice bath / contrast / massage come in via the
+    # "sauna" extractor domain (heat/cold exposure share an extractor) but are
+    # NOT sauna. Route them to recovery_modality_logs so they feed the recovery
+    # bonus + coach context (and don't pollute the sauna calorie aggregate).
+    session_type = (payload.get("session_type") or "").lower().strip()
+    if session_type and not session_type.startswith("sauna") and session_type != "":
+        _cold = any(k in session_type for k in (
+            "cold", "plunge", "ice", "contrast", "massage", "foam",
+            "compress", "stretch", "mobility",
+        ))
+        if _cold:
+            from api.v1.recovery_modalities import _normalize_modality
+            modality = _normalize_modality(session_type)
+            row = {
+                "user_id": user_id,
+                "modality": modality,
+                "duration_minutes": duration_minutes if duration_minutes > 0 else None,
+                "logged_at": occurred_at,
+                "local_date": occurred_at[:10],
+                "notes": payload.get("notes"),
+            }
+            row = {k: v for k, v in row.items() if v is not None}
+            result = db.client.table("recovery_modality_logs").insert(row).execute()
+            if not result.data:
+                raise HTTPException(status_code=500, detail="recovery_modality_logs insert returned empty")
+            inserted = result.data[0]
+            label = modality.replace("_", " ")
+            return {
+                "event_id": f"recovery_modality:{inserted['id']}",
+                "raw_id": inserted["id"],
+                "name": (f"{duration_minutes} min {label}" if duration_minutes > 0 else label),
+                "calories": 0,
+            }
+
     if duration_minutes <= 0:
         raise HTTPException(status_code=422, detail={"code": "MISSING_DURATION", "message": "duration_minutes is required"})
     # Sauna burn ≈ 1.5 kcal/min as a conservative passive-heat estimate.
@@ -868,7 +906,11 @@ async def log_event(
     undo_token = None
     if body.domain != "fasting":
         expires_at = int(time.time()) + _UNDO_TTL_SECONDS
-        undo_token = _sign_undo_token(body.domain, result["raw_id"], body.user_id, expires_at)
+        # Use the domain the writer ACTUALLY persisted to (e.g. a "sauna"-domain
+        # cold plunge is stored under "recovery_modality") so undo deletes from
+        # the right table — Gap 8.
+        _undo_domain = str(result.get("event_id", "")).split(":", 1)[0] or body.domain
+        undo_token = _sign_undo_token(_undo_domain, result["raw_id"], body.user_id, expires_at)
 
     warning = None
     if overlap_warning:
@@ -1004,6 +1046,7 @@ def _table_for_domain(domain: str) -> str:
         "sleep": "workouts",  # sleep stored in workouts with type='sleep'
         "measurement": "body_measurements",
         "sauna": "sauna_logs",
+        "recovery_modality": "recovery_modality_logs",  # Gap 8
         "habit": "habit_logs",
         "fasting": "fasting_records",
     }[domain]
@@ -1021,6 +1064,7 @@ def _editable_fields(domain: str) -> set[str]:
                         "bicep_right_cm", "thigh_right_cm", "shoulder_cm",
                         "body_fat_percent", "notes"},
         "sauna": {"duration_minutes", "estimated_calories", "notes"},
+        "recovery_modality": {"duration_minutes", "modality", "temperature_c", "notes"},
         "habit": {"completed", "value", "notes"},
         "fasting": {"notes", "mood_after", "energy_level_after"},
     }[domain]
