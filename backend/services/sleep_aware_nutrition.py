@@ -70,6 +70,20 @@ _LOW_RECOVERY_TIERS = frozenset(
     t for t, bump in _RECOVERY_PROTEIN_BUMP.items() if bump > 0.0
 )
 
+# Gap 2 — load-aware escalation. When the user is ALSO carrying high training
+# load (loading / overreaching) on a low-recovery day, the protein-repair need
+# is greater, so we step the bump up ONE notch — but never past the documented
+# +15% band ceiling. The day stays calorie-neutral (the carb/fat re-allocation
+# below is unchanged), so the cutting deficit is still preserved. Deterministic;
+# no LLM judges "is this load dangerous" (feedback_no_llm_for_safety_classification).
+_LOAD_ESCALATED_BUMP: Dict[str, float] = {
+    "moderate": 0.125,     # +10% → +12.5%
+    "compromised": 0.15,   # +12.5% → +15% (band ceiling)
+    "low": 0.15,           # already at the ceiling — no further escalation
+}
+# Training-load states that justify the escalation.
+_HIGH_LOAD_STATES = frozenset({"loading", "overreaching"})
+
 # Absolute floor for the FINAL daily calorie target. ACSM / NATA minimum-intake
 # guidance: never program a day below ~1200 kcal regardless of the deficit.
 # This floors the FINAL target only — it never widens or clamps the deficit.
@@ -128,6 +142,7 @@ def adjust_targets_for_recovery(
     base_targets: Dict[str, Optional[float]],
     recovery: Optional[Dict[str, Any]],
     dietary_restrictions: Optional[List[str]] = None,
+    load_state: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Deterministically adjust a day's macro targets for the user's recovery.
 
@@ -210,6 +225,17 @@ def adjust_targets_for_recovery(
 
     bump_frac = _RECOVERY_PROTEIN_BUMP[tier]
 
+    # Gap 2 — escalate the protein bump one notch on a high-load day (still
+    # capped at the +15% band ceiling, still calorie-neutral).
+    load_escalated = False
+    _load = (load_state or "").strip().lower()
+    if _load in _HIGH_LOAD_STATES:
+        escalated = _LOAD_ESCALATED_BUMP.get(tier, bump_frac)
+        if escalated > bump_frac:
+            bump_frac = escalated
+            load_escalated = True
+    load_note = _load_note(tier, _load, load_escalated) if _load in _HIGH_LOAD_STATES else None
+
     # Without a known protein target there is nothing to scale — surface only
     # the craving heads-up so the user still gets the timing guidance.
     if protein is None or protein <= 0:
@@ -221,6 +247,9 @@ def adjust_targets_for_recovery(
             "calorie_floored": False,
             "craving_heads_up": _craving_heads_up(tier),
             "protein_delta_g": 0,
+            "load_state": _load or None,
+            "load_escalated": load_escalated,
+            "load_note": load_note,
         }
 
     new_protein = protein * (1.0 + bump_frac)
@@ -292,7 +321,38 @@ def adjust_targets_for_recovery(
         "calorie_floored": calorie_floored,
         "craving_heads_up": _craving_heads_up(tier),
         "protein_delta_g": int(round(extra_protein_g)),
+        "load_state": _load or None,
+        "load_escalated": load_escalated,
+        "load_note": load_note,
     }
+
+
+def _load_note(tier: str, load_state: str, escalated: bool) -> Optional[str]:
+    """Deterministic note when a high-load + low-recovery day shifts nutrition.
+
+    Calorie-neutral by construction (the carb/fat re-allocation keeps the total
+    constant), so the copy never implies eating more — only eating SMARTER.
+    """
+    if load_state == "overreaching":
+        if escalated:
+            return (
+                "Your training load is running hot and recovery is short today — "
+                "nudged protein up a notch to support repair, with calories held "
+                "steady. Consider an easier session."
+            )
+        return (
+            "Training load is high and recovery is short — keep protein up and "
+            "consider an easier session today."
+        )
+    # loading
+    if escalated:
+        return (
+            "You're building load while under-recovered — shifted a bit more of "
+            "the day toward protein for repair, calories unchanged."
+        )
+    return (
+        "You're building training load — keep protein steady to support repair."
+    )
 
 
 def _craving_heads_up(tier: str) -> str:

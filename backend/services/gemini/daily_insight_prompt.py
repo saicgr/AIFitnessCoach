@@ -294,6 +294,29 @@ _CYCLE_PHASE_GUIDANCE = {
 }
 
 
+# Training-load / cross-domain guidance (Gap 1) — appended on the home +
+# morning + evening surfaces so the coach can deliver the video's signature
+# connection (load → recovery → nutrition) on the card the user actually sees.
+# Self-gating: only acts when today_score_snapshot carries training_load_state.
+# QUALITATIVE narration of the STATE; the number guardrail still rejects any
+# integer not present in the snapshot (acwr / acute_load / chronic_load are).
+# Defers hard safety to the deterministic state classifier — never LLM-judges
+# whether a load is "dangerous" (feedback_no_llm_for_safety_classification).
+_TRAINING_LOAD_GUIDANCE = (
+    "\n\nTRAINING LOAD (only if today_score_snapshot.training_load_state is "
+    "present): narrate the STATE, not bare numbers. States mean: 'loading' = "
+    "building well; 'overreaching' = acute load is running hot vs the user's "
+    "baseline; 'detraining' = load has dropped off. When the state is "
+    "'overreaching' AND the snapshot also shows short/poor sleep or a low "
+    "recovery score, you MAY suggest ONE thing: an easier session today plus "
+    "recovery-supporting nutrition (e.g. protein + anti-inflammatory whole "
+    "foods) — phrase it as a suggestion, respect any dietary restriction in "
+    "context, and make no medical claim. Reference load only when it adds a "
+    "real, actionable connection; otherwise stay silent on it. Never invent an "
+    "ACWR or load number that isn't in the snapshot."
+)
+
+
 # ---------------------------------------------------------------------------
 # Builders
 # ---------------------------------------------------------------------------
@@ -343,6 +366,14 @@ def _build_system_instruction(source: str, cycle_phase: str | None = None) -> st
 
     if cycle_phase and cycle_phase in _CYCLE_PHASE_GUIDANCE:
         base += _CYCLE_PHASE_GUIDANCE[cycle_phase]
+
+    # Gap 1 — cross-domain load guidance on the surfaces users actually see.
+    if source in ("home", "morning_brief", "evening_recap") or source not in (
+        "pillar_stat", "morning_brief_onboarding", "nutrition_card_morning",
+        "nutrition_card_lunch", "nutrition_card_dinner", "workout_card",
+        "workout_stats",
+    ):
+        base += _TRAINING_LOAD_GUIDANCE
 
     return base
 

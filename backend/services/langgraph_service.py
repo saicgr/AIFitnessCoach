@@ -28,6 +28,7 @@ from services.langgraph_agents.injury_agent import build_injury_agent_graph
 from services.langgraph_agents.hydration_agent import build_hydration_agent_graph
 from services.langgraph_agents.cycle_agent import build_cycle_agent_graph
 from services.langgraph_agents.coach_agent import build_coach_agent_graph
+from services.langgraph_agents.recommendation_agent import build_recommendation_agent_graph
 from services.langgraph_agents.tools.suggestion_tools import inject_suggested_actions
 from services.coach.chat_blocks import build_blocks_for_response
 
@@ -185,6 +186,8 @@ AGENT_MENTION_PATTERNS = {
     r"@hydration\b": AgentType.HYDRATION,
     r"@cycle\b": AgentType.CYCLE,
     r"@coach\b": AgentType.COACH,
+    # Gap 7 Part B — cross-domain synthesis.
+    r"@recommend\b": AgentType.RECOMMENDATION,
 }
 
 # Intent to agent mapping
@@ -212,6 +215,9 @@ INTENT_TO_AGENT = {
 
     # Hydration agent
     CoachIntent.LOG_HYDRATION: AgentType.HYDRATION,
+
+    # Recommendation agent (Gap 7 Part B) — cross-domain synthesis.
+    CoachIntent.HOLISTIC_RECOMMENDATION: AgentType.RECOMMENDATION,
 
     # Form analysis -> Workout agent
     CoachIntent.CHECK_EXERCISE_FORM: AgentType.WORKOUT,
@@ -304,6 +310,7 @@ class LangGraphCoachService:
             AgentType.HYDRATION: build_hydration_agent_graph(),
             AgentType.CYCLE: build_cycle_agent_graph(),
             AgentType.COACH: build_coach_agent_graph(),
+            AgentType.RECOMMENDATION: build_recommendation_agent_graph(),
         }
 
         # Initialize services for intent extraction
@@ -918,7 +925,53 @@ class LangGraphCoachService:
                 user_profile_dict = db.enrich_user_with_nutrition_targets(user_profile_dict)
             except Exception as e:
                 logger.warning(f"Failed to enrich user profile with nutrition targets: {e}", exc_info=True)
+            # Gap 17 — overlay demographics from the `users` row so the coach
+            # reasons age/sex/size-aware and toward the real weight goal, even
+            # when the client omits them. select("*") under the hood (drift-safe);
+            # only fill fields the client left empty so a fresh client value wins.
+            try:
+                self._overlay_user_demographics(user_profile_dict)
+            except Exception as e:
+                logger.debug(f"Demographic enrich skipped: {e}")
         return user_profile_dict
+
+    def _overlay_user_demographics(self, profile: Dict[str, Any]) -> None:
+        """Fill age/sex/height/weight/target/units/body-fat from the users row.
+
+        Mutates `profile` in place. Maps the DB column names (gender, etc.) onto
+        the UserProfile field names the coach prompt reads. Only sets a field
+        when the profile doesn't already carry a non-null value (client wins).
+        """
+        uid = profile.get("id")
+        if not uid:
+            return
+        row = get_supabase_db().get_user(uid) or {}
+        if not row:
+            return
+
+        def _fill(field: str, value: Any):
+            if value is not None and profile.get(field) in (None, "", 0):
+                profile[field] = value
+
+        _fill("age", row.get("age"))
+        _fill("sex", row.get("gender") or row.get("sex"))
+        _fill("height_cm", row.get("height_cm"))
+        _fill("weight_kg", row.get("weight_kg"))
+        _fill("target_weight_kg", row.get("target_weight_kg"))
+        _fill("body_fat_pct", row.get("body_fat_percentage") or row.get("body_fat_pct"))
+        # Units: explicit user setting wins; default lb (this user trains in lb —
+        # feedback_weight_units), but only set if the column gives us something.
+        _fill(
+            "weight_unit",
+            row.get("weight_unit") or row.get("preferred_weight_unit") or row.get("units"),
+        )
+        # Stash the structured active_injuries JSONB (NOT the free-text
+        # UserProfile.active_injuries list) so the coach build can resolve
+        # phase-aware injury directives without a second users-row fetch. Used
+        # server-side only; never sent anywhere.
+        raw_inj = row.get("active_injuries")
+        if raw_inj:
+            profile["_active_injuries_raw"] = raw_inj
 
     async def _build_agent_state(
         self,
@@ -1046,6 +1099,49 @@ class LangGraphCoachService:
             # Never the raw hormone_logs rows — only the digested summary.
             self._attach_cycle_context_summary(base_state, request.user_id, user_tz)
 
+            # Gap 7/17 — give the nutrition agent the cross-domain context the
+            # coach already gets so a food rec reasons across injuries, training
+            # load, and recovery, and (HARD rule) respects dietary restrictions
+            # + allergies. resolve_dietary_constraints unions diet_type +
+            # dietary_restrictions[] + coach_memory 'dietary' (a vegan stored in
+            # ANY of the three is now honored). Best-effort per block.
+            _uid = str(request.user_id)
+            _msg = getattr(request, "message", None)
+            try:
+                from services.coach.holistic_context import resolve_dietary_constraints
+                base_state["dietary_constraints"] = resolve_dietary_constraints(_uid)
+            except Exception as e:
+                logger.warning(f"[NutritionContext] dietary resolve failed: {e}")
+                base_state["dietary_constraints"] = None
+            try:
+                from services.coach.memory.injector import build_memory_block
+                _mb, _ = build_memory_block(_uid, _msg, limit=8)
+                base_state["memory_context"] = _mb or ""
+            except Exception as e:
+                logger.debug(f"[NutritionContext] memory block skipped: {e}")
+            try:
+                from services.user_context.cardio_activity import get_cardio_context_for_ai
+                base_state["cardio_context"] = await get_cardio_context_for_ai(_uid)
+            except Exception as e:
+                logger.debug(f"[NutritionContext] cardio context skipped: {e}")
+            try:
+                from services.user_context.service import UserContextService
+                base_state["health_context"] = await UserContextService().get_health_context_for_ai(_uid, days=7)
+            except Exception as e:
+                logger.debug(f"[NutritionContext] health context skipped: {e}")
+            # Gap 15 — glucose↔food correlation (diabetes users). Empty + cheap
+            # for everyone else (returns fast when there are no readings).
+            try:
+                import asyncio as _asyncio
+                from services.glucose_food_correlation import (
+                    compute_glucose_food_correlations,
+                    format_glucose_correlations_for_ai,
+                )
+                _corr = await _asyncio.to_thread(compute_glucose_food_correlations, _uid)
+                base_state["glucose_context"] = format_glucose_correlations_for_ai(_corr)
+            except Exception as e:
+                logger.debug(f"[NutritionContext] glucose correlation skipped: {e}")
+
         elif agent_type == AgentType.WORKOUT:
             base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
             base_state["workout_schedule"] = request.workout_schedule.model_dump() if request.workout_schedule else None
@@ -1135,6 +1231,84 @@ class LangGraphCoachService:
                 memory_context, memory_ref_ids = "", []
             base_state["memory_context"] = memory_context
             base_state["memory_ref_ids"] = memory_ref_ids
+
+            # Gap 17 — coach context completeness. In GENERAL chat the coach was
+            # missing: structured diet prefs (a "Vegan"-in-settings user the
+            # coach never knew about), training load / ACWR (only injected on the
+            # cardio-insight path), and today's nutrition. Attach all three so a
+            # coach food/training answer reasons across the whole user. Each
+            # best-effort; the coach prompt renders them as compact grounded lines.
+            _cuid = str(request.user_id)
+            # dietary resolve is sync + cheap; run it inline.
+            try:
+                from services.coach.holistic_context import resolve_dietary_constraints
+                base_state["dietary_constraints"] = resolve_dietary_constraints(_cuid)
+            except Exception as e:
+                logger.warning(f"[CoachState] dietary resolve failed: {e}")
+                base_state["dietary_constraints"] = None
+            # cardio + nutrition are independent async fetches — run them
+            # concurrently so the coach reply stays snappy (instant-feel rule).
+            try:
+                from services.user_context.cardio_activity import get_cardio_context_for_ai
+                from services.langgraph_agents.tools.nutrition_context_helpers import (
+                    fetch_daily_nutrition_context,
+                )
+                _cardio, _nutri = await asyncio.gather(
+                    get_cardio_context_for_ai(_cuid),
+                    fetch_daily_nutrition_context(_cuid, user_tz or "UTC"),
+                    return_exceptions=True,
+                )
+                base_state["cardio_context"] = (
+                    _cardio if not isinstance(_cardio, Exception) else None
+                )
+                if isinstance(_cardio, Exception):
+                    logger.debug(f"[CoachState] cardio context skipped: {_cardio}")
+                base_state["daily_nutrition_context"] = (
+                    _nutri if not isinstance(_nutri, Exception) else None
+                )
+                if isinstance(_nutri, Exception):
+                    logger.debug(f"[CoachState] nutrition summary skipped: {_nutri}")
+            except Exception as e:
+                logger.debug(f"[CoachState] cross-domain fetch skipped: {e}")
+
+            # Gap 17 — cycle phase (given to nutrition/workout agents but not the
+            # coach until now) so "should I train / what should I eat" is
+            # cycle-aware in general chat. Phase + summary only, never raw logs.
+            try:
+                self._attach_cycle_context_summary(base_state, request.user_id, user_tz)
+            except Exception as e:
+                logger.debug(f"[CoachState] cycle context skipped: {e}")
+
+            # Gap 17 — structured injury directives (phase/severity/allowed
+            # intensity) instead of only free-text memory, so the coach respects
+            # the SAME deterministic safety the workout generator uses
+            # (feedback_no_llm_for_safety_classification — never LLM-classify).
+            try:
+                from services.coach.injury_directives import resolve_injury_directives
+                _prof = base_state.get("user_profile") or {}
+                _raw_inj = _prof.get("_active_injuries_raw")
+                if _raw_inj:
+                    base_state["injury_directives"] = resolve_injury_directives(_raw_inj)
+            except Exception as e:
+                logger.debug(f"[CoachState] injury directives skipped: {e}")
+
+            # Gap 11 — race/event periodization. If the user has a dated race
+            # goal, the coach gets the current phase + today's auto-adjusted
+            # recommendation so "should I train today?" is race-aware.
+            try:
+                from api.v1.race import race_context_for_coach
+                base_state["race_context"] = await race_context_for_coach(
+                    _cuid, user_tz or "UTC"
+                )
+            except Exception as e:
+                logger.debug(f"[CoachState] race context skipped: {e}")
+
+        elif agent_type == AgentType.RECOMMENDATION:
+            # Gap 7 Part B — the recommendation node self-assembles its holistic
+            # context (build_holistic_context) so the agent is reusable from any
+            # surface. The state only needs the live tz + locale; everything
+            # else (memory/load/recovery/nutrition/dietary) is fetched in-node.
+            base_state["user_tz"] = user_tz or "UTC"
 
         return base_state
 

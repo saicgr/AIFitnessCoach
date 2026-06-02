@@ -55,6 +55,37 @@ class CoachAgentState(TypedDict):
     # generally and never invent pace/distance numbers.
     cardio_context: Optional[str]
 
+    # Dietary constraints (Gap 7/17) — `resolve_dietary_constraints` output:
+    # the HARD vegan/allergy/restriction rule unioned across
+    # nutrition_preferences.diet_type + dietary_restrictions[] + allergies +
+    # coach_memory, so the coach never suggests a violating food even in
+    # general chat (the user may be "vegan" only in settings, never in chat).
+    dietary_constraints: Optional[Dict[str, Any]]
+
+    # Today's nutrition (Gap 17) — `fetch_daily_nutrition_context` output so the
+    # coach can answer "what should I eat?" with the real calorie/macro
+    # remainder in GENERAL chat, not only the @nutrition agent. None when the
+    # user has no targets / logged nothing — the coach must then never invent
+    # macros.
+    daily_nutrition_context: Optional[Dict[str, Any]]
+
+    # Cycle phase (Gap 17) — phase string + compact prompt block, mirrored from
+    # the nutrition/workout agents so the coach is cycle-aware in general chat.
+    # None when the user has no cycle data. Never raw hormone_logs.
+    cycle_phase: Optional[str]
+    cycle_context: Optional[Dict[str, Any]]
+
+    # Structured injury directives (Gap 17) — `resolve_injury_directives` output
+    # (phase/severity/allowed_intensity per body part) so the coach respects the
+    # SAME deterministic safety the workout generator uses, not just free-text
+    # memory. None/empty when healthy.
+    injury_directives: Optional[Dict[str, Any]]
+
+    # Race/event periodization block (Gap 11) — `format_race_context_for_ai`
+    # output: phase + this-week focus + today's auto-adjusted recommendation.
+    # "" when the user has no dated race goal.
+    race_context: Optional[str]
+
     # Surface bias — identifies WHICH UI surface invoked the coach so the
     # prompt can add a one-sentence emphasis (e.g. cardio_auto_insight asks
     # for a single 1-2 sentence insight). Optional; absence = no bias.

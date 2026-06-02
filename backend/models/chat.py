@@ -17,6 +17,7 @@ class AgentType(str, Enum):
     HYDRATION = "hydration"  # Hydration tracking specialist
     CYCLE = "cycle"          # Menstrual-cycle health specialist
     PLAN = "plan"            # Holistic weekly planning specialist
+    RECOMMENDATION = "recommendation"  # Cross-domain synthesis (Gap 7 Part B)
 
 
 class CoachIntent(str, Enum):
@@ -49,6 +50,10 @@ class CoachIntent(str, Enum):
     GENERATE_WEEKLY_PLAN = "generate_weekly_plan"
     ADJUST_PLAN = "adjust_plan"
     EXPLAIN_PLAN = "explain_plan"
+    # Cross-domain synthesis (Gap 7 Part B) — "what should I eat/do given my
+    # training and how I'm recovering?" Routes to the RECOMMENDATION agent,
+    # which reasons across food + load + recovery + injuries + diet prefs.
+    HOLISTIC_RECOMMENDATION = "holistic_recommendation"
     # Form analysis intent
     CHECK_EXERCISE_FORM = "check_exercise_form"
     # Multi-media intents
@@ -164,6 +169,18 @@ class UserProfile(BaseModel):
     equipment: List[str] = Field(default=[])
     active_injuries: List[str] = Field(default=[])
     name: Optional[str] = Field(default=None, max_length=200)
+    # Gap 17 — coach context completeness. In general chat the coach lacked the
+    # basic demographic + goal frame the video's coach uses ("plant-based fats
+    # for YOUR recovery", age/sex-appropriate guidance). All optional: a turn
+    # works without them, but when present the coach reasons age/sex/size-aware
+    # and toward the actual weight goal. Units lets it speak lb or kg natively.
+    age: Optional[int] = Field(default=None, ge=0, le=120)
+    sex: Optional[str] = Field(default=None, max_length=20)
+    height_cm: Optional[float] = Field(default=None, ge=0, le=300)
+    weight_kg: Optional[float] = Field(default=None, ge=0, le=700)
+    target_weight_kg: Optional[float] = Field(default=None, ge=0, le=700)
+    weight_unit: Optional[str] = Field(default=None, max_length=10)  # "lb" | "kg"
+    body_fat_pct: Optional[float] = Field(default=None, ge=0, le=100)
 
     @field_validator("equipment", mode="before")
     @classmethod

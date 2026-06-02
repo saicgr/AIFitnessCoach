@@ -159,11 +159,35 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
     workout = state.get("current_workout") or {}
     favs = state.get("recent_favorites") or []
     partial = bool(state.get("context_partial"))
+    # Gap 7/17 — cross-domain + dietary context.
+    dietary = state.get("dietary_constraints") or {}
+    cardio_block = state.get("cardio_context")
+    memory_block = state.get("memory_context")
+    health_block = state.get("health_context")
 
-    if not dnc and not workout and not favs:
+    if not dnc and not workout and not favs and not dietary.get("has_any") \
+            and not cardio_block and not memory_block and not health_block:
         return ""
 
     lines = ["TODAY'S CONTEXT (use when relevant; do NOT narrate it):"]
+
+    # HARD dietary rule first (highest salience) — a vegan/allergy user must
+    # NEVER get a violating recommendation, even when no day-context exists.
+    if dietary.get("hard_rule"):
+        lines.append(f"• ⛔ {dietary['hard_rule']}")
+    # Compact cross-domain signals so the pick reasons across the whole picture
+    # (injuries/prefs from memory, training load, recovery) — grounded, never a
+    # metric dump.
+    if memory_block:
+        lines.append(f"• What I know about you:\n{memory_block.strip()}")
+    if cardio_block:
+        lines.append(f"• Training load: {str(cardio_block).strip()}")
+    if health_block:
+        lines.append(f"• Recovery/sleep: {str(health_block).strip()}")
+    # Gap 15 — measured glucose response for this user's foods.
+    glucose_block = state.get("glucose_context")
+    if glucose_block:
+        lines.append(f"• {str(glucose_block).strip()}")
 
     if dnc:
         cal_target = dnc.get("target_calories")
@@ -239,6 +263,12 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
             heads_up = rec_adj.get("craving_heads_up")
             if heads_up:
                 lines.append(f"• 🛌 Craving heads-up: {heads_up}")
+            # Gap 2 — high training load on a low-recovery day escalated the
+            # protein emphasis. Surface the note (calorie-neutral) so the pick
+            # leans protein-forward without narrating it as a metric dump.
+            load_note = rec_adj.get("load_note")
+            if load_note:
+                lines.append(f"• 🏋️ {load_note}")
 
     if workout:
         sched = workout.get("scheduled_time_local") or ""

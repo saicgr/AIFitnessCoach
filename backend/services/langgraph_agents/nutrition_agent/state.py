@@ -58,6 +58,17 @@ class NutritionAgentState(TypedDict):
     recent_favorites: Optional[List[Dict[str, Any]]]
     context_partial: bool
 
+    # Gap 7/17 — cross-domain context so a food rec respects the whole picture.
+    # dietary_constraints unions diet_type + dietary_restrictions[] + coach_memory
+    # 'dietary' (the HARD vegan/allergy rule). memory/cardio/health blocks let the
+    # food rec reason across injuries, training load, and recovery.
+    dietary_constraints: Optional[Dict[str, Any]]
+    memory_context: Optional[str]
+    cardio_context: Optional[str]
+    health_context: Optional[str]
+    # Gap 15 — glucose↔food correlation block (diabetes users; "" otherwise).
+    glucose_context: Optional[str]
+
     # Cycle context (Phase F) — phase string + compact summary only, so
     # "what should I eat today" is cycle-aware. Never raw hormone_logs rows.
     cycle_phase: Optional[str]

@@ -266,8 +266,23 @@ async def _recovery_target_adjustment(
                 f"failed for {user_id}: {e}"
             )
 
+        # Gap 2 — fetch the training-load state so a high-load + low-recovery
+        # day escalates the protein bump one notch (still calorie-neutral,
+        # still dietary-gated). Best-effort: any failure leaves load_state None
+        # and the adjustment behaves exactly as before.
+        load_state: Optional[str] = None
+        try:
+            import asyncio as _asyncio
+            from services.training_load_service import current_state
+            db2 = get_supabase_db()
+            _st = await _asyncio.to_thread(current_state, db2, user_id)
+            if _st and _st.state and _st.state != "calibration":
+                load_state = _st.state
+        except Exception as e:
+            logger.debug(f"recovery target adj: load state skipped for {user_id}: {e}")
+
         result = adjust_targets_for_recovery(
-            base_targets, recovery, dietary_restrictions
+            base_targets, recovery, dietary_restrictions, load_state=load_state
         )
         # Only surface it when it actually changes something the caller acts
         # on — an adjusted target set or a craving heads-up.

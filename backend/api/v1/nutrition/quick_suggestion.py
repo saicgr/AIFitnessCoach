@@ -226,6 +226,23 @@ async def _generate_suggestion(
     eatable = daily_ctx.get("net_calorie_remainder")
     if eatable is None:
         eatable = daily_ctx.get("calorie_remainder")
+
+    # Gap 7 — the widget previously passed EMPTY dietary lists, so the "Coach
+    # Recommends" card could suggest meat to a vegan / an allergen to an allergic
+    # user. Resolve the real constraints (unions diet_type + dietary_restrictions
+    # + coach_memory) so the card respects them like the chat agents now do.
+    allergens: List[str] = []
+    restrictions: List[str] = []
+    dislikes: List[str] = []
+    try:
+        from services.coach.holistic_context import resolve_dietary_constraints
+        dietary = await asyncio.to_thread(resolve_dietary_constraints, user_id)
+        allergens = dietary.get("allergies") or []
+        restrictions = dietary.get("restrictions") or []
+        dislikes = dietary.get("dislikes") or []
+    except Exception as e:
+        logger.warning(f"[QuickSuggestion] dietary resolve failed for {user_id[:8]}: {e}")
+
     return await generate_suggestion(
         user_id=user_id,
         meal_slot=meal_slot,
@@ -233,9 +250,9 @@ async def _generate_suggestion(
         macros_remaining=daily_ctx.get("macros_remaining") or {},
         favs=favs,
         workout=workout,
-        allergens=[],
-        dietary_restrictions=[],
-        dislikes=[],
+        allergens=allergens,
+        dietary_restrictions=restrictions,
+        dislikes=dislikes,
         cuisines=[],
         over_budget=bool(daily_ctx.get("over_budget")),
         snack_only=False,

@@ -385,6 +385,28 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
         # all funnel here — silent skip is correct.
         logger.debug(f"[daily_insight] cycle phase lookup skipped: {e}")
 
+    # --- Training load / ACWR (Gap 1) ---------------------------------------
+    # The Stats-tab insight already cites ACWR, but the HOME card + morning/
+    # evening briefs (this snapshot) never did — so the coach couldn't deliver
+    # the video's signature "your load is high + you slept short → go lighter
+    # and lean on recovery food" line on the surface users actually see. Attach
+    # the state + acute/acwr ints (they auto-join the number guardrail). Mirror
+    # the cycle block: best-effort, omit on calibration/no-data so the prompt
+    # never narrates a metric the user can't see.
+    try:
+        from services.training_load_service import current_state
+        st = current_state(sb, user_id)
+        if st and st.state and st.state != "calibration":
+            snapshot["training_load_state"] = st.state
+            if st.acwr is not None:
+                # 1-decimal ACWR is the human-facing form; store the rounded int
+                # of acute load so any number the coach cites is snapshot-backed.
+                snapshot["acwr"] = round(float(st.acwr), 2)
+            snapshot["acute_load"] = int(round(st.acute_load))
+            snapshot["chronic_load"] = int(round(st.chronic_load))
+    except Exception as e:
+        logger.debug(f"[daily_insight] training load lookup skipped: {e}")
+
     return snapshot, next_workout
 
 

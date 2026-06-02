@@ -6,7 +6,7 @@ The coach agent is autonomous - it handles:
 2. Motivation and greetings
 3. App settings and navigation (via action_data)
 """
-from typing import Dict, Any, Literal
+from typing import Dict, Any, List, Literal
 from datetime import datetime
 import base64
 import pytz
@@ -352,6 +352,169 @@ def format_workout_context(schedule: Dict[str, Any]) -> str:
         parts.append(f"- This week: {completed_count}/{total_count} workouts completed")
 
     return "\n".join(parts)
+
+
+def format_dietary_and_nutrition_context(state: Dict[str, Any]) -> List[str]:
+    """Gap 7/17 — dietary HARD rule + today's nutrition for the coach prompt.
+
+    Returns a list of context_parts (possibly empty). Called from BOTH coach
+    prompt builders (`_build_coach_response_prompt` + `coach_response_node`) so
+    the streamed and buffered replies stay byte-identical — edit here, not in
+    either caller.
+
+    The dietary rule unions diet_type + dietary_restrictions[] + allergies +
+    coach_memory (resolved in langgraph_service via `resolve_dietary_constraints`)
+    so a "Vegan"-in-settings user who never said it in chat still never gets a
+    meat suggestion — the video's "remembers you're vegan" moment, but grounded
+    in structured prefs, not just chat memory.
+    """
+    out: List[str] = []
+
+    dietary = state.get("dietary_constraints") or {}
+    if dietary.get("hard_rule"):
+        out.append(
+            "\nDIETARY CONSTRAINTS (apply to EVERY food mention):\n"
+            f"⛔ {dietary['hard_rule']}\n"
+            "Never recommend, suggest, or assume a food that violates these — "
+            "not even as an example. This holds whether or not the user "
+            "mentioned it in this chat."
+        )
+
+    # Today's nutrition so the coach can answer "what should I eat?" in general
+    # chat (not only @nutrition). Compact, grounded — never a macro dump.
+    dnc = state.get("daily_nutrition_context") or {}
+    if dnc:
+        cal_t = dnc.get("target_calories")
+        cal_c = dnc.get("total_calories")
+        # Prefer the burn-adjusted net remainder when exercise earned calories
+        # back; else the plain remainder.
+        cal_r = dnc.get("net_calorie_remainder")
+        if cal_r is None:
+            cal_r = dnc.get("calorie_remainder")
+        bits: List[str] = []
+        if cal_t is not None:
+            if cal_r is not None:
+                bits.append(
+                    f"calories {int(round(cal_c or 0))}/{int(round(cal_t))} "
+                    f"({int(round(cal_r))} left)"
+                )
+            else:
+                bits.append(f"calorie target {int(round(cal_t))}")
+        prot_r = (dnc.get("macros_remaining") or {}).get("protein_g")
+        if prot_r is not None:
+            bits.append(f"{int(round(prot_r))}g protein left")
+        burned = dnc.get("calories_burned_today")
+        if burned:
+            bits.append(f"{int(round(burned))} kcal burned today")
+        if bits:
+            out.append(
+                "\nTODAY'S NUTRITION (use ONLY these numbers for food/calorie "
+                "questions; never invent macros):\n- " + "; ".join(bits)
+            )
+
+    # Race/event periodization (Gap 11) — phase + today's auto-adjusted plan so
+    # "should I train today?" respects the taper/peak/deload schedule.
+    race_block = state.get("race_context")
+    if race_block:
+        out.append(
+            "\n" + str(race_block).strip()
+            + "\nUse this as the source of truth for training-load advice; the "
+            "schedule already auto-adjusts for recovery — do not override it."
+        )
+
+    # Cycle phase (Gap 17) — compact prompt block so general-chat coaching is
+    # cycle-aware. Reuses the same block the nutrition/workout agents get.
+    cyc = state.get("cycle_context") or {}
+    if cyc.get("available") and cyc.get("prompt_block"):
+        out.append("\n" + str(cyc["prompt_block"]).strip())
+
+    # Structured injury directives (Gap 17) — deterministic phase-aware safety,
+    # not LLM-classified. One compact line; the coach must respect it.
+    inj = state.get("injury_directives") or {}
+    active = inj.get("active") or []
+    ease_in = inj.get("ease_in") or []
+    if active or ease_in:
+        parts: List[str] = []
+        for a in active[:4]:
+            bp = a.get("body_part")
+            ph = a.get("phase")
+            ai = a.get("allowed_intensity")
+            if bp:
+                seg = bp
+                if ph:
+                    seg += f" ({ph}"
+                    seg += f", {ai} intensity)" if ai else ")"
+                parts.append(seg)
+        for e in ease_in[:3]:
+            bp = e.get("body_part")
+            if bp:
+                parts.append(f"{bp} (easing back in)")
+        if parts:
+            out.append(
+                "\nACTIVE INJURIES (deterministic — respect for any training/"
+                "exercise suggestion; never program around a hard-avoid):\n- "
+                + "; ".join(parts)
+            )
+
+    return out
+
+
+def format_profile_extras(profile: Dict[str, Any]) -> List[str]:
+    """Gap 17 — extra USER PROFILE lines (age/sex/size + weight goal).
+
+    Returns context_parts to append under the existing "USER PROFILE" header.
+    Called from BOTH coach prompt builders — edit here, not in either caller.
+    Renders weight in the user's own unit (lb default — they train in lb).
+    Only emits a line when the value is present (no fabricated demographics).
+    """
+    out: List[str] = []
+    if not profile:
+        return out
+
+    unit = (profile.get("weight_unit") or "lb").lower()
+
+    def _w(kg):
+        if kg in (None, 0):
+            return None
+        if unit == "kg":
+            return f"{round(float(kg))} kg"
+        return f"{round(float(kg) * 2.2046226)} lb"
+
+    bits: List[str] = []
+    age = profile.get("age")
+    sex = profile.get("sex")
+    if age:
+        bits.append(f"age {int(age)}")
+    if sex:
+        bits.append(str(sex).lower())
+    h = profile.get("height_cm")
+    if h:
+        if unit == "kg":
+            bits.append(f"{round(float(h))} cm")
+        else:
+            total_in = round(float(h) / 2.54)
+            bits.append(f"{total_in // 12}'{total_in % 12}\"")
+    w = _w(profile.get("weight_kg"))
+    if w:
+        bits.append(w)
+    bf = profile.get("body_fat_pct")
+    if bf:
+        bits.append(f"{round(float(bf))}% body fat")
+    if bits:
+        out.append("- Body: " + ", ".join(bits))
+
+    tw = _w(profile.get("target_weight_kg"))
+    if tw:
+        cur = _w(profile.get("weight_kg"))
+        if cur and cur != tw:
+            out.append(
+                f"- Weight goal: {tw} (from {cur}) — frame guidance toward this "
+                "goal; never push an unsafe deficit."
+            )
+        else:
+            out.append(f"- Weight goal: {tw}")
+
+    return out
 
 
 def should_handle_action(state: CoachAgentState) -> Literal["action", "log", "respond"]:
@@ -932,6 +1095,7 @@ def _build_coach_response_prompt(state: CoachAgentState):
         context_parts.append(f"\nUSER PROFILE:")
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
+        context_parts.extend(format_profile_extras(profile))  # Gap 17: age/sex/size/weight goal
 
     # === Long-term coach memory (migration 2217) ===
     # Durable facts the user told the coach (injuries/pain, dietary prefs,
@@ -982,6 +1146,10 @@ def _build_coach_response_prompt(state: CoachAgentState):
             "training-load / race / pace) questions using ONLY the numbers "
             "above. Never invent paces, distances, or PRs."
         )
+
+    # === Dietary constraints + today's nutrition (Gap 7/17) — mirrors
+    # `coach_response_node`; edit in `format_dietary_and_nutrition_context`. ===
+    context_parts.extend(format_dietary_and_nutrition_context(state))
 
     context = "\n".join(context_parts)
 
@@ -1101,6 +1269,7 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
         context_parts.append(f"\nUSER PROFILE:")
         context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
         context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
+        context_parts.extend(format_profile_extras(profile))  # Gap 17: age/sex/size/weight goal
 
     # === Long-term coach memory (migration 2217) ===
     # Durable facts the user told the coach (injuries/pain, dietary prefs,
@@ -1150,6 +1319,10 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
             "training-load / race / pace) questions using ONLY the numbers "
             "above. Never invent paces, distances, or PRs."
         )
+
+    # === Dietary constraints + today's nutrition (Gap 7/17) — mirrors
+    # `_build_coach_response_prompt`; edit in `format_dietary_and_nutrition_context`. ===
+    context_parts.extend(format_dietary_and_nutrition_context(state))
 
     context = "\n".join(context_parts)
 
