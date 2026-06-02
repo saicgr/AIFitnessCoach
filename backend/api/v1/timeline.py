@@ -278,10 +278,13 @@ async def get_timeline(
     user_tz = resolve_timezone(request, db, user_id)
     target_date = date or get_user_today(user_tz)
 
-    # Cache lookup
-    cached = await get_timeline_cache(user_id, target_date, days, metrics_only)
-    if cached:
-        return cached
+    # Cache lookup (best-effort — a cache-layer hiccup must not fail the request)
+    try:
+        cached = await get_timeline_cache(user_id, target_date, days, metrics_only)
+        if cached:
+            return cached
+    except Exception as e:
+        logger.warning(f"[Timeline] cache read failed (continuing): {e}")
 
     # Resolve UTC range covering all `days` ending at target_date
     base_dt = datetime.strptime(target_date, "%Y-%m-%d").date()
@@ -355,6 +358,15 @@ async def get_timeline(
             "achieved_at", range_end
         ).execute()
 
+    # Resilient fan-out: one flaky domain query must NEVER 500 the whole
+    # timeline. `return_exceptions=True` collects per-query results; a domain
+    # that raised is logged and treated as empty so the feed degrades to
+    # "whatever succeeded" instead of failing wholesale. The per-domain log
+    # surfaces exactly which query is flaky for a permanent fix.
+    _DOMAIN_NAMES = [
+        "workouts", "food", "water", "weight", "mood",
+        "habits", "streak", "xp", "personal_records",
+    ]
     try:
         results = await asyncio.gather(
             loop.run_in_executor(None, _q_workouts),
@@ -366,35 +378,54 @@ async def get_timeline(
             loop.run_in_executor(None, _q_streak),
             loop.run_in_executor(None, _q_xp),
             loop.run_in_executor(None, _q_personal_records),
+            return_exceptions=True,
         )
     except Exception as e:
-        logger.error(f"[Timeline] aggregator query failed: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail="Failed to load timeline")
+        # gather() with return_exceptions=True effectively never raises; this
+        # only fires on a catastrophic scheduling failure.
+        logger.error(f"[Timeline] aggregator scheduling failed: {e}", exc_info=True)
+        results = [None] * len(_DOMAIN_NAMES)
 
-    workouts_r, food_r, water_r, weight_r, mood_r, habits_r, streak_r, xp_r, pr_r = results
+    def _rows(idx: int) -> List[Dict[str, Any]]:
+        r = results[idx]
+        if isinstance(r, Exception):
+            logger.warning(f"[Timeline] {_DOMAIN_NAMES[idx]} query failed: {r}")
+            return []
+        return (getattr(r, "data", None) or []) if r is not None else []
 
-    # Build entries
+    workouts_rows = _rows(0)
+    food_rows = _rows(1)
+    water_rows = _rows(2)
+    weight_rows = _rows(3)
+    mood_rows = _rows(4)
+    habits_rows = _rows(5)
+    streak_rows = _rows(6)
+    xp_rows = _rows(7)
+    pr_rows = _rows(8)
+
+    # Build entries — each row is converted defensively so one malformed row
+    # (or a builder bug) can't blow up the whole feed.
     raw_entries: List[Dict[str, Any]] = []
-    for r in workouts_r.data or []:
-        e = _workout_to_entry(r)
-        if e:
-            raw_entries.append(e)
-    for r in food_r.data or []:
-        raw_entries.append(_food_to_entry(r))
-    for r in water_r.data or []:
-        raw_entries.append(_water_to_entry(r))
-    for r in weight_r.data or []:
-        raw_entries.append(_weight_to_entry(r))
-    for r in mood_r.data or []:
-        raw_entries.append(_mood_to_entry(r))
-    for r in habits_r.data or []:
-        e = _habit_to_entry(r)
-        if e:
-            raw_entries.append(e)
+
+    def _safe_build(rows, builder, *, domain: str):
+        for r in rows:
+            try:
+                e = builder(r)
+                if e:
+                    raw_entries.append(e)
+            except Exception as ex:
+                logger.warning(f"[Timeline] {domain} row skipped: {ex}")
+
+    _safe_build(workouts_rows, _workout_to_entry, domain="workout")
+    _safe_build(food_rows, _food_to_entry, domain="food")
+    _safe_build(water_rows, _water_to_entry, domain="water")
+    _safe_build(weight_rows, _weight_to_entry, domain="weight")
+    _safe_build(mood_rows, _mood_to_entry, domain="mood")
+    _safe_build(habits_rows, _habit_to_entry, domain="habit")
 
     # Achievement chips: index PRs by workout_id for inline annotation
     pr_by_workout: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-    for pr in (pr_r.data or []):
+    for pr in pr_rows:
         wid = pr.get("workout_id")
         if not wid:
             continue
@@ -543,16 +574,16 @@ async def get_timeline(
 
     # Build day summaries
     streak_day = 0
-    if streak_r.data:
+    if streak_rows:
         # Pick the workout streak if present, else max
-        for s in streak_r.data:
+        for s in streak_rows:
             if s.get("streak_type") == "workout":
                 streak_day = s.get("current_streak") or 0
                 break
         if not streak_day:
-            streak_day = max((s.get("current_streak") or 0) for s in streak_r.data)
+            streak_day = max((s.get("current_streak") or 0) for s in streak_rows)
 
-    xp = (xp_r.data[0]["total_xp"] if xp_r.data else 0)
+    xp = (xp_rows[0].get("total_xp", 0) if xp_rows else 0)
 
     days_payload: List[Dict[str, Any]] = []
     today_str = get_user_today(user_tz)
@@ -617,5 +648,8 @@ async def get_timeline(
         "generated_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    await set_timeline_cache(user_id, target_date, payload, days, metrics_only)
+    try:
+        await set_timeline_cache(user_id, target_date, payload, days, metrics_only)
+    except Exception as e:
+        logger.warning(f"[Timeline] cache write failed (continuing): {e}")
     return payload
