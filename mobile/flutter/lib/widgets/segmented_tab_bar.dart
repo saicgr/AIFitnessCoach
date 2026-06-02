@@ -20,7 +20,9 @@ class SegmentedTabBar extends StatelessWidget {
     required this.controller,
     required this.tabs,
     this.showIcons = true,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    // Slimmer vertical inset so the sub-tab bar reads as a distinct, lighter
+    // strip above the floating bottom nav (was vertical: 8).
+    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
     this.borderRadius = 12,
     this.showBorder = false,
     this.compact = false,
@@ -132,9 +134,11 @@ class _SegmentedTabButton extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeOutCubic,
           padding: EdgeInsets.symmetric(
+            // Trimmed ~2-3px each side so the bar is shorter / better
+            // differentiated from the floating bottom nav.
             vertical: showIcon && item.icon != null
-                ? (compact ? 6 : 10)
-                : (compact ? 7 : 12),
+                ? (compact ? 5 : 8)
+                : (compact ? 6 : 9),
           ),
           decoration: BoxDecoration(
             color: bgColor,
@@ -158,7 +162,7 @@ class _SegmentedTabButton extends StatelessWidget {
                       size: 20,
                       color: fgColor,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Text(
                       item.label,
                       style: TextStyle(
