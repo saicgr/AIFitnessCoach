@@ -34,7 +34,6 @@ import 'cards/hr_zone_breakdown_card.dart';
 import 'cards/injury_workaround_banner.dart';
 import 'cards/jet_lag_adjust_card.dart';
 import 'cards/macro_pattern_callout.dart';
-import 'cards/micronutrient_gap_chip.dart';
 import 'cards/one_rm_recompute_banner.dart';
 import 'cards/plan_adjustments_card.dart';
 import 'cards/planned_vs_actual_card.dart';
@@ -90,7 +89,8 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         _HomeCardSection(
           title: 'Nutrition & body',
           children: const [
-            MicronutrientGapChip(),
+            // MicronutrientGapChip removed from Home — micronutrients live in
+            // the Nutrition tab (micros_detail_screen / nutrient_explorer).
             SmoothedWeightTrendChip(),
           ],
         ),
