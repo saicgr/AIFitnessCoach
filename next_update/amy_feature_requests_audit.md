@@ -43,6 +43,33 @@ Same scheme as `youtube_audit_tasks_immediate.md`:
 
 ---
 
+## What I think Zealova actually needs from this
+
+Weighting by Amy demand × cross-source reinforcement (appears in both this board and the Fitbit-Air audit) × strategic fit:
+
+**Build now (high-leverage gaps) — ALL 5 SHIPPED 2026-06-01 (see `[x]` items below):**
+1. **Barcode + label scan** — 101 votes, cross-source, our GAP. The clearest signal on the entire board. Wire it to the existing override DB by UPC/EAN.
+2. **Deterministic / accurate calorie estimates** — Amy's #1 trust failure (same text → different numbers daily). We're PARTIAL with the confidence band + override cross-check; closing this is a direct competitive wedge, not just a feature.
+3. **Recommend-a-meal-to-fill-remaining-macros from history** — 26 votes, PARTIAL. High differentiation, leans on our coach.
+4. **Add exercise burn into the calorie budget** — ~8 separate reports + cross-source. We read HealthKit energy already; the visible "you can eat 300 more" loop is the gap.
+5. **Micronutrient depth (Cronometer-class)** — multi-request + cross-source TODO. Users named the competitor to beat.
+
+**Strong second tier:**
+- Food-title summarization (36 votes, cheap AI win)
+- "Calorie-only / hide-the-prose" mode — maps to the youtube audit's strongest wedge (data-first, anti-AI-slop)
+- Tap-a-macro → which foods contributed it (for the whole day)
+- Don't show "thinking…" until typing pauses (23 votes, pure polish)
+- Custom notification times / one-per-day cap
+- Editable serving size + portion slider
+- Dark/glass app icons (19 votes, low-effort polish)
+
+**Research, don't build blind:**
+- Trial friction — Amy's paid-only-no-taste model is visibly costing them users ("instant turn-off, can't even try it"). Worth A/B-testing a limited taste vs our 7-day trial (mirrors the youtube 30-day-trial research item).
+- Friend groups / social (3 votes, Amy's founder is actively building it) — we have the gamification scaffold; decide if a social layer fits before committing.
+- Breastfeeding/pregnancy goal modifier — fits our planned "Mira" women's-health persona.
+
+---
+
 ## 1. Food-logging input & text-editing UX (Amy's core loop)
 
 The single richest theme — Amy is a text-first journal, so input ergonomics dominate the board.
@@ -68,7 +95,7 @@ The single richest theme — Amy is a text-first journal, so input ergonomics do
 
 Amy's biggest weakness per the board: **same meal returns different calories on different days** (no result caching), and hallucination on vague inputs. This is the wedge `feedback_no_silent_fallbacks` + confidence-band work already targets.
 
-- [ ] **[CHANGE · AI · BACKEND] Deterministic calorie caching — identical input must return identical result** — multiple users logged the *same text* on two days and got 180 vs 103 cal, 200-cal swings, branded items 60% off label. Erodes trust fast. *(Amy board: aggregated across #0033, #0075, #0205, multiple 1-2 vote · Pending)* 🟡 PARTIAL — Zealova has confidence band + `verified_source='override_db'` cross-check (`log_meal_sheet.dart`), and the 198k-row override DB; the determinism guarantee (cache the per-text result) is the explicit gap. _Added 2026-06-01._
+- [x] **[CHANGE · AI · BACKEND] Deterministic calorie caching — identical input must return identical result** — multiple users logged the *same text* on two days and got 180 vs 103 cal, 200-cal swings, branded items 60% off label. Erodes trust fast. *(Amy board: aggregated across #0033, #0075, #0205, multiple 1-2 vote · Pending)* _Added 2026-06-01._ **✅ SHIPPED 2026-06-01:** `normalize_for_cache_key()` (`nutrition_db_helpers_part2.py`) normalizes the food text before hashing the cache key so "2 eggs"=="two eggs"=="2x eggs" collide while "2 eggs fried"/"…from McDonald's" stay distinct (English word-numbers, emoji/`#`-note/locale-decimal stripping; non-English left conservative); wired into `cache_service_helpers_part2.py`; global cache stores the PRE-override AI baseline; a user correction busts that text's cache (`food_logs.py`). (Override cross-check on the image/scan path was already wired.) Flutter adds a tappable "Verified from <source>" / "Why this estimate?" affordance on the food row.
 - [ ] **[CHANGE · AI · BACKEND] Fix quantity double-counting ("2 pieces of chocolate" logged as 2×2)** — AI lists the item twice and doubles/quadruples macros. *(Amy board: 2 votes · Pending · 1 comment, screenshots attached)* 🟡 PARTIAL — Zealova's serving-arbitration work (`serving_arbitration.py`) is the right home; add a multiplier-dedup guard. _Added 2026-06-01._
 - [ ] **[CHANGE · AI · BACKEND] Editing a meal via natural language must actually update macros** — "the patty is 90g with 32g protein" / "6 potatoes not 4" updates the text but not the totals; same for the "something's not right" edit path. *(Amy board: aggregated #0046, #0109, #0183, #0230 · Pending/In Progress)* 🟡 PARTIAL — Zealova has the something's-not-right confirm flow; verify the AI-edit path recomputes + persists. _Added 2026-06-01._
 - [ ] **[CHANGE · AI · BACKEND] Don't recalculate on cosmetic edits (capitalisation/reformat)** — wastes an expensive model call with no change. *(Amy board: 1 vote · Pending)* 🔴 GAP — cheap win: hash-compare normalised text before re-querying. _Added 2026-06-01._
@@ -82,7 +109,7 @@ Amy's biggest weakness per the board: **same meal returns different calories on 
 
 ## 3. AI meal recommendation, coach & chat
 
-- [ ] **[NEW · AI · UI+BACKEND] Recommend a meal to fill remaining macros from eating history** — "I have X protein left → suggest a meal from foods I've had before or would like." *(Amy board: 26 votes · Pending · 4 comments)* 2nd-highest organic request; commenter "exactly what this app needs." 🟡 PARTIAL — Zealova has meal-gen; the "fill the gap from MY history" personalisation is the gap. _Added 2026-06-01._
+- [x] **[NEW · AI · UI+BACKEND] Recommend a meal to fill remaining macros from eating history** — "I have X protein left → suggest a meal from foods I've had before or would like." *(Amy board: 26 votes · Pending · 4 comments)* 2nd-highest organic request; commenter "exactly what this app needs." _Added 2026-06-01._ **✅ SHIPPED 2026-06-01:** shared engine `services/nutrition_meal_recommendation.py` (reused by the widget endpoint, no parallel Gemini call) + `recommend_meal` coach tool (`nutrition_tools.py`) — uses the burn-adjusted remainder, hard-respects FDA Big-9 allergens + dietary restrictions + favorite cuisines + coach-memory dislikes, honors fasting windows, light-option when over budget, snack when <150 remaining, never below the safe floor; emits the `meal_recommended` action. Flutter `recommended_meal_card.dart` (chat) + `coach_recommends_card.dart` (Daily tab) render the card with a double-tap-guarded "Log this"; meal-suggestion sheet upgraded from pills to a card.
 - [ ] **[NEW · AI · UI+BACKEND] Daily AI nutrition coach recap** — daily recommendations on what was good/bad and how to improve. *(Amy board: 1 vote · Pending)* ✅ SHIPS — Zealova has the coach + 7 langgraph agents + nutrition agent + weekly recap is a youtube-audit TODO. _Added 2026-06-01._
 - [ ] **[NEW · AI · UI+BACKEND] Ask diet questions in natural language / nutrition chatbot** — "how do I change this meal to hit my goal?"; one user even asked for an MCP connector to use their own Claude. *(Amy board: aggregated #0103, #0129 · Pending)* ✅ SHIPS — Zealova coach chat already does this; MCP connector is a separate MKT wedge (already planned). _Added 2026-06-01._
 - [ ] **[NEW · AI · UI] "What if…?" preview mode** — "what if I add fries?" → "+380 cal" preview with an add button, without committing to the log. *(Amy board: 1 vote · Pending · 1 comment, founder "interesting 👀")* 🔴 GAP — delightful, novel; a simulate-before-commit affordance. _Added 2026-06-01._
@@ -93,7 +120,7 @@ Amy shipped sugar + sodium tracking from this board (validated). Micronutrient d
 
 - [ ] **[CHANGE · UI+BACKEND] Sugar tracking** — *(Amy board: 23 votes · ✅ Completed · 2 comments)* ✅ SHIPS — Zealova optional sugar tracker shipped (migration 2223, `optional_trackers_strip.dart`). High-vote validation that this was worth building. _Added 2026-06-01._
 - [ ] **[CHANGE · UI+BACKEND] Caffeine tracking (swappable into the macro ring)** — let users replace a ring they don't care about (fiber) with caffeine. *(Amy board: 1 vote · Pending)* ✅ SHIPS — caffeine optional tracker shipped (2223). The *swap-a-ring* customisation is the remaining slice. _Added 2026-06-01._
-- [ ] **[NEW · DATA · UI] Micronutrient + vitamin tab (where am I deficient?)** — estimate vitamins/minerals from logged food and show where to improve; users cited **Cronometer** as the benchmark, and asked for potassium (vs sodium), calcium, oxalates, collagen, fiber. *(Amy board: aggregated #0068, #0119, #0139, #0158, #0166 · Pending · multiple comments)* 🔴 GAP — Zealova's "Micronutrient depth" is a youtube-audit TODO; this board confirms strong demand + names the competitor to beat. _Added 2026-06-01._
+- [x] **[NEW · DATA · UI] Micronutrient + vitamin tab (where am I deficient?)** — estimate vitamins/minerals from logged food and show where to improve; users cited **Cronometer** as the benchmark, and asked for potassium (vs sodium), calcium, oxalates, collagen, fiber. *(Amy board: aggregated #0068, #0119, #0139, #0158, #0166 · Pending · multiple comments)* _Added 2026-06-01._ **✅ SHIPPED 2026-06-01:** the real gap closed — the Gemini text-log path now extracts + persists ~28 micros to `food_logs` (was macros-only); OFF extraction extended 8→full tracked set with unit conversions; `micronutrients.py` now excludes NULL micros from the consumed sum and returns `coverage:{foods_with_micro_data,total_foods}` (missing data ≠ zero intake); `get_micronutrient_gaps` coach tool (gender-aware RDA, ≥3-day coverage gate, "below RDA estimate" framing, no diagnosis); deterministic `compute_nutrition_micro_insight()` for the Coach card. Flutter `micros_detail_screen.dart` + `micros_entry_card.dart` (Daily tab) render 3-tier RDA bars with a coverage banner + "—" for missing; `view_micros` deep-link wired.
 - [ ] **[NEW · UI+BACKEND] Fully customisable tracked macros/micros** — users have specific health needs (kidney stones → sodium+oxalates; arthritis → collagen) and want to pick what's tracked. *(Amy board: 1 vote · Pending · 3 comments)* 🟡 PARTIAL — optional-trackers strip exists; extend the vocabulary + make it user-pickable (`feedback_no_hardcoded_enumerations`). _Added 2026-06-01._
 - [ ] **[NEW · UI] Percentages instead of grams toggle on goal bars/widgets** *(Amy board: 1 vote · Pending)*. 🔴 GAP. _Added 2026-06-01._
 - [ ] **[NEW · UI] Customise which single metric shows beside each entry** — some users want protein-per-entry instead of calories. *(Amy board: 1 vote · Pending · founder "interesting, let me see")* 🔴 GAP. _Added 2026-06-01._
@@ -106,7 +133,7 @@ Amy shipped sugar + sodium tracking from this board (validated). Micronutrient d
 
 Heavily requested: pull workout/step burn (Apple Health, Peloton) into the daily calorie budget. Recurs ~8 times.
 
-- [ ] **[NEW · UI+BACKEND] Add burned calories (Apple Health / steps / workouts) into the daily budget** — if I burned 300, let me eat 300 more before the ring goes red; cited CalAI as the reference. *(Amy board: aggregated #0036, #0091, #0099, #0107, #0130 · Pending · multiple)* 🟡 PARTIAL — Zealova reads HealthKit/HC active energy + has TDEE; verify the food budget visibly adds exercise burn (adjustable %). Strong cluster. _Added 2026-06-01._
+- [x] **[NEW · UI+BACKEND] Add burned calories (Apple Health / steps / workouts) into the daily budget** — if I burned 300, let me eat 300 more before the ring goes red; cited CalAI as the reference. *(Amy board: aggregated #0036, #0091, #0099, #0107, #0130 · Pending · multiple)* _Added 2026-06-01._ **✅ SHIPPED 2026-06-01:** `fetch_daily_nutrition_context()` now reads `daily_activity.active_calories` for the user's LOCAL day (active energy only — never total, so BMR in TDEE isn't double-counted; de-duped across sources; clamped [0,4000]; gated by the `adjust_calories_for_training` pref); daily summary + quick-suggestion context expose `calories_burned_today` / `net_calorie_remainder` / `burn_adjusted` (verified live: 450 kcal burn → remainder 1821→2271). Flutter hero card page-1 shows a factual "Net N left · Goal − Eaten + Burned" row (tap → existing `calories_burned_sheet`), hidden entirely when burn==0/pref off.
 - [ ] **[NEW · AI · BACKEND] Log burned calories from text ("burned 250 cal" / "walked 2 miles")** — estimate burn from a typed activity. *(Amy board: 1 vote · Pending)* 🔴 GAP — natural-language workout-burn entry. _Added 2026-06-01._
 - [ ] **[NEW · UI] Weekly calories-in vs calories-out dashboard card** *(Amy board: 3 votes · Pending)*. 🟡 PARTIAL — Zealova trends exist; a dedicated energy-balance card is the gap. _Added 2026-06-01._
 - [ ] **[NEW · UI] Display calorie balance = consumed − (TDEE + exercise)** and a per-day Total-Daily-Burn goal. *(Amy board: aggregated #0094, #0095 · Pending)* 🟡 PARTIAL. _Added 2026-06-01._
@@ -138,7 +165,7 @@ Directly validates Zealova's `feedback_batch_cook_leftovers` model.
 
 ## 8. Barcode & photo/label scanning
 
-- [ ] **[NEW · UI+BACKEND] Barcode scanning + nutrition-label photo OCR** — scan a UPC or snap a label to skip AI inference (faster, cheaper, more accurate); a user said barcode is *the* missing feature keeping them from renewing. *(Amy board: 101 votes · ✅ Completed (Amy shipped it) · 8 comments; reinforced by #0136 retention comment, #0113 photo-%-consumed)* 🔴 GAP — **highest-demand item on the entire board.** Zealova's "Barcode scan for food logging" is a youtube-audit TODO; this is the single strongest cross-source signal to prioritise it, wired to the override DB by UPC/EAN. _Added 2026-06-01._
+- [x] **[NEW · UI+BACKEND] Barcode scanning + nutrition-label photo OCR** — scan a UPC or snap a label to skip AI inference (faster, cheaper, more accurate); a user said barcode is *the* missing feature keeping them from renewing. *(Amy board: 101 votes · ✅ Completed (Amy shipped it) · 8 comments; reinforced by #0136 retention comment, #0113 photo-%-consumed)* _Added 2026-06-01._ **✅ SHIPPED 2026-06-01:** migration 2224 adds a `barcode` column to `food_nutrition_overrides`; `food_database_service._normalize_barcode` (UPC-A→EAN-13) + `_lookup_override_by_barcode` short-circuit OFF for known products (country-resolved); `apply_user_food_overrides()` now applied to the barcode result; `POST /log-barcode` takes `consumed_fraction`; coach `log_food_barcode` tool (emits `food_logged` source=barcode); Flutter barcode confirm card gains `ConfidenceIndicator` + ¼/½/¾/All package chips; label OCR (`scan_imports.py`) now passes micros through.
 - [ ] **[NEW · UI] Photo-package "% consumed" input** — when snapping a nutrition label, let the user say how much of the package they ate. *(Amy board: within #0113 · Reviewing)* 🔴 GAP — companion to label scan. _Added 2026-06-01._
 - [ ] **[NEW · UI] Photo log — attach one photo per logged food (memory + portion check)** *(Amy board: aggregated #0096 marker, #0216 photo-log · Pending)*. 🟡 PARTIAL — Zealova has photo logging; a per-entry thumbnail + list marker is the gap. _Added 2026-06-01._
 - [ ] **[NEW · UI] Connect to iOS Visual Intelligence (share a photo into the app)** *(Amy board: 1 vote · Pending)*. 🔴 GAP — iOS share-extension entry point. _Added 2026-06-01._

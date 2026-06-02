@@ -113,6 +113,24 @@ def _build_response(
             f"This package has {spc} servings — confirm how many you actually ate."
         )
 
+    # F5 — surface meal-level micronutrients so the client can forward them to
+    # /log-direct (the label OCR already estimates the full RDA-tracked set via
+    # the FoodAnalysisResponse schema; previously they were dropped here, so a
+    # label scan logged 0/28 micros). Additive — None values are simply absent.
+    _MICRO_PASSTHROUGH = [
+        'sodium_mg', 'sugar_g', 'added_sugar_g', 'saturated_fat_g', 'cholesterol_mg',
+        'potassium_mg', 'vitamin_a_ug', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg',
+        'vitamin_k_ug', 'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b6_mg',
+        'vitamin_b9_ug', 'vitamin_b12_ug', 'choline_mg', 'calcium_mg', 'iron_mg',
+        'magnesium_mg', 'zinc_mg', 'selenium_ug', 'phosphorus_mg', 'copper_mg',
+        'manganese_mg', 'iodine_ug', 'omega3_g', 'omega6_g', 'caffeine_mg',
+    ]
+    micros = {}
+    for _k in _MICRO_PASSTHROUGH:
+        _v = analysis.get(_k)
+        if _v is not None:
+            micros[_k] = _v
+
     return {
         "success": True,
         "food_log_id": None,  # analyze-only — not saved yet
@@ -122,6 +140,7 @@ def _build_response(
         "carbs_g": carbs_g,
         "fat_g": fat_g,
         "fiber_g": fiber_g,
+        **micros,
         "health_score": analysis.get("health_score"),
         "health_score_reasons": analysis.get("health_score_reasons"),
         "ai_suggestion": analysis.get("feedback") or None,

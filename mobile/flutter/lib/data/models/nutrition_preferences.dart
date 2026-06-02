@@ -155,6 +155,15 @@ class NutritionPreferences {
   @JsonKey(name: 'alcohol_limit_units')
   final int alcoholLimitUnits;
 
+  // Intermittent fasting — the coach suppresses meal suggestions during the
+  // fasting window (outside the eating window). Hours are 0–23 local time.
+  @JsonKey(name: 'intermittent_fasting_enabled')
+  final bool intermittentFastingEnabled;
+  @JsonKey(name: 'eating_window_start_hour')
+  final int? eatingWindowStartHour;
+  @JsonKey(name: 'eating_window_end_hour')
+  final int? eatingWindowEndHour;
+
   const NutritionPreferences({
     this.id,
     required this.userId,
@@ -214,6 +223,9 @@ class NutritionPreferences {
     this.sugarLimitG = 36,
     this.caffeineLimitMg = 400,
     this.alcoholLimitUnits = 2,
+    this.intermittentFastingEnabled = false,
+    this.eatingWindowStartHour,
+    this.eatingWindowEndHour,
   });
 
   /// Get nutrition goals as enums (multi-select)
@@ -326,6 +338,9 @@ class NutritionPreferences {
     int? sugarLimitG,
     int? caffeineLimitMg,
     int? alcoholLimitUnits,
+    bool? intermittentFastingEnabled,
+    int? eatingWindowStartHour,
+    int? eatingWindowEndHour,
   }) {
     return NutritionPreferences(
       id: id ?? this.id,
@@ -402,6 +417,11 @@ class NutritionPreferences {
       sugarLimitG: sugarLimitG ?? this.sugarLimitG,
       caffeineLimitMg: caffeineLimitMg ?? this.caffeineLimitMg,
       alcoholLimitUnits: alcoholLimitUnits ?? this.alcoholLimitUnits,
+      intermittentFastingEnabled:
+          intermittentFastingEnabled ?? this.intermittentFastingEnabled,
+      eatingWindowStartHour:
+          eatingWindowStartHour ?? this.eatingWindowStartHour,
+      eatingWindowEndHour: eatingWindowEndHour ?? this.eatingWindowEndHour,
     );
   }
 }

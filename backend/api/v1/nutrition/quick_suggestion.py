@@ -214,25 +214,33 @@ async def _generate_suggestion(
     favs: List[Dict[str, Any]],
     workout: Optional[Dict[str, Any]],
 ) -> QuickSuggestionGeminiResponse:
-    prompt = _build_prompt(meal_slot, daily_ctx, favs, workout)
-    response = await gemini_generate_with_retry(
-        model=settings.gemini_model,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=_SYSTEM_INSTRUCTION,
-            response_mime_type="application/json",
-            response_schema=QuickSuggestionGeminiResponse,
-            max_output_tokens=600,
-            temperature=0.6,  # some variety across refreshes
-        ),
+    """Delegate to the shared meal-recommendation engine (F3) so the widget and
+    the Coach `recommend_meal` tool share one Gemini path. The widget passes no
+    hard constraints (it has historically been unconstrained); the F4
+    burn-adjusted remainder is used when present so the widget budget matches
+    the coach's. Behaviour is otherwise identical to the prior inline call."""
+    from services.nutrition_meal_recommendation import generate_suggestion
+
+    # Prefer the burn-adjusted remainder when the user opted in (F4); otherwise
+    # the plain remainder — same number the prompt used before.
+    eatable = daily_ctx.get("net_calorie_remainder")
+    if eatable is None:
+        eatable = daily_ctx.get("calorie_remainder")
+    return await generate_suggestion(
         user_id=user_id,
-        method_name="quick_meal_suggestion",
-        timeout=20,
+        meal_slot=meal_slot,
+        eatable_calories=eatable,
+        macros_remaining=daily_ctx.get("macros_remaining") or {},
+        favs=favs,
+        workout=workout,
+        allergens=[],
+        dietary_restrictions=[],
+        dislikes=[],
+        cuisines=[],
+        over_budget=bool(daily_ctx.get("over_budget")),
+        snack_only=False,
+        locale="en",
     )
-    parsed = response.parsed
-    if parsed is None:
-        raise RuntimeError("Gemini returned an unparseable quick-suggestion response")
-    return parsed
 
 
 # ─── Endpoint ──────────────────────────────────────────────────────────────

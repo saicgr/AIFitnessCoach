@@ -1150,3 +1150,109 @@ def compute_training_sleep_insights(
 
     candidates.sort(key=lambda c: (abs(c["r"]), c["n"]), reverse=True)
     return candidates[:_MAX_TRAINING_INSIGHTS]
+
+
+# =============================================================================
+# Nutrition micronutrient insight (F5) — Coach card
+# =============================================================================
+# A single deterministic "you're tracking low on X" line for the Coach insights
+# card, gated on data coverage so missing data NEVER reads as a deficiency.
+# Frames everything as "below the RDA estimate", never a diagnosis. No LLM.
+
+# RDA fallbacks (gender-neutral adult, sourced from nutrient_rdas defaults) used
+# only when a live RDA map isn't supplied. mg unless noted (µg / IU).
+_MICRO_RDA_FALLBACK: Dict[str, float] = {
+    "fiber_g": 28.0, "vitamin_c_mg": 85.0, "vitamin_d_iu": 800.0,
+    "calcium_mg": 1000.0, "iron_mg": 14.0, "magnesium_mg": 380.0,
+    "potassium_mg": 4700.0, "zinc_mg": 10.0, "vitamin_a_ug": 800.0,
+    "vitamin_b12_ug": 2.4, "vitamin_b9_ug": 400.0, "omega3_g": 1.4,
+}
+_MICRO_LABEL: Dict[str, str] = {
+    "fiber_g": "fiber", "vitamin_c_mg": "vitamin C", "vitamin_d_iu": "vitamin D",
+    "calcium_mg": "calcium", "iron_mg": "iron", "magnesium_mg": "magnesium",
+    "potassium_mg": "potassium", "zinc_mg": "zinc", "vitamin_a_ug": "vitamin A",
+    "vitamin_b12_ug": "vitamin B12", "vitamin_b9_ug": "folate", "omega3_g": "omega-3",
+}
+_MIN_MICRO_COVERAGE_DAYS = 3
+
+
+def compute_nutrition_micro_insight(
+    food_logs: List[Dict[str, Any]],
+    rda_map: Optional[Dict[str, float]] = None,
+    utc_offset_hours: float = 0.0,
+    window_days: int = 7,
+) -> Optional[Dict[str, Any]]:
+    """Return ONE deterministic micronutrient-gap insight, or None.
+
+    Gated on coverage: needs at least ``_MIN_MICRO_COVERAGE_DAYS`` distinct
+    local days that carried ANY non-null micro value. A NULL micro means
+    "unknown", NOT zero, so it is excluded from both the sum and the day count.
+    Returns the nutrient with the lowest avg-daily/RDA ratio that is meaningfully
+    below the estimate (<70%). Framed as "below the RDA estimate" — never a
+    deficiency/diagnosis. ``rda_map`` (live ``nutrient_rdas``) overrides the
+    fallback when supplied. No LLM, no fabrication.
+    """
+    if not food_logs:
+        return None
+
+    tracked = rda_map or _MICRO_RDA_FALLBACK
+    sums: Dict[str, float] = {}
+    days_with_data: set = set()
+
+    for log in food_logs:
+        raw = log.get("logged_at")
+        d = None
+        try:
+            ts = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            d = (ts + timedelta(hours=utc_offset_hours)).date()
+        except Exception:
+            continue
+        had_any = False
+        for key in tracked:
+            v = log.get(key)
+            if v is None:
+                continue
+            try:
+                fv = float(v)
+            except (TypeError, ValueError):
+                continue
+            sums[key] = sums.get(key, 0.0) + fv
+            if fv > 0:
+                had_any = True
+        if had_any and d is not None:
+            days_with_data.add(d)
+
+    if len(days_with_data) < _MIN_MICRO_COVERAGE_DAYS:
+        return None  # not enough coverage — silent (NOT a zero/deficiency)
+
+    n_days = len(days_with_data)
+    worst_key = None
+    worst_ratio = 1.0
+    for key, rda in tracked.items():
+        if not rda or rda <= 0:
+            continue
+        avg = sums.get(key, 0.0) / n_days
+        ratio = avg / rda
+        if ratio < worst_ratio:
+            worst_ratio = ratio
+            worst_key = key
+
+    if worst_key is None or worst_ratio >= 0.70:
+        return None  # everything at/above the RDA estimate — no gap to flag
+
+    label = _MICRO_LABEL.get(worst_key, worst_key)
+    pct = int(round(worst_ratio * 100))
+    return {
+        "category": "nutrition_micro",
+        "nutrient_key": worst_key,
+        "pct_of_rda": pct,
+        "n_days": n_days,
+        "association_only": False,
+        "framing": "below_rda_estimate_not_deficiency",
+        "insight": (
+            f"Over the last {n_days} logged days you've averaged about {pct}% of "
+            f"the {label} RDA estimate — an easy one to nudge up with the right foods."
+        ),
+    }

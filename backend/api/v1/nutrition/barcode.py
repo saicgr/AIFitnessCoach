@@ -52,12 +52,23 @@ async def lookup_barcode(barcode: str, current_user: dict = Depends(get_current_
 
     try:
         service = get_food_database_service()
-        product = await service.lookup_barcode(cleaned)
-        
+        # Resolve the user's country so a multi-country verified override can
+        # pick the right regional row (F1).
+        country = None
+        try:
+            db = get_supabase_db()
+            u = db.get_user(str(current_user.get("id"))) or {}
+            country = u.get("country_code") or u.get("country")
+        except Exception:
+            country = None
+        product = await service.lookup_barcode(cleaned, country=country)
+
         if not product:
+            # Clear, non-fabricated not-found signal — the client/coach prompts
+            # the user to describe the food instead of inventing a row.
             raise HTTPException(
-                status_code=404, 
-                detail=f"Product not found for barcode: {barcode}"
+                status_code=404,
+                detail=f"Product not found for barcode: {barcode}. Describe it and we'll log it instead."
             )
         
         return BarcodeProductResponse(
@@ -107,21 +118,36 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
     try:
         # First, lookup the product
         service = get_food_database_service()
-        product = await service.lookup_barcode(request.barcode)
-        
+        db = get_supabase_db()
+        # Resolve country for the verified-override regional pick (F1).
+        country = None
+        try:
+            u = db.get_user(request.user_id) or {}
+            country = u.get("country_code") or u.get("country")
+        except Exception:
+            country = None
+        product = await service.lookup_barcode(request.barcode, country=country)
+
         if not product:
             raise HTTPException(
                 status_code=404,
-                detail=f"Product not found for barcode: {request.barcode}"
+                detail=f"Product not found for barcode: {request.barcode}. Describe it and we'll log it instead."
             )
-        
+
         # Calculate serving size
         serving_size_g = request.serving_size_g
         if serving_size_g is None:
             serving_size_g = product.nutrients.serving_size_g or 100.0
-        
-        # Calculate nutrition based on servings
-        total_grams = serving_size_g * request.servings
+
+        # Calculate nutrition based on servings. `consumed_fraction` (F1) lets
+        # the user log a fraction of the whole package (e.g. 0.5 = half the bag)
+        # — it scales on TOP of servings × serving size.
+        frac = request.consumed_fraction
+        if frac is not None and frac > 0:
+            frac = min(float(frac), 1.0)
+        else:
+            frac = 1.0
+        total_grams = serving_size_g * request.servings * frac
         multiplier = total_grams / 100.0
         
         total_calories = int(product.nutrients.calories_per_100g * multiplier)
@@ -189,9 +215,51 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
         potassium_mg = round(product.nutrients.potassium_100g * multiplier, 1) if product.nutrients.potassium_100g else None
         magnesium_mg = round(product.nutrients.magnesium_100g * multiplier, 1) if product.nutrients.magnesium_100g else None
         zinc_mg = round(product.nutrients.zinc_100g * multiplier, 2) if product.nutrients.zinc_100g else None
-        
-        # Create food log
-        db = get_supabase_db()
+
+        # F5 — extended micros from OFF. OFF reports most micros in GRAMS per
+        # 100g; nutrient_rdas wants mg (×1000) or µg (×1_000_000). Vitamin B9 /
+        # selenium / iodine / vit-K are µg-scale; the rest mg-scale. We only
+        # emit a value when OFF actually carried it (None otherwise → never read
+        # as 0 intake downstream).
+        def _mg(v):  # grams → mg
+            return round(v * multiplier * 1000, 3) if v else None
+        def _ug(v):  # grams → µg
+            return round(v * multiplier * 1_000_000, 2) if v else None
+        n = product.nutrients
+        vitamin_e_mg = _mg(n.vitamin_e_100g)
+        vitamin_k_ug = _ug(n.vitamin_k_100g)
+        vitamin_b1_mg = _mg(n.vitamin_b1_100g)
+        vitamin_b2_mg = _mg(n.vitamin_b2_100g)
+        vitamin_b3_mg = _mg(n.vitamin_b3_100g)
+        vitamin_b6_mg = _mg(n.vitamin_b6_100g)
+        vitamin_b9_ug = _ug(n.vitamin_b9_100g)
+        vitamin_b12_ug = _ug(n.vitamin_b12_100g)
+        selenium_ug = _ug(n.selenium_100g)
+        phosphorus_mg = _mg(n.phosphorus_100g)
+        copper_mg = _mg(n.copper_100g)
+        manganese_mg = _mg(n.manganese_100g)
+        iodine_ug = _ug(n.iodine_100g)
+        cholesterol_mg = _mg(n.cholesterol_100g)
+        omega3_g = round(n.omega3_100g * multiplier, 3) if n.omega3_100g else None
+        omega6_g = round(n.omega6_100g * multiplier, 3) if n.omega6_100g else None
+
+        # F1 — apply the user's learned per-food correction on top of the
+        # barcode/label macros, so a personal override (e.g. they always log a
+        # different scoop size for this protein) trumps the database value.
+        try:
+            from services.food_override_service import apply_user_food_overrides
+            _items, _totals, _n_over = apply_user_food_overrides(
+                db, request.user_id, [food_item]
+            )
+            if _n_over:
+                logger.info(f"Applied user override on barcode log for {request.user_id}")
+                food_item = _items[0]
+                total_calories = _totals["total_calories"]
+                protein_g = _totals["protein_g"]
+                carbs_g = _totals["carbs_g"]
+                fat_g = _totals["fat_g"]
+        except Exception as ov_err:
+            logger.warning(f"Barcode override application skipped: {ov_err}")
 
         # Resolve timezone for logged_at timestamp
         user_tz_logged_at = None
@@ -226,6 +294,23 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             potassium_mg=potassium_mg,
             magnesium_mg=magnesium_mg,
             zinc_mg=zinc_mg,
+            # F5 — extended micros (only set when OFF carried them).
+            vitamin_e_mg=vitamin_e_mg,
+            vitamin_k_ug=vitamin_k_ug,
+            vitamin_b1_mg=vitamin_b1_mg,
+            vitamin_b2_mg=vitamin_b2_mg,
+            vitamin_b3_mg=vitamin_b3_mg,
+            vitamin_b6_mg=vitamin_b6_mg,
+            vitamin_b9_ug=vitamin_b9_ug,
+            vitamin_b12_ug=vitamin_b12_ug,
+            selenium_ug=selenium_ug,
+            phosphorus_mg=phosphorus_mg,
+            copper_mg=copper_mg,
+            manganese_mg=manganese_mg,
+            iodine_ug=iodine_ug,
+            cholesterol_mg=cholesterol_mg,
+            omega3_g=omega3_g,
+            omega6_g=omega6_g,
             inflammation_score=inflammation_score,
             is_ultra_processed=is_ultra_processed,
         )

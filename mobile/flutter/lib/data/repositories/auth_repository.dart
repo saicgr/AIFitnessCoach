@@ -1723,6 +1723,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final raw = asStr(updates['vacation_end_date']);
       next = next.copyWith(vacationEndDate: (raw == null || raw.isEmpty) ? null : raw);
     }
+    // ── Life stage (nutrition settings → micronutrient RDA targets) ────
+    if (updates.containsKey('is_pregnant')) {
+      next = next.copyWith(isPregnant: updates['is_pregnant'] as bool?);
+    }
+    if (updates.containsKey('is_lactating')) {
+      next = next.copyWith(isLactating: updates['is_lactating'] as bool?);
+    }
     // ── Personal info (edit_personal_info_sheet) ───────────────────────
     if (updates.containsKey('name')) {
       next = next.copyWith(name: asStr(updates['name']));

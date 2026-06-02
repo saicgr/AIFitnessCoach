@@ -14,6 +14,7 @@ import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
+import '../../nutrition/widgets/calories_burned_sheet.dart';
 import '../../nutrition/widgets/nutrition_goals_card.dart' show showNutritionCalculationSheet;
 import '../../nutrition/widgets/edit_targets_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -206,6 +207,17 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final fatTarget = prefsState.currentFatTarget;
     final caloriesRemaining = calorieTarget - caloriesConsumed;
 
+    // F4 — exercise burn folded into the budget. Only surface the net row when
+    // the backend actually adjusted for burn AND there's real burn to show, so
+    // a zero/stale day never adds "+0 burned" noise or whipsaws the ring.
+    final caloriesBurnedToday = summary?.caloriesBurnedToday ?? 0;
+    final burnAdjusted = summary?.burnAdjusted == true;
+    final netCalorieRemainder = summary?.netCalorieRemainder;
+    final showBurnRow = hasCalorieTarget &&
+        burnAdjusted &&
+        caloriesBurnedToday > 0 &&
+        netCalorieRemainder != null;
+
     final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
     final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
     final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
@@ -312,8 +324,17 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                             textSecondary: textSecondary,
                             caloriesRemaining: caloriesRemaining,
                             calorieTarget: calorieTarget,
+                            caloriesConsumed: caloriesConsumed,
                             hasCalorieTarget: hasCalorieTarget,
                             calorieProgress: calorieProgress,
+                            showBurnRow: showBurnRow,
+                            caloriesBurnedToday: caloriesBurnedToday,
+                            netCalorieRemainder: netCalorieRemainder ?? 0,
+                            onTapBurned: () {
+                              HapticService.light();
+                              showCaloriesBurnedSheet(
+                                context, caloriesBurnedToday.toDouble());
+                            },
                             proteinConsumed: proteinConsumed,
                             carbsConsumed: carbsConsumed,
                             fatConsumed: fatConsumed,
@@ -482,8 +503,15 @@ class _MacrosPage extends StatelessWidget {
   final Color textSecondary;
   final int caloriesRemaining;
   final int calorieTarget;
+  final int caloriesConsumed;
   final bool hasCalorieTarget;
   final double calorieProgress;
+  // F4 — exercise burn breakdown (Goal − Eaten + Burned = Net). Only rendered
+  // when [showBurnRow] is true (burn data present + backend-adjusted).
+  final bool showBurnRow;
+  final int caloriesBurnedToday;
+  final int netCalorieRemainder;
+  final VoidCallback onTapBurned;
   final int proteinConsumed, carbsConsumed, fatConsumed;
   final int proteinTarget, carbsTarget, fatTarget;
   final Color proteinColor, carbsColor, fatColor;
@@ -500,8 +528,13 @@ class _MacrosPage extends StatelessWidget {
     required this.textSecondary,
     required this.caloriesRemaining,
     required this.calorieTarget,
+    required this.caloriesConsumed,
     required this.hasCalorieTarget,
     required this.calorieProgress,
+    required this.showBurnRow,
+    required this.caloriesBurnedToday,
+    required this.netCalorieRemainder,
+    required this.onTapBurned,
     required this.proteinConsumed,
     required this.carbsConsumed,
     required this.fatConsumed,
@@ -535,7 +568,10 @@ class _MacrosPage extends StatelessWidget {
     // 3 macro pills always render at full width instead of being squeezed.
     return Align(
       alignment: Alignment.topCenter,
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+      Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -677,6 +713,117 @@ class _MacrosPage extends StatelessWidget {
             ),
           ),
         ],
+      ),
+      // F4 — net-remaining breakdown. Hidden entirely unless real burn data is
+      // present (showBurnRow). Factual copy, no "you can eat X more!" gamified
+      // framing (ED-safety). Tapping the burned figure opens the existing
+      // calories-burned breakdown sheet.
+      if (showBurnRow) ...[
+        const SizedBox(height: 8),
+        _NetRemainingRow(
+          calorieTarget: calorieTarget,
+          caloriesConsumed: caloriesConsumed,
+          caloriesBurned: caloriesBurnedToday,
+          netRemaining: netCalorieRemainder,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          accent: accent,
+          onTapBurned: onTapBurned,
+        ),
+      ],
+        ],
+      ),
+    );
+  }
+}
+
+/// F4 — a single compact line: "Net N left  ·  Goal G − Eaten E + Burned B".
+/// The burned figure is tappable (opens the calories-burned sheet). All copy
+/// is factual; no gamified "you can eat more" framing.
+class _NetRemainingRow extends StatelessWidget {
+  final int calorieTarget;
+  final int caloriesConsumed;
+  final int caloriesBurned;
+  final int netRemaining;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color accent;
+  final VoidCallback onTapBurned;
+
+  const _NetRemainingRow({
+    required this.calorieTarget,
+    required this.caloriesConsumed,
+    required this.caloriesBurned,
+    required this.netRemaining,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.accent,
+    required this.onTapBurned,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final over = netRemaining < 0;
+    final netLabel = over
+        ? 'Net ${netRemaining.abs()} over'
+        : 'Net $netRemaining left';
+    final detailStyle = TextStyle(
+      fontSize: 10.5,
+      fontWeight: FontWeight.w600,
+      color: textSecondary,
+    );
+    return Semantics(
+      label:
+          '$netLabel. Goal $calorieTarget calories minus $caloriesConsumed eaten '
+          'plus $caloriesBurned burned. Tap burned to see the breakdown.',
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 2,
+          children: [
+            Text(
+              netLabel,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: over ? AppColors.error : textPrimary,
+              ),
+            ),
+            Text('·', style: detailStyle),
+            Text('Goal $calorieTarget', style: detailStyle),
+            Text('− $caloriesConsumed eaten', style: detailStyle),
+            // Burned segment is the only tappable part — opens the sheet.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onTapBurned,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.local_fire_department_outlined,
+                      size: 12, color: accent),
+                  const SizedBox(width: 2),
+                  Text(
+                    '+ $caloriesBurned burned',
+                    style: detailStyle.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w700,
+                      decoration: TextDecoration.underline,
+                      decorationColor: accent.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1416,6 +1416,24 @@ extension NutritionRepositoryExt on NutritionRepository {
     }
   }
 
+  /// F5 — raw micronutrient response. Same endpoint as [getDailyMicronutrients]
+  /// but returns the decoded JSON map so callers can read the additive
+  /// `coverage: {foods_with_micro_data, total_foods}` block without a model
+  /// migration. Returns an empty map on a null/non-map body.
+  Future<Map<String, dynamic>> getDailyMicronutrientsRaw({
+    required String userId,
+    String? date,
+  }) async {
+    final queryParams = <String, dynamic>{};
+    if (date != null) queryParams['date'] = date;
+    final response = await _client.get(
+      '/nutrition/micronutrients/$userId',
+      queryParameters: queryParams.isNotEmpty ? queryParams : null,
+    );
+    final data = response.data;
+    return data is Map<String, dynamic> ? data : <String, dynamic>{};
+  }
+
 
   /// Get top contributors for a specific nutrient
   Future<NutrientContributorsResponse> getNutrientContributors({

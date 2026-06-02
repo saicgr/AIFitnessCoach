@@ -15,6 +15,7 @@ from models.recipe import (
     NutrientProgress,
     NutrientRDA,
     DailyMicronutrientSummary,
+    NutrientCoverage,
     NutrientContributorsResponse,
     NutrientContributor,
 )
@@ -100,13 +101,30 @@ async def get_daily_micronutrients(
         # accounts get 'dynamic' set by onboarding.
         pinning_mode = (user.get("pinned_nutrients_mode") if user else None) or "static"
 
-        # Aggregate micronutrients from all logs
+        # Aggregate micronutrients from all logs.
+        # F5 — a NULL micro on a food log means "unknown", NOT "zero intake".
+        # We sum only NON-NULL values and separately count how many of the
+        # day's foods carried ANY micro data, so the client/coach can say
+        # "based on N of M foods" and never read missing data as a deficiency.
         totals = {}
+        foods_with_micro_data = 0
+        total_foods = len(logs)
+        _MICRO_KEYS = set(rdas.keys())
         for log in logs:
-            for key in rdas.keys():
-                col_name = key  # e.g., 'vitamin_d_iu'
-                value = log.get(col_name) or 0
-                totals[key] = totals.get(key, 0) + float(value)
+            has_any = False
+            for key in _MICRO_KEYS:
+                value = log.get(key)
+                if value is None:
+                    continue  # unknown — do NOT count as 0
+                try:
+                    fv = float(value)
+                except (TypeError, ValueError):
+                    continue
+                totals[key] = totals.get(key, 0) + fv
+                if fv > 0:
+                    has_any = True
+            if has_any:
+                foods_with_micro_data += 1
 
         # Macro-like keys are surfaced separately on the Daily header — exclude
         # from the pinned card so we don't double-show them.
@@ -304,6 +322,10 @@ async def get_daily_micronutrients(
             other=other,
             pinned=pinned[:8],  # Hard cap; dynamic mode self-limits to 4.
             pinning_mode=pinning_mode,
+            coverage=NutrientCoverage(
+                foods_with_micro_data=foods_with_micro_data,
+                total_foods=total_foods,
+            ),
         )
 
     except Exception as e:

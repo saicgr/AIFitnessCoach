@@ -1368,24 +1368,40 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       if (verifiedCount == 0) return const SizedBox.shrink();
       final teal = isDark ? AppColors.teal : AppColorsLight.teal;
       final tMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+      // F2 — tappable "source" affordance: opens a sheet listing which items
+      // were cross-checked against verified data and the matched source row.
+      final verifiedItems =
+          items.where((i) => i.isVerified).toList(growable: false);
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            Icon(Icons.verified_rounded, size: 14, color: teal),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                verifiedCount == items.length
-                    ? AppLocalizations.of(context).logMealSheetAllItemsMatchedVerified
-                    : '$verifiedCount of ${items.length} items matched verified nutrition data',
-                style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w500,
-                    color: tMuted),
+        child: Semantics(
+          button: true,
+          label: 'View verified nutrition source',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: () => _showVerifiedSourceSheet(isDark, verifiedItems),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Icon(Icons.verified_rounded, size: 14, color: teal),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      verifiedCount == items.length
+                          ? AppLocalizations.of(context).logMealSheetAllItemsMatchedVerified
+                          : '$verifiedCount of ${items.length} items matched verified nutrition data',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: tMuted),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, size: 16, color: tMuted),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       );
     }
@@ -1456,10 +1472,35 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 ),
               ),
             ] else ...[
-              Text(
-                AppLocalizations.of(context).logMealSheetTapToConfirmEach,
-                style: TextStyle(
-                    fontSize: 12, height: 1.35, color: textMuted),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context).logMealSheetTapToConfirmEach,
+                      style: TextStyle(
+                          fontSize: 12, height: 1.35, color: textMuted),
+                    ),
+                  ),
+                  // F2 — "Why this estimate?" explainer for low-confidence items.
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _showWhyEstimateSheet(
+                        isDark, [for (final i in lowIdx) items[i]]),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Text(
+                        'Why this estimate?',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: amber,
+                          decoration: TextDecoration.underline,
+                          decorationColor: amber.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               for (final idx in lowIdx)
@@ -1543,6 +1584,150 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// F2 — "Verified from <source>" sheet. Lists each cross-checked item and the
+  /// matched source row (override DB / global DB) so the user can see the
+  /// numbers came from real verified data, not a pure AI guess.
+  void _showVerifiedSourceSheet(bool isDark, List<FoodItemRanking> verified) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+
+    String sourceLabel(String? src) {
+      switch (src) {
+        case 'override_db':
+          return 'Verified food database';
+        case 'global_db':
+          return 'Global nutrition database';
+        default:
+          return 'Verified nutrition data';
+      }
+    }
+
+    showGlassSheet(
+      context: context,
+      builder: (_) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.verified_rounded, size: 20, color: teal),
+                  const SizedBox(width: 8),
+                  Text('Verified nutrition source',
+                      style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary)),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'These items were cross-checked against verified nutrition '
+                'data, so the numbers are more than an AI estimate.',
+                style: TextStyle(fontSize: 13, height: 1.4, color: textMuted),
+              ),
+              const SizedBox(height: 14),
+              ...verified.map((item) {
+                final matched = item.verifiedMatchName?.trim();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.name,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                        matched != null && matched.isNotEmpty
+                            ? 'Matched: $matched · ${sourceLabel(item.verifiedSource)}'
+                            : sourceLabel(item.verifiedSource),
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// F2 — "Why this estimate?" explainer for low-confidence items. Shows the
+  /// grounded reasoning the backend supplied (or a factual fallback) so the
+  /// user understands what the estimate is based on and can edit it.
+  void _showWhyEstimateSheet(bool isDark, List<FoodItemRanking> lowItems) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    const amber = Color(0xFFF59E0B);
+
+    showGlassSheet(
+      context: context,
+      builder: (_) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.help_outline_rounded, size: 20, color: amber),
+                  const SizedBox(width: 8),
+                  Text('Why this estimate?',
+                      style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary)),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'These items were estimated from the photo or text without a '
+                'verified database match. Here is what each estimate is based '
+                'on — tap "Looks right" to confirm, or edit the values.',
+                style: TextStyle(fontSize: 13, height: 1.4, color: textMuted),
+              ),
+              const SizedBox(height: 14),
+              ...lowItems.map((item) {
+                final reasoning = item.estimateReasoning?.trim();
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(item.name,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                        reasoning != null && reasoning.isNotEmpty
+                            ? reasoning
+                            : 'Estimated from the image/description; no verified '
+                                'database match was found, so values may vary.',
+                        style: TextStyle(
+                            fontSize: 12, height: 1.35, color: textMuted),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }

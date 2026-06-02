@@ -29,6 +29,12 @@ const Map<String, ({String label, IconData icon, Color color})>
     icon: Icons.videocam_outlined,
     color: Color(0xFF06B6D4),
   ),
+  // F5 — deep-link to the micronutrient detail view for a logged food.
+  'view_micros': (
+    label: 'Vitamins & minerals',
+    icon: Icons.science_outlined,
+    color: Color(0xFF14B8A6),
+  ),
 };
 
 /// IDs that open a Nutrition log-meal sheet. From a chat bubble these CANNOT
@@ -47,6 +53,8 @@ const Map<String, String> _kNutritionDeepLinks = {
   'scan_nutrition_label': '/nutrition?multiImage=true',
   'scan_app_screenshot': '/nutrition?multiImage=true',
   'scan_menu': '/nutrition?scanMenu=true',
+  // F5 — micronutrient detail view (pushed, survives the chat-route pop).
+  'view_micros': '/nutrition/micros',
 };
 
 /// Human-voiced lead-in lines for the chip row. A pool (not a single robotic
@@ -154,6 +162,10 @@ class _SuggestedActionsCardState extends ConsumerState<SuggestedActionsCard> {
     try {
       if (id == 'attach_form_video') {
         widget.onAttachFormVideo?.call();
+      } else if (id == 'view_micros') {
+        // Pushed utility route (not a shell branch) — push so it returns to
+        // chat on back, rather than replacing the branch stack.
+        context.push(_kNutritionDeepLinks[id]!);
       } else if (_kNutritionDeepLinks.containsKey(id)) {
         // Deep-link so the Nutrition screen opens the sheet itself — survives
         // the chat route being popped (see _kNutritionDeepLinks).

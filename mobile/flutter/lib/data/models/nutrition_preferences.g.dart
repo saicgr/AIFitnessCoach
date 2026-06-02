@@ -109,6 +109,10 @@ NutritionPreferences _$NutritionPreferencesFromJson(
   sugarLimitG: (json['sugar_limit_g'] as num?)?.toInt() ?? 36,
   caffeineLimitMg: (json['caffeine_limit_mg'] as num?)?.toInt() ?? 400,
   alcoholLimitUnits: (json['alcohol_limit_units'] as num?)?.toInt() ?? 2,
+  intermittentFastingEnabled:
+      json['intermittent_fasting_enabled'] as bool? ?? false,
+  eatingWindowStartHour: (json['eating_window_start_hour'] as num?)?.toInt(),
+  eatingWindowEndHour: (json['eating_window_end_hour'] as num?)?.toInt(),
 );
 
 Map<String, dynamic> _$NutritionPreferencesToJson(
@@ -172,6 +176,9 @@ Map<String, dynamic> _$NutritionPreferencesToJson(
   'sugar_limit_g': instance.sugarLimitG,
   'caffeine_limit_mg': instance.caffeineLimitMg,
   'alcohol_limit_units': instance.alcoholLimitUnits,
+  'intermittent_fasting_enabled': instance.intermittentFastingEnabled,
+  'eating_window_start_hour': instance.eatingWindowStartHour,
+  'eating_window_end_hour': instance.eatingWindowEndHour,
 };
 
 WeightLog _$WeightLogFromJson(Map<String, dynamic> json) => WeightLog(

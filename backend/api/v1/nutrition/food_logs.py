@@ -289,12 +289,30 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
             try:
                 items_after_update = body.food_items or (updated.get("food_items") or [])
                 edited_indices = {e.food_item_index for e in body.item_edits}
+                edited_names = []
                 for idx in edited_indices:
                     if 0 <= idx < len(items_after_update):
                         db.upsert_user_food_override(
                             user_id=user_id,
                             food_item=items_after_update[idx],
                         )
+                        nm = (items_after_update[idx] or {}).get("name")
+                        if nm:
+                            edited_names.append(nm)
+                # F2 — bust the GLOBAL AI-analysis cache for each corrected food
+                # text so the next re-log re-runs analysis and re-stores a fresh
+                # baseline (the cache holds the pre-override AI value; a stale
+                # entry would otherwise keep returning the old estimate).
+                if edited_names:
+                    try:
+                        from services.food_analysis.cache_service import (
+                            get_food_analysis_cache_service,
+                        )
+                        _cache_svc = get_food_analysis_cache_service()
+                        for nm in edited_names:
+                            await _cache_svc.invalidate_cache(nm)
+                    except Exception as inv_err:
+                        logger.warning(f"Food-text cache invalidation skipped: {inv_err}")
             except Exception as ov_err:
                 logger.warning(
                     f"Failed to upsert user_food_overrides for {log_id}: {ov_err}"

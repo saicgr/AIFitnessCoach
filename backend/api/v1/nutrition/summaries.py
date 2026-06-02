@@ -52,6 +52,47 @@ async def invalidate_daily_summary_cache(user_id: str, date: str = None):
     else:
         await _daily_summary_cache.delete_prefix(f"{user_id}:")
 
+async def _apply_burn_fields(
+    db, user_id: str, local_date: str, user_tz: str, response: "DailyNutritionResponse"
+) -> None:
+    """F4 — overlay live exercise-burn fields onto a daily summary in place.
+
+    Sets ``calories_burned_today`` / ``net_calorie_remainder`` / ``burn_adjusted``
+    on ``response`` using the SAME logic as the nutrition-agent context helper
+    (active energy only, de-duped across sources, clamped to [0,4000], gated on
+    the ``adjust_calories_for_training`` preference). When the pref is off or
+    burn==0, ``burn_adjusted=False`` and ``net_calorie_remainder`` mirrors the
+    plain remainder (or stays null when no calorie target is set). Best-effort:
+    any failure leaves the macro summary untouched (burn fields default to 0/
+    null/false). Runs off the cache so the burn term is never stale."""
+    try:
+        from services.langgraph_agents.tools.nutrition_context_helpers import (
+            _fetch_active_calories_and_pref,
+        )
+        burned, pref_on = await _fetch_active_calories_and_pref(
+            user_id, local_date, user_tz
+        )
+        response.calories_burned_today = burned
+
+        targets = await asyncio.get_event_loop().run_in_executor(
+            None, lambda: db.get_user_nutrition_targets(user_id)
+        )
+        cal_target = (targets or {}).get("daily_calorie_target")
+        if cal_target is None:
+            response.net_calorie_remainder = None
+            response.burn_adjusted = False
+            return
+
+        base_remainder = int(cal_target) - int(response.total_calories or 0)
+        burn_adjusted = bool(pref_on and burned > 0)
+        response.burn_adjusted = burn_adjusted
+        response.net_calorie_remainder = (
+            base_remainder + burned if burn_adjusted else base_remainder
+        )
+    except Exception as e:
+        logger.warning(f"[F4] burn-field overlay skipped for {user_id}: {e}")
+
+
 @router.get("/summary/daily/{user_id}", response_model=DailyNutritionResponse)
 async def get_daily_summary(
     user_id: str,
@@ -86,7 +127,12 @@ async def get_daily_summary(
         cached = await _daily_summary_cache.get(cache_key)
         if cached:
             logger.debug(f"Cache hit for daily summary {cache_key}")
-            return DailyNutritionResponse(**cached)
+            resp = DailyNutritionResponse(**cached)
+            # F4 — the BURN term must never be served stale (active energy can
+            # change minute-to-minute as HealthKit/Google Fit sync). Recompute
+            # it live on a cache hit and overlay it on the cached macro totals.
+            await _apply_burn_fields(db, user_id, date, user_tz, resp)
+            return resp
 
         logger.info(f"Getting daily nutrition summary for user {user_id}, date={date}, tz={user_tz}")
 
@@ -153,8 +199,13 @@ async def get_daily_summary(
             meals=meal_responses,
         )
 
-        # Cache the response
+        # Cache the response BEFORE overlaying the (live) burn term so the
+        # cached payload stays burn-neutral — the burn fields are recomputed on
+        # every cache hit (see above) and on this cold path just below.
         await _daily_summary_cache.set(cache_key, response.dict())
+
+        # F4 — burn-adjusted remainder (live).
+        await _apply_burn_fields(db, user_id, date, user_tz, response)
 
         return response
 

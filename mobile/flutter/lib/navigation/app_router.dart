@@ -27,6 +27,7 @@ import '../screens/library/screens/all_splits_screen.dart';
 import '../screens/mindfulness/mindfulness_session_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/nutrition/nutrition_settings_screen.dart';
+import '../screens/nutrition/micros_detail_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';
 import '../screens/fasting/fasting_body_status_screen.dart';
 import '../screens/fasting/fasting_guide_screen.dart';

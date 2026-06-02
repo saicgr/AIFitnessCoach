@@ -182,4 +182,10 @@ const Set<String> kChatLaunchableActionIds = {
   // Progress
   'photo',
   'progress',
+  // F3 — coach surfaces a recommended-meal card with a "Log this" button.
+  // Rendered as a rich card (not a launcher chip); allowlisted so the
+  // backend can emit it and the bubble renders it (it has no nav side effect).
+  'meal_recommended',
+  // F5 — deep-link to the micronutrient detail view for a logged food.
+  'view_micros',
 };

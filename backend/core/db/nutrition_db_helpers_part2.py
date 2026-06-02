@@ -214,6 +214,94 @@ class NutritionDBPart2:
         return normalized
 
     @staticmethod
+    def normalize_for_cache_key(text: str) -> str:
+        """F2 — deterministic GLOBAL-cache key normalization.
+
+        Goal: "2 eggs" == "two eggs" == "2x eggs" (same key), BUT
+        "2 eggs" != "2 eggs fried" != "2 eggs from McDonald's" (different keys).
+
+        So we KEEP everything that changes the food (quantity, brand, restaurant,
+        cooking method, qualifier tokens) and only strip noise:
+          - leading filler phrases ("i had", "for breakfast", logging verbs)
+          - word-numbers → digits ("two"→"2") — ENGLISH ONLY
+          - "2x"/"2 x" multiplier → "2"
+          - locale decimal comma ("7,5"→"7.5")
+          - emoji + most punctuation, trailing notes after '#'
+          - case + whitespace
+
+        For input that is clearly NOT English (no ASCII letters / has non-Latin
+        script), we normalize CONSERVATIVELY (case + whitespace only) so we don't
+        mangle e.g. "dos huevos" / "deux oeufs" by word-number mapping.
+
+        Used ONLY for the AI-analysis cache hash. It is NOT used for override
+        matching (that still uses `normalize_food_query`), so the global cache
+        stores the pre-override AI baseline.
+        """
+        from services.food_analysis.constants import _WORD_NUMBERS, _FILLER_REGEX
+
+        if not text:
+            return ""
+        s = text.strip()
+
+        # Drop a trailing free-text note after '#'.
+        if "#" in s:
+            s = s.split("#", 1)[0].strip()
+
+        # Strip emoji / pictographs (keep ASCII + common latin letters/digits).
+        s = re.sub(
+            r"[\U0001F000-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF←-⇿⌀-⏿]",
+            " ",
+            s,
+        )
+
+        # Locale decimal comma between digits → dot (7,5 → 7.5).
+        s = re.sub(r"(?<=\d),(?=\d)", ".", s)
+
+        lower = s.lower()
+
+        # Detect "clearly non-English": contains a non-Latin script char, OR
+        # has no ASCII a-z letters at all. In that case, conservative only.
+        has_non_latin = bool(re.search(r"[^\x00-\x7f]", lower))
+        has_ascii_alpha = bool(re.search(r"[a-z]", lower))
+        conservative = has_non_latin or not has_ascii_alpha
+
+        if conservative:
+            out = re.sub(r"\s+", " ", lower).strip()
+            return out
+
+        # Strip leading filler phrases (iteratively — "today i had some ...").
+        prev = None
+        cur = lower.strip()
+        guard = 0
+        while prev != cur and guard < 6:
+            prev = cur
+            cur = _FILLER_REGEX.sub("", cur, count=1).strip()
+            guard += 1
+        lower = cur or lower
+
+        # "2x" / "2 x eggs" multiplier → "2 eggs".
+        lower = re.sub(r"\b(\d+(?:\.\d+)?)\s*x\b", r"\1", lower)
+
+        # Tokenize, mapping word-numbers → digits.
+        tokens = re.split(r"\s+", lower)
+        mapped = []
+        for tok in tokens:
+            t = tok.strip(".,:;!?()[]\"'")
+            if not t:
+                continue
+            if t in _WORD_NUMBERS:
+                num = _WORD_NUMBERS[t]
+                mapped.append(str(int(num)) if float(num).is_integer() else str(num))
+            else:
+                mapped.append(t)
+        joined = " ".join(mapped)
+
+        # Strip remaining punctuation except '.' (decimals) and keep alnum/space.
+        joined = re.sub(r"[^a-z0-9.\s]", " ", joined)
+        joined = re.sub(r"\s+", " ", joined).strip()
+        return joined
+
+    @staticmethod
     def hash_query(text: str) -> str:
         """
         Create SHA256 hash of normalized text for cache key.

@@ -17,6 +17,8 @@ import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
 import 'hydration_summary_block.dart';
 import 'optional_trackers_strip.dart';
+import 'coach_recommends_card.dart';
+import 'micros_entry_card.dart';
 import 'logged_meals_section.dart';
 import '../../home/widgets/hero_nutrition_card.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
@@ -431,6 +433,13 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   // with the meal cards below. No external height bound needed.
                   const HeroNutritionCard(embedded: true),
                   const SizedBox(height: 12),
+                  // F3 — "Coach recommends" card backed by /quick-suggestion.
+                  // Self-hides until a suggestion is available (no empty shell).
+                  if (widget.userId.isNotEmpty)
+                    CoachRecommendsCard(
+                      userId: widget.userId,
+                      isDark: widget.isDark,
+                    ),
                 ],
 
                 // 3. MEAL SECTIONS with (date-scoped) hero-row summary at top.
@@ -512,6 +521,16 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     userId: widget.userId,
                     isDark: widget.isDark,
                   ),
+
+                // F5 — "Vitamins & minerals" entry point. Expands to a peek of
+                // pinned nutrients and opens the full micros detail view.
+                if (widget.userId.isNotEmpty && widget.isViewingToday) ...[
+                  const SizedBox(height: 12),
+                  MicrosEntryCard(
+                    micronutrients: widget.micronutrients,
+                    isDark: widget.isDark,
+                  ),
+                ],
 
                 // Week-at-a-glance "Nutrition stats" block. Gated on
                 // isViewingToday so weekly aggregates don't show when the user

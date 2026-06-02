@@ -191,6 +191,19 @@ class DailyNutritionSummary {
   final int mealCount;
   @JsonKey(name: 'avg_health_score')
   final double? avgHealthScore;
+  // F4 — exercise burn in the budget. Backend daily-summary additive fields:
+  //   caloriesBurnedToday: workout + activity energy attributed to today (0 when
+  //     no burn data — the UI then hides the burned row entirely, no "+0" noise).
+  //   netCalorieRemainder: goal − eaten + burned, null when burn is unavailable.
+  //   burnAdjusted: true only when the backend actually folded burn into the
+  //     remainder. The net row renders ONLY when burnAdjusted == true AND
+  //     caloriesBurnedToday > 0, so a stale/zero day never whipsaws the ring.
+  @JsonKey(name: 'calories_burned_today')
+  final int? caloriesBurnedToday;
+  @JsonKey(name: 'net_calorie_remainder')
+  final int? netCalorieRemainder;
+  @JsonKey(name: 'burn_adjusted')
+  final bool? burnAdjusted;
   final List<FoodLog> meals;
 
   const DailyNutritionSummary({
@@ -202,6 +215,9 @@ class DailyNutritionSummary {
     this.totalFiberG = 0,
     this.mealCount = 0,
     this.avgHealthScore,
+    this.caloriesBurnedToday,
+    this.netCalorieRemainder,
+    this.burnAdjusted,
     this.meals = const [],
   });
 
@@ -584,6 +600,11 @@ class FoodItemRanking {
   //   'verified' badge and suppresses the low-confidence flag.
   @JsonKey(name: 'verified_source')
   final String? verifiedSource;
+  // verifiedMatchName: F2 — the human-readable name of the matched verified
+  //   source row (e.g. "Chicken breast, grilled (USDA 05064)"). Surfaced in the
+  //   "Verified from <…>" source affordance. Null when not cross-checked.
+  @JsonKey(name: 'verified_match_name')
+  final String? verifiedMatchName;
 
   const FoodItemRanking({
     required this.name,
@@ -607,6 +628,7 @@ class FoodItemRanking {
     this.estimateReasoning,
     this.requiresUserConfirmation,
     this.verifiedSource,
+    this.verifiedMatchName,
   });
 
   /// L4 — true when this item is shaky enough to ask the user to confirm.
@@ -707,6 +729,7 @@ class FoodItemRanking {
       estimateReasoning: estimateReasoning,
       requiresUserConfirmation: false,
       verifiedSource: verifiedSource,
+      verifiedMatchName: verifiedMatchName,
     );
   }
 
@@ -751,6 +774,7 @@ class FoodItemRanking {
       estimateReasoning: estimateReasoning,
       requiresUserConfirmation: false,
       verifiedSource: verifiedSource,
+      verifiedMatchName: verifiedMatchName,
     );
   }
 
@@ -779,6 +803,7 @@ class FoodItemRanking {
       estimateReasoning: estimateReasoning,
       requiresUserConfirmation: false,
       verifiedSource: verifiedSource,
+      verifiedMatchName: verifiedMatchName,
     );
   }
 }

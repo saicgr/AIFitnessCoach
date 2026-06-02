@@ -152,6 +152,12 @@ class NutrientProgress(BaseModel):
     pin_reason: Optional[str] = None
 
 
+class NutrientCoverage(BaseModel):
+    """How many of the day's logged foods carried any micronutrient data."""
+    foods_with_micro_data: int = 0
+    total_foods: int = 0
+
+
 class DailyMicronutrientSummary(BaseModel):
     """Daily summary of all micronutrients."""
     date: str
@@ -168,6 +174,9 @@ class DailyMicronutrientSummary(BaseModel):
     # (computed from today's logs). Frontend uses this to render a settings
     # toggle without an extra API call.
     pinning_mode: Optional[str] = None
+    # F5 — data coverage so the client/coach can say "based on N of M foods" and
+    # never treat missing micro data as zero intake / a deficiency.
+    coverage: Optional[NutrientCoverage] = None
 
 
 class NutrientContributor(BaseModel):

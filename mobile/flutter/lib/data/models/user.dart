@@ -35,6 +35,10 @@ class User extends Equatable {
   final bool? coachSelected;
   @JsonKey(name: 'paywall_completed')
   final bool? paywallCompleted;
+  @JsonKey(name: 'is_pregnant')
+  final bool? isPregnant; // Raises micronutrient RDA targets the nutrition coach reads
+  @JsonKey(name: 'is_lactating')
+  final bool? isLactating; // Raises micronutrient RDA targets the nutrition coach reads
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -101,6 +105,8 @@ class User extends Equatable {
     this.onboardingCompleted,
     this.coachSelected,
     this.paywallCompleted,
+    this.isPregnant,
+    this.isLactating,
     this.createdAt,
     this.updatedAt,
     this.timezone,
@@ -721,6 +727,8 @@ class User extends Equatable {
         onboardingCompleted,
         coachSelected,
         paywallCompleted,
+        isPregnant,
+        isLactating,
         createdAt,
         updatedAt,
         timezone,
@@ -762,6 +770,8 @@ class User extends Equatable {
     bool? onboardingCompleted,
     bool? coachSelected,
     bool? paywallCompleted,
+    bool? isPregnant,
+    bool? isLactating,
     String? createdAt,
     String? updatedAt,
     String? timezone,
@@ -803,6 +813,8 @@ class User extends Equatable {
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       coachSelected: coachSelected ?? this.coachSelected,
       paywallCompleted: paywallCompleted ?? this.paywallCompleted,
+      isPregnant: isPregnant ?? this.isPregnant,
+      isLactating: isLactating ?? this.isLactating,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       timezone: timezone ?? this.timezone,

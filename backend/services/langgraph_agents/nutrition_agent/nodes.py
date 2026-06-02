@@ -15,7 +15,15 @@ from core.gemini_client import get_langchain_llm, sanitize_messages_for_response
 from core.locale import locale_system_suffix as _locale_system_suffix
 from .state import NutritionAgentState
 from ..tools import analyze_food_image, analyze_multi_food_images, parse_app_screenshot, parse_nutrition_label, get_nutrition_summary, get_recent_meals, log_food_from_text, suggest_actions
-from ..tools.nutrition_tools import get_calorie_remainder, get_favorite_foods, get_todays_workout_for_meal, build_grocery_list
+from ..tools.nutrition_tools import (
+    get_calorie_remainder,
+    get_favorite_foods,
+    get_todays_workout_for_meal,
+    build_grocery_list,
+    recommend_meal,
+    log_food_barcode,
+    get_micronutrient_gaps,
+)
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
 from services.gemini_service import GeminiService
@@ -38,6 +46,9 @@ NUTRITION_TOOLS = [
     get_favorite_foods,
     get_todays_workout_for_meal,
     build_grocery_list,
+    recommend_meal,
+    log_food_barcode,
+    get_micronutrient_gaps,
     suggest_actions,
 ]
 
@@ -114,6 +125,25 @@ SAFETY GUARDRAILS (NON-NEGOTIABLE — applies to every reply):
    include the source name in the reply ("matched to 'chicken breast,
    roasted' from USDA — tap to switch source if wrong"). Lets the user
    correct upstream errors rather than just gram-amount tweaks.
+
+CAPABILITY NOTES:
+- You can log packaged foods by their scanned BARCODE (log_food_barcode). When
+  a barcode or override match exists, PREFER that verified value over your own
+  AI guess — say so ("logged from the verified label, not an estimate").
+- If a user says "the same food showed different calories before," explain the
+  real mechanism: identical food text hits a deterministic cache so it returns
+  the SAME numbers, and once they correct a food we learn that override and
+  reuse it — so changes come from a real edit or a different description, not
+  randomness. Don't vaguely apologize; explain the cache + learned-override
+  behaviour.
+- The remaining calorie/macro budget you're shown ALREADY includes today's
+  exercise burn whenever the user's training-adjust setting is on (it's added
+  on top of their target). Reason from that net number; don't double-count burn.
+- For any "what should I eat / fill my macros / suggest a meal" ask, CALL
+  recommend_meal — never free-generate a meal in prose.
+- You can answer micronutrient questions by citing RDA progress (call
+  get_micronutrient_gaps). Always frame results as "below the RDA estimate" —
+  NEVER "deficiency", never a diagnosis (guard 3 still applies).
 """
 
 
@@ -170,6 +200,23 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
 
         if dnc.get("over_budget"):
             lines.append("• ⚠️ User is OVER the calorie budget today — prefer low-cal swaps.")
+
+        # F4 — exercise burn folded into the eatable budget. Only surface the
+        # adjusted budget when the user's training-adjust pref is ON and there
+        # is real burn; the day-context's remainder already includes it then.
+        burned = dnc.get("calories_burned_today") or 0
+        if dnc.get("burn_adjusted") and burned > 0:
+            net = dnc.get("net_calorie_remainder")
+            lines.append(
+                f"• 🔥 Exercise today burned ~{burned} kcal — already ADDED to "
+                f"the remaining budget"
+                + (f" (net {net:+d} kcal left)." if isinstance(net, int) else ".")
+            )
+        elif burned > 0:
+            lines.append(
+                f"• 🔥 Exercise today burned ~{burned} kcal (NOT added to budget "
+                f"— user's training-adjust setting is off)."
+            )
 
         # Phase E1 — sleep-aware nutrition. Present only on a low-recovery day;
         # the deterministic engine shifts macro emphasis toward protein and
@@ -333,6 +380,34 @@ def should_use_tools(state: NutritionAgentState) -> Literal["agent", "respond"]:
             logger.info(f"[Nutrition Router] Data query detected: {keyword} -> agent")
             return "agent"
 
+    # F3 — meal-suggestion asks must CALL recommend_meal (not free-generate).
+    meal_suggestion_patterns = [
+        "what should i eat", "what to eat", "what can i eat", "fill my macros",
+        "fill my remaining", "suggest a meal", "suggest a dinner", "suggest a lunch",
+        "suggest a breakfast", "suggest a snack", "recommend a meal", "meal idea",
+        "what fits my macros", "what fits my remaining", "what should i have",
+        "give me a meal", "meal suggestion",
+    ]
+    for pattern in meal_suggestion_patterns:
+        if pattern in message:
+            logger.info(f"[Nutrition Router] Meal-suggestion ask: '{pattern}' -> agent (recommend_meal)")
+            return "agent"
+
+    # F1 — barcode logging asks.
+    if "barcode" in message or "scan this code" in message or "upc" in message:
+        logger.info("[Nutrition Router] Barcode ask -> agent (log_food_barcode)")
+        return "agent"
+
+    # F5 — micronutrient-gap asks.
+    micro_patterns = [
+        "low on", "missing any", "any gaps", "vitamin", "mineral",
+        "micronutrient", "deficien", "am i getting enough", "nutrient gap",
+    ]
+    for pattern in micro_patterns:
+        if pattern in message:
+            logger.info(f"[Nutrition Router] Micronutrient ask: '{pattern}' -> agent (get_micronutrient_gaps)")
+            return "agent"
+
     # Default: autonomous response for questions/advice
     logger.info("[Nutrition Router] General nutrition query -> respond (no tools)")
     return "respond"
@@ -431,6 +506,15 @@ AVAILABLE TOOLS:
 - get_nutrition_summary(user_id, date, period, timezone_str) - Get nutrition totals for a day or week
   * timezone_str: ALWAYS pass "{_tz}"
 - get_recent_meals(user_id, limit) - Get recent meal logs
+- recommend_meal(user_id, meal_type, timezone_str) - Recommend ONE meal that fits the remaining macros
+  * CALL THIS for "what should I eat", "fill my macros", "suggest dinner/lunch", "what fits my remaining calories". Do NOT free-generate a meal in prose — this tool respects allergens, dietary restrictions, dislikes, cuisine, fasting window, the burn-adjusted budget, and the safe floor, and renders a tappable Log card.
+  * timezone_str: ALWAYS pass "{_tz}"
+- log_food_barcode(user_id, barcode, meal_type, consumed_fraction, timezone_str) - Log a packaged food by its scanned barcode
+  * Use when the user supplies a barcode/UPC or asks to log a scanned product. Prefer the verified barcode/override value over any AI guess. consumed_fraction = fraction of the package eaten (default 1.0).
+  * timezone_str: ALWAYS pass "{_tz}"
+- get_micronutrient_gaps(user_id, days, timezone_str) - Which micronutrients are tracking below the RDA estimate
+  * Use for "am I low on any vitamins?", "any nutrient gaps?". Frame answers as "below the RDA estimate", NEVER as a deficiency/diagnosis. Returns nothing actionable until there are a few days of data with nutrient detail.
+  * timezone_str: ALWAYS pass "{_tz}"
 
 IMPORTANT: For ALL tool calls that accept timezone_str, you MUST pass timezone_str="{_tz}".
 
@@ -730,6 +814,25 @@ async def nutrition_action_data_node(state: NutritionAgentState) -> Dict[str, An
 
     for result in tool_results:
         action = result.get("action")
+
+        # F1/F3 — these tools already build their own (contract-shaped)
+        # action_data (`food_logged` for barcode, `meal_recommended` for the
+        # meal card). Pass it straight through.
+        if action in ("recommend_meal", "log_food_barcode") and result.get("action_data"):
+            action_data = result["action_data"]
+            continue
+
+        # F5 — micronutrient-gap answers carry a deep-link the client can use to
+        # open the micros screen.
+        if action == "get_micronutrient_gaps" and result.get("success"):
+            action_data = {
+                "action": "view_micros",
+                "food_log_id": None,
+                "coverage": result.get("coverage"),
+                "gaps": result.get("gaps", []),
+                "insufficient_data": result.get("insufficient_data", False),
+            }
+            continue
 
         if action in ("analyze_food_image", "analyze_multi_food_images"):
             # Determine analysis type

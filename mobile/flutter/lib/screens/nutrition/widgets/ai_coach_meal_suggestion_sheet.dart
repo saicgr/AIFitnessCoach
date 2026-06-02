@@ -11,6 +11,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/models/meal_context.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
@@ -687,6 +688,28 @@ class _AiCoachMealSuggestionSheetState
   Map<String, dynamic>? _extractSuggestedFood() {
     final action = _lastActionData;
     if (action == null) return null;
+    // F3 — the nutrition agent may now emit the shared `meal_recommended`
+    // contract ({meal:{title, calories, protein_g, ...}}). Normalize it into
+    // the same `suggested_food` shape the log callback expects so a single
+    // reply card + Log button handles both shapes.
+    if (action['action'] == 'meal_recommended' && action['meal'] is Map) {
+      final meal = Map<String, dynamic>.from(action['meal'] as Map);
+      final hasMacros = meal['calories'] != null &&
+          (meal['protein_g'] != null ||
+              meal['carbs_g'] != null ||
+              meal['fat_g'] != null);
+      if (!hasMacros) return null;
+      return {
+        'name': meal['title'] ?? meal['name'],
+        'emoji': meal['emoji'],
+        'subtitle': meal['subtitle'],
+        'total_calories': meal['calories'],
+        'protein_g': meal['protein_g'],
+        'carbs_g': meal['carbs_g'],
+        'fat_g': meal['fat_g'],
+        'food_items': meal['food_items'],
+      };
+    }
     final suggested = action['suggested_food'];
     if (suggested is! Map) return null;
     // Require macros so we don't log something incomplete.
@@ -1163,6 +1186,13 @@ class _AiCoachMealSuggestionSheetState
               color: colors.textPrimary,
             ),
           ),
+          // F3 — when the reply carries a loggable meal, render it as a card
+          // (emoji + title + macro pills) above the Log button instead of a
+          // bare text+button. Macro pills use macro-specific colors.
+          if (suggested != null) ...[
+            const SizedBox(height: 12),
+            _buildSuggestedMealCard(suggested, colors),
+          ],
           if (suggested != null) ...[
             const SizedBox(height: 12),
             Material(
@@ -1196,6 +1226,92 @@ class _AiCoachMealSuggestionSheetState
               ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  /// F3 — compact meal preview (emoji + title + subtitle + macro pills) shown
+  /// inside the reply card when the coach returned a loggable meal. Macro pills
+  /// use macro-specific colors per feedback_accent_colors.
+  Widget _buildSuggestedMealCard(
+      Map<String, dynamic> meal, ThemeColors colors) {
+    final isDark = colors.isDark;
+    final proteinColor =
+        isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+
+    num asNum(Object? v) => v is num ? v : 0;
+    final emoji = (meal['emoji'] ?? '🍽️').toString();
+    final title = (meal['name'] ?? 'Suggested meal').toString();
+    final subtitle = (meal['subtitle'] ?? '').toString();
+    final calories = asNum(meal['total_calories']).round();
+
+    Widget pill(String label, num grams, Color color) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDark ? 0.18 : 0.12),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
+          ),
+          child: Text(
+            '$label ${grams.round()}g',
+            style: TextStyle(
+                fontSize: 11, fontWeight: FontWeight.w700, color: color),
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colors.textMuted.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary),
+                    ),
+                    if (subtitle.isNotEmpty)
+                      Text(subtitle,
+                          style: TextStyle(
+                              fontSize: 12, color: colors.textSecondary)),
+                  ],
+                ),
+              ),
+              if (calories > 0)
+                Text('$calories kcal',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              pill('P', asNum(meal['protein_g']), proteinColor),
+              pill('C', asNum(meal['carbs_g']), carbsColor),
+              pill('F', asNum(meal['fat_g']), fatColor),
+            ],
+          ),
         ],
       ),
     );

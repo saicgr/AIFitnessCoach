@@ -130,6 +130,14 @@ class DailyNutritionResponse(BaseModel):
     meal_count: int
     avg_health_score: Optional[float] = None
     meals: List[FoodLogResponse] = []
+    # F4 — exercise-burn-into-budget (additive; client reads these to show the
+    # "earned back" calories). `calories_burned_today` is 0 when no active
+    # energy is recorded. `net_calorie_remainder` is burn-adjusted ONLY when
+    # `burn_adjusted` is true (pref on AND burn>0); otherwise it mirrors the
+    # plain remainder (or is null when no calorie target is set).
+    calories_burned_today: int = 0
+    net_calorie_remainder: Optional[int] = None
+    burn_adjusted: bool = False
 
 
 class WeeklyNutritionResponse(BaseModel):
@@ -201,6 +209,9 @@ class LogBarcodeRequest(BaseModel):
     meal_type: str = Field(..., max_length=20)
     servings: float = 1.0
     serving_size_g: Optional[float] = None
+    # F1 — fraction of the whole package consumed (0<f<=1). When provided it
+    # scales the WHOLE-package macros; `servings` still multiplies the serving.
+    consumed_fraction: Optional[float] = None
 
     @validator('user_id')
     def user_id_must_not_be_empty(cls, v):
@@ -495,6 +506,11 @@ class NutritionPreferencesResponse(BaseModel):
     sugar_limit_g: int = 36
     caffeine_limit_mg: int = 400
     alcohol_limit_units: int = 2
+    # Intermittent-fasting / eating window — recommend_meal won't push a meal
+    # during the fast. Hours are local 0-23 (e.g. 12→20 for 16:8).
+    intermittent_fasting_enabled: bool = False
+    eating_window_start_hour: Optional[int] = None
+    eating_window_end_hour: Optional[int] = None
 
 
 class NutritionPreferencesUpdate(BaseModel):
@@ -534,6 +550,10 @@ class NutritionPreferencesUpdate(BaseModel):
     sugar_limit_g: Optional[int] = None
     caffeine_limit_mg: Optional[int] = None
     alcohol_limit_units: Optional[int] = None
+    # Intermittent-fasting / eating window (local hours 0-23).
+    intermittent_fasting_enabled: Optional[bool] = None
+    eating_window_start_hour: Optional[int] = None
+    eating_window_end_hour: Optional[int] = None
 
 
 class DynamicTargetsResponse(BaseModel):

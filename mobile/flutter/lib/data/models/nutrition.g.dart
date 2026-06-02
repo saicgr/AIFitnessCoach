@@ -141,6 +141,9 @@ DailyNutritionSummary _$DailyNutritionSummaryFromJson(
   totalFiberG: (json['total_fiber_g'] as num?)?.toDouble() ?? 0,
   mealCount: (json['meal_count'] as num?)?.toInt() ?? 0,
   avgHealthScore: (json['avg_health_score'] as num?)?.toDouble(),
+  caloriesBurnedToday: (json['calories_burned_today'] as num?)?.toInt(),
+  netCalorieRemainder: (json['net_calorie_remainder'] as num?)?.toInt(),
+  burnAdjusted: json['burn_adjusted'] as bool?,
   meals:
       (json['meals'] as List<dynamic>?)
           ?.map((e) => FoodLog.fromJson(e as Map<String, dynamic>))
@@ -159,6 +162,9 @@ Map<String, dynamic> _$DailyNutritionSummaryToJson(
   'total_fiber_g': instance.totalFiberG,
   'meal_count': instance.mealCount,
   'avg_health_score': instance.avgHealthScore,
+  'calories_burned_today': instance.caloriesBurnedToday,
+  'net_calorie_remainder': instance.netCalorieRemainder,
+  'burn_adjusted': instance.burnAdjusted,
   'meals': instance.meals,
 };
 
@@ -333,6 +339,7 @@ FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
       estimateReasoning: json['estimate_reasoning'] as String?,
       requiresUserConfirmation: json['requires_user_confirmation'] as bool?,
       verifiedSource: json['verified_source'] as String?,
+      verifiedMatchName: json['verified_match_name'] as String?,
     );
 
 Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
@@ -358,6 +365,7 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
       'estimate_reasoning': instance.estimateReasoning,
       'requires_user_confirmation': instance.requiresUserConfirmation,
       'verified_source': instance.verifiedSource,
+      'verified_match_name': instance.verifiedMatchName,
     };
 
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>

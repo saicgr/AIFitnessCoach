@@ -40,6 +40,25 @@ class ProductNutrients:
     potassium_100g: Optional[float] = None
     magnesium_100g: Optional[float] = None
     zinc_100g: Optional[float] = None
+    # F5 — extended OFF micro extraction (was 8; now the full RDA-tracked set
+    # OFF can carry). Units below are the OFF native units we convert at log
+    # time to match nutrient_rdas (vit A µg, vit D IU, etc.).
+    vitamin_e_100g: Optional[float] = None
+    vitamin_k_100g: Optional[float] = None
+    vitamin_b1_100g: Optional[float] = None
+    vitamin_b2_100g: Optional[float] = None
+    vitamin_b3_100g: Optional[float] = None
+    vitamin_b6_100g: Optional[float] = None
+    vitamin_b9_100g: Optional[float] = None
+    vitamin_b12_100g: Optional[float] = None
+    selenium_100g: Optional[float] = None
+    phosphorus_100g: Optional[float] = None
+    copper_100g: Optional[float] = None
+    manganese_100g: Optional[float] = None
+    iodine_100g: Optional[float] = None
+    cholesterol_100g: Optional[float] = None
+    omega3_100g: Optional[float] = None
+    omega6_100g: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         d = {
@@ -156,6 +175,24 @@ class FoodDatabaseService:
         potassium = self._parse_float(nutriments.get("potassium_100g"))
         magnesium = self._parse_float(nutriments.get("magnesium_100g"))
         zinc = self._parse_float(nutriments.get("zinc_100g"))
+        # F5 — extended micros (OFF native units, mostly grams per 100g except
+        # the IU/µg vitamins, converted at log time).
+        vit_e = self._parse_float(nutriments.get("vitamin-e_100g"))
+        vit_k = self._parse_float(nutriments.get("vitamin-k_100g"))
+        vit_b1 = self._parse_float(nutriments.get("vitamin-b1_100g"))
+        vit_b2 = self._parse_float(nutriments.get("vitamin-b2_100g"))
+        vit_b3 = self._parse_float(nutriments.get("vitamin-pp_100g") or nutriments.get("vitamin-b3_100g"))
+        vit_b6 = self._parse_float(nutriments.get("vitamin-b6_100g"))
+        vit_b9 = self._parse_float(nutriments.get("vitamin-b9_100g") or nutriments.get("folates_100g"))
+        vit_b12 = self._parse_float(nutriments.get("vitamin-b12_100g"))
+        selenium = self._parse_float(nutriments.get("selenium_100g"))
+        phosphorus = self._parse_float(nutriments.get("phosphorus_100g"))
+        copper = self._parse_float(nutriments.get("copper_100g"))
+        manganese = self._parse_float(nutriments.get("manganese_100g"))
+        iodine = self._parse_float(nutriments.get("iodine_100g"))
+        cholesterol = self._parse_float(nutriments.get("cholesterol_100g"))
+        omega3 = self._parse_float(nutriments.get("omega-3-fat_100g"))
+        omega6 = self._parse_float(nutriments.get("omega-6-fat_100g"))
 
         serving_size = product.get("serving_size")
         serving_quantity = self._parse_float(product.get("serving_quantity"))
@@ -191,6 +228,22 @@ class FoodDatabaseService:
             potassium_100g=round(potassium, 1) if potassium > 0 else None,
             magnesium_100g=round(magnesium, 1) if magnesium > 0 else None,
             zinc_100g=round(zinc, 2) if zinc > 0 else None,
+            vitamin_e_100g=round(vit_e, 4) if vit_e > 0 else None,
+            vitamin_k_100g=round(vit_k, 6) if vit_k > 0 else None,
+            vitamin_b1_100g=round(vit_b1, 4) if vit_b1 > 0 else None,
+            vitamin_b2_100g=round(vit_b2, 4) if vit_b2 > 0 else None,
+            vitamin_b3_100g=round(vit_b3, 4) if vit_b3 > 0 else None,
+            vitamin_b6_100g=round(vit_b6, 4) if vit_b6 > 0 else None,
+            vitamin_b9_100g=round(vit_b9, 8) if vit_b9 > 0 else None,
+            vitamin_b12_100g=round(vit_b12, 8) if vit_b12 > 0 else None,
+            selenium_100g=round(selenium, 8) if selenium > 0 else None,
+            phosphorus_100g=round(phosphorus, 4) if phosphorus > 0 else None,
+            copper_100g=round(copper, 6) if copper > 0 else None,
+            manganese_100g=round(manganese, 6) if manganese > 0 else None,
+            iodine_100g=round(iodine, 8) if iodine > 0 else None,
+            cholesterol_100g=round(cholesterol, 4) if cholesterol > 0 else None,
+            omega3_100g=round(omega3, 4) if omega3 > 0 else None,
+            omega6_100g=round(omega6, 4) if omega6 > 0 else None,
         )
 
     def _is_valid_barcode(self, barcode: str) -> bool:
@@ -205,17 +258,121 @@ class FoodDatabaseService:
             return False
         return True
 
-    async def lookup_barcode(self, barcode: str) -> Optional[BarcodeProduct]:
+    @staticmethod
+    def _normalize_barcode(barcode: str) -> str:
+        """Normalize scanned codes so DB/OFF lookups collide.
+
+        UPC-A is 12 digits; the same product is stored as EAN-13 (13 digits)
+        with a leading zero in most databases (including Open Food Facts and our
+        `food_nutrition_overrides.barcode`). So we left-pad a 12-digit UPC-A to
+        13 with a leading 0. Other lengths (EAN-8, EAN-13, ITF-14) pass through.
         """
-        Look up a barcode with caching and USDA fallback.
+        b = (barcode or "").strip().replace(" ", "").replace("-", "")
+        if len(b) == 12 and b.isdigit():
+            return "0" + b
+        return b
+
+    def _lookup_override_by_barcode(
+        self, barcode: str, country: Optional[str] = None
+    ) -> Optional["BarcodeProduct"]:
+        """F1 — try the verified `food_nutrition_overrides.barcode` match FIRST.
+
+        Short-circuits the OFF/USDA round-trip when the community-curated table
+        already has this exact code (migration 2224 added the column + index).
+        When several rows share a code, prefer the one matching the user's
+        country, else the first. Returns None on no match / any error — the
+        caller then falls through to OFF.
+        """
+        try:
+            from core.db import get_supabase_db
+            db = get_supabase_db()
+            q = (
+                db.client.table("food_nutrition_overrides")
+                .select("*")
+                .eq("barcode", barcode)
+                .limit(10)
+                .execute()
+            )
+            rows = [r for r in (q.data or []) if r.get("is_active", True)]
+            if not rows:
+                return None
+            row = rows[0]
+            if country and len(rows) > 1:
+                for r in rows:
+                    rc = (r.get("country_name") or "").lower()
+                    if rc and country.lower() in rc:
+                        row = r
+                        break
+
+            # food_nutrition_overrides stores per-100g macros + micros.
+            def _f(k):
+                v = row.get(k)
+                try:
+                    return float(v) if v is not None else 0.0
+                except (TypeError, ValueError):
+                    return 0.0
+
+            nutrients = ProductNutrients(
+                calories_per_100g=_f("calories_per_100g"),
+                protein_per_100g=_f("protein_per_100g"),
+                carbs_per_100g=_f("carbs_per_100g"),
+                fat_per_100g=_f("fat_per_100g"),
+                fiber_per_100g=_f("fiber_per_100g"),
+                sugar_per_100g=_f("sugar_per_100g"),
+                sodium_per_100g=_f("sodium_mg"),
+                saturated_fat_per_100g=_f("saturated_fat_g"),
+                serving_size=None,
+                serving_size_g=row.get("default_serving_g"),
+                calories_per_serving=None,
+                protein_per_serving=None,
+                carbs_per_serving=None,
+                fat_per_serving=None,
+                vitamin_a_100g=row.get("vitamin_a_ug"),
+                vitamin_c_100g=row.get("vitamin_c_mg"),
+                vitamin_d_100g=row.get("vitamin_d_iu"),
+                calcium_100g=row.get("calcium_mg"),
+                iron_100g=row.get("iron_mg"),
+                potassium_100g=row.get("potassium_mg"),
+                magnesium_100g=row.get("magnesium_mg"),
+                zinc_100g=row.get("zinc_mg"),
+            )
+            logger.info(
+                f"[Barcode] verified override hit for {barcode} "
+                f"({row.get('display_name') or row.get('food_name_normalized')})"
+            )
+            return BarcodeProduct(
+                barcode=barcode,
+                product_name=row.get("display_name") or row.get("food_name_normalized") or "Unknown Product",
+                brand=row.get("restaurant_name"),
+                categories=row.get("food_category"),
+                image_url=None,
+                image_thumb_url=None,
+                nutrients=nutrients,
+                nutriscore_grade=None,
+                nova_group=None,
+                ingredients_text=None,
+                allergens=None,
+            )
+        except Exception as e:
+            logger.debug(f"[Barcode] override-by-barcode lookup skipped for {barcode}: {e}")
+            return None
+
+    async def lookup_barcode(
+        self, barcode: str, country: Optional[str] = None
+    ) -> Optional[BarcodeProduct]:
+        """
+        Look up a barcode with caching, verified-override short-circuit, and
+        USDA fallback.
 
         Flow:
-        1. Check cache first (instant if cached)
-        2. Try Open Food Facts API
-        3. If not found, try USDA as fallback
-        4. Cache the result for future lookups
+        0. Normalize the code (UPC-A 12 → EAN-13 13).
+        1. Verified `food_nutrition_overrides.barcode` match (F1) — short-circuit.
+        2. Check cache.
+        3. Try Open Food Facts API.
+        4. If not found, try USDA as fallback.
+        5. Cache the result for future lookups.
         """
-        barcode = barcode.strip().replace(" ", "").replace("-", "")
+        barcode = self._normalize_barcode(barcode)
         if not barcode:
             logger.warning("Empty barcode provided")
             return None
@@ -225,7 +382,12 @@ class FoodDatabaseService:
             logger.warning(f"Invalid barcode format: {barcode[:50]}...")
             return None
 
-        # 1. Check cache first
+        # 1. Verified override short-circuit (community-curated, highest trust).
+        override_hit = self._lookup_override_by_barcode(barcode, country=country)
+        if override_hit:
+            return override_hit
+
+        # 2. Check cache
         cached = self._get_cached_barcode(barcode)
         if cached:
             logger.info(f"Cache hit for barcode: {barcode}")
@@ -233,11 +395,11 @@ class FoodDatabaseService:
 
         logger.info(f"Looking up barcode: {barcode}")
 
-        # 2. Try Open Food Facts
+        # 3. Try Open Food Facts
         result = await self._lookup_open_food_facts(barcode)
         from_off = result is not None
 
-        # 3. If not found, try USDA fallback
+        # 4. If not found, try USDA fallback
         if not result:
             result = await self._lookup_usda_barcode(barcode)
 
@@ -393,6 +555,10 @@ class FoodDatabaseService:
             client = await self._get_client()
             url = f"{OFF_API_BASE_URL}/product/{barcode}"
             params = {
+                # F5 — `nutriments` returns ALL per-100g nutrient keys OFF has
+                # for the product (vitamins/minerals/fatty acids included), so
+                # the extended micro extraction works without enumerating each
+                # micro field here.
                 "fields": "code,product_name,brands,categories,image_url,image_small_url,"
                          "nutriments,serving_size,serving_quantity,nutriscore_grade,"
                          "nova_group,ingredients_text,allergens,"

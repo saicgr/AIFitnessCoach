@@ -1324,6 +1324,7 @@ async def get_smart_insights(
             compute_smart_insights,
             compute_food_sleep_insights,
             compute_training_sleep_insights,
+            compute_nutrition_micro_insight,
         )
 
         db = get_supabase_db()
@@ -1412,10 +1413,21 @@ async def get_smart_insights(
             utc_offset_hours=utc_offset_hours,
         )
 
+        # F5 — one deterministic "tracking low on X" nutrition insight for the
+        # Coach card, gated on data coverage (>=3 days with micro data) and
+        # framed as "below the RDA estimate", never a deficiency. Reuses the
+        # food_logs already fetched above.
+        micro_insight = compute_nutrition_micro_insight(
+            food_logs,
+            utc_offset_hours=utc_offset_hours,
+            window_days=window_days,
+        )
+
         payload = {
             "insights": insights,
             "food_sleep_insights": food_sleep,
             "training_sleep_insights": training_sleep,
+            "nutrition_micro_insight": micro_insight,
         }
 
         # Cache for a week — the engine is meant to recompute weekly.

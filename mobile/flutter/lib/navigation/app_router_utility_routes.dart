@@ -20,6 +20,16 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const NotificationsScreen(),
       ),
 
+      // F5 — Vitamins & minerals detail. Reached from the daily-tab
+      // "Vitamins & minerals" entry point and the chat `view_micros`
+      // deep-link (?foodLogId=… is optional/informational).
+      GoRoute(
+        path: '/nutrition/micros',
+        builder: (context, state) => MicrosDetailScreen(
+          foodLogId: state.uri.queryParameters['foodLogId'],
+        ),
+      ),
+
       // Plan / period share — Generate Share More-tile + AI chat "Open in app".
       // The route opens a thin shell that immediately shows the period picker
       // and pops back to the previous screen on dismiss.

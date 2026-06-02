@@ -37,6 +37,17 @@ from services.food_analysis.modifiers_helpers import _build_default_modifiers
 
 logger = logging.getLogger(__name__)
 
+# F2 single-flight — in-process registry of in-flight Gemini analyses keyed by
+# the normalized cache key. When several requests for the SAME normalized food
+# text arrive before the first finishes (e.g. a user typing fires "2 eggs",
+# "2 eggs a", "2 eggs and bacon" — or two devices logging the same meal), the
+# followers await the leader's single Gemini call instead of each spending one.
+# This is the per-text dedup that prevents the rate-limit stalls Amy users hit.
+# Safe because the cached/global analysis is user-independent (per-user
+# overrides are layered AFTER this call); paths carrying personal_history are
+# never deduped (they're user-specific and uncacheable).
+_INFLIGHT_ANALYSES: Dict[str, "asyncio.Future"] = {}
+
 
 from services.food_analysis.cache_service_phase2 import (
     FoodAnalysisCacheServicePhase2,
@@ -469,21 +480,64 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     f"{len(gemini_components)} need Gemini — falling through"
                 )
 
-        # Step 3: Fresh Gemini analysis
+        # Step 3: Fresh Gemini analysis (single-flight deduped on normalized text)
         logger.info(f"🔄 Cache MISS - calling Gemini for: {description[:50]}...")
 
-        analysis = await self.gemini_service.parse_food_description(
-            description=description,
-            user_goals=user_goals,
-            nutrition_targets=nutrition_targets,
-            rag_context=rag_context,
-            mood_before=mood_before,
-            meal_type=meal_type,
-            user_id=user_id,
-            personal_history=personal_history,
-            # L3 — standing food-logging rules injected into the Gemini prompt.
-            standing_rules_block=standing_rules_block,
-        )
+        # F2 single-flight: only the cacheable, user-history-free path is
+        # deduped (a personal-history analysis is user-specific). The check and
+        # the future-registration below run with NO await between them, so two
+        # coroutines on the single-threaded event loop can't both become leader.
+        analysis = None
+        _dedup_key = None
+        _is_leader = False
+        if use_cache and not personal_history:
+            try:
+                _dedup_key = self.get_cache_key(description)
+            except Exception:
+                _dedup_key = None
+            if _dedup_key:
+                _pending = _INFLIGHT_ANALYSES.get(_dedup_key)
+                if _pending is not None:
+                    logger.info(
+                        f"⏳ Single-flight: awaiting in-flight Gemini for: {description[:40]}..."
+                    )
+                    try:
+                        leader_analysis = await _pending
+                    except Exception:
+                        leader_analysis = None
+                    if leader_analysis and leader_analysis.get("food_items"):
+                        result.update(leader_analysis)
+                        result["cache_hit"] = False
+                        result["cache_source"] = "gemini_inflight"
+                        return result
+                    # Leader failed → drop dedup and run our own call below.
+                    _dedup_key = None
+                else:
+                    _INFLIGHT_ANALYSES[_dedup_key] = asyncio.get_event_loop().create_future()
+                    _is_leader = True
+
+        try:
+            analysis = await self.gemini_service.parse_food_description(
+                description=description,
+                user_goals=user_goals,
+                nutrition_targets=nutrition_targets,
+                rag_context=rag_context,
+                mood_before=mood_before,
+                meal_type=meal_type,
+                user_id=user_id,
+                personal_history=personal_history,
+                # L3 — standing food-logging rules injected into the Gemini prompt.
+                standing_rules_block=standing_rules_block,
+            )
+        finally:
+            # Resolve + de-register the in-flight future BEFORE the leader does
+            # its own caching/learning, so followers don't wait on side-effects.
+            if _is_leader and _dedup_key:
+                _fut = _INFLIGHT_ANALYSES.pop(_dedup_key, None)
+                if _fut is not None and not _fut.done():
+                    _fut.set_result(
+                        analysis if (analysis and analysis.get("food_items")) else None
+                    )
 
         # Phase-2: auto-upsert novel Gemini results to user_contributed
         # so the next time THIS user logs the same dish, it hits cache.

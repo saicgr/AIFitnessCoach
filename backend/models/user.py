@@ -124,6 +124,8 @@ class UserUpdate(BaseModel):
     onboarding_completed: Optional[bool] = None  # Set to True after onboarding
     coach_selected: Optional[bool] = None  # Set to True after coach selection
     paywall_completed: Optional[bool] = None  # Set to True after paywall flow
+    is_pregnant: Optional[bool] = None  # Raises micronutrient RDA targets (coach)
+    is_lactating: Optional[bool] = None  # Raises micronutrient RDA targets (coach)
     # Extended onboarding fields
     days_per_week: Optional[int] = Field(default=None, ge=1, le=7)
     workout_duration: Optional[int] = Field(default=None, ge=1, le=480)

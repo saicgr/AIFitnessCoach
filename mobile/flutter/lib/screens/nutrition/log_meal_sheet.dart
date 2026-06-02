@@ -22,6 +22,7 @@ import '../../data/repositories/hydration_repository.dart';
 import '../../data/models/hydration.dart' show HydrationSource;
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/haptic_service.dart';
 import '../../data/services/last_used_service.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/common/last_used_badge.dart';
@@ -929,6 +930,16 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                 // totals row below and the dialog's return value so the
                 // backend logs exactly what the user chose.
                 const SizedBox(height: 12),
+                // F1 — barcode lookups are verified-from-DB, so surface a
+                // high-confidence ConfidenceIndicator (reuses the shared
+                // widget) so the source is explicit on the confirm card.
+                ConfidenceIndicator(
+                  confidenceLevel: 'high',
+                  sourceType: 'barcode',
+                  isDark: isDark,
+                ),
+
+                const SizedBox(height: 12),
                 _ServingsStepper(
                   value: servings,
                   servingLabel: product.servingSize ??
@@ -938,6 +949,17 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   isDark: isDark,
                   accent: accentColor,
                   onChanged: (next) => setDialogState(() => servings = next),
+                ),
+
+                // F1 — "How much of this serving did you eat?" Quick-percent
+                // chips scale the serving count to a fraction so a partially
+                // consumed item logs honestly (25 % = 0.25 servings, etc.).
+                const SizedBox(height: 8),
+                _PackagePercentRow(
+                  isDark: isDark,
+                  accent: accentColor,
+                  current: servings,
+                  onPick: (frac) => setDialogState(() => servings = frac),
                 ),
 
                 const SizedBox(height: 12),
@@ -1457,6 +1479,86 @@ class _ScorePill extends StatelessWidget {
 /// native serving description ("30g", "1 bar") so the user reasons in real
 /// units, not abstract servings. Clamped to [0.25, 10.0]; fractional values
 /// are allowed so users can log "half a bar".
+/// F1 — quick "how much of this serving did you eat?" percent chips. Each chip
+/// sets the serving count to a fraction (25 % → 0.25 servings) so a partially
+/// consumed item logs honestly. Wraps (never overflows) on small screens.
+class _PackagePercentRow extends StatelessWidget {
+  final bool isDark;
+  final Color accent;
+  final double current;
+  final ValueChanged<double> onPick;
+
+  const _PackagePercentRow({
+    required this.isDark,
+    required this.accent,
+    required this.current,
+    required this.onPick,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    const fractions = <(String, double)>[
+      ('¼', 0.25),
+      ('½', 0.5),
+      ('¾', 0.75),
+      ('All', 1.0),
+    ];
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text('Ate',
+            style: TextStyle(
+                fontSize: 12, fontWeight: FontWeight.w600, color: textMuted)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final f in fractions)
+                Semantics(
+                  button: true,
+                  label: 'Ate ${f.$1} of a serving',
+                  selected: (current - f.$2).abs() < 0.01,
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticService.selection();
+                      onPick(f.$2);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: (current - f.$2).abs() < 0.01
+                            ? accent.withValues(alpha: 0.18)
+                            : accent.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: (current - f.$2).abs() < 0.01
+                              ? accent.withValues(alpha: 0.5)
+                              : accent.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Text(
+                        f.$1,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: accent,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ServingsStepper extends StatefulWidget {
   final double value;
   final String servingLabel;

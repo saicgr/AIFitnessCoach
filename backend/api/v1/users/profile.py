@@ -681,6 +681,11 @@ async def update_user(user_id: str, user: UserUpdate,
             update_data["coach_selected"] = user.coach_selected
         if user.paywall_completed is not None:
             update_data["paywall_completed"] = user.paywall_completed
+        # Life stage — drives micronutrient RDA targets the nutrition coach reads.
+        if user.is_pregnant is not None:
+            update_data["is_pregnant"] = user.is_pregnant
+        if user.is_lactating is not None:
+            update_data["is_lactating"] = user.is_lactating
 
         # Handle extended onboarding fields - merge into preferences
         has_extended_fields = any([
@@ -1627,6 +1632,10 @@ _PATCH_ME_ALLOWED_FIELDS: set = {
     # back-propagate Accept-Language.
     "preferred_locale",
     "chat_locale",
+    # Pregnancy / lactation status — raises micronutrient RDA targets the AI
+    # coach reads (folate/iron/iodine/etc.); user toggles from settings.
+    "is_pregnant",
+    "is_lactating",
 }
 
 

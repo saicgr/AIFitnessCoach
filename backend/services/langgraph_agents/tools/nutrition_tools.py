@@ -978,6 +978,28 @@ async def log_food_from_text(
             carbs_g = _override_totals["carbs_g"]
             fat_g = _override_totals["fat_g"]
 
+        # F5 — persist micronutrients estimated by Gemini (parse_food_description
+        # uses the FoodAnalysisResponse schema, which carries the full RDA-tracked
+        # micro set). Previously the chat-logging tool dropped these, so a meal
+        # logged via the coach showed 0/28 micros. Additive — macros unchanged.
+        _MICRO_KEYS = [
+            'sodium_mg', 'sugar_g', 'saturated_fat_g', 'cholesterol_mg', 'potassium_mg',
+            'vitamin_a_ug', 'vitamin_c_mg', 'vitamin_d_iu', 'vitamin_e_mg', 'vitamin_k_ug',
+            'vitamin_b1_mg', 'vitamin_b2_mg', 'vitamin_b3_mg', 'vitamin_b6_mg',
+            'vitamin_b9_ug', 'vitamin_b12_ug', 'choline_mg',
+            'calcium_mg', 'iron_mg', 'magnesium_mg', 'zinc_mg', 'selenium_ug',
+            'phosphorus_mg', 'copper_mg', 'manganese_mg', 'iodine_ug',
+            'omega3_g', 'omega6_g', 'caffeine_mg', 'added_sugar_g',
+        ]
+        micronutrients = {}
+        for _k in _MICRO_KEYS:
+            _v = analysis_result.get(_k)
+            if _v is not None:
+                try:
+                    micronutrients[_k] = float(_v)
+                except (TypeError, ValueError):
+                    pass
+
         # Save to database
         food_log = db.create_food_log(
             user_id=user_id,
@@ -993,6 +1015,7 @@ async def log_food_from_text(
             source_type="text",
             input_type="chat",
             user_query=food_description,
+            **micronutrients,
         )
 
         food_log_id = food_log.get("id") if food_log else None
@@ -1208,6 +1231,571 @@ def get_todays_workout_for_meal(
             "action": "get_todays_workout_for_meal",
             "user_id": user_id,
             "message": f"Failed to load workout: {str(e)}",
+        }
+
+
+def _fetch_disliked_foods(db, user_id: str) -> List[str]:
+    """Best-effort read of foods the user has told the coach they dislike.
+
+    Reads ACTIVE `coach_memory` preference rows (migration 2217) and keeps the
+    content phrases that signal a dislike. Conservative: returns short food-ish
+    tokens only. Any failure (table absent on an env where the coach-memory
+    branch isn't merged) returns [] — the tool still respects allergens +
+    dietary restrictions, which are the safety-critical constraints."""
+    out: List[str] = []
+    try:
+        resp = (
+            db.client.table("coach_memory")
+            .select("content, category, status")
+            .eq("user_id", user_id)
+            .eq("category", "preference")
+            .eq("status", "active")
+            .limit(50)
+            .execute()
+        )
+        _DISLIKE_CUES = ("dislike", "don't like", "doesnt like", "doesn't like",
+                         "hate", "hates", "avoid", "avoids", "won't eat",
+                         "wont eat", "allergic", "no ", "not a fan")
+        for row in (resp.data or []):
+            content = (row.get("content") or "").strip().lower()
+            if not content:
+                continue
+            if any(cue in content for cue in _DISLIKE_CUES):
+                # Strip the cue verb to leave the food-ish remainder.
+                food = content
+                for cue in ("dislikes ", "dislike ", "doesn't like ", "doesnt like ",
+                            "hates ", "hate ", "avoids ", "avoid ", "won't eat ",
+                            "wont eat ", "not a fan of "):
+                    if cue in food:
+                        food = food.split(cue, 1)[1]
+                        break
+                food = food.strip(" .,:;")
+                if 2 <= len(food) <= 40:
+                    out.append(food)
+    except Exception as e:
+        logger.debug(f"[recommend_meal] dislikes read skipped for {user_id}: {e}")
+    return out[:20]
+
+
+@tool
+def recommend_meal(
+    user_id: str,
+    meal_type: Optional[str] = None,
+    timezone_str: str = "UTC",
+) -> Dict[str, Any]:
+    """
+    Recommend ONE concrete meal that fits the user's REMAINING macros for today.
+
+    Use this tool whenever the user asks "what should I eat?", "fill my macros",
+    "suggest a meal/dinner/lunch", "what fits my remaining calories?", or similar.
+    Do NOT free-generate a meal in prose — call this so the recommendation
+    respects the user's allergens, dietary restrictions, disliked foods, cuisine
+    preference, fasting window, the burn-adjusted remaining budget, and the safe
+    calorie floor, and so the app can render a tappable "Log it" meal card.
+
+    Args:
+        user_id: User's UUID.
+        meal_type: Optional slot (breakfast/lunch/dinner/snack). Inferred from
+                   local time + already-logged meals when omitted.
+        timezone_str: IANA timezone (e.g. "America/Chicago").
+
+    Returns:
+        Dict carrying a `meal_recommended` action_data the UI renders as a meal
+        card with a Log CTA, plus a human-readable `message`.
+    """
+    try:
+        from services.langgraph_agents.tools.nutrition_context_helpers import (
+            fetch_daily_nutrition_context,
+            fetch_recent_favorites,
+            fetch_todays_workout,
+        )
+        from services.nutrition_meal_recommendation import (
+            collect_forbidden_tokens,
+            infer_slot,
+            is_in_fasting_window,
+            cache_key,
+            cache_get,
+            cache_put,
+            generate_suggestion,
+            SNACK_REMAINDER_THRESHOLD,
+            SAFE_FLOOR_KCAL,
+        )
+
+        db = get_supabase_db()
+
+        # Day context (includes F4 burn-adjusted remainder), favorites, workout.
+        daily_ctx = run_async_in_sync(
+            fetch_daily_nutrition_context(user_id, timezone_str)
+        )
+        favs = run_async_in_sync(
+            fetch_recent_favorites(user_id, limit=5, exclude_days=0)
+        )
+        workout = run_async_in_sync(fetch_todays_workout(user_id, timezone_str))
+
+        # Preferences: allergens, dietary restrictions, cuisines, locale, fasting.
+        # Read nutrition_preferences via the client (the db facade doesn't expose
+        # a typed getter for it).
+        prefs = {}
+        try:
+            _pr = (
+                db.client.table("nutrition_preferences")
+                .select(
+                    "allergies, dietary_restrictions, favorite_cuisines, "
+                    "adjust_calories_for_training, intermittent_fasting_enabled, "
+                    "eating_window_start_hour, eating_window_end_hour"
+                )
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            prefs = (_pr.data if _pr and _pr.data else {}) or {}
+        except Exception as _pe:
+            logger.debug(f"[recommend_meal] prefs read fell back to defaults: {_pe}")
+        user = db.get_user(user_id) or {}
+        locale = user.get("preferred_locale") or user.get("chat_locale") or "en"
+        gender = (user.get("gender") or "").strip().lower()
+        safe_floor = SAFE_FLOOR_KCAL.get(
+            "female" if gender in ("female", "f", "woman") else "male"
+            if gender in ("male", "m", "man") else "female"
+        )
+
+        # Fasting: never push food during a fast.
+        if is_in_fasting_window(prefs, timezone_str):
+            return {
+                "success": True,
+                "action": "recommend_meal",
+                "user_id": user_id,
+                "fasting": True,
+                "message": (
+                    "You're in your fasting window right now, so I'll hold off on "
+                    "a meal idea. Want me to line one up for when your eating "
+                    "window opens?"
+                ),
+            }
+
+        allergens, restrictions, _ = collect_forbidden_tokens(
+            allergies=prefs.get("allergies"),
+            dietary_restrictions=prefs.get("dietary_restrictions"),
+            dislikes=[],
+        )
+        dislikes = _fetch_disliked_foods(db, user_id)
+        cuisines = []
+        raw_cuisines = prefs.get("favorite_cuisines")
+        if isinstance(raw_cuisines, list):
+            cuisines = [str(c).strip() for c in raw_cuisines if c]
+        elif isinstance(raw_cuisines, str) and raw_cuisines.strip():
+            cuisines = [raw_cuisines.strip()]
+
+        # Resolve slot.
+        logged_today = daily_ctx.get("meal_types_logged") or []
+        if meal_type and meal_type.lower() in {"breakfast", "lunch", "dinner", "snack"}:
+            slot = meal_type.lower()
+        else:
+            slot = infer_slot(timezone_str, logged_today)
+
+        # Budget: prefer the burn-adjusted remainder (F4).
+        eatable = daily_ctx.get("net_calorie_remainder")
+        if eatable is None:
+            eatable = daily_ctx.get("calorie_remainder")
+        over_budget = bool(daily_ctx.get("over_budget"))
+        # Never push the day below the safe floor: if eating the suggested
+        # calories would drop the day under the floor, treat as over-budget
+        # (light option only). consumed = target - remainder.
+        snack_only = False
+        if isinstance(eatable, int):
+            if eatable < SNACK_REMAINDER_THRESHOLD:
+                snack_only = eatable > 0  # tiny positive remainder → snack
+                if eatable <= 0:
+                    over_budget = True
+            cal_target = daily_ctx.get("target_calories")
+            if cal_target and (cal_target - max(eatable, 0)) >= (cal_target - 0) and eatable < 0:
+                over_budget = True
+
+        # Shared (user, slot, hour) cache — no parallel Gemini call.
+        key = cache_key(user_id, slot)
+        parsed = cache_get(key)
+        if parsed is None:
+            parsed = run_async_in_sync(
+                generate_suggestion(
+                    user_id=user_id,
+                    meal_slot=slot,
+                    eatable_calories=eatable if isinstance(eatable, int) else None,
+                    macros_remaining=daily_ctx.get("macros_remaining") or {},
+                    favs=favs,
+                    workout=workout,
+                    allergens=allergens,
+                    dietary_restrictions=restrictions,
+                    dislikes=dislikes,
+                    cuisines=cuisines,
+                    over_budget=over_budget,
+                    snack_only=snack_only,
+                    locale=locale,
+                )
+            )
+            cache_put(key, parsed)
+
+        # Build the `meal_recommended` action_data (shared contract).
+        food_items = [
+            {
+                "name": fi.name,
+                "calories": int(fi.calories),
+                "protein_g": float(fi.protein_g),
+                "carbs_g": float(fi.carbs_g),
+                "fat_g": float(fi.fat_g),
+            }
+            for fi in (parsed.food_items or [])
+        ]
+        macros_rem = daily_ctx.get("macros_remaining") or {}
+        action_data = {
+            "action": "meal_recommended",
+            "meal": {
+                "emoji": parsed.emoji,
+                "title": parsed.title,
+                "subtitle": parsed.subtitle,
+                "calories": int(parsed.calories),
+                "protein_g": float(parsed.protein_g),
+                "carbs_g": float(parsed.carbs_g),
+                "fat_g": float(parsed.fat_g),
+                "food_items": food_items,
+            },
+            "macros_fit": {
+                "protein_g": float(macros_rem.get("protein_g") or 0),
+                "carbs_g": float(macros_rem.get("carbs_g") or 0),
+                "fat_g": float(macros_rem.get("fat_g") or 0),
+                "calories": int(eatable) if isinstance(eatable, int) else 0,
+            },
+            "meal_slot": slot,
+            "log_cta": True,
+        }
+
+        message = (
+            f"{parsed.emoji} **{parsed.title}** — {parsed.subtitle}\n"
+            f"{int(parsed.calories)} kcal · {parsed.protein_g:.0f}P "
+            f"{parsed.carbs_g:.0f}C {parsed.fat_g:.0f}F"
+        )
+
+        return {
+            "success": True,
+            "action": "recommend_meal",
+            "user_id": user_id,
+            "meal_slot": slot,
+            "message": message,
+            "action_data": action_data,
+        }
+
+    except Exception as e:
+        logger.error(f"recommend_meal failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "recommend_meal",
+            "user_id": user_id,
+            "message": f"Failed to build a meal recommendation: {str(e)}",
+        }
+
+
+@tool
+def get_micronutrient_gaps(
+    user_id: str,
+    days: int = 7,
+    timezone_str: str = "UTC",
+) -> Dict[str, Any]:
+    """
+    Report micronutrients the user is running BELOW the RDA estimate on, over a
+    recent window. Use this for "am I low on any vitamins?", "what nutrients am
+    I missing?", "any gaps in my diet?".
+
+    Gated on data coverage: returns gaps ONLY when there are at least a few days
+    of logged foods that carry micro data — otherwise it says there isn't enough
+    data yet (missing data is NOT a deficiency). Uses the gender-appropriate RDA
+    row. Frames everything as "below the RDA estimate", NEVER a clinical
+    "deficiency" or diagnosis.
+
+    Args:
+        user_id: User's UUID.
+        days: Trailing window in days (default 7).
+        timezone_str: IANA timezone.
+
+    Returns:
+        Dict with a `gaps` list (nutrient, avg_daily, rda, pct) when coverage is
+        sufficient, plus a `coverage` object; or `insufficient_data=True`.
+    """
+    try:
+        from core.timezone_utils import local_date_to_utc_range, get_user_today
+
+        db = get_supabase_db()
+        rda_rows = (
+            db.client.table("nutrient_rdas").select("*").execute().data or []
+        )
+        rdas = {r["nutrient_key"]: r for r in rda_rows}
+
+        user = db.get_user(user_id) or {}
+        gender = (user.get("gender") or "").strip().lower()
+        is_female = gender in ("female", "f", "woman")
+        is_pregnant = bool(user.get("is_pregnant"))
+        is_lactating = bool(user.get("is_lactating"))
+
+        def _rda_for(r: dict):
+            # Pregnancy/lactation columns when present, else gender-specific.
+            if is_pregnant and r.get("rda_target_pregnant"):
+                return float(r["rda_target_pregnant"])
+            if is_lactating and r.get("rda_target_lactating"):
+                return float(r["rda_target_lactating"])
+            key = "rda_target_female" if is_female else "rda_target_male"
+            return float(r.get(key) or r.get("rda_target") or 0)
+
+        # Pull the window's logs once.
+        today = get_user_today(timezone_str)
+        from datetime import date as _d, timedelta as _td
+        base = _d.fromisoformat(today)
+        start_iso = (base - _td(days=days - 1)).isoformat()
+        start_utc, _ = local_date_to_utc_range(start_iso, timezone_str)
+        _, end_utc = local_date_to_utc_range(today, timezone_str)
+
+        logs = (
+            db.client.table("food_logs").select("*")
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .gte("logged_at", start_utc)
+            .lte("logged_at", end_utc)
+            .limit(300)
+            .execute()
+        ).data or []
+
+        total_foods = len(logs)
+        foods_with_micro = 0
+        sums: Dict[str, float] = {}
+        # Days that had at least one food with micro data → coverage in days.
+        days_with_data = set()
+        for log in logs:
+            has_any = False
+            for key in rdas.keys():
+                v = log.get(key)
+                if v is None:
+                    continue
+                try:
+                    fv = float(v)
+                except (TypeError, ValueError):
+                    continue
+                sums[key] = sums.get(key, 0.0) + fv
+                if fv > 0:
+                    has_any = True
+            if has_any:
+                foods_with_micro += 1
+                la = str(log.get("logged_at") or "")[:10]
+                if la:
+                    days_with_data.add(la)
+
+        # Coverage gate — need at least 3 distinct days of micro data.
+        if len(days_with_data) < 3:
+            return {
+                "success": True,
+                "action": "get_micronutrient_gaps",
+                "user_id": user_id,
+                "insufficient_data": True,
+                "coverage": {
+                    "foods_with_micro_data": foods_with_micro,
+                    "total_foods": total_foods,
+                    "days_with_data": len(days_with_data),
+                },
+                "message": (
+                    "Not enough logged days with nutrient detail yet to call out "
+                    "gaps reliably — keep logging and I'll spot patterns."
+                ),
+            }
+
+        n_days = max(1, len(days_with_data))
+        gaps = []
+        for key, r in rdas.items():
+            if key in ("calories", "protein_g", "carbs_g", "fat_g"):
+                continue
+            rda = _rda_for(r)
+            if rda <= 0:
+                continue
+            # Penalty nutrients (sodium/sugar/etc) aren't "gaps" when low.
+            if r.get("penalty"):
+                continue
+            avg_daily = sums.get(key, 0.0) / n_days
+            pct = round((avg_daily / rda) * 100, 0)
+            if pct < 70:  # meaningfully below the RDA estimate
+                gaps.append({
+                    "nutrient_key": key,
+                    "display_name": r.get("display_name", key),
+                    "unit": r.get("unit", ""),
+                    "avg_daily": round(avg_daily, 1),
+                    "rda": round(rda, 1),
+                    "pct_of_rda": pct,
+                })
+        gaps.sort(key=lambda g: g["pct_of_rda"])
+
+        return {
+            "success": True,
+            "action": "get_micronutrient_gaps",
+            "user_id": user_id,
+            "gaps": gaps[:5],
+            "coverage": {
+                "foods_with_micro_data": foods_with_micro,
+                "total_foods": total_foods,
+                "days_with_data": len(days_with_data),
+            },
+            "framing": "below_rda_estimate_not_deficiency",
+            "message": (
+                f"Based on {foods_with_micro} of {total_foods} logged foods over "
+                f"{len(days_with_data)} days, "
+                + (
+                    "you're tracking below the RDA estimate on: "
+                    + ", ".join(g["display_name"] for g in gaps[:5])
+                    if gaps else "you're meeting the RDA estimate on the tracked nutrients."
+                )
+            ),
+        }
+    except Exception as e:
+        logger.error(f"get_micronutrient_gaps failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "get_micronutrient_gaps",
+            "user_id": user_id,
+            "message": f"Failed to compute micronutrient gaps: {str(e)}",
+        }
+
+
+@tool
+def log_food_barcode(
+    user_id: str,
+    barcode: str,
+    meal_type: str = "snack",
+    consumed_fraction: float = 1.0,
+    timezone_str: str = "UTC",
+) -> Dict[str, Any]:
+    """
+    Log a packaged food to the diary by its scanned barcode (UPC/EAN).
+
+    Use this when the user gives a barcode number or asks to log a scanned
+    product. Looks the product up (verified override → Open Food Facts → USDA),
+    prefers the verified barcode/override value over any AI guess, scales by
+    `consumed_fraction` (fraction of the package eaten, default whole), persists
+    macros + micros, and emits a `food_logged` action_data with
+    source_type="barcode".
+
+    Args:
+        user_id: User's UUID.
+        barcode: The numeric barcode (8-14 digits).
+        meal_type: breakfast/lunch/dinner/snack (default snack).
+        consumed_fraction: Fraction of the package consumed (0<f<=1, default 1.0).
+        timezone_str: IANA timezone.
+
+    Returns:
+        Dict with the logged macros + a `food_logged` action_data (source_type
+        "barcode"), or a clear not-found message so the coach can ask the user
+        to describe the food instead.
+    """
+    try:
+        from services.food_database_service import get_food_database_service
+        from core.timezone_utils import get_user_now_iso
+
+        db = get_supabase_db()
+        service = get_food_database_service()
+
+        product = run_async_in_sync(service.lookup_barcode(barcode))
+        if not product:
+            return {
+                "success": False,
+                "action": "log_food_barcode",
+                "user_id": user_id,
+                "not_found": True,
+                "message": (
+                    f"I couldn't find a product for barcode {barcode} in the food "
+                    f"databases. Tell me what it is (name + serving) and I'll log it."
+                ),
+            }
+
+        frac = consumed_fraction if consumed_fraction and consumed_fraction > 0 else 1.0
+        frac = min(frac, 1.0)
+        serving_g = product.nutrients.serving_size_g or 100.0
+        total_grams = serving_g * frac
+        mult = total_grams / 100.0
+
+        food_item = {
+            "name": product.product_name,
+            "amount": f"{total_grams:.0f}g ({int(frac * 100)}% of package)"
+            if frac != 1.0 else f"{total_grams:.0f}g",
+            "calories": int(product.nutrients.calories_per_100g * mult),
+            "protein_g": round(product.nutrients.protein_per_100g * mult, 1),
+            "carbs_g": round(product.nutrients.carbs_per_100g * mult, 1),
+            "fat_g": round(product.nutrients.fat_per_100g * mult, 1),
+            "barcode": barcode,
+            "brand": product.brand,
+            "verified_source": "barcode",
+        }
+
+        # Apply the user's learned per-food correction on top of the barcode row.
+        from services.food_override_service import apply_user_food_overrides
+        items, totals, n_over = apply_user_food_overrides(db, user_id, [food_item])
+        food_item = items[0]
+        total_calories = totals["total_calories"]
+        protein_g = totals["protein_g"]
+        carbs_g = totals["carbs_g"]
+        fat_g = totals["fat_g"]
+        fiber_g = round(product.nutrients.fiber_per_100g * mult, 1)
+
+        user_tz_logged_at = get_user_now_iso(timezone_str)
+        created = db.create_food_log(
+            user_id=user_id,
+            meal_type=meal_type,
+            food_items=[food_item],
+            total_calories=total_calories,
+            protein_g=protein_g,
+            carbs_g=carbs_g,
+            fat_g=fat_g,
+            fiber_g=fiber_g,
+            ai_feedback=None,
+            health_score=None,
+            logged_at=user_tz_logged_at,
+            source_type="barcode",
+            input_type="chat",
+            user_query=product.product_name,
+        )
+        food_log_id = created.get("id") if created else None
+
+        try:
+            from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            run_async_in_sync(invalidate_daily_summary_cache(user_id))
+        except Exception:
+            pass
+
+        return {
+            "success": True,
+            "action": "log_food_barcode",
+            "user_id": user_id,
+            "food_log_id": food_log_id,
+            "meal_type": meal_type,
+            "total_calories": total_calories,
+            "protein_g": protein_g,
+            "carbs_g": carbs_g,
+            "fat_g": fat_g,
+            "message": (
+                f"Logged **{product.product_name}** — {total_calories} kcal, "
+                f"{protein_g:.0f}g protein."
+            ),
+            "action_data": {
+                "action": "food_logged",
+                "food_log_id": food_log_id,
+                "meal_type": meal_type,
+                "total_calories": total_calories,
+                "protein_g": protein_g,
+                "carbs_g": carbs_g,
+                "fat_g": fat_g,
+                "food_item_count": 1,
+                "source_type": "barcode",
+                "success": True,
+            },
+        }
+    except Exception as e:
+        logger.error(f"log_food_barcode failed: {e}", exc_info=True)
+        return {
+            "success": False,
+            "action": "log_food_barcode",
+            "user_id": user_id,
+            "message": f"Failed to log barcode: {str(e)}",
         }
 
 

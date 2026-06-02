@@ -71,6 +71,27 @@ async def fetch_daily_nutrition_context(
     cal_remainder = _remainder(cal_consumed, cal_target)
     over_budget = cal_remainder is not None and cal_remainder < 0
 
+    # ── F4: exercise-burn-into-budget ─────────────────────────────────────
+    # Fetch today's ACTIVE energy (exercise burn only — never total/basal,
+    # because BMR is already baked into the calorie target/TDEE). Recomputed
+    # live at every call (no stale cache for the burn term). When the user's
+    # `adjust_calories_for_training` preference is ON and there is real burn,
+    # the eatable budget grows additively on top of the existing target:
+    #     net_remainder = target - consumed + active_calories
+    # i.e. exercise "earns back" calories. When the pref is OFF or burn==0,
+    # `burn_adjusted=False` and `net_calorie_remainder` simply mirrors
+    # `calorie_remainder` (no behavioural change). The raw burn is always
+    # surfaced (`calories_burned_today`) so the UI/coach can show it even when
+    # the pref is off, but it only MOVES the budget when the pref is on.
+    calories_burned_today, burn_pref_on = await _fetch_active_calories_and_pref(
+        user_id, today, timezone_str
+    )
+    burn_adjusted = bool(burn_pref_on and calories_burned_today > 0)
+    if burn_adjusted and cal_remainder is not None:
+        net_calorie_remainder = cal_remainder + calories_burned_today
+    else:
+        net_calorie_remainder = cal_remainder  # mirrors (None if no target)
+
     # Meal-type coverage today (avoid proposing a 4th breakfast).
     meals = summary.get("meals") or []
     meal_types_logged = sorted({
@@ -114,6 +135,10 @@ async def fetch_daily_nutrition_context(
         "target_carbs_g": c_target,
         "target_fat_g": f_target,
         "calorie_remainder": cal_remainder,
+        # F4 — exercise burn surfaced additively (see contract).
+        "calories_burned_today": calories_burned_today,
+        "net_calorie_remainder": net_calorie_remainder,
+        "burn_adjusted": burn_adjusted,
         "macros_remaining": {
             "protein_g": _remainder(p_consumed, p_target),
             "carbs_g": _remainder(c_consumed, c_target),
@@ -128,6 +153,75 @@ async def fetch_daily_nutrition_context(
         # can treat its presence as "the day's targets were recovery-adjusted".
         "recovery_adjusted_targets": recovery_adjustment,
     }
+
+
+async def _fetch_active_calories_and_pref(
+    user_id: str,
+    local_date: str,
+    timezone_str: str,
+) -> "tuple[int, bool]":
+    """F4 — return ``(active_calories_today, adjust_calories_for_training)``.
+
+    ACTIVE energy ONLY — never ``calories_burned``/``basal_calories`` (basal is
+    already inside the calorie target/TDEE). ``daily_activity`` is keyed by
+    ``activity_date`` (the user's LOCAL calendar date), so we look up the row
+    for ``local_date`` directly. If multiple rows exist for the same date
+    (overlapping HealthKit / Google Fit / Health-Connect sources), we DE-DUPE
+    by taking the single largest ``active_calories`` rather than summing — two
+    sources reporting the same workout must not double-count. The value is
+    sanity-capped to ``[0, 4000]`` so a garbage/negative reading can never
+    inflate the eatable budget. Best-effort: any failure returns ``(0, pref)``
+    so the burn term simply has no effect.
+
+    Recomputed live on every call (no caching of the burn term).
+    """
+    active = 0
+    pref_on = False
+    db = get_supabase_db()
+
+    # Preference: adjust_calories_for_training (default OFF when unset).
+    try:
+        client = get_supabase().client
+        pref_resp = (
+            client.table("nutrition_preferences")
+            .select("adjust_calories_for_training")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        prefs = (pref_resp.data if pref_resp and pref_resp.data else {}) or {}
+        pref_on = bool(prefs.get("adjust_calories_for_training"))
+    except Exception as e:
+        logger.warning(f"[F4] adjust_calories_for_training lookup failed for {user_id}: {e}")
+
+    # Active energy for the user's local day.
+    try:
+        client = get_supabase().client
+        resp = (
+            client.table("daily_activity")
+            .select("active_calories, source")
+            .eq("user_id", user_id)
+            .eq("activity_date", local_date)
+            .execute()
+        )
+        rows = resp.data or []
+        # De-dupe overlapping sources: largest single active_calories wins
+        # (NOT a sum) so the same workout reported by two providers counts once.
+        best = 0.0
+        for row in rows:
+            try:
+                v = float(row.get("active_calories") or 0)
+            except (TypeError, ValueError):
+                v = 0.0
+            if v > best:
+                best = v
+        # Sanity clamp — reject absurd/negative readings.
+        active = int(max(0.0, min(best, 4000.0)))
+    except Exception as e:
+        logger.warning(f"[F4] active_calories lookup failed for {user_id}: {e}")
+        active = 0
+
+    return active, pref_on
 
 
 async def _recovery_target_adjustment(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/chat_message.dart';
@@ -24,6 +25,7 @@ import 'equipment_match_card.dart';
 import 'event_logged_undo_card.dart';
 import 'share_artifact_card.dart';
 import 'suggested_actions_card.dart';
+import 'recommended_meal_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
@@ -451,6 +453,17 @@ class ChatMessageBubble extends ConsumerWidget {
               mealType: message.loggedMealType,
               calories: message.loggedMealCalories,
             ),
+          // ── F3: recommend-a-meal card ─────────────────────────────────
+          // Backend emits action == 'meal_recommended' with a meal payload +
+          // food_items. Render a rich card with a one-tap "Log this" button
+          // (logs food_items to meal_slot / today). The card resolves the
+          // userId itself and is double-tap guarded.
+          if (!isUser &&
+              message.actionData != null &&
+              message.actionData!['action'] == 'meal_recommended')
+            RecommendedMealCard(
+              actionData: Map<String, dynamic>.from(message.actionData!),
+            ),
           // ── Suggested-action launcher chips ───────────────────────────
           // Tappable shortcuts the coach surfaces (scan a menu, check form,
           // browse workouts…). Rides alongside any result card above, so it
@@ -512,6 +525,18 @@ class ChatMessageBubble extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: ViewRecipeButton(recipe: message.referencedRecipe!),
+            ),
+          // ── F5: view-micros deep-link pill ────────────────────────────
+          // Backend emits action == 'view_micros' (optionally with a
+          // food_log_id) → a pill that pushes the micronutrient detail view.
+          if (!isUser &&
+              message.actionData != null &&
+              message.actionData!['action'] == 'view_micros')
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: _ViewMicrosButton(
+                foodLogId: message.actionData!['food_log_id'] as String?,
+              ),
             ),
           // Timestamp + delivery status (assistant messages also show latency)
           Padding(
@@ -971,6 +996,59 @@ class ChatMessageBubble extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+/// F5 — a pill that pushes the micronutrient detail view from a chat
+/// `view_micros` action.
+class _ViewMicrosButton extends StatelessWidget {
+  final String? foodLogId;
+
+  const _ViewMicrosButton({this.foodLogId});
+
+  @override
+  Widget build(BuildContext context) {
+    const color = Color(0xFF14B8A6); // teal — matches the micros surface
+    final path = foodLogId != null && foodLogId!.isNotEmpty
+        ? '/nutrition/micros?foodLogId=$foodLogId'
+        : '/nutrition/micros';
+    return Semantics(
+      button: true,
+      label: 'View vitamins and minerals',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.selection();
+            context.push(path);
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: color.withValues(alpha: 0.30)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.science_outlined, size: 16, color: color),
+                SizedBox(width: 6),
+                Text(
+                  'Vitamins & minerals',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

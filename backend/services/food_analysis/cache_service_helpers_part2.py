@@ -1151,8 +1151,10 @@ class FoodAnalysisCacheServicePart2:
             Cached analysis result if found, None otherwise
         """
         try:
-            # Normalize and hash
-            normalized = NutritionDB.normalize_food_query(description)
+            # F2 — deterministic cache key. Keep quantity/brand/method/qualifier,
+            # strip filler/word-numbers/emoji/notes so "2 eggs"=="two eggs" but
+            # "2 eggs"!="2 eggs fried".
+            normalized = NutritionDB.normalize_for_cache_key(description)
             query_hash = NutritionDB.hash_query(normalized)
 
             # Check cache
@@ -1180,7 +1182,9 @@ class FoodAnalysisCacheServicePart2:
             True if cached successfully
         """
         try:
-            normalized = NutritionDB.normalize_food_query(description)
+            # F2 — same deterministic key as _try_cache. Stores the PRE-override
+            # AI baseline (override is applied downstream, per-user).
+            normalized = NutritionDB.normalize_for_cache_key(description)
             query_hash = NutritionDB.hash_query(normalized)
             await _food_analysis_cache.set(query_hash, analysis)
             return True
@@ -1200,7 +1204,7 @@ class FoodAnalysisCacheServicePart2:
         Returns:
             SHA256 hash of normalized description
         """
-        normalized = NutritionDB.normalize_food_query(description)
+        normalized = NutritionDB.normalize_for_cache_key(description)
         return NutritionDB.hash_query(normalized)
 
     async def invalidate_cache(self, description: str) -> bool:
@@ -1214,7 +1218,7 @@ class FoodAnalysisCacheServicePart2:
             True if invalidated successfully
         """
         try:
-            normalized = NutritionDB.normalize_food_query(description)
+            normalized = NutritionDB.normalize_for_cache_key(description)
             query_hash = NutritionDB.hash_query(normalized)
 
             await _food_analysis_cache.delete(query_hash)

@@ -38,10 +38,21 @@ class _NutritionSettingsScreenState
   bool _isLoading = false;
   bool _hidePostMealReview = false;
 
+  // Life stage (users table: is_pregnant / is_lactating). Seeded from the
+  // User model on open so the toggles reflect the persisted value across
+  // launches; written on toggle via the auth notifier's profile-update path
+  // (PUT /users/{id}), which also drives micronutrient RDA targets the coach reads.
+  bool _isPregnant = false;
+  bool _isLactating = false;
+
   @override
   void initState() {
     super.initState();
     _loadPostMealReviewPref();
+    // Seed life-stage toggles from the current user (read-back across launches).
+    final user = ref.read(authStateProvider).user;
+    _isPregnant = user?.isPregnant ?? false;
+    _isLactating = user?.isLactating ?? false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userId = ref.read(authStateProvider).user?.id;
       if (userId == null) return;
@@ -492,6 +503,135 @@ class _NutritionSettingsScreenState
 
                   const SizedBox(height: 24),
 
+                  // ── Fasting window. When intermittent fasting is on, the AI
+                  // coach won't suggest meals during the fast (outside the
+                  // eating window). Hours are 0–23 local time.
+                  _buildSectionHeader(
+                    context,
+                    'Fasting Window',
+                    Icons.timer_outlined,
+                    AppColors.teal,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Intermittent fasting',
+                        subtitle:
+                            "Your coach won't suggest meals during your fast.",
+                        value: preferences.intermittentFastingEnabled,
+                        onChanged: (value) => _updatePreference(
+                          userId,
+                          preferences,
+                          intermittentFastingEnabled: value,
+                          // Seed sensible defaults the first time it's enabled
+                          // so the window pickers aren't blank.
+                          eatingWindowStartHour: value
+                              ? (preferences.eatingWindowStartHour ?? 12)
+                              : null,
+                          eatingWindowEndHour: value
+                              ? (preferences.eatingWindowEndHour ?? 20)
+                              : null,
+                        ),
+                        icon: Icons.timer_outlined,
+                        iconColor: AppColors.teal,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      if (preferences.intermittentFastingEnabled) ...[
+                        _buildDivider(isDark),
+                        _buildHourPickerTile(
+                          context,
+                          title: 'Eating window opens',
+                          hour: preferences.eatingWindowStartHour ?? 12,
+                          icon: Icons.wb_sunny_rounded,
+                          iconColor: AppColors.yellow,
+                          textPrimary: textPrimary,
+                          textMuted: textMuted,
+                          elevated: elevated,
+                          onChanged: (h) => _updatePreference(
+                            userId,
+                            preferences,
+                            eatingWindowStartHour: h,
+                          ),
+                        ),
+                        _buildDivider(isDark),
+                        _buildHourPickerTile(
+                          context,
+                          title: 'Eating window closes',
+                          hour: preferences.eatingWindowEndHour ?? 20,
+                          icon: Icons.nightlight_round,
+                          iconColor: AppColors.purple,
+                          textPrimary: textPrimary,
+                          textMuted: textMuted,
+                          elevated: elevated,
+                          onChanged: (h) => _updatePreference(
+                            userId,
+                            preferences,
+                            eatingWindowEndHour: h,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Life stage (users.is_pregnant / is_lactating). Drives
+                  // the coach's micronutrient RDA targets. Written via the
+                  // auth profile-update path, not nutrition prefs.
+                  _buildSectionHeader(
+                    context,
+                    'Life Stage',
+                    Icons.pregnant_woman_rounded,
+                    AppColors.pink,
+                    textPrimary,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSettingsCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    children: [
+                      _buildSwitchTile(
+                        context,
+                        title: 'Pregnant',
+                        subtitle:
+                            'Adjusts your micronutrient targets (folate, iron, iodine, and more).',
+                        value: _isPregnant,
+                        onChanged: (value) =>
+                            _updateLifeStage(isPregnant: value),
+                        icon: Icons.pregnant_woman_rounded,
+                        iconColor: AppColors.pink,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                      _buildDivider(isDark),
+                      _buildSwitchTile(
+                        context,
+                        title: 'Breastfeeding',
+                        subtitle:
+                            'Adjusts your micronutrient targets (folate, iron, iodine, and more).',
+                        value: _isLactating,
+                        onChanged: (value) =>
+                            _updateLifeStage(isLactating: value),
+                        icon: Icons.child_friendly_rounded,
+                        iconColor: AppColors.purple,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
                   // ── 10. Food Library — navigation to Saved Foods & Recipes.
                   _buildSectionHeader(
                     context,
@@ -650,6 +790,10 @@ class _NutritionSettingsScreenState
     bool? sugarTrackingEnabled,
     bool? caffeineTrackingEnabled,
     bool? alcoholTrackingEnabled,
+    // Intermittent fasting — coach suppresses meal suggestions during the fast.
+    bool? intermittentFastingEnabled,
+    int? eatingWindowStartHour,
+    int? eatingWindowEndHour,
   }) async {
     if (userId == null) return;
 
@@ -671,6 +815,9 @@ class _NutritionSettingsScreenState
         sugarTrackingEnabled: sugarTrackingEnabled,
         caffeineTrackingEnabled: caffeineTrackingEnabled,
         alcoholTrackingEnabled: alcoholTrackingEnabled,
+        intermittentFastingEnabled: intermittentFastingEnabled,
+        eatingWindowStartHour: eatingWindowStartHour,
+        eatingWindowEndHour: eatingWindowEndHour,
       );
 
       await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
@@ -695,6 +842,124 @@ class _NutritionSettingsScreenState
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// Persist a life-stage flag (pregnancy / lactation) to the `users` row.
+  /// Reuses the auth notifier's profile-update path — `updateUserProfile`
+  /// optimistically applies locally then PUTs `/users/{id}` (the same call
+  /// the chat coach uses for unit/vacation toggles). The backend reads
+  /// `is_pregnant` / `is_lactating` to raise micronutrient RDA targets.
+  Future<void> _updateLifeStage({
+    bool? isPregnant,
+    bool? isLactating,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (isPregnant != null) updates['is_pregnant'] = isPregnant;
+    if (isLactating != null) updates['is_lactating'] = isLactating;
+    if (updates.isEmpty) return;
+
+    setState(() {
+      if (isPregnant != null) _isPregnant = isPregnant;
+      if (isLactating != null) _isLactating = isLactating;
+    });
+
+    try {
+      await ref.read(authStateProvider.notifier).updateUserProfile(updates);
+      debugPrint('✅ [NutritionSettings] Life stage updated: $updates');
+    } catch (e) {
+      debugPrint('❌ [NutritionSettings] Error updating life stage: $e');
+      if (mounted) {
+        // Roll back the optimistic local switch on failure.
+        setState(() {
+          if (isPregnant != null) _isPregnant = !isPregnant;
+          if (isLactating != null) _isLactating = !isLactating;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving settings: $e'),
+            backgroundColor: AppColors.textMuted,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Format a 0–23 hour as a 12-hour clock label (e.g. 0 → "12 AM",
+  /// 13 → "1 PM"). Used by the eating-window pickers.
+  String _formatHour(int hour) {
+    final h = hour % 24;
+    final period = h < 12 ? 'AM' : 'PM';
+    final display = h % 12 == 0 ? 12 : h % 12;
+    return '$display $period';
+  }
+
+  /// A settings row that exposes a 0–23 local-hour picker via a trailing
+  /// [DropdownButton]. Mirrors [_buildSwitchTile]'s leading icon + title /
+  /// subtitle layout. Used for the intermittent-fasting eating window.
+  Widget _buildHourPickerTile(
+    BuildContext context, {
+    required String title,
+    required int hour,
+    required IconData icon,
+    required Color iconColor,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color elevated,
+    required ValueChanged<int> onChanged,
+  }) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: iconColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iconColor, size: 20),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          color: textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 15,
+        ),
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        decoration: BoxDecoration(
+          color: textPrimary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: DropdownButton<int>(
+          value: hour.clamp(0, 23),
+          underline: const SizedBox.shrink(),
+          isDense: true,
+          dropdownColor: elevated,
+          icon: Icon(Icons.arrow_drop_down, color: textMuted),
+          style: TextStyle(
+            color: textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
+          items: List.generate(
+            24,
+            (h) => DropdownMenuItem<int>(
+              value: h,
+              child: Text(_formatHour(h)),
+            ),
+          ),
+          onChanged: _isLoading
+              ? null
+              : (value) {
+                  if (value == null) return;
+                  HapticService.light();
+                  onChanged(value);
+                },
+        ),
+      ),
+    );
   }
 
   /// Show bottom sheet to edit calorie and macro targets
