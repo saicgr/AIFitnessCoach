@@ -113,13 +113,24 @@ List<RouteBase> _utilityRoutes() => [
         },
       ),
 
-      // Custom Trends builder — pick any two metrics, see overlay + correlation
+      // Custom Trends builder — pick any two metrics, see overlay + correlation.
+      // `extra` accepts either a bare TrendMetric (open on that primary) or a
+      // SavedTrendView (restore the full saved set: primary + overlays + range).
       GoRoute(
         path: '/trends/custom',
-        builder: (context, state) => CustomTrendScreen(
-          initialMetric:
-              state.extra is TrendMetric ? state.extra as TrendMetric : null,
-        ),
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is SavedTrendView) {
+            return CustomTrendScreen(
+              initialMetric: extra.primary,
+              initialOverlays: extra.overlays,
+              initialRange: extra.range,
+            );
+          }
+          return CustomTrendScreen(
+            initialMetric: extra is TrendMetric ? extra : null,
+          );
+        },
       ),
 
       // Glossary

@@ -56,7 +56,20 @@ class CustomTrendScreen extends ConsumerStatefulWidget {
   /// screen opens on the default ([TrendMetric.weight]).
   final TrendMetric? initialMetric;
 
-  const CustomTrendScreen({super.key, this.initialMetric});
+  /// Optional overlays to restore alongside [initialMetric] — set when opening
+  /// a SAVED trend so the full set (primary + overlays + range) is rebuilt,
+  /// not just the bare primary at the default range.
+  final List<TrendMetric>? initialOverlays;
+
+  /// Optional range to restore for a saved trend.
+  final TrendRange? initialRange;
+
+  const CustomTrendScreen({
+    super.key,
+    this.initialMetric,
+    this.initialOverlays,
+    this.initialRange,
+  });
 
   @override
   ConsumerState<CustomTrendScreen> createState() =>
@@ -121,6 +134,18 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   List<_SavedTrend> _saved = const [];
 
+  /// Scroll controller + anchor so a successful save can reveal the SAVED
+  /// TRENDS list (users reported "I saved it but found no way to see it").
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _savedSectionKey = GlobalKey();
+
+  /// True when the currently-built trend (primary + overlays + range) already
+  /// exists in [_saved] — drives the "Saved ✓" state on the save button.
+  bool get _isCurrentSaved => _saved.any((t) =>
+      t.primary == _primary &&
+      t.range == _range &&
+      _listEq(t.overlays, _overlays));
+
   /// CacheFirstView screen key — drives the skeleton-on-true-first-open
   /// behaviour. The chart shows a skeleton ONLY the very first time this
   /// screen is ever opened on the install; every later open renders the
@@ -148,9 +173,30 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   void initState() {
     super.initState();
     _primary = widget.initialMetric ?? TrendMetric.weight;
+    // Restore the FULL saved set when opened from a saved-trend row — overlays
+    // and range, not just the primary (previously the carousel passed only the
+    // primary, so tapping a saved trend silently dropped its overlays/range).
+    if (widget.initialOverlays != null) {
+      _overlays
+        ..clear()
+        ..addAll(
+          widget.initialOverlays!
+              .where((m) => m != _primary)
+              .take(_kMaxOverlays),
+        );
+    }
+    if (widget.initialRange != null) {
+      _range = widget.initialRange!;
+    }
     _loadSaved();
     _resolveFirstEver();
     _loadCyclePhasesPref();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   /// Reads the persisted cycle-phases toggle. When unset (never toggled
@@ -227,7 +273,26 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).customTrendCustomTrendSaved)),
       );
+      // Reveal the SAVED TRENDS list so the user sees where it landed — the
+      // #1 complaint was "I saved it but couldn't find it afterwards".
+      _scrollToSaved();
     }
+  }
+
+  /// Smooth-scroll the SAVED TRENDS section into view (post-save + the header
+  /// "Saved" affordance both call this).
+  void _scrollToSaved() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _savedSectionKey.currentContext;
+      if (ctx != null) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+          alignment: 0.1,
+        );
+      }
+    });
   }
 
   Future<void> _deleteSaved(_SavedTrend t) async {
@@ -252,11 +317,13 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             _header(colors),
             Expanded(
               child: ListView(
+                controller: _scrollController,
                 // Single consistent 16px left/right margin for every section —
                 // cards, section labels, and chip rows all align to it. 12px
                 // inter-card gap on the measurement-detail 8px grid.
@@ -280,12 +347,14 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                   _correlationSection(colors),
                   // ── 7. AI insight ──────────────────────────────────────
                   _aiInsightSection(colors),
-                  const SizedBox(height: 12),
-                  // ── Save + saved list ──────────────────────────────────
-                  _saveButton(colors),
+                  // ── Saved list (the Save action now lives in the pinned
+                  //    footer below so it's never scrolled past) ───────────
                   if (_saved.isNotEmpty) ...[
                     const SizedBox(height: 24),
-                    _sectionLabel(colors, 'SAVED TRENDS'),
+                    KeyedSubtree(
+                      key: _savedSectionKey,
+                      child: _sectionLabel(colors, 'SAVED TRENDS'),
+                    ),
                     const SizedBox(height: 10),
                     for (final t in _saved) _savedRow(colors, t),
                   ],
@@ -297,6 +366,13 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             ),
           ],
         ),
+      ),
+      // Sticky save action — always reachable while scrolling the chart, so the
+      // user never misses it (and it reflects the already-saved state).
+      bottomNavigationBar: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        child: _saveButton(colors),
       ),
     );
   }
@@ -320,6 +396,39 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary)),
+          const Spacer(),
+          // Top-right "Saved" access — jumps to the SAVED TRENDS list so saved
+          // trends are reachable without hunting (only when some exist).
+          if (_saved.isNotEmpty)
+            GestureDetector(
+              onTap: () {
+                HapticService.selection();
+                _scrollToSaved();
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: colors.accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.bookmark_rounded, size: 14, color: colors.accent),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Saved (${_saved.length})',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: colors.accent,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -1542,15 +1651,31 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   // ── Save button + saved rows ────────────────────────────────────────────
 
   Widget _saveButton(ThemeColors colors) {
+    final saved = _isCurrentSaved;
+    // When the current trend is already saved, the button flips to a "Saved"
+    // state and instead reveals the SAVED TRENDS list (so the action is never a
+    // confusing no-op + the user learns where saved trends live).
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: _saveCurrent,
-        icon: const Icon(Icons.bookmark_add_outlined, size: 18),
-        label: Text(AppLocalizations.of(context).customTrendSaveThisTrend),
+        onPressed: saved ? _scrollToSaved : _saveCurrent,
+        icon: Icon(
+          saved ? Icons.bookmark_added_rounded : Icons.bookmark_add_outlined,
+          size: 18,
+        ),
+        label: Text(
+          saved
+              ? 'Saved · view your trends'
+              : AppLocalizations.of(context).customTrendSaveThisTrend,
+        ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: colors.accent,
-          side: BorderSide(color: colors.cardBorder),
+          foregroundColor: saved ? colors.success : colors.accent,
+          backgroundColor:
+              saved ? colors.success.withValues(alpha: 0.08) : null,
+          side: BorderSide(
+              color: saved
+                  ? colors.success.withValues(alpha: 0.5)
+                  : colors.cardBorder),
           padding: const EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

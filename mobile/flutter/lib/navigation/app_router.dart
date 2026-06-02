@@ -112,6 +112,7 @@ import '../screens/settings/cycle_settings_screen.dart';
 import '../screens/measurements/derived_metric_detail_screen.dart';
 import '../screens/trends/custom_trend_screen.dart';
 import '../data/providers/trend_series_provider.dart';
+import '../data/providers/saved_trends_provider.dart';
 import '../screens/glossary/glossary_screen.dart';
 import '../screens/personal_goals/personal_goals_screen.dart';
 import '../screens/paywall/hard_paywall_screen.dart';

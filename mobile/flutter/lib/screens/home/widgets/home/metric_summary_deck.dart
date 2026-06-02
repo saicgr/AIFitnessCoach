@@ -422,7 +422,9 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
               itemBuilder: (_, i) {
                 final t = saved[i];
                 return GestureDetector(
-                  onTap: () => context.push('/trends/custom', extra: t.primary),
+                  // Pass the FULL saved view (primary + overlays + range) so the
+                  // builder restores the exact trend, not just the bare primary.
+                  onTap: () => context.push('/trends/custom', extra: t),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
