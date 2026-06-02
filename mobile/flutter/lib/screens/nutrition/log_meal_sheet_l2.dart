@@ -360,6 +360,10 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final typical = _typicalFoodsForSlot();
     final busy = _isAnalyzing || _describeAnalyzing || _isLoading;
+    // The "Set to X for the time of day" message was removed per user request.
+    // What's left is the useful "your usual <slot>" quick-relog strip — so hide
+    // the whole hint when the user has no usual foods for this slot.
+    if (typical.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
@@ -373,29 +377,6 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(Icons.auto_awesome, size: 13, color: accent),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    'Set to ${predicted.label} for the time of day — tap the meal pill to change.',
-                    style: TextStyle(
-                        fontSize: 11.5, height: 1.3, color: textMuted),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() => _predictedMealSlot = null),
-                  child: Icon(Icons.close, size: 14, color: textMuted),
-                ),
-              ],
-            ),
-            // Typical foods for this slot — only when the user has
-            // history for it (C8 new user → this section is absent).
-            if (typical.isNotEmpty) ...[
-              const SizedBox(height: 8),
               Text(
                 'Your usual ${predicted.label.toLowerCase()}',
                 style: TextStyle(
@@ -444,7 +425,6 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                     ),
                 ],
               ),
-            ],
           ],
         ),
       ),
