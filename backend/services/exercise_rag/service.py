@@ -1183,9 +1183,15 @@ class ExerciseRAGService:
         candidates, seen_exercises = _filter_exercises(require_media=True)
         _stage_counts.append(("after_filter_with_media", len(candidates)))
 
-        # If no candidates with media, try again without media requirement
-        if not candidates:
-            logger.warning(f"No exercises with media found for focus_area={focus_area}, trying without media requirement")
+        # Backfill from no-media exercises whenever we're BELOW the target count
+        # (not only at zero). A media-sparse focus (e.g. bodyweight full_body)
+        # otherwise starved the pool to 2 → "Could only select 2/3". We still
+        # PREFER media-rich; this only tops up the shortfall.
+        if len(candidates) < count:
+            logger.warning(
+                f"Only {len(candidates)}/{count} media-rich candidates for "
+                f"focus_area={focus_area}; backfilling without media requirement"
+            )
             candidates, seen_exercises = _filter_exercises(require_media=False)
             _stage_counts.append(("after_filter_no_media", len(candidates)))
 

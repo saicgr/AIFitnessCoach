@@ -638,6 +638,16 @@ def generate_quick_workout(
     Returns:
         Result dict with the new quick workout details
     """
+    # Input hardening (Fix 4) — never crash on a null / out-of-range arg from
+    # the LLM tool call. Clamp duration to a sane 5–90 min; default type/intensity.
+    try:
+        duration_minutes = int(duration_minutes) if duration_minutes else 15
+    except (TypeError, ValueError):
+        duration_minutes = 15
+    duration_minutes = max(5, min(duration_minutes, 90))
+    workout_type = (workout_type or "full_body").strip() or "full_body"
+    intensity = (intensity or "moderate").strip() or "moderate"
+
     logger.info(f"Tool: Generating quick {duration_minutes}min {workout_type} workout for user {user_id}")
 
     # ── DURABLE AUTO-CAPTURE (D) ──────────────────────────────────────────────
@@ -895,41 +905,65 @@ def generate_quick_workout(
 
         logger.info(f"[Quick Workout] Intensity={intensity_key}, user_level={user_fitness_level}, rag_level={rag_fitness_level}")
 
-        # Use Exercise RAG
-        from services.exercise_rag_service import get_exercise_rag_service
-        exercise_rag = get_exercise_rag_service()
+        # ── FAST, equipment-aware exercise selection ─────────────────────────
+        # The chat "quick workout" must be INSTANT. We deliberately DO NOT touch
+        # ChromaDB here (it was the 30s hang) — instead we run one indexed SQL
+        # query over the exercise library (equipment-aware, so "I want to work
+        # out with a hay bale" works), then a hardcoded injury-safe static set as
+        # the zero-dependency guarantee. Selection can never return success=False
+        # and never blocks on a network round-trip. (RAG personalization stays on
+        # the full plan-generation path where latency is acceptable.)
+        from services import workout_fallback
 
+        floor = min(exercise_count, 3)
+        avoid_set = {n for n in (old_exercise_names or []) if n}
+        rag_exercises: list = []
+
+        # Layer 1 — fast SQL from exercise_library_cleaned (equipment-aware).
         try:
-            rag_exercises = run_async_in_sync(
-                exercise_rag.select_exercises_for_workout(
-                    focus_area=focus_area,
-                    equipment=user_equipment if user_equipment else ["Bodyweight"],
-                    fitness_level=rag_fitness_level,
-                    goals=user_goals if user_goals else ["General Fitness"],
-                    count=exercise_count,
-                    avoid_exercises=old_exercise_names,
-                    injuries=injury_body_parts if injury_body_parts else None,
-                    dumbbell_count=dumbbell_count,
-                    kettlebell_count=kettlebell_count,
-                ),
-                timeout=30
+            rag_exercises = workout_fallback.sql_exercises(
+                db,
+                focus_area=focus_area,
+                fitness_level=rag_fitness_level,
+                count=exercise_count,
+                equipment=user_equipment,
+                injury_parts=injury_body_parts,
+                avoid_names=avoid_set,
             )
-        except Exception as rag_error:
-            logger.error(f"Exercise RAG failed: {rag_error}", exc_info=True)
-            return {
-                "success": False,
-                "action": "generate_quick_workout",
-                "workout_id": workout_id,
-                "message": f"Could not generate workout: {str(rag_error)}"
-            }
+            logger.info(f"[Quick Workout] SQL selected {len(rag_exercises)} exercises (fast path)")
+        except Exception as e:
+            logger.warning(f"[Quick Workout] SQL selection failed ({e}); using static")
+            rag_exercises = []
 
-        if not rag_exercises:
-            return {
-                "success": False,
-                "action": "generate_quick_workout",
-                "workout_id": workout_id,
-                "message": f"Could not find exercises for {workout_type} workout."
-            }
+        # Layer 1b — injury⇄focus collision: if the requested focus is starved by
+        # injury avoidance / niche equipment, broaden to full_body (keep filters).
+        if len(rag_exercises) < floor and focus_area != "full_body":
+            try:
+                broad = workout_fallback.sql_exercises(
+                    db, focus_area="full_body", fitness_level=rag_fitness_level,
+                    count=exercise_count, equipment=user_equipment,
+                    injury_parts=injury_body_parts, avoid_names=avoid_set,
+                )
+                rag_exercises = workout_fallback.merge_unique(rag_exercises, broad)
+                if broad:
+                    logger.info("[Quick Workout] broadened focus→full_body (injury/equipment starvation)")
+            except Exception:
+                pass
+
+        # Layer 2 — static curated bodyweight set (zero external dependency).
+        if len(rag_exercises) < floor:
+            static_ex = workout_fallback.static_bodyweight_exercises(
+                focus_area=focus_area,
+                count=exercise_count,
+                injury_parts=injury_body_parts,
+                avoid_names=avoid_set,
+            )
+            rag_exercises = workout_fallback.merge_unique(rag_exercises, static_ex)
+            logger.info(f"[Quick Workout] static fallback ensured {len(rag_exercises)} exercises")
+
+        # Cap to requested count. The static layer guarantees a non-empty result
+        # for a reasonable request, so there is no success=False path here.
+        rag_exercises = rag_exercises[:exercise_count]
 
         # Get adaptive parameters
         from services.adaptive_workout_service import get_adaptive_workout_service
@@ -1014,14 +1048,27 @@ def generate_quick_workout(
                 "generation_method": "ai_quick_workout",
                 "generation_source": "chat",
             }
-            created_workout = db.create_workout(new_workout_data)
+            # Persist with one retry. Supabase is the same reliable DB the whole
+            # app uses; a failure here means an app-wide outage, so this is the
+            # ONLY remaining non-card path — surface a clear retry, not a silent
+            # apology. Selection NEVER causes success=False (resilient ladder).
+            created_workout = None
+            for _attempt in range(2):
+                try:
+                    created_workout = db.create_workout(new_workout_data)
+                except Exception as ce:
+                    logger.warning(f"[Quick Workout] create_workout attempt {_attempt+1} failed: {ce}")
+                    created_workout = None
+                if created_workout:
+                    break
             if created_workout:
                 final_workout_id = created_workout.get("id")
             else:
                 return {
                     "success": False,
                     "action": "generate_quick_workout",
-                    "message": "Failed to create new workout"
+                    "workout_id": None,
+                    "message": "I built your workout but couldn't save it just now — tap to try again.",
                 }
         else:
             update_data = {
