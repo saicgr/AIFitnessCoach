@@ -799,7 +799,13 @@ class _ActiveHoursCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context).neatDashboardScreenActiveHoursNtoday,
+                // The ARB value carries a double-escaped "\\n" that reaches us
+                // as a literal backslash-n (rendered "Active Hours\nToday").
+                // Convert it to a real newline here so it's locale-safe across
+                // every translation without regenerating the l10n bundle.
+                AppLocalizations.of(context)
+                    .neatDashboardScreenActiveHoursNtoday
+                    .replaceAll(r'\n', '\n'),
                 style: TextStyle(
                   fontSize: 14,
                   color: textSecondary,

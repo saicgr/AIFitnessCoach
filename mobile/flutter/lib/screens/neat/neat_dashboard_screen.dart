@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/neat_provider.dart' as real_neat;
 import '../../data/services/api_client.dart';
+import '../../data/services/health_service.dart' show dailyActivityProvider;
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
@@ -246,10 +247,28 @@ class NeatNotifier extends StateNotifier<NeatState> {
       }
 
       // Calculate totals from hourly data
-      final totalSteps = realState.currentSteps;
+      final backendSteps = realState.currentSteps;
       final activeHours = hourlyActivity.where((h) => h.isActive).length;
       final stepGoal = realState.stepGoal;
-      final neatScoreValue = realState.todayScoreValue;
+      final backendScore = realState.todayScoreValue;
+
+      // Reconcile with on-device Health Connect / HealthKit — the SAME source
+      // the Home "MOVE" card reads. The backend /neat/dashboard row lags the
+      // device→backend activity sync, so this screen showed 0 while Home
+      // correctly showed today's real step count. Prefer the freshest value so
+      // the two surfaces never disagree.
+      final deviceSteps = _ref.read(dailyActivityProvider).today?.steps ?? 0;
+      final totalSteps = deviceSteps > backendSteps ? deviceSteps : backendSteps;
+
+      // When we had to overlay device steps (backend row was stale/empty), the
+      // backend NEAT score is also stale — a "5,090 steps but score 0" reads as
+      // broken. Fall back to a step-goal-completion estimate so the ring is at
+      // least internally consistent; keep the backend score when it's higher.
+      int neatScoreValue = backendScore;
+      if (totalSteps > backendSteps && stepGoal > 0) {
+        final stepPct = (totalSteps / stepGoal * 100).round().clamp(0, 100);
+        if (stepPct > neatScoreValue) neatScoreValue = stepPct;
+      }
 
       final score = NeatScore(
         score: neatScoreValue.clamp(0, 100),
