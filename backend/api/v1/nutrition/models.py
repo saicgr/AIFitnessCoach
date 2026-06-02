@@ -61,6 +61,21 @@ class FoodLogResponse(BaseModel):
     vitamin_a_ug: Optional[float] = None
     vitamin_c_mg: Optional[float] = None
     vitamin_d_iu: Optional[float] = None
+    # Extended micronutrients (food_logs columns exist + persist path stores
+    # them via _extract_micronutrients; surfaced here so the Home nutrition
+    # card's micronutrient grid can render the full set, not just the first 10).
+    vitamin_e_mg: Optional[float] = None
+    vitamin_k_ug: Optional[float] = None
+    vitamin_b6_mg: Optional[float] = None
+    vitamin_b12_ug: Optional[float] = None
+    vitamin_b9_ug: Optional[float] = None
+    magnesium_mg: Optional[float] = None
+    zinc_mg: Optional[float] = None
+    phosphorus_mg: Optional[float] = None
+    selenium_ug: Optional[float] = None
+    copper_mg: Optional[float] = None
+    manganese_mg: Optional[float] = None
+    omega3_g: Optional[float] = None
     created_at: str
 
 

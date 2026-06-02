@@ -52,6 +52,11 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
     final currentProtein = nutritionState.currentProteinTarget;
     final currentCarbs = nutritionState.currentCarbsTarget;
     final currentFat = nutritionState.currentFatTarget;
+    // Never present the 2000/150/200/65 placeholder as if it were a real plan.
+    // When the user hasn't configured targets, show "Not set" so the card reads
+    // honestly (feedback_no_silent_fallbacks).
+    final hasTargets = nutritionState.hasConfiguredTargets;
+    final caloriesDisplay = hasTargets ? '$currentCalories cal' : 'Not set';
 
     // Show loading state
     if (nutritionState.isLoading || fastingState.isLoading) {
@@ -114,7 +119,7 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
             icon: Icons.local_fire_department_outlined,
             iconColor: AppColors.orange,
             label: AppLocalizations.of(context).nutritionFastingCardDailyTarget,
-            value: '$currentCalories cal',
+            value: caloriesDisplay,
             isDark: isDark,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -185,15 +190,17 @@ class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
           ],
           Divider(height: 1, color: cardBorder, indent: 48, endIndent: 16),
 
-          // Macros row
-          _buildMacrosRow(
-            protein: currentProtein,
-            carbs: currentCarbs,
-            fat: currentFat,
-            isDark: isDark,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
-          ),
+          // Macros row — only when the user has real configured targets, so we
+          // never present the 150/200/65 placeholder split as a real plan.
+          if (hasTargets)
+            _buildMacrosRow(
+              protein: currentProtein,
+              carbs: currentCarbs,
+              fat: currentFat,
+              isDark: isDark,
+              textPrimary: textPrimary,
+              textMuted: textMuted,
+            ),
 
           // Allergens (only if set)
           if (prefs?.allergies.isNotEmpty == true) ...[

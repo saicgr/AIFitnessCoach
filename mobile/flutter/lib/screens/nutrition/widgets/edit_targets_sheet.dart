@@ -852,24 +852,43 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible(
-            child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(),
-              child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Title row
+          // ── Pinned header — title + Reset + close, then the goal banner.
+          // These stay fixed while only the form below scrolls, so the user
+          // always sees what they're editing toward and Reset/close are one tap
+          // away (issue #7).
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                AppLocalizations.of(context).editTargetsEditDailyTargets,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).editTargetsEditDailyTargets,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: textPrimary,
+                  ),
                 ),
               ),
+              // Reset moved up beside the close button (was a footer link).
+              TextButton.icon(
+                onPressed: _isSaving ? null : _resetToInitial,
+                icon: Icon(Icons.restart_alt_rounded,
+                    size: 15, color: textMuted),
+                label: Text(
+                  AppLocalizations.of(context).trophyFilterReset,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+              const SizedBox(width: 2),
               IconButton(
                 onPressed: () => Navigator.pop(context),
                 icon: Icon(Icons.close, color: textMuted, size: 20),
@@ -884,7 +903,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           // sheet is framed by what they're working toward.
           _buildGoalBanner(textPrimary, textMuted, accent),
           const SizedBox(height: 8),
-
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           // Baseline-vs-today banner. When today's dynamic target differs
           // from the stored baseline (training/rest/fasting day), tell the
           // user they're editing the BASELINE and what today's adjusted
@@ -1112,38 +1136,15 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           ),
 
           // ── Pinned footer ──────────────────────────────────────────────
-          // Reset + action buttons live OUTSIDE the scroll view so they stay
-          // visible no matter how far the form is scrolled. A hairline rule
+          // Action buttons live OUTSIDE the scroll view so they stay visible no
+          // matter how far the form is scrolled. (Reset moved up to the pinned
+          // header beside the close button — issue #7.) A hairline rule
           // separates them from the scrolling content above.
           Container(
             height: 1,
-            margin: const EdgeInsets.only(top: 4),
+            margin: const EdgeInsets.only(top: 4, bottom: 8),
             color: textMuted.withValues(alpha: 0.12),
           ),
-          // B10: Reset link — reverts the four macro fields + rate + preset
-          // to the values present when the sheet opened.
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: _isSaving ? null : _resetToInitial,
-              icon: Icon(Icons.restart_alt_rounded, size: 14, color: textMuted),
-              label: Text(
-                AppLocalizations.of(context).trophyFilterReset,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
 
           // Action buttons
           Row(

@@ -85,6 +85,32 @@ class FoodLog {
   final double? vitaminCMg;
   @JsonKey(name: 'vitamin_d_iu')
   final double? vitaminDIu;
+  // Extended micronutrients (food_logs columns + backend serialization added so
+  // the Home nutrition micronutrient grid can show the full set).
+  @JsonKey(name: 'vitamin_e_mg')
+  final double? vitaminEMg;
+  @JsonKey(name: 'vitamin_k_ug')
+  final double? vitaminKUg;
+  @JsonKey(name: 'vitamin_b6_mg')
+  final double? vitaminB6Mg;
+  @JsonKey(name: 'vitamin_b12_ug')
+  final double? vitaminB12Ug;
+  @JsonKey(name: 'vitamin_b9_ug')
+  final double? vitaminB9Ug;
+  @JsonKey(name: 'magnesium_mg')
+  final double? magnesiumMg;
+  @JsonKey(name: 'zinc_mg')
+  final double? zincMg;
+  @JsonKey(name: 'phosphorus_mg')
+  final double? phosphorusMg;
+  @JsonKey(name: 'selenium_ug')
+  final double? seleniumUg;
+  @JsonKey(name: 'copper_mg')
+  final double? copperMg;
+  @JsonKey(name: 'manganese_mg')
+  final double? manganeseMg;
+  @JsonKey(name: 'omega3_g')
+  final double? omega3G;
   @JsonKey(name: 'inflammation_score')
   final int? inflammationScore;
   @JsonKey(name: 'is_ultra_processed')
@@ -139,6 +165,18 @@ class FoodLog {
     this.vitaminAUg,
     this.vitaminCMg,
     this.vitaminDIu,
+    this.vitaminEMg,
+    this.vitaminKUg,
+    this.vitaminB6Mg,
+    this.vitaminB12Ug,
+    this.vitaminB9Ug,
+    this.magnesiumMg,
+    this.zincMg,
+    this.phosphorusMg,
+    this.seleniumUg,
+    this.copperMg,
+    this.manganeseMg,
+    this.omega3G,
     this.inflammationScore,
     this.isUltraProcessed,
     this.glycemicLoad,

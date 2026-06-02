@@ -166,10 +166,18 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     showGlassSheet(
       context: context,
       builder: (_) => GlassSheet(
+        // Taller sheet (0.92 vs the 0.9 default) so the daily-targets form fits
+        // with minimal scrolling now that the header + footer are pinned.
+        maxHeightFraction: 0.92,
         child: EditTargetsSheet(
           userId: userId,
-          onSaved: () =>
-              ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
+          // forceRefresh so a save/recalc that persisted server-side always
+          // re-pulls the confirmed targets — the default initialize() is
+          // blocked by the once-per-session skip-guard and would leave Home /
+          // Profile showing the stale 2000/150/200/65 fallback.
+          onSaved: () => ref
+              .read(nutritionPreferencesProvider.notifier)
+              .initialize(userId, forceRefresh: true),
         ),
       ),
     ).whenComplete(() {
@@ -311,7 +319,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                     // empty space inside a scroll view.
                     _carousel(
                       embedded: widget.embedded,
-                      child: PageView(
+                      // Isolate the carousel's paint: the ring/pill entrance
+                      // animations + page swipes repaint frequently, and a
+                      // RepaintBoundary keeps that off the rest of the Home feed
+                      // (perf pass, issue #14).
+                      child: RepaintBoundary(
+                        child: PageView(
                         controller: _pageController,
                         onPageChanged: (_) => HapticService.selection(),
                         children: [
@@ -361,7 +374,20 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                             isDark: isDark,
                             tiles: _microPage3(micros, waterConsumedMl, waterGoalMl),
                           ),
+                          // Page 4 — extended minerals + vitamins
+                          _MicroGridPage(
+                            entrance: _entrance,
+                            isDark: isDark,
+                            tiles: _microPage4(micros),
+                          ),
+                          // Page 5 — trace minerals + remaining vitamins
+                          _MicroGridPage(
+                            entrance: _entrance,
+                            isDark: isDark,
+                            tiles: _microPage5(micros),
+                          ),
                         ],
+                        ),
                       ),
                     ),
 
@@ -489,6 +515,28 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
         _MicroSpec('Sat. Fat', m.saturatedFatG, 20, 'g', '🧀', const Color(0xFFCF5F4A), 0),
         _MicroSpec('Hydration', waterMl / 1000.0,
             (waterGoalMl / 1000.0), 'L', '💧', const Color(0xFF3F7FA3), 1),
+      ];
+
+  // Page 4 + 5 — the extended micronutrient set now persisted on food_logs and
+  // surfaced by the daily-summary serialization. Goals are FDA Daily Values
+  // (Omega-3 uses the 1.6 g adequate-intake reference). Decimals chosen per
+  // unit magnitude so small µg values (B12) don't round to 0.
+  List<_MicroSpec> _microPage4(_MicroTotals m) => [
+        _MicroSpec('Magnesium', m.magnesiumMg, 420, 'mg', '🪨', const Color(0xFF5F8F6B), 0),
+        _MicroSpec('Zinc', m.zincMg, 11, 'mg', '⚙️', const Color(0xFF7A8CA3), 0),
+        _MicroSpec('Vitamin B12', m.vitaminB12Ug, 2.4, 'µg', '🐟', const Color(0xFFB5604A), 1),
+        _MicroSpec('Folate', m.vitaminB9Ug, 400, 'µg', '🥬', const Color(0xFF4F9E5A), 0),
+        _MicroSpec('Vitamin E', m.vitaminEMg, 15, 'mg', '🥜', const Color(0xFFC7902A), 1),
+        _MicroSpec('Omega-3', m.omega3G, 1.6, 'g', '🐠', const Color(0xFF3F8FA3), 1),
+      ];
+
+  List<_MicroSpec> _microPage5(_MicroTotals m) => [
+        _MicroSpec('Vitamin K', m.vitaminKUg, 120, 'µg', '🥦', const Color(0xFF3F8F5F), 0),
+        _MicroSpec('Vitamin B6', m.vitaminB6Mg, 1.7, 'mg', '🍗', const Color(0xFFB07A4A), 1),
+        _MicroSpec('Phosphorus', m.phosphorusMg, 1250, 'mg', '🦴', const Color(0xFF8A8FA8), 0),
+        _MicroSpec('Selenium', m.seleniumUg, 55, 'µg', '🌰', const Color(0xFF9A6F3A), 0),
+        _MicroSpec('Copper', m.copperMg, 0.9, 'mg', '🟫', const Color(0xFFB5733A), 1),
+        _MicroSpec('Manganese', m.manganeseMg, 2.3, 'mg', '🧱', const Color(0xFF9A5F4A), 1),
       ];
 }
 
@@ -1291,6 +1339,11 @@ class _CalorieRingPainter extends CustomPainter {
 class _MicroTotals {
   final double fiberG, sugarG, sodiumMg, potassiumMg, cholesterolMg, calciumMg;
   final double ironMg, vitaminCMg, vitaminAUg, vitaminDIu, saturatedFatG;
+  // Extended micronutrients (mirrors the food_logs columns now surfaced by the
+  // daily-summary serialization).
+  final double vitaminEMg, vitaminKUg, vitaminB6Mg, vitaminB12Ug, vitaminB9Ug;
+  final double magnesiumMg, zincMg, phosphorusMg, seleniumUg, copperMg;
+  final double manganeseMg, omega3G;
 
   const _MicroTotals({
     required this.fiberG,
@@ -1304,11 +1357,25 @@ class _MicroTotals {
     required this.vitaminAUg,
     required this.vitaminDIu,
     required this.saturatedFatG,
+    required this.vitaminEMg,
+    required this.vitaminKUg,
+    required this.vitaminB6Mg,
+    required this.vitaminB12Ug,
+    required this.vitaminB9Ug,
+    required this.magnesiumMg,
+    required this.zincMg,
+    required this.phosphorusMg,
+    required this.seleniumUg,
+    required this.copperMg,
+    required this.manganeseMg,
+    required this.omega3G,
   });
 
   factory _MicroTotals.fromMeals(List<FoodLog> meals) {
     double fiber = 0, sugar = 0, sodium = 0, potassium = 0, chol = 0, calcium = 0;
     double iron = 0, vitC = 0, vitA = 0, vitD = 0, satFat = 0;
+    double vitE = 0, vitK = 0, b6 = 0, b12 = 0, b9 = 0;
+    double mag = 0, zinc = 0, phos = 0, sel = 0, copper = 0, mang = 0, omega3 = 0;
     for (final m in meals) {
       fiber += m.fiberG ?? 0;
       sugar += m.sugarG ?? 0;
@@ -1321,6 +1388,18 @@ class _MicroTotals {
       vitA += m.vitaminAUg ?? 0;
       vitD += m.vitaminDIu ?? 0;
       satFat += m.saturatedFatG ?? 0;
+      vitE += m.vitaminEMg ?? 0;
+      vitK += m.vitaminKUg ?? 0;
+      b6 += m.vitaminB6Mg ?? 0;
+      b12 += m.vitaminB12Ug ?? 0;
+      b9 += m.vitaminB9Ug ?? 0;
+      mag += m.magnesiumMg ?? 0;
+      zinc += m.zincMg ?? 0;
+      phos += m.phosphorusMg ?? 0;
+      sel += m.seleniumUg ?? 0;
+      copper += m.copperMg ?? 0;
+      mang += m.manganeseMg ?? 0;
+      omega3 += m.omega3G ?? 0;
     }
     return _MicroTotals(
       fiberG: fiber,
@@ -1334,6 +1413,18 @@ class _MicroTotals {
       vitaminAUg: vitA,
       vitaminDIu: vitD,
       saturatedFatG: satFat,
+      vitaminEMg: vitE,
+      vitaminKUg: vitK,
+      vitaminB6Mg: b6,
+      vitaminB12Ug: b12,
+      vitaminB9Ug: b9,
+      magnesiumMg: mag,
+      zincMg: zinc,
+      phosphorusMg: phos,
+      seleniumUg: sel,
+      copperMg: copper,
+      manganeseMg: mang,
+      omega3G: omega3,
     );
   }
 }

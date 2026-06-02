@@ -655,11 +655,22 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     try {
       debugPrint('🔄 [NutritionPrefsProvider] Recalculating targets');
       final preferences = await _repository.recalculateTargets(userId);
-      final dynamicTargets =
-          await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
+      // The recalc PUT has already persisted the new baseline server-side. The
+      // dynamic-targets GET is a SECONDARY enrichment — if it fails we must NOT
+      // discard the freshly-recalculated `preferences` (that was the 2000-vs-
+      // 1500 bug: a throwing getDynamicTargets sent us to catch{} and the new
+      // baseline never reached state, so Home/Profile kept the stale fallback).
+      DynamicNutritionTargets? dynamicTargets;
+      try {
+        dynamicTargets =
+            await _repository.getDynamicTargets(userId: userId, date: DateTime.now());
+      } catch (e) {
+        debugPrint(
+            '⚠️ [NutritionPrefsProvider] Dynamic refresh failed after recalc: $e (keeping baseline)');
+      }
       state = state.copyWith(
         preferences: preferences,
-        dynamicTargets: dynamicTargets,
+        dynamicTargets: dynamicTargets ?? state.dynamicTargets,
         isLoading: false,
       );
       _nutritionPrefsInMemoryCache = state;

@@ -184,6 +184,18 @@ async def get_daily_summary(
                 vitamin_a_ug=log.get("vitamin_a_ug"),
                 vitamin_c_mg=log.get("vitamin_c_mg"),
                 vitamin_d_iu=log.get("vitamin_d_iu"),
+                vitamin_e_mg=log.get("vitamin_e_mg"),
+                vitamin_k_ug=log.get("vitamin_k_ug"),
+                vitamin_b6_mg=log.get("vitamin_b6_mg"),
+                vitamin_b12_ug=log.get("vitamin_b12_ug"),
+                vitamin_b9_ug=log.get("vitamin_b9_ug"),
+                magnesium_mg=log.get("magnesium_mg"),
+                zinc_mg=log.get("zinc_mg"),
+                phosphorus_mg=log.get("phosphorus_mg"),
+                selenium_ug=log.get("selenium_ug"),
+                copper_mg=log.get("copper_mg"),
+                manganese_mg=log.get("manganese_mg"),
+                omega3_g=log.get("omega3_g"),
                 created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
             ))
 
