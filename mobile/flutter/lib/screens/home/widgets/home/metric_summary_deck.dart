@@ -51,10 +51,11 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     final c = ThemeColors.of(context);
     final visible = ref.watch(ringVisibilityProvider);
 
-    // Summary = Today ring + first 4 enabled tiles. More = the remainder,
-    // chunked into pages of 6 → a clean 3 rows × 2 columns grid per page.
-    final summaryTiles = visible.take(4).toList();
-    final moreTiles = visible.length > 4 ? visible.sublist(4) : <RingKind>[];
+    // Summary = Today ring (col 1) + first 3 enabled tiles stacked in a single
+    // column (col 2), Google-Health style. More = the remainder, chunked into
+    // pages of 6 → a clean 3 rows × 2 columns grid per page.
+    final summaryTiles = visible.take(3).toList();
+    final moreTiles = visible.length > 3 ? visible.sublist(3) : <RingKind>[];
     final moreChunks = <List<RingKind>>[];
     for (var i = 0; i < moreTiles.length; i += 6) {
       moreChunks.add(
@@ -104,10 +105,10 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
       padding: kHomeHPad,
       child: SizedBox(
         // ALL pages share this one height so the deck reads at a constant size
-        // as you swipe. Page 1 is now ring-LEFT + a 2×2 grid on the RIGHT
-        // (vertically centered); page 2 is a 3×2 grid. Inner height = 240 − 12
-        // top − 38 bottom (footer) = 190, which fits the centered page-1 row
-        // (~121) and the page-2 grid (3×56 + 2×9 = 186) alike.
+        // as you swipe. Page 1 is a big ring-LEFT + a single vertical column of
+        // 3 tiles on the RIGHT (Google-Health style); page 2 is a 3×2 grid.
+        // Inner height = 240 − 12 top − 38 bottom (footer) = 190, which fits the
+        // page-1 tile column (3×56 + 2×9 = 186) and the page-2 grid alike.
         height: 240,
         child: Stack(
           children: [
@@ -250,15 +251,19 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         ),
     ];
 
-    // Ring on the LEFT, the 4 metric tiles as a 2×2 grid on the RIGHT (was a
-    // ring stacked ON TOP of the grid). The row is vertically centered in the
-    // shared-height card so slides 2 & 3 read at the exact same height.
+    // Big score ring on the LEFT (col 1); the metric tiles stacked in a SINGLE
+    // column on the RIGHT (col 2 = N rows × 1 column), Google-Health style. The
+    // row is vertically centered in the shared-height card so slides 2 & 3 read
+    // at the exact same height. The ring already encodes all four pillars, so a
+    // tighter 3-up stack reads cleaner than the old 2×2 grid; overflow metrics
+    // (incl. Sleep when it's the 4th) live on the next swipe page.
+    const double tileHeight = 56;
+    const double tileGap = 9; // 3×56 + 2×9 = 186 ≤ 190 inner height
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 38),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 38),
       child: Center(
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Score ring (left). Tapping opens the stats breakdown (#15).
@@ -266,8 +271,8 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
               behavior: HitTestBehavior.opaque,
               onTap: () => context.push('/stats'),
               child: SegmentedScoreRing(
-                size: 88,
-                strokeWidth: 9,
+                size: 116,
+                strokeWidth: 11,
                 segments: segments,
                 center: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -275,19 +280,19 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
                     Text(
                       '${score.score}',
                       style: TextStyle(
-                        fontSize: 28,
+                        fontSize: 36,
                         height: 1,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: -1,
+                        letterSpacing: -1.2,
                         color: c.textPrimary,
                       ),
                     ),
                     Text(
                       'TODAY',
                       style: TextStyle(
-                        fontSize: 8,
+                        fontSize: 9,
                         fontWeight: FontWeight.w800,
-                        letterSpacing: 0.6,
+                        letterSpacing: 0.7,
                         color: c.textMuted,
                       ),
                     ),
@@ -295,26 +300,24 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
                 ),
               ),
             ),
-            const SizedBox(width: 14),
-            // 4 tiles in a 2×2 grid on the right — same compact tile delegate as
-            // page 2 so the shapes stay consistent across the deck.
+            const SizedBox(width: 16),
+            // Tiles stacked vertically (1 column) on the right — same compact
+            // tile as page 2 so the shapes stay consistent across the deck.
             Expanded(
-              child: GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 9,
-                  crossAxisSpacing: 9,
-                  mainAxisExtent: 56,
-                ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  for (final kind in tiles)
-                    MetricTile(
-                      key: ValueKey('tile_${kind.id}'),
-                      kind: kind,
-                      compact: true,
+                  for (var i = 0; i < tiles.length; i++) ...[
+                    if (i > 0) const SizedBox(height: tileGap),
+                    SizedBox(
+                      height: tileHeight,
+                      child: MetricTile(
+                        key: ValueKey('tile_${tiles[i].id}'),
+                        kind: tiles[i],
+                        compact: true,
+                      ),
                     ),
+                  ],
                 ],
               ),
             ),
