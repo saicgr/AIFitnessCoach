@@ -46,6 +46,10 @@ import '../../../l10n/generated/app_localizations.dart';
 /// makes a disk round-trip safe here. `ScoresOverview` is intentionally NOT
 /// cached: that model has no `toJson`, so it can only be skeletonised.
 class _OverviewDiskCache with CacheFirstMixin {
+  // Plain disk-cache helper (no lifecycle) — always "mounted".
+  @override
+  bool get mounted => true;
+
   /// Bump when the cached model shapes change so stale blobs are dropped.
   static const int _schemaVersion = 1;
 

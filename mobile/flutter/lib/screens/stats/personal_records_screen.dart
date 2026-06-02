@@ -45,6 +45,10 @@ enum _SortMode { name, oneRm, recentPr }
 /// itself is out of scope, so the disk warm is driven from the screen's
 /// `State` via [CacheFirstMixin].
 class _PrDiskCache with CacheFirstMixin {
+  // Plain disk-cache helper (no lifecycle) — always "mounted".
+  @override
+  bool get mounted => true;
+
   /// Bump when [PRStats]'s JSON shape changes so stale blobs are dropped.
   static const int _schemaVersion = 1;
 

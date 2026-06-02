@@ -95,10 +95,18 @@ const String _kKeyPrefix = 'cachefirst';
 /// classes / `ChangeNotifier`s that expose a compatible `mounted` — but the
 /// common case is a `StateNotifier`.
 mixin CacheFirstMixin {
-  /// Whether the host object is still alive. `StateNotifier` provides this;
-  /// classes without it should override. Defaults to `true` so a host that
-  /// genuinely has no lifecycle still works.
-  bool get mounted => true;
+  /// Whether the host object is still alive — guards every `emit`/`onError` so
+  /// we never write `state` into a disposed notifier.
+  ///
+  /// ABSTRACT on purpose. A previous default (`=> true`) silently SHADOWED
+  /// `StateNotifier.mounted` due to mixin linearization (the mixin is applied
+  /// ON TOP of the superclass), so the guards were always-true and an async
+  /// fetch completing after the screen closed threw "Tried to use <Notifier>
+  /// after dispose". Leaving it abstract lets the superclass's real `mounted`
+  /// (StateNotifier's) satisfy it, so the guards actually work. Plain
+  /// (non-StateNotifier) hosts that genuinely have no lifecycle must implement
+  /// `bool get mounted => true;` themselves.
+  bool get mounted;
 
   /// Load [cacheKey] cache-first.
   ///

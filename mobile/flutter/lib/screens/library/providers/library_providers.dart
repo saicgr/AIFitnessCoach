@@ -46,7 +46,11 @@ const String _filterOptionsCacheUser = '';
 /// not a `StateNotifier`) can still reuse the shared 24h-TTL, versioned
 /// disk-cache machinery instead of hand-rolling a SharedPreferences envelope.
 /// `mounted` is always true — a top-level provider has no lifecycle.
-class _FilterOptionsDiskCache with CacheFirstMixin {}
+class _FilterOptionsDiskCache with CacheFirstMixin {
+  // Plain disk-cache helper (no lifecycle) — always "mounted".
+  @override
+  bool get mounted => true;
+}
 
 final _filterOptionsDiskCache = _FilterOptionsDiskCache();
 
