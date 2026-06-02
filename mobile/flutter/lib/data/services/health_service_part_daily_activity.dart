@@ -447,18 +447,13 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       // getActivitySummary(days: 1) summed a rolling 24h window, inflating
       // "today's" calories with up to a day of prior activity).
       final activeEnergy = await _healthService.getTodayActiveEnergy();
-      final heartRateData = await _healthService.getHeartRateData(days: 1);
       final sleepData = await _healthService.getSleepData(days: 1);
       final vitalsData = await _healthService.getTodayVitals();
 
-      // Get resting heart rate if available
-      int? restingHR;
-      for (final point in heartRateData) {
-        if (point.type == HealthDataType.RESTING_HEART_RATE) {
-          restingHR = (point.value as NumericHealthValue).numericValue.toInt();
-          break;
-        }
-      }
+      // Resting HR now comes from getTodayVitals (midnight→now), the SAME
+      // calendar-day window as steps/calories — the old getHeartRateData(days:1)
+      // was a rolling 24h window that could surface yesterday's resting HR.
+      final restingHR = vitalsData['restingHeartRate'] as int?;
 
       final today = DailyActivity(
         steps: steps,

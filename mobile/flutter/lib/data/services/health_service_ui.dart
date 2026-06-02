@@ -418,6 +418,7 @@ extension HealthServiceExt on HealthService {
 
       final types = _getAvailableTypes([
         HealthDataType.HEART_RATE,
+        HealthDataType.RESTING_HEART_RATE,
         HealthDataType.WATER,
       ]);
 
@@ -433,6 +434,7 @@ extension HealthServiceExt on HealthService {
       int heartRateCount = 0;
       int maxHeartRate = 0;
       int? minHeartRate;
+      int? restingHeartRate; // today's resting HR (most recent reading)
       double waterMl = 0;
 
       for (final point in uniqueData) {
@@ -444,6 +446,11 @@ extension HealthServiceExt on HealthService {
             heartRateCount++;
             if (v > maxHeartRate) maxHeartRate = v;
             if (minHeartRate == null || v < minHeartRate) minHeartRate = v;
+            break;
+          case HealthDataType.RESTING_HEART_RATE:
+            // removeDuplicates keeps these time-ordered; last one wins so we
+            // surface today's most recent resting-HR reading.
+            restingHeartRate = value.toInt();
             break;
           case HealthDataType.WATER:
             waterMl += value;
@@ -457,6 +464,7 @@ extension HealthServiceExt on HealthService {
         'avgHeartRate': heartRateCount > 0 ? heartRateSum ~/ heartRateCount : null,
         'maxHeartRate': maxHeartRate > 0 ? maxHeartRate : null,
         'minHeartRate': minHeartRate,
+        'restingHeartRate': restingHeartRate,
         'waterMl': waterMl > 0 ? waterMl.toInt() : null,
       };
     } catch (e) {
