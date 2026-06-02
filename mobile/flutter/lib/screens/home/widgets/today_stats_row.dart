@@ -8,6 +8,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/habit_provider.dart';
 import '../../../data/providers/recovery_provider.dart';
+import '../../../data/providers/training_load_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -36,6 +37,7 @@ class TodayStatsRow extends ConsumerWidget {
     if (pills.showSleep) pillWidgets.add(const _SleepPill(key: ValueKey('sleep_pill')));
     if (pills.showStreak) pillWidgets.add(const _StreakPill(key: ValueKey('streak_pill')));
     if (pills.showHabits) pillWidgets.add(const _HabitsPill(key: ValueKey('habits_pill')));
+    if (pills.showCardioLoad) pillWidgets.add(const _CardioLoadPill(key: ValueKey('cardio_load_pill')));
 
     if (pillWidgets.isEmpty) return const SizedBox.shrink();
 
@@ -564,6 +566,64 @@ class _HabitsPill extends ConsumerWidget {
                 : (completed > 0
                     ? const Color(0xFF10B981).withValues(alpha: 0.6)
                     : Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Pill 8 - Cardio training load (ACWR) — Gap 3
+// =============================================================================
+
+class _CardioLoadPill extends ConsumerWidget {
+  const _CardioLoadPill({super.key});
+
+  static const _color = Color(0xFFEF4444);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loadAsync = ref.watch(trainingLoadProvider);
+    final load = loadAsync.valueOrNull;
+
+    // No data / still loading → dashes (never invent a state).
+    final bool hasState = load != null && !load.isCalibrating;
+    final String value;
+    if (load == null) {
+      value = '--';
+    } else if (load.isCalibrating) {
+      value = 'Cal';
+    } else {
+      // Acute load is the at-a-glance number; the icon color carries the state.
+      value = load.acuteLoad >= 1
+          ? load.acuteLoad.round().toString()
+          : '--';
+    }
+
+    final color = load?.state == 'overreaching'
+        ? _color
+        : (hasState ? const Color(0xFF22C55E) : null);
+
+    return _StatPillContainer(
+      onTap: () {
+        HapticService.light();
+        context.push('/health/combined');
+      },
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatNumber(
+            value: value,
+            size: StatType.compact,
+            color: color ?? Theme.of(context).colorScheme.onSurface,
+            alignment: Alignment.center,
+          ),
+          const SizedBox(height: 4),
+          Icon(
+            Icons.monitor_heart_outlined,
+            size: 14,
+            color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],
       ),

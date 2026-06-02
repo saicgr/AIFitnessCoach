@@ -20,6 +20,7 @@ class TrackingPillsState {
   final bool showSleep;
   final bool showStreak;
   final bool showHabits;
+  final bool showCardioLoad; // Gap 3 — training-load (ACWR) state pill
   final bool isLoaded;
 
   const TrackingPillsState({
@@ -32,6 +33,7 @@ class TrackingPillsState {
     this.showSleep = false,
     this.showStreak = false,
     this.showHabits = false,
+    this.showCardioLoad = false,
     this.isLoaded = false,
   });
 
@@ -45,6 +47,7 @@ class TrackingPillsState {
     bool? showSleep,
     bool? showStreak,
     bool? showHabits,
+    bool? showCardioLoad,
     bool? isLoaded,
   }) {
     return TrackingPillsState(
@@ -57,6 +60,7 @@ class TrackingPillsState {
       showSleep: showSleep ?? this.showSleep,
       showStreak: showStreak ?? this.showStreak,
       showHabits: showHabits ?? this.showHabits,
+      showCardioLoad: showCardioLoad ?? this.showCardioLoad,
       isLoaded: isLoaded ?? this.isLoaded,
     );
   }
@@ -68,7 +72,8 @@ class TrackingPillsState {
       (showSteps ? 1 : 0) +
       (showSleep ? 1 : 0) +
       (showStreak ? 1 : 0) +
-      (showHabits ? 1 : 0);
+      (showHabits ? 1 : 0) +
+      (showCardioLoad ? 1 : 0);
 }
 
 class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
@@ -90,6 +95,7 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       showSleep: prefs.getBool('${_prefix}sleep') ?? false,
       showStreak: prefs.getBool('${_prefix}streak') ?? true,
       showHabits: prefs.getBool('${_prefix}habits') ?? false,
+      showCardioLoad: prefs.getBool('${_prefix}cardio_load') ?? false,
       isLoaded: true,
     );
   }
@@ -125,12 +131,15 @@ class TrackingPillsNotifier extends StateNotifier<TrackingPillsState> {
       case 'habits':
         state = state.copyWith(showHabits: value);
         break;
+      case 'cardio_load':
+        state = state.copyWith(showCardioLoad: value);
+        break;
     }
   }
 
   Future<void> resetToDefaults() async {
     final prefs = await SharedPreferences.getInstance();
-    for (final key in ['goals', 'calories', 'water', 'nutrition', 'burned', 'steps', 'sleep', 'streak', 'habits']) {
+    for (final key in ['goals', 'calories', 'water', 'nutrition', 'burned', 'steps', 'sleep', 'streak', 'habits', 'cardio_load']) {
       await prefs.remove('$_prefix$key');
     }
     state = const TrackingPillsState(isLoaded: true);
@@ -213,6 +222,17 @@ class EditTrackingSheet extends ConsumerWidget {
         icon: Icons.check_circle_outline,
         color: const Color(0xFF10B981),
         enabled: pillsState.showHabits,
+      ),
+      // Gap 3 — cardio training-load (ACWR) state. Plain strings (no ARB key)
+      // to avoid multi-locale churn for a new optional pill; no apostrophes
+      // (Android strings.xml aapt2 trap).
+      _PillOption(
+        key: 'cardio_load',
+        title: 'Cardio load',
+        subtitle: 'Training load and recovery balance',
+        icon: Icons.monitor_heart_outlined,
+        color: const Color(0xFFEF4444),
+        enabled: pillsState.showCardioLoad,
       ),
     ];
 

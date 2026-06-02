@@ -55,6 +55,8 @@ import 'breakfast_suggestion_provider.dart';
 import 'daily_coach_insight_provider.dart';
 import 'nudge_snooze_provider.dart';
 import 'today_workout_provider.dart';
+import 'training_load_provider.dart';
+import 'usual_meal_provider.dart';
 import 'nudge_packs/phase_bcde_nudges.dart';
 import 'nudge_packs/phase_fghij_nudges.dart';
 import 'nudge_packs/phase_klmno_nudges.dart';
@@ -448,6 +450,74 @@ final contextualNudgeProvider =
     ));
   }
 
+  // ------------------------------------------------------------------
+  // Gap 10 — ACWR load-spike nudge. The server already computes the
+  // overreaching state (acute load running hot vs the user's chronic
+  // baseline); surface it proactively with an active-recovery suggestion.
+  // Self-guarded: a trainingLoadProvider error/null simply skips it. The
+  // injury×load cross-reference is handled server-side in the coach's
+  // holistic context (Gap 17); here we keep it a clean load signal.
+  // ------------------------------------------------------------------
+  try {
+    final load = ref.watch(trainingLoadProvider).valueOrNull;
+    if (load != null &&
+        load.state == 'overreaching' &&
+        !workoutCompleted &&
+        hourFraction < 20) {
+      out.add(ContextualNudge(
+        id: NudgeId.loadSpike,
+        icon: '📈',
+        title: 'Training load is spiking',
+        body: 'Your recent load is running hot. Make today active recovery — '
+            'mobility or an easy walk, not intervals.',
+        ctaLabel: 'See load',
+        action: const ContextualNudgeAction(
+          kind: ContextualNudgeActionKind.navigateRoute,
+          args: {'route': '/health/combined'},
+        ),
+        priorityTier: NudgePriorityTier.healthAlert,
+        category: NudgeCategory.healthAlert,
+        perishesAt: DateTime(now.year, now.month, now.day, 20),
+        dedupKey: 'load_spike_${load.acuteLoad.round()}',
+      ));
+    }
+  } catch (_) {/* training load not ready */}
+
+  // ------------------------------------------------------------------
+  // Gap 12 — peri-workout nutrition timing.
+  //   (a) Pre-workout fuel: a planned-but-not-done workout earlier in the
+  //       day → a light-fuel reminder (genuinely missing before).
+  //   (b) Post-workout refuel: the F3.17 protein nudge fires unconditionally
+  //       in its pack; gate it to the REAL post-workout window so it only
+  //       shows when it's actually relevant (augment, don't duplicate).
+  // ------------------------------------------------------------------
+  final hasWorkoutToday = todayWorkout?.hasWorkoutToday ?? false;
+  if (hasWorkoutToday &&
+      !workoutCompleted &&
+      hourFraction >= 6 &&
+      hourFraction < 18) {
+    out.add(ContextualNudge(
+      id: NudgeId.preWorkoutFuel,
+      icon: '🍌',
+      title: 'Fuel before you train',
+      body: 'Workout still ahead today — a light carb + protein snack '
+          '60-90 min before keeps your energy up.',
+      ctaLabel: 'Log a snack',
+      action: const ContextualNudgeAction(
+        kind: ContextualNudgeActionKind.navigateRoute,
+        args: {'route': '/nutrition'},
+      ),
+      priorityTier: NudgePriorityTier.timeSensitive,
+      category: NudgeCategory.timeSensitive,
+      perishesAt: DateTime(now.year, now.month, now.day, 18),
+      dedupKey: 'pre_workout_fuel',
+    ));
+  }
+  // Gate the pack's always-on post-workout protein nudge to the real window.
+  if (!inPostWorkoutWindow) {
+    out.removeWhere((n) => n.id == NudgeId.postWorkoutProtein);
+  }
+
   // Filter snoozed entries last so an upstream state change (e.g. user
   // logs the meal that was snoozed) is still reflected the moment it
   // happens — we want the nudge to re-evaluate against fresh data, not
@@ -472,9 +542,20 @@ final contextualNudgeProvider =
 
 ContextualNudge _mealNudge(Ref ref, MealSlot slot) {
   final suggestion = ref.watch(mealSlotSuggestionProvider(slot)).valueOrNull;
-  final body = (suggestion != null && suggestion.body.trim().isNotEmpty)
-      ? suggestion.body.trim()
-      : mealSlotFallbackBody(slot);
+  // Gap 16 — proactive "your usual?". When the user has a strong habitual meal
+  // for this slot, lead with it (one tap to re-log the thing they actually eat)
+  // instead of a fresh AI suggestion. Falls through to the AI suggestion / the
+  // static fallback when there's no confident usual.
+  final usual = ref.watch(usualMealProvider(slot.mealType)).valueOrNull;
+  String body;
+  if (usual != null && (usual.summary?.trim().isNotEmpty ?? false)) {
+    final cal = usual.totalCalories > 0 ? ' (~${usual.totalCalories} cal)' : '';
+    body = 'Your usual ${usual.summary}$cal? One tap to log it.';
+  } else if (suggestion != null && suggestion.body.trim().isNotEmpty) {
+    body = suggestion.body.trim();
+  } else {
+    body = mealSlotFallbackBody(slot);
+  }
   final title = mealSlotFallbackHeadline(slot);
   final now = DateTime.now();
   // Meal slots perish at the END of their window — breakfast at 11:00,

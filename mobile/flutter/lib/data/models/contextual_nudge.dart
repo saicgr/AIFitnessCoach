@@ -143,6 +143,9 @@ enum NudgeId {
   hydrationHeat,              // F3.45
   electrolyteTile,            // F3.46
   kudosBadge,                 // F3.53
+  // Gap 10 — ACWR spike: training load is overreaching (acute >> chronic).
+  // Escalated when an active injury overlaps the loaded area.
+  loadSpike,
 }
 
 /// Priority tier for the SubCardRanker pyramid (F4).

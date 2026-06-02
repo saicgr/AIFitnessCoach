@@ -231,6 +231,14 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                     fontSize: 18,
                                     showZoneLabel: false,
                                   ),
+                                  const SizedBox(width: 10),
+                                  // Live calories burned so far (Gap 6) — HR-based
+                                  // estimate, updates as the session runs.
+                                  LiveCaloriesDisplay(
+                                    elapsedSeconds: timerController.workoutSeconds,
+                                    iconSize: 22,
+                                    fontSize: 18,
+                                  ),
                                   // BLE connection indicator
                                   Consumer(builder: (context, ref, _) {
                                     final connAsync = ref.watch(bleHrConnectionStateProvider);

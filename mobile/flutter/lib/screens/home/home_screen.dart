@@ -428,7 +428,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         SnackBar(
           content: Text(AppLocalizations.of(context)!.homeScreenImportedWorkouts(count)),
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 3),
+          duration: const Duration(seconds: 4),
+          // Gap 4 — auto-detected workouts import frictionlessly, but the user
+          // can still confirm/correct a misdetection (type/duration) from the
+          // workouts list. Keeps the effortless default + an editable path.
+          action: SnackBarAction(
+            label: 'Review',
+            onPressed: () {
+              if (mounted) context.push('/workouts');
+            },
+          ),
         ),
       );
     }

@@ -7,7 +7,9 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton_box.dart';
 import '../../data/providers/combined_health_provider.dart';
 import '../../data/providers/recovery_provider.dart';
+import '../../data/providers/training_load_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
+import '../../data/services/activity_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/health_goals_service.dart';
 import '../../data/services/health_service.dart';
@@ -44,6 +46,85 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
     super.initState();
     final now = DateTime.now();
     _selectedDate = DateTime(now.year, now.month, now.day);
+  }
+
+  /// Gap 5 — "you can edit anything." Correct the SELECTED day's reading for a
+  /// metric; the value is written as a locked manual override (survives future
+  /// wearable re-syncs) and the hub refreshes to show it.
+  Future<void> _editDailyMetric({
+    required String label,
+    required String field, // 'steps' | 'sleep_minutes'
+    int? current,
+    String? helperText,
+  }) async {
+    final controller = TextEditingController(
+      text: current != null ? current.toString() : '',
+    );
+    final value = await showDialog<int?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Correct $label'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: label,
+                helperText: helperText,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              final v = int.tryParse(controller.text.trim());
+              Navigator.pop(ctx, v);
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (value == null || value < 0) return;
+
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) return;
+    final svc = ref.read(activityServiceProvider);
+    final result = await svc.overrideDailyActivity(
+      userId: userId,
+      date: _selectedDate,
+      steps: field == 'steps' ? value : null,
+      sleepMinutes: field == 'sleep_minutes' ? value : null,
+    );
+    if (!mounted) return;
+    if (result != null) {
+      ref.invalidate(combinedHealthHistoryProvider);
+      HapticService.light();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$label updated'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save. Please try again.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -136,6 +217,9 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         // ── Recovery hero
         _RecoveryHero(isDark: isDark),
         const SizedBox(height: 12),
+        // ── Cardio training load (ACWR) — Gap 3, display-only sibling of recovery
+        _TrainingLoadTile(isDark: isDark),
+        const SizedBox(height: 12),
         // ── Activity streak
         _ActivityStreakCard(history: history, isDark: isDark),
         const SizedBox(height: 12),
@@ -159,6 +243,12 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
           ),
           metric: TrendMetric.steps,
           isDark: isDark,
+          onEdit: () => _editDailyMetric(
+            label: 'Steps',
+            field: 'steps',
+            current: (day != null && day.steps > 0) ? day.steps : null,
+            helperText: 'Correct this day’s step count.',
+          ),
         ),
         const SizedBox(height: 12),
         MetricHistoryCard(
@@ -212,6 +302,14 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
           ),
           metric: TrendMetric.sleepHours,
           isDark: isDark,
+          onEdit: () => _editDailyMetric(
+            label: 'Sleep (minutes)',
+            field: 'sleep_minutes',
+            current: (day?.sleepMinutes != null && day!.sleepMinutes! > 0)
+                ? day.sleepMinutes
+                : null,
+            helperText: 'Total minutes asleep. Use 0 if you weren’t wearing it.',
+          ),
         ),
         const SizedBox(height: 12),
         // Water has no trend metric source — value only, no fabricated chart.
@@ -419,6 +517,109 @@ class _RecoveryHero extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ── Cardio training load (ACWR) — Gap 3 ─────────────────────────────────────
+// Display-only sibling of the recovery hero. The video sells "cardio load" as
+// a headline metric; Zealova already computes it server-side (Banister TRIMP +
+// ACWR). This surfaces the state + acute/chronic numbers; it never recomputes.
+class _TrainingLoadTile extends ConsumerWidget {
+  final bool isDark;
+  const _TrainingLoadTile({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final loadAsync = ref.watch(trainingLoadProvider);
+    final load = loadAsync.valueOrNull;
+
+    // Hide entirely when there's no signal at all — never an empty shell.
+    if (loadAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+    if (load == null) {
+      return const SizedBox.shrink();
+    }
+
+    final Color stateColor;
+    final String caption;
+    if (load.isCalibrating) {
+      stateColor = textMuted;
+      caption = 'Building baseline — keep logging cardio for ~2 weeks.';
+    } else {
+      switch (load.state) {
+        case 'overreaching':
+          stateColor = AppColors.error;
+          break;
+        case 'loading':
+          stateColor = AppColors.warning;
+          break;
+        case 'detraining':
+          stateColor = AppColors.teal;
+          break;
+        default:
+          stateColor = AppColors.success;
+      }
+      final acwrText =
+          load.acwr != null ? ' · ratio ${load.acwr!.toStringAsFixed(1)}' : '';
+      caption = load.interpretation.isNotEmpty
+          ? load.interpretation
+          : 'Acute ${load.acuteLoad.round()} vs base ${load.chronicLoad.round()}$acwrText';
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder, width: 1),
+      ),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: stateColor.withValues(alpha: 0.14),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.monitor_heart_outlined, color: stateColor, size: 24),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  load.isCalibrating ? 'Cardio load' : 'Cardio load · ${load.label}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  caption,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textMuted,
+                    fontWeight: FontWeight.w500,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

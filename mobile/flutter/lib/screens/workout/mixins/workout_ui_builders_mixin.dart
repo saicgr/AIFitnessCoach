@@ -25,6 +25,7 @@ import '../providers/active_workout_session_provider.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/heart_rate_display.dart';
+import '../../../widgets/live_calories_display.dart';
 import '../../../widgets/voice/voice_mic_fab.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../controllers/workout_timer_controller.dart';

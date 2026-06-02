@@ -148,6 +148,48 @@ class ActivityService {
     }
   }
 
+  /// Manually correct a day's activity / sleep (Gap 5 — "edit anything").
+  ///
+  /// Only pass the fields the user actually edited; each becomes a LOCKED
+  /// override the backend protects from future wearable re-syncs. Pass `0`
+  /// (not null) to assert "I wasn't wearing it" (e.g. sleepMinutes: 0).
+  /// Returns the updated activity map, or null on failure.
+  Future<Map<String, dynamic>?> overrideDailyActivity({
+    required String userId,
+    required DateTime date,
+    int? steps,
+    int? activeCalories,
+    int? sleepMinutes,
+    int? deepSleepMinutes,
+    int? remSleepMinutes,
+    int? lightSleepMinutes,
+    int? restingHeartRate,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'user_id': userId,
+        'activity_date': _formatDate(date),
+        if (steps != null) 'steps': steps,
+        if (activeCalories != null) 'active_calories': activeCalories,
+        if (sleepMinutes != null) 'sleep_minutes': sleepMinutes,
+        if (deepSleepMinutes != null) 'deep_sleep_minutes': deepSleepMinutes,
+        if (remSleepMinutes != null) 'rem_sleep_minutes': remSleepMinutes,
+        if (lightSleepMinutes != null) 'light_sleep_minutes': lightSleepMinutes,
+        if (restingHeartRate != null) 'resting_heart_rate': restingHeartRate,
+      };
+      final response = await _apiClient.patch('/activity/override', data: body);
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Activity] Override saved');
+        return response.data as Map<String, dynamic>?;
+      }
+      debugPrint('❌ [Activity] Override failed: ${response.statusCode}');
+      return null;
+    } catch (e) {
+      debugPrint('❌ [Activity] Error overriding activity: $e');
+      return null;
+    }
+  }
+
   /// Get today's activity from backend
   Future<DailyActivity?> getTodayActivity(String userId) async {
     try {

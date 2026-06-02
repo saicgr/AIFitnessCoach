@@ -38,6 +38,11 @@ class MetricHistoryCard extends ConsumerStatefulWidget {
 
   final bool isDark;
 
+  /// Gap 5 — optional "edit this day's value" affordance. When provided, a
+  /// pencil shows in the header; tapping it lets the user correct the
+  /// selected day's reading (writes a locked manual override on the backend).
+  final VoidCallback? onEdit;
+
   const MetricHistoryCard({
     super.key,
     required this.title,
@@ -47,6 +52,7 @@ class MetricHistoryCard extends ConsumerStatefulWidget {
     this.subtitleText,
     required this.metric,
     required this.isDark,
+    this.onEdit,
   });
 
   @override
@@ -122,6 +128,13 @@ class _MetricHistoryCardState extends ConsumerState<MetricHistoryCard> {
                   ],
                 ),
               ),
+              if (widget.onEdit != null)
+                IconButton(
+                  icon: Icon(Icons.edit_outlined, size: 18, color: textMuted),
+                  tooltip: 'Correct this day',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.onEdit,
+                ),
             ],
           ),
           if (widget.metric != null) ...[
