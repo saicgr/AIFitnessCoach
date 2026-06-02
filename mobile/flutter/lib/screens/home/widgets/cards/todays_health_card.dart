@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/providers/activity_history_provider.dart';
 import '../../../../data/providers/neat_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
+import '../../../../widgets/charts/mini_sparkline.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// Composite "Today's Health" card matching the level of polish competitors
@@ -135,6 +137,17 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
     final maxHr = activity?.maxHeartRate;
     final restingHr = activity?.restingHeartRate;
     final hasHrRange = minHr != null && maxHr != null && maxHr > minHr;
+
+    // Inline trend sparklines — last ~14 days of steps + resting HR from the
+    // recorded activity history (self-hide when <2 points exist).
+    final history = ref.watch(activityHistoryProvider).valueOrNull ?? const [];
+    final recent =
+        history.length > 14 ? history.sublist(history.length - 14) : history;
+    final stepsSeries = [for (final d in recent) d.steps.toDouble()];
+    final rhrSeries = [
+      for (final d in recent)
+        if (d.restingHeartRate != null) d.restingHeartRate!.toDouble()
+    ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -275,6 +288,35 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                             AlwaysStoppedAnimation<Color>(AppColors.success),
                       ),
                     ),
+                    // ─── Inline trend sparklines (steps + resting HR). Render
+                    // only when there's a multi-day series to draw.
+                    if (stepsSeries.length >= 2 || rhrSeries.length >= 2) ...[
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          if (stepsSeries.length >= 2)
+                            Expanded(
+                              child: _TrendSpark(
+                                label: 'Steps · 14d',
+                                values: stepsSeries,
+                                color: AppColors.success,
+                                textMuted: textMuted,
+                              ),
+                            ),
+                          if (stepsSeries.length >= 2 && rhrSeries.length >= 2)
+                            const SizedBox(width: 12),
+                          if (rhrSeries.length >= 2)
+                            Expanded(
+                              child: _TrendSpark(
+                                label: 'Resting HR · 14d',
+                                values: rhrSeries,
+                                color: AppColors.teal,
+                                textMuted: textMuted,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
                     const SizedBox(height: 14),
                     // ─── Metric tiles in a 2×2 grid (4 equal-width slots).
                     Row(
@@ -347,6 +389,42 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
       buf.write(s[i]);
     }
     return buf.toString();
+  }
+}
+
+/// A labelled inline trend sparkline used inside the Today's Health card.
+class _TrendSpark extends StatelessWidget {
+  final String label;
+  final List<double> values;
+  final Color color;
+  final Color textMuted;
+  const _TrendSpark({
+    required this.label,
+    required this.values,
+    required this.color,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.5,
+            color: textMuted,
+          ),
+        ),
+        const SizedBox(height: 4),
+        MiniSparkline(values: values, color: color, height: 30),
+      ],
+    );
   }
 }
 

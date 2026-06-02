@@ -7,11 +7,14 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/models/timeline_entry.dart';
 import '../../../../data/models/workout.dart';
+import '../../../../data/providers/activity_history_provider.dart';
+import '../../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/sleep_detail_provider.dart';
 import '../../../../data/providers/timeline_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/charts/mini_sparkline.dart';
 import 'timeline_totals_strip.dart';
 import 'timeline_trends_rail.dart';
 import 'unified_home_widgets.dart' show kHomeHPad;
@@ -115,6 +118,20 @@ class HomeTimeline extends ConsumerWidget {
             c: c,
             sleepMinutes: sleepMin,
           ));
+        }
+        // Per-day trailing-trend graphs (steps + resting HR up to that day) —
+        // the "graphs for yesterday/earlier" analogue of the top trend rail.
+        // Self-hides when there's not enough history.
+        if (isPast) {
+          children.add(const SizedBox(height: 10));
+          children.add(_DayTrendRail(day: dayDate, c: c));
+        }
+        // Per-day coach tip — replays the AI coach insight that was recorded
+        // for a PAST day (today's tip already lives in the coach hero above).
+        // Self-hides when no insight was stored for that day.
+        if (isPast) {
+          children.add(const SizedBox(height: 8));
+          children.add(_DayCoachTip(day: dayDate, c: c));
         }
         children.add(const SizedBox(height: 10));
         if (events.isEmpty) {
@@ -1033,6 +1050,193 @@ String _fmtTimeShort(DateTime t) {
   final m = t.minute.toString().padLeft(2, '0');
   final ap = h24 < 12 ? 'a' : 'p';
   return '$h12:$m$ap';
+}
+
+/// Per-day trailing-trend graphs — steps + resting-HR sparklines for the ~14
+/// days ENDING on [day], so a past day in the timeline carries the same kind of
+/// trend context the top rail gives "today". Self-hides when there isn't a
+/// multi-day series to draw (never fabricates data).
+class _DayTrendRail extends ConsumerWidget {
+  final DateTime day;
+  final ThemeColors c;
+  const _DayTrendRail({required this.day, required this.c});
+
+  static DateTime _dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(activityHistoryProvider).valueOrNull ?? const [];
+    if (history.isEmpty) return const SizedBox.shrink();
+    final target = _dateOnly(day);
+    // Trailing 14-day window up to and including the selected day.
+    final window = [
+      for (final d in history)
+        if (!d.date.isAfter(target) &&
+            d.date.isAfter(target.subtract(const Duration(days: 14))))
+          d
+    ];
+    if (window.length < 2) return const SizedBox.shrink();
+    final steps = [for (final d in window) d.steps.toDouble()];
+    final rhr = [
+      for (final d in window)
+        if (d.restingHeartRate != null) d.restingHeartRate!.toDouble()
+    ];
+    if (steps.length < 2 && rhr.length < 2) return const SizedBox.shrink();
+
+    final dayRow = window.where((d) => d.date == target).toList();
+    final stepsToday = dayRow.isNotEmpty ? dayRow.first.steps : null;
+    final rhrToday = dayRow.isNotEmpty ? dayRow.first.restingHeartRate : null;
+
+    Widget cell(String label, String value, List<double> series, Color color) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          decoration: BoxDecoration(
+            color: c.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: c.cardBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label.toUpperCase(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  color: c.textMuted,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: c.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              MiniSparkline(values: series, color: color, height: 26),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final cells = <Widget>[];
+    if (steps.length >= 2) {
+      cells.add(cell(
+        'Steps',
+        stepsToday != null ? _fmtThousands(stepsToday) : '—',
+        steps,
+        c.success,
+      ));
+    }
+    if (rhr.length >= 2) {
+      if (cells.isNotEmpty) cells.add(const SizedBox(width: 8));
+      cells.add(cell(
+        'Resting HR',
+        rhrToday != null ? '$rhrToday bpm' : '—',
+        rhr,
+        c.cyan,
+      ));
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: cells),
+    );
+  }
+
+  static String _fmtThousands(int v) {
+    final s = v.abs().toString();
+    final buf = StringBuffer();
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return '${v < 0 ? '-' : ''}$buf';
+  }
+}
+
+/// Compact per-day coach-tip card for the timeline — replays the AI coach
+/// insight that was recorded for a past day. Renders nothing while loading or
+/// when no insight exists for that day (the provider returns null on the
+/// backend's 404-for-unrecorded-past-dates), so days without a tip stay clean.
+class _DayCoachTip extends ConsumerWidget {
+  final DateTime day;
+  final ThemeColors c;
+  const _DayCoachTip({required this.day, required this.c});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final insight = ref.watch(coachInsightForDateProvider(day)).valueOrNull;
+    if (insight == null) return const SizedBox.shrink();
+    final headline = insight.headline.trim();
+    final body =
+        insight.body.replaceAll('\n', ' ').replaceAll('  ', ' ').trim();
+    if (headline.isEmpty && body.isEmpty) return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+      decoration: BoxDecoration(
+        color: c.accent.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.accent.withValues(alpha: 0.18)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LineIcon('spark', size: 15, color: c.accent),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'COACH TIP',
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.7,
+                    color: c.accent,
+                  ),
+                ),
+                if (headline.isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    headline,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: c.textPrimary,
+                    ),
+                  ),
+                ],
+                if (body.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    body,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      height: 1.35,
+                      fontWeight: FontWeight.w500,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Per-row loading placeholders shown on a cold start before the feed lands.

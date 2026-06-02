@@ -359,7 +359,10 @@ def _build_recovery_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
             "type": "chart",
             "title": f"Resting HR · last {len(rhr_points)} days",
             "spec": {
-                "chart_type": "sparkline",
+                # A labeled LINE (axes on) rather than a bare sparkline, so the
+                # resting-HR trend carries date + value labels like the steps
+                # chart. The client thins the x-labels to ~6 evenly-spaced ticks.
+                "chart_type": "line",
                 "color": _COLOR_HR,
                 "unit": "bpm",
                 "points": rhr_points,

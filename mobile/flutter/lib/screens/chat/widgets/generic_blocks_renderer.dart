@@ -320,6 +320,42 @@ class _ChartBlock extends StatelessWidget {
     if (points.isEmpty) return const SizedBox.shrink();
 
     final chartType = (spec['chart_type'] as String?) ?? 'line';
+    // A single data point can't be a meaningful line/bar — render an honest
+    // "not enough data yet" note instead of a flat, misleading 1-point line
+    // (sparklines stay silent — they're decorative inline glyphs).
+    if (points.length < 2 && chartType != 'sparkline') {
+      final cs = theme.colorScheme;
+      return Container(
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: cs.outline.withValues(alpha: 0.18)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (title != null && title!.isNotEmpty) ...[
+              Text(
+                title!,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: cs.onSurface.withValues(alpha: 0.7),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 6),
+            ],
+            Text(
+              'Not enough data yet — keep logging and this chart fills in.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: cs.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     final accent = _parseHexColor(spec['color']) ?? cs.primary;
     final unit = spec['unit'] as String?;
     final xLabels = (spec['x_labels'] is List)
@@ -386,6 +422,13 @@ class _ChartBlock extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Spacing between rendered x-axis labels — aim for ~6 ticks max so a long
+  /// series (e.g. 18 days) doesn't overlap into an unreadable smear.
+  static double _xLabelInterval(int count) {
+    if (count <= 6) return 1;
+    return (count / 6).ceilToDouble();
   }
 
   // y bounds, with a little headroom when not explicitly provided.
@@ -469,10 +512,21 @@ class _ChartBlock extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: hasXLabels,
               reservedSize: 22,
-              interval: 1,
+              // Thin the labels so a long window (e.g. 18 days) shows ~6 evenly
+              // spaced ticks instead of cramming every date into the axis and
+              // overlapping into an unreadable smear.
+              interval: _xLabelInterval(xLabels.length),
               getTitlesWidget: (value, meta) {
                 final idx = value.round();
                 if (idx < 0 || idx >= xLabels.length) {
+                  return const SizedBox.shrink();
+                }
+                // Belt-and-suspenders: only paint labels on the thinned cadence
+                // (always include the final point so the latest date shows).
+                final step = _xLabelInterval(xLabels.length).round();
+                if (step > 1 &&
+                    idx % step != 0 &&
+                    idx != xLabels.length - 1) {
                   return const SizedBox.shrink();
                 }
                 return Padding(
