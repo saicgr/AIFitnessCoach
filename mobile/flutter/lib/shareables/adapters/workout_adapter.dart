@@ -88,12 +88,22 @@ class WorkoutAdapter {
     final Map<String, List<Map<String, dynamic>>> setsJsonByExercise =
         _parseSetsJson(setsJsonRaw);
 
+    // Names (lowercased) of exercises that set a PR this session, so each
+    // ShareableExercise can carry an isPr flag for templates to badge.
+    final prNames = <String>{
+      for (final pr in (newPRs ?? const <Map<String, dynamic>>[]))
+        ((pr['exercise_name'] ?? pr['name'] ?? '') as String)
+            .toLowerCase()
+            .trim(),
+    }..removeWhere((s) => s.isEmpty);
+
     final exercises = _buildExerciseList(
       planned: plannedExercises,
       logs: loggedSets,
       setsJsonByExercise: setsJsonByExercise,
       useKg: useKg,
       unitLabel: unit,
+      prNames: prNames,
     );
 
     final highlights = <ShareableMetric>[
@@ -321,6 +331,7 @@ class WorkoutAdapter {
         const <String, List<Map<String, dynamic>>>{},
     required bool useKg,
     required String unitLabel,
+    Set<String> prNames = const <String>{},
   }) {
     final byExercise = <String, List<SetLogInfo>>{};
     if (logs != null) {
@@ -382,6 +393,7 @@ class WorkoutAdapter {
         name: ex.name,
         imageUrl: _resolveExerciseImageUrl(ex),
         sets: sets,
+        isPr: prNames.contains(ex.name.toLowerCase().trim()),
       );
     }).toList();
   }

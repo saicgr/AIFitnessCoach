@@ -3,6 +3,137 @@ part of 'workout_complete_screen.dart';
 /// UI builder methods extracted from _WorkoutCompleteScreenState
 extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
 
+  /// Per-exercise breakdown — each exercise with sets x reps x avg weight and
+  /// a PR badge where the lift set a personal record. Returns null when there
+  /// is no logged performance to show. (The user wanted to see what they
+  /// actually did + which PRs landed, not just aggregate totals.)
+  Widget? _buildExercisesSection() {
+    final perf = widget.exercisesPerformance;
+    if (perf == null || perf.isEmpty) return null;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    final unit = useKg ? 'kg' : 'lb';
+
+    final prNames = <String>{
+      for (final pr
+          in (widget.personalRecords ?? const <PersonalRecordInfo>[]))
+        pr.exerciseName.toLowerCase().trim(),
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.format_list_bulleted_rounded,
+                  size: 18, color: textMuted),
+              const SizedBox(width: 8),
+              Text(
+                'Exercises',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          for (final e in perf)
+            _exerciseBreakdownRow(
+                e, prNames, useKg, unit, textPrimary, textMuted),
+        ],
+      ),
+    );
+  }
+
+  Widget _exerciseBreakdownRow(
+    Map<String, dynamic> e,
+    Set<String> prNames,
+    bool useKg,
+    String unit,
+    Color textPrimary,
+    Color textMuted,
+  ) {
+    final name = (e['name'] as String?) ?? 'Exercise';
+    final sets = (e['sets'] as num?)?.toInt() ?? 0;
+    final reps = (e['reps'] as num?)?.toInt() ?? 0;
+    final wKg = (e['weight_kg'] as num?)?.toDouble() ?? 0;
+    final w = useKg ? wKg : WeightUtils.kgToLbs(wKg);
+    final isPr = prNames.contains(name.toLowerCase().trim());
+    final detail = w > 0
+        ? '$sets sets · $reps reps · ${w.toStringAsFixed(0)}$unit avg'
+        : '$sets sets · $reps reps';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Flexible(
+                child: Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              if (isPr) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFCD34D),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.emoji_events_rounded,
+                          size: 11, color: Color(0xFF7A5C00)),
+                      SizedBox(width: 3),
+                      Text(
+                        'PR',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF7A5C00),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(detail, style: TextStyle(fontSize: 12, color: textMuted)),
+        ],
+      ),
+    );
+  }
+
   /// Compact stats grid for single-screen layout.
   ///
   /// Primary row (Time / Cal / Volume) is always visible. Secondary row

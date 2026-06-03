@@ -738,6 +738,12 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     useKg: ref.watch(useKgForWorkoutProvider),
                   ).animate().fadeIn(delay: 300.ms),
 
+                  // Per-exercise breakdown (sets x reps x weight + PR badges).
+                  if (_buildExercisesSection() != null) ...[
+                    const SizedBox(height: 16),
+                    _buildExercisesSection()!.animate().fadeIn(delay: 320.ms),
+                  ],
+
                   const SizedBox(height: 16),
 
                   // Rating Section

@@ -232,10 +232,15 @@ class ShareableExercise {
   final String? imageUrl;
   final List<ShareableSet> sets;
 
+  /// True when this exercise hit a personal record in the shared session, so
+  /// templates can flag it (a trophy/PR badge next to the name).
+  final bool isPr;
+
   const ShareableExercise({
     required this.name,
     this.imageUrl,
     this.sets = const [],
+    this.isPr = false,
   });
 }
 

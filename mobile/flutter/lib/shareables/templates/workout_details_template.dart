@@ -234,17 +234,52 @@ class _ExerciseRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                ex.name,
-                // Allow wrap for long exercise names (Issue 15 edge case —
-                // 40+ char names previously truncated to "Barbell Bulgar...").
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111111),
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      ex.name,
+                      // Allow wrap for long exercise names (Issue 15 edge case
+                      // — 40+ char names previously truncated).
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111111),
+                      ),
+                    ),
+                  ),
+                  // PR badge — flags an exercise that hit a personal record.
+                  if (ex.isPr) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFCD34D),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.emoji_events_rounded,
+                              size: 11, color: Color(0xFF7A5C00)),
+                          SizedBox(width: 3),
+                          Text(
+                            'PR',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF7A5C00),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
               if (ex.sets.isNotEmpty) ...[
                 const SizedBox(height: 4),

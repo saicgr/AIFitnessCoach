@@ -352,84 +352,93 @@ class _EasyInstructionsContent extends StatelessWidget {
             );
           }),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // ── Secondary content: bullet-pointed form tips ───────────
-          _SectionLabel(label: AppLocalizations.of(context).easySheetHelpersFormTips, fg: fg),
-          const SizedBox(height: 10),
-          ...formTips.map((tip) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: accent,
-                          shape: BoxShape.circle,
-                        ),
+          // Secondary sections collapse by default so the sheet opens
+          // scannable (name + How-to-perform), not a wall of text. Tap to
+          // expand the form tips, breathing, and about details.
+          _CollapsibleSection(
+            title: AppLocalizations.of(context).easySheetHelpersFormTips,
+            icon: Icons.lightbulb_outline,
+            fg: fg,
+            accent: accent,
+            children: formTips
+                .map((tip) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Container(
+                              width: 5,
+                              height: 5,
+                              decoration: BoxDecoration(
+                                color: accent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              tip,
+                              style: TextStyle(
+                                  fontSize: 14, color: fg, height: 1.45),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        tip,
-                        style: TextStyle(
-                            fontSize: 14, color: fg, height: 1.45),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-
-          const SizedBox(height: 12),
-
-          // ── Breathing cues ────────────────────────────────────────
-          Row(
-            children: [
-              Icon(Icons.air_rounded, size: 16, color: accent),
-              const SizedBox(width: 6),
-              _SectionLabel(label: AppLocalizations.of(context).workoutUiBuildersBreathing, fg: fg),
-            ],
+                    ))
+                .toList(),
           ),
-          const SizedBox(height: 10),
-          ...breathingCues.map((cue) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Icon(
-                        Icons.arrow_right_rounded,
-                        size: 18,
-                        color: accent.withValues(alpha: 0.75),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        cue,
-                        style: TextStyle(
-                            fontSize: 14, color: fg, height: 1.45),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
 
-          if (aboutRows.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            _SectionLabel(label: AppLocalizations.of(context).easySheetHelpersAboutThisExercise, fg: fg),
-            const SizedBox(height: 10),
-            ...aboutRows.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _buildRow(r, fg: fg, muted: muted),
-                )),
-          ],
+          _CollapsibleSection(
+            title: AppLocalizations.of(context).workoutUiBuildersBreathing,
+            icon: Icons.air_rounded,
+            fg: fg,
+            accent: accent,
+            children: breathingCues
+                .map((cue) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Icon(
+                              Icons.arrow_right_rounded,
+                              size: 18,
+                              color: accent.withValues(alpha: 0.75),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              cue,
+                              style: TextStyle(
+                                  fontSize: 14, color: fg, height: 1.45),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ))
+                .toList(),
+          ),
+
+          if (aboutRows.isNotEmpty)
+            _CollapsibleSection(
+              title: AppLocalizations.of(context)
+                  .easySheetHelpersAboutThisExercise,
+              fg: fg,
+              accent: accent,
+              children: aboutRows
+                  .map((r) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _buildRow(r, fg: fg, muted: muted),
+                      ))
+                  .toList(),
+            ),
         ],
       ),
     );
@@ -463,6 +472,59 @@ class _EasyInstructionsContent extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// A tap-to-expand instructions section (collapsed by default) so the
+/// exercise sheet opens scannable instead of as one long wall of text.
+/// Uses [ExpansionTile] so it manages its own open/closed state.
+class _CollapsibleSection extends StatelessWidget {
+  final String title;
+  final IconData? icon;
+  final Color fg;
+  final Color accent;
+  final List<Widget> children;
+
+  const _CollapsibleSection({
+    required this.title,
+    required this.fg,
+    required this.accent,
+    required this.children,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 4),
+        expandedCrossAxisAlignment: CrossAxisAlignment.start,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        iconColor: accent,
+        collapsedIconColor: accent,
+        title: Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: accent),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: fg,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
+        children: children,
+      ),
     );
   }
 }
