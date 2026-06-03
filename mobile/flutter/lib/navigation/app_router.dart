@@ -455,6 +455,33 @@ String? _handleAuthRedirect(
   final isLoggedIn = authState.status == AuthStatus.authenticated;
   final homeRoute = _getHomeRoute(accessibilitySettings);
 
+  // Fire the aggregated /home/bootstrap prefetch for EVERY path that lands an
+  // authenticated user on the home route — not just splash → home.
+  //
+  // The brand-new-user onboarding handoff navigates straight to the home route
+  // via `context.go('/home')` from ProgramSummaryScreen, which never passes
+  // through the `/splash` branch below where prefetch() used to be the ONLY
+  // trigger. Without this, a fresh-install user's very first home paint fired
+  // 3-5 separate cold API calls (today workout, nutrition, hydration, …) each
+  // with its own loading skeleton, instead of one pre-seeded /home/bootstrap
+  // aggregate — the "fresh install home takes forever" symptom.
+  //
+  // prefetch() is idempotent (deduped via _hasPrefetched / _activePrefetch) so
+  // this is safe to evaluate on every redirect and only runs the network fetch
+  // once per auth session. Crucially it fires when the user *reaches* the home
+  // route — by which point the onboarding workout has already been generated —
+  // so the persisted bootstrap blob is complete (an auth-time trigger would
+  // race ahead of generation and persist an empty blob for the next cold open).
+  // Gated on onboarding being complete so an incomplete user who transiently
+  // resolves to the home route (before the redirect bounces them back into the
+  // funnel) can't persist a premature empty blob.
+  if (isLoggedIn && loc == homeRoute) {
+    final homeUser = authState.user;
+    if (homeUser != null && _getNextOnboardingStep(homeUser, ref) == null) {
+      BootstrapPrefetchService.prefetch(ref);
+    }
+  }
+
   // Redirect from splash to appropriate destination
   if (loc == '/splash') {
     if (isLoggedIn) {
@@ -694,6 +721,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       // attached at signUp, so the JIT generation can run immediately.
       if (authState.status == AuthStatus.authenticated && !_todayWorkoutPrewarmed) {
         _todayWorkoutPrewarmed = true;
+        // Fire the aggregated /home/bootstrap prefetch at the EARLIEST possible
+        // moment — the instant auth resolves, before the user has even finished
+        // the splash → home transition — so its pre-seed (today workout +
+        // nutrition + hydration) has landed by the time Home mounts and the
+        // cards paint with real data instead of cold-loading skeletons. It also
+        // persists the bootstrap disk blob, which makes every SUBSEQUENT cold
+        // start instant (PrewarmerBoot hydrates it before the first frame).
+        //
+        // Gated to already-onboarded users: an existing user's home data all
+        // exists server-side, so the aggregate is complete. A brand-new user
+        // reaching this point is still mid-onboarding (no workout/targets yet),
+        // so we skip them here — they get the reach-home trigger in
+        // _handleAuthRedirect once their onboarding workout has been generated,
+        // which keeps the persisted blob from being empty.
+        final prewarmUser = authState.user;
+        if (prewarmUser != null && _getNextOnboardingStep(prewarmUser, ref) == null) {
+          BootstrapPrefetchService.prefetch(ref);
+        }
         Future.microtask(() {
           try {
             ref.read(todayWorkoutProvider);

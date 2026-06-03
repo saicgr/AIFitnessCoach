@@ -10,6 +10,7 @@ library;
 
 import 'dart:async';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,6 +25,65 @@ import '../services/data_cache_service.dart';
 final timelineRepositoryProvider = Provider<TimelineRepository>((ref) {
   return TimelineRepository(ref.read(apiClientProvider));
 });
+
+/// Whether [e] is worth a scoped, read-only retry: a transient network failure,
+/// or a 502/503/504 from a briefly restarting/overloaded backend. Real errors
+/// (4xx, parse/shape failures, other 5xx) are NOT retried — they're surfaced.
+bool _isTransientTimelineError(Object e) {
+  if (e is! DioException) return false;
+  switch (e.type) {
+    case DioExceptionType.receiveTimeout:
+    case DioExceptionType.connectionTimeout:
+    case DioExceptionType.sendTimeout:
+    case DioExceptionType.connectionError:
+      return true;
+    case DioExceptionType.badResponse:
+      final code = e.response?.statusCode ?? 0;
+      return code == 502 || code == 503 || code == 504;
+    default:
+      return false;
+  }
+}
+
+/// Run [fetch] (an idempotent timeline GET) with a small transient-failure
+/// retry. The Home timeline is the single heaviest request (9 parallel backend
+/// queries), so it's the first to lose a thundering-herd race when the backend
+/// is briefly stalled or restarting — without this it surfaces a hard
+/// "Couldn't load" tile for a blip the next second would have served.
+///
+/// The global Dio interceptor deliberately never retries receive-timeouts (that
+/// policy must stay safe for write requests); this retry is scoped to a read, so
+/// re-issuing it is safe. Expensive timeouts (each burns the full 30s
+/// receiveTimeout) get a single retry to bound the wait; cheap failures
+/// (connectionError / 502-504) get the full short-backoff schedule.
+Future<T> _fetchTimelineWithRetry<T>(
+  Future<T> Function() fetch, {
+  required bool Function() isDisposed,
+}) async {
+  const backoffs = [Duration(milliseconds: 1200), Duration(milliseconds: 3000)];
+  for (var attempt = 0;; attempt++) {
+    try {
+      return await fetch();
+    } catch (e) {
+      final expensive = e is DioException &&
+          (e.type == DioExceptionType.receiveTimeout ||
+              e.type == DioExceptionType.sendTimeout);
+      final maxAttempts = expensive ? 2 : backoffs.length + 1;
+      if (!_isTransientTimelineError(e) ||
+          isDisposed() ||
+          attempt + 1 >= maxAttempts) {
+        rethrow;
+      }
+      final delay =
+          backoffs[attempt < backoffs.length ? attempt : backoffs.length - 1];
+      debugPrint('⚠️ [Timeline] transient fetch failure '
+          '(attempt ${attempt + 1}/$maxAttempts) — retrying in '
+          '${delay.inMilliseconds}ms: $e');
+      await Future<void>.delayed(delay);
+      if (isDisposed()) rethrow;
+    }
+  }
+}
 
 /// Module-level cache so a fresh [TimelineNotifier] (provider invalidation,
 /// returning to Home) seeds its first frame instantly instead of flashing a
@@ -216,7 +276,10 @@ class TimelineNotifier extends StateNotifier<TimelineState> {
     }
     try {
       final repo = _ref.read(timelineRepositoryProvider);
-      final result = await repo.fetchWithRaw(userId: userId, days: 1);
+      final result = await _fetchTimelineWithRetry(
+        () => repo.fetchWithRaw(userId: userId, days: 1),
+        isDisposed: () => _disposed,
+      );
       if (_disposed) return;
       state = state.copyWith(days: result.parsed.days, isLoading: false);
       // Write-through to in-memory + disk for the next cold start / recreation.
@@ -457,10 +520,13 @@ class TimelineTrendsNotifier extends StateNotifier<TimelineTrendsState> {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       final repo = _ref.read(timelineRepositoryProvider);
-      final response = await repo.fetch(
-        userId: userId,
-        days: kTimelineTrendDays,
-        metricsOnly: true,
+      final response = await _fetchTimelineWithRetry(
+        () => repo.fetch(
+          userId: userId,
+          days: kTimelineTrendDays,
+          metricsOnly: true,
+        ),
+        isDisposed: () => _disposed,
       );
       if (_disposed) return;
       state = state.copyWith(days: response.days, isLoading: false);
