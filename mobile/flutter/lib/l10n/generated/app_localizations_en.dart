@@ -23688,7 +23688,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get neatDashboardScreenActiveHours => 'Active Hours';
 
   @override
-  String get neatDashboardScreenActiveHoursNtoday => 'Active Hours\\nToday';
+  String get neatDashboardScreenActiveHoursNtoday => 'Active Hours\nToday';
 
   @override
   String get neatDashboardScreenAiCoachTip => 'AI Coach Tip';

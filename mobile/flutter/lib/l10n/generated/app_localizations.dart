@@ -40004,7 +40004,7 @@ abstract class AppLocalizations {
   /// No description provided for @neatDashboardScreenActiveHoursNtoday.
   ///
   /// In en, this message translates to:
-  /// **'Active Hours\\nToday'**
+  /// **'Active Hours\nToday'**
   String get neatDashboardScreenActiveHoursNtoday;
 
   /// No description provided for @neatDashboardScreenAiCoachTip.
