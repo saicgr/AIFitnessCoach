@@ -9,6 +9,7 @@ import '../models/today_workout.dart';
 import '../providers/today_workout_provider.dart';
 import '../repositories/nutrition_repository.dart';
 import '../repositories/hydration_repository.dart';
+import '../providers/nutrition_preferences_provider.dart';
 import '../../utils/tz.dart';
 import 'api_client.dart';
 
@@ -316,6 +317,22 @@ class BootstrapPrefetchService {
         targetCarbs: (m['target_carbs'] as num?)?.toDouble(),
         targetFat: (m['target_fat'] as num?)?.toDouble(),
       );
+      // Also seed the PREFERENCES provider's targets — that's what the hero
+      // calorie ring (Home + Nutrition) reads via `currentCalorieTarget` /
+      // `hasConfiguredTargets`. Without this the ring shows "Set a calorie
+      // target" on a fresh install until the separate /nutrition/dynamic-targets
+      // round-trip lands. No-op once real prefs exist; initialize() still
+      // refines to the cycle/training-adjusted figure.
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      if (uid != null) {
+        ref.read(nutritionPreferencesProvider.notifier).seedFromBootstrap(
+          userId: uid,
+          targetCalories: (m['target_calories'] as num?)?.toInt(),
+          targetProteinG: (m['target_protein'] as num?)?.round(),
+          targetCarbsG: (m['target_carbs'] as num?)?.round(),
+          targetFatG: (m['target_fat'] as num?)?.round(),
+        );
+      }
     } catch (e) {
       debugPrint('⚠️ [Bootstrap] Nutrition pre-seed failed: $e');
     }

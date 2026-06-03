@@ -246,6 +246,43 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     debugPrint('🧹 [NutritionPrefsProvider] In-memory cache cleared');
   }
 
+  /// Seed the calorie/macro TARGETS from the `/home/bootstrap` payload so the
+  /// Home + Nutrition calorie ring renders the real target on first paint —
+  /// no "Set a calorie target" flash on a fresh install where the prefs disk
+  /// cache is still empty and the slowest link is the separate
+  /// `/nutrition/dynamic-targets` round-trip.
+  ///
+  /// No-op once any preferences already exist (disk-cache seed or a network
+  /// load got there first), so it never clobbers richer data or the
+  /// cycle/training-adjusted dynamic targets. The background [initialize] still
+  /// runs and refines the ring to the dynamic-adjusted figure silently.
+  void seedFromBootstrap({
+    required String userId,
+    int? targetCalories,
+    int? targetProteinG,
+    int? targetCarbsG,
+    int? targetFatG,
+  }) {
+    if (state.preferences != null) return;
+    if (targetCalories == null &&
+        targetProteinG == null &&
+        targetCarbsG == null &&
+        targetFatG == null) {
+      return; // nothing to seed
+    }
+    debugPrint('🥗 [NutritionPrefsProvider] Seeded targets from bootstrap '
+        '($targetCalories kcal)');
+    state = state.copyWith(
+      preferences: NutritionPreferences(
+        userId: userId,
+        targetCalories: targetCalories,
+        targetProteinG: targetProteinG,
+        targetCarbsG: targetCarbsG,
+        targetFatG: targetFatG,
+      ),
+    );
+  }
+
   /// Initialize nutrition preferences for a user.
   /// Set [forceRefresh] to bypass the in-memory cache and re-fetch from backend.
   Future<void> initialize(String userId, {bool forceRefresh = false}) async {
