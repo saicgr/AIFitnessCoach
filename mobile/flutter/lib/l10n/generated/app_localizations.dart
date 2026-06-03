@@ -19118,7 +19118,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseSwapSheetTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Swap exercise'**
   String get exerciseSwapSheetTitle;
 
   /// No description provided for @exerciseSwapSheetTryAgain.
@@ -65806,7 +65806,7 @@ abstract class AppLocalizations {
   /// No description provided for @trophiesEarnedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Title'**
+  /// **'Trophies and milestones'**
   String get trophiesEarnedTitle;
 
   /// No description provided for @trophiesEarnedTotalWorkouts.

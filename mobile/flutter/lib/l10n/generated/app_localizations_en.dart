@@ -11172,7 +11172,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exerciseSwapSheetTabSnapped => 'Snapped';
 
   @override
-  String get exerciseSwapSheetTitle => 'Title';
+  String get exerciseSwapSheetTitle => 'Swap exercise';
 
   @override
   String get exerciseSwapSheetTryAgain => 'Try Again';
@@ -38809,7 +38809,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get trophiesEarnedTitle => 'Title';
+  String get trophiesEarnedTitle => 'Trophies and milestones';
 
   @override
   String get trophiesEarnedTotalWorkouts => 'Total Workouts';
