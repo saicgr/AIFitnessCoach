@@ -360,7 +360,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // TabController so the user actually lands on the requested tab.
     final target = widget.initialTab.clamp(0, _tabController.length - 1);
     if (target >= 0 && target < _tabController.length && _tabController.index != target) {
-      _tabController.animateTo(target);
+      // Defer the tab sync to AFTER this frame's layout. Driving
+      // `animateTo` synchronously inside didUpdateWidget animates the
+      // TabBarView's PageController before the newly-built tab's scrollable
+      // children have finished their first layout pass — the PagePosition then
+      // reports `_lastMetrics != null` while `haveDimensions` is still false,
+      // tripping the `'haveDimensions == (_lastMetrics != null)'` assertion.
+      // A post-frame callback lets the page lay out first, then animates.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final t = widget.initialTab.clamp(0, _tabController.length - 1);
+        if (_tabController.index != t) _tabController.animateTo(t);
+      });
     }
     // Deep-link re-navigation while this State is preserved (StatefulShellRoute
     // keeps the Nutrition branch alive in an IndexedStack) does NOT re-run
@@ -888,6 +899,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onShareDay: () => _shareDailyReport(),
                             isDark: isDark,
                             calmMode: calmMode,
+                            // ?fuelSection=water (Home "Water" card / hydration
+                            // reminder deep links) → auto-scroll to the inline
+                            // hydration card on Daily.
+                            initialFuelSection: widget.initialFuelSection,
                             ),
                           ),
 

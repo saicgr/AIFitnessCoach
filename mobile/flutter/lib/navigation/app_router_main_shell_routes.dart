@@ -40,13 +40,14 @@ List<RouteBase> _mainShellRoutes() => [
                 final initialMeal = state.uri.queryParameters['meal'];
                 final tabParam = state.uri.queryParameters['tab'];
                 final fuelSectionParam = state.uri.queryParameters['fuelSection'];
-                // When a hydration deep-link arrives without an explicit tab
-                // param, default to tab=3 (Fuel) so fuelSection has somewhere
-                // to apply. Otherwise the user lands on Daily and the
-                // hydration hint never reaches the Fuel→Water section.
+                // Water lives inline on the Daily tab now (the Fuel sub-tab
+                // was retired), so a hydration deep-link (?fuelSection=water)
+                // with no explicit tab lands on Daily (0); the Daily tab then
+                // auto-scrolls to the hydration card. The old default (tab=3
+                // Fuel) clamped to Patterns and stranded the user there.
                 final initialTab = tabParam != null
                     ? int.tryParse(tabParam) ?? 0
-                    : (fuelSectionParam != null ? 3 : 0);
+                    : 0;
                 final autoOpenCamera = state.uri.queryParameters['camera'] == 'true';
                 final autoOpenBarcode = state.uri.queryParameters['barcode'] == 'true';
                 // AI-coach launcher-chip deep links (chat route gets popped on

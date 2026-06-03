@@ -528,10 +528,13 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
-      // Hydration — redirect to Nutrition screen's Water tab
+      // Hydration — water now lives INLINE on the Nutrition Daily tab (the
+      // Fuel sub-tab was retired). tab=0 (Daily) + fuelSection=water makes the
+      // Daily tab auto-scroll to the hydration card. The old tab=2 mis-landed
+      // on the Patterns tab.
       GoRoute(
         path: '/hydration',
-        redirect: (context, state) => '/nutrition?tab=2',
+        redirect: (context, state) => '/nutrition?tab=0&fuelSection=water',
       ),
 
       // Habit Detail - View habit detail with yearly heatmap and stats

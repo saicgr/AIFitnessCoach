@@ -7,6 +7,8 @@ import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/repositories/hydration_repository.dart';
+import '../../workout/widgets/hydration_dialog.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../fasting/widgets/fasting_stage_model.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
@@ -68,6 +70,11 @@ class DailyTab extends ConsumerStatefulWidget {
   /// tour anchor keys only while the first-run tour is active.
   final bool tourActive;
 
+  /// When 'water', the tab auto-scrolls to the hydration card on first build /
+  /// on a deep-link re-navigation (e.g. the Home "Water" card or a hydration
+  /// reminder). Water lives on Daily now (the Fuel sub-tab was retired).
+  final String? initialFuelSection;
+
   const DailyTab({
     super.key,
     required this.userId,
@@ -100,6 +107,7 @@ class DailyTab extends ConsumerStatefulWidget {
     this.onSwitchToHydrationTab,
     required this.isDark,
     this.calmMode = false,
+    this.initialFuelSection,
   });
 
   @override
@@ -112,6 +120,12 @@ class _DailyTabState extends ConsumerState<DailyTab>
   bool _isLoadingFavorites = false;
   bool _analyticsExpanded = false;
 
+  // Body scroll controller + an anchor on the hydration card so "Log Water"
+  // (and a ?fuelSection=water deep link) can smooth-scroll to the tracker that
+  // now lives inline on the Daily tab.
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _hydrationKey = GlobalKey();
+
   // Keep this tab's state alive when the user switches away and back —
   // otherwise the favorites fetch and the (heavy) meal-list rebuild fires
   // on every visit, which is the perceived "lag" when returning to Daily.
@@ -122,6 +136,61 @@ class _DailyTabState extends ConsumerState<DailyTab>
   void initState() {
     super.initState();
     _loadFavorites();
+    if (widget.initialFuelSection == 'water') _scheduleScrollToHydration();
+  }
+
+  @override
+  void didUpdateWidget(DailyTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A deep-link re-navigation (Home "Water" card / hydration reminder) keeps
+    // this State alive (IndexedStack) and just passes a new fuelSection — so
+    // re-arm the scroll when it newly becomes 'water'.
+    if (widget.initialFuelSection == 'water' &&
+        oldWidget.initialFuelSection != 'water') {
+      _scheduleScrollToHydration();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  /// Smooth-scroll the body so the inline hydration card is fully visible.
+  void _scrollToHydration() {
+    final ctx = _hydrationKey.currentContext;
+    if (ctx == null) return;
+    Scrollable.ensureVisible(
+      ctx,
+      duration: const Duration(milliseconds: 360),
+      curve: Curves.easeOutCubic,
+      alignment: 0.1, // park it near the top, not flush against the app bar
+    );
+  }
+
+  void _scheduleScrollToHydration() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _scrollToHydration();
+    });
+  }
+
+  /// Open the shared drink-logging sheet and persist the result. This is the
+  /// hydration card's tap target now that the old `/hydration` screen is gone
+  /// (its route only redirected back into the Nutrition tabs).
+  Future<void> _logWaterFromCard() async {
+    final result = await showHydrationDialog(
+      context: context,
+      totalIntakeMl: ref.read(hydrationProvider).todaySummary?.totalMl ?? 0,
+    );
+    if (result == null || !mounted) return;
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+    await ref.read(hydrationProvider.notifier).quickLog(
+          userId: userId,
+          drinkType: result.drinkType.name,
+          amountMl: result.amountMl,
+        );
   }
 
   Future<void> _loadFavorites() async {
@@ -380,6 +449,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
       child: Stack(
         children: [
           SingleChildScrollView(
+            controller: _scrollController,
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -399,7 +469,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Expanded(child: _LogWaterButton()),
+                        Expanded(child: _LogWaterButton(onTap: _scrollToHydration)),
                         const SizedBox(width: 10),
                         const Expanded(child: _FastingActiveBar()),
                       ],
@@ -508,8 +578,12 @@ class _DailyTabState extends ConsumerState<DailyTab>
                             ?.hydrationTrackingEnabled ??
                         true)) ...[
                   HydrationSummaryBlock(
+                    key: _hydrationKey,
                     isDark: widget.isDark,
-                    onTap: () => context.push('/hydration'),
+                    // Old `/hydration` route only redirected back into the
+                    // Nutrition tabs (and mis-landed on Patterns); tapping the
+                    // card now opens the drink-log sheet inline.
+                    onTap: _logWaterFromCard,
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -709,7 +783,8 @@ class _LeftoversCarousel extends ConsumerWidget {
 /// Secondary "Log Water" CTA — half-width sibling of the fasting bar. Mirrors
 /// the fasting bar's outlined-tile styling; taps into the hydration screen.
 class _LogWaterButton extends ConsumerWidget {
-  const _LogWaterButton();
+  final VoidCallback onTap;
+  const _LogWaterButton({required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -720,7 +795,7 @@ class _LogWaterButton extends ConsumerWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => context.push('/hydration'),
+          onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
