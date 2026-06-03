@@ -464,19 +464,58 @@ class _MeasurementDetailScreenState
     final hasData = values.isNotEmpty;
     final isSingle = values.length == 1;
 
-    // Big number: the range average when we have a trend; the lone value when
-    // there's a single entry; the all-time latest when the range is empty.
-    final double? heroValue = hasData
-        ? (isSingle
-            ? values.first
-            : values.reduce((a, b) => a + b) / values.length)
-        : latest?.getValueInUnit(_isMetric);
-
-    final String heroLabel = !hasData
-        ? 'No entries in this range'
-        : isSingle
-            ? '1 entry — log more to see a trend'
-            : '${_formatValue(heroValue!)} $unit avg · ${_rangeLabel()}';
+    // Hero is a small swipeable carousel: Latest (what the user just logged)
+    // is page 0 — they expect to see their newest reading, not a smoothed
+    // average — then Average and (with enough points) the MacroFactor-style
+    // EWMA Trend. Single/empty ranges collapse to one page (no swipe/dots).
+    final List<_HeroPage> heroPages = [];
+    if (!hasData) {
+      // Range empty: fall back to the all-time latest if we have one.
+      if (latest != null) {
+        heroPages.add(_HeroPage(
+          _formatValue(latest.getValueInUnit(_isMetric)),
+          unit,
+          'Last logged ${DateFormat('MMM d, yyyy').format(latest.recordedAt)}',
+        ));
+      } else {
+        heroPages.add(_HeroPage('--', unit, 'No entries in this range'));
+      }
+    } else if (isSingle) {
+      heroPages.add(_HeroPage(
+        _formatValue(values.first),
+        unit,
+        '1 entry — log more to see a trend',
+      ));
+    } else {
+      // history is newest-first, so .first is the latest reading (by time,
+      // even with multiple logs on the same day).
+      heroPages.add(_HeroPage(
+        _formatValue(history.first.getValueInUnit(_isMetric)),
+        unit,
+        'Latest · ${DateFormat('MMM d').format(history.first.recordedAt)}',
+      ));
+      heroPages.add(_HeroPage(
+        _formatValue(values.reduce((a, b) => a + b) / values.length),
+        unit,
+        'Average · ${_rangeLabel()}',
+      ));
+      // EWMA trend needs a few points to be meaningful (matches the chart's
+      // alpha-fallback). Build it over chronological (oldest-first) points.
+      if (values.length >= 3) {
+        final pts = [
+          for (final e in history.reversed)
+            TrendPoint(date: e.recordedAt, value: e.getValueInUnit(_isMetric)),
+        ];
+        final smoothed = ewmaPoints(pts, alpha: 0.25);
+        if (smoothed.isNotEmpty) {
+          heroPages.add(_HeroPage(
+            _formatValue(smoothed.last.value),
+            unit,
+            'Trend · smoothed',
+          ));
+        }
+      }
+    }
 
     // Period change = newest minus oldest within the range. history is
     // newest-first, so .first is newest, .last is oldest.
@@ -503,37 +542,12 @@ class _MeasurementDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Big value + unit on one consistent baseline.
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Flexible(
-                child: Text(
-                  heroValue != null ? _formatValue(heroValue) : '--',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 46,
-                    height: 1.0,
-                    fontWeight: FontWeight.bold,
-                    color: cyan,
-                  ),
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsetsDirectional.only(bottom: 8, start: 6),
-                child: Text(
-                  unit,
-                  style: TextStyle(fontSize: 18, color: textMuted),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            heroLabel,
-            style: TextStyle(fontSize: 13, color: textMuted),
+          // Big value + unit on one consistent baseline, swipeable across
+          // Latest / Average / Trend.
+          _HeroValueCarousel(
+            pages: heroPages,
+            valueColor: cyan,
+            labelColor: textMuted,
           ),
           if (periodChange != null && periodChange.abs() >= 0.05) ...[
             const SizedBox(height: 12),
@@ -1296,6 +1310,154 @@ class _AiCoachIconButton extends StatelessWidget {
           child: Icon(Icons.auto_awesome_rounded, size: 18, color: accent),
         ),
       ),
+    );
+  }
+}
+
+/// One page of the hero carousel: a formatted [value] + [unit] big number
+/// with a small [label] caption beneath it.
+class _HeroPage {
+  final String value;
+  final String unit;
+  final String label;
+  const _HeroPage(this.value, this.unit, this.label);
+}
+
+/// Swipeable hero number. Page 0 is the latest reading; subsequent pages add
+/// Average and the EWMA Trend. With a single page it renders statically (no
+/// PageView, no dots) so the empty/single-entry states stay calm.
+class _HeroValueCarousel extends StatefulWidget {
+  final List<_HeroPage> pages;
+  final Color valueColor;
+  final Color labelColor;
+
+  const _HeroValueCarousel({
+    required this.pages,
+    required this.valueColor,
+    required this.labelColor,
+  });
+
+  @override
+  State<_HeroValueCarousel> createState() => _HeroValueCarouselState();
+}
+
+class _HeroValueCarouselState extends State<_HeroValueCarousel> {
+  final PageController _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant _HeroValueCarousel old) {
+    super.didUpdateWidget(old);
+    // If the page-set shrank (e.g. the user switched to a sparser range),
+    // clamp the active page so we never strand the viewport past the end.
+    if (_page >= widget.pages.length && widget.pages.isNotEmpty) {
+      _page = widget.pages.length - 1;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _controller.hasClients) {
+          _controller.jumpToPage(_page);
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.pages.isEmpty) return const SizedBox.shrink();
+    if (widget.pages.length == 1) {
+      return _pageContent(widget.pages.first);
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Bounded height for the PageView: big number (46) + gap + caption.
+        SizedBox(
+          height: 76,
+          child: PageView.builder(
+            controller: _controller,
+            itemCount: widget.pages.length,
+            onPageChanged: (i) {
+              HapticService.selection();
+              setState(() => _page = i);
+            },
+            itemBuilder: (_, i) => Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: _pageContent(widget.pages[i]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _dots(),
+      ],
+    );
+  }
+
+  Widget _pageContent(_HeroPage p) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Flexible(
+              child: Text(
+                p.value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 46,
+                  height: 1.0,
+                  fontWeight: FontWeight.bold,
+                  color: widget.valueColor,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsetsDirectional.only(bottom: 8, start: 6),
+              child: Text(
+                p.unit,
+                style: TextStyle(fontSize: 18, color: widget.labelColor),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          p.label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(fontSize: 13, color: widget.labelColor),
+        ),
+      ],
+    );
+  }
+
+  Widget _dots() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < widget.pages.length; i++)
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 6),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: i == _page ? 18 : 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: widget.valueColor.withValues(
+                  alpha: i == _page ? 0.9 : 0.3,
+                ),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
