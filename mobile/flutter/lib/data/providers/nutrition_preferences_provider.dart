@@ -855,10 +855,21 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       final fatDelta = (targetFatG ?? previousPreferences.targetFatG ?? 0) -
           (previousPreferences.targetFatG ?? 0);
       optimisticDynamic = DynamicNutritionTargets(
-        targetCalories: previousDynamicTargets.targetCalories + calDelta,
-        targetProteinG: previousDynamicTargets.targetProteinG + proteinDelta,
-        targetCarbsG: previousDynamicTargets.targetCarbsG + carbsDelta,
-        targetFatG: previousDynamicTargets.targetFatG + fatDelta,
+        // Preserve the dynamic adjustment when one existed; leave null (fall
+        // through to the updated base target) when the prior dynamic value was
+        // absent — never fabricate a number.
+        targetCalories: previousDynamicTargets.targetCalories == null
+            ? null
+            : previousDynamicTargets.targetCalories! + calDelta,
+        targetProteinG: previousDynamicTargets.targetProteinG == null
+            ? null
+            : previousDynamicTargets.targetProteinG! + proteinDelta,
+        targetCarbsG: previousDynamicTargets.targetCarbsG == null
+            ? null
+            : previousDynamicTargets.targetCarbsG! + carbsDelta,
+        targetFatG: previousDynamicTargets.targetFatG == null
+            ? null
+            : previousDynamicTargets.targetFatG! + fatDelta,
         targetFiberG: previousDynamicTargets.targetFiberG,
         isTrainingDay: previousDynamicTargets.isTrainingDay,
         isFastingDay: previousDynamicTargets.isFastingDay,

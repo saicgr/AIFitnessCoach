@@ -663,10 +663,13 @@ class WeightTrend {
 /// fields default to a clean no-op (`cycleSyncApplied == false`) for users
 /// who do not track a cycle or have not opted in.
 class DynamicNutritionTargets {
-  final int targetCalories;
-  final int targetProteinG;
-  final int targetCarbsG;
-  final int targetFatG;
+  // Nullable on purpose: a missing/failed dynamic target is `null`, NOT a fake
+  // 2000/150/200/65. That stops a phantom default from shadowing the real base
+  // target via `dynamicTargets?.targetCalories ?? preferences?.targetCalories`.
+  final int? targetCalories;
+  final int? targetProteinG;
+  final int? targetCarbsG;
+  final int? targetFatG;
   final int targetFiberG;
   final bool isTrainingDay;
   final bool isFastingDay;
@@ -692,10 +695,10 @@ class DynamicNutritionTargets {
   final String? cycleAdjustmentReason;
 
   const DynamicNutritionTargets({
-    this.targetCalories = 2000,
-    this.targetProteinG = 150,
-    this.targetCarbsG = 200,
-    this.targetFatG = 65,
+    this.targetCalories,
+    this.targetProteinG,
+    this.targetCarbsG,
+    this.targetFatG,
     this.targetFiberG = 25,
     this.isTrainingDay = false,
     this.isFastingDay = false,
@@ -717,10 +720,10 @@ class DynamicNutritionTargets {
     }
 
     return DynamicNutritionTargets(
-      targetCalories: json['target_calories'] as int? ?? 2000,
-      targetProteinG: json['target_protein_g'] as int? ?? 150,
-      targetCarbsG: json['target_carbs_g'] as int? ?? 200,
-      targetFatG: json['target_fat_g'] as int? ?? 65,
+      targetCalories: json['target_calories'] as int?,
+      targetProteinG: json['target_protein_g'] as int?,
+      targetCarbsG: json['target_carbs_g'] as int?,
+      targetFatG: json['target_fat_g'] as int?,
       targetFiberG: json['target_fiber_g'] as int? ?? 25,
       isTrainingDay: json['is_training_day'] as bool? ?? false,
       isFastingDay: json['is_fasting_day'] as bool? ?? false,
