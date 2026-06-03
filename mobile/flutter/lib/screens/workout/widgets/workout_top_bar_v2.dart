@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
+import '../../../widgets/app_tour/app_tour_controller.dart' show AppTourKeys;
 import '../controllers/workout_timer_controller.dart';
 import '../shared/unit_chip.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -148,6 +149,9 @@ class WorkoutTopBarV2 extends ConsumerWidget {
               // heart. The heart has moved one slot to the right (into the
               // cluster below).
               _TierToggle(
+                // Keyed so the in-workout tour can spotlight the real tier
+                // toggle (its final step previously pointed at the swap area).
+                key: AppTourKeys.tierToggleKey,
                 isDark: isDark,
                 compact: useCompactTierToggle,
               ),
@@ -286,7 +290,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
 class _TierToggle extends ConsumerWidget {
   final bool isDark;
   final bool compact;
-  const _TierToggle({required this.isDark, required this.compact});
+  const _TierToggle({super.key, required this.isDark, required this.compact});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

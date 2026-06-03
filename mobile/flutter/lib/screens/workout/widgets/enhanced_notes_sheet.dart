@@ -498,9 +498,10 @@ class _EnhancedNotesSheetState extends State<EnhancedNotesSheet> {
             accentColor: accentColor,
           ),
           const SizedBox(width: 8),
-          // Audio recording button (voice memo)
+          // Audio recording button (voice memo) — distinct record-dot icon so
+          // it doesn't read as a second dictation mic next to "Dictate".
           _buildToolbarButton(
-            icon: _isRecording ? Icons.stop : Icons.mic,
+            icon: _isRecording ? Icons.stop : Icons.fiber_manual_record,
             label: _isRecording ? AppLocalizations.of(context).hearInsightButtonStop : AppLocalizations.of(context).enhancedNotesRecord,
             onTap: _toggleRecording,
             isActive: _isRecording,

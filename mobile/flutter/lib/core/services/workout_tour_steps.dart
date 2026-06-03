@@ -150,9 +150,9 @@ List<AppTourStep> advancedTourSteps() => [
       AppTourStep(
         id: 'workout_step_exercise',
         targetKey: AppTourKeys.exerciseCardKey,
-        title: 'Current Exercise',
+        title: 'Welcome to Advanced',
         description:
-            'Follow along with the video. Tap Info for full details and instructions.',
+            'Advanced mode gives you full per-set logging. This is your current exercise. Follow the video, or tap Info for the full how-to.',
         position: TooltipPosition.below,
       ),
       AppTourStep(
@@ -204,11 +204,13 @@ List<AppTourStep> advancedTourSteps() => [
       ),
       AppTourStep(
         id: 'workout_step_tier_toggle',
-        targetKey: AppTourKeys.swapExerciseKey,
-        title: 'Tier toggle',
+        // Now points at the real E/A/S tier toggle (keyed in
+        // workout_top_bar_v2.dart) instead of the swap area.
+        targetKey: AppTourKeys.tierToggleKey,
+        title: 'Switch tiers anytime',
         description:
-            'Want a calmer screen? Switch to Easy anytime from the top bar.',
-        position: TooltipPosition.above,
+            'Want a calmer screen? Switch to Easy from this toggle anytime.',
+        position: TooltipPosition.below,
       ),
     ];
 

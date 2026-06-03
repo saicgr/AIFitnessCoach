@@ -8884,7 +8884,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Microphone permission required';
 
   @override
-  String get enhancedNotesRecord => 'Record';
+  String get enhancedNotesRecord => 'Voice memo';
 
   @override
   String get enhancedNotesRecording => 'Recording...';

@@ -15210,7 +15210,7 @@ abstract class AppLocalizations {
   /// No description provided for @enhancedNotesRecord.
   ///
   /// In en, this message translates to:
-  /// **'Record'**
+  /// **'Voice memo'**
   String get enhancedNotesRecord;
 
   /// No description provided for @enhancedNotesRecording.
