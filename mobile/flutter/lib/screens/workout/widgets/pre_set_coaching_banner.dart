@@ -61,10 +61,10 @@ class PreSetCoachingBanner extends StatelessWidget {
                 ),
               ),
               Expanded(
+                // Let the tip wrap fully — it's a short insight and truncating
+                // it dropped the actionable tail.
                 child: Text(
                   message,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 13.5,
                     height: 1.35,

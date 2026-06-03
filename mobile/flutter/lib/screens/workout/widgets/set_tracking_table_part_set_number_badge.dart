@@ -551,8 +551,12 @@ class _AutoTargetCell extends StatelessWidget {
                   ],
                 ),
               ),
-            // RIR pill with info icon - only ? icon is tappable
-            if (targetRir != null)
+            // RIR pill with info icon - only ? icon is tappable.
+            // Shown ONLY before the set is logged: once an actualRir exists the
+            // logged-RIR chip below replaces it. Rendering BOTH stacked the
+            // column past the fixed row height ("OVERFLOWED BY 1.00" + the
+            // logged pill overlapping the target pill).
+            if (targetRir != null && actualRir == null)
               Padding(
                 padding: const EdgeInsets.only(top: 1),
                 child: Container(

@@ -11160,7 +11160,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exerciseSwapSheetSwapToThisExercise => 'Swap to this exercise';
 
   @override
-  String get exerciseSwapSheetTabAnyEquipment => 'Any equipment';
+  String get exerciseSwapSheetTabAnyEquipment => 'Any';
 
   @override
   String get exerciseSwapSheetTabRecent => 'Recent';

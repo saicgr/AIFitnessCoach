@@ -18,11 +18,21 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
         // "harder", "no machine", etc. without typing. Selected chip
         // persists in _aiPickChip so the user can see which angle they
         // chose; tapping the same chip again clears it (toggle).
-        SizedBox(
+        // Right-edge fade so the horizontally-scrollable chip strip reads as
+        // "scroll for more" instead of looking hard-cut at the last chip.
+        ShaderMask(
+          shaderCallback: (rect) => const LinearGradient(
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+            stops: [0.0, 0.92, 1.0],
+            colors: [Colors.black, Colors.black, Colors.transparent],
+          ).createShader(rect),
+          blendMode: BlendMode.dstIn,
+          child: SizedBox(
           height: 38,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.only(left: 16, right: 24, top: 4, bottom: 4),
             itemCount: _ExerciseSwapSheetState._aiPickChipOptions.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, index) {
@@ -69,6 +79,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                 ),
               );
             },
+          ),
           ),
         ),
 

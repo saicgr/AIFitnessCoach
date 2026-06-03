@@ -19094,7 +19094,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseSwapSheetTabAnyEquipment.
   ///
   /// In en, this message translates to:
-  /// **'Any equipment'**
+  /// **'Any'**
   String get exerciseSwapSheetTabAnyEquipment;
 
   /// No description provided for @exerciseSwapSheetTabRecent.

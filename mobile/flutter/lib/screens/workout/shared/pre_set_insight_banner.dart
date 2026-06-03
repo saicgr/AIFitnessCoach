@@ -177,7 +177,9 @@ class _BannerBody extends StatelessWidget {
         border: Border.all(color: accent.withValues(alpha: 0.45)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        // Top-align so the sparkle + label sit on the first line when the tip
+        // wraps to multiple lines.
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('✨', style: TextStyle(fontSize: fontSize + 1)),
           const SizedBox(width: 6),
@@ -190,10 +192,10 @@ class _BannerBody extends StatelessWidget {
             ),
           ),
           Expanded(
+            // No maxLines/ellipsis — the coaching tip is short (1-2 sentences)
+            // and was being cut off ("...before failur…"). Let it wrap fully.
             child: Text(
               copy,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: fontSize,
                 fontWeight: weight,

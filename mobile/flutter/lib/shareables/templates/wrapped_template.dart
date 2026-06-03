@@ -87,6 +87,11 @@ class WrappedTemplate extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   data.title.toUpperCase(),
+                  // Cap a long workout name so it can't push the fixed-height
+                  // layout into the Spacer below (overflow). Wraps to 2 lines
+                  // then ellipsizes.
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 16 * mul,
                     fontWeight: FontWeight.w800,
