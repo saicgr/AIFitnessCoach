@@ -110,42 +110,39 @@ class NutritionStatsSection extends ConsumerWidget {
         const SizedBox(height: 12),
 
         if (isEmptyWeek)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: _NutritionStatsEmptyState(
-              isDark: isDark,
-              accent: accent,
-              cardColor: cardColor,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              textMuted: textMuted,
-              lastLog: lastLog,
-              onLogMeal: () => showLogMealSheet(context, ref),
-            ),
+          _NutritionStatsEmptyState(
+            isDark: isDark,
+            accent: accent,
+            cardColor: cardColor,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            textMuted: textMuted,
+            lastLog: lastLog,
+            onLogMeal: () => showLogMealSheet(context, ref),
           )
         else ...[
         // 1 — Scalar strip (week at a glance, big numbers).
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _NutritionScalarStrip(
-            weeklySummary: weeklySummary,
-            weeklyNutrition: weeklyNutrition,
-            isDark: isDark,
-            accent: accent,
-            useKgForBody: useKgForBody,
-            cardColor: cardColor,
-            textMuted: textMuted,
-          ),
+        // NOTE: no own horizontal padding — the daily_tab body is already a
+        // SingleChildScrollView(padding: EdgeInsets.all(16)), so the section
+        // header + every card here inherit the same 16px gutter as the hero
+        // card and meal cards. Re-adding padding double-insets to 32px and made
+        // these cards visibly narrower than their neighbours.
+        _NutritionScalarStrip(
+          weeklySummary: weeklySummary,
+          weeklyNutrition: weeklyNutrition,
+          isDark: isDark,
+          accent: accent,
+          useKgForBody: useKgForBody,
+          cardColor: cardColor,
+          textMuted: textMuted,
         ),
         const SizedBox(height: 16),
 
-        // The reusable stat cards are full-bleed-to-16px-gutters like the rest
-        // of the Daily column, so wrap each in the same horizontal padding.
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        // The reusable stat cards align to the same 16px gutter (supplied by
+        // the parent scroll view) as the rest of the Daily column.
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               // 2 — Calorie trend.
               CalorieTrendCard(
                 weeklyNutrition: weeklyNutrition,
@@ -200,7 +197,6 @@ class NutritionStatsSection extends ConsumerWidget {
                 accent: accent,
               ),
             ],
-          ),
         ),
         ],
       ],
