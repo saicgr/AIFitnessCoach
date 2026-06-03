@@ -115,11 +115,16 @@ class _EasyVideoOnlyScreenState extends ConsumerState<_EasyVideoOnlyScreen> {
   }
 
   Future<void> _resolveAndPlay() async {
-    // 1. Prefer an already-resolved URL on the exercise model.
-    if (widget.directUrl != null && widget.directUrl!.isNotEmpty) {
-      _resolvedUrl = widget.directUrl;
+    // 1. Prefer an already-resolved URL on the exercise model — but ONLY if
+    // it's a real https URL. A raw `s3://bucket/key` path (videoS3Path) is
+    // NOT playable by ExoPlayer ("unknown protocol: s3"), so treat it as
+    // unresolved and fall through to the API, which returns a presigned
+    // https URL. Mirrors widgets/exercise_image.dart's resolution.
+    final direct = widget.directUrl;
+    if (direct != null && direct.startsWith('http')) {
+      _resolvedUrl = direct;
     } else {
-      // 2. Fall back to the API.
+      // 2. Fall back to the API (handles s3:// paths + missing media).
       try {
         final apiClient = ref.read(apiClientProvider);
         final res = await apiClient.get(
