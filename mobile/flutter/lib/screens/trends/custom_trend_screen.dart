@@ -13,6 +13,7 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/trends/metric_picker_sheet.dart';
+import '../../widgets/trends/mini_trend_sparkline.dart';
 import '../../widgets/trends/trend_ai_insight_card.dart';
 import '../../widgets/trends/trend_chart.dart';
 import '../../widgets/trends/trend_correlation.dart';
@@ -134,10 +135,8 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   List<_SavedTrend> _saved = const [];
 
-  /// Scroll controller + anchor so a successful save can reveal the SAVED
-  /// TRENDS list (users reported "I saved it but found no way to see it").
+  /// Scroll controller for the main builder list.
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey _savedSectionKey = GlobalKey();
 
   /// True when the currently-built trend (primary + overlays + range) already
   /// exists in [_saved] — drives the "Saved ✓" state on the save button.
@@ -270,29 +269,20 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     await _persistSaved();
     if (mounted) {
       HapticService.success();
+      // A confirmation with a direct "View" action so the user always knows
+      // where the trend landed — the saved-trends sheet — without auto-opening
+      // a modal over the chart they just built.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).customTrendCustomTrendSaved)),
+        SnackBar(
+          content:
+              Text(AppLocalizations.of(context).customTrendCustomTrendSaved),
+          action: SnackBarAction(
+            label: 'View',
+            onPressed: _openSavedSheet,
+          ),
+        ),
       );
-      // Reveal the SAVED TRENDS list so the user sees where it landed — the
-      // #1 complaint was "I saved it but couldn't find it afterwards".
-      _scrollToSaved();
     }
-  }
-
-  /// Smooth-scroll the SAVED TRENDS section into view (post-save + the header
-  /// "Saved" affordance both call this).
-  void _scrollToSaved() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _savedSectionKey.currentContext;
-      if (ctx != null) {
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-          alignment: 0.1,
-        );
-      }
-    });
   }
 
   Future<void> _deleteSaved(_SavedTrend t) async {
@@ -347,17 +337,9 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                   _correlationSection(colors),
                   // ── 7. AI insight ──────────────────────────────────────
                   _aiInsightSection(colors),
-                  // ── Saved list (the Save action now lives in the pinned
-                  //    footer below so it's never scrolled past) ───────────
-                  if (_saved.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    KeyedSubtree(
-                      key: _savedSectionKey,
-                      child: _sectionLabel(colors, 'SAVED TRENDS'),
-                    ),
-                    const SizedBox(height: 10),
-                    for (final t in _saved) _savedRow(colors, t),
-                  ],
+                  // Saved trends now live in their own sheet — opened from the
+                  // header "Saved (N)" pill or the footer save button — so they
+                  // never clutter the builder scroll.
                   // ── About — explainer card, bottom of screen ───────────
                   const SizedBox(height: 24),
                   _aboutSection(colors),
@@ -397,14 +379,11 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                   fontWeight: FontWeight.w800,
                   color: colors.textPrimary)),
           const Spacer(),
-          // Top-right "Saved" access — jumps to the SAVED TRENDS list so saved
+          // Top-right "Saved" access — opens the saved-trends sheet so saved
           // trends are reachable without hunting (only when some exist).
           if (_saved.isNotEmpty)
             GestureDetector(
-              onTap: () {
-                HapticService.selection();
-                _scrollToSaved();
-              },
+              onTap: _openSavedSheet,
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -1653,19 +1632,19 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   Widget _saveButton(ThemeColors colors) {
     final saved = _isCurrentSaved;
     // When the current trend is already saved, the button flips to a "Saved"
-    // state and instead reveals the SAVED TRENDS list (so the action is never a
+    // state and instead opens the saved-trends sheet (so the action is never a
     // confusing no-op + the user learns where saved trends live).
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
-        onPressed: saved ? _scrollToSaved : _saveCurrent,
+        onPressed: saved ? _openSavedSheet : _saveCurrent,
         icon: Icon(
           saved ? Icons.bookmark_added_rounded : Icons.bookmark_add_outlined,
           size: 18,
         ),
         label: Text(
           saved
-              ? 'Saved · view your trends'
+              ? 'Saved · view all'
               : AppLocalizations.of(context).customTrendSaveThisTrend,
         ),
         style: OutlinedButton.styleFrom(
@@ -1728,71 +1707,123 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     );
   }
 
-  Widget _savedRow(ThemeColors colors, _SavedTrend t) {
-    final overlaysText = t.overlays.isEmpty
-        ? 'single metric'
-        : '+ ${t.overlays.map((m) => m.displayName).join(', ')}';
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
+  /// Opens the saved-trends sheet — a dedicated bottom sheet listing every
+  /// saved set (each with a mini sparkline), tap-to-restore, and per-row
+  /// delete. Replaces the old inline "SAVED TRENDS" section so saved trends
+  /// live in their own surface instead of the bottom of the builder scroll.
+  void _openSavedSheet() {
+    HapticService.selection();
+    final colors = ref.colors(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colors.background,
+      barrierColor: Colors.black.withValues(alpha: 0.5),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            HapticService.light();
-            setState(() {
-              _primary = t.primary;
-              _overlays
-                ..clear()
-                ..addAll(t.overlays);
-              _range = t.range;
-            });
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (sheetCtx, setSheetState) {
+            return SafeArea(
+              top: false,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(sheetCtx).size.height * 0.72,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 10),
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colors.cardBorder,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.bookmark_rounded,
+                              size: 20, color: colors.accent),
+                          const SizedBox(width: 8),
+                          Text('Saved trends',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: colors.textPrimary)),
+                          const Spacer(),
+                          Text('${_saved.length}',
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.textMuted)),
+                        ],
+                      ),
+                    ),
+                    if (_saved.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
+                        child: Text(
+                          'No saved trends yet. Build a trend and tap Save to '
+                          'pin it here and to your home screen.',
+                          style: TextStyle(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: colors.textMuted),
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: ListView(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                          children: [
+                            for (final t in _saved)
+                              _SavedTrendSheetRow(
+                                primary: t.primary,
+                                overlays: t.overlays,
+                                range: t.range,
+                                onRestore: () {
+                                  HapticService.light();
+                                  setState(() {
+                                    _primary = t.primary;
+                                    _overlays
+                                      ..clear()
+                                      ..addAll(t.overlays);
+                                    _range = t.range;
+                                  });
+                                  Navigator.of(sheetCtx).pop();
+                                },
+                                onDelete: () async {
+                                  // Capture the navigator before the async gap
+                                  // so we never touch sheetCtx after awaiting.
+                                  final nav = Navigator.of(sheetCtx);
+                                  await _deleteSaved(t);
+                                  if (!mounted) return;
+                                  if (_saved.isEmpty) {
+                                    nav.pop();
+                                  } else {
+                                    setSheetState(() {});
+                                  }
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
           },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.insights_rounded,
-                    size: 18, color: colors.accent),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(t.primary.displayName,
-                          style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary)),
-                      const SizedBox(height: 1),
-                      Text(overlaysText,
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textMuted)),
-                    ],
-                  ),
-                ),
-                Text(t.range.label,
-                    style: TextStyle(
-                        fontSize: 12, color: colors.textMuted)),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => _deleteSaved(t),
-                  child: Icon(Icons.delete_outline,
-                      size: 18, color: colors.textMuted),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -1872,6 +1903,108 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       context: context,
       exclude: exclude,
       onPicked: onPicked,
+    );
+  }
+}
+
+/// One row in the saved-trends sheet — the saved set's name + overlays, a live
+/// mini sparkline of its primary series, its range, and a delete affordance.
+/// Tapping the row restores the full set into the builder.
+class _SavedTrendSheetRow extends ConsumerWidget {
+  final TrendMetric primary;
+  final List<TrendMetric> overlays;
+  final TrendRange range;
+  final VoidCallback onRestore;
+  final Future<void> Function() onDelete;
+
+  const _SavedTrendSheetRow({
+    required this.primary,
+    required this.overlays,
+    required this.range,
+    required this.onRestore,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = ThemeColors.of(context);
+    final series = ref
+        .watch(trendSeriesProvider(TrendSeriesKey(primary, range)))
+        .valueOrNull;
+    final points = series?.points ?? const <TrendPoint>[];
+    final overlaysText = overlays.isEmpty
+        ? 'single metric'
+        : '+ ${overlays.map((m) => m.displayName).join(', ')}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: colors.elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.cardBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onRestore,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.insights_rounded, size: 18, color: colors.accent),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(primary.displayName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary)),
+                      const SizedBox(height: 1),
+                      Text(overlaysText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 11, color: colors.textMuted)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                // Live mini sparkline of the saved primary series (≥2 points).
+                if (points.length >= 2)
+                  SizedBox(
+                    width: 64,
+                    height: 32,
+                    child:
+                        MiniTrendSparkline(points: points, color: colors.accent),
+                  ),
+                const SizedBox(width: 10),
+                Text(range.label,
+                    style: TextStyle(fontSize: 12, color: colors.textMuted)),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    onDelete();
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(Icons.delete_outline,
+                        size: 18, color: colors.textMuted),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

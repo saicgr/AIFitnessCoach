@@ -23,7 +23,10 @@ import '../../../../data/providers/metric_layout_provider.dart';
 import '../../../../data/providers/metric_value_provider.dart';
 import '../../../../data/providers/saved_trends_provider.dart';
 import '../../../../data/providers/today_score_provider.dart';
+import '../../../../data/providers/trend_series_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/trends/mini_trend_sparkline.dart';
+import '../../../../widgets/trends/trend_correlation.dart' show TrendPoint;
 import 'metric_settings_sheet.dart';
 import '../ring_catalog.dart';
 import '../segmented_score_ring.dart';
@@ -383,7 +386,9 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
 
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      // Bottom inset clears the overlaid dots + gear footer so a full-height
+      // graph never sits under them (matches the other deck pages' 36-38px).
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 36),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -414,57 +419,19 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
             ],
           ),
           const SizedBox(height: 8),
+          // One saved trend → a single big featured graph that fills the card
+          // (this is what the user expects when they "add a trend"). Multiple →
+          // a vertical list of compact graph rows, each with its own sparkline.
           Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: saved.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 7),
-              itemBuilder: (_, i) {
-                final t = saved[i];
-                return GestureDetector(
-                  // Pass the FULL saved view (primary + overlays + range) so the
-                  // builder restores the exact trend, not just the bare primary.
-                  onTap: () => context.push('/trends/custom', extra: t),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: c.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: c.cardBorder),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.insights_rounded, size: 16, color: c.accent),
-                        const SizedBox(width: 9),
-                        Expanded(
-                          child: Text(
-                            t.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: c.textPrimary,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          t.range.label,
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: c.textMuted,
-                          ),
-                        ),
-                      ],
-                    ),
+            child: saved.length == 1
+                ? _SavedTrendGraphCard(view: saved.first, expanded: true)
+                : ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: saved.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 7),
+                    itemBuilder: (_, i) =>
+                        _SavedTrendGraphCard(view: saved[i], expanded: false),
                   ),
-                );
-              },
-            ),
           ),
         ],
       ),
@@ -544,6 +511,234 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
       case ContributorKind.sleep:
         return RingKind.sleep.color;
     }
+  }
+}
+
+// =================================================== SavedTrendGraphCard
+
+/// A saved custom-trend rendered as a real mini graph on the home "Your
+/// trends" carousel — the thing a user expects to see after they save a trend.
+///
+/// Watches [trendSeriesProvider] for the saved trend's PRIMARY metric at its
+/// saved range and draws an area sparkline plus the latest value + delta.
+/// Tapping opens the full Custom-Trends builder restored to the exact saved set
+/// (primary + overlays + range).
+///
+///  * [expanded] true  → fills the card height as a single featured graph
+///    (used when the user has exactly one saved trend).
+///  * [expanded] false → a compact row with the sparkline on the right (used
+///    when several trends share the page).
+class _SavedTrendGraphCard extends ConsumerWidget {
+  final SavedTrendView view;
+  final bool expanded;
+
+  const _SavedTrendGraphCard({required this.view, required this.expanded});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ThemeColors.of(context);
+    final series = ref
+        .watch(trendSeriesProvider(TrendSeriesKey(view.primary, view.range)))
+        .valueOrNull;
+
+    return GestureDetector(
+      // Pass the FULL saved view so the builder restores overlays + range too.
+      onTap: () => context.push('/trends/custom', extra: view),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: expanded ? _expandedLayout(c, series) : _rowLayout(c, series),
+      ),
+    );
+  }
+
+  // ── Single featured graph (fills the card) ──────────────────────────────
+  Widget _expandedLayout(ThemeColors c, TrendSeries? series) {
+    final points = series?.points ?? const <TrendPoint>[];
+    final hasLine = points.length >= 2;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.insights_rounded, size: 16, color: c.accent),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                view.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: c.textPrimary,
+                ),
+              ),
+            ),
+            Text(
+              view.range.label,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w800,
+                color: c.textMuted,
+              ),
+            ),
+          ],
+        ),
+        if (points.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _valueRow(c, series!, big: true),
+        ],
+        const SizedBox(height: 6),
+        Expanded(
+          child: hasLine
+              ? MiniTrendSparkline(points: points, color: c.accent)
+              : _chartFallback(c, series),
+        ),
+      ],
+    );
+  }
+
+  // ── Compact row (sparkline on the right) ────────────────────────────────
+  Widget _rowLayout(ThemeColors c, TrendSeries? series) {
+    final points = series?.points ?? const <TrendPoint>[];
+    final hasLine = points.length >= 2;
+    return Row(
+      children: [
+        Icon(Icons.insights_rounded, size: 16, color: c.accent),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                view.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: c.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              if (points.isNotEmpty)
+                _valueRow(c, series!, big: false)
+              else
+                Text(
+                  series == null ? 'Loading…' : 'No data in range',
+                  style: TextStyle(fontSize: 10.5, color: c.textMuted),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 80,
+          height: 38,
+          child: hasLine
+              ? MiniTrendSparkline(points: points, color: c.accent)
+              : CustomPaint(painter: _DashPainter(c.cardBorder)),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          view.range.label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: c.textMuted,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Latest value + a signed delta-over-range chip. [big] drives the headline
+  /// size (featured graph vs compact row).
+  Widget _valueRow(ThemeColors c, TrendSeries series, {required bool big}) {
+    final last = series.points.last.value;
+    final first = series.points.first.value;
+    final delta = last - first;
+    final unit = series.unit;
+    final hasDelta = series.points.length >= 2 && delta.abs() > 1e-9;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          _fmtNum(last),
+          style: TextStyle(
+            fontSize: big ? 22 : 14,
+            height: 1,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: c.textPrimary,
+          ),
+        ),
+        if (unit.isNotEmpty) ...[
+          const SizedBox(width: 3),
+          Text(
+            unit,
+            style: TextStyle(
+              fontSize: big ? 11 : 9.5,
+              fontWeight: FontWeight.w700,
+              color: c.textMuted,
+            ),
+          ),
+        ],
+        if (hasDelta) ...[
+          const SizedBox(width: 8),
+          Icon(
+            delta > 0 ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+            size: big ? 13 : 11,
+            color: c.textSecondary,
+          ),
+          Text(
+            '${_fmtNum(delta.abs())}${unit.isNotEmpty ? ' $unit' : ''}',
+            style: TextStyle(
+              fontSize: big ? 12 : 10.5,
+              fontWeight: FontWeight.w700,
+              color: c.textSecondary,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Loading / empty / single-point states for the featured-graph chart area.
+  Widget _chartFallback(ThemeColors c, TrendSeries? series) {
+    if (series == null) {
+      // Loading — a quiet dashed baseline (cache-first resolves fast).
+      return CustomPaint(
+        painter: _DashPainter(c.cardBorder),
+        child: const SizedBox.expand(),
+      );
+    }
+    final msg = series.points.length == 1
+        ? 'Log ${view.primary.displayName.toLowerCase()} again to draw a trend'
+        : 'No ${view.primary.displayName.toLowerCase()} logged in this range';
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Text(
+          msg,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11.5, height: 1.3, color: c.textMuted),
+        ),
+      ),
+    );
+  }
+
+  static String _fmtNum(double v) {
+    if (v.abs() >= 1000) return '${(v / 1000).toStringAsFixed(1)}k';
+    if (v == v.roundToDouble()) return v.toInt().toString();
+    return v.toStringAsFixed(1);
   }
 }
 
