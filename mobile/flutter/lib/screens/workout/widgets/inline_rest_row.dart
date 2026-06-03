@@ -457,34 +457,11 @@ class _InlineRestRowState extends State<InlineRestRow>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Label row
+          // RPE is captured by the mandatory post-set intensity sheet, so the
+          // inline "how did that feel?" stars were a duplicate ask and have
+          // been removed. Only the "+ Note" affordance remains here.
           Row(
             children: [
-              Text(
-                AppLocalizations.of(context).inlineRestRowHowDidThatFeel,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: textPrimary,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                AppLocalizations.of(context).inlineRestRowRpe,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: textMuted,
-                ),
-              ),
-              const SizedBox(width: 3),
-              GestureDetector(
-                onTap: widget.onShowRpeInfo,
-                child: Icon(
-                  Icons.info_outline,
-                  size: 14,
-                  color: textMuted,
-                ),
-              ),
               const Spacer(),
               // + Note button
               GestureDetector(
@@ -522,91 +499,6 @@ class _InlineRestRowState extends State<InlineRestRow>
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 6),
-
-          // 5-star rating row, no emoji bookends.
-          //
-          // Display ↔ stored RPE mapping (preserves analytics scale):
-          //   1★ = Easy           → stored RPE 2
-          //   2★ = A little tough → stored RPE 4
-          //   3★ = Solid effort   → stored RPE 6
-          //   4★ = Hard           → stored RPE 8
-          //   5★ = Max effort     → stored RPE 10
-          //
-          // The widget's `currentRpe` field is the stored 1–10 value. We
-          // round it to the nearest 5-star bucket for visual selection.
-          Builder(builder: (context) {
-            int? selectedStars;
-            if (widget.currentRpe != null && widget.currentRpe! > 0) {
-              selectedStars = ((widget.currentRpe! + 1) / 2).round().clamp(1, 5);
-            }
-            const labels = <String>['Easy', 'A little tough', 'Solid effort', 'Hard', 'Max effort'];
-
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                final starsValue = index + 1;
-                final isSelected = selectedStars != null && starsValue <= selectedStars;
-                final isExact = selectedStars == starsValue;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticFeedback.selectionClick();
-                      if (isExact) {
-                        // Tap-again clears.
-                        widget.onRateSet(0);
-                      } else {
-                        // 5-star → 1-10 RPE: 1★=2, 2★=4, 3★=6, 4★=8, 5★=10
-                        widget.onRateSet(starsValue * 2);
-                      }
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Semantics(
-                      label: '${labels[index]}, $starsValue of 5',
-                      button: true,
-                      selected: isSelected,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Icon(
-                          isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                          size: 28,
-                          color: isSelected
-                              ? Colors.amber.shade600
-                              : textMuted.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            );
-          }),
-
-          // Inline label for the currently selected (or tappable) intensity.
-          // Reads off the same star count → matches what the user just tapped.
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: Builder(builder: (context) {
-              int? selectedStars;
-              if (widget.currentRpe != null && widget.currentRpe! > 0) {
-                selectedStars = ((widget.currentRpe! + 1) / 2).round().clamp(1, 5);
-              }
-              const labels = <String>['Easy', 'A little tough', 'Solid effort', 'Hard', 'Max effort'];
-              final label = selectedStars == null
-                  ? 'Tap to rate (optional)'
-                  : labels[selectedStars - 1];
-              return Center(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textMuted,
-                    fontWeight: selectedStars == null ? FontWeight.w400 : FontWeight.w600,
-                  ),
-                ),
-              );
-            }),
           ),
         ],
       ),

@@ -671,17 +671,13 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
         ),
         // Snap-equipment FAB (Issue #1, Task #6). Fixed bottom-right; doesn't
         // overlap content because the tab bodies have their own bottom padding.
-        PositionedDirectional(end: 16,
+        PositionedDirectional(
+          end: 16,
           bottom: 16,
-          child: FloatingActionButton.extended(
-            heroTag: 'swap_snap_fab',
-              backgroundColor: AppColors.cyan,
-            icon: const Icon(Icons.camera_alt, color: Colors.black),
-            label: const Text(
-              'Snap equipment',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
-            ),
-            onPressed: () async {
+          child: Builder(builder: (context) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final fg = isDark ? Colors.white : Colors.black;
+            Future<void> onTap() async {
               final updated = await showEquipmentSnapFlow(
                 context, ref,
                 mode: SnapMode.swap,
@@ -693,8 +689,49 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
               if (updated != null && mounted) {
                 Navigator.of(context).pop(updated);
               }
-            },
-          ),
+            }
+
+            // Glassmorphic pill — translucent + blurred instead of the solid
+            // cyan FAB, so it floats over the list without dominating it.
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(28),
+                    onTap: onTap,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: fg.withValues(alpha: isDark ? 0.16 : 0.06),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: fg.withValues(alpha: isDark ? 0.28 : 0.14),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.camera_alt, size: 18, color: fg),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Snap equipment',
+                            style: TextStyle(
+                              color: fg,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
       ],
     );
