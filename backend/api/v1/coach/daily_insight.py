@@ -335,6 +335,33 @@ def _time_of_day_bucket(now_local: datetime) -> str:
     return "quiet"  # 00:00–04:59
 
 
+# Sources whose COPY is time-of-day specific (greetings / daily briefings that
+# open with "Start your day" / "Wind down" etc.). A cached row for one of these
+# must be regenerated once the local clock crosses into a different coarse
+# phase — otherwise the morning briefing is reused verbatim at 11pm. The
+# pillar-stat / nutrition-card / workout-card sources are NOT time-of-day copy
+# and are left cached for the whole day.
+_TIME_SENSITIVE_SOURCES = frozenset({
+    "home",
+    "greeting",
+    "morning_brief",
+    "morning_brief_onboarding",
+    "evening_recap",
+})
+
+
+def _coarse_phase(bucket: str) -> str:
+    """Collapse the fine time buckets into the 3 phases that change the copy's
+    framing, so we regenerate at most ~twice a day (morning→day→evening) rather
+    than on every fine bucket flip."""
+    if bucket == "morning":
+        return "morning"
+    if bucket in ("midday", "afternoon"):
+        return "day"
+    # evening / late / quiet all read as "wind-down / late" framing.
+    return "evening"
+
+
 def _first_name(user_row: Dict[str, Any]) -> str:
     """Derive a clean first name with safe fallback to the email handle."""
     raw = (
@@ -1297,20 +1324,43 @@ async def daily_insight(
                 existing = q.limit(1).execute()
                 if existing and existing.data:
                     row = existing.data[0]
-                    return DailyInsightResponse(
-                        insight_id=row.get("id"),
-                        local_date=row["local_date"],
-                        source=row["source"],
-                        headline=row["headline"],
-                        body=row["body"],
-                        cta_primary=row.get("cta_primary"),
-                        cta_secondary=row.get("cta_secondary"),
-                        chips=row.get("chips"),
-                        leading_pillar=row.get("leading_pillar"),
-                        generated_at=row.get("generated_at"),
-                        delivery="gemini",  # cached rows are only stored on success
-                        blocks=briefing_blocks,
-                    )
+                    # Time-of-day staleness: a greeting/briefing generated this
+                    # morning must NOT be replayed at night ("Start your day" at
+                    # 11pm). If the row's generated_at lands in a different
+                    # coarse phase than now (both in the user's tz), skip the
+                    # cache and regenerate — the upsert below overwrites the row.
+                    _phase_stale = False
+                    if source in _TIME_SENSITIVE_SOURCES and row.get("generated_at"):
+                        try:
+                            from zoneinfo import ZoneInfo
+                            _zone = ZoneInfo(tz_resolved if tz_resolved else "UTC")
+                            _gen_local = datetime.fromisoformat(
+                                row["generated_at"]
+                            ).astimezone(_zone)
+                            _now_local = datetime.now(_zone)
+                            _phase_stale = _coarse_phase(
+                                _time_of_day_bucket(_gen_local)
+                            ) != _coarse_phase(_time_of_day_bucket(_now_local))
+                        except Exception as e:
+                            # Parse/tz error → safe to serve the cached row.
+                            logger.warning(
+                                f"[daily_insight] phase-staleness check skipped: {e}"
+                            )
+                    if not _phase_stale:
+                        return DailyInsightResponse(
+                            insight_id=row.get("id"),
+                            local_date=row["local_date"],
+                            source=row["source"],
+                            headline=row["headline"],
+                            body=row["body"],
+                            cta_primary=row.get("cta_primary"),
+                            cta_secondary=row.get("cta_secondary"),
+                            chips=row.get("chips"),
+                            leading_pillar=row.get("leading_pillar"),
+                            generated_at=row.get("generated_at"),
+                            delivery="gemini",  # cached rows stored only on success
+                            blocks=briefing_blocks,
+                        )
             except HTTPException:
                 raise
             except Exception as e:
