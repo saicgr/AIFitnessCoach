@@ -83,6 +83,10 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
 
   /// Fetch AI-powered weight suggestion from the backend
   Future<void> fetchAIWeightSuggestion(SetLog setLog) async {
+    // Guard against duplicate concurrent fetches — a rebuild / re-entry would
+    // otherwise refire and count against the rate limit.
+    if (isLoadingWeightSuggestion) return;
+
     final exercise = exercises[currentExerciseIndex];
     final isLastSet = (completedSets[currentExerciseIndex]?.length ?? 0) >=
         (totalSetsPerExercise[currentExerciseIndex] ?? 3);

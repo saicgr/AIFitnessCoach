@@ -13,7 +13,7 @@ Uses Gemini AI to generate personalized reasoning for suggestions.
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
-from core.rate_limiter import limiter
+from core.rate_limiter import user_limiter
 from core.exceptions import safe_internal_error
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -240,7 +240,9 @@ Return ONLY the reasoning text, nothing else."""
 
 
 @router.post("/rest-suggestion", response_model=RestSuggestionResponse)
-@limiter.limit("5/minute")
+# Per-USER (not per-IP) + 20/min so a normal multi-set workout (one call per
+# set) never trips it, even on a shared gym/NAT IP.
+@user_limiter.limit("20/minute")
 async def get_rest_suggestion(body: RestSuggestionRequest,
     request: Request,
     current_user: dict = Depends(get_current_user),

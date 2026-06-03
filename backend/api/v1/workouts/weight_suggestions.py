@@ -13,7 +13,7 @@ from core.db import get_supabase_db
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
-from core.rate_limiter import limiter
+from core.rate_limiter import user_limiter
 from core.exceptions import safe_internal_error
 from typing import List, Optional
 from datetime import datetime
@@ -607,7 +607,9 @@ CRITICAL RULES FOR SET-TO-SET SUGGESTIONS:
 
 
 @router.post("/weight-suggestion", response_model=WeightSuggestionResponse)
-@limiter.limit("5/minute")
+# Per-USER (not per-IP) so a shared gym/NAT IP doesn't pool everyone's calls,
+# and 20/min so a normal multi-set workout (fires once per set) never trips it.
+@user_limiter.limit("20/minute")
 async def get_weight_suggestion(body: WeightSuggestionRequest,
     request: Request,
     current_user: dict = Depends(get_current_user),

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../core/services/rest_tip_service.dart';
+import '../../../core/services/weight_suggestion_service.dart';
 import '../../../core/services/achievement_prompt_service.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/rest_suggestion.dart';
@@ -602,10 +603,44 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
 
   /// Fetch AI-powered rest suggestion
   Future<void> fetchRestSuggestion() async {
+    // Guard against duplicate concurrent fetches (a rebuild / re-entry would
+    // otherwise refire and burn requests against the rate limit).
+    if (isLoadingRestSuggestion) return;
+
     final exercise = exercises[currentExerciseIndex];
     final completedSetsList = completedSets[currentExerciseIndex] ?? [];
 
     if (completedSetsList.isEmpty) return;
+
+    // Computed up front so the fallback can use them in any failure branch.
+    final muscleGroup =
+        (exercise.muscleGroup ?? exercise.primaryMuscle ?? '').toLowerCase();
+    final isCompound = muscleGroup.contains('chest') ||
+        muscleGroup.contains('back') ||
+        muscleGroup.contains('legs') ||
+        muscleGroup.contains('quads') ||
+        muscleGroup.contains('hamstrings') ||
+        muscleGroup.contains('glutes') ||
+        muscleGroup.contains('shoulders');
+    final totalSets = totalSetsPerExercise[currentExerciseIndex] ?? 3;
+    final setsRemaining = totalSets - completedSetsList.length;
+    final rpe = lastSetRpe ?? 7;
+
+    // Deterministic fallback so a rate-limited / failed AI call still shows
+    // real rest guidance instead of nothing (mirrors the weight-suggestion
+    // fallback). Never blank.
+    void applyFallback() {
+      if (!mounted) return;
+      setState(() {
+        restSuggestion = WeightSuggestionService.generateRestSuggestion(
+          rpe: rpe,
+          isCompound: isCompound,
+          setsCompleted: completedSetsList.length,
+          setsRemaining: setsRemaining > 0 ? setsRemaining : 0,
+        );
+        isLoadingRestSuggestion = false;
+      });
+    }
 
     setState(() => isLoadingRestSuggestion = true);
 
@@ -613,26 +648,14 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
       if (userId == null) {
-        setState(() => isLoadingRestSuggestion = false);
+        applyFallback();
         return;
       }
-
-      final muscleGroup = (exercise.muscleGroup ?? exercise.primaryMuscle ?? '').toLowerCase();
-      final isCompound = muscleGroup.contains('chest') ||
-          muscleGroup.contains('back') ||
-          muscleGroup.contains('legs') ||
-          muscleGroup.contains('quads') ||
-          muscleGroup.contains('hamstrings') ||
-          muscleGroup.contains('glutes') ||
-          muscleGroup.contains('shoulders');
-
-      final totalSets = totalSetsPerExercise[currentExerciseIndex] ?? 3;
-      final setsRemaining = totalSets - completedSetsList.length;
 
       final response = await apiClient.dio.post(
         '/workouts/rest-suggestion',
         data: {
-          'rpe': lastSetRpe ?? 7,
+          'rpe': rpe,
           'exercise_type': 'strength',
           'exercise_name': exercise.name,
           'sets_remaining': setsRemaining > 0 ? setsRemaining : 0,
@@ -653,19 +676,15 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
         });
         debugPrint('✅ [Rest] Got suggestion: ${suggestion.suggestedSeconds}s - ${suggestion.reasoning}');
       } else {
-        setState(() => isLoadingRestSuggestion = false);
+        applyFallback();
       }
     } on DioException catch (e) {
-      debugPrint('❌ [Rest] DioException: ${e.message}');
-      debugPrint('❌ [Rest] Response: ${e.response?.statusCode} ${e.response?.data}');
-      if (mounted) {
-        setState(() => isLoadingRestSuggestion = false);
-      }
+      // Includes 429 (rate limited) — degrade to the deterministic suggestion.
+      debugPrint('❌ [Rest] DioException: ${e.message} (${e.response?.statusCode})');
+      applyFallback();
     } catch (e) {
       debugPrint('❌ [Rest] Error fetching suggestion: $e');
-      if (mounted) {
-        setState(() => isLoadingRestSuggestion = false);
-      }
+      applyFallback();
     }
   }
 
