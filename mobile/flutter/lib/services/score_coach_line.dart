@@ -268,6 +268,12 @@ String _interpolate(
   required int reach,
   required ContributorKind kind,
 }) {
+  // NOTE: copy intentionally no longer references the projected score number
+  // ({reach}). The composite 0-100 score is opaque to users (the Today Score
+  // card deliberately hides it too), so the pools phrase leverage concretely
+  // (the action + its real payoff, e.g. "closes your Move ring"). The {reach}
+  // substitution is kept as a harmless no-op for any future template + so the
+  // [reach] plumbing (which still selects the leverage pillar) stays intact.
   return template
       .replaceAll('{name}', _safeName(name))
       .replaceAll('{workout}', _safeWorkout(workout))
@@ -313,21 +319,21 @@ const List<String> _trainHeadlines = [
   '{name}, the workout is your big lever.',
   'Today rises with training, {name}.',
   '{name}, your plan is waiting.',
-  '{name}, one session unlocks {reach}.',
-  'Train is where the points are.',
+  '{name}, one session carries the day.',
+  'Train is where the day is won.',
   '{name}, lift first, the rest follows.',
-  'Score climbs fast with training.',
+  'Momentum starts with training.',
 ];
 
 const List<String> _trainBodies = [
-  'Knock out {workout} and your score reaches {reach}.',
-  'Finish {workout} and you are at {reach}. Everything else is incremental from there.',
-  'Your plan calls for {workout}. Completing it puts the day at {reach}.',
-  'One session, {workout}, gets you to {reach}.',
-  'Train is the heaviest pillar on your card. Hit {workout} to climb to {reach}.',
-  'Start {workout} when you can. Completion alone lifts you to {reach}.',
-  'Even half of {workout} moves the needle. Full completion lands {reach}.',
-  'The score is built around your training. Do {workout} to reach {reach}.',
+  'Knock out {workout} and today\'s biggest lever is done.',
+  'Finish {workout} and everything else today is incremental.',
+  'Your plan calls for {workout}. Completing it anchors the whole day.',
+  'One session, {workout}, and the hard part is behind you.',
+  'Train is the heaviest pillar on your card. Hit {workout} to clear it.',
+  'Start {workout} when you can. Completion alone moves the day forward.',
+  'Even half of {workout} moves the needle. Full completion seals it.',
+  'Training is the core of your day. Do {workout} and the rest follows.',
 ];
 
 // ── Nourish ───────────────────────────────────────────────────────────
@@ -335,23 +341,23 @@ const List<String> _trainBodies = [
 const List<String> _nourishHeadlines = [
   '{name}, fuel is the move right now.',
   '{name}, your protein is lagging.',
-  'Eat your way to {reach}, {name}.',
+  'Eat your way back on track, {name}.',
   '{name}, food logging is the gap.',
   'Close the Nourish gap, {name}.',
   '{name}, the kitchen is your next stop.',
-  'Hit your macros to land {reach}.',
-  '{name}, a meal away from {reach}.',
+  'Hit your macros and close the gap.',
+  '{name}, a meal away from on target.',
 ];
 
 const List<String> _nourishBodies = [
-  'Log the rest of your food to climb to {reach}.',
-  'You are short on protein. Hit the target to reach {reach}.',
-  'A solid meal closes the Nourish ring and lands you at {reach}.',
-  'Your calorie target is partly logged. Finish the day to reach {reach}.',
-  'Protein is the lever right now. Hitting your goal moves the day to {reach}.',
-  'Log your remaining meals and the score lifts to {reach}.',
-  'You have macros left on the table. Close the gap to reach {reach}.',
-  'A balanced meal here clears the Nourish gap and gets you to {reach}.',
+  'Log the rest of your food to close the nutrition gap.',
+  'You are short on protein. Hit the target to close it out.',
+  'A solid meal closes the Nourish ring for the day.',
+  'Your calorie target is partly logged. Finish the day to close it.',
+  'Protein is the lever right now. Hitting your goal closes the gap.',
+  'Log your remaining meals and the Nourish ring closes.',
+  'You have macros left on the table. Close the gap before the day ends.',
+  'A balanced meal here clears the Nourish gap.',
 ];
 
 // ── Move ──────────────────────────────────────────────────────────────
@@ -360,46 +366,46 @@ const List<String> _moveHeadlines = [
   '{name}, a walk closes Move.',
   '{name}, steps are the easiest win.',
   'Move is almost there, {name}.',
-  '{name}, get outside for {reach}.',
+  '{name}, get outside for the easy win.',
   'Close the Move ring, {name}.',
   '{name}, a few thousand steps left.',
-  'Steps unlock {reach} for you.',
+  'Steps are your easiest ring to close.',
   '{name}, your feet do the work.',
 ];
 
 const List<String> _moveBodies = [
-  'A short walk gets your score to {reach}.',
-  'You are close to your step goal. Finishing it puts the day at {reach}.',
-  'Move is your fastest open ring today. A 20 minute walk lands {reach}.',
-  'Steps are the cheapest points on the card. Hit the goal to reach {reach}.',
-  'A loop around the block usually does it. Closing Move gets you to {reach}.',
-  'Step goal is in reach. Closing it brings the score to {reach}.',
-  'Move counts every step, even slow ones. Hit goal to land {reach}.',
-  'A walk after your next break closes the ring and reaches {reach}.',
+  'A short walk closes your Move ring for the day.',
+  'You are close to your step goal. Finishing it closes Move.',
+  'Move is your fastest open ring today. A 20 minute walk closes it.',
+  'Steps are the easiest win on the card. Hit the goal to close Move.',
+  'A loop around the block usually does it. That closes Move.',
+  'Your step goal is within reach. Close it before the day winds down.',
+  'Move counts every step, even slow ones. Hit your goal to close it.',
+  'A walk after your next break closes the ring.',
 ];
 
 // ── Sleep ─────────────────────────────────────────────────────────────
 
 const List<String> _sleepHeadlines = [
   '{name}, last night was short.',
-  '{name}, sleep is dragging your score.',
+  '{name}, sleep is dragging your day.',
   'Build tonight back in, {name}.',
   '{name}, rest is on the card now.',
   'Sleep counts here, {name}.',
   '{name}, an earlier bedtime helps.',
-  'Wind down by ten, land {reach}.',
+  'Wind down by ten tonight, {name}.',
   '{name}, recovery is the lever tonight.',
 ];
 
 const List<String> _sleepBodies = [
-  'Last night came in short. An earlier wind down tonight protects tomorrow\'s score.',
-  'Sleep is a contributor now. A solid night lifts you toward {reach} tomorrow.',
-  'Recovery shows up on the card. Aim for your goal tonight to bank {reach}.',
+  'Last night came in short. An earlier wind down tonight protects tomorrow.',
+  'Sleep is a contributor now. A solid night sets up a stronger tomorrow.',
+  'Recovery shows up on the card. Aim for your sleep goal tonight.',
   'Bed by ten gives you a better starting line tomorrow.',
-  'Your sleep score is below your usual. Tonight is a chance to reset.',
+  'Your sleep is below your usual. Tonight is a chance to reset.',
   'A full goal-length night tonight resets the trend.',
-  'The Sleep ring rewards consistency. Match your usual bedtime to land {reach}.',
-  'Wind down 30 minutes earlier. Tomorrow\'s score starts with tonight.',
+  'The Sleep ring rewards consistency. Match your usual bedtime tonight.',
+  'Wind down 30 minutes earlier. Tomorrow starts with tonight.',
 ];
 
 // ── All-done state ────────────────────────────────────────────────────
@@ -443,13 +449,13 @@ const List<String> _morningHeadlines = [
 ];
 
 const List<String> _morningBodies = [
-  'Plan today around {workout}. Hit it and you\'re at {reach}.',
-  'You\'ve got {workout} on deck. Knock it out and the day climbs to {reach}.',
-  'Open with hydration, then food. {workout} is the lever — land it for {reach}.',
+  'Plan today around {workout}. Hit it and the day has its anchor.',
+  'You\'ve got {workout} on deck. Knock it out and the day is yours.',
+  'Open with hydration, then food. {workout} is the lever, so land it.',
   'Start protein early so Nourish isn\'t the lever later. {workout} closes the day.',
-  'Get your steps in before the desk traps you. {workout} for {reach}.',
-  'Easy meal first, {workout} second. That puts the day at {reach}.',
-  'Set the tone: hit your protein and your workout. Lands {reach}.',
+  'Get your steps in before the desk traps you, then {workout}.',
+  'Easy meal first, {workout} second. That sets the day up right.',
+  'Set the tone: hit your protein and your workout.',
   '{workout} is today\'s headline. Everything else flows from there.',
 ];
 
@@ -518,7 +524,7 @@ const List<String> _lateBodies = [
   'Get to bed at your usual time and tomorrow opens with momentum.',
   'Tonight\'s sleep is on tomorrow\'s scorecard. Wind down within 30 minutes.',
   'Screens off, lights down. A goal-length night protects the whole next day.',
-  'Skip the late scroll — Sleep is one of your four pillars now.',
+  'Skip the late scroll. Sleep is one of your four pillars now.',
   'The Sleep ring rewards consistency. Same bedtime as last night, please.',
   'Anything you do now costs you Sleep. Bed first, list tomorrow.',
   'You\'ve done enough today. The smart move is rest.',

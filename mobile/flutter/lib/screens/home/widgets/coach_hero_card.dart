@@ -26,6 +26,7 @@ import '../../../data/providers/sub_card_shown_today_provider.dart';
 import '../../../widgets/coach/coach_contextual_nudge_row.dart';
 import '../../../widgets/coach/sub_card_ranker.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../chat/widgets/generic_blocks_renderer.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -197,6 +198,14 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               color: c.textSecondary,
             ),
           ),
+        ],
+        // One compact grounded block tied to the leading pillar (e.g. a
+        // protein progress bar / steps sparkline). Capped at a single block
+        // so the card stays tight and does not duplicate the full
+        // TodayScoreCard / health snapshot rendered below it on Home.
+        if (insight.blocks.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          GenericBlocksRenderer(blocks: insight.blocks.take(1).toList()),
         ],
         if (insight.ctaPrimary != null || insight.ctaSecondary != null) ...[
           const SizedBox(height: 12),
@@ -501,6 +510,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 
   // _CoachNudgeStack defined at file scope below.
   void _onLongPressRegen() {
+    // Guard against a second trigger while one is already in flight — the
+    // refresh now has two entry points (long-press AND the ⋮ menu), so they
+    // must not stack concurrent force-refreshes.
+    if (_regenerating) return;
     final now = DateTime.now();
     if (_lastRegenAt != null &&
         now.difference(_lastRegenAt!) < const Duration(minutes: 30)) {
@@ -529,6 +542,14 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       onError: (_) {
         if (!mounted) return;
         setState(() => _regenerating = false);
+        // Surface the failure instead of failing silently — the card keeps
+        // showing the prior insight, so this degrades gracefully.
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            duration: Duration(seconds: 2),
+            content: Text("Couldn't refresh, try again"),
+          ),
+        );
       },
     );
   }
@@ -560,6 +581,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              row(Icons.refresh, 'Refresh insight', () {
+                Navigator.of(sheetCtx).pop();
+                _onLongPressRegen();
+              }),
               row(Icons.tune, 'AI Settings', () {
                 Navigator.of(sheetCtx).pop();
                 context.push('/ai-settings');
