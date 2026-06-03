@@ -406,16 +406,11 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         if (userId != null) {
           today = await _activityService.getTodayActivity(userId);
         }
-        // The most recent seeded `daily_activity` row ends yesterday, so a
-        // demo "today" may be absent. Fall back to the latest history row
-        // so the cards still render real seeded numbers for the reviewer.
-        if (today == null && userId != null) {
-          final history = await _activityService.getActivityHistory(
-            userId,
-            limit: 1,
-          );
-          if (history.isNotEmpty) today = history.first;
-        }
+        // NO fallback to the latest history row: the seed now always writes a
+        // CURRENT-date row (window ends today, refreshed daily), so a genuine
+        // null here means "no data for today" and must render as such — never
+        // a stale past row re-presented as today (that showed May 20's 5,090
+        // steps under today's date for weeks).
         final stampNow = DateTime.now();
         _lastFetchAt = stampNow;
         _lastFetchDay = DateTime(stampNow.year, stampNow.month, stampNow.day);

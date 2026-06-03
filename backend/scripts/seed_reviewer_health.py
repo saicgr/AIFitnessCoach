@@ -87,9 +87,10 @@ REVIEWER_EMAIL = "reviewer@zealova.com"
 # comfortable margin.
 SEED_DAYS = 45
 
-# Fixed RNG seed so re-runs are byte-stable (the founder wants stable
-# screenshots across reviewer logins).
-RNG_SEED = 20260521
+# Base RNG seed for byte-stable per-run output. Rolled forward whenever the
+# demo numbers need refreshing (the most-recent day is otherwise deterministic
+# and would repeat the same "today" value on every reseed).
+RNG_SEED = 20260602
 
 # Demo data source tag — distinguishes seeded rows from any real
 # health_connect / apple_health rows. Used by --delete as a safety belt.
@@ -117,9 +118,10 @@ def _build_seed_rows() -> list[dict]:
     """
     rng = random.Random(RNG_SEED)
     today = date.today()
-    # Window ends yesterday so "today" stays empty until the reviewer's
-    # device syncs (or the demo provider serves an in-progress today).
-    start = today - timedelta(days=SEED_DAYS)
+    # Window ends TODAY (inclusive) so the reviewer/demo always has a CURRENT
+    # row for the current date — never a stale past row presented as "today".
+    # Run daily (cron) so the window slides forward and today is always fresh.
+    start = today - timedelta(days=SEED_DAYS - 1)
 
     # Pick 5-6 genuinely poor nights and several good nights up front so the
     # distribution is controlled rather than emergent. Indices are day
@@ -347,8 +349,8 @@ def delete(db: Client, reset_goals: bool) -> None:
     alone.
     """
     today = date.today()
-    start = (today - timedelta(days=SEED_DAYS)).isoformat()
-    end = (today - timedelta(days=1)).isoformat()
+    start = (today - timedelta(days=SEED_DAYS - 1)).isoformat()
+    end = today.isoformat()
     print(f"🧹 Deleting seeded daily_activity rows for {REVIEWER_EMAIL}")
     print(f"   user_id={REVIEWER_USER_ID}")
     print(f"   window {start} .. {end}, source={DEMO_SOURCE}")
@@ -389,8 +391,8 @@ def delete(db: Client, reset_goals: bool) -> None:
 # --------------------------------------------------------------------------
 def verify(db: Client) -> None:
     today = date.today()
-    start = (today - timedelta(days=SEED_DAYS)).isoformat()
-    end = (today - timedelta(days=1)).isoformat()
+    start = (today - timedelta(days=SEED_DAYS - 1)).isoformat()
+    end = today.isoformat()
     res = (
         db.table("daily_activity")
         .select(
