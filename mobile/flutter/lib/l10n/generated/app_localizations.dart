@@ -18900,7 +18900,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseSwapOptionSwap.
   ///
   /// In en, this message translates to:
-  /// **'Option swap'**
+  /// **'Swap'**
   String get exerciseSwapOptionSwap;
 
   /// No description provided for @exerciseSwapSheetAiPicks.

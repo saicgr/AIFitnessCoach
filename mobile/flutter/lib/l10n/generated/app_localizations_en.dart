@@ -11053,7 +11053,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get exerciseSwapNoAlternatives => 'No alternatives found';
 
   @override
-  String get exerciseSwapOptionSwap => 'Option swap';
+  String get exerciseSwapOptionSwap => 'Swap';
 
   @override
   String get exerciseSwapSheetAiPicks => 'AI Picks';
