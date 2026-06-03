@@ -309,19 +309,44 @@ String chatOpenSourceForHour(int hour) {
 final chatOpenInsightProvider =
     FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
   // NOTE: intentionally NOT keepAlive — the greeting source rotates server-side
-  // on every call, so each fresh chat open must re-fetch a new greeting.
+  // on every call, so each fresh chat open must re-fetch a new greeting. The
+  // RICH briefings (morning_brief / evening_recap) are instead served
+  // cache-first below so the chat open paints them instantly on a warm second
+  // open instead of blocking on the Gemini round-trip.
   final tzState = ref.watch(timezoneProvider);
   if (tzState.isLoading ||
       Supabase.instance.client.auth.currentSession == null) {
     return _buildClientFallback(ref);
   }
   final now = DateTime.now();
+  final source = chatOpenSourceForHour(now.hour);
   final args = _InsightArgs(
     localDate: DateTime(now.year, now.month, now.day),
     tz: tzState.timezone,
-    source: chatOpenSourceForHour(now.hour),
+    source: source,
   );
-  return _fetchInsight(ref, args);
+
+  // Cache-first for the rich briefings only (mirrors dailyCoachInsightProvider).
+  // The light `greeting` rotates server-side, so it stays uncached and fetches
+  // fresh every open. A non-expired, same-local-day cached briefing paints
+  // instantly; the REAL response is written through on success by _fetchInsight.
+  final cacheKey = source == 'morning_brief'
+      ? DataCacheService.chatMorningBriefKey
+      : source == 'evening_recap'
+          ? DataCacheService.chatEveningRecapKey
+          : null;
+  if (cacheKey != null) {
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    final cached = await DataCacheService.instance.getCached(
+      cacheKey,
+      userId: uid,
+    );
+    if (cached != null) {
+      return DailyCoachInsight.fromJson(cached);
+    }
+  }
+
+  return _fetchInsight(ref, args, cacheKey: cacheKey);
 });
 
 /// Manual refresh — pass `?refresh=true` to bust the server cache. Use after

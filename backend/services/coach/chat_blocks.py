@@ -699,14 +699,39 @@ def _attach_route(blocks: List[Dict[str, Any]], topic: str) -> List[Dict[str, An
     return blocks
 
 
-def build_briefing_blocks(user_id: str) -> List[Dict[str, Any]]:
-    """Grounded blocks for a PROACTIVE daily briefing (morning/evening).
+# Maps the insight's `leading_pillar` to the per-topic key used below, so a
+# nutrition-themed brief leads with its nutrition graph, a move brief with
+# steps, etc. "train" has no grounded graph of its own here, so it falls
+# through to the default priority order.
+_PILLAR_TO_TOPIC_KEY: Dict[str, str] = {
+    "nourish": "nourish",
+    "fuel": "nourish",
+    "move": "move",
+    "sleep": "sleep",
+}
 
-    A briefing has no user question to topic-detect from, so we assemble the
-    same grounded set Google Health's coach view shows: a sleep-duration ring,
-    the recovery signals (resting HR metric + sparkline), and a steps chart.
-    Curated to one-headline-per-topic so the card stays compact. Reuses the same
-    never-fabricate per-topic builders. NEVER raises; returns [] when no data.
+# Default priority when no leading pillar is supplied (or its topic has no
+# data). Nutrition first: it is the most-logged daily lever and was the gap a
+# nutrition-themed brief used to render with NO graph at all.
+_BRIEFING_TOPIC_PRIORITY = ["nourish", "sleep", "move", "recovery"]
+
+
+def build_briefing_blocks(
+    user_id: str,
+    leading_pillar: Optional[str] = None,
+    max_blocks: int = 3,
+) -> List[Dict[str, Any]]:
+    """Grounded blocks for a PROACTIVE daily briefing (morning/evening) or the
+    home coach card.
+
+    A briefing has no user question to topic-detect from, so we assemble one
+    compact graph per topic from the user's own data: a nutrition graph
+    (protein bar), a sleep-duration ring, a steps trend, and recovery signals.
+    The block matching [leading_pillar] is moved to the front so the visual
+    leads with the brief's topic; the rest follow [_BRIEFING_TOPIC_PRIORITY].
+    Curated to one block per topic and capped at [max_blocks] so the card stays
+    compact. Reuses the never-fabricate per-topic builders. NEVER raises;
+    returns [] when the user has no data in any topic (text-only is honest).
     """
     try:
         try:
@@ -715,19 +740,48 @@ def build_briefing_blocks(user_id: str) -> List[Dict[str, Any]]:
             logger.debug(f"chat_blocks(briefing): DB unavailable: {e}")
             return []
 
-        out: List[Dict[str, Any]] = []
+        by_topic: Dict[str, List[Dict[str, Any]]] = {}
+
+        # Nutrition — prefer the protein BAR chart (a real graph) so a
+        # nutrition brief actually shows nutrition; fall back to the metric.
+        nutr = _build_nutrition_blocks(db, user_id) or []
+        nutr_pick = [b for b in nutr
+                     if isinstance(b, dict) and b.get("type") == "chart"][:1] \
+            or [b for b in nutr if isinstance(b, dict)][:1]
+        if nutr_pick:
+            by_topic["nourish"] = _attach_route(nutr_pick, "nutrition")
+
         # Sleep ring (metric only — drop the stage grid to keep the card tight).
         sleep_bl = [b for b in (_build_sleep_blocks(db, user_id) or [])
                     if isinstance(b, dict) and b.get("type") == "metric"][:1]
-        out += _attach_route(sleep_bl, "sleep")
-        # Recovery signals (resting-HR metric + sparkline, + HRV if present).
-        out += _attach_route(_build_recovery_blocks(db, user_id) or [], "recovery")
+        if sleep_bl:
+            by_topic["sleep"] = _attach_route(sleep_bl, "sleep")
+
         # Steps (chart only — the trend, not another headline number).
         steps_bl = [b for b in (_build_steps_blocks(db, user_id) or [])
                     if isinstance(b, dict) and b.get("type") == "chart"][:1]
-        out += _attach_route(steps_bl, "steps")
+        if steps_bl:
+            by_topic["move"] = _attach_route(steps_bl, "steps")
 
-        return [b for b in out if isinstance(b, dict)][:5]
+        # Recovery signals (resting-HR metric + sparkline, + HRV if present).
+        rec_bl = (_build_recovery_blocks(db, user_id) or [])[:1]
+        if rec_bl:
+            by_topic["recovery"] = _attach_route(rec_bl, "recovery")
+
+        # Order: leading-pillar topic first (when it has data), then the rest
+        # in the default priority. De-duped, never the same topic twice.
+        order: List[str] = []
+        lead_key = _PILLAR_TO_TOPIC_KEY.get((leading_pillar or "").lower())
+        if lead_key and lead_key in by_topic:
+            order.append(lead_key)
+        for k in _BRIEFING_TOPIC_PRIORITY:
+            if k in by_topic and k not in order:
+                order.append(k)
+
+        out: List[Dict[str, Any]] = []
+        for k in order:
+            out += by_topic[k]
+        return [b for b in out if isinstance(b, dict)][:max_blocks]
     except Exception as e:
         logger.warning(f"chat_blocks: briefing block build failed (no blocks): {e}")
         return []

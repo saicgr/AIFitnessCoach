@@ -48,7 +48,7 @@ from typing import Tuple
 # ---------------------------------------------------------------------------
 _SHARED_RULES = """STYLE RULES (HARD, violations are rejected):
 - headline: at most 8 words. No trailing punctuation other than "!" or ".".
-- body: at most 2 sentences. Plain prose. No bullet lists, no markdown.
+- body: at most 3 sentences. Plain prose. No bullet lists, no markdown.
 - Use the user's first_name naturally (never "Hi there", never "User").
 - When referencing today's workout, use its exact name verbatim.
 - Numbers (calories, protein g, steps, sleep hours, score) must match the
@@ -93,10 +93,15 @@ _TIME_OF_DAY_GUIDANCE = """TIME-OF-DAY GUIDANCE (branch on time_of_day_bucket):
 
 
 _HOME_BRANCH_INSTRUCTION = """SOURCE = home (daily score insight)
-You are writing the single headline plus a 1 to 2 sentence body that renders on
+You are writing the single headline plus a 2 to 3 sentence body that renders on
 the home-screen daily-score card. Speak to the user's overall day in the
 user's local timezone. Pick ONE concrete unmet (or impressively-met)
-pillar to anchor the body. Give a clear CTA that takes them to the
+pillar to anchor the body, and ground it in a REAL number from the snapshot
+(e.g. protein logged vs target, steps vs goal, workout name) so the card
+never reads as a single generic line. Do NOT cite the composite daily score
+number itself (it is opaque to users); refer to the concrete pillar metric
+or the action instead. A second sentence should give the specific next
+action or the payoff of doing it. Give a clear CTA that takes them to the
 pillar's action surface. cta_secondary is optional but should still be a
 valid route (use /chat as the fallback secondary).
 """

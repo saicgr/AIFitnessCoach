@@ -1307,6 +1307,16 @@ async def daily_insight(
             except Exception as e:
                 logger.warning(f"[daily_insight] briefing blocks build failed: {e}")
                 briefing_blocks = None
+        elif source == "home":
+            # One compact contextual graph beside the home coach copy. Capped
+            # at a single block so the card stays tight and does not duplicate
+            # the full TodayScoreCard / health snapshot rendered below it.
+            try:
+                from services.coach.chat_blocks import build_briefing_blocks
+                briefing_blocks = build_briefing_blocks(user_id, max_blocks=1) or None
+            except Exception as e:
+                logger.warning(f"[daily_insight] home block build failed: {e}")
+                briefing_blocks = None
 
         if source == "pillar_stat" and not stat_context:
             raise HTTPException(400, "context query param required for source=pillar_stat")

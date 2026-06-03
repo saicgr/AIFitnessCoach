@@ -31,6 +31,15 @@ class DataCacheService {
   static const String consistencyKey = 'cache_consistency';
   static const String dailyActivityKey = 'cache_daily_activity';
   static const String coachInsightKey = 'cache_coach_insight';
+  // Ask-Coach "living open state" RICH briefings (morning_brief / evening_recap)
+  // — cached so the chat open paints the briefing instantly on a warm second
+  // open instead of blocking on the Gemini round-trip. Keyed PER SOURCE so the
+  // morning brief is never served for an evening request. The light `greeting`
+  // source is intentionally NOT cached (it rotates server-side every call).
+  // tz-sensitive: both are "today" surfaces, so a calendar rollover invalidates
+  // them even before the TTL fires.
+  static const String chatMorningBriefKey = 'cache_chat_morning_brief';
+  static const String chatEveningRecapKey = 'cache_chat_evening_recap';
   static const String nutritionDailyKey = 'cache_nutrition_daily';
   // "Ask Coach" conversation list — paints instantly on open, then silently
   // revalidates. NOT tz-sensitive (sessions aren't a "today" surface).
@@ -70,6 +79,8 @@ class DataCacheService {
     hydrationKey,
     dailyActivityKey,
     coachInsightKey,
+    chatMorningBriefKey,
+    chatEveningRecapKey,
     nutritionDailyKey,
     combinedHealthKey,
   };
@@ -99,6 +110,8 @@ class DataCacheService {
     consistencyKey: _statsTtlMs,
     dailyActivityKey: _dailyActivityTtlMs,
     coachInsightKey: _statsTtlMs,
+    chatMorningBriefKey: _statsTtlMs, // 12h — within a phase the brief is stable
+    chatEveningRecapKey: _statsTtlMs,
     nutritionDailyKey: _firstPaintTtlMs,
     chatSessionsKey: _firstPaintTtlMs, // 24h — survives overnight reopens; always revalidated
     combinedHealthKey: _dailyActivityTtlMs, // 6h — step/zone data drifts intraday
@@ -392,6 +405,8 @@ class DataCacheService {
         consistencyKey,
         dailyActivityKey,
         coachInsightKey,
+        chatMorningBriefKey,
+        chatEveningRecapKey,
         nutritionDailyKey,
         combinedHealthKey,
       ];
