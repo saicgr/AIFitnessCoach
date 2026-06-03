@@ -54,6 +54,7 @@ import 'controllers/workout_timer_controller.dart';
 import 'foldable/foldable_warmup_layout.dart';
 import 'models/workout_state.dart';
 import 'providers/active_workout_session_provider.dart';
+import 'providers/active_workout_live_provider.dart';
 import 'widgets/action_chips_row.dart';
 import 'widgets/quick_adjust_sheet.dart';
 import 'widgets/ai_input_preview_sheet.dart';
@@ -2073,6 +2074,8 @@ class _ActiveWorkoutScreenState
           _previousSets[i] = [];
         }
       });
+      // Publish the mutated workout so the added exercises survive a tier switch.
+      ref.read(activeWorkoutLiveProvider.notifier).state = updatedWorkout;
       // Fetch smart weight suggestions for new exercises
       for (int i = oldCount; i < _exercises.length; i++) {
         fetchSmartWeightForExercise(_exercises[i]);
@@ -2187,6 +2190,9 @@ class _ActiveWorkoutScreenState
       ref
           .read(activeWorkoutSessionProvider.notifier)
           .syncSets(_completedSets);
+      // Publish the mutated workout so the swap survives an Easy<->Advanced
+      // tier switch (the other tier remounts from this shared override).
+      ref.read(activeWorkoutLiveProvider.notifier).state = updatedWorkout;
 
       // Show success feedback
       if (mounted) {

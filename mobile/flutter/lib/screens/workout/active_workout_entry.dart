@@ -16,6 +16,7 @@ import '../../data/models/workout.dart';
 import '../../data/providers/equipment_match_pending_action_provider.dart';
 import 'active_workout_screen_refactored.dart';
 import 'easy/easy_active_workout_screen.dart';
+import 'providers/active_workout_live_provider.dart';
 import 'widgets/exercise_add_sheet.dart';
 import 'widgets/exercise_swap_sheet.dart';
 
@@ -36,6 +37,11 @@ class ActiveWorkoutEntry extends ConsumerStatefulWidget {
 }
 
 class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
+  /// The workout actually handed to the current tier — the live override when
+  /// present (carries swaps/adds across tier switches), else the passed-in one.
+  /// Resolved in [build].
+  late Workout _activeWorkout = widget.workout;
+
   @override
   void initState() {
     super.initState();
@@ -63,6 +69,17 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
     //     trade-off for avoiding the crash — and the underlying stale-true
     //     bug should be fixed at workout-end time, not here.
     final notifier = ref.read(activeWorkoutWarmupDoneProvider.notifier);
+    // Clear any live-workout override left over from a PREVIOUS session so this
+    // workout starts from its own passed-in exercise list. Post-frame to avoid
+    // mutating a provider during build. The build-time id guard also defends
+    // against a stale override, but clearing keeps the provider tidy.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final live = ref.read(activeWorkoutLiveProvider);
+      if (live != null && live.id != widget.workout.id) {
+        ref.read(activeWorkoutLiveProvider.notifier).state = null;
+      }
+    });
     // Consume any chat-deeplink pending action AFTER first frame so the
     // child tier has fully mounted and the user sees the workout shell
     // first (avoids a sheet over a blank background). One-shot: we clear
@@ -137,6 +154,12 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(workoutUiModeProvider.select((s) => s.mode));
+    // Prefer the live (post-swap / post-add) workout so a structural mutation
+    // made in one tier survives a switch to the other. Guarded by id so a
+    // stale override from a prior session is ignored.
+    final live = ref.watch(activeWorkoutLiveProvider);
+    _activeWorkout =
+        (live != null && live.id == widget.workout.id) ? live : widget.workout;
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 240),
@@ -163,14 +186,14 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
       case WorkoutUiMode.simple:
         return EasyActiveWorkoutScreen(
           key: const ValueKey('easy_active_workout'),
-          workout: widget.workout,
+          workout: _activeWorkout,
           challengeId: widget.challengeId,
           challengeData: widget.challengeData,
         );
       case WorkoutUiMode.advanced:
         return ActiveWorkoutScreen(
           key: const ValueKey('advanced_active_workout'),
-          workout: widget.workout,
+          workout: _activeWorkout,
           challengeId: widget.challengeId,
           challengeData: widget.challengeData,
         );

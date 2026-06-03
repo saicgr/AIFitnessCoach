@@ -49,6 +49,7 @@ import '../widgets/exercise_swap_sheet.dart';
 import '../widgets/report_pain_sheet.dart';
 import 'easy_active_workout_screen.dart';
 import '../providers/active_workout_session_provider.dart';
+import '../providers/active_workout_live_provider.dart';
 import 'easy_active_workout_state_models.dart';
 import 'easy_active_workout_view.dart';
 import 'easy_insight_helpers.dart';
@@ -702,6 +703,9 @@ class EasyActiveWorkoutScreenState
         // completed list; mirror the full map so the checkpoint doesn't keep
         // the pre-swap sets for that index.
         _syncEasySessionSets();
+        // Publish the mutated workout so the swap survives an Easy<->Advanced
+        // tier switch (the other tier remounts from this shared override).
+        ref.read(activeWorkoutLiveProvider.notifier).state = updated;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(AppLocalizations.of(context).easyActiveWorkoutExerciseSwapped),
