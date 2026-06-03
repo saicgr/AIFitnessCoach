@@ -154,28 +154,3 @@ services:
       - key: GEMINI_API_KEY
         sync: false
 
-  # Reviewer-demo health reseed. Daily at 04:00 UTC. Re-runs the seed so the
-  # 45-day reviewer demo window always slides forward to END ON TODAY — without
-  # this the latest seeded row goes stale and "today" reads as empty (or, before
-  # the fallback was removed, showed a weeks-old row as today). Idempotent upsert
-  # scoped to the single reviewer account only. See scripts/seed_reviewer_health.py.
-  - type: cron
-    name: fitwiz-reviewer-health-reseed
-    schedule: "0 4 * * *"
-    env: python
-    region: ohio
-    plan: starter
-    branch: main
-    rootDir: backend
-    buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: python -m scripts.seed_reviewer_health --seed
-    envVars:
-      - key: PYTHON_VERSION
-        value: "3.11"
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_SERVICE_KEY
-        sync: false
-      - key: SUPABASE_KEY
-        sync: false
-
