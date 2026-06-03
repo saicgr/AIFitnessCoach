@@ -8,12 +8,15 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
+import '../../../data/models/micronutrient_catalog.dart';
+import '../../../data/providers/micronutrient_visibility_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
+import '../../nutrition/widgets/micro_settings_sheet.dart';
 import '../../nutrition/widgets/calories_burned_sheet.dart';
 import '../../nutrition/widgets/nutrition_goals_card.dart' show showNutritionCalculationSheet;
 import '../../nutrition/widgets/edit_targets_sheet.dart';
@@ -197,9 +200,6 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final nutritionState = ref.watch(nutritionProvider);
     final summary = nutritionState.todaySummary;
     final prefsState = ref.watch(nutritionPreferencesProvider);
-    final hydrationState = ref.watch(hydrationProvider);
-    final waterConsumedMl = hydrationState.todaySummary?.totalMl ?? 0;
-    final waterGoalMl = hydrationState.todaySummary?.goalMl ?? hydrationState.dailyGoalMl;
 
     final caloriesConsumed = summary?.totalCalories ?? 0;
     // Guard the 2000 fallback (feedback_no_silent_fallbacks): when the user has
@@ -238,6 +238,34 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     // Aggregate micronutrients from the day's logged meals (summary-level
     // model has no micro totals, but each FoodLog carries them).
     final micros = _MicroTotals.fromMeals(summary?.meals ?? const []);
+
+    // Customizable micronutrient tiles (home-deck style): which tiles show + in
+    // what order comes from [microVisibilityProvider]; presentation + FDA goals
+    // from [kMicroCatalog]; the per-day VALUE from `micros`. Chunked into pages
+    // of 6 so each carousel page is a clean 3×2 grid.
+    final visibleMicroIds = ref.watch(microVisibilityProvider);
+    final microSpecs = <_MicroSpec>[
+      for (final id in visibleMicroIds)
+        if (microEntryById(id) != null)
+          _specForMicro(microEntryById(id)!, micros),
+    ];
+    final microPages = <List<_MicroSpec>>[];
+    for (var i = 0; i < microSpecs.length; i += 6) {
+      microPages.add(
+        microSpecs.sublist(i, i + 6 > microSpecs.length ? microSpecs.length : i + 6),
+      );
+    }
+    final pageCount = 1 + microPages.length; // page 0 = macros
+    // If the visible-micro set shrank below the parked page (user hid tiles in
+    // the customize sheet), snap the controller back onto a page that still
+    // exists next frame so the PageView never sits on a dead index.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_pageController.hasClients) return;
+      final last = pageCount - 1;
+      if ((_pageController.page ?? 0).round() > last) {
+        _pageController.jumpToPage(last);
+      }
+    });
 
     return Padding(
       // Embedded: no horizontal padding (the Nutrition screen's list already
@@ -319,6 +347,14 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                     // empty space inside a scroll view.
                     _carousel(
                       embedded: widget.embedded,
+                      // Page 1's real height includes the F4 net-burn row when
+                      // it shows — pass the inputs so the carousel can size to
+                      // the genuinely-tallest page (issue: 0.425px clip).
+                      showBurnRow: showBurnRow,
+                      calorieTarget: calorieTarget,
+                      caloriesConsumed: caloriesConsumed,
+                      caloriesBurned: caloriesBurnedToday,
+                      netRemaining: netCalorieRemainder ?? 0,
                       // Isolate the carousel's paint: the ring/pill entrance
                       // animations + page swipes repaint frequently, and a
                       // RepaintBoundary keeps that off the rest of the Home feed
@@ -362,48 +398,73 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                             onEditCarbsGoal: (v) => _commitGoal('carbs', v),
                             onEditFatGoal: (v) => _commitGoal('fat', v),
                           ),
-                          // Page 2 — micronutrients
-                          _MicroGridPage(
-                            entrance: _entrance,
-                            isDark: isDark,
-                            tiles: _microPage2(micros),
-                          ),
-                          // Page 3 — more micronutrients + hydration
-                          _MicroGridPage(
-                            entrance: _entrance,
-                            isDark: isDark,
-                            tiles: _microPage3(micros, waterConsumedMl, waterGoalMl),
-                          ),
-                          // Page 4 — extended minerals + vitamins
-                          _MicroGridPage(
-                            entrance: _entrance,
-                            isDark: isDark,
-                            tiles: _microPage4(micros),
-                          ),
-                          // Page 5 — trace minerals + remaining vitamins
-                          _MicroGridPage(
-                            entrance: _entrance,
-                            isDark: isDark,
-                            tiles: _microPage5(micros),
-                          ),
+                          // Micronutrient pages — user-customizable (which tiles
+                          // show + order live in microVisibilityProvider, edited
+                          // via the tune gear beside the dots). Each page is a
+                          // 3×2 grid of up to 6 tiles.
+                          for (final tiles in microPages)
+                            _MicroGridPage(
+                              entrance: _entrance,
+                              isDark: isDark,
+                              tiles: tiles,
+                            ),
                         ],
                         ),
                       ),
                     ),
 
                     const SizedBox(height: 8),
-                    // Dot indicators + edit hint
-                    SmoothPageIndicator(
-                      controller: _pageController,
-                      count: 3,
-                      effect: ExpandingDotsEffect(
-                        dotHeight: 7,
-                        dotWidth: 7,
-                        expansionFactor: 3,
-                        spacing: 6,
-                        activeDotColor: accent,
-                        dotColor: (isDark ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.18),
+                    // Dot indicators + customize gear. The dots stay optically
+                    // centered (Stack) while the tune gear pins to the right —
+                    // mirrors the home metric deck's footer affordance.
+                    SizedBox(
+                      height: 22,
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          if (pageCount > 1)
+                            SmoothPageIndicator(
+                              controller: _pageController,
+                              count: pageCount,
+                              effect: ExpandingDotsEffect(
+                                dotHeight: 7,
+                                dotWidth: 7,
+                                expansionFactor: 3,
+                                spacing: 6,
+                                activeDotColor: accent,
+                                dotColor: (isDark ? Colors.white : Colors.black)
+                                    .withValues(alpha: 0.18),
+                              ),
+                            ),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: Semantics(
+                              button: true,
+                              label: 'Customize nutrients',
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  HapticService.light();
+                                  showMicroSettingsSheet(context, ref);
+                                },
+                                child: Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: (isDark ? Colors.white : Colors.black)
+                                        .withValues(alpha: 0.06),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.tune_rounded,
+                                    size: 14,
+                                    color: textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -475,14 +536,27 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
 
   /// Carousel sizing: flexible (Expanded) on Home, fixed height when embedded
   /// in the Nutrition screen's scroll view so pages don't stretch unevenly.
-  Widget _carousel({required bool embedded, required Widget child}) {
+  ///
+  /// Both candidate page heights are computed per-layout (never hard-coded) so
+  /// the carousel adapts to ANY screen width + text scale:
+  ///   • the 2-col micro grid scales with width (childAspectRatio 3.55), and
+  ///   • page 1 grows by the F4 net-burn row, whose wrapping `Wrap` adds lines
+  ///     on narrow screens / large text.
+  /// A hard-coded `page1Height = 120` ignored the net-burn row, so on widths
+  /// where the grid landed a sub-pixel shorter than the real page-1 stack, page
+  /// 1 overflowed by a fraction of a pixel ("BOTTOM OVERFLOWED BY 0.425px").
+  /// Pages top-align, so any candidate being the taller one just parks the
+  /// shorter pages' slack harmlessly below their content.
+  Widget _carousel({
+    required bool embedded,
+    required Widget child,
+    required bool showBurnRow,
+    required int calorieTarget,
+    required int caloriesConsumed,
+    required int caloriesBurned,
+    required int netRemaining,
+  }) {
     if (!embedded) return Expanded(child: child);
-    // After compacting page 1 (issue 2) the calorie ring + 3 compact pills
-    // span 114px. The tallest page is now the 2-col micro grid (3 rows,
-    // childAspectRatio 3.55) — its height scales with the available width, so
-    // compute it per-layout instead of hard-coding (a fixed value clipped the
-    // grid on wide screens / iPad and left a gap on narrow ones).
-    const double page1Height = 120; // ring/pill stack (3×36 pill + 2×6 gaps)
     return LayoutBuilder(
       builder: (context, constraints) {
         final w = constraints.maxWidth;
@@ -491,53 +565,180 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
         final tileH = ((w - 8) / 2) / 3.55;
         // 3 rows + 2 × 8px mainAxisSpacing.
         final gridHeight = tileH * 3 + 16;
+        final page1Height = _page1Height(
+          context,
+          width: w,
+          showBurnRow: showBurnRow,
+          calorieTarget: calorieTarget,
+          caloriesConsumed: caloriesConsumed,
+          caloriesBurned: caloriesBurned,
+          netRemaining: netRemaining,
+        );
         final h = math.max(page1Height, gridHeight);
         return SizedBox(height: h, child: child);
       },
     );
   }
 
-  // --- micronutrient page definitions (FDA Daily Values as reference goals) ---
-  List<_MicroSpec> _microPage2(_MicroTotals m) => [
-        _MicroSpec('Fiber', m.fiberG, 28, 'g', '🥦', const Color(0xFF3F8F5F), 0),
-        _MicroSpec('Sugar', m.sugarG, 50, 'g', '🍬', const Color(0xFFB65689), 0),
-        _MicroSpec('Sodium', m.sodiumMg, 2300, 'mg', '🧂', const Color(0xFF5560BF), 0),
-        _MicroSpec('Potassium', m.potassiumMg, 4700, 'mg', '🍌', const Color(0xFFCC8A2A), 0),
-        _MicroSpec('Cholesterol', m.cholesterolMg, 300, 'mg', '🧈', const Color(0xFFCF5F4A), 0),
-        _MicroSpec('Calcium', m.calciumMg, 1300, 'mg', '🥛', const Color(0xFF3A9A9A), 0),
-      ];
+  /// Real rendered height of carousel page 1 at [width] — the calorie ring /
+  /// macro-pill stack (a fixed 120: 3 × 36 pill + 2 × 6 gap == the ring square)
+  /// plus, when [showBurnRow] is set, the F4 `_NetRemainingRow`. That row is a
+  /// centered [Wrap] of chips, so its line count (and therefore height) depends
+  /// on the available width and the user's text scale. We measure each chip and
+  /// greedily pack them exactly the way [Wrap] does, so the result matches the
+  /// real layout on every device instead of a brittle constant.
+  static double _page1Height(
+    BuildContext context, {
+    required double width,
+    required bool showBurnRow,
+    required int calorieTarget,
+    required int caloriesConsumed,
+    required int caloriesBurned,
+    required int netRemaining,
+  }) {
+    const double ringStack = 120;
+    if (!showBurnRow) return ringStack;
 
-  List<_MicroSpec> _microPage3(_MicroTotals m, int waterMl, int waterGoalMl) => [
-        _MicroSpec('Iron', m.ironMg, 18, 'mg', '🩸', const Color(0xFF8C5BB0), 0),
-        _MicroSpec('Vitamin C', m.vitaminCMg, 90, 'mg', '🍊', const Color(0xFFC79520), 0),
-        _MicroSpec('Vitamin A', m.vitaminAUg, 900, 'µg', '🥕', const Color(0xFFD9802E), 0),
-        _MicroSpec('Vitamin D', m.vitaminDIu, 800, 'IU', '☀️', const Color(0xFFCFA62A), 0),
-        _MicroSpec('Sat. Fat', m.saturatedFatG, 20, 'g', '🧀', const Color(0xFFCF5F4A), 0),
-        _MicroSpec('Hydration', waterMl / 1000.0,
-            (waterGoalMl / 1000.0), 'L', '💧', const Color(0xFF3F7FA3), 1),
-      ];
+    final scaler = MediaQuery.textScalerOf(context);
+    final over = netRemaining < 0;
+    final netLabel =
+        over ? 'Net ${netRemaining.abs()} over' : 'Net $netRemaining left';
 
-  // Page 4 + 5 — the extended micronutrient set now persisted on food_logs and
-  // surfaced by the daily-summary serialization. Goals are FDA Daily Values
-  // (Omega-3 uses the 1.6 g adequate-intake reference). Decimals chosen per
-  // unit magnitude so small µg values (B12) don't round to 0.
-  List<_MicroSpec> _microPage4(_MicroTotals m) => [
-        _MicroSpec('Magnesium', m.magnesiumMg, 420, 'mg', '🪨', const Color(0xFF5F8F6B), 0),
-        _MicroSpec('Zinc', m.zincMg, 11, 'mg', '⚙️', const Color(0xFF7A8CA3), 0),
-        _MicroSpec('Vitamin B12', m.vitaminB12Ug, 2.4, 'µg', '🐟', const Color(0xFFB5604A), 1),
-        _MicroSpec('Folate', m.vitaminB9Ug, 400, 'µg', '🥬', const Color(0xFF4F9E5A), 0),
-        _MicroSpec('Vitamin E', m.vitaminEMg, 15, 'mg', '🥜', const Color(0xFFC7902A), 1),
-        _MicroSpec('Omega-3', m.omega3G, 1.6, 'g', '🐠', const Color(0xFF3F8FA3), 1),
-      ];
+    // (text, fontSize, weight) for every chip, mirroring `_NetRemainingRow`.
+    const detail = 10.5;
+    final chips = <(String, double, FontWeight)>[
+      (netLabel, 12, FontWeight.w800),
+      ('·', detail, FontWeight.w600),
+      ('Goal $calorieTarget', detail, FontWeight.w600),
+      ('− $caloriesConsumed eaten', detail, FontWeight.w600),
+      ('+ $caloriesBurned burned', detail, FontWeight.w700),
+    ];
 
-  List<_MicroSpec> _microPage5(_MicroTotals m) => [
-        _MicroSpec('Vitamin K', m.vitaminKUg, 120, 'µg', '🥦', const Color(0xFF3F8F5F), 0),
-        _MicroSpec('Vitamin B6', m.vitaminB6Mg, 1.7, 'mg', '🍗', const Color(0xFFB07A4A), 1),
-        _MicroSpec('Phosphorus', m.phosphorusMg, 1250, 'mg', '🦴', const Color(0xFF8A8FA8), 0),
-        _MicroSpec('Selenium', m.seleniumUg, 55, 'µg', '🌰', const Color(0xFF9A6F3A), 0),
-        _MicroSpec('Copper', m.copperMg, 0.9, 'mg', '🟫', const Color(0xFFB5733A), 1),
-        _MicroSpec('Manganese', m.manganeseMg, 2.3, 'mg', '🧱', const Color(0xFF9A5F4A), 1),
-      ];
+    double lineHeight = 0;
+    final widths = <double>[];
+    for (final (text, size, weight) in chips) {
+      final tp = TextPainter(
+        text: TextSpan(
+          text: text,
+          style: TextStyle(fontSize: size, fontWeight: weight),
+        ),
+        textDirection: TextDirection.ltr,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      widths.add(tp.width);
+      if (tp.height > lineHeight) lineHeight = tp.height;
+    }
+    // The burned chip is an icon (12) + 2px gap + its text.
+    widths[widths.length - 1] += 12 + 2;
+    if (lineHeight < 12) lineHeight = 12; // icon never shorter than its glyph
+
+    // CRITICAL: TextPainter reports the TIGHT glyph box (ascent + descent ≈
+    // fontSize × 1.17), but when Flutter actually lays the chips out in the
+    // Wrap it adds the font's STRUT LEADING on top of that — so the real
+    // rendered line box is taller than `tp.height` by the leading (≈ 15-20% of
+    // the font size, and it varies by platform: Android's Roboto strut is the
+    // tallest). Sizing the carousel to the un-led tight height left page 1 a
+    // sub-pixel-to-~2px shorter than its real content, which is the
+    // "BOTTOM OVERFLOWED BY 0.425 pixels" stripe. Add a per-line leading factor
+    // (it scales with line count, so a flat constant would be wrong on a
+    // 2-line wrap) so the prediction is a guaranteed UPPER bound on the real
+    // line box. Extra slack parks harmlessly below the top-aligned page.
+    const leadingFactor = 1.25;
+    lineHeight = lineHeight * leadingFactor;
+
+    // Wrap spacing 6 (horizontal) / runSpacing 2 (vertical); the row Container
+    // pads 10 each side, so chips wrap inside `width − 20`.
+    const spacing = 6.0;
+    const runSpacing = 2.0;
+    final avail = width - 20;
+    var lines = 1;
+    var lineWidth = 0.0;
+    for (final cw in widths) {
+      if (lineWidth == 0) {
+        lineWidth = cw; // first chip on a line always fits (or overflows alone)
+      } else if (lineWidth + spacing + cw <= avail) {
+        lineWidth += spacing + cw;
+      } else {
+        lines++;
+        lineWidth = cw;
+      }
+    }
+
+    const vPad = 14.0; // 7 top + 7 bottom
+    const gap = 8.0; // SizedBox between the pill row and the net row
+    final netRowHeight = vPad + lineHeight * lines + runSpacing * (lines - 1);
+    // Ceil to the whole logical pixel so the carousel box can never land a
+    // fraction below the real (device-pixel-rounded) page height.
+    return (ringStack + gap + netRowHeight).ceilToDouble();
+  }
+
+  // --- micronutrient tile builders (catalog-driven, user-customizable) -------
+  // Presentation + FDA goal come from [kMicroCatalog]; the per-day VALUE is read
+  // from the aggregated [_MicroTotals] by stable id. (Hydration is no longer a
+  // carousel tile — it has a dedicated tracker on the Daily tab.)
+  _MicroSpec _specForMicro(MicroCatalogEntry e, _MicroTotals m) => _MicroSpec(
+        e.name,
+        _microValue(e.id, m),
+        e.goal,
+        e.unit,
+        e.emoji,
+        e.color,
+        e.fixed,
+      );
+
+  double _microValue(String id, _MicroTotals m) {
+    switch (id) {
+      case 'fiber':
+        return m.fiberG;
+      case 'sugar':
+        return m.sugarG;
+      case 'sodium':
+        return m.sodiumMg;
+      case 'potassium':
+        return m.potassiumMg;
+      case 'cholesterol':
+        return m.cholesterolMg;
+      case 'calcium':
+        return m.calciumMg;
+      case 'iron':
+        return m.ironMg;
+      case 'vitamin_c':
+        return m.vitaminCMg;
+      case 'vitamin_a':
+        return m.vitaminAUg;
+      case 'vitamin_d':
+        return m.vitaminDIu;
+      case 'sat_fat':
+        return m.saturatedFatG;
+      case 'magnesium':
+        return m.magnesiumMg;
+      case 'zinc':
+        return m.zincMg;
+      case 'vitamin_b12':
+        return m.vitaminB12Ug;
+      case 'folate':
+        return m.vitaminB9Ug;
+      case 'vitamin_e':
+        return m.vitaminEMg;
+      case 'omega_3':
+        return m.omega3G;
+      case 'vitamin_k':
+        return m.vitaminKUg;
+      case 'vitamin_b6':
+        return m.vitaminB6Mg;
+      case 'phosphorus':
+        return m.phosphorusMg;
+      case 'selenium':
+        return m.seleniumUg;
+      case 'copper':
+        return m.copperMg;
+      case 'manganese':
+        return m.manganeseMg;
+      default:
+        return 0;
+    }
+  }
 }
 
 // ============================================================================
