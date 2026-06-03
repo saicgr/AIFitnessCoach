@@ -38,14 +38,20 @@ NutritionPreferencesState? _nutritionPrefsInMemoryCache;
 /// from the backend.
 class _NutritionPrefsDiskCache {
   static const _prefix = 'nutrition_prefs_v1::';
-  static const _schemaVersion = 1;
+  // v2: the envelope now ALSO persists the last-known `dynamic_targets` so a
+  // cold start can seed the real adjusted calorie target (e.g. 1700) instantly
+  // instead of the base `preferences.target_calories` (e.g. 2000) and then
+  // visibly jumping once the network confirms. v1 envelopes are dropped on read
+  // (one harmless refetch on the update boundary).
+  static const _schemaVersion = 2;
 
   static String _key(String userId) => '$_prefix$userId';
 
-  /// Read the persisted preferences, or null on miss / schema mismatch /
-  /// malformed JSON. Never throws — a stale render is corrected by the
-  /// network revalidation.
-  static Future<NutritionPreferences?> read(String userId) async {
+  /// Read the persisted preferences + last-known dynamic targets, or null on
+  /// miss / schema mismatch / malformed JSON. Never throws — a stale render is
+  /// corrected by the network revalidation.
+  static Future<({NutritionPreferences preferences, DynamicNutritionTargets? dynamicTargets})?>
+      read(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_key(userId));
@@ -55,15 +61,28 @@ class _NutritionPrefsDiskCache {
       if (envelope['v'] != _schemaVersion) return null; // drop on schema bump
       final body = envelope['preferences'];
       if (body is! Map<String, dynamic>) return null;
-      return NutritionPreferences.fromJson(body);
+      final preferences = NutritionPreferences.fromJson(body);
+      DynamicNutritionTargets? dynamicTargets;
+      final dyn = envelope['dynamic_targets'];
+      if (dyn is Map<String, dynamic>) {
+        try {
+          dynamicTargets = DynamicNutritionTargets.fromJson(dyn);
+        } catch (_) {/* tolerate a malformed dynamic block; prefs still usable */}
+      }
+      return (preferences: preferences, dynamicTargets: dynamicTargets);
     } catch (e) {
       debugPrint('🥗 [NutritionPrefsDiskCache] read failed: $e');
       return null;
     }
   }
 
-  /// Write-through the preferences. Best-effort.
-  static Future<void> write(String userId, NutritionPreferences value) async {
+  /// Write-through the preferences + (optionally) the current dynamic targets.
+  /// Best-effort.
+  static Future<void> write(
+    String userId,
+    NutritionPreferences value, [
+    DynamicNutritionTargets? dynamicTargets,
+  ]) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
@@ -72,6 +91,7 @@ class _NutritionPrefsDiskCache {
           'v': _schemaVersion,
           'cached_at': DateTime.now().toIso8601String(),
           'preferences': value.toJson(),
+          if (dynamicTargets != null) 'dynamic_targets': dynamicTargets.toJson(),
         }),
       );
     } catch (e) {
@@ -281,13 +301,18 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     if (state.preferences == null) {
       final cached = await _NutritionPrefsDiskCache.read(userId);
       if (cached != null && state.preferences == null) {
-        debugPrint('🥗 [NutritionPrefsProvider] Seeded preferences from disk cache');
+        debugPrint('🥗 [NutritionPrefsProvider] Seeded preferences (+dynamic) from disk cache');
         state = state.copyWith(
-          preferences: cached,
+          preferences: cached.preferences,
+          // Seed the last-known dynamic targets too, so the calorie ring shows
+          // the real adjusted value (e.g. 1700) on a cold start instead of the
+          // base `target_calories` (e.g. 2000) until the network confirms. Only
+          // when we don't already hold a fresher one in memory.
+          dynamicTargets: state.dynamicTargets ?? cached.dynamicTargets,
           // Honour the cached backend flag so onboarding gating is correct
           // even before the network confirms.
           onboardingCompleted: state.onboardingCompleted ||
-              cached.nutritionOnboardingCompleted,
+              cached.preferences.nutritionOnboardingCompleted,
         );
       }
     }
@@ -296,37 +321,84 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
     try {
       debugPrint('🥗 [NutritionPrefsProvider] Initializing for $userId');
 
-      // Load core data in parallel. getPreferences carries the TARGETS, so a
-      // transient failure here must NOT reject the whole init (which would wipe
-      // targets to the 2000 default). On error, keep the disk-seeded prefs (or
-      // null) and flag a retry — mirroring the .catchError on the other three.
-      final results = await Future.wait([
-        _repository.getPreferences(userId).catchError((e) {
-          _prefsLoadErrored = true;
-          debugPrint('⚠️ [NutritionPrefsProvider] getPreferences failed, keeping cached targets + will retry: $e');
-          return state.preferences;
-        }),
-        _repository.getStreak(userId).catchError((_) => NutritionStreak(
-              userId: userId,
-              currentStreakDays: 0,
-              longestStreakEver: 0,
-              freezesAvailable: 2,
-              freezesUsedThisWeek: 0,
-              totalDaysLogged: 0,
-              weeklyGoalEnabled: false,
-              weeklyGoalDays: 5,
-              daysLoggedThisWeek: 0,
-            )),
-        _repository.getWeightLogs(userId: userId, limit: 30).catchError((_) => <WeightLog>[]),
-        _repository.getDynamicTargets(userId: userId, date: DateTime.now()).catchError((_) => const DynamicNutritionTargets()),
-      ]);
+      // CRITICAL PATH vs SECONDARY PATH.
+      //
+      // The Home / Nutrition calorie ring + macro targets depend ONLY on
+      // `preferences` + `dynamicTargets`. The streak, weight-log history and
+      // weight-trend are unrelated concerns. Previously all four were bundled
+      // into one `Future.wait` PLUS a sequential `getWeightTrend`, and the
+      // result was surfaced to the UI in a SINGLE `state.copyWith` only after
+      // ALL FIVE network calls resolved. So a slow/hanging streak, weight-log
+      // or weight-trend call (up to the 25-30s connect/receive timeout, ×2
+      // retries on connect ≈ a minute+) held the already-arrived
+      // `dynamicTargets` hostage — the ring sat at the disk-seeded base 2000
+      // for "a few minutes", then jumped to the real 1700. (feedback_instant_data)
+      //
+      // Fix: kick off ALL fetches concurrently, but emit the targets to the UI
+      // the INSTANT `preferences` + `dynamicTargets` resolve, decoupled from
+      // streak/weight which land afterwards on their own.
+      final prefsFuture = _repository.getPreferences(userId).catchError((e) {
+        _prefsLoadErrored = true;
+        debugPrint('⚠️ [NutritionPrefsProvider] getPreferences failed, keeping cached targets + will retry: $e');
+        return state.preferences;
+      });
+      // NOTE: do NOT .catchError → const DynamicNutritionTargets() here. That
+      // default has targetCalories=2000, and since currentCalorieTarget reads
+      // dynamicTargets FIRST, a failed dynamic fetch would shadow the real
+      // preferences.target_calories (e.g. 1500) and render "2000 of 2000".
+      // Awaited in a try/catch below so a failure yields null (→ fall through
+      // to the real base target), never a fake 2000.
+      final dynamicFuture = _repository
+          .getDynamicTargets(userId: userId, date: DateTime.now());
+      final streakFuture = _repository.getStreak(userId).catchError((_) => NutritionStreak(
+            userId: userId,
+            currentStreakDays: 0,
+            longestStreakEver: 0,
+            freezesAvailable: 2,
+            freezesUsedThisWeek: 0,
+            totalDaysLogged: 0,
+            weeklyGoalEnabled: false,
+            weeklyGoalDays: 5,
+            daysLoggedThisWeek: 0,
+          ));
+      final weightFuture =
+          _repository.getWeightLogs(userId: userId, limit: 30).catchError((_) => <WeightLog>[]);
 
-      final preferences = results[0] as NutritionPreferences?;
-      final streak = results[1] as NutritionStreak;
-      final weightHistory = results[2] as List<WeightLog>;
-      final dynamicTargets = results[3] as DynamicNutritionTargets?;
+      // ── Critical path: surface the calorie/macro targets the moment they
+      //    land. Does NOT await streak/weight/trend. ──
+      final preferences = await prefsFuture;
+      DynamicNutritionTargets? dynamicTargets;
+      try {
+        dynamicTargets = await dynamicFuture;
+      } catch (e) {
+        // Dynamic fetch failed — keep any prior REAL value, else null. Null
+        // makes currentCalorieTarget fall through to preferences.targetCalories
+        // (the real base) instead of the 2000 default.
+        debugPrint(
+            '⚠️ [NutritionPrefsProvider] getDynamicTargets failed, using base target: $e');
+        dynamicTargets = state.dynamicTargets;
+      }
+      final wasOnboardingCompleted = state.onboardingCompleted;
+      final backendOnboardingCompleted = preferences?.nutritionOnboardingCompleted ?? false;
+      state = state.copyWith(
+        preferences: preferences,
+        dynamicTargets: dynamicTargets,
+        isLoading: false,
+        onboardingCompleted: wasOnboardingCompleted || backendOnboardingCompleted,
+      );
+      _nutritionPrefsInMemoryCache = state;
+      // Write through to disk for the next cold start (A2) — now including the
+      // dynamic targets so the ring opens on the real adjusted value.
+      if (preferences != null) {
+        unawaited(_NutritionPrefsDiskCache.write(userId, preferences, dynamicTargets));
+      }
+      debugPrint(
+          '✅ [NutritionPrefsProvider] Targets ready: dynCal=${dynamicTargets?.targetCalories}, baseCal=${preferences?.targetCalories}, onboarded=${state.onboardingCompleted}');
 
-      // Get weight trend if we have enough data
+      // ── Secondary path: streak + weight history (already in flight). A slow
+      //    call here can no longer stall the calorie target. ──
+      final streak = await streakFuture;
+      final weightHistory = await weightFuture;
       WeightTrend? weightTrend;
       if (weightHistory.length >= 2) {
         try {
@@ -335,26 +407,12 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
           debugPrint('⚠️ [NutritionPrefsProvider] Could not get weight trend: $e');
         }
       }
-
-      // Use backend flag as source of truth, preserve in-memory if already set
-      final wasOnboardingCompleted = state.onboardingCompleted;
-      final backendOnboardingCompleted = preferences?.nutritionOnboardingCompleted ?? false;
-
       state = state.copyWith(
-        preferences: preferences,
         streak: streak,
         weightHistory: weightHistory,
         weightTrend: weightTrend,
-        dynamicTargets: dynamicTargets,
-        isLoading: false,
-        onboardingCompleted: wasOnboardingCompleted || backendOnboardingCompleted,
       );
-      // Update in-memory cache for instant access on provider recreation
       _nutritionPrefsInMemoryCache = state;
-      // Write through to disk for the next cold start (A2).
-      if (preferences != null) {
-        unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
-      }
 
       debugPrint(
           '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$backendOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
@@ -618,7 +676,7 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       );
       _nutritionPrefsInMemoryCache = state;
       if (preferences != null) {
-        unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
+        unawaited(_NutritionPrefsDiskCache.write(userId, preferences, dynamicTargets));
       }
       debugPrint('✅ [NutritionPrefsProvider] Force-refresh done: goal=${preferences?.nutritionGoals}, cal=${preferences?.targetCalories}');
     } catch (e) {
