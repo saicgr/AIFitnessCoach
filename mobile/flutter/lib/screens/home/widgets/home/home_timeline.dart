@@ -94,6 +94,9 @@ class HomeTimeline extends ConsumerWidget {
             ? (night.mainSleep.wakeTime ??
                 DateTime(dayDate.year, dayDate.month, dayDate.day, 7))
             : null;
+        // Sleep START (when you went to bed). Shown alongside the wake time so
+        // the sleep row reads as a span, not a lone timestamp.
+        final bed = hasSleep ? night.mainSleep.bedTime : null;
 
         final events = _buildEvents(
           context: context,
@@ -106,6 +109,7 @@ class HomeTimeline extends ConsumerWidget {
           isFuture: isFuture,
           sleepMinutes: sleepMin,
           sleepWakeTime: wake,
+          sleepBedTime: bed,
         );
 
         children.add(_dayHeader(c, dayDate, today, first: di == 0));
@@ -191,18 +195,21 @@ class HomeTimeline extends ConsumerWidget {
           children: [
             Row(
               children: [
-                LineIcon('check', size: 15, color: c.textMuted),
-                const SizedBox(width: 6),
+                LineIcon('check', size: 16, color: c.textSecondary),
+                const SizedBox(width: 7),
                 Expanded(
                   child: Text(
-                    'TIMELINE',
+                    // Reads as a section header consistent with the in-card
+                    // day headers ("Today"/"Yesterday") — primary text, 13px,
+                    // tight tracking — rather than a tiny muted eyebrow.
+                    'Timeline',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 13,
                       fontWeight: FontWeight.w800,
-                      letterSpacing: 0.7,
-                      color: c.textMuted,
+                      letterSpacing: -0.2,
+                      color: c.textPrimary,
                     ),
                   ),
                 ),
@@ -306,6 +313,7 @@ class HomeTimeline extends ConsumerWidget {
     required bool isFuture,
     required int sleepMinutes,
     required DateTime? sleepWakeTime,
+    DateTime? sleepBedTime,
   }) {
     final events = <_TimelineEvent>[];
 
@@ -346,10 +354,18 @@ class HomeTimeline extends ConsumerWidget {
     // from `sleepHistoryProvider` and merged in as a duration block — unless the
     // feed already carries a (rare) backend `sleep` entry for this day.
     if (sleepMinutes > 0 && sleepWakeTime != null && !hasSleepEntry) {
+      // Subtitle reads as a span — "11:00p – 7:00a · 7h 12m" — so the row shows
+      // when sleep both started (bedTime) and ended (wakeTime), not just the
+      // lone wake time in the gutter. Falls back to duration-only when the
+      // source didn't record a bedtime.
+      final sleepSubtitle = sleepBedTime != null
+          ? '${_fmtTimeShort(sleepBedTime)} – ${_fmtTimeShort(sleepWakeTime)}'
+              ' · ${_fmtSleepDuration(sleepMinutes)}'
+          : _fmtSleepDuration(sleepMinutes);
       events.add(_TimelineEvent(
         iconName: 'sleep',
         title: 'Sleep',
-        subtitle: _fmtSleepDuration(sleepMinutes),
+        subtitle: sleepSubtitle,
         status: _Status.done,
         tint: c.cyan,
         sortKey: sleepWakeTime.millisecondsSinceEpoch.toDouble(),
