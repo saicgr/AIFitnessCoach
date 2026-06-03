@@ -20,9 +20,18 @@ import '../../core/providers/auth_provider.dart';
 /// byte-identical to before this provider existed. Every demo branch is
 /// gated on [demoHealthModeProvider] being `true`, which can only happen
 /// for an id in this `const` set.
-const Set<String> kDemoHealthUserIds = {
-  'd8f9677f-3cda-413b-8df7-0bb0035f69b1', // reviewer@zealova.com
-};
+///
+/// INTENTIONALLY EMPTY (2026-06-02): the reviewer demo health seed was
+/// retired — `reviewer@zealova.com` now reads the real device Health Connect /
+/// HealthKit store like every other account, instead of the seeded backend
+/// `daily_activity` rows (which surfaced phantom values, e.g. 7,312 steps the
+/// user never walked). With the set empty, `demoHealthModeProvider` is always
+/// `false` and no demo branch can fire.
+///
+/// To re-enable populated demo health for a future App Store / Play review:
+/// add the reviewer account's user id back to this set AND reseed via
+/// `backend/.venv/bin/python scripts/seed_reviewer_health.py --seed`.
+const Set<String> kDemoHealthUserIds = <String>{};
 
 /// `true` only when the signed-in user is the disclosed reviewer demo
 /// account. Watch this before entering any demo health code path; when it
