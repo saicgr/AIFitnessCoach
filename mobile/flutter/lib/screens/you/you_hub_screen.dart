@@ -33,6 +33,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/providers/you_hub_tab_request_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/minigame_unlock_service.dart';
 import '../../widgets/floating_tab_bar.dart';
@@ -93,11 +94,36 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
     // whether they hit their step goal. Serious Mode still dims the
     // gamification visuals on Overview (XpHeroTile reads `muted: serious`)
     // but no longer changes the landing tab.
+    // Seed the landing tab from a pending request (e.g. the home avatar set
+    // one immediately before navigating) if present, else the route's
+    // initialTabIndex. Reading the request here avoids a visible
+    // Overview->Profile sweep on a cold cross-branch entry. [_lastTabSeq]
+    // tracks the seq we've already honoured so the build-time listener does
+    // not re-fire for this same request.
+    final pending = ref.read(youHubTabRequestProvider);
+    _lastTabSeq = pending?.seq;
+    final seedIndex = (pending?.index ?? widget.initialTabIndex).clamp(0, 2);
     _tabController = TabController(
       length: 3,
       vsync: this,
-      initialIndex: widget.initialTabIndex.clamp(0, 2),
+      initialIndex: seedIndex,
     );
+  }
+
+  /// The last [YouHubTabRequest.seq] we've already applied — so the
+  /// `build`-time listener animates only on genuinely new requests.
+  int? _lastTabSeq;
+
+  /// Apply a tab-switch request. The cold first-build case is handled by
+  /// `initState` seeding the controller directly (no sweep); this animates
+  /// for an already-mounted hub, dedupes by [YouHubTabRequest.seq], and never
+  /// fights a request that is already satisfied.
+  void _applyTabRequest(YouHubTabRequest req) {
+    if (req.seq == _lastTabSeq) return;
+    _lastTabSeq = req.seq;
+    final target = req.index.clamp(0, 2);
+    if (_tabController.index == target) return;
+    _tabController.animateTo(target);
   }
 
   @override
@@ -183,6 +209,14 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
 
   @override
   Widget build(BuildContext context) {
+    // React to tab-switch requests (home avatar, deep links) on every new
+    // seq — even when the target index repeats — so a request always wins
+    // over a prior manual swipe, while incidental rebuilds (no new request)
+    // never move the tab.
+    ref.listen<YouHubTabRequest?>(youHubTabRequestProvider, (prev, next) {
+      if (next != null) _applyTabRequest(next);
+    });
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);

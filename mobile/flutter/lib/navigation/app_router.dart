@@ -179,6 +179,7 @@ import '../screens/xp_goals/xp_goals_screen.dart';
 // import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/xp_provider.dart';
 import '../data/providers/today_workout_provider.dart';
+import '../data/providers/you_hub_tab_request_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
 import '../screens/injuries/report_injury_screen.dart';
 import '../screens/injuries/injury_detail_screen.dart';

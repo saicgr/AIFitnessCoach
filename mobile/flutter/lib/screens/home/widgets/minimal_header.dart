@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/xp_provider.dart';
+import '../../../data/providers/you_hub_tab_request_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import 'components/components.dart';
@@ -70,10 +71,14 @@ class _HomeAvatarButton extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        // ?tab=profile lands on the Profile sub-tab inside the You hub
-        // instead of the default Overview tab. Route handler parses this
-        // query param in `app_router_main_shell_routes.dart` and passes
-        // `initialTabIndex: 1` to YouHubScreen.
+        // Land on the Profile sub-tab inside the You hub, not the default
+        // Overview. The You branch is kept alive in the shell IndexedStack,
+        // so `initialTabIndex` (read once in initState) is ignored on a
+        // re-visit; the nonce-carrying request guarantees the switch fires
+        // every tap (even after the user manually swiped to Overview). The
+        // `?tab=profile` query is kept for URL clarity / shareable deep
+        // links; the route also seeds the same request.
+        ref.read(youHubTabRequestProvider.notifier).requestTab(1);
         context.go('/profile?tab=profile');
       },
       child: Container(

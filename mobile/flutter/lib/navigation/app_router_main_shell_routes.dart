@@ -124,7 +124,25 @@ List<RouteBase> _mainShellRoutes() => [
                 } else if (tabParam == 'rewards') {
                   initialTab = 2;
                 }
+                // Push the tab intent through the nonce request so a deep link
+                // that arrives while the You branch is ALREADY mounted (kept
+                // alive in the shell IndexedStack) still switches tabs —
+                // initState alone only handles a cold first build. Done in a
+                // post-frame callback so we never mutate a provider mid-build.
+                // Restricted to the two tabs the hub actually maps; other
+                // legacy `?tab=` values (measurements/stats/…) are vestigial
+                // and keep their prior Overview-default behaviour untouched.
+                if (tabParam == 'profile' || tabParam == 'rewards') {
+                  final container =
+                      ProviderScope.containerOf(context, listen: false);
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    container
+                        .read(youHubTabRequestProvider.notifier)
+                        .requestTab(initialTab);
+                  });
+                }
                 return NoTransitionPage(
+                  key: state.pageKey,
                   child: YouHubScreen(
                     initialTabIndex: initialTab,
                     profileScrollTo: scrollTo,
