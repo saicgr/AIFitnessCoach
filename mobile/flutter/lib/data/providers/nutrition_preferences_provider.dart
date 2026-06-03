@@ -664,12 +664,22 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   Future<void> forceRefreshPreferences(String userId) async {
     try {
       debugPrint('🔄 [NutritionPrefsProvider] Force-refreshing preferences for $userId');
-      final results = await Future.wait([
-        _repository.getPreferences(userId),
-        _repository.getDynamicTargets(userId: userId, date: DateTime.now()).catchError((_) => const DynamicNutritionTargets()),
-      ]);
-      final preferences = results[0] as NutritionPreferences?;
-      final dynamicTargets = results[1] as DynamicNutritionTargets?;
+      // Fire both concurrently, but NEVER fall back to a default
+      // DynamicNutritionTargets() (targetCalories defaults to 2000, which would
+      // shadow the real base target). A failed dynamic fetch yields null so the
+      // calorie getters fall through to the real preferences value.
+      final prefsFuture = _repository.getPreferences(userId);
+      final dynFuture =
+          _repository.getDynamicTargets(userId: userId, date: DateTime.now());
+      final preferences = await prefsFuture;
+      DynamicNutritionTargets? dynamicTargets;
+      try {
+        dynamicTargets = await dynFuture;
+      } catch (e) {
+        debugPrint(
+            '⚠️ [NutritionPrefsProvider] force-refresh dynamic failed, keeping base: $e');
+        dynamicTargets = state.dynamicTargets;
+      }
       state = state.copyWith(
         preferences: preferences,
         dynamicTargets: dynamicTargets,
