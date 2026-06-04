@@ -1181,6 +1181,12 @@ class _ActiveWorkoutScreenState
         // User is back in the app looking at the workout — the shade entry
         // is redundant. Clear it so the two timers can't visibly desync.
         _isAppBackgrounded = false;
+        // B13(b): catch the rest timer up to wall-clock — Dart's 1s tick
+        // freezes/throttles while backgrounded, so reconcile against
+        // _restEndsAt (and auto-complete the rest if it already elapsed while
+        // we were away). Do this BEFORE clearing the notification so the
+        // in-app countdown matches the Live Activity the user just saw.
+        _timerController.reconcileRestFromWallClock();
         cancelWorkoutNotification();
         break;
       case AppLifecycleState.detached:

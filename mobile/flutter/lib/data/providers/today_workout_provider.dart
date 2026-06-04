@@ -16,7 +16,9 @@ import '../local/database_provider.dart';
 import '../models/workout.dart';
 import '../repositories/workout_repository.dart';
 import '../services/data_cache_service.dart';
+import '../services/connectivity_service.dart';
 import '../services/wearable_service.dart';
+import '../../services/workout_generation_orchestrator.dart';
 
 /// Tracks poll count for exponential backoff
 /// Prevents excessive API calls when generation is failing
@@ -437,6 +439,34 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       var response = await repository.getTodayWorkout();
       debugPrint('⏱️ [startup] /today fetch returned in ${apiSw.elapsedMilliseconds}ms (showLoading=$showLoading)');
 
+      // B5 OFFLINE WIRING — the cloud `/today` call (getTodayWorkout) catches
+      // its own errors and returns null when the device is offline. If we're
+      // offline AND there's nothing in the disk/in-memory cache for today
+      // either, fall back to the on-device orchestrator so the user still
+      // gets a workout with no connection. Per no-silent-fallback rules,
+      // getOfflineWorkout THROWS on an empty library / zero-result generation,
+      // and we surface that as an error state rather than swallowing it.
+      if (response == null && !_disposed) {
+        final isOnline = _ref.read(isOnlineProvider);
+        // "Disk cache had nothing for today" == we have no displayable cached
+        // content. _loadWithCacheFirst races the disk read into `state`/
+        // `_inMemoryCache`, so both being empty means the cache miss is real.
+        final cachedHasContent = (_inMemoryCache?.hasDisplayableContent ??
+                false) ||
+            (state.valueOrNull?.hasDisplayableContent ?? false);
+        if (!isOnline && !cachedHasContent) {
+          final offline = await _tryOfflineWorkout();
+          if (offline == null) {
+            // Offline generation failed and already surfaced an error state
+            // (empty library / over-constrained / zero-result). Stop here —
+            // do NOT fall through to the empty-state / needs-generation paths
+            // which would clobber the actionable error with "No workout yet".
+            return;
+          }
+          response = offline;
+        }
+      }
+
       // §8d — a fresh response carrying real content must clear any stale
       // poll-cap sentinel set by a previous cycle. copyWith can't null the
       // field (uses `??`), so rebuild explicitly when needed.
@@ -638,6 +668,81 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
         _startStuckStateWatchdog();
       }
     }
+  }
+
+  /// B5 OFFLINE WIRING — on-device fallback when the cloud `/today` flow
+  /// returned null while OFFLINE and nothing was cached for today.
+  ///
+  /// Routes through the already-shipped
+  /// [WorkoutGenerationOrchestrator.getOfflineWorkout], which serves a
+  /// pre-cached server workout if one was downloaded for today, else builds a
+  /// rule-based workout on-device from the bundled exercise library. The
+  /// generated workout is mapped into a [TodayWorkoutResponse] and saved to
+  /// cache (so a subsequent provider rebuild paints it instantly).
+  ///
+  /// Returns the [TodayWorkoutResponse] on success. On failure (empty library /
+  /// over-constrained / zero-result — getOfflineWorkout THROWS in those cases),
+  /// this SURFACES the descriptive error to the UI via an error state and
+  /// returns null. We never swallow the error or fabricate an empty workout.
+  Future<TodayWorkoutResponse?> _tryOfflineWorkout() async {
+    final userId = _currentUserId();
+    if (userId == null) {
+      debugPrint('⚠️ [TodayWorkout] Offline fallback skipped — no user id');
+      return null;
+    }
+
+    debugPrint('📴 [TodayWorkout] Offline + no cached workout — trying on-device generation');
+    try {
+      final orchestrator = _ref.read(workoutGenerationOrchestratorProvider);
+      // splitType: the orchestrator's rule-based generator falls back to
+      // 'full_body' for unknown splits, and full_body is the safest universal
+      // template for an offline fallback (no equipment/movement assumptions).
+      final workout = await orchestrator.getOfflineWorkout(
+        userId: userId,
+        splitType: 'full_body',
+        scheduledDate: _todayDateString(),
+      );
+
+      final summary = _offlineWorkoutToSummary(workout);
+      final response = TodayWorkoutResponse(
+        hasWorkoutToday: true,
+        todayWorkout: summary,
+      );
+
+      // Persist so the next provider build / app open paints instantly.
+      await _saveToCache(response);
+      debugPrint('✅ [TodayWorkout] Offline workout ready (${summary.exerciseCount} exercises)');
+      return response;
+    } catch (e, stack) {
+      // No-silent-fallback: surface the orchestrator's descriptive message
+      // (empty library / over-constrained) as an error state for the UI.
+      debugPrint('❌ [TodayWorkout] Offline generation failed: $e');
+      if (!_disposed) {
+        _safeSetState(AsyncValue.error(e, stack));
+      }
+      return null;
+    }
+  }
+
+  /// Map an offline-generated [Workout] into a [TodayWorkoutSummary] for the
+  /// today state. Mirrors the field mapping used by [_cachedWorkoutToSummary].
+  TodayWorkoutSummary _offlineWorkoutToSummary(Workout workout) {
+    final todayStr = _todayDateString();
+    final scheduled = workout.scheduledDate ?? todayStr;
+    return TodayWorkoutSummary(
+      id: workout.id ?? '',
+      name: workout.name ?? 'Workout',
+      type: workout.type ?? 'strength',
+      difficulty: workout.difficulty ?? 'medium',
+      durationMinutes: workout.durationMinutes ?? 45,
+      exerciseCount: workout.exerciseCount,
+      primaryMuscles: workout.primaryMuscles,
+      scheduledDate: scheduled,
+      isToday: scheduled.length >= 10 && scheduled.substring(0, 10) == todayStr,
+      isCompleted: workout.isCompleted ?? false,
+      exercises: workout.exercises,
+      generationMethod: workout.generationMethod,
+    );
   }
 
   /// Handle generation polling with exponential backoff

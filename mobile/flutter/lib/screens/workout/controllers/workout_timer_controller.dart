@@ -151,6 +151,32 @@ class WorkoutTimerController {
     HapticService.selection();
   }
 
+  /// B13(b): Reconcile the rest countdown against wall-clock time. Call on app
+  /// resume — Dart timers freeze/throttle while the app is backgrounded (hard
+  /// on iOS, throttled on Android), so the 1s tick loop alone drifts and the
+  /// in-app countdown disagrees with the Live Activity (which renders from the
+  /// native wall-clock [restEndsAt]).
+  ///
+  /// Recomputes [_restSecondsRemaining] from [_restEndsAt] (the authoritative
+  /// wall-clock end) and fires completion if the rest already elapsed while
+  /// backgrounded. Skips while paused: [_applyPause] does NOT extend
+  /// [_restEndsAt] by the paused duration, so a paused rest must not advance
+  /// (advancing it here would wrongly consume the paused time).
+  void reconcileRestFromWallClock() {
+    final endsAt = _restEndsAt;
+    if (endsAt == null || _isPaused) return; // not resting, or paused by design
+    final remaining = endsAt.difference(DateTime.now()).inSeconds;
+    if (remaining <= 0) {
+      // Rest elapsed while backgrounded — complete now (also cancels the
+      // throttled timer and fires onRestComplete via _endRest).
+      _restSecondsRemaining = 0;
+      _endRest();
+    } else if (remaining != _restSecondsRemaining) {
+      _restSecondsRemaining = remaining;
+      onRestTick?.call(_restSecondsRemaining);
+    }
+  }
+
   /// Toggle pause state
   void togglePause() {
     _applyPause(!_isPaused);

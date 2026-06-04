@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../utils/tz.dart';
 import '../local/database.dart';
 import 'health_import_service.dart';
 import 'health_service.dart';
@@ -238,11 +239,14 @@ Future<String?> _resolveBackgroundToken() async {
 /// tracker the foreground path uses, so a workout imported in background won't
 /// re-surface in the foreground sheet and vice-versa.
 ///
-/// Time handling: each workout's `scheduled_date` is its real start instant
-/// serialized as UTC ISO (`startTime.toUtc()`). The absolute instant is
-/// timezone-correct on read because the backend resolves the user's local day
-/// from `users.timezone` — we never substitute a server/UTC "now" for the
-/// workout's own clock (see feedback_user_local_time_only).
+/// Time handling: each workout's `scheduled_date` is the LOCAL calendar day the
+/// workout actually happened on (`Tz.localDate(startTime)` → YYYY-MM-DD). The
+/// backend buckets scheduled_date by the leading date portion
+/// (`str(scheduled_date)[:10]` in today.py + workout_db.py), so we must send the
+/// user's local training day, not the UTC instant — otherwise an evening
+/// workout west of UTC shifts forward a calendar day (B13(a)). We never
+/// substitute a server/UTC "now" for the workout's own clock (see
+/// feedback_user_local_time_only).
 Future<bool> _processExternalWorkoutImport() async {
   // Respect the user opt-out toggle (default ON).
   try {
@@ -341,7 +345,9 @@ Future<bool> _processExternalWorkoutImport() async {
           'name': _externalWorkoutName(enriched.activityKind),
           'type': enriched.activityType,
           'difficulty': 'intermediate',
-          'scheduled_date': enriched.startTime.toUtc().toIso8601String(),
+          // B13(a): local calendar day the workout happened on (backend buckets
+          // scheduled_date by YYYY-MM-DD — see the time-handling note above).
+          'scheduled_date': Tz.localDate(enriched.startTime),
           'exercises_json': '[]',
           'duration_minutes': enriched.durationMinutes,
           'generation_method': 'health_connect_import',

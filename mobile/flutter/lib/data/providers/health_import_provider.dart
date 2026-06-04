@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../utils/tz.dart';
 import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
 import '../services/background_sync_service.dart'
@@ -222,7 +223,13 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
           'name': workoutName,
           'type': pending.activityType,
           'difficulty': difficulty,
-          'scheduled_date': pending.startTime.toUtc().toIso8601String(),
+          // B13(a): file the import on the LOCAL calendar day the user actually
+          // trained. The backend buckets scheduled_date by the leading
+          // YYYY-MM-DD (str(scheduled_date)[:10] in today.py + workout_db.py),
+          // so sending startTime.toUtc() shifted every evening workout west of
+          // UTC forward a day. Tz.localDate() sends the user's real training
+          // day as a date string Pydantic accepts.
+          'scheduled_date': Tz.localDate(pending.startTime),
           'exercises_json': '[]',
           'duration_minutes': pending.durationMinutes,
           'generation_method': 'health_connect_import',
@@ -362,7 +369,9 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
             'name': workoutName,
             'type': enriched.activityType,
             'difficulty': 'intermediate',
-            'scheduled_date': enriched.startTime.toUtc().toIso8601String(),
+            // B13(a): local calendar day the workout actually happened on —
+            // backend buckets scheduled_date by YYYY-MM-DD (see importAsNewWorkout).
+            'scheduled_date': Tz.localDate(enriched.startTime),
             'exercises_json': '[]',
             'duration_minutes': enriched.durationMinutes,
             'generation_method': 'health_connect_import',
