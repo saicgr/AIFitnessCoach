@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -299,11 +301,25 @@ class HomeWorkoutCard extends ConsumerWidget {
 
       if (resp?.completedToday == true ||
           (todayWorkout != null && todayWorkout.isCompleted == true)) {
-        content = _heroStatus(context, c,
-            key: const ValueKey('today-complete'),
-            msg: AppLocalizations.of(context)!.unifiedHomeWidgetsWorkoutCompleteGreatJob,
-            accent: c.success,
-            iconName: 'check');
+        // Mirror the Workouts-tab carousel's completed-state: a blurred shot of
+        // the workout's exercise art behind a frosted-green scrim with a big
+        // green check, "Workout complete" and the workout name — at the home
+        // hero's footprint (132pt). Falls back to the flat status banner only
+        // when we genuinely have no workout object to render art/name for
+        // (e.g. /today says completedToday with no todayWorkout payload).
+        if (todayWorkout != null) {
+          content = KeyedSubtree(
+            key: ValueKey('today-complete-${todayWorkout.id}'),
+            child: _workoutRow(context, ref, c, todayWorkout,
+                isToday: true, completed: true),
+          );
+        } else {
+          content = _heroStatus(context, c,
+              key: const ValueKey('today-complete'),
+              msg: AppLocalizations.of(context)!.unifiedHomeWidgetsWorkoutCompleteGreatJob,
+              accent: c.success,
+              iconName: 'check');
+        }
       } else {
         final workout = todayWorkout ?? resp?.nextWorkout?.toWorkout();
         if (workout == null && state.hasError && !state.hasValue) {
@@ -630,6 +646,13 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
     final workout = widget.workout;
     final accent = widget.completed ? c.success : c.accent;
 
+    // Completed workouts get a distinct celebratory treatment — the blurred
+    // exercise art + frosted-green scrim + centered check, matching the
+    // Workouts-tab carousel's completed overlay (see hero_workout_card_ui.dart).
+    if (widget.completed) {
+      return _buildCompletedHero(c, workout);
+    }
+
     final type = (workout.type ?? 'strength').toUpperCase();
     final mins = workout.durationMinutes ?? workout.durationMinutesMax ?? 0;
     final exCount = workout.exerciseCount;
@@ -866,6 +889,143 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
       );
     }
     // Loading or no-image: an accent gradient fill keeps the hero energetic.
+    return _accentFill(accent);
+  }
+
+  /// Completed-workout hero — same 132pt footprint as the live hero, but
+  /// rendered as a celebration: a heavily blurred shot of the exercise art
+  /// sits behind a frosted accent-green scrim, with a prominent green check,
+  /// "Workout complete" and the workout name centered on top. Tapping anywhere
+  /// opens the summary; the top-right menu still exposes repeat / share / undo.
+  /// This mirrors the Workouts-tab carousel's completed overlay so the two
+  /// surfaces read identically.
+  Widget _buildCompletedHero(ThemeColors c, Workout workout) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = c.success;
+    return GestureDetector(
+      onTap: () {
+        HapticService.medium();
+        context.push('/workout-summary/${workout.id}?tab=summary');
+      },
+      // A5: isolate the blurred-image paint so sibling tile repaints (e.g. the
+      // per-second fasting tick) never re-rasterise this expensive layer.
+      child: RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: SizedBox(
+            height: _kWorkoutHeroHeight,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Blurred exercise art (or accent gradient when none).
+                _buildCompletedBackground(c, accent),
+                // Frosted accent-green tint over the blur — keeps the check and
+                // text legible over any image and gives the card its "done" hue.
+                DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: isDark ? 0.32 : 0.26),
+                  ),
+                ),
+                // Repeat / share / undo access stays reachable.
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: _OverImageMenuButton(workout: workout),
+                ),
+                // Centered completion content.
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: accent,
+                            border:
+                                Border.all(color: Colors.white, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: accent.withValues(alpha: 0.45),
+                                blurRadius: 14,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.check_rounded,
+                            color: Colors.white,
+                            size: 28,
+                            weight: 800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          AppLocalizations.of(context)
+                              .workoutShowcaseWorkoutComplete,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                blurRadius: 6,
+                                color: Color(0x66000000),
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          workout.name ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.85),
+                            shadows: const [
+                              Shadow(
+                                blurRadius: 5,
+                                color: Color(0x55000000),
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Background for the completed hero: the exercise photo blurred behind the
+  /// frosted scrim, or a plain accent gradient when no image is available.
+  Widget _buildCompletedBackground(ThemeColors c, Color accent) {
+    if (_imageUrl != null) {
+      return ImageFiltered(
+        imageFilter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: CachedNetworkImage(
+          imageUrl: _imageUrl!,
+          fit: BoxFit.cover,
+          alignment: const Alignment(0.0, -0.25),
+          memCacheWidth: 600,
+          memCacheHeight: 360,
+          placeholder: (_, __) => _accentFill(accent),
+          errorWidget: (_, __, ___) => _accentFill(accent),
+        ),
+      );
+    }
     return _accentFill(accent);
   }
 
