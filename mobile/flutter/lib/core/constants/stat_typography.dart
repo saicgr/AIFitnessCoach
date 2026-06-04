@@ -126,3 +126,57 @@ class StatNumber extends StatelessWidget {
     );
   }
 }
+
+/// A [StatNumber] that counts UP from 0 to [value] on first build — the "feels
+/// alive" polish for hero numbers (streak, strength score, weekly volume).
+///
+/// Pass the raw numeric [value]; [format] turns the interpolated double into the
+/// displayed string (e.g. `(v) => v.round().toString()` or a thousands-formatter).
+/// Respects reduce-motion: when the platform/app disables animations the number
+/// renders immediately at its final value.
+class AnimatedStatNumber extends StatelessWidget {
+  final double value;
+  final String Function(double) format;
+  final String? unit;
+  final double size;
+  final Color color;
+  final Color? unitColor;
+  final FontWeight weight;
+  final Alignment alignment;
+  final Duration duration;
+  final Curve curve;
+
+  const AnimatedStatNumber({
+    super.key,
+    required this.value,
+    required this.format,
+    required this.size,
+    required this.color,
+    this.unit,
+    this.unitColor,
+    this.weight = FontWeight.w700,
+    this.alignment = Alignment.centerLeft,
+    this.duration = const Duration(milliseconds: 750),
+    this.curve = Curves.easeOutCubic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0, end: value),
+      duration: reduceMotion ? Duration.zero : duration,
+      curve: curve,
+      builder: (context, v, _) => StatNumber(
+        value: format(v),
+        unit: unit,
+        size: size,
+        color: color,
+        unitColor: unitColor,
+        weight: weight,
+        alignment: alignment,
+      ),
+    );
+  }
+}
