@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../exercise_preferences/excluded_muscles_screen.dart';
 import '../widgets/widgets.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -189,6 +191,17 @@ class TrainingPreferencesSection extends StatelessWidget {
               title: AppLocalizations.of(context).trainingPreferencesMusclesToAvoid,
               subtitle: AppLocalizations.of(context).trainingPreferencesSkipOrReduceMuscle,
               isAvoidedMusclesManager: true,
+            ),
+            SettingItemData(
+              icon: Icons.block,
+              title: 'Excluded Muscles',
+              subtitle: 'Muscle groups the AI never trains',
+              onTap: () => Navigator.push(
+                context,
+                AppPageRoute(
+                  builder: (_) => const ExcludedMusclesScreen(),
+                ),
+              ),
             ),
             SettingItemData(
               icon: Icons.history,

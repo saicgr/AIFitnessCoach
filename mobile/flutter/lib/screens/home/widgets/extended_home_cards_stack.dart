@@ -45,6 +45,7 @@ import 'cards/referral_gift_tile.dart';
 import 'cards/return_to_exercise_card.dart';
 import 'cards/rhr_delta_card.dart';
 import 'cards/smoothed_weight_trend_chip.dart';
+import 'cards/stale_score_nudge_card.dart';
 import 'cards/stand_reminder_chip.dart';
 import 'cards/step_streak_tile.dart';
 import 'cards/training_effect_card.dart';
@@ -108,6 +109,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
           title: 'Plan & adjustments',
           children: const [
             WeeklyPlanStrip(),
+            StaleScoreNudgeCard(),
             PlanAdjustmentsCard(),
             ReturnToExerciseCard(),
             InjuryWorkaroundBanner(),
