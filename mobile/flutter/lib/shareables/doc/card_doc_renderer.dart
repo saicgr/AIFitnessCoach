@@ -4,6 +4,7 @@
 /// canvas, or a capture `RepaintBoundary`.
 library;
 
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -302,6 +303,7 @@ class _ElementBody extends StatelessWidget {
 
   // ─── chart (macro viz) ───
   Widget _chart(ChartProps p) {
+    if (p.kind != ChartKind.macro) return _seriesChart(p);
     // MacroViz is a `crossAxisAlignment: stretch` Column — it MUST lay out
     // under bounded constraints. A bare `FittedBox` would hand it unbounded
     // width (→ "BoxConstraints forces an infinite width" crash). So give it
@@ -326,6 +328,43 @@ class _ElementBody extends StatelessWidget {
             healthScore: p.showHealthScore ? data.healthScore : null,
           ),
         ),
+      ),
+    );
+  }
+
+  // ─── series chart (bars/line/radar/ring/appleRings/heatmap) ───
+  Widget _seriesChart(ChartProps p) {
+    final raw = data.subMetrics
+        .map((m) =>
+            double.tryParse(m.value.replaceAll(RegExp(r'[^0-9.\-]'), '')) ?? 0)
+        .where((v) => v >= 0)
+        .toList();
+    final series =
+        raw.isNotEmpty ? raw : const [0.4, 0.7, 0.5, 0.95, 0.6, 0.35, 0.8];
+    final mw = data.musclesWorked ?? const <String, int>{};
+    List<double> radar;
+    if (mw.isNotEmpty) {
+      final maxM = mw.values.fold<int>(1, (a, b) => b > a ? b : a);
+      radar = (mw.values.toList()..sort((a, b) => b.compareTo(a)))
+          .take(6)
+          .map((v) => v / maxM)
+          .toList();
+      if (radar.length < 3) radar = const [0.85, 0.6, 0.9, 0.5, 0.7];
+    } else {
+      radar = const [0.85, 0.6, 0.9, 0.5, 0.7];
+    }
+    final maxV = p.maxValue == 0 ? 1.0 : p.maxValue;
+    final ring = (((resolveNumber(p.valueBinding, data) ?? (maxV * 0.7)) / maxV))
+        .clamp(0.0, 1.0)
+        .toDouble();
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _SeriesPainter(
+        kind: p.kind,
+        accent: _accent,
+        series: series,
+        radar: radar,
+        ring: ring,
       ),
     );
   }
@@ -754,6 +793,175 @@ class _ElementBody extends StatelessWidget {
 }
 
 // ─────────────────────────── Painters ─────────────────────────────────────
+
+class _SeriesPainter extends CustomPainter {
+  final ChartKind kind;
+  final Color accent;
+  final List<double> series;
+  final List<double> radar;
+  final double ring;
+  const _SeriesPainter({
+    required this.kind,
+    required this.accent,
+    required this.series,
+    required this.radar,
+    required this.ring,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sw = size.shortestSide * 0.09;
+    switch (kind) {
+      case ChartKind.macro:
+        break;
+      case ChartKind.bars:
+        final n = series.length;
+        final maxV = series.fold<double>(0.0001, (a, b) => b > a ? b : a);
+        final gap = size.width * 0.03;
+        final bw = (size.width - gap * (n - 1)) / n;
+        for (var i = 0; i < n; i++) {
+          final f = series[i] / maxV;
+          final h = f * size.height;
+          canvas.drawRRect(
+            RRect.fromRectAndCorners(
+              Rect.fromLTWH(i * (bw + gap), size.height - h, bw, h),
+              topLeft: const Radius.circular(3),
+              topRight: const Radius.circular(3),
+            ),
+            Paint()..color = accent.withValues(alpha: 0.45 + 0.55 * f),
+          );
+        }
+      case ChartKind.line:
+        final n = series.length;
+        final maxV = series.fold<double>(0.0001, (a, b) => b > a ? b : a);
+        final path = Path();
+        for (var i = 0; i < n; i++) {
+          final x = n == 1 ? size.width / 2 : i / (n - 1) * size.width;
+          final y = size.height -
+              (series[i] / maxV) * size.height * 0.9 -
+              size.height * 0.05;
+          i == 0 ? path.moveTo(x, y) : path.lineTo(x, y);
+        }
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = accent
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = math.max(2.0, size.shortestSide * 0.03)
+            ..strokeCap = StrokeCap.round
+            ..strokeJoin = StrokeJoin.round,
+        );
+      case ChartKind.ring:
+        final c = size.center(Offset.zero);
+        final r = size.shortestSide / 2 - sw;
+        canvas.drawCircle(
+            c,
+            r,
+            Paint()
+              ..color = const Color(0x22FFFFFF)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = sw);
+        canvas.drawArc(
+            Rect.fromCircle(center: c, radius: r),
+            -math.pi / 2,
+            2 * math.pi * ring,
+            false,
+            Paint()
+              ..color = accent
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = sw
+              ..strokeCap = StrokeCap.round);
+      case ChartKind.appleRings:
+        final c = size.center(Offset.zero);
+        const colors = [Color(0xFFFA114F), Color(0xFF92E82A), Color(0xFF1AD6FD)];
+        const fracs = [0.82, 0.7, 0.6];
+        for (var i = 0; i < 3; i++) {
+          final r = size.shortestSide / 2 - sw - i * (sw * 1.25);
+          if (r <= 0) continue;
+          canvas.drawCircle(
+              c,
+              r,
+              Paint()
+                ..color = colors[i].withValues(alpha: 0.2)
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = sw);
+          canvas.drawArc(
+              Rect.fromCircle(center: c, radius: r),
+              -math.pi / 2,
+              2 * math.pi * fracs[i],
+              false,
+              Paint()
+                ..color = colors[i]
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = sw
+                ..strokeCap = StrokeCap.round);
+        }
+      case ChartKind.radar:
+        final c = size.center(Offset.zero);
+        final radius = size.shortestSide / 2 * 0.9;
+        final n = radar.length;
+        Offset pt(int i, double f) {
+          final a = -math.pi / 2 + 2 * math.pi * i / n;
+          return c + Offset(math.cos(a), math.sin(a)) * radius * f;
+        }
+        final grid = Path();
+        for (var i = 0; i < n; i++) {
+          final pp = pt(i, 1);
+          i == 0 ? grid.moveTo(pp.dx, pp.dy) : grid.lineTo(pp.dx, pp.dy);
+        }
+        grid.close();
+        canvas.drawPath(
+            grid,
+            Paint()
+              ..color = const Color(0x22FFFFFF)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5);
+        final poly = Path();
+        for (var i = 0; i < n; i++) {
+          final pp = pt(i, radar[i].clamp(0.1, 1.0));
+          i == 0 ? poly.moveTo(pp.dx, pp.dy) : poly.lineTo(pp.dx, pp.dy);
+        }
+        poly.close();
+        canvas.drawPath(poly, Paint()..color = accent.withValues(alpha: 0.28));
+        canvas.drawPath(
+            poly,
+            Paint()
+              ..color = accent
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = math.max(2.0, size.shortestSide * 0.022)
+              ..strokeJoin = StrokeJoin.round);
+      case ChartKind.heatmap:
+        const cols = 10;
+        final rows = (series.length / cols).ceil().clamp(3, 7);
+        final cell = math.min(size.width / cols, size.height / rows);
+        final gap = cell * 0.16;
+        for (var r = 0; r < rows; r++) {
+          for (var col = 0; col < cols; col++) {
+            final idx = r * cols + col;
+            final v = idx < series.length
+                ? series[idx].clamp(0.0, 1.0)
+                : ((idx * 37) % 10) / 10;
+            canvas.drawRRect(
+              RRect.fromRectAndRadius(
+                Rect.fromLTWH(col * cell + gap / 2, r * cell + gap / 2,
+                    cell - gap, cell - gap),
+                const Radius.circular(2),
+              ),
+              Paint()..color = accent.withValues(alpha: 0.15 + 0.85 * v),
+            );
+          }
+        }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SeriesPainter old) =>
+      old.kind != kind ||
+      old.accent != accent ||
+      old.ring != ring ||
+      old.series != series ||
+      old.radar != radar;
+}
 
 class _DashedLinePainter extends CustomPainter {
   final Color color;

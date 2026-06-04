@@ -130,6 +130,9 @@ CardElement chartEl({
   bool showFiber = false,
   bool showHealthScore = false,
   double vizScale = 1.0,
+  ChartKind kind = ChartKind.macro,
+  DataBinding valueBinding = DataBinding.none,
+  double maxValue = 100,
 }) =>
     _el(
       CardElementType.chart,
@@ -141,6 +144,9 @@ CardElement chartEl({
         showFiber: showFiber,
         showHealthScore: showHealthScore,
         vizScale: vizScale,
+        kind: kind,
+        valueBinding: valueBinding,
+        maxValue: maxValue,
       ),
     );
 

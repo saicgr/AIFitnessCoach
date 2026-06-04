@@ -895,23 +895,48 @@ class _ChartControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final style in MacroVizStyle.values)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 3),
-              child: ChoiceChip(
-                label: Text(style.name),
-                selected: props.macroStyle == style,
-                onSelected: (_) => controller.updateSelected(
-                  (e) => e.copyWith(props: props.copyWith(macroStyle: style)),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final k in ChartKind.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(k.name),
+                    selected: props.kind == k,
+                    onSelected: (_) => controller.updateSelected(
+                      (e) => e.copyWith(props: props.copyWith(kind: k)),
+                    ),
+                  ),
                 ),
-              ),
+            ],
+          ),
+        ),
+        if (props.kind == ChartKind.macro)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final style in MacroVizStyle.values)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: ChoiceChip(
+                      label: Text(style.name),
+                      selected: props.macroStyle == style,
+                      onSelected: (_) => controller.updateSelected(
+                        (e) => e.copyWith(props: props.copyWith(macroStyle: style)),
+                      ),
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
+          ),
+      ],
     );
   }
 }

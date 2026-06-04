@@ -679,8 +679,12 @@ class PhotoProps extends ElementProps {
       );
 }
 
-/// A chart element. The macro styles delegate to `MacroViz`; the generic
-/// styles (progress/gauge/bar/dotGrid) render from explicit value/segments.
+/// Non-macro chart kinds. `macro` keeps the original MacroViz behaviour; the
+/// rest render via a generic series painter (see card_doc_renderer).
+enum ChartKind { macro, bars, line, radar, ring, appleRings, heatmap }
+
+/// A chart element. `macro` styles delegate to `MacroViz`; the generic kinds
+/// (bars/line/radar/ring/appleRings/heatmap) render from live workout/stats data.
 @immutable
 class ChartProps extends ElementProps {
   final MacroVizStyle macroStyle;
@@ -688,6 +692,10 @@ class ChartProps extends ElementProps {
   final bool showFiber;
   final bool showHealthScore;
   final double vizScale;
+  final ChartKind kind;
+  /// For `ring`: fill fraction = resolveNumber(valueBinding) / maxValue.
+  final DataBinding valueBinding;
+  final double maxValue;
 
   const ChartProps({
     this.macroStyle = MacroVizStyle.appleRings,
@@ -695,6 +703,9 @@ class ChartProps extends ElementProps {
     this.showFiber = false,
     this.showHealthScore = false,
     this.vizScale = 1.0,
+    this.kind = ChartKind.macro,
+    this.valueBinding = DataBinding.none,
+    this.maxValue = 100,
   });
 
   @override
@@ -706,6 +717,9 @@ class ChartProps extends ElementProps {
     bool? showFiber,
     bool? showHealthScore,
     double? vizScale,
+    ChartKind? kind,
+    DataBinding? valueBinding,
+    double? maxValue,
   }) =>
       ChartProps(
         macroStyle: macroStyle ?? this.macroStyle,
@@ -713,6 +727,9 @@ class ChartProps extends ElementProps {
         showFiber: showFiber ?? this.showFiber,
         showHealthScore: showHealthScore ?? this.showHealthScore,
         vizScale: vizScale ?? this.vizScale,
+        kind: kind ?? this.kind,
+        valueBinding: valueBinding ?? this.valueBinding,
+        maxValue: maxValue ?? this.maxValue,
       );
 
   @override
@@ -722,6 +739,9 @@ class ChartProps extends ElementProps {
         'showFiber': showFiber,
         'showHealthScore': showHealthScore,
         'vizScale': vizScale,
+        'kind': kind.name,
+        'valueBinding': valueBinding.toJson(),
+        'maxValue': maxValue,
       };
 
   factory ChartProps.fromJson(Map v) => ChartProps(
@@ -731,6 +751,11 @@ class ChartProps extends ElementProps {
         showFiber: v['showFiber'] as bool? ?? false,
         showHealthScore: v['showHealthScore'] as bool? ?? false,
         vizScale: (v['vizScale'] as num?)?.toDouble() ?? 1.0,
+        kind: _enumFromJson(v['kind'], ChartKind.values, ChartKind.macro),
+        valueBinding: v['valueBinding'] != null
+            ? DataBinding.fromJson(v['valueBinding'])
+            : DataBinding.none,
+        maxValue: (v['maxValue'] as num?)?.toDouble() ?? 100,
       );
 }
 
