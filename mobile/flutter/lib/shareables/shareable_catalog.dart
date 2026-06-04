@@ -84,7 +84,6 @@ import 'templates/macro_rings_card_doc.dart';
 import 'templates/macro_waffle_card_doc.dart';
 import 'templates/magazine_cover_doc.dart';
 import 'templates/minimal_doc.dart';
-import 'templates/monthly_plan_grid_doc.dart';
 import 'templates/muscle_map_doc.dart';
 import 'templates/news_doc.dart';
 import 'templates/now_playing_doc.dart';
@@ -111,7 +110,6 @@ import 'templates/trading_card_doc.dart';
 import 'templates/trading_card_gold_doc.dart';
 import 'templates/vinyl_doc.dart';
 import 'templates/volume_bars_doc.dart';
-import 'templates/weekly_plan_grid_doc.dart';
 import 'templates/weekly_report_doc.dart';
 import 'templates/weight_graph_doc.dart';
 import 'templates/what_i_ate_card_doc.dart';
@@ -992,7 +990,11 @@ class ShareableCatalog {
         requiresPlanDays: true,
         builder: (d, w) =>
             WeeklyPlanGridTemplate(data: d, showWatermark: w),
-        docBuilder: weeklyPlanGridDoc,
+        // docBuilder intentionally null: the card-doc engine has no planDays
+        // binding, so its placeholder grid would ship an empty share image.
+        // TemplateView falls back to the rich WeeklyPlanGridTemplate widget
+        // (which binds real planDays + thumbnails + sets/reps). isEditable=false
+        // is correct here — a plan grid can't be represented in the doc editor.
       ),
       ShareableTemplateSpec(
         template: ShareableTemplate.monthlyPlanGrid,
@@ -1006,7 +1008,9 @@ class ShareableCatalog {
         requiresPlanDays: true,
         builder: (d, w) =>
             MonthlyPlanGridTemplate(data: d, showWatermark: w),
-        docBuilder: monthlyPlanGridDoc,
+        // docBuilder intentionally null (see weeklyPlanGrid above): render the
+        // rich MonthlyPlanGridTemplate widget with real planDays, not the
+        // placeholder doc grid.
       ),
       // ─────────── New viral formats ───────────
       ShareableTemplateSpec(
