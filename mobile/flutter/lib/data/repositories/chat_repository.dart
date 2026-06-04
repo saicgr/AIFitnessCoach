@@ -1,7 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:dio/dio.dart';
+// `compute` (background-isolate offload for base64 image encoding) and
+// `Uint8List` both live in foundation. material.dart re-exports it, but
+// importing foundation explicitly makes the `part` notifier's `compute(...)`
+// call resolve unambiguously (it otherwise mis-binds to the extension's
+// receiver type).
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -570,8 +575,12 @@ class ChatRepository {
       baseUrl: _apiClient.baseUrl,
       connectTimeout: const Duration(seconds: 30),
       // LangGraph multi-agent replies can run long; the per-token cadence
-      // resets the receive timer, so 3 minutes is a generous ceiling.
-      receiveTimeout: const Duration(minutes: 3),
+      // resets the receive timer, so this is the MAX silent gap we'll tolerate
+      // between tokens, not the total reply budget. 90s halves the worst-case
+      // dead-stall wait vs the old 3-minute ceiling while still leaving ample
+      // margin for the slowest single step (vision frame extraction, a full
+      // plan generation, or a cold multi-agent hand-off). Do not drop below 90s.
+      receiveTimeout: const Duration(seconds: 90),
       headers: {
         'Accept': 'text/event-stream',
         'Cache-Control': 'no-cache',

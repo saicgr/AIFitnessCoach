@@ -995,6 +995,79 @@ extension NotificationServiceScheduled on NotificationService {
     debugPrint('✅ [Notifications] Cancelled all schedule reminders');
   }
 
+  /// Schedule a CUSTOM coach-authored reminder created from chat
+  /// ("remind me to take creatine at 8am", "remind me in 2 hours to stretch").
+  ///
+  /// Reuses the `schedule_reminder` channel + the 7000-7999 ID space and the
+  /// same `matchDateTimeComponents` mechanism the built-in workout / nutrition
+  /// reminders use, so it fires in the device's LOCAL timezone and survives
+  /// app background / kill — no server round-trip at fire time.
+  ///
+  /// [scheduledTime] is the absolute first/next fire instant, already resolved
+  /// server-side against the user's live timezone. [recurrence] is one of
+  /// 'once' | 'daily' | 'weekly'. [reminderId] is stable so the reminder can be
+  /// cancelled later via [cancelItemReminder].
+  Future<void> scheduleCoachReminder({
+    required String reminderId,
+    required String title,
+    required String body,
+    required DateTime scheduledTime,
+    String recurrence = 'once',
+  }) async {
+    final notificationId =
+        _scheduleReminderBaseId + (reminderId.hashCode.abs() % 1000);
+
+    final isRecurring = recurrence == 'daily' || recurrence == 'weekly';
+    // A one-off reminder in the past is dropped. A recurring one is allowed —
+    // its next occurrence is in the future (the backend resolves `scheduledTime`
+    // to the next match, and matchDateTimeComponents rolls it forward anyway).
+    if (!isRecurring && scheduledTime.isBefore(DateTime.now())) {
+      debugPrint('⚠️ [Notifications] Coach reminder time is in the past, skipping');
+      return;
+    }
+
+    final scheduledDate = tz.TZDateTime.from(scheduledTime, tz.local);
+
+    final channelConfig = NotificationService._channelConfigs['schedule_reminder']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@drawable/ic_launcher_monochrome',
+      color: channelConfig.color,
+    );
+
+    DateTimeComponents? matchComponents;
+    if (recurrence == 'daily') {
+      matchComponents = DateTimeComponents.time;
+    } else if (recurrence == 'weekly') {
+      matchComponents = DateTimeComponents.dayOfWeekAndTime;
+    }
+
+    await _localNotifications.zonedSchedule(
+      notificationId,
+      title,
+      body,
+      scheduledDate,
+      NotificationDetails(
+        android: androidDetails,
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      matchDateTimeComponents: matchComponents,
+      payload: _richPayload('schedule_reminder', title, body),
+    );
+
+    debugPrint(
+      '✅ [Notifications] Coach reminder "$title" @ $scheduledDate '
+      '(recurrence=$recurrence, ID: $notificationId)',
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────────
   // Cycle Tracking Reminders (Phase E)
   // ─────────────────────────────────────────────────────────────────

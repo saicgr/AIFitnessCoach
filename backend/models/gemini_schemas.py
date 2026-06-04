@@ -55,6 +55,7 @@ class CoachIntentEnum(str, Enum):
     GENERATE_WEEKLY_PLAN = "generate_weekly_plan"
     ADJUST_PLAN = "adjust_plan"
     EXPLAIN_PLAN = "explain_plan"
+    SCHEDULE_REMINDER = "schedule_reminder"
 
 
 class IntentExtractionResponse(BaseModel):
@@ -71,6 +72,16 @@ class IntentExtractionResponse(BaseModel):
     hydration_amount: Optional[int] = Field(default=None, description="Number of glasses/cups")
     water_goal_glasses: Optional[int] = Field(default=None, description="Daily water goal in glasses")
     weight_value: Optional[float] = Field(default=None, description="Weight value to log")
+    # Reminder scheduling (intent=schedule_reminder). Capture time as EITHER a
+    # relative delay OR an absolute clock time — do NOT compute a real
+    # timestamp (you have no 'now'); the backend resolves it in the user's tz.
+    reminder_text: Optional[str] = Field(default=None, description="What to remind about, e.g. 'take creatine', 'stretch', 'log dinner'")
+    reminder_title: Optional[str] = Field(default=None, description="Short title (<=80 chars); leave null to derive from reminder_text")
+    reminder_delay_minutes: Optional[int] = Field(default=None, description="Relative delay in minutes ('in 2 hours'->120, 'in 30 min'->30)")
+    reminder_time_hour: Optional[int] = Field(default=None, description="Clock hour 0-23 for 'at 6pm'->18, 'at 7am'->7")
+    reminder_time_minute: Optional[int] = Field(default=None, description="Clock minute 0-59 ('6:30pm'->30); default 0")
+    reminder_recurrence: Optional[str] = Field(default=None, description="'once' (default) | 'daily' | 'weekly'")
+    reminder_weekday: Optional[int] = Field(default=None, description="0=Mon..6=Sun, only for weekly recurrence")
 
 
 # =============================================================================

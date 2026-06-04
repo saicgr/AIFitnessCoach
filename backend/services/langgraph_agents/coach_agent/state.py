@@ -36,6 +36,20 @@ class CoachAgentState(TypedDict):
     water_goal_glasses: Optional[int]
     weight_value: Optional[float]
 
+    # Reminder scheduling (SCHEDULE_REMINDER). Time is captured as EITHER a
+    # relative delay OR an absolute clock time; coach_action_node resolves it to
+    # an absolute timestamp against `user_tz`.
+    reminder_text: Optional[str]
+    reminder_title: Optional[str]
+    reminder_delay_minutes: Optional[int]
+    reminder_time_hour: Optional[int]
+    reminder_time_minute: Optional[int]
+    reminder_recurrence: Optional[str]
+    reminder_weekday: Optional[int]
+    # Live IANA timezone of the user's phone, threaded from the HTTP layer so
+    # reminder times resolve to the user's local clock.
+    user_tz: Optional[str]
+
     # RAG context
     rag_documents: List[Dict[str, Any]]
     rag_context_formatted: str
@@ -46,6 +60,12 @@ class CoachAgentState(TypedDict):
     # or has not consented (a NORMAL state — the coach must then never invent
     # numbers).
     health_context: Optional[str]
+
+    # Self-tracked habits / mood / body-measurements summary (user-logged via
+    # chat or the dedicated screens). "" when the user has no such data — the
+    # coach must then never invent streaks/measurements. Built by
+    # services.coach.self_tracking_context.build_self_tracking_context.
+    self_tracking_context: Optional[str]
 
     # Cardio activity context (SLICE_COACH) — compact prompt string of the
     # user's recent cardio picture (sessions, VO2max, training-load ACWR,

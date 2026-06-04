@@ -226,7 +226,7 @@ class ChatMixin:
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|recommend_workout_change|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|log_activity|generate_quick_workout|log_food|nutrition_summary|recent_meals|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|recommend_workout_change|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|log_activity|generate_quick_workout|log_food|nutrition_summary|recent_meals|schedule_reminder|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
@@ -237,7 +237,14 @@ Return ONLY valid JSON in this exact format (no markdown, no explanation):
   "destination": "home|nutrition|social|profile|workouts|library|schedule|workout_builder|hydration|fasting|food_history|food_library|recipe_suggestions|nutrition_settings|stats|progress|milestones|exercise_history|muscle_analytics|progress_charts|consistency|measurements|chat|support|help|glossary|injuries|habits|neat|metrics|diabetes|plateau|strain_prevention|hormonal_health|mood_history|achievements|trophy_room|leaderboard|rewards|summaries|settings|workout_settings|ai_coach|appearance|sound_notifications|equipment|offline_mode|privacy|subscription",
   "hydration_amount": 8,
   "water_goal_glasses": 10,
-  "weight_value": 75.5
+  "weight_value": 75.5,
+  "reminder_text": "take creatine",
+  "reminder_title": "Creatine",
+  "reminder_delay_minutes": 120,
+  "reminder_time_hour": 18,
+  "reminder_time_minute": 0,
+  "reminder_recurrence": "once",
+  "reminder_weekday": 0
 }
 
 INTENT DEFINITIONS:
@@ -308,6 +315,7 @@ INTENT DEFINITIONS:
       * "show my meals" → recent_meals (wants to SEE past logs)
       * "how many calories today?" → nutrition_summary (wants totals)
       * "did I eat vegetables today?" → recent_meals or nutrition_summary
+- schedule_reminder: User wants the app to REMIND them about something at a future time — a custom one-off or daily/weekly reminder with THEIR OWN message and time. Examples: "remind me to take creatine at 8am", "remind me in 2 hours to stretch", "set a reminder to log dinner at 7pm", "remind me every morning at 7 to weigh in", "ping me in 45 minutes to start my workout", "remind me to foam roll tonight at 9". This is DIFFERENT from change_setting reminder toggles: those just enable/disable a built-in recurring reminder TYPE; schedule_reminder creates a NEW custom reminder. IMPORTANT routing: if the user wants the app's built-in recurring nudges ("remind me to move every hour", "remind me to drink water regularly", "turn on workout reminders") use change_setting with setting_name=movement_reminders / hydration_reminders / workout_reminders instead — those are purpose-built. Only use schedule_reminder when the user gives a SPECIFIC time (clock time or relative delay) OR a specific daily/weekly cadence with their own message.
 - nutrition_summary: User wants a SUMMARY of their nutrition/diet TOTALS (e.g., "how's my diet today?", "show my macros", "nutrition summary", "calorie report", "how many calories have I eaten", "am I hitting my protein goal")
 - recent_meals: User wants to SEE their RECENT MEALS list or food log (e.g., "what did I eat?", "show my meals", "recent food", "meal history", "what have I logged today")
 - question: General fitness question, asking for food suggestions, or unclear intent that doesn't fit another category
@@ -340,7 +348,7 @@ SETTING EXTRACTION:
 - Notification/reminder toggles are now DIRECT (do NOT just open settings): setting_name in {workout_reminders, hydration_reminders, nutrition_reminders, movement_reminders, habit_reminders, post_workout_meal_reminder, daily_briefing, streak_alerts, achievement_alerts, weekly_summary, ai_coach_messages, guilt_notifications}, setting_value=true/false
 - Nutrition UI: setting_name in {nutrition_ai_tips, nutrition_compact_view, nutrition_quick_log, show_macros_on_log}, setting_value=true/false
 - Workout behavior: setting_name in {week_starts_sunday, fatigue_alerts, pre_set_insight, voice_set_logging, show_synced_workouts, ble_heart_rate, ble_auto_connect, vacation_mode, barbell_per_side}, setting_value=true/false
-- IMPORTANT: notifications about device/wearable hardware (e.g. Apple Watch / Fitbit / Google Health heart-rate alerts, phone OS notification permission) are NOT app settings — do NOT emit change_setting for those; explain they live in the phone/wearable settings instead.
+- IMPORTANT: notifications about device/wearable hardware (e.g. Apple Watch / Fitbit / Google Health heart-rate alerts, phone OS notification permission) are NOT app settings — do NOT emit change_setting for those; explain they live in the phone/wearable settings instead. (In-app reminders ARE schedulable — for "remind me to X at/in <time>" use intent="schedule_reminder", see below.)
 
 NAVIGATION EXTRACTION:
 - "show achievements" / "my badges" -> destination="achievements"
@@ -405,6 +413,19 @@ WEIGHT LOGGING EXTRACTION:
 - "I weigh 165 lbs" -> intent="log_weight", weight_value=165.0
 - "record weight 80" -> intent="log_weight", weight_value=80.0
 
+REMINDER SCHEDULING EXTRACTION (intent="schedule_reminder"):
+- ALWAYS fill reminder_text with the thing to be reminded about, stripped of the time words: "remind me to take creatine at 8am" -> reminder_text="take creatine". Keep it short and imperative.
+- reminder_title: a 1-3 word label ("Creatine", "Stretch", "Log dinner"). If unsure, leave null.
+- TIME — fill EITHER a relative delay OR an absolute clock time, never both:
+  * Relative ("in 2 hours", "in 45 minutes", "in 30 min", "in an hour", "in 90 seconds"->round up to 1) -> reminder_delay_minutes (hours*60). "in an hour"->60, "in 2 hours"->120, "in 45 minutes"->45.
+  * Absolute clock ("at 8am"->hour=8 min=0, "at 6pm"->hour=18 min=0, "at 6:30pm"->hour=18 min=30, "tonight at 9"->hour=21, "at noon"->hour=12, "at midnight"->hour=0) -> reminder_time_hour + reminder_time_minute. Convert 12h am/pm to 24h.
+- RECURRENCE — reminder_recurrence:
+  * one-off (default, "remind me ... at 6pm", "in 2 hours") -> "once"
+  * daily ("every morning at 7", "every day at 8am", "daily at noon") -> "daily" (also fill reminder_time_hour/minute)
+  * weekly ("every Monday at 9", "each Sunday morning") -> "weekly" + reminder_weekday (Mon=0,Tue=1,Wed=2,Thu=3,Fri=4,Sat=5,Sun=6) + reminder_time_hour/minute
+- If the user gives NO usable time (e.g. "remind me to stretch" with no when), still set intent="schedule_reminder" but leave all time fields null — the app will ask for a time.
+- Do NOT use schedule_reminder for "remind me to move every hour" / "remind me to drink water" (recurring built-in nudges) — those are change_setting (movement_reminders/hydration_reminders). Use schedule_reminder for custom-message + specific-time reminders only.
+
 User message: "''' + _sanitize_for_prompt(user_message) + '"'
 
         # Check intent cache first (common intents like greetings hit this often)
@@ -450,6 +471,13 @@ User message: "''' + _sanitize_for_prompt(user_message) + '"'
                 hydration_amount=data.hydration_amount,
                 water_goal_glasses=data.water_goal_glasses,
                 weight_value=data.weight_value,
+                reminder_text=data.reminder_text,
+                reminder_title=data.reminder_title,
+                reminder_delay_minutes=data.reminder_delay_minutes,
+                reminder_time_hour=data.reminder_time_hour,
+                reminder_time_minute=data.reminder_time_minute,
+                reminder_recurrence=data.reminder_recurrence,
+                reminder_weekday=data.reminder_weekday,
             )
 
             # Cache the result

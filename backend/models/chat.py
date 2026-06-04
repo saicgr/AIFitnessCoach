@@ -71,6 +71,12 @@ class CoachIntent(str, Enum):
     LOG_ACTIVITY = "log_activity"
     # Public share artifact generation (single workout / week / month / PRs / 1RM / summary)
     GENERATE_SHARE_ARTIFACT = "generate_share_artifact"
+    # Schedule a one-time or recurring LOCAL reminder the device fires even when
+    # the app is backgrounded/killed ("remind me at 6pm to stretch", "remind me
+    # in 2 hours to take creatine", "remind me every morning at 7 to weigh in").
+    # Distinct from the boolean reminder TYPE toggles (change_setting) — this
+    # creates a custom notification with the user's own message + time.
+    SCHEDULE_REMINDER = "schedule_reminder"
 
 
 class MediaRef(BaseModel):
@@ -350,6 +356,17 @@ class IntentExtraction(BaseModel):
     water_goal_glasses: Optional[int] = Field(default=None, ge=1, le=30, description="Daily water goal in glasses")
     # Weight logging fields
     weight_value: Optional[float] = Field(default=None, ge=0, le=500, description="Weight value in user's preferred unit")
+    # Reminder scheduling fields (SCHEDULE_REMINDER). Time is captured as EITHER
+    # a relative delay OR an absolute clock time — never resolved to a real
+    # timestamp here (the extractor has no 'now'); coach_action_node resolves it
+    # against the user's live timezone.
+    reminder_text: Optional[str] = Field(default=None, max_length=200, description="What to remind the user about — becomes the notification body")
+    reminder_title: Optional[str] = Field(default=None, max_length=80, description="Short notification title; derived from reminder_text when absent")
+    reminder_delay_minutes: Optional[int] = Field(default=None, ge=1, le=43200, description="Relative delay in minutes for 'in N minutes/hours' phrasing (cap 30 days)")
+    reminder_time_hour: Optional[int] = Field(default=None, ge=0, le=23, description="Absolute clock hour (24h) for 'at 6pm' phrasing")
+    reminder_time_minute: Optional[int] = Field(default=None, ge=0, le=59, description="Absolute clock minute for 'at 6:30' phrasing (default 0)")
+    reminder_recurrence: Optional[str] = Field(default=None, max_length=10, description="'once' | 'daily' | 'weekly' repeat cadence (default 'once')")
+    reminder_weekday: Optional[int] = Field(default=None, ge=0, le=6, description="0=Mon .. 6=Sun for weekly recurrence")
 
 
 class ChatResponse(BaseModel):

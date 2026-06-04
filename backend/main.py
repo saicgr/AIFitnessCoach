@@ -462,6 +462,37 @@ async def _warm_workout_rag():
     logger.info(f"Workout RAG warmed in {time.time() - t:.2f}s")
 
 
+async def _prewarm_chroma_connection():
+    """Establish the Chroma Cloud connection/pool with ONE tiny warm-up query.
+
+    The first real AI-coach RAG query (`RAGService.find_similar`) otherwise pays
+    the cold-connection cost — TLS handshake + httpx pool setup to Chroma Cloud —
+    on top of its own latency. Issuing a single cheap query here, off the hot
+    path, primes that connection so the first user query is warm.
+
+    Deliberately CONSERVATIVE: one minimal query (n_results=1, no user data, no
+    preload of any dataset), run off the event loop because the underlying
+    ChromaHTTPCollection call is blocking httpx. Fire-and-forget and fully
+    wrapped in try/except — a warm-up failure must never affect startup or any
+    request; the worst case is just that the first real query pays the old cold
+    cost. Mirrors the non-fatal pattern of _warm_workout_rag.
+    """
+    logger.info("Pre-warming Chroma Cloud connection (single ping query)...")
+    t = time.time()
+    try:
+        rag = chat_module.rag_service
+        if rag is None:
+            logger.warning("Chroma pre-warm skipped: RAG service not initialized")
+            return
+        # One tiny similarity query just to force the connection/pool to open.
+        # No user_id filter, n_results=1 — minimal work on the Chroma side.
+        await rag.find_similar(query="warmup", n_results=1)
+        logger.info(f"Chroma Cloud connection pre-warmed in {time.time() - t:.2f}s")
+    except Exception as e:
+        # Non-fatal by design — never raise, never block startup.
+        logger.warning(f"Chroma connection pre-warm failed (first query will be cold): {e}", exc_info=True)
+
+
 async def _check_exercise_rag_index():
     """Check and auto-index exercises for RAG (can run after server starts)."""
     logger.info("Checking Exercise RAG index (Chroma Cloud)...")
@@ -784,6 +815,10 @@ async def lifespan(app: FastAPI):
     _create_safe_task(_init_cache_manager(), name="init-cache-manager")
     _create_safe_task(_init_equipment_resolver(), name="init-equipment-resolver")
     _create_safe_task(_warm_workout_rag(), name="warm-workout-rag")
+    # Prime the Chroma Cloud connection so the first real coach RAG query is warm.
+    # RAG service is ready by now (Phase 2 completed above). Fire-and-forget,
+    # non-blocking, self-contained try/except — never affects startup.
+    _create_safe_task(_prewarm_chroma_connection(), name="prewarm-chroma-connection")
     _create_safe_task(_check_exercise_rag_index(), name="check-exercise-rag-index")
     _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
     _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")

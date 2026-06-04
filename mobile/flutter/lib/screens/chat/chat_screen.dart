@@ -1137,14 +1137,30 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                     statusText: 'Building your workout…',
                                     elapsedListenable: _elapsedNotifier,
                                   ),
+                                  // Reassurance once the build runs long.
+                                  _SlowThinkingCue(
+                                    elapsedListenable: _elapsedNotifier,
+                                  ),
                                   const SizedBox(height: 8),
                                   const WorkoutSkeletonCard(),
                                 ],
                               );
                             }
-                            return _TypingIndicator(
-                              statusText: _statusLabel,
-                              elapsedListenable: _elapsedNotifier,
+                            // Plain typing indicator + a delayed slow-cue line
+                            // that only surfaces after ~3s of silence so long
+                            // multi-agent/vision/plan replies feel attended-to.
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _TypingIndicator(
+                                  statusText: _statusLabel,
+                                  elapsedListenable: _elapsedNotifier,
+                                ),
+                                _SlowThinkingCue(
+                                  elapsedListenable: _elapsedNotifier,
+                                ),
+                              ],
                             );
                           },
                         );
@@ -1909,3 +1925,61 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 }
 
 // _MediaUploadOverlay and _FoodAnalysisSummaryCard extracted to widgets/chat_media_widgets.dart
+
+// ─────────────────────────────────────────────────────────────────
+// Slow "Coach is thinking…" cue
+// ─────────────────────────────────────────────────────────────────
+
+/// A subtle secondary line shown beneath the typing indicator once the reply
+/// has taken a while (≥ ~3s) with no tokens yet. It reassures the user the
+/// request is still being worked on during long multi-agent / vision / plan
+/// runs. Reuses the existing 1-Hz `_elapsedNotifier` (the same listenable the
+/// typing indicator's elapsed label rides on) so it adds NO extra timer — only
+/// this `Text` rebuilds each second. It vanishes automatically once the
+/// streaming bubble replaces the typing indicator (tokens started arriving).
+class _SlowThinkingCue extends StatelessWidget {
+  /// The shared elapsed-label notifier (value like `(4s)`, empty when idle).
+  final ValueListenable<String> elapsedListenable;
+
+  /// Seconds of silence before the cue appears.
+  static const int _thresholdSeconds = 3;
+
+  const _SlowThinkingCue({required this.elapsedListenable});
+
+  /// Parse the integer seconds out of the `(${n}s)` elapsed label; returns 0
+  /// when the label is empty or not in the expected shape (idle / just-started).
+  int _parseElapsed(String label) {
+    final match = RegExp(r'(\d+)').firstMatch(label);
+    if (match == null) return 0;
+    return int.tryParse(match.group(1)!) ?? 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return ValueListenableBuilder<String>(
+      valueListenable: elapsedListenable,
+      builder: (context, elapsed, _) {
+        // Only reveal the cue after the threshold; before then it occupies no
+        // space so the typing indicator sits flush as usual.
+        if (_parseElapsed(elapsed) < _thresholdSeconds) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'Working on it…',
+            // Match the typing indicator's muted 12sp label conventions, a
+            // touch dimmer so it reads as secondary.
+            style: TextStyle(
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+              color: (isDark ? AppColors.textMuted : Colors.grey.shade500)
+                  .withValues(alpha: 0.8),
+            ),
+          ).animate().fadeIn(duration: 300.ms),
+        );
+      },
+    );
+  }
+}

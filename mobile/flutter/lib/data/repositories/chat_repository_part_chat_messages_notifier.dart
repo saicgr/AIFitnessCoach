@@ -1648,6 +1648,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'set_water_goal':
         await _handleSetWaterGoal(actionData);
         break;
+      case 'schedule_reminder':
+        await _handleScheduleReminder(actionData);
+        break;
       case 'generate_quick_workout':
         await _handleQuickWorkoutGenerated(actionData);
         break;
@@ -1818,6 +1821,62 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         break;
       default:
         debugPrint('🩺 [Chat] Unhandled cycle action: $action');
+    }
+  }
+
+  /// Handle a coach-scheduled reminder (chat: "remind me to X at/in Y").
+  ///
+  /// The backend resolved the user's phrasing into an absolute ISO-8601 instant
+  /// (in their live timezone) plus a recurrence, so here we just hand it to the
+  /// device's local-notification scheduler — the reminder then fires on time
+  /// even if the app is closed. A `success:false` payload means the coach
+  /// couldn't pin down a time; it will have asked the user when, so there is
+  /// nothing to schedule yet.
+  Future<void> _handleScheduleReminder(Map<String, dynamic> actionData) async {
+    if (actionData['success'] == false) {
+      debugPrint('⏰ [Chat] schedule_reminder: no time resolved — coach is asking the user when');
+      return;
+    }
+
+    final iso = (actionData['trigger_time_iso8601'] as String?)?.trim();
+    final title = (actionData['title'] as String?)?.trim();
+    final body = (actionData['body'] as String?)?.trim();
+    final reminderId = (actionData['reminder_id'] as String?)?.trim();
+    final recurrence =
+        (actionData['recurrence'] as String?)?.trim().toLowerCase() ?? 'once';
+
+    if (iso == null ||
+        iso.isEmpty ||
+        title == null ||
+        title.isEmpty ||
+        reminderId == null ||
+        reminderId.isEmpty) {
+      debugPrint(
+        '⏰ [Chat] schedule_reminder missing fields — skipping '
+        '(iso=$iso, title=$title, id=$reminderId)',
+      );
+      return;
+    }
+
+    final when = DateTime.tryParse(iso);
+    if (when == null) {
+      debugPrint('⏰ [Chat] schedule_reminder unparseable time: $iso');
+      return;
+    }
+
+    try {
+      await _ref.read(notificationServiceProvider).scheduleCoachReminder(
+            reminderId: reminderId,
+            title: title,
+            body: (body == null || body.isEmpty) ? title : body,
+            // ISO carries the user-tz offset; toLocal() normalizes to the
+            // device clock before the scheduler converts to tz.local.
+            scheduledTime: when.toLocal(),
+            recurrence: recurrence,
+          );
+      debugPrint('⏰ [Chat] Scheduled coach reminder "$title" for $when ($recurrence)');
+    } catch (e, st) {
+      debugPrint('⏰ [Chat] Failed to schedule coach reminder: $e\n$st');
     }
   }
 

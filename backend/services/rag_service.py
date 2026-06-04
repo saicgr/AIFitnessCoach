@@ -38,7 +38,64 @@ RAGCache = RedisCache
 
 # Module-level cache instances (shared across service instances within a process)
 # Note: Embedding cache removed - gemini_service.get_embedding_async() already caches
-_query_cache = RedisCache(prefix="rag_query", ttl_seconds=1800, max_size=50)   # 30 min TTL for query results (reduced for 512MB)
+#
+# TTL extended from 1800s (30 min) → 21600s (6 hours). Safe ONLY because of the
+# per-user write-invalidation below (_bump_user_cache_version): when a user
+# writes a new Q&A pair via add_qa_pair(), their cache "version" is bumped so all
+# of their previously-cached find_similar results are logically discarded on the
+# next lookup (the version is mixed into the cache key). Without that
+# invalidation a 6h TTL would serve stale RAG context after a write; with it, a
+# long TTL is purely a latency win on the read hot path.
+_query_cache = RedisCache(prefix="rag_query", ttl_seconds=21600, max_size=50)   # 6h TTL — safe given per-user write-invalidation
+
+# Per-user cache version cache. find_similar's cache key includes a small integer
+# "version" for the queried user; add_qa_pair() bumps it on a successful write so
+# that user's stale find_similar entries are abandoned without scanning/deleting
+# individual hashed keys (RedisCache.make_key md5-hashes its args, so the query
+# keys are NOT prefix-structured by user and delete_prefix() can't target them).
+# Bumping a single per-user counter is the clean, safe primitive the existing
+# RedisCache API supports (plain get/set, Redis + in-memory fallback) and never
+# touches similarity thresholds. Longer TTL than the query cache so the version
+# survives a query-cache eviction; degrades gracefully (a missing version just
+# reads as 0 and is treated like a cold cache).
+_user_cache_version = RedisCache(prefix="rag_user_ver", ttl_seconds=7 * 24 * 3600, max_size=500)
+
+
+async def _get_user_cache_version(user_id: Optional[Union[str, int]]) -> int:
+    """Read the current find_similar cache version for a user.
+
+    Returns 0 when there is no version yet (cold) or on any cache error — the
+    same value is used in the key on both read and write, so a transient Redis
+    blip just behaves like a cache miss, never a wrong-user hit.
+    """
+    if user_id is None:
+        return 0
+    try:
+        v = await _user_cache_version.get(str(user_id))
+        return int(v) if v is not None else 0
+    except Exception as e:  # never let a cache hiccup break a request
+        _rag_logger.debug(f"RAG user cache-version read failed for {user_id}: {e}")
+        return 0
+
+
+async def _bump_user_cache_version(user_id: Optional[Union[str, int]]) -> None:
+    """Invalidate a user's cached find_similar results after a write.
+
+    Increments the per-user version integer so subsequent find_similar lookups
+    compute a different cache key and miss (then repopulate). This is a simple
+    namespace bump — NOT similarity-threshold invalidation — so it can never
+    drop a still-valid neighbour for the wrong reason. Fail-soft: on any error
+    we log and return; the worst case is the old 6h-TTL'd entries linger until
+    they expire, which is the pre-change behaviour, never a correctness break.
+    """
+    if user_id is None:
+        return
+    try:
+        current = await _get_user_cache_version(user_id)
+        await _user_cache_version.set(str(user_id), current + 1)
+        _rag_logger.debug(f"Bumped RAG cache version for user {user_id} -> {current + 1}")
+    except Exception as e:
+        _rag_logger.warning(f"Failed to bump RAG cache version for user {user_id}: {e}")
 
 # Module-level RAG service instance (set by chat.py on startup)
 _rag_service_instance: Optional["RAGService"] = None
@@ -131,6 +188,13 @@ class RAGService:
             }],
         )
 
+        # Write succeeded — invalidate this user's cached find_similar results so
+        # the newly-stored Q&A pair can be retrieved immediately instead of being
+        # shadowed by a stale (now up to 6h-TTL'd) cache entry. Per-user namespace
+        # bump only; no similarity recomputation, fail-soft (see helper). This is
+        # what makes the longer query-cache TTL safe.
+        await _bump_user_cache_version(user_id)
+
         try:
             _count = await asyncio.to_thread(self.collection.count)
         except Exception as e:
@@ -164,8 +228,18 @@ class RAGService:
         """
         n_results = n_results or settings.rag_top_k
 
-        # Check query result cache first
-        query_cache_key = _query_cache.make_key("find_similar", query, n_results, user_id, intent_filter)
+        # Check query result cache first.
+        # Normalize the query (lower + strip) so "Leg day " and "leg day" share
+        # a cache entry — same retrieval, fewer cold ChromaDB round-trips. The
+        # ORIGINAL `query` is still used for the embedding below; only the cache
+        # KEY is normalized. user_id is already part of the key (no cross-user
+        # bleed), and we additionally mix in the per-user cache version so a new
+        # write (add_qa_pair) logically invalidates this user's cached entries.
+        normalized_query = (query or "").lower().strip()
+        cache_version = await _get_user_cache_version(user_id)
+        query_cache_key = _query_cache.make_key(
+            "find_similar", normalized_query, n_results, user_id, intent_filter, cache_version
+        )
         cached_results = await _query_cache.get(query_cache_key)
         if cached_results is not None:
             _rag_logger.debug(f"RAG query cache HIT ({len(cached_results)} docs) for: '{query[:40]}...'")

@@ -287,6 +287,15 @@ DAILY_MEDIA_CAP_FREE = 20       # Free-tier daily media analysis limit
 DAILY_MEDIA_CAP_PRO = 100       # Pro-tier daily media analysis limit
 _NUTRITION_SEMAPHORE = asyncio.Semaphore(10)  # Limit concurrent vision calls
 
+# Per-user TTL cache for user_settings.beast_mode_config (workout-agent only).
+# Keyed by str(user_id) -> (monotonic_timestamp, config|None). Short TTL keeps
+# Beast Mode toggles responsive while skipping the Supabase round-trip on the
+# common case of back-to-back workout questions. Per-worker (same scope as the
+# other in-process caches in this service); a stale toggle self-heals within the
+# TTL. See LangGraphCoachService._fetch_beast_mode_config.
+_BEAST_MODE_CACHE: Dict[str, Tuple[float, Optional[Dict[str, Any]]]] = {}
+_BEAST_MODE_TTL_SECONDS = 120
+
 
 class LangGraphCoachService:
     """
@@ -657,7 +666,54 @@ class LangGraphCoachService:
             "hydration_amount": extraction.hydration_amount,
             "water_goal_glasses": extraction.water_goal_glasses,
             "weight_value": extraction.weight_value,
+            "reminder_text": extraction.reminder_text,
+            "reminder_title": extraction.reminder_title,
+            "reminder_delay_minutes": extraction.reminder_delay_minutes,
+            "reminder_time_hour": extraction.reminder_time_hour,
+            "reminder_time_minute": extraction.reminder_time_minute,
+            "reminder_recurrence": extraction.reminder_recurrence,
+            "reminder_weekday": extraction.reminder_weekday,
         }
+
+    async def _fetch_beast_mode_config(self, user_id: Any) -> Optional[Dict[str, Any]]:
+        """Fetch user_settings.beast_mode_config, cached per-user for a short TTL.
+
+        Only the WORKOUT agent needs this, and it's the same value every turn,
+        so a repeat workout question shouldn't pay a fresh Supabase round-trip
+        each time. Two latency wins over the old inline fetch: (1) a cache hit
+        skips the DB entirely, (2) on a miss the (synchronous) Supabase call runs
+        via asyncio.to_thread so it never blocks the event loop. Fail-soft:
+        any error logs a warning and returns None (identical to the old
+        behavior — Beast Mode simply stays off for that turn).
+        """
+        uid = str(user_id)
+        now = time.monotonic()
+        cached = _BEAST_MODE_CACHE.get(uid)
+        if cached is not None and (now - cached[0]) < _BEAST_MODE_TTL_SECONDS:
+            return cached[1]
+
+        def _query() -> Optional[Dict[str, Any]]:
+            supabase = get_supabase().client
+            bm_result = (
+                supabase.table("user_settings")
+                .select("beast_mode_config")
+                .eq("user_id", user_id)
+                .maybe_single()
+                .execute()
+            )
+            if bm_result and bm_result.data and bm_result.data.get("beast_mode_config"):
+                return bm_result.data["beast_mode_config"]
+            return None
+
+        try:
+            config = await asyncio.to_thread(_query)
+            _BEAST_MODE_CACHE[uid] = (now, config)
+            if config:
+                logger.info(f"Beast mode config loaded for user {user_id}")
+            return config
+        except Exception as bm_err:
+            logger.warning(f"Failed to fetch beast mode config: {bm_err}", exc_info=True)
+            return None
 
     async def _get_rag_context(self, message: str, user_id: str) -> Tuple[str, bool, list]:
         """Get RAG context for the message, including training settings."""
@@ -1107,40 +1163,76 @@ class LangGraphCoachService:
             # ANY of the three is now honored). Best-effort per block.
             _uid = str(request.user_id)
             _msg = getattr(request, "message", None)
-            try:
-                from services.coach.holistic_context import resolve_dietary_constraints
-                base_state["dietary_constraints"] = resolve_dietary_constraints(_uid)
-            except Exception as e:
-                logger.warning(f"[NutritionContext] dietary resolve failed: {e}")
-                base_state["dietary_constraints"] = None
-            try:
-                from services.coach.memory.injector import build_memory_block
-                _mb, _ = build_memory_block(_uid, _msg, limit=8)
-                base_state["memory_context"] = _mb or ""
-            except Exception as e:
-                logger.debug(f"[NutritionContext] memory block skipped: {e}")
-            try:
-                from services.user_context.cardio_activity import get_cardio_context_for_ai
-                base_state["cardio_context"] = await get_cardio_context_for_ai(_uid)
-            except Exception as e:
-                logger.debug(f"[NutritionContext] cardio context skipped: {e}")
-            try:
-                from services.user_context.service import UserContextService
-                base_state["health_context"] = await UserContextService().get_health_context_for_ai(_uid, days=7)
-            except Exception as e:
-                logger.debug(f"[NutritionContext] health context skipped: {e}")
+            # These five secondary-context fetches are mutually independent, so
+            # run them CONCURRENTLY rather than sequentially. The two sync ones
+            # (resolve_dietary_constraints, build_memory_block) are offloaded to
+            # threads via asyncio.to_thread so they don't block the event loop
+            # and overlap with the two async fetches + the glucose thread.
+            # return_exceptions=True preserves the original per-block no-crash
+            # contract: each slot is inspected below and falls back to the SAME
+            # default (None / "" ) with the SAME log line as the serial version.
+            import asyncio as _asyncio
+            from services.coach.holistic_context import resolve_dietary_constraints
+            from services.coach.memory.injector import build_memory_block
+            from services.user_context.cardio_activity import get_cardio_context_for_ai
+            from services.user_context.service import UserContextService
             # Gap 15 — glucose↔food correlation (diabetes users). Empty + cheap
             # for everyone else (returns fast when there are no readings).
-            try:
-                import asyncio as _asyncio
-                from services.glucose_food_correlation import (
-                    compute_glucose_food_correlations,
-                    format_glucose_correlations_for_ai,
-                )
-                _corr = await _asyncio.to_thread(compute_glucose_food_correlations, _uid)
-                base_state["glucose_context"] = format_glucose_correlations_for_ai(_corr)
-            except Exception as e:
-                logger.debug(f"[NutritionContext] glucose correlation skipped: {e}")
+            from services.glucose_food_correlation import (
+                compute_glucose_food_correlations,
+                format_glucose_correlations_for_ai,
+            )
+            (
+                _diet_res,
+                _mem_res,
+                _cardio_res,
+                _health_res,
+                _glucose_res,
+            ) = await _asyncio.gather(
+                _asyncio.to_thread(resolve_dietary_constraints, _uid),
+                _asyncio.to_thread(build_memory_block, _uid, _msg, 8),
+                get_cardio_context_for_ai(_uid),
+                UserContextService().get_health_context_for_ai(_uid, days=7),
+                _asyncio.to_thread(compute_glucose_food_correlations, _uid),
+                return_exceptions=True,
+            )
+            # dietary_constraints — fall back to None on any failure.
+            if isinstance(_diet_res, Exception):
+                logger.warning(f"[NutritionContext] dietary resolve failed: {_diet_res}")
+                base_state["dietary_constraints"] = None
+            else:
+                base_state["dietary_constraints"] = _diet_res
+            # memory_context — only set on success (debug-skip on failure, as before).
+            # Unpack inside a try so a bad return shape debug-skips like the
+            # original combined try/except did.
+            if isinstance(_mem_res, Exception):
+                logger.debug(f"[NutritionContext] memory block skipped: {_mem_res}")
+            else:
+                try:
+                    _mb, _ = _mem_res
+                    base_state["memory_context"] = _mb or ""
+                except Exception as e:
+                    logger.debug(f"[NutritionContext] memory block skipped: {e}")
+            # cardio_context — only set on success (debug-skip on failure).
+            if isinstance(_cardio_res, Exception):
+                logger.debug(f"[NutritionContext] cardio context skipped: {_cardio_res}")
+            else:
+                base_state["cardio_context"] = _cardio_res
+            # health_context — only set on success (debug-skip on failure).
+            if isinstance(_health_res, Exception):
+                logger.debug(f"[NutritionContext] health context skipped: {_health_res}")
+            else:
+                base_state["health_context"] = _health_res
+            # glucose_context — only set on success (debug-skip on failure).
+            # Keep the format step inside a try so a formatting error still
+            # debug-skips exactly as the original combined try/except did.
+            if isinstance(_glucose_res, Exception):
+                logger.debug(f"[NutritionContext] glucose correlation skipped: {_glucose_res}")
+            else:
+                try:
+                    base_state["glucose_context"] = format_glucose_correlations_for_ai(_glucose_res)
+                except Exception as e:
+                    logger.debug(f"[NutritionContext] glucose correlation skipped: {e}")
 
         elif agent_type == AgentType.WORKOUT:
             base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
@@ -1192,72 +1284,106 @@ class LangGraphCoachService:
             base_state["destination"] = extraction_data.get("destination")
             base_state["water_goal_glasses"] = extraction_data.get("water_goal_glasses")
             base_state["weight_value"] = extraction_data.get("weight_value")
+            # Reminder scheduling (SCHEDULE_REMINDER) — resolved to an absolute
+            # timestamp in coach_action_node using base_state["user_tz"].
+            base_state["reminder_text"] = extraction_data.get("reminder_text")
+            base_state["reminder_title"] = extraction_data.get("reminder_title")
+            base_state["reminder_delay_minutes"] = extraction_data.get("reminder_delay_minutes")
+            base_state["reminder_time_hour"] = extraction_data.get("reminder_time_hour")
+            base_state["reminder_time_minute"] = extraction_data.get("reminder_time_minute")
+            base_state["reminder_recurrence"] = extraction_data.get("reminder_recurrence")
+            base_state["reminder_weekday"] = extraction_data.get("reminder_weekday")
             base_state["image_base64"] = request.image_base64
             base_state["media_ref"] = request.media_ref.model_dump() if hasattr(request, "media_ref") and request.media_ref else None
             base_state["media_refs"] = media_refs_dicts
 
-            # Pre-fetch the user's wearable health & activity context (Phase B2)
-            # so the coach prompt can cite real sleep / steps / recovery / HR
-            # numbers without a tool round-trip. `get_health_context_for_ai`
-            # returns "" cleanly when there is no consent or no wearable data
-            # (a NORMAL state); any error here also yields "" so the coach
-            # path is never broken by an absent or failing health snapshot.
-            health_context = ""
-            try:
-                from services.user_context.service import UserContextService
-                health_context = await UserContextService().get_health_context_for_ai(
-                    str(request.user_id), days=7
-                )
-            except Exception as e:
-                logger.warning(f"[CoachState] health_context pre-fetch failed: {e}")
-                health_context = ""
-            base_state["health_context"] = health_context
-
-            # Pre-fetch the coach's long-term MEMORY block (migration 2217) so
-            # the prompt recalls durable facts the user told the coach (back
-            # pain, dietary prefs, goals) across sessions and days — and any
-            # open loops it should follow up on. Ranked by relevance to THIS
-            # message. Returns ("", []) cleanly when memory is empty/disabled
-            # or on any error, so the coach path is never broken.
-            memory_context = ""
-            memory_ref_ids: list = []
-            try:
-                from services.coach.memory.injector import build_memory_block
-                memory_context, memory_ref_ids = build_memory_block(
-                    str(request.user_id), current_message=request.message, limit=8
-                )
-            except Exception as e:
-                logger.warning(f"[CoachState] memory_context pre-fetch failed: {e}")
-                memory_context, memory_ref_ids = "", []
-            base_state["memory_context"] = memory_context
-            base_state["memory_ref_ids"] = memory_ref_ids
-
-            # Gap 17 — coach context completeness. In GENERAL chat the coach was
-            # missing: structured diet prefs (a "Vegan"-in-settings user the
-            # coach never knew about), training load / ACWR (only injected on the
-            # cardio-insight path), and today's nutrition. Attach all three so a
-            # coach food/training answer reasons across the whole user. Each
-            # best-effort; the coach prompt renders them as compact grounded lines.
+            # Pre-fetch the coach's cross-domain context CONCURRENTLY. These four
+            # groups are mutually independent (none consumes another's result),
+            # so a single asyncio.gather overlaps them instead of paying four
+            # serial round-trips:
+            #   1. wearable health & activity (Phase B2)  — get_health_context_for_ai
+            #   2. long-term coach MEMORY block (mig 2217) — build_memory_block (sync)
+            #   3. structured dietary constraints (Gap 17) — resolve_dietary_constraints (sync)
+            #   4. cardio load + today's nutrition (Gap 17) — the existing async pair
+            # The two sync fetches run off the event loop via asyncio.to_thread.
+            # return_exceptions=True keeps the original no-crash contract; each
+            # slot below falls back to the SAME default + SAME log line/level as
+            # the serial version, so output is byte-for-byte identical.
             _cuid = str(request.user_id)
-            # dietary resolve is sync + cheap; run it inline.
-            try:
-                from services.coach.holistic_context import resolve_dietary_constraints
-                base_state["dietary_constraints"] = resolve_dietary_constraints(_cuid)
-            except Exception as e:
-                logger.warning(f"[CoachState] dietary resolve failed: {e}")
+            from services.user_context.service import UserContextService
+            from services.coach.memory.injector import build_memory_block
+            from services.coach.holistic_context import resolve_dietary_constraints
+            from services.user_context.cardio_activity import get_cardio_context_for_ai
+            from services.langgraph_agents.tools.nutrition_context_helpers import (
+                fetch_daily_nutrition_context,
+            )
+            from services.coach.self_tracking_context import build_self_tracking_context
+            (
+                _health_res,
+                _mem_res,
+                _diet_res,
+                _cardio,
+                _nutri,
+                _selftrack_res,
+            ) = await asyncio.gather(
+                UserContextService().get_health_context_for_ai(_cuid, days=7),
+                asyncio.to_thread(
+                    build_memory_block, _cuid, request.message, 8
+                ),
+                asyncio.to_thread(resolve_dietary_constraints, _cuid),
+                get_cardio_context_for_ai(_cuid),
+                fetch_daily_nutrition_context(_cuid, user_tz or "UTC"),
+                build_self_tracking_context(_cuid, user_tz),
+                return_exceptions=True,
+            )
+
+            # 1. health_context — "" cleanly when there is no consent / wearable
+            # data (a NORMAL state); any error also yields "" so the coach path
+            # is never broken by an absent or failing health snapshot.
+            if isinstance(_health_res, Exception):
+                logger.warning(f"[CoachState] health_context pre-fetch failed: {_health_res}")
+                base_state["health_context"] = ""
+            else:
+                base_state["health_context"] = _health_res
+
+            # Self-tracked habits / mood / measurements (read side). "" on any error
+            # so the coach path is never broken by an absent/failing summary.
+            if isinstance(_selftrack_res, Exception):
+                logger.warning(f"[CoachState] self_tracking_context pre-fetch failed: {_selftrack_res}")
+                base_state["self_tracking_context"] = ""
+            else:
+                base_state["self_tracking_context"] = _selftrack_res or ""
+
+            # 2. memory_context / memory_ref_ids (mig 2217) — durable facts the
+            # user told the coach (back pain, dietary prefs, goals) + open loops,
+            # ranked by relevance to THIS message. Falls back to ("", []) on any
+            # error so the coach path is never broken.
+            if isinstance(_mem_res, Exception):
+                logger.warning(f"[CoachState] memory_context pre-fetch failed: {_mem_res}")
+                base_state["memory_context"] = ""
+                base_state["memory_ref_ids"] = []
+            else:
+                try:
+                    memory_context, memory_ref_ids = _mem_res
+                    base_state["memory_context"] = memory_context
+                    base_state["memory_ref_ids"] = memory_ref_ids
+                except Exception as e:
+                    logger.warning(f"[CoachState] memory_context pre-fetch failed: {e}")
+                    base_state["memory_context"] = ""
+                    base_state["memory_ref_ids"] = []
+
+            # 3. dietary_constraints (Gap 17) — structured diet prefs the coach
+            # was previously missing (a "Vegan"-in-settings user). None on error.
+            if isinstance(_diet_res, Exception):
+                logger.warning(f"[CoachState] dietary resolve failed: {_diet_res}")
                 base_state["dietary_constraints"] = None
-            # cardio + nutrition are independent async fetches — run them
-            # concurrently so the coach reply stays snappy (instant-feel rule).
+            else:
+                base_state["dietary_constraints"] = _diet_res
+
+            # 4. cardio + today's nutrition (Gap 17) — training load / ACWR and
+            # today's intake so a coach food/training answer reasons across the
+            # whole user. Each best-effort (debug-skip → None).
             try:
-                from services.user_context.cardio_activity import get_cardio_context_for_ai
-                from services.langgraph_agents.tools.nutrition_context_helpers import (
-                    fetch_daily_nutrition_context,
-                )
-                _cardio, _nutri = await asyncio.gather(
-                    get_cardio_context_for_ai(_cuid),
-                    fetch_daily_nutrition_context(_cuid, user_tz or "UTC"),
-                    return_exceptions=True,
-                )
                 base_state["cardio_context"] = (
                     _cardio if not isinstance(_cardio, Exception) else None
                 )
@@ -1464,19 +1590,11 @@ class LangGraphCoachService:
             )
             logger.info(f"Selected agent: {selected_agent.value}")
 
-            # 4b. Fetch beast mode config from Supabase (if workout agent)
+            # 4b. Fetch beast mode config (workout agent only) — cached per-user
+            # + run off the event loop. See _fetch_beast_mode_config.
             beast_mode_config = None
             if selected_agent == AgentType.WORKOUT:
-                try:
-                    supabase = get_supabase().client
-                    bm_result = supabase.table("user_settings").select(
-                        "beast_mode_config"
-                    ).eq("user_id", request.user_id).maybe_single().execute()
-                    if bm_result and bm_result.data and bm_result.data.get("beast_mode_config"):
-                        beast_mode_config = bm_result.data["beast_mode_config"]
-                        logger.info(f"Beast mode config loaded for user {request.user_id}")
-                except Exception as bm_err:
-                    logger.warning(f"Failed to fetch beast mode config: {bm_err}", exc_info=True)
+                beast_mode_config = await self._fetch_beast_mode_config(request.user_id)
 
             # 5. Build agent state
             agent_state = await self._build_agent_state(
@@ -1757,18 +1875,10 @@ class LangGraphCoachService:
         )
         logger.info(f"Selected agent (stream): {selected_agent.value}")
 
-        # 4b. Beast mode config (workout agent only).
+        # 4b. Beast mode config (workout agent only) — cached per-user + off-loop.
         beast_mode_config = None
         if selected_agent == AgentType.WORKOUT:
-            try:
-                supabase = get_supabase().client
-                bm_result = supabase.table("user_settings").select(
-                    "beast_mode_config"
-                ).eq("user_id", request.user_id).maybe_single().execute()
-                if bm_result and bm_result.data and bm_result.data.get("beast_mode_config"):
-                    beast_mode_config = bm_result.data["beast_mode_config"]
-            except Exception as bm_err:
-                logger.warning(f"Failed to fetch beast mode config (stream): {bm_err}", exc_info=True)
+            beast_mode_config = await self._fetch_beast_mode_config(request.user_id)
 
         # 5. Build agent state — identical to process_message.
         agent_state = await self._build_agent_state(

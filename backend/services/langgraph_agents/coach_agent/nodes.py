@@ -6,9 +6,11 @@ The coach agent is autonomous - it handles:
 2. Motivation and greetings
 3. App settings and navigation (via action_data)
 """
-from typing import Dict, Any, List, Literal
-from datetime import datetime
+from typing import Dict, Any, List, Literal, Optional, Tuple
+from datetime import datetime, timedelta
 import base64
+import re
+import uuid
 import pytz
 
 from google.genai import types
@@ -127,7 +129,8 @@ THINGS YOU CAN DO DIRECTLY (via action_data):
 16. Generate quick custom workouts
 17. Start today's workout
 18. Mark workout as complete
-19. Answer any fitness, nutrition, or wellness question
+19. Set a custom reminder ("remind me to take creatine at 8am", "remind me in 2 hours to stretch", "remind me every morning at 7 to weigh in"). The phone fires it on time even if the app is closed. Use this for a SPECIFIC time/cadence + the user's own message. For the built-in recurring nudges (move every hour, drink water regularly) toggle movement_reminders / hydration_reminders instead.
+20. Answer any fitness, nutrition, or wellness question
 
 VALID DESTINATIONS (for action_data with action: "navigate"):
 home, nutrition, social, profile, workouts, library, schedule, workout_builder,
@@ -205,6 +208,13 @@ ADDITIONAL ACTIONS:
 - action: "log_weight", weight: N - Navigate to log weight
 - action: "start_workout", workout_id: ID - Start a specific workout
 - action: "complete_workout", workout_id: ID - Mark workout as done
+- action: "schedule_reminder" - Schedule a local device reminder. You do NOT
+  build this payload yourself; the system resolves the time from the user's
+  request against their timezone and emits {title, body, trigger_time_iso8601,
+  recurrence ('once'|'daily'|'weekly'), reminder_id}. Just confirm naturally
+  what was set ("Done — I'll remind you to take creatine every day at 8 AM").
+  If no time was given the action comes back unsuccessful — then ASK the user
+  when they'd like the reminder.
 
 AI IMPORT TOOLS (delegated to the tool-binding agent path):
 - import_gym_equipment(source='file'|'images'|'text'|'url', s3_keys?, mime_types?, raw_text?, url?)
@@ -269,6 +279,10 @@ SAFETY GUARDRAILS (NON-NEGOTIABLE — applies to every reply):
    When in doubt, pull a second data point or ask the user how they
    actually felt. Single outliers are sensor problems until proven
    otherwise.
+
+7. **Self-tracked data is opt-in.** If a SELF-TRACKED block is present you may
+   reference the user's habit streaks, mood, and measurement trends naturally
+   and proactively; if it's absent, never invent them.
 """
 
 
@@ -543,6 +557,7 @@ def should_handle_action(state: CoachAgentState) -> Literal["action", "log", "re
         CoachIntent.START_WORKOUT,
         CoachIntent.COMPLETE_WORKOUT,
         CoachIntent.SET_WATER_GOAL,
+        CoachIntent.SCHEDULE_REMINDER,
     ]
 
     if intent in action_intents:
@@ -552,6 +567,140 @@ def should_handle_action(state: CoachAgentState) -> Literal["action", "log", "re
     # Default: respond with coaching
     logger.info("[Coach Router] General query -> respond")
     return "respond"
+
+
+# Monday=0 .. Sunday=6, matching Python's datetime.weekday() and the
+# `reminder_weekday` extraction field.
+_WEEKDAY_NAMES = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+]
+
+
+def _fmt_12h(dt: datetime) -> str:
+    """Format a clock time as '6:05 PM' without platform-specific strftime
+    flags (Render is Linux but %-I is non-portable — keep it explicit)."""
+    hour = dt.hour % 12 or 12
+    ampm = "AM" if dt.hour < 12 else "PM"
+    return f"{hour}:{dt.minute:02d} {ampm}"
+
+
+def _build_schedule_reminder_action(
+    state: CoachAgentState,
+) -> Tuple[Optional[Dict[str, Any]], str]:
+    """Resolve a SCHEDULE_REMINDER intent into a frontend-ready action.
+
+    The intent extractor captures time as EITHER a relative delay
+    (`reminder_delay_minutes`) OR an absolute clock time (`reminder_time_hour` /
+    `reminder_time_minute`) — never a real timestamp, because it has no notion
+    of "now". Here we resolve it against the user's LIVE phone timezone
+    (`user_tz`) into an absolute ISO-8601 instant the Flutter side hands
+    straight to `flutter_local_notifications.zonedSchedule`.
+
+    Returns (action_data, action_context). When no usable time was given we
+    return a soft-failure action (success=False) so the acknowledgment asks the
+    user when — we never silently drop the request.
+    """
+    tz_name = state.get("user_tz") or "UTC"
+    try:
+        tz = pytz.timezone(tz_name)
+    except Exception:
+        tz = pytz.UTC
+        tz_name = "UTC"
+    now = datetime.now(tz)
+
+    text = (state.get("reminder_text") or "").strip()
+    title = (state.get("reminder_title") or "").strip()
+    if not title and text:
+        title = text[:1].upper() + text[1:]
+        if len(title) > 60:
+            title = title[:57].rstrip() + "…"
+    if not title:
+        title = "Reminder"
+    body = text or title
+
+    recurrence = (state.get("reminder_recurrence") or "once").lower().strip()
+    if recurrence not in ("once", "daily", "weekly"):
+        recurrence = "once"
+
+    delay = state.get("reminder_delay_minutes")
+    hour = state.get("reminder_time_hour")
+    minute = state.get("reminder_time_minute") or 0
+    weekday = state.get("reminder_weekday")
+
+    fire_at: Optional[datetime] = None
+
+    if isinstance(delay, int) and delay > 0:
+        # A relative delay is inherently one-off.
+        recurrence = "once"
+        fire_at = now + timedelta(minutes=delay)
+    elif isinstance(hour, int) and 0 <= hour <= 23:
+        try:
+            candidate = now.replace(
+                hour=hour, minute=int(minute or 0), second=0, microsecond=0
+            )
+        except Exception:
+            candidate = now.replace(hour=hour, minute=0, second=0, microsecond=0)
+        if recurrence == "weekly" and isinstance(weekday, int) and 0 <= weekday <= 6:
+            days_ahead = (weekday - candidate.weekday()) % 7
+            if days_ahead == 0 and candidate <= now:
+                days_ahead = 7
+            candidate = candidate + timedelta(days=days_ahead)
+        elif candidate <= now:
+            # once / daily: if the time already passed today, fire tomorrow.
+            candidate = candidate + timedelta(days=1)
+        fire_at = candidate
+
+    if fire_at is None:
+        return (
+            {
+                "action": "schedule_reminder",
+                "success": False,
+                "error": "no_time",
+                "reminder_text": text or None,
+            },
+            f"Tried to set a reminder for '{text or 'something'}' but the user "
+            f"gave no time — ask them WHEN they want it (a clock time or "
+            f"'in N minutes/hours').",
+        )
+
+    reminder_id = "coach_" + uuid.uuid4().hex[:12]
+    action_data = {
+        "action": "schedule_reminder",
+        "reminder_id": reminder_id,
+        "title": title,
+        "body": body,
+        "trigger_time_iso8601": fire_at.isoformat(),
+        "recurrence": recurrence,
+        "weekday": weekday if recurrence == "weekly" else None,
+        "success": True,
+    }
+
+    when_local = _fmt_12h(fire_at)
+    if recurrence == "daily":
+        when_desc = f"every day at {when_local}"
+    elif recurrence == "weekly":
+        wd = (
+            _WEEKDAY_NAMES[weekday]
+            if isinstance(weekday, int) and 0 <= weekday <= 6
+            else "weekly"
+        )
+        when_desc = f"every {wd} at {when_local}"
+    else:
+        day_desc = (
+            "today"
+            if fire_at.date() == now.date()
+            else (
+                "tomorrow"
+                if fire_at.date() == (now + timedelta(days=1)).date()
+                else fire_at.strftime("%A, %b %d")
+            )
+        )
+        when_desc = f"{day_desc} at {when_local}"
+    action_context = (
+        f"Scheduled a {'recurring ' if recurrence != 'once' else ''}reminder to "
+        f"'{text or title}' {when_desc} ({tz_name})"
+    )
+    return action_data, action_context
 
 
 async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
@@ -711,6 +860,9 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
                 action_context = (
                     f"Share failed: {payload.get('error', 'unknown error')}"
                 )
+
+    elif intent == CoachIntent.SCHEDULE_REMINDER:
+        action_data, action_context = _build_schedule_reminder_action(state)
 
     # Generate a natural response for the action
     context_parts = []
@@ -1135,6 +1287,16 @@ def _build_coach_response_prompt(state: CoachAgentState):
             "numbers."
         )
 
+    # === Self-tracked habits / mood / measurements (read side) ===
+    # IMPORTANT: this snippet is byte-for-byte identical to the one in
+    # `coach_response_node` — the streamed and buffered coach replies MUST
+    # build the same prompt. Edit both together. "" when the user has no
+    # self-logged data — then it's simply omitted (the coach must never
+    # invent streaks/moods/measurements).
+    self_tracking_context = state.get("self_tracking_context")
+    if self_tracking_context:
+        context_parts.append(f"\n{self_tracking_context}")
+
     # === Cardio activity context (SLICE_COACH) ===
     # Sibling to health_context. Same "cite only what's here" rule applies —
     # never invent pace, distance, VO2max, or training-load numbers.
@@ -1308,6 +1470,16 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
             "guidance and never invent sleep, step, heart-rate, or recovery "
             "numbers."
         )
+
+    # === Self-tracked habits / mood / measurements (read side) ===
+    # IMPORTANT: this snippet is byte-for-byte identical to the one in
+    # `_build_coach_response_prompt` — the streamed and buffered coach replies
+    # MUST build the same prompt. Edit both together. "" when the user has no
+    # self-logged data — then it's simply omitted (the coach must never
+    # invent streaks/moods/measurements).
+    self_tracking_context = state.get("self_tracking_context")
+    if self_tracking_context:
+        context_parts.append(f"\n{self_tracking_context}")
 
     # === Cardio activity context (SLICE_COACH) — mirrors
     # `_build_coach_response_prompt`; edit both together. ===

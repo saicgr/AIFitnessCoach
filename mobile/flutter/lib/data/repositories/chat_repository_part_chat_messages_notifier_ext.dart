@@ -1,5 +1,15 @@
 part of 'chat_repository.dart';
 
+/// Base64-encode raw image bytes on a background isolate.
+///
+/// `base64Encode` is O(n) on the main thread and visibly janks the UI for
+/// large camera photos (several MB). Hoisting it behind `compute(...)` keeps
+/// the encode off the platform thread. Kept top-level (a `part` shares the
+/// parent library scope) because `compute` entry points must be top-level or
+/// static functions. `Uint8List` comes from `dart:typed_data` and
+/// `base64Encode` from `dart:convert`, both imported by the parent library.
+String _encodeBytesToBase64(Uint8List bytes) => base64Encode(bytes);
+
 /// Result of an attempt to stream the assistant reply (Part 5 — C1).
 enum _StreamOutcome {
   /// The stream produced at least one token and reached a terminal state
@@ -796,12 +806,21 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         // Image: get presigned URL, update message with public URL, then upload to S3
         // in parallel with the AI call (using base64 inline)
         final filename = media.file.path.split('/').last;
-        final presignData = await _repository.getPresignedUrl(
-          filename: filename,
-          contentType: media.mimeType,
-          mediaType: 'image',
-          expectedSizeBytes: media.sizeBytes,
-        );
+
+        // The presign fetch and the local file read are independent — overlap
+        // them so presign network latency hides behind the disk read (and vice
+        // versa) instead of running back-to-back. Errors propagate identically
+        // to awaiting either one directly (record `.wait` rethrows the first).
+        setOverlay('analyzing', null);
+        final (presignData, imageBytes) = await (
+          _repository.getPresignedUrl(
+            filename: filename,
+            contentType: media.mimeType,
+            mediaType: 'image',
+            expectedSizeBytes: media.sizeBytes,
+          ),
+          media.file.readAsBytes(),
+        ).wait;
 
         final presignedUrl = presignData['presigned_url'] as String? ?? presignData['url'] as String;
         final s3Key = presignData['s3_key'] as String;
@@ -818,9 +837,10 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
           state = AsyncValue.data(updatedMsgs);
         }
 
-        setOverlay('analyzing', null);
-        final imageBytes = await media.file.readAsBytes();
-        final imageBase64 = base64Encode(imageBytes);
+        // base64 of a multi-MB photo is O(n) and janks the main thread — encode
+        // it on a background isolate so the UI stays smooth while we prep the
+        // inline payload.
+        final imageBase64 = await compute(_encodeBytesToBase64, imageBytes);
         // Send both imageBase64 (for immediate analysis) and mediaRef with s3_key
         // (for menu/buffet/multi-image tools that need S3 keys)
         final imageMediaRef = {
