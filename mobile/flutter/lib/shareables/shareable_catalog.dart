@@ -189,6 +189,131 @@ import 'templates/macro_rings_card_template.dart';
 import 'templates/macro_waffle_card_template.dart';
 import 'templates/nutrition_facts_card_template.dart';
 import 'templates/what_i_ate_card_template.dart';
+// --- 117 newly-authored share templates (social / ai / collectible / ios / ticket / meaningful / data) ---
+// --- Social share templates ---
+import 'templates/social_bereal_dual_doc.dart';
+import 'templates/social_calendar_invite_doc.dart';
+import 'templates/social_chat_convo_doc.dart';
+import 'templates/social_comment_thread_doc.dart';
+import 'templates/social_dm_doc.dart';
+import 'templates/social_fb_memory_doc.dart';
+import 'templates/social_group_chat_doc.dart';
+import 'templates/social_ig_carousel_doc.dart';
+import 'templates/social_ig_post_doc.dart';
+import 'templates/social_ig_reel_cover_doc.dart';
+import 'templates/social_ig_story_poll_doc.dart';
+import 'templates/social_linkedin_post_doc.dart';
+import 'templates/social_pinterest_pin_doc.dart';
+import 'templates/social_quote_tweet_doc.dart';
+import 'templates/social_reddit_post_doc.dart';
+import 'templates/social_snap_streak_doc.dart';
+import 'templates/social_threads_doc.dart';
+import 'templates/social_tiktok_post_doc.dart';
+import 'templates/social_venmo_payment_doc.dart';
+import 'templates/social_youtube_shorts_doc.dart';
+import 'templates/social_youtube_thumb_doc.dart';
+// --- AI share templates ---
+import 'templates/ai_agent_log_doc.dart';
+import 'templates/ai_avatar_doc.dart';
+import 'templates/ai_calorie_scan_doc.dart';
+import 'templates/ai_caption_doc.dart';
+import 'templates/ai_coach_chat_doc.dart';
+import 'templates/ai_confidence_doc.dart';
+import 'templates/ai_diffusion_params_doc.dart';
+import 'templates/ai_grid_doc.dart';
+import 'templates/ai_imagined_doc.dart';
+import 'templates/ai_model_card_doc.dart';
+import 'templates/ai_neural_analysis_doc.dart';
+import 'templates/ai_next_workout_doc.dart';
+import 'templates/ai_pose_check_doc.dart';
+import 'templates/ai_prompt_plan_doc.dart';
+import 'templates/ai_rep_counter_doc.dart';
+import 'templates/ai_roast_doc.dart';
+import 'templates/ai_strength_curve_doc.dart';
+import 'templates/ai_summary_doc.dart';
+import 'templates/ai_vibe_check_doc.dart';
+import 'templates/ai_voice_orb_doc.dart';
+import 'templates/ai_wrapped_doc.dart';
+// --- Collectible share templates ---
+import 'templates/collectible_banknote_doc.dart';
+import 'templates/collectible_battle_card_doc.dart';
+import 'templates/collectible_casino_chip_doc.dart';
+import 'templates/collectible_certificate_doc.dart';
+import 'templates/collectible_dog_tag_doc.dart';
+import 'templates/collectible_fortune_doc.dart';
+import 'templates/collectible_gift_card_doc.dart';
+import 'templates/collectible_holo_card_doc.dart';
+import 'templates/collectible_license_plate_doc.dart';
+import 'templates/collectible_loyalty_card_doc.dart';
+import 'templates/collectible_medal_doc.dart';
+import 'templates/collectible_nft_card_doc.dart';
+import 'templates/collectible_race_bib_doc.dart';
+import 'templates/collectible_scratch_ticket_doc.dart';
+import 'templates/collectible_trophy_shelf_doc.dart';
+import 'templates/collectible_watch_face_doc.dart';
+import 'templates/collectible_wristband_doc.dart';
+// --- iOS share templates ---
+import 'templates/ios_activity_rings_doc.dart';
+import 'templates/ios_billboard_doc.dart';
+import 'templates/ios_comic_panel_doc.dart';
+import 'templates/ios_departure_board_doc.dart';
+import 'templates/ios_dynamic_island_doc.dart';
+import 'templates/ios_glass_widget_doc.dart';
+import 'templates/ios_lock_screen_doc.dart';
+import 'templates/ios_magazine_cover_doc.dart';
+import 'templates/ios_mesh_gradient_doc.dart';
+import 'templates/ios_movie_poster_doc.dart';
+import 'templates/ios_museum_label_doc.dart';
+import 'templates/ios_neon_sign_doc.dart';
+import 'templates/ios_notification_stack_doc.dart';
+import 'templates/ios_periodic_element_doc.dart';
+import 'templates/ios_vinyl_record_doc.dart';
+import 'templates/ios_weather_widget_doc.dart';
+// --- Ticket share templates ---
+import 'templates/ticket_boarding_pass_doc.dart';
+import 'templates/ticket_cinema_doc.dart';
+import 'templates/ticket_coupon_doc.dart';
+import 'templates/ticket_event_doc.dart';
+import 'templates/ticket_gym_receipt_doc.dart';
+import 'templates/ticket_lanyard_doc.dart';
+import 'templates/ticket_parking_doc.dart';
+import 'templates/ticket_passport_doc.dart';
+import 'templates/ticket_raffle_doc.dart';
+import 'templates/ticket_scratch_doc.dart';
+import 'templates/ticket_wristband_doc.dart';
+// --- Meaningful share templates ---
+import 'templates/meaningful_before_after_doc.dart';
+import 'templates/meaningful_comeback_doc.dart';
+import 'templates/meaningful_dear_past_me_doc.dart';
+import 'templates/meaningful_grind_doc.dart';
+import 'templates/meaningful_hundred_workouts_doc.dart';
+import 'templates/meaningful_identity_doc.dart';
+import 'templates/meaningful_journey_doc.dart';
+import 'templates/meaningful_letter_doc.dart';
+import 'templates/meaningful_milestone_doc.dart';
+import 'templates/meaningful_one_year_doc.dart';
+import 'templates/meaningful_quiet_wins_doc.dart';
+import 'templates/meaningful_showed_up_doc.dart';
+import 'templates/meaningful_transformation_timeline_doc.dart';
+import 'templates/meaningful_why_i_train_doc.dart';
+// --- Data share templates ---
+import 'templates/data_box_score_doc.dart';
+import 'templates/data_bracket_doc.dart';
+import 'templates/data_captcha_doc.dart';
+import 'templates/data_error_404_doc.dart';
+import 'templates/data_infographic_doc.dart';
+import 'templates/data_leaderboard_doc.dart';
+import 'templates/data_magic_8ball_doc.dart';
+import 'templates/data_odometer_doc.dart';
+import 'templates/data_pie_breakdown_doc.dart';
+import 'templates/data_recovery_ring_doc.dart';
+import 'templates/data_rx_label_doc.dart';
+import 'templates/data_scoreboard_doc.dart';
+import 'templates/data_stock_chart_doc.dart';
+import 'templates/data_strength_radar_doc.dart';
+import 'templates/data_tier_list_doc.dart';
+import 'templates/data_volume_bars_doc.dart';
+import 'templates/data_volume_line_doc.dart';
 
 /// Every template the unified sheet can render. Order here is also the
 /// default render order in the gallery.
@@ -315,6 +440,130 @@ enum ShareableTemplate {
   softCard,
   dinerMenu,
   cassetteMeal,
+  // --- Social (21) ---
+  socialBerealDual,
+  socialCalendarInvite,
+  socialChatConvo,
+  socialCommentThread,
+  socialDm,
+  socialFbMemory,
+  socialGroupChat,
+  socialIgCarousel,
+  socialIgPost,
+  socialIgReelCover,
+  socialIgStoryPoll,
+  socialLinkedinPost,
+  socialPinterestPin,
+  socialQuoteTweet,
+  socialRedditPost,
+  socialSnapStreak,
+  socialThreads,
+  socialTiktokPost,
+  socialVenmoPayment,
+  socialYoutubeShorts,
+  socialYoutubeThumb,
+  // --- AI (21) ---
+  aiAgentLog,
+  aiAvatar,
+  aiCalorieScan,
+  aiCaption,
+  aiCoachChat,
+  aiConfidence,
+  aiDiffusionParams,
+  aiGrid,
+  aiImagined,
+  aiModelCard,
+  aiNeuralAnalysis,
+  aiNextWorkout,
+  aiPoseCheck,
+  aiPromptPlan,
+  aiRepCounter,
+  aiRoast,
+  aiStrengthCurve,
+  aiSummary,
+  aiVibeCheck,
+  aiVoiceOrb,
+  aiWrapped,
+  // --- Collectible (17) ---
+  collectibleBanknote,
+  collectibleBattleCard,
+  collectibleCasinoChip,
+  collectibleCertificate,
+  collectibleDogTag,
+  collectibleFortune,
+  collectibleGiftCard,
+  collectibleHoloCard,
+  collectibleLicensePlate,
+  collectibleLoyaltyCard,
+  collectibleMedal,
+  collectibleNftCard,
+  collectibleRaceBib,
+  collectibleScratchTicket,
+  collectibleTrophyShelf,
+  collectibleWatchFace,
+  collectibleWristband,
+  // --- iOS (16) ---
+  iosActivityRings,
+  iosBillboard,
+  iosComicPanel,
+  iosDepartureBoard,
+  iosDynamicIsland,
+  iosGlassWidget,
+  iosLockScreen,
+  iosMagazineCover,
+  iosMeshGradient,
+  iosMoviePoster,
+  iosMuseumLabel,
+  iosNeonSign,
+  iosNotificationStack,
+  iosPeriodicElement,
+  iosVinylRecord,
+  iosWeatherWidget,
+  // --- Ticket (11) ---
+  ticketBoardingPass,
+  ticketCinema,
+  ticketCoupon,
+  ticketEvent,
+  ticketGymReceipt,
+  ticketLanyard,
+  ticketParking,
+  ticketPassport,
+  ticketRaffle,
+  ticketScratch,
+  ticketWristband,
+  // --- Meaningful (14) ---
+  meaningfulBeforeAfter,
+  meaningfulComeback,
+  meaningfulDearPastMe,
+  meaningfulGrind,
+  meaningfulHundredWorkouts,
+  meaningfulIdentity,
+  meaningfulJourney,
+  meaningfulLetter,
+  meaningfulMilestone,
+  meaningfulOneYear,
+  meaningfulQuietWins,
+  meaningfulShowedUp,
+  meaningfulTransformationTimeline,
+  meaningfulWhyITrain,
+  // --- Data (17) ---
+  dataBoxScore,
+  dataBracket,
+  dataCaptcha,
+  dataError404,
+  dataInfographic,
+  dataLeaderboard,
+  dataMagic8ball,
+  dataOdometer,
+  dataPieBreakdown,
+  dataRecoveryRing,
+  dataRxLabel,
+  dataScoreboard,
+  dataStockChart,
+  dataStrengthRadar,
+  dataTierList,
+  dataVolumeBars,
+  dataVolumeLine,
 }
 
 /// User-facing grouping (Tier 3 in the nested pill selector).
@@ -1563,6 +1812,949 @@ class ShareableCatalog {
         category: ShareableCategory.playful,
         kinds: const {ShareableKind.foodLog},
         docBuilder: cassetteMealDoc,
+      ),
+      // ─── Social ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialBerealDual,
+        name: 'Bereal Dual',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialBerealDualDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialCalendarInvite,
+        name: 'Calendar Invite',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialCalendarInviteDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialChatConvo,
+        name: 'Chat Convo',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialChatConvoDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialCommentThread,
+        name: 'Comment Thread',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialCommentThreadDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialDm,
+        name: 'Dm',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialDmDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialFbMemory,
+        name: 'Fb Memory',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialFbMemoryDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialGroupChat,
+        name: 'Group Chat',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialGroupChatDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialIgCarousel,
+        name: 'Ig Carousel',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialIgCarouselDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialIgPost,
+        name: 'Ig Post',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialIgPostDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialIgReelCover,
+        name: 'Ig Reel Cover',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialIgReelCoverDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialIgStoryPoll,
+        name: 'Ig Story Poll',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialIgStoryPollDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialLinkedinPost,
+        name: 'Linkedin Post',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialLinkedinPostDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialPinterestPin,
+        name: 'Pinterest Pin',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialPinterestPinDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialQuoteTweet,
+        name: 'Quote Tweet',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialQuoteTweetDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialRedditPost,
+        name: 'Reddit Post',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialRedditPostDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialSnapStreak,
+        name: 'Snap Streak',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialSnapStreakDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialThreads,
+        name: 'Threads',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialThreadsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialTiktokPost,
+        name: 'Tiktok Post',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialTiktokPostDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialVenmoPayment,
+        name: 'Venmo Payment',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialVenmoPaymentDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialYoutubeShorts,
+        name: 'Youtube Shorts',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialYoutubeShortsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.socialYoutubeThumb,
+        name: 'Youtube Thumb',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: socialYoutubeThumbDoc,
+      ),
+      // ─── AI ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiAgentLog,
+        name: 'Agent Log',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiAgentLogDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiAvatar,
+        name: 'Avatar',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiAvatarDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiCalorieScan,
+        name: 'Calorie Scan',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiCalorieScanDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiCaption,
+        name: 'Caption',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiCaptionDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiCoachChat,
+        name: 'Coach Chat',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiCoachChatDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiConfidence,
+        name: 'Confidence',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiConfidenceDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiDiffusionParams,
+        name: 'Diffusion Params',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiDiffusionParamsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiGrid,
+        name: 'Grid',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiGridDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiImagined,
+        name: 'Imagined',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiImaginedDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiModelCard,
+        name: 'Model Card',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiModelCardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiNeuralAnalysis,
+        name: 'Neural Analysis',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiNeuralAnalysisDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiNextWorkout,
+        name: 'Next Workout',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiNextWorkoutDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiPoseCheck,
+        name: 'Pose Check',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiPoseCheckDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiPromptPlan,
+        name: 'Prompt Plan',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiPromptPlanDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiRepCounter,
+        name: 'Rep Counter',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiRepCounterDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiRoast,
+        name: 'Roast',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiRoastDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiStrengthCurve,
+        name: 'Strength Curve',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiStrengthCurveDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiSummary,
+        name: 'Summary',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiSummaryDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiVibeCheck,
+        name: 'Vibe Check',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiVibeCheckDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiVoiceOrb,
+        name: 'Voice Orb',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiVoiceOrbDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.aiWrapped,
+        name: 'Wrapped',
+        category: ShareableCategory.spark,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: aiWrappedDoc,
+      ),
+      // ─── Collectible ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleBanknote,
+        name: 'Banknote',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleBanknoteDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleBattleCard,
+        name: 'Battle Card',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleBattleCardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleCasinoChip,
+        name: 'Casino Chip',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleCasinoChipDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleCertificate,
+        name: 'Certificate',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleCertificateDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleDogTag,
+        name: 'Dog Tag',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleDogTagDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleFortune,
+        name: 'Fortune',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleFortuneDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleGiftCard,
+        name: 'Gift Card',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleGiftCardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleHoloCard,
+        name: 'Holo Card',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleHoloCardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleLicensePlate,
+        name: 'License Plate',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleLicensePlateDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleLoyaltyCard,
+        name: 'Loyalty Card',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleLoyaltyCardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleMedal,
+        name: 'Medal',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleMedalDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleNftCard,
+        name: 'Nft Card',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleNftCardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleRaceBib,
+        name: 'Race Bib',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleRaceBibDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleScratchTicket,
+        name: 'Scratch Ticket',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleScratchTicketDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleTrophyShelf,
+        name: 'Trophy Shelf',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleTrophyShelfDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleWatchFace,
+        name: 'Watch Face',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleWatchFaceDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.collectibleWristband,
+        name: 'Wristband',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.personalRecords},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: collectibleWristbandDoc,
+      ),
+      // ─── iOS ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosActivityRings,
+        name: 'Activity Rings',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosActivityRingsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosBillboard,
+        name: 'Billboard',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosBillboardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosComicPanel,
+        name: 'Comic Panel',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosComicPanelDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosDepartureBoard,
+        name: 'Departure Board',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosDepartureBoardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosDynamicIsland,
+        name: 'Dynamic Island',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosDynamicIslandDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosGlassWidget,
+        name: 'Glass Widget',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosGlassWidgetDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosLockScreen,
+        name: 'Lock Screen',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosLockScreenDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosMagazineCover,
+        name: 'Magazine Cover',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosMagazineCoverDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosMeshGradient,
+        name: 'Mesh Gradient',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosMeshGradientDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosMoviePoster,
+        name: 'Movie Poster',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosMoviePosterDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosMuseumLabel,
+        name: 'Museum Label',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosMuseumLabelDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosNeonSign,
+        name: 'Neon Sign',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosNeonSignDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosNotificationStack,
+        name: 'Notification Stack',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosNotificationStackDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosPeriodicElement,
+        name: 'Periodic Element',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosPeriodicElementDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosVinylRecord,
+        name: 'Vinyl Record',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosVinylRecordDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.iosWeatherWidget,
+        name: 'Weather Widget',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.workoutComplete},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: iosWeatherWidgetDoc,
+      ),
+      // ─── Ticket ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketBoardingPass,
+        name: 'Boarding Pass',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketBoardingPassDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketCinema,
+        name: 'Cinema',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketCinemaDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketCoupon,
+        name: 'Coupon',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketCouponDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketEvent,
+        name: 'Event',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketEventDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketGymReceipt,
+        name: 'Gym Receipt',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketGymReceiptDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketLanyard,
+        name: 'Lanyard',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketLanyardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketParking,
+        name: 'Parking',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketParkingDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketPassport,
+        name: 'Passport',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketPassportDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketRaffle,
+        name: 'Raffle',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketRaffleDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketScratch,
+        name: 'Scratch',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketScratchDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.ticketWristband,
+        name: 'Wristband',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.workoutComplete, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: ticketWristbandDoc,
+      ),
+      // ─── Meaningful ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulBeforeAfter,
+        name: 'Before After',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulBeforeAfterDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulComeback,
+        name: 'Comeback',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulComebackDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulDearPastMe,
+        name: 'Dear Past Me',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulDearPastMeDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulGrind,
+        name: 'Grind',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulGrindDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulHundredWorkouts,
+        name: 'Hundred Workouts',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulHundredWorkoutsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulIdentity,
+        name: 'Identity',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulIdentityDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulJourney,
+        name: 'Journey',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulJourneyDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulLetter,
+        name: 'Letter',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulLetterDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulMilestone,
+        name: 'Milestone',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulMilestoneDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulOneYear,
+        name: 'One Year',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulOneYearDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulQuietWins,
+        name: 'Quiet Wins',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulQuietWinsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulShowedUp,
+        name: 'Showed Up',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulShowedUpDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulTransformationTimeline,
+        name: 'Transformation Timeline',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulTransformationTimelineDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.meaningfulWhyITrain,
+        name: 'Why I Train',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.milestones, ShareableKind.statsOverview},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait},
+        docBuilder: meaningfulWhyITrainDoc,
+      ),
+      // ─── Data ───
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataBoxScore,
+        name: 'Box Score',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataBoxScoreDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataBracket,
+        name: 'Bracket',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataBracketDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataCaptcha,
+        name: 'Captcha',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataCaptchaDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataError404,
+        name: 'Error 404',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataError404Doc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataInfographic,
+        name: 'Infographic',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataInfographicDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataLeaderboard,
+        name: 'Leaderboard',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataLeaderboardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataMagic8ball,
+        name: 'Magic 8ball',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataMagic8ballDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataOdometer,
+        name: 'Odometer',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataOdometerDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataPieBreakdown,
+        name: 'Pie Breakdown',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataPieBreakdownDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataRecoveryRing,
+        name: 'Recovery Ring',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataRecoveryRingDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataRxLabel,
+        name: 'Rx Label',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataRxLabelDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataScoreboard,
+        name: 'Scoreboard',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataScoreboardDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataStockChart,
+        name: 'Stock Chart',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataStockChartDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataStrengthRadar,
+        name: 'Strength Radar',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataStrengthRadarDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataTierList,
+        name: 'Tier List',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataTierListDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataVolumeBars,
+        name: 'Volume Bars',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataVolumeBarsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dataVolumeLine,
+        name: 'Volume Line',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.statsOverview, ShareableKind.weeklyProgress},
+        aspects: const {ShareableAspect.story, ShareableAspect.portrait, ShareableAspect.square},
+        docBuilder: dataVolumeLineDoc,
       ),
     ];
   }
