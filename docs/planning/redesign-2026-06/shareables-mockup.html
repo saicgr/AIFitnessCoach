@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova Shareables — Studio + Editor + Full Catalog — v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@500;700;900&family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#070709;--bg2:#0d0e12;--ink:#F5F6F8;--muted:rgba(245,246,248,.52);--line:rgba(255,255,255,.10);
+    --volt:#D8FF3A;--orange:#F97316;--cyan:#22D3EE;--magenta:#F0429A;--violet:#A78BFA;
+    --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='.4'/></svg>");
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  html,body{margin:0;background:radial-gradient(1200px 600px at 80% -10%,rgba(216,255,58,.06),transparent 60%),radial-gradient(900px 500px at 0% 110%,rgba(249,115,22,.06),transparent 55%),var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif}
+  .wrap{max-width:1340px;margin:0 auto;padding:46px 26px 120px}
+  .kicker{font-family:'Barlow Condensed';font-weight:700;letter-spacing:.32em;text-transform:uppercase;color:var(--volt);font-size:13px}
+  h1{font-family:Anton;font-weight:400;font-size:clamp(32px,5vw,58px);line-height:.92;margin:10px 0 0}
+  h1 em{font-style:normal;color:var(--volt)}
+  .sub{color:var(--muted);max-width:680px;margin-top:14px;font-size:15px;line-height:1.6}
+  .sub b{color:var(--ink)}
+  .top{border-bottom:1px solid var(--line);padding-bottom:26px;margin-bottom:14px}
+  .section-label{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.22em;font-size:14px;color:var(--muted);margin:56px 0 8px;display:flex;align-items:center;gap:14px}
+  .section-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .section-label .n{color:var(--volt)}
+  .section-sub{color:var(--muted);font-size:13.5px;margin:0 0 22px;max-width:820px;line-height:1.6}
+  .section-sub b{color:var(--ink)}
+
+  .stage{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+  .colcap{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:var(--muted);margin:12px 2px 0;text-align:center;width:286px}
+  .colcap b{color:var(--volt)}
+  .phone{width:286px;height:620px;border-radius:44px;padding:10px;background:linear-gradient(160deg,#26282f,#0a0b0e);box-shadow:0 40px 90px -30px rgba(0,0,0,.85),inset 0 0 0 1px rgba(255,255,255,.06);flex:none;position:relative}
+  .screen{position:relative;width:100%;height:100%;border-radius:34px;overflow:hidden;background:#000}
+  .notch{position:absolute;top:9px;left:50%;transform:translateX(-50%);width:90px;height:24px;background:#000;border-radius:14px;z-index:60}
+
+  .card{position:absolute;inset:0;overflow:hidden}
+  .photo{position:absolute;inset:0;background-size:cover;background-position:center}
+  .bw{filter:grayscale(1) contrast(1.08) brightness(.92)}
+  .duo-volt{filter:grayscale(1) brightness(.85)}.duo-volt::after{content:"";position:absolute;inset:0;background:var(--volt);mix-blend-mode:color;opacity:.6}
+  .grain::after{content:"";position:absolute;inset:0;background:var(--grain);mix-blend-mode:overlay;opacity:.5;pointer-events:none}
+  .scrim-b{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.92) 6%,rgba(0,0,0,.42) 34%,rgba(0,0,0,0) 62%)}
+  .scrim-t{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.5),transparent 22%)}
+  .editorial{position:absolute;left:16px;right:16px;bottom:18px}
+  .eyebrow{font-family:'Barlow Condensed';font-weight:700;letter-spacing:.3em;text-transform:uppercase;font-size:10px;color:var(--muted)}
+  .headline{font-family:Anton;font-size:58px;line-height:.82;color:var(--volt);text-transform:uppercase;margin:2px 0 10px}
+  .headline.orange{color:var(--orange)}.headline.white{color:#fff}.headline.cyan{color:var(--cyan)}
+  .ledger .row{display:flex;justify-content:space-between;align-items:baseline;font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;font-size:13px;letter-spacing:.02em}
+  .ledger .row span:first-child{color:#fff}.ledger .row span:last-child{color:var(--volt);font-variant-numeric:tabular-nums}
+  .ledger.orange .row span:last-child{color:var(--orange)}
+
+  .topbar{position:absolute;top:38px;left:11px;right:11px;display:flex;align-items:center;justify-content:space-between;z-index:50}
+  .chip-ic{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(20,20,24,.5);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16)}
+  .chip-ic svg{width:17px;height:17px;stroke:#fff;stroke-width:2;fill:none}
+  .seg{display:flex;background:rgba(20,20,24,.55);backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);border-radius:16px;overflow:hidden}
+  .seg div{padding:6px 11px;font-size:11px;font-weight:700;color:var(--muted)}
+  .seg div.on{background:var(--volt);color:#0b0b0b}
+  .btn-done{padding:8px 16px;border-radius:18px;background:var(--volt);color:#0b0b0b;font-weight:800;font-size:12.5px;box-shadow:0 0 20px rgba(216,255,58,.4)}
+  .btn-done.ghost{background:rgba(20,20,24,.5);color:#fff;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.16);box-shadow:none}
+  .vhandle{position:absolute;right:-13px;top:46%;width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#fff,#9aa);box-shadow:0 0 0 6px rgba(0,0,0,.25);z-index:55}
+
+  .sheet{position:absolute;left:7px;right:7px;bottom:7px;border-radius:24px;background:rgba(14,15,19,.85);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);padding:12px;z-index:50}
+  .sheet .shd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+  .sheet .shd b{font-size:11px;font-family:'Barlow Condensed';font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .sheet .shd span{font-size:10px;color:var(--muted)}
+  .varrow{display:flex;gap:8px;overflow:auto;padding-bottom:2px}
+  .var{width:50px;height:88px;border-radius:10px;flex:none;overflow:hidden;position:relative;border:1px solid var(--line)}
+  .var.on{border-color:var(--volt);box-shadow:0 0 0 2px rgba(216,255,58,.5)}
+  .var .vp{position:absolute;inset:0;background-size:cover;background-position:center}
+  .var .vh{position:absolute;left:4px;bottom:3px;font-family:Anton;font-size:10px;line-height:1}
+
+  .palette{display:flex;align-items:center;gap:11px}
+  .pal{display:flex;gap:10px;align-items:center;overflow:auto;flex:1}
+  .ps{width:28px;height:28px;border-radius:50%;flex:none;position:relative}
+  .ps.sel{box-shadow:0 0 0 2px #0b0b0b,0 0 0 4px #fff}
+  .ps.edit{display:grid;place-items:center}.ps.edit svg{width:12px;height:12px;stroke:#0b0b0b;stroke-width:2.4;fill:none}
+
+  .dock{position:absolute;left:0;right:0;bottom:0;padding:11px 8px 14px;background:linear-gradient(to top,rgba(7,7,9,.96),rgba(7,7,9,.6) 70%,transparent);z-index:50}
+  .dockrow{display:flex;gap:5px;overflow:auto}
+  .tdock{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:48px;padding:7px 3px;border-radius:12px}
+  .tdock svg{width:19px;height:19px;stroke:#cfd2d8;stroke-width:1.8;fill:none}
+  .tdock span{font-size:9px;color:var(--muted);font-weight:600}
+  .tdock.on{background:rgba(216,255,58,.12)}.tdock.on svg{stroke:var(--volt)}.tdock.on span{color:var(--volt)}
+  .undo{position:absolute;top:40px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:50}
+  .zone{position:absolute;border:1.6px solid var(--volt);border-radius:6px;z-index:45}
+  .hd4{position:absolute;width:10px;height:10px;background:#fff;border:2px solid var(--volt);border-radius:3px}
+  .hd4.tl{left:-5px;top:-5px}.hd4.tr{right:-5px;top:-5px}.hd4.bl{left:-5px;bottom:-5px}.hd4.br{right:-5px;bottom:-5px}
+
+  .epanel{position:absolute;left:7px;right:7px;bottom:7px;border-radius:22px;background:rgba(14,15,19,.93);backdrop-filter:blur(22px);border:1px solid rgba(255,255,255,.12);padding:13px;z-index:52}
+  .epanel .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+  .epanel .ph b{font-size:12px;font-family:'Barlow Condensed';font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+  .epanel .ph .x{color:var(--muted);font-size:16px}
+  .arow{display:flex;align-items:center;gap:9px;margin:10px 0}
+  .arow .al{width:62px;font-size:10px;color:var(--muted);font-family:'Barlow Condensed';font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .track{flex:1;height:4px;border-radius:3px;background:rgba(255,255,255,.14);position:relative}
+  .track .fill{position:absolute;left:0;top:0;bottom:0;background:var(--volt);border-radius:3px}
+  .track .knob{position:absolute;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 0 0 3px rgba(216,255,58,.3)}
+  .srcgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .src{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:rgba(255,255,255,.03);position:relative;overflow:hidden}
+  .src svg{width:21px;height:21px;stroke:var(--volt);stroke-width:1.7;fill:none}
+  .src span{font-size:9.5px;color:var(--muted);font-weight:600}
+  .src.ph{padding:0}.src.ph .pp{position:absolute;inset:0;background-size:cover;background-position:center}
+  .src.ph small{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);font-size:8px;text-align:center;padding:2px;color:#fff}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{padding:7px 11px;border-radius:10px;border:1px solid var(--line);font-size:13px;background:rgba(255,255,255,.03)}
+  .chip.on{border-color:var(--volt);color:var(--volt);background:rgba(216,255,58,.08)}
+  .ratios{display:flex;gap:12px;justify-content:center}
+  .ratiobox{display:flex;flex-direction:column;align-items:center;gap:7px}
+  .rb{border:2px solid var(--line);border-radius:6px;background:rgba(255,255,255,.04)}
+  .rb.on{border-color:var(--volt);background:rgba(216,255,58,.1)}
+  .ratiobox span{font-size:10px;color:var(--muted);font-weight:700;font-family:'Barlow Condensed';letter-spacing:.1em}
+
+  /* treatment range strip */
+  .range{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:14px}
+  .rcard{aspect-ratio:9/16;border-radius:14px;overflow:hidden;position:relative;border:1px solid var(--line)}
+  .rcard .rp{position:absolute;inset:0;background-size:cover;background-position:center}
+  .rcard .rt{position:absolute;left:9px;bottom:24px;font-family:Anton;font-size:24px;line-height:.85;color:var(--volt);text-transform:uppercase}
+  .rcard .rl{position:absolute;left:0;right:0;bottom:0;text-align:center;font-size:9.5px;padding:5px;background:rgba(0,0,0,.6);font-family:'Barlow Condensed';font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+  /* hero quality set */
+  .gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}
+  .g{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:9/16;background:var(--bg2);border:1px solid var(--line)}
+  .g .gp{position:absolute;inset:0;background-size:cover;background-position:center}
+  .g .lbl{position:absolute;top:9px;left:11px;font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.16em;font-size:9px;color:var(--muted);z-index:3}
+  .g .wm{position:absolute;bottom:8px;left:11px;font-family:'Barlow Condensed';font-weight:700;letter-spacing:.14em;font-size:8px;text-transform:uppercase;color:rgba(255,255,255,.5);z-index:3}
+  .gh{font-family:Anton;text-transform:uppercase;color:var(--volt);line-height:.84}.num{font-family:Anton;color:#fff;line-height:.82}
+  .center{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:14px;z-index:3}
+  .bottom{position:absolute;left:12px;right:12px;bottom:26px;z-index:3}
+
+  /* full catalog */
+  .catlegend{display:flex;flex-wrap:wrap;gap:8px;margin:2px 0 18px}
+  .clg{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 11px;display:inline-flex;gap:7px;align-items:center}
+  .clg i{width:9px;height:9px;border-radius:3px;display:inline-block}
+  .kindhd{display:flex;align-items:baseline;gap:12px;margin:30px 0 6px}
+  .kindhd h2{font-family:Anton;font-weight:400;font-size:24px;margin:0;text-transform:uppercase}
+  .kindhd h2 em{font-style:normal;color:var(--volt)}
+  .kindhd span{color:var(--muted);font-size:12px}
+  .catgrp{margin-top:16px}
+  .catgrp .ch{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .catgrp .ch i{width:8px;height:8px;border-radius:2px}
+  .tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:11px}
+  .t{aspect-ratio:9/16;border-radius:11px;overflow:hidden;position:relative;border:1px solid var(--line);background:#0d0e12}
+  .t .tp{position:absolute;inset:0;background-size:cover;background-position:center}
+  .t .tov{position:absolute;inset:0}
+  .t .tl{position:absolute;left:7px;right:7px;bottom:6px;font-family:'Barlow Condensed';font-weight:700;font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8);z-index:2;line-height:1}
+  .t .te{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:rgba(20,20,24,.55);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.2);display:grid;place-items:center;z-index:3}
+  .t .te svg{width:9px;height:9px;stroke:#fff;stroke-width:2;fill:none}
+  .t .tnum{position:absolute;top:8px;left:8px;font-family:Anton;font-size:20px;line-height:.8;z-index:2}
+  .t .tcat{position:absolute;top:7px;left:8px;width:7px;height:7px;border-radius:2px;z-index:2}
+
+  .notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:24px}
+  .callout{display:flex;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:15px;background:rgba(255,255,255,.02)}
+  .callout .ix{width:28px;height:28px;border-radius:8px;background:rgba(216,255,58,.12);color:var(--volt);display:grid;place-items:center;font-weight:800;flex:none;font-size:13px;font-family:'Barlow Condensed'}
+  .callout b{font-size:13px}.callout small{display:block;color:var(--muted);font-size:12px;line-height:1.5;margin-top:2px}
+  .bgwrap{display:flex;flex-direction:column;gap:20px}
+  .bggrp .ch{font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:12px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .bggrp .ch i{width:8px;height:8px;border-radius:2px}
+  .bggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px}
+  .bgt{aspect-ratio:9/16;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#0d0e12;position:relative}
+  .bgt img{width:100%;height:100%;object-fit:cover;display:block}
+  .cattabs{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+  .cattab{padding:9px 15px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);font-size:13px;font-weight:600;font-family:Inter;cursor:pointer}
+  .cattab.on{border-color:var(--volt);color:var(--volt);background:rgba(216,255,58,.08)}
+  .t img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#0d0e12}
+  .t.tcur .tl{left:0;right:0;bottom:0;padding:16px 6px 5px;background:linear-gradient(to top,rgba(0,0,0,.85),transparent)}
+  .t.miss{background:#16181e;display:grid;place-items:center}
+  .t.miss img{display:none}
+  footer{margin-top:70px;border-top:1px solid var(--line);padding-top:26px;color:var(--muted);font-size:13px;line-height:1.7}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="kicker">Zealova · Shareables · Studio + Editor + Full Catalog · v3</div>
+    <h1>All <em>113</em> templates.<br>One editor. Your photo.</h1>
+    <p class="sub">Every current template — <b>51 workout &amp; stats</b> + <b>62 nutrition</b>, across all 7 categories — converted to the new system. A real photo editor (layers, adjust, crop, filters, <b>ratios 9:16 / 4:5 / 1:1</b>) wrapped in phone-customizer chrome (Variations · palette · Apply). Bring <b>your own photo</b> (camera, library, your workout shot, or an AI backdrop) and treat it any way — colour, duotone, gradient, solid — not just black &amp; white.</p>
+  </div>
+
+  <!-- 01 STUDIO -->
+  <div class="section-label"><span class="n">01</span> The Studio — system + ratios + your photo</div>
+  <p class="section-sub">Live preview with phone-customizer chrome: swap the <b>ratio</b> (9:16/4:5/1:1) up top, flick <b>Variations</b>, recolor from the <b>Palette</b>, and the photo is <b>yours</b>.</p>
+  <div class="stage">
+    <div><div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="card grain"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80')"></div><div class="scrim-t"></div><div class="scrim-b"></div>
+        <div class="editorial" style="bottom:150px"><div class="eyebrow">Zealova · Push Day</div><div class="headline">Friday</div>
+          <div class="ledger"><div class="row"><span>Pull Up</span><span>2,654 kg</span></div><div class="row"><span>Incline Bench</span><span>2,400 kg</span></div></div></div>
+      </div>
+      <div class="topbar"><div class="chip-ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-7 7"/></svg></div>
+        <div class="seg"><div class="on">9:16</div><div>4:5</div><div>1:1</div></div><div class="btn-done">Done</div></div>
+      <div class="vhandle"></div>
+      <div class="sheet"><div class="shd"><b>Variations</b><span>same workout · 11 looks</span></div>
+        <div class="varrow">
+          <div class="var on"><div class="vp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=160&q=70')"></div><div class="vh" style="color:var(--volt)">FRI</div></div>
+          <div class="var"><div class="vp" style="background:radial-gradient(120% 90% at 50% 40%,#3a1d14,#0b0707)"></div></div>
+          <div class="var"><div class="vp" style="background:linear-gradient(160deg,#102a3a,#070709)"></div><div class="vh" style="color:var(--cyan)">12</div></div>
+          <div class="var"><div class="vp" style="background:linear-gradient(160deg,#2a1500,#070709)"></div><div class="vh" style="color:var(--orange)">🔥</div></div>
+          <div class="var"><div class="vp" style="background:var(--volt)"></div><div class="vh" style="color:#0b0b0b;font-size:8px">LVL</div></div>
+          <div class="var"><div class="vp" style="background-image:url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=160&q=70')"></div></div>
+        </div></div>
+    </div></div><div class="colcap"><b>Ratios + Variations</b></div></div>
+
+    <div><div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="card grain"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80')"></div><div class="scrim-t"></div><div class="scrim-b"></div>
+        <div class="editorial"><div class="eyebrow">Zealova · Push Day</div><div class="headline">Friday</div>
+          <div class="ledger"><div class="row"><span>Pull Up</span><span>2,654 kg</span></div><div class="row"><span>Incline Bench</span><span>2,400 kg</span></div></div></div>
+        <div class="zone" style="left:13px;bottom:118px;width:210px;height:54px"><div class="hd4 tl"></div><div class="hd4 tr"></div><div class="hd4 bl"></div><div class="hd4 br"></div></div>
+      </div>
+      <div class="topbar"><div class="chip-ic"><svg viewBox="0 0 24 24"><path d="M9 14L4 19M15 10l5-5"/></svg></div><div class="seg" style="border-radius:14px"><div class="on" style="padding:6px 12px">Tap to edit</div></div><div class="btn-done">Done</div></div>
+    </div></div><div class="colcap"><b>Tap-to-edit zones</b></div></div>
+
+    <div><div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="card grain"><div class="photo duo-volt" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80')"></div><div class="scrim-b"></div>
+        <div class="editorial" style="bottom:140px"><div class="eyebrow" style="color:#0b0b0b">Zealova · Push Day</div><div class="headline" style="color:#0b0b0b">Friday</div>
+          <div class="ledger"><div class="row"><span style="color:#0b0b0b">Pull Up</span><span style="color:#0b0b0b">2,654 kg</span></div></div></div>
+      </div>
+      <div class="topbar"><div class="chip-ic"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></div><div class="seg"><div class="on">Palette</div></div><div class="btn-done">Apply</div></div>
+      <div class="sheet"><div class="shd"><b>Palette + treatment</b><span>recolor live</span></div>
+        <div class="palette"><div class="pal">
+          <span class="ps sel" style="background:var(--volt)"></span><span class="ps" style="background:var(--orange)"></span><span class="ps" style="background:var(--cyan)"></span><span class="ps" style="background:var(--magenta)"></span><span class="ps" style="background:var(--violet)"></span><span class="ps" style="background:#fff"></span>
+          <span class="ps edit" style="background:conic-gradient(red,orange,yellow,lime,cyan,blue,magenta,red)"><svg viewBox="0 0 24 24"><path d="M4 20l4-1 10-10-3-3L5 16z"/></svg></span>
+        </div></div>
+        <div class="palette" style="margin-top:11px"><div class="pal" style="gap:7px">
+          <span class="chip on" style="font-size:11px;padding:5px 9px">Duotone</span><span class="chip" style="font-size:11px;padding:5px 9px">Colour</span><span class="chip" style="font-size:11px;padding:5px 9px">B&amp;W</span><span class="chip" style="font-size:11px;padding:5px 9px">Gradient</span><span class="chip" style="font-size:11px;padding:5px 9px">Grain</span>
+        </div></div>
+      </div>
+    </div></div><div class="colcap"><b>Palette + treatment</b> · duotone shown</div></div>
+  </div>
+
+  <!-- 02 EDITOR -->
+  <div class="section-label"><span class="n">02</span> The Editor — real tools, on every template</div>
+  <p class="section-sub">The full dock keeps the controls you already have (<b>Photo · Ratio · Background · Style · Watermark</b>) and adds <b>Layers · Adjust · Text · Sticker · Filter · Crop</b>. “Photo” is where you add <b>your own image</b>; “Filter” offers colour duotones in any accent, not just grayscale.</p>
+  <div class="stage">
+
+    <div><div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="card grain"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80')"></div><div class="scrim-b"></div>
+        <div class="editorial" style="bottom:124px"><div class="headline" style="font-size:50px">Friday</div></div>
+        <div class="zone" style="left:13px;bottom:140px;width:190px;height:48px"><div class="hd4 tl"></div><div class="hd4 tr"></div><div class="hd4 bl"></div><div class="hd4 br"></div></div>
+      </div>
+      <div class="undo"><div class="chip-ic" style="width:32px;height:32px"><svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-3"/></svg></div><div class="chip-ic" style="width:32px;height:32px"><svg viewBox="0 0 24 24"><path d="M15 14l5-5-5-5M20 9H9a5 5 0 000 10h3"/></svg></div></div>
+      <div class="topbar" style="right:auto"><div class="btn-done ghost">Cancel</div></div><div class="topbar" style="left:auto"><div class="btn-done">Done</div></div>
+      <div class="dock"><div class="dockrow">
+        <div class="tdock on"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-7 7"/></svg><span>Photo</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/></svg><span>Ratio</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5zM3 14l9 5 9-5"/></svg><span>Layers</span></div>
+        <div class="tdock"><span style="font-family:Inter;font-weight:800;font-size:17px;color:#cfd2d8">A</span><span>Text</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 6.3L21 10l-5 4.3L17.5 21 12 17.3 6.5 21 8 14.3 3 10z"/></svg><span>Sticker</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 12h2M10 12h10M4 17h13"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="12" r="2"/></svg><span>Adjust</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="6"/><path d="M12 3v3"/></svg><span>Filter</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 002 2h14M2 6h14a2 2 0 012 2v14"/></svg><span>Crop</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg><span>Bg</span></div>
+        <div class="tdock"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg><span>Mark</span></div>
+      </div></div>
+    </div></div><div class="colcap"><b>Full tool dock</b> · Photo→Ratio→Layers…</div></div>
+
+    <div><div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="card"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80')"></div><div class="scrim-b"></div></div>
+      <div class="topbar"><div class="btn-done ghost">Cancel</div><div class="seg"><div class="on">Photo</div></div><div class="btn-done">Done</div></div>
+      <div class="epanel"><div class="ph"><b>Add your photo</b><span class="x">⤓</span></div>
+        <div class="srcgrid">
+          <div class="src ph"><div class="pp" style="background-image:url('backgrounds/nutrition/bg-01.jpg')"></div><small>This log's photo</small></div>
+          <div class="src"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="4"/><path d="M8 6l2-2h4l2 2"/></svg><span>Camera</span></div>
+          <div class="src"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="11" r="2"/><path d="M21 17l-5-5-7 7"/></svg><span>Library</span></div>
+          <div class="src"><svg viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M5 12H1M23 12h-4M6 6l2 2"/><circle cx="12" cy="12" r="3"/></svg><span>AI backdrop</span></div>
+          <div class="src ph"><div class="pp" style="background-image:url('backgrounds/workout/bg-02.jpg')"></div><small>Backgrounds · 22</small></div>
+          <div class="src"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/></svg><span>Solid / gradient</span></div>
+        </div>
+        <p style="margin:12px 2px 0;font-size:11px;color:var(--muted);line-height:1.45">Sharing from the <b style="color:var(--ink)">Nutrition tab</b> or a finished workout auto-fills the photo you logged (the <code>nutrition_adapter</code> already passes it). Then treat it any way in Filter.</p>
+      </div>
+    </div></div><div class="colcap"><b>“Add your image”</b> · 6 sources</div></div>
+
+    <div><div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="card"><div class="photo" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80')"></div><div class="scrim-b"></div></div>
+      <div class="topbar"><div class="btn-done ghost">Cancel</div><div class="seg"><div class="on">Filter</div></div><div class="btn-done">Done</div></div>
+      <div class="epanel"><div class="ph"><b>Filter · any colour</b><span class="x">Reset</span></div>
+        <div class="srcgrid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55')"></div><small>Colour</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp bw" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55')"></div><small>B&amp;W</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55');filter:grayscale(1) brightness(.8)"></div><div style="position:absolute;inset:0;background:var(--volt);mix-blend-mode:color;opacity:.6"></div><small>Volt duo</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55');filter:grayscale(1) brightness(.8)"></div><div style="position:absolute;inset:0;background:var(--orange);mix-blend-mode:color;opacity:.6"></div><small>Orange</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55');filter:grayscale(1) brightness(.8)"></div><div style="position:absolute;inset:0;background:var(--cyan);mix-blend-mode:color;opacity:.6"></div><small>Cyan</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55');filter:contrast(1.3) saturate(1.3)"></div><small>Punch</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55');filter:sepia(.5)"></div><small>Fade</small></div>
+          <div class="src ph" style="aspect-ratio:.8"><div class="pp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=120&q=55')"></div><div style="position:absolute;inset:0;box-shadow:inset 0 0 30px 14px #000"></div><small>Vignette</small></div>
+        </div>
+        <div class="arow" style="margin-top:12px"><div class="al">Intensity</div><div class="track"><div class="fill" style="width:60%"></div><div class="knob" style="left:60%"></div></div></div>
+      </div>
+    </div></div><div class="colcap"><b>Filter</b> · colour duotones, not just B&amp;W</div></div>
+
+  </div>
+
+  <!-- 03 TREATMENT RANGE -->
+  <div class="section-label"><span class="n">03</span> Treatment range — “is B&amp;W the only thing?” No.</div>
+  <p class="section-sub">The same card, eight ways. Photo treatment is just one control among many — colour, any-hue duotone, gradient, and solid all live in the editor.</p>
+  <div class="range">
+    <div class="rcard"><div class="rp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&q=70')"></div><div class="scrim-b"></div><div class="rt">Friday</div><div class="rl">Colour photo</div></div>
+    <div class="rcard"><div class="rp bw" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&q=70')"></div><div class="scrim-b"></div><div class="rt">Friday</div><div class="rl">B&amp;W</div></div>
+    <div class="rcard"><div class="rp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&q=70');filter:grayscale(1) brightness(.8)"></div><div style="position:absolute;inset:0;background:var(--volt);mix-blend-mode:color;opacity:.6"></div><div class="rt" style="color:#0b0b0b">Friday</div><div class="rl">Duotone · volt</div></div>
+    <div class="rcard"><div class="rp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&q=70');filter:grayscale(1) brightness(.8)"></div><div style="position:absolute;inset:0;background:var(--magenta);mix-blend-mode:color;opacity:.55"></div><div class="rt" style="color:#fff">Friday</div><div class="rl">Duotone · magenta</div></div>
+    <div class="rcard"><div class="rp" style="background-image:url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=300&q=70');filter:saturate(1.4) contrast(1.2)"></div><div class="scrim-b"></div><div class="rt" style="color:var(--cyan)">Friday</div><div class="rl">Vivid colour</div></div>
+    <div class="rcard"><div class="rp" style="background:linear-gradient(160deg,#3a1d6e,#0b0712)"></div><div class="rt" style="color:var(--violet)">Friday</div><div class="rl">Gradient</div></div>
+    <div class="rcard"><div class="rp" style="background:var(--volt)"></div><div class="rt" style="color:#0b0b0b">Friday</div><div class="rl">Solid · volt</div></div>
+    <div class="rcard"><div class="rp" style="background:#0d0e12"></div><div class="rp grain"></div><div class="rt">Friday</div><div class="rl">Solid + grain</div></div>
+  </div>
+
+  <!-- 03b BACKGROUND LIBRARY -->
+  <div class="section-label"><span class="n">★</span> Background library — saved to /backgrounds + a note on graphs</div>
+  <p class="section-sub">A curated stock-background pack ships with the editor, saved to <code>backgrounds/workout</code> + <code>backgrounds/nutrition</code> (22 to start, trivially extended — drop more files in). Used by the “Backgrounds” photo source. And to answer it directly: <b>the Graph cards render real, data-driven charts</b> (CustomPaint from your sets/volume/muscles — verified in <code>strength_radar</code>, <code>volume_bars</code>, <code>weight_graph</code>, <code>activity_rings</code>), not static art. The mini-charts in the catalog below are just stand-ins.</p>
+  <div class="bgwrap">
+    <div class="bggrp"><div class="ch"><i style="background:var(--volt)"></i>Workout · 12</div><div class="bggrid" id="bgWork"></div></div>
+    <div class="bggrp"><div class="ch"><i style="background:var(--orange)"></i>Nutrition · 10</div><div class="bggrid" id="bgFood"></div></div>
+  </div>
+
+  <!-- 04 FULL CATALOG -->
+  <div class="section-label"><span class="n">04</span> The full catalog — all 113, by kind &amp; category</div>
+  <p class="section-sub">Every shipping template, split <b>Workout &amp; Stats (51)</b> vs <b>Nutrition (62)</b>, grouped by the real categories. Workout cards bind workout photos + lift/stat modules; nutrition cards bind food photos + macro modules. All editable in the Studio + Editor (tap ✎).</p>
+  <div class="cattabs">
+    <button id="tabNew" class="cattab on">✦ Redesigned direction</button>
+    <button id="tabOld" class="cattab">▢ What we have today · 113 real renders</button>
+  </div>
+  <p class="section-sub" id="modenote" style="margin-top:-8px"></p>
+  <div class="catlegend" id="legend"></div>
+  <div id="catalog"></div>
+
+  <div class="notes">
+    <div class="callout"><div class="ix">⊞</div><div><b>Food vs Workout is the data layer</b><small>A template’s <code>kind</code> decides which modules + photo it binds — same art direction, right content.</small></div></div>
+    <div class="callout"><div class="ix">▦</div><div><b>Categories carry intent</b><small>Cards (clean), Editorial (type-led), Playful (fun), Graph (data-viz), Spark (AI), Studio (photo-forward).</small></div></div>
+    <div class="callout"><div class="ix">▭</div><div><b>Three ratios, one layout</b><small>Each template reflows for 9:16 / 4:5 / 1:1 — no separate art per ratio.</small></div></div>
+    <div class="callout"><div class="ix">◉</div><div><b>Your photo, any treatment</b><small>Camera, library, your workout shot, AI backdrop, stock, or solid/gradient — then colour/duotone/B&amp;W/grain.</small></div></div>
+  </div>
+
+  <footer>
+    <b>Mockup notes.</b> Static HTML for sign-off — no Dart yet. The 113 thumbnails below are the real catalog (IDs + categories pulled from <code>shareable_catalog.dart</code>), each shown in the new art direction with category-tinted treatments to convey coverage + grouping (the hand-finished quality bar is sections 01–03). On approval: bundle the type system, build the layer model + editor surface (incl. the existing Ratio/Background/Style/Watermark/Photo tools), migrate all 113, wire Studio + Variations.
+  </footer>
+
+</div>
+
+<script>
+  const C = {classic:['#9aa0aa','Cards · Clean'],rich:['#9aa0aa','Cards · Rich'],editorial:['#D8FF3A','Editorial'],playful:['#F0429A','Playful'],graph:['#22D3EE','Graph'],spark:['#A78BFA','Spark · AI'],studio:['#F97316','Studio · Photo']};
+  const GYM=['1534438327276-14e5300c3a48','1517836357463-d25dfeac3438','1571019613454-1cb2f99b2d8b','1583454110551-21f2fa2afe61','1605296867304-46d5465a13f1','1574680096145-d05b474e2155'];
+  const FOOD=['1546069901-ba9599a7e63c','1512621776951-a57141f2eefd','1490645935967-10de6ba17061','1467003909585-2f8a72700288','1540189549336-e6e99c3679fe','1559054663-e8d23213f55c'];
+  const ACC=['var(--volt)','var(--orange)','var(--cyan)','var(--magenta)','var(--violet)','#fff'];
+  // [templateId, label, category] — exact catalog order; id = golden filename
+  const WORK=[['activityOverview','Overview','classic'],['minimal','Minimal','classic'],['wrapped','Wrapped','editorial'],['news','News','editorial'],['receipt','Receipt','rich'],['tradingCard','Card','rich'],['statGrid','Grid','rich'],['streakFire','Streak','playful'],['prs','PRs','playful'],['weeklyReport','Weekly Bars','graph'],['levelUp','Level Up','playful'],['elite','Elite','playful'],['workoutDetails','Workout','rich'],['workoutMuscleCard','Muscles','rich'],['workoutProgram','Program','rich'],['workoutSummary','Watch Summary','rich'],['dailyWorkoutCard','Day','rich'],['weeklyPlanGrid','Week Grid','rich'],['monthlyPlanGrid','Month Grid','rich'],['magazineCover','Cover','editorial'],['widget','Widget','classic'],['achievementHero','Trophy','playful'],['calendarHeatmap','Heatmap','graph'],['activityRings','Rings','graph'],['polaroid','Polaroid','playful'],['quote','Quote','editorial'],['chatBubble','iMessage','playful'],['statBrag','Brag','classic'],['exerciseShowcase','Showcase','rich'],['boardingPass','Boarding','editorial'],['nowPlaying','Now Playing','classic'],['coachReview','Coach Review','spark'],['smartInsight','Insight','graph'],['prPrediction','Projection','graph'],['workoutScore','Score','graph'],['muscleMap','Muscle Map','spark'],['weightGraph','Weight Trend','graph'],['volumeBars','Volume Bars','graph'],['strengthRadar','Radar','graph'],['photoStats','Stat Overlay','studio'],['photoQuote','Quote Overlay','studio'],['photoBeforeAfter','Before / After','studio'],['photoSplit','Split','studio'],['photoMagazine','Cover Story','studio'],['photoLockscreen','Lockscreen','studio'],['discord','Discord','editorial'],['instagramStory','IG Story','playful'],['vinyl','Vinyl','playful'],['passport','Passport','editorial'],['oneRm','1RM','graph'],['tradingCardGold','Gold Card','playful']];
+  const FOODT=[['foodPhotoMacros','Photo','studio'],['foodPolaroid','Polaroid','playful'],['foodMagazine','Cover','editorial'],['foodCollage','Collage','studio'],['macroRingsCard','Rings','classic'],['macroNumbersCard','Numbers','classic'],['macroPieCard','Pie','classic'],['macroPlateCard','Plate','classic'],['whatIAteCard','What I Ate','classic'],['macroWaffleCard','Waffle','graph'],['macroBarsCard','Bars','graph'],['nutritionFactsCard','Facts','editorial'],['foodReceipt','Receipt','editorial'],['foodScoreCard','Score','playful'],['macroReceipt','Macro Receipt','editorial'],['mealTradingCard','Card','playful'],['wrappedCalorie','Wrapped','playful'],['plateSpotlight','Spotlight','classic'],['macroDonutHero','Donut','classic'],['mealBoardingPass','Pass','playful'],['thisOrThat','This or That','playful'],['mealNewspaper','News','editorial'],['macroTierList','Tier List','playful'],['beforeAfterPlate','Before/After','playful'],['statStripPhoto','Stat Strip','classic'],['mealStreak','Streak','playful'],['recipeCard','Recipe','editorial'],['goalProgressBars','Goals','classic'],['dayInMeals','Day Grid','classic'],['minimalQuoteMeal','Quote','classic'],['mealScoreboard','Scoreboard','playful'],['mealPassport','Passport','playful'],['calorieCalendar','Calendar','classic'],['mealCoupon','Coupon','playful'],['mealIdBadge','ID Badge','playful'],['neonMeal','Neon','playful'],['meshBigNumber','Big Number','classic'],['macroSplitBlock','Split','classic'],['candidMeal','Candid','playful'],['mealTimeline','Timeline','classic'],['snackPlate','Snack Plate','playful'],['mealRating','Rating','playful'],['povMeal','POV','playful'],['proteinHero','Protein','classic'],['calorieGauge','Gauge','classic'],['macroSparkline','Trend','graph'],['macroCompare','Compare','graph'],['macroDashboard','Dashboard','classic'],['macroExport','Export','editorial'],['mealMeme','Meme','playful'],['mealAchievement','Unlocked','playful'],['mealChat','Chat','playful'],['mealReview','Review','playful'],['mealTabloid','Tabloid','editorial'],['candyHeart','Candy','playful'],['mealFlatLay','Flat Lay','editorial'],['editorialSplit','Editorial','editorial'],['swissGrid','Swiss','editorial'],['duotonePoster','Duotone','editorial'],['softCard','Soft','classic'],['dinerMenu','Diner','editorial'],['cassetteMeal','Cassette','playful']];
+  const CATORDER=['classic','rich','editorial','playful','graph','spark','studio'];
+
+  const EMO=['🏆','🔥','💪','⚡','📈','🥇','⭐','🎯','🎉','🏅','✨','🚀'];
+  function localBg(kind,i){const n=kind==='food'?(i%10)+1:(i%12)+1;const d=kind==='food'?'nutrition':'workout';return 'backgrounds/'+d+'/bg-'+String(n).padStart(2,'0')+'.jpg';}
+  function numOf(label){const m=label.match(/\d+/);return m?m[0]:label.split(' ')[0].slice(0,4).toUpperCase();}
+  function thumbNew(label,cat,i,kind){
+    const acc=ACC[i%ACC.length];
+    const bg=localBg(kind,i);
+    let inner='';
+    if(cat==='studio'||cat==='editorial'){
+      // photo-forward, using the saved background library; rotate treatment
+      const t=i%3; const treat=t===2?'filter:grayscale(1) contrast(1.05)':'';
+      const duo=t===1?`<div class="tov" style="background:${acc};mix-blend-mode:color;opacity:.5"></div>`:'';
+      inner=`<div class="tp" style="background-image:url('${bg}');${treat}"></div>${duo}`+
+        `<div class="tov" style="background:linear-gradient(to top,rgba(0,0,0,.9),transparent 55%)"></div>`+
+        (cat==='editorial'?`<div style="position:absolute;left:7px;bottom:22px;font-family:Anton;font-size:17px;line-height:.85;color:${acc};text-transform:uppercase;z-index:2">${label.split(' ')[0]}</div>`:'');
+    } else if(cat==='graph'){
+      // real-looking mini chart, 3 variants — these are data-driven (CustomPaint) in-app
+      const v=i%3;
+      let chart;
+      if(v===0){ // bars
+        chart=`<div class="tov" style="display:flex;align-items:flex-end;gap:3px;padding:18px 9px 22px"><i style="flex:1;height:40%;background:${acc};opacity:.45;border-radius:2px 2px 0 0"></i><i style="flex:1;height:68%;background:${acc};opacity:.7;border-radius:2px 2px 0 0"></i><i style="flex:1;height:52%;background:${acc};opacity:.55;border-radius:2px 2px 0 0"></i><i style="flex:1;height:92%;background:${acc};border-radius:2px 2px 0 0"></i><i style="flex:1;height:60%;background:${acc};opacity:.6;border-radius:2px 2px 0 0"></i></div>`;
+      } else if(v===1){ // ring
+        chart=`<div class="tov" style="display:grid;place-items:center"><svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="23" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="6"/><circle cx="29" cy="29" r="23" fill="none" stroke="${acc}" stroke-width="6" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="40" transform="rotate(-90 29 29)"/></svg></div>`;
+      } else { // line
+        chart=`<div class="tov" style="display:grid;place-items:center;padding:14px"><svg width="86" height="56" viewBox="0 0 86 56"><polyline points="2,46 18,34 34,38 50,18 68,22 84,6" fill="none" stroke="${acc}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="84" cy="6" r="3" fill="${acc}"/></svg></div>`;
+      }
+      inner=`<div class="tov" style="background:linear-gradient(160deg,#0f1620,#070709)"></div>${chart}<div class="tnum" style="color:${acc};font-size:15px">${numOf(label)}</div>`;
+    } else if(cat==='playful'){
+      const emo=EMO[i%EMO.length]; const bright=i%2===0;
+      inner=`<div class="tov" style="background:${bright?acc:'#15131c'}"></div>`+
+        `<div class="tov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><div style="font-size:25px">${emo}</div>`+
+        `<div style="font-family:Anton;font-size:21px;line-height:.8;color:${bright?'#0b0b0b':acc}">${numOf(label)}</div></div>`;
+    } else if(cat==='spark'){
+      inner=`<div class="tov" style="background:radial-gradient(120% 85% at 50% 32%,#1b1430,#070709)"></div>`+
+        `<div class="tov" style="background:radial-gradient(70% 50% at 50% 30%,${acc},transparent 70%);opacity:.28"></div>`+
+        `<div class="tov" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><div style="font-size:22px;color:${acc}">✦</div><div style="height:4px;width:46%;background:rgba(255,255,255,.18);border-radius:3px"></div><div style="height:4px;width:34%;background:${acc};opacity:.6;border-radius:3px"></div></div>`;
+    } else { // classic / rich → mini stat card
+      inner=`<div class="tov" style="background:linear-gradient(160deg,#14161c,#0a0b0e)"></div>`+
+        `<div class="tov" style="padding:13px 9px;display:flex;flex-direction:column;gap:5px;justify-content:center"><div style="font-family:Anton;font-size:23px;line-height:.8;color:${acc}">${numOf(label)}</div>`+
+        `<div style="height:5px;width:72%;background:rgba(255,255,255,.15);border-radius:3px;margin-top:4px"></div><div style="height:5px;width:52%;background:rgba(255,255,255,.1);border-radius:3px"></div><div style="height:5px;width:62%;background:${acc};opacity:.5;border-radius:3px"></div></div>`;
+    }
+    return `<div class="t"><span class="tcat" style="background:${C[cat][0]};z-index:3"></span>${inner}<div class="te"><svg viewBox="0 0 24 24"><path d="M4 20l4-1L18 9l-3-3L5 16z"/></svg></div><div class="tl">${label}</div></div>`;
+  }
+
+  function thumbOld(id,label,cat){
+    return `<div class="t tcur"><span class="tcat" style="background:${C[cat][0]};z-index:3"></span>`+
+      `<img loading="lazy" src="current-templates/${id}.png" onerror="this.closest('.t').classList.add('miss')"/>`+
+      `<div class="tl">${label}</div></div>`;
+  }
+
+  function group(list,kind,mode){
+    let html='';
+    for(const cat of CATORDER){
+      const items=list.map((x,i)=>[x[0],x[1],x[2],i]).filter(x=>x[2]===cat);
+      if(!items.length) continue;
+      html+=`<div class="catgrp"><div class="ch"><i style="background:${C[cat][0]}"></i>${C[cat][1]} · ${items.length}</div><div class="tgrid">`+
+        items.map(it=>mode==='old'?thumbOld(it[0],it[1],it[2]):thumbNew(it[1],it[2],it[3],kind)).join('')+`</div></div>`;
+    }
+    return html;
+  }
+
+  document.getElementById('legend').innerHTML = CATORDER.map(c=>`<span class="clg"><i style="background:${C[c][0]}"></i>${C[c][1]}</span>`).join('');
+
+  const NOTE={
+    new:'Each of the 113 in the new art direction (category-tinted treatments convey grouping; sections 01–03 are the hand-finished quality bar).',
+    old:'Actual current renders of all 113 (offline harness: photo-backed cards show a grey placeholder — production binds the real photo — and a few emoji glyphs box). Note the underline-on-everything and dead space the redesign removes.'
+  };
+  function render(mode){
+    document.getElementById('modenote').textContent = NOTE[mode];
+    document.getElementById('catalog').innerHTML =
+      `<div class="kindhd"><h2>Workout &amp; <em>Stats</em></h2><span>51 templates</span></div>`+group(WORK,'work',mode)+
+      `<div class="kindhd"><h2><em>Nutrition</em></h2><span>62 templates</span></div>`+group(FOODT,'food',mode);
+  }
+  const tN=document.getElementById('tabNew'), tO=document.getElementById('tabOld');
+  tN.onclick=()=>{tN.classList.add('on');tO.classList.remove('on');render('new');};
+  tO.onclick=()=>{tO.classList.add('on');tN.classList.remove('on');render('old');};
+  render('new');
+
+  function bgGrid(el,dir,n){let h='';for(let k=1;k<=n;k++){h+=`<div class="bgt"><img loading="lazy" src="backgrounds/${dir}/bg-${String(k).padStart(2,'0')}.jpg"/></div>`;}document.getElementById(el).innerHTML=h;}
+  bgGrid('bgWork','workout',12); bgGrid('bgFood','nutrition',10);
+</script>
+</body>
+</html>

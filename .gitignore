@@ -124,3 +124,17 @@ docs/planning/redesign-2026-05/backup/
 IMG*.PNG
 
 docs/planning/redesign-2026-06/backup/
+
+# Generated shareable proof renders + downloaded source assets (~700MB,
+# reproducible from proofs.html / the render pipeline — never belongs in git
+# history). The small HTML proofs + design .md stay tracked as the references.
+docs/planning/redesign-2026-06/backgrounds/
+docs/planning/redesign-2026-06/current-templates/
+docs/planning/redesign-2026-06/exercises/
+docs/planning/redesign-2026-06/muscles/
+docs/planning/redesign-2026-06/previews/
+docs/planning/redesign-2026-05/previews/
+docs/planning/redesign-2026-05/backgrounds/
+
+# Playwright MCP scratch output
+.playwright-mcp/
