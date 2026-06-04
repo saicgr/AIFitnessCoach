@@ -442,6 +442,26 @@ List<RouteBase> _workoutRoutes() => [
         builder: (context, state) => const XPLeaderboardScreen(),
       ),
 
+      // Streaks — dedicated hub (big streak number, weekly momentum, 2×2 stat
+      // grid, leaderboard). Gravl-parity "Streaks have a new home".
+      GoRoute(
+        path: '/streaks',
+        builder: (context, state) => const StreaksScreen(),
+      ),
+
+      // Streak Freeze — polished home for our passive auto-protect freezes
+      // (banked/armed tiles + earn-progress). Reached from the streaks hub.
+      GoRoute(
+        path: '/streak-freeze',
+        builder: (context, state) => const StreakFreezeScreen(),
+      ),
+
+      // What's New — feature-spotlight carousel announcing the redesign.
+      GoRoute(
+        path: '/whats-new',
+        builder: (context, state) => const WhatsNewScreen(),
+      ),
+
       // Rewards - Claim gifts and rewards
       GoRoute(
         path: '/rewards',

@@ -157,6 +157,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// Ensures the Health Connect popup auto-shows at most once per app session.
   static bool _healthPopupShownThisSession = false;
 
+  /// Ensures the "What's New" spotlight is checked at most once per app session
+  /// (the persistent seen-once flag lives in AppTourController).
+  static bool _whatsNewCheckedThisSession = false;
+
   /// Perf markers (Phase B hook): guards so each PerfTrace mark fires exactly
   /// once. `_markedFirstContent` flips the first time `build()` runs with real
   /// (non-skeleton) content; `_markedInteractive` flips once init completes.
@@ -277,7 +281,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (mounted) {
         maybeShowScoreChangeAnnouncement(context);
       }
+      // One-shot: the Gravl-parity redesign "What's New" spotlight. Gated by a
+      // persistent seen-once flag (AppTourController.hasSeenWhatsNew) so it
+      // shows exactly once after the update, then never again.
+      if (mounted) {
+        _maybeShowWhatsNew();
+      }
     });
+  }
+
+  /// Show the "What's New" spotlight carousel once after the redesign ships.
+  /// Session-guarded (avoids re-hitting prefs on every nav back to home) and
+  /// persistently gated via [AppTourController]. No-op once seen.
+  Future<void> _maybeShowWhatsNew() async {
+    if (_whatsNewCheckedThisSession) return;
+    _whatsNewCheckedThisSession = true;
+    try {
+      final controller = ref.read(appTourControllerProvider.notifier);
+      if (await controller.hasSeenWhatsNew()) return;
+      if (!mounted) return;
+      // Don't stack over an active coach-mark tour.
+      if (ref.read(appTourControllerProvider).isVisible) return;
+      await controller.markWhatsNewSeen();
+      if (!mounted) return;
+      context.push('/whats-new');
+    } catch (e) {
+      debugPrint('⚠️ [Home] What\'s New spotlight skipped: $e');
+    }
   }
 
   /// Auto-refresh workouts if enough time has passed since last refresh

@@ -67,6 +67,29 @@ class AppTourState {
 class AppTourController extends StateNotifier<AppTourState> {
   AppTourController() : super(const AppTourState());
 
+  /// Versioned key gating the one-time "What's New" spotlight. Bump the
+  /// version suffix (e.g. `_v2`) whenever the What's New carousel content
+  /// changes so it re-fires for everyone exactly once. Reuses the same
+  /// SharedPreferences storage as the app tour's "seen" flags.
+  static const String whatsNewVersionKey = 'whats_new_seen_gravl_v1';
+
+  /// Returns true once the user has dismissed the current "What's New"
+  /// carousel (i.e. [whatsNewVersionKey] is set locally). Mirrors the
+  /// SharedPreferences access used by [checkAndShow]/[dismiss].
+  Future<bool> hasSeenWhatsNew() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(whatsNewVersionKey) ?? false;
+  }
+
+  /// Marks the current "What's New" carousel as seen so it won't fire again
+  /// until [whatsNewVersionKey] is bumped. Persists locally (source of truth
+  /// for speed); cloud mirroring isn't needed since the version suffix makes
+  /// the gate self-expiring across content updates.
+  Future<void> markWhatsNewSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(whatsNewVersionKey, true);
+  }
+
   void show(String tourId, List<AppTourStep> steps) {
     if (steps.isEmpty) return;
     state = AppTourState(
