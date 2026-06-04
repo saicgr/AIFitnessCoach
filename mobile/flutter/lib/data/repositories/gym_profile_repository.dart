@@ -209,6 +209,40 @@ class GymProfileRepository {
     }
   }
 
+  /// Activate one-tap Travel Mode (Feature 3B).
+  ///
+  /// Find-or-restore-or-create the user's single bodyweight Travel/Hotel profile
+  /// on the backend, then activate it. Returns the activated profile (same shape
+  /// as [activateProfile]). The backend never creates a duplicate and never
+  /// touches vacation mode.
+  ///
+  /// Backend: POST /gym-profiles/travel-mode/activate?user_id=...
+  Future<ActivateProfileResponse> activateTravelMode(String userId) async {
+    try {
+      debugPrint('🧳 [GymProfile] Activating Travel Mode for user: $userId');
+
+      final response = await _apiClient.post(
+        '$_basePath/travel-mode/activate',
+        queryParameters: {'user_id': userId},
+      );
+
+      if (response.statusCode == 200) {
+        final activateResponse = ActivateProfileResponse.fromJson(
+          response.data as Map<String, dynamic>,
+        );
+        debugPrint(
+            '✅ [GymProfile] Travel Mode active: ${activateResponse.activeProfile.name} '
+            '(isTravelManaged=${activateResponse.activeProfile.isTravelManaged})');
+        return activateResponse;
+      }
+
+      throw Exception('Failed to activate Travel Mode: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('❌ [GymProfile] Error activating Travel Mode: $e');
+      rethrow;
+    }
+  }
+
   /// Reorder gym profiles
   ///
   /// Updates the display order based on the provided list of profile IDs

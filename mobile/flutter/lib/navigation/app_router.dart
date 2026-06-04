@@ -206,6 +206,7 @@ import '../screens/wrapped/wrapped_viewer_screen.dart';
 import '../screens/wrapped/my_wrapped_screen.dart';
 import '../screens/wrapped/weekly_wrapped_screen.dart';
 import '../screens/dashboard/coach_dashboard_screen.dart';
+import '../screens/gym_profile/find_gyms_screen.dart';
 import '../screens/nutrition/recipes/public_recipe_screen.dart';
 
 part 'app_router_workout_routes.dart';

@@ -20,6 +20,13 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const NotificationsScreen(),
       ),
 
+      // Feature 3B — Find gyms near me (community catalog). Leaf route; pushed
+      // (NOT a shell branch root) from the gym switcher's "Find a gym near me".
+      GoRoute(
+        path: '/find-gyms',
+        builder: (context, state) => const FindGymsScreen(),
+      ),
+
       // F5 — Vitamins & minerals detail. Reached from the daily-tab
       // "Vitamins & minerals" entry point and the chat `view_micros`
       // deep-link (?foodLogId=… is optional/informational).

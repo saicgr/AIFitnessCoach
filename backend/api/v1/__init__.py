@@ -92,6 +92,7 @@ from api.v1 import progress_rewards  # Unified rewards aggregator (crates + merc
 from api.v1 import masteries  # Levelled mastery badges (Badge Hub grid)
 from api.v1 import personal_bests  # Personal Bests grid (heaviest lift / longest session / most volume)
 from api.v1 import gym_profiles  # Multi-gym profile system (Robinhood-style switcher)
+from api.v1 import community_gyms  # Community gym catalog + crowdsourced equipment (Feature 3B)
 from api.v1 import xp  # XP events, daily login, streaks, double XP
 from api.v1 import warmup_preferences  # Custom warmup/stretch preferences and pre/post workout routines
 from api.v1 import custom_exercises  # User-defined custom exercises with media upload
@@ -477,6 +478,11 @@ router.include_router(personal_bests.router, tags=["Personal Bests"])
 
 # Multi-gym profile system (Robinhood-style switcher for different gyms/locations)
 router.include_router(gym_profiles.router, prefix="/gym-profiles", tags=["Gym Profiles"])
+
+# Community gym catalog (Feature 3B) — grow-as-you-go gyms keyed by Places
+# place_id + crowdsourced equipment consensus. /community-gyms/nearby,
+# /community-gyms/{place_id}, /community-gyms/{place_id}/adopt, /report.
+router.include_router(community_gyms.router, prefix="/community-gyms", tags=["Community Gyms"])
 
 # XP events, daily login, streaks, double XP multipliers
 router.include_router(xp.router, tags=["XP & Progression"])

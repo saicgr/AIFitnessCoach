@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/models/quick_action.dart';
 import '../../../../data/providers/content_catalogs_provider.dart';
+import '../../../../data/providers/gym_profile_provider.dart';
+import '../../../../data/providers/today_workout_provider.dart';
+import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../../../workout/widgets/equipment_snap_flow.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
+
+/// SharedPreferences key storing the gym profile id that was active BEFORE the
+/// user entered Travel Mode, so a future "back to my gym" affordance can restore
+/// it. Written by the travel_mode quick action (Feature 3B).
+const String kPreTravelActiveGymIdPrefKey = 'pre_travel_active_gym_id';
 
 /// Shared launch dispatch for quick-action IDs.
 ///
@@ -107,6 +116,41 @@ Future<bool> launchQuickAction(
           showLogMealSheet(context, ref, autoOpenMenuScan: true);
         }
       });
+      return true;
+    case 'travel_mode':
+      HapticService.medium();
+      try {
+        // Remember the pre-travel active gym so the user can return to it later.
+        final priorGymId = ref.read(activeGymProfileIdProvider);
+        if (priorGymId != null) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(kPreTravelActiveGymIdPrefKey, priorGymId);
+        }
+
+        final travel =
+            await ref.read(gymProfilesProvider.notifier).activateTravelMode();
+
+        // Mirror the gym switcher's post-activate refresh so Today/Workouts
+        // regenerate against bodyweight immediately.
+        TodayWorkoutNotifier.resetGenerationState();
+        clearScreenSummaryCache();
+        ref.invalidate(todayWorkoutProvider);
+        ref.invalidate(workoutsProvider);
+        ref.invalidate(workoutScreenSummaryProvider);
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${travel.name} on. Bodyweight workouts ready.')),
+          );
+        }
+      } catch (e) {
+        debugPrint('❌ [QuickActionLauncher] Travel Mode failed: $e');
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Couldn't switch to Travel Mode. Please try again.")),
+          );
+        }
+      }
       return true;
     case 'workout':
       HapticService.light();

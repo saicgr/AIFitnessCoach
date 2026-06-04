@@ -77,7 +77,15 @@ class GymProgressFilter extends ConsumerWidget {
     final liveOptions = options.where((o) => !o.isArchived).toList();
     final archivedOptions = options.where((o) => o.isArchived).toList();
 
-    return SizedBox(
+    // F3B — when a travel/bodyweight gym is selected, surface a one-line caption
+    // that its bodyweight progress is pooled across gyms (not gym-specific).
+    final selectedGymId = selection.isAllGyms ? null : selection.gymProfileId;
+    final selectedIsBodyweight = selectedGymId != null &&
+        _isBodyweightGym(
+          allProfiles.where((p) => p.id == selectedGymId).firstOrNull,
+        );
+
+    final chipRow = SizedBox(
       height: 40,
       child: ListView(
         scrollDirection: Axis.horizontal,
@@ -117,6 +125,51 @@ class GymProgressFilter extends ConsumerWidget {
         ],
       ),
     );
+
+    if (!selectedIsBodyweight) return chipRow;
+
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        chipRow,
+        Padding(
+          padding: padding.add(const EdgeInsets.only(top: 6, bottom: 2)),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.all_inclusive_rounded,
+                  size: 13, color: colorScheme.onSurfaceVariant),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  'Bodyweight is combined across gyms',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// True when a gym profile's progress is the universal bodyweight set: the
+  /// dedicated Travel profile, or a hotel/home/outdoor profile with only
+  /// portable equipment. Null profile → false.
+  static bool _isBodyweightGym(GymProfile? profile) {
+    if (profile == null) return false;
+    if (profile.isTravelManaged) return true;
+    final env = profile.workoutEnvironment.toLowerCase();
+    if (!{'hotel', 'home', 'outdoors'}.contains(env)) return false;
+    final equipment = profile.equipment.map((e) => e.toLowerCase()).toSet();
+    if (equipment.isEmpty) return true;
+    const portable = {'bodyweight', 'resistance_bands', 'pull_up_bar'};
+    return equipment.every(portable.contains);
   }
 }
 

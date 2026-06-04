@@ -76,6 +76,10 @@ class GymProfileBase(BaseModel):
     goals: List[str] = Field(default=[], description="Profile-specific goals (overrides user goals if set)")
     focus_areas: List[str] = Field(default=[], description="Focus muscle areas")
 
+    # Travel Mode (Feature 3B). Defaults False; only the travel-mode endpoint
+    # sets it. Additive — ordinary create/edit flows never touch it.
+    is_travel_managed: bool = Field(default=False, description="True for the one-tap bodyweight Travel/Hotel profile (at most one per user)")
+
 
 class GymProfileCreate(GymProfileBase):
     """Request model for creating a gym profile."""
@@ -137,6 +141,11 @@ class GymProfile(GymProfileBase):
     # Ordering and state
     display_order: int = 0
     is_active: bool = False
+
+    # Travel Mode (Feature 3B): TRUE for the single per-user bodyweight
+    # Travel/Hotel profile activated via POST /gym-profiles/travel-mode/activate.
+    # At most one per user (partial unique index, migration 2243).
+    is_travel_managed: bool = False
 
     # Soft-delete (Gravl B-series): non-null = archived. Archived gyms are
     # hidden from pickers/generation but keep their history attributed and

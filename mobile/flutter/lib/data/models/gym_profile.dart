@@ -94,6 +94,10 @@ class GymProfile extends Equatable {
   final int displayOrder;
   @JsonKey(name: 'is_active')
   final bool isActive;
+  // Travel Mode (Feature 3B): true for the single per-user bodyweight
+  // Travel/Hotel profile. Drives bodyweight-combined copy in the UI.
+  @JsonKey(name: 'is_travel_managed')
+  final bool isTravelManaged;
   @JsonKey(name: 'created_at')
   final String? createdAt;
   @JsonKey(name: 'updated_at')
@@ -131,6 +135,7 @@ class GymProfile extends Equatable {
     this.programCustomName,
     this.displayOrder = 0,
     this.isActive = false,
+    this.isTravelManaged = false,
     this.createdAt,
     this.updatedAt,
   });
@@ -257,6 +262,7 @@ class GymProfile extends Equatable {
     String? programCustomName,
     int? displayOrder,
     bool? isActive,
+    bool? isTravelManaged,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -292,6 +298,7 @@ class GymProfile extends Equatable {
       programCustomName: programCustomName ?? this.programCustomName,
       displayOrder: displayOrder ?? this.displayOrder,
       isActive: isActive ?? this.isActive,
+      isTravelManaged: isTravelManaged ?? this.isTravelManaged,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -330,6 +337,7 @@ class GymProfile extends Equatable {
         programCustomName,
         displayOrder,
         isActive,
+        isTravelManaged,
         createdAt,
         updatedAt,
       ];

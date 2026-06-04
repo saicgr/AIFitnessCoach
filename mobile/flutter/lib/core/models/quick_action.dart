@@ -16,6 +16,10 @@ enum QuickActionBehavior {
   // Issue 2: opens EquipmentSnapFlow in identify mode → success routes to
   // chat with the photo attached and identify_equipment tool already running.
   identifyEquipment,
+  // F3B: one-tap Travel Mode — activates the bodyweight Travel/Hotel gym
+  // profile (find-or-restore-or-create on the backend), then invalidates the
+  // workout providers so Today/Workouts regenerate against bodyweight.
+  travelMode,
 }
 
 class QuickAction {
@@ -277,6 +281,16 @@ const quickActionRegistry = <String, QuickAction>{
     color: Color(0xFF06B6D4),
     behavior: QuickActionBehavior.identifyEquipment,
   ),
+  // F3B: one-tap Travel Mode. Lives in the More overflow by default (pinnable
+  // via the customize sheet). Switches the active gym to the bodyweight
+  // Travel/Hotel profile so workouts work in any hotel room.
+  'travel_mode': QuickAction(
+    id: 'travel_mode',
+    label: 'Travel Mode',
+    icon: Icons.hotel_outlined,
+    color: Color(0xFFF59E0B),
+    behavior: QuickActionBehavior.travelMode,
+  ),
 };
 
 // Home shortcut bar layout (home-v27 redesign — `CompactQuickActionsRow`):
@@ -310,6 +324,10 @@ const defaultQuickActionOrder = [
   'share_plan',
   // Issue 2: discoverable in More sheet only.
   'identify_equipment',
+  // F3B: Travel Mode — More-only by default, pinnable. Sits in the overflow
+  // region (after identify_equipment, before chat); never displaces the
+  // protected primary slots (slot 9 = scan_menu, slot 10 = More).
+  'travel_mode',
   // 'chat' kept in the catalog for users who want to re-pin it.
   'chat',
 ];

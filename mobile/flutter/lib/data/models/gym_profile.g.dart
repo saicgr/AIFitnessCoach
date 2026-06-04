@@ -51,6 +51,7 @@ GymProfile _$GymProfileFromJson(Map<String, dynamic> json) => GymProfile(
   programCustomName: json['program_custom_name'] as String?,
   displayOrder: (json['display_order'] as num?)?.toInt() ?? 0,
   isActive: json['is_active'] as bool? ?? false,
+  isTravelManaged: json['is_travel_managed'] as bool? ?? false,
   createdAt: json['created_at'] as String?,
   updatedAt: json['updated_at'] as String?,
 );
@@ -85,6 +86,7 @@ Map<String, dynamic> _$GymProfileToJson(GymProfile instance) =>
       'program_custom_name': instance.programCustomName,
       'display_order': instance.displayOrder,
       'is_active': instance.isActive,
+      'is_travel_managed': instance.isTravelManaged,
       'created_at': instance.createdAt,
       'updated_at': instance.updatedAt,
     };

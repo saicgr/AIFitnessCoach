@@ -16,6 +16,7 @@ ENDPOINTS:
 - GET  /api/v1/gym-profiles/active - Get user's currently active profile
 """
 from .gym_profiles_endpoints import router as _endpoints_router
+from .gym_profiles_endpoints import travel_router as _travel_router
 
 import asyncio
 from datetime import datetime
@@ -44,6 +45,12 @@ from core.exceptions import safe_internal_error
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Feature 3B: register the LITERAL /travel-mode/activate route FIRST so it is
+# matched before the dynamic /{profile_id}/activate route (in _endpoints_router,
+# included at the bottom of this file). Starlette matches in registration order;
+# without this, POST /travel-mode/activate would resolve as {profile_id}="travel-mode".
+router.include_router(_travel_router)
 
 _COACH_COLORS = {
     "coach_mike": "#FF9800",    # Orange
@@ -103,6 +110,7 @@ def row_to_gym_profile(row: dict) -> GymProfile:
         program_custom_name=row.get("program_custom_name"),
         display_order=row.get("display_order", 0),
         is_active=row.get("is_active", False),
+        is_travel_managed=row.get("is_travel_managed", False),
         archived_at=row.get("archived_at"),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),

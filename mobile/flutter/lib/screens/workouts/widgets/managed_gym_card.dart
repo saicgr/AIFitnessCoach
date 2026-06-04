@@ -167,9 +167,35 @@ class ManagedGymCard extends ConsumerWidget {
               cardBorder: cardBorder,
               textSecondary: textSecondary,
             ),
+          // F3B — when on the Travel/bodyweight gym (or a bodyweight-only
+          // hotel/home/outdoor profile), reassure that bodyweight progress is
+          // pooled across every gym (it isn't fragmented per-location).
+          if (activeProfile != null &&
+              _showsBodyweightCombinedChip(activeProfile))
+            _BodyweightCombinedChip(
+              tint: tint,
+              cardBorder: cardBorder,
+              textSecondary: textSecondary,
+            ),
         ],
       ),
     );
+  }
+
+  /// True when the active gym's bodyweight progress is combined across gyms:
+  /// the dedicated Travel profile, OR a hotel/home/outdoor profile whose
+  /// equipment is the universal bodyweight set (so its lifts aren't gym-specific).
+  static bool _showsBodyweightCombinedChip(dynamic activeProfile) {
+    if (activeProfile.isTravelManaged == true) return true;
+    final env = (activeProfile.workoutEnvironment as String).toLowerCase();
+    if (!{'hotel', 'home', 'outdoors'}.contains(env)) return false;
+    final equipment = (activeProfile.equipment as List)
+        .map((e) => e.toString().toLowerCase())
+        .toSet();
+    if (equipment.isEmpty) return true; // nothing but bodyweight available
+    // Combined when every item is a universally-portable bodyweight item.
+    const portable = {'bodyweight', 'resistance_bands', 'pull_up_bar'};
+    return equipment.every(portable.contains);
   }
 
   /// Renders the gym profile icon. Profiles store either an emoji or a
@@ -209,6 +235,52 @@ class ManagedGymCard extends ConsumerWidget {
       return '$env · no equipment added yet';
     }
     return '$env · $equipmentCount equipment item${equipmentCount == 1 ? '' : 's'}';
+  }
+}
+
+/// Small reassurance chip at the foot of the Managed Gym card (Feature 3B).
+///
+/// Shown when the active gym is the bodyweight Travel profile (or a portable
+/// hotel/home/outdoor profile): bodyweight numbers are pooled across every gym,
+/// not fragmented per location.
+class _BodyweightCombinedChip extends StatelessWidget {
+  final Color tint;
+  final Color cardBorder;
+  final Color textSecondary;
+
+  const _BodyweightCombinedChip({
+    required this.tint,
+    required this.cardBorder,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Divider(height: 1, thickness: 1, color: cardBorder),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              Icon(Icons.all_inclusive_rounded, size: 16, color: tint),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Bodyweight progress tracked across all gyms',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textSecondary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 

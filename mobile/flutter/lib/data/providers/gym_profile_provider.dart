@@ -535,6 +535,69 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     }
   }
 
+  /// Whether the currently-active profile is the bodyweight Travel/Hotel
+  /// profile (Feature 3B). Used by UI to surface "bodyweight combined" copy.
+  bool get isTravelManagedActive {
+    final profiles = state.valueOrNull;
+    if (profiles == null) return false;
+    for (final p in profiles) {
+      if (p.isActive) return p.isTravelManaged;
+    }
+    return false;
+  }
+
+  /// One-tap Travel Mode (Feature 3B).
+  ///
+  /// Activates the user's single bodyweight Travel/Hotel profile (the backend
+  /// finds-or-restores-or-creates it). Merges the returned active profile into
+  /// local state exactly like [activateProfile]: demote every other profile,
+  /// and either replace the existing travel row or APPEND it when this is the
+  /// first time the user enters Travel Mode (the new profile won't be in the
+  /// current list yet). Syncs accent + invalidates dependents.
+  Future<GymProfile> activateTravelMode() async {
+    if (_userId == null) {
+      throw StateError('Cannot activate Travel Mode without a signed-in user');
+    }
+    try {
+      debugPrint('🧳 [GymProfileProvider] Activating Travel Mode');
+
+      final response = await _repository.activateTravelMode(_userId);
+      final travel = response.activeProfile;
+
+      state.whenData((profiles) {
+        final exists = profiles.any((p) => p.id == travel.id);
+        final List<GymProfile> newProfiles;
+        if (exists) {
+          newProfiles = profiles.map((p) {
+            if (p.id == travel.id) return travel;
+            return p.copyWith(isActive: false);
+          }).toList();
+        } else {
+          // First Travel Mode activation — the freshly-created profile is not
+          // in the cached list yet. Demote the rest and append it.
+          newProfiles = [
+            ...profiles.map((p) => p.copyWith(isActive: false)),
+            travel,
+          ];
+        }
+        state = AsyncValue.data(newProfiles);
+        _saveToCache(newProfiles);
+      });
+
+      debugPrint('✅ [GymProfileProvider] Travel Mode active: ${travel.name}');
+
+      // Sync accent + refresh profile-dependent workout providers.
+      _syncAccentColor(travel.color);
+      _invalidateWorkoutCaches();
+      _invalidateProfileDependentProviders();
+
+      return travel;
+    } catch (e) {
+      debugPrint('❌ [GymProfileProvider] Error activating Travel Mode: $e');
+      rethrow;
+    }
+  }
+
   /// Reorder profiles
   Future<void> reorderProfiles(List<String> orderedIds) async {
     if (_userId == null) return;

@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/gym_profile.dart';
@@ -9,6 +10,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../gym_profile/widgets/travel_mode_tile.dart';
 import 'add_gym_profile_sheet.dart';
 import 'components/sheet_theme_colors.dart';
 import 'edit_gym_profile_sheet.dart';
@@ -543,6 +545,69 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+
+                    // Feature 3B — one-tap Travel Mode at the top of the picker.
+                    // Self-contained tile: activates the bodyweight Travel/Hotel
+                    // profile, then pops the picker on success.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                      child: TravelModeTile(
+                        onActivated: () {
+                          // Tile already activated + invalidated the workout
+                          // providers; just close the picker. The parent
+                          // switcher reflects the new active gym reactively.
+                          if (Navigator.canPop(context)) {
+                            Navigator.of(context).pop();
+                          }
+                        },
+                      ),
+                    ),
+
+                    // Feature 3B — "Find a gym near me" entry → community catalog.
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(14),
+                          onTap: () {
+                            HapticService.light();
+                            Navigator.of(context).pop();
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              context.push('/find-gyms');
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: colors.glassSurface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: colors.cardBorder),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.travel_explore_rounded,
+                                    color: colors.textSecondary, size: 22),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Text(
+                                    'Find a gym near me',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                                Icon(Icons.chevron_right_rounded,
+                                    color: colors.textMuted, size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
 

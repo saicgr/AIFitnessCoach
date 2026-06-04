@@ -858,3 +858,226 @@ async def reorder_gym_profiles(
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to reorder profiles: {e}", exc_info=True)
         raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+
+
+# =============================================================================
+# TRAVEL MODE — one-tap bodyweight gym (Feature 3B)
+# =============================================================================
+
+# Equipment a travel/hotel workout can rely on anywhere. Decision: keep this
+# minimal + deterministic (bodyweight + bands). NOT a config knob.
+_TRAVEL_EQUIPMENT = ["bodyweight", "resistance_bands"]
+_TRAVEL_PROFILE_NAME = "Travel / Hotel"
+_TRAVEL_PROFILE_ICON = "hotel"
+_TRAVEL_PROFILE_ENV = "hotel"
+# Fallback workout days when neither the active profile nor the user record has
+# a schedule (Mon / Wed / Fri — indices 0/2/4, Mon=0).
+_TRAVEL_DEFAULT_DAYS = [0, 2, 4]
+
+# Dedicated router for the LITERAL /travel-mode/activate path. It is included by
+# gym_profiles.py BEFORE the dynamic /{profile_id}/activate route so Starlette's
+# in-order matching can't swallow "travel-mode" as a {profile_id}. Registering
+# this on the same `router` (after the dynamic activate handler) would let the
+# dynamic route win — hence the separate router.
+travel_router = APIRouter()
+
+
+@travel_router.post("/travel-mode/activate", response_model=ActivateProfileResponse)
+async def activate_travel_mode(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    user_id: str = Query(..., description="User ID"),
+    current_user: dict = Depends(get_current_user),
+):
+    """One-tap Travel Mode: find-or-restore-or-create the user's single
+    bodyweight `is_travel_managed` profile, then activate it.
+
+    Lifecycle (idempotent, NEVER creates a duplicate — guarded by the partial
+    unique index in migration 2243):
+      * Travel profile exists & live  → activate it.
+      * Travel profile exists archived → CLEAR archived_at (restore semantics —
+        does NOT insert a new row), then activate.
+      * No travel profile             → create one (bodyweight + bands, hotel
+        env), then activate.
+
+    The activate path funnels through the SAME side-effects as the normal
+    /{id}/activate handler: deactivate others, set users.active_gym_profile_id,
+    bust today/profile caches, and enqueue a 14-day schedule top-up.
+
+    workout_days are copied from the currently-active profile if it has any,
+    else from the user record's workout_days, else Mon/Wed/Fri.
+
+    DECOUPLED from vacation: this endpoint never reads/writes in_vacation_mode
+    and does NOT bypass the card_context 'paused' card. It emits NO push.
+    """
+    logger.info(f"🧳 [GymProfile] Travel Mode activate requested for user {user_id}")
+
+    try:
+        supabase = get_supabase()
+
+        # Resolve the workout_days to seed onto the travel profile: active
+        # profile's days → user's days → Mon/Wed/Fri.
+        travel_days: list = []
+        active_result = supabase.client.table("gym_profiles") \
+            .select("workout_days") \
+            .eq("user_id", user_id) \
+            .eq("is_active", True) \
+            .is_("archived_at", "null") \
+            .limit(1) \
+            .execute()
+        if active_result.data and (active_result.data[0].get("workout_days") or []):
+            travel_days = list(active_result.data[0]["workout_days"])
+        else:
+            user_result = supabase.client.table("users") \
+                .select("workout_days") \
+                .eq("id", user_id) \
+                .single() \
+                .execute()
+            if user_result.data and (user_result.data.get("workout_days") or []):
+                travel_days = list(user_result.data["workout_days"])
+        if not travel_days:
+            travel_days = list(_TRAVEL_DEFAULT_DAYS)
+
+        now_iso = datetime.utcnow().isoformat()
+
+        # 1) Locate the (single) travel-managed profile, archived or not.
+        travel_result = supabase.client.table("gym_profiles") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .eq("is_travel_managed", True) \
+            .limit(1) \
+            .execute()
+
+        if travel_result.data:
+            travel_profile = travel_result.data[0]
+            travel_id = travel_profile["id"]
+
+            # If archived → restore in place (clear archived_at). Reuse restore
+            # semantics: NO new row.
+            if travel_profile.get("archived_at") is not None:
+                logger.info(f"♻️ [GymProfile] Restoring archived travel profile {travel_id}")
+                supabase.client.table("gym_profiles") \
+                    .update({"archived_at": None, "updated_at": now_iso}) \
+                    .eq("id", travel_id) \
+                    .execute()
+        else:
+            # 2) No travel profile → create one at end of display order.
+            order_result = supabase.client.table("gym_profiles") \
+                .select("display_order") \
+                .eq("user_id", user_id) \
+                .order("display_order", desc=True) \
+                .limit(1) \
+                .execute()
+            max_order = order_result.data[0]["display_order"] if order_result.data else -1
+
+            create_data = {
+                "user_id": user_id,
+                "name": _TRAVEL_PROFILE_NAME,
+                "icon": _TRAVEL_PROFILE_ICON,
+                "color": "#F59E0B",  # amber — matches the Travel Mode quick action
+                "equipment": list(_TRAVEL_EQUIPMENT),
+                "equipment_details": [],
+                "workout_environment": _TRAVEL_PROFILE_ENV,
+                "workout_days": travel_days,
+                "is_travel_managed": True,
+                "display_order": max_order + 1,
+                "is_active": False,
+                "created_at": now_iso,
+                "updated_at": now_iso,
+            }
+            created = supabase.client.table("gym_profiles") \
+                .insert(create_data) \
+                .execute()
+            if not created.data:
+                raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+            travel_id = created.data[0]["id"]
+            logger.info(f"✅ [GymProfile] Created travel profile {travel_id} for user {user_id}")
+
+        # 3) Activate the travel profile — same side-effects as /{id}/activate.
+        # Deactivate all, activate travel, refresh days so a stale create doesn't
+        # leave empty days, point users.active_gym_profile_id at it.
+        supabase.client.table("gym_profiles") \
+            .update({"is_active": False}) \
+            .eq("user_id", user_id) \
+            .execute()
+        supabase.client.table("gym_profiles") \
+            .update({"is_active": True, "workout_days": travel_days, "updated_at": now_iso}) \
+            .eq("id", travel_id) \
+            .execute()
+        supabase.client.table("users") \
+            .update({"active_gym_profile_id": travel_id}) \
+            .eq("id", user_id) \
+            .execute()
+
+        # Reload the activated row for the response.
+        final_result = supabase.client.table("gym_profiles") \
+            .select("*") \
+            .eq("id", travel_id) \
+            .single() \
+            .execute()
+
+        from .gym_profiles import row_to_gym_profile
+        active_profile = row_to_gym_profile(final_result.data)
+        active_profile.is_active = True
+
+        logger.info(f"🧳 [GymProfile] Travel Mode active: '{active_profile.name}' (id {travel_id})")
+
+        # Cache bust + 14-day pre-gen — identical to the normal activate path.
+        try:
+            from api.v1.workouts.today import (
+                invalidate_today_workout_cache,
+                _gym_profile_cache,
+                _user_record_cache,
+                enqueue_schedule_top_up,
+            )
+            await _gym_profile_cache.delete(user_id)
+            await _user_record_cache.delete(user_id)
+            await invalidate_today_workout_cache(user_id, travel_id)
+        except Exception as cache_err:
+            logger.warning(f"[GymProfile] Travel cache invalidation failed (non-fatal): {cache_err}")
+
+        try:
+            from api.v1.workouts.today import enqueue_schedule_top_up
+            db = get_supabase_db()
+            user_tz = resolve_timezone(request, db, user_id)
+            if travel_days:
+                background_tasks.add_task(
+                    enqueue_schedule_top_up,
+                    user_id=user_id,
+                    gym_profile_id=travel_id,
+                    workout_days=travel_days,
+                    user_tz=user_tz,
+                    horizon_days=14,
+                )
+                logger.info(f"📅 [GymProfile] Queued 14-day pre-gen for Travel Mode")
+        except Exception as gen_err:
+            logger.warning(f"[GymProfile] Travel pre-gen enqueue failed (non-fatal): {gen_err}", exc_info=True)
+
+        # user-context analytics event.
+        try:
+            await user_context_service.log_event(
+                user_id=user_id,
+                event_type=EventType.FEATURE_INTERACTION,
+                event_data={
+                    "feature": "gym_profile",
+                    "action": "travel_mode_activated",
+                    "profile_id": travel_id,
+                    "profile_name": active_profile.name,
+                    "equipment": active_profile.equipment,
+                },
+                context={"source": "gym_profiles_api"},
+            )
+        except Exception as log_err:
+            logger.warning(f"[GymProfile] Travel log_event failed (non-fatal): {log_err}")
+
+        return ActivateProfileResponse(
+            success=True,
+            active_profile=active_profile,
+            message="Travel Mode on. Bodyweight workouts ready.",
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GymProfile] Failed to activate Travel Mode: {e}", exc_info=True)
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
