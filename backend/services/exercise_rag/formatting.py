@@ -30,6 +30,13 @@ from .filters import (
 
 logger = get_logger(__name__)
 
+# FEATURE 3A: rep-progression step for bodyweight exercises. With no external load to
+# add, progressive overload on a bodyweight move = more reps. When the user already has
+# history, we target last_reps + this step (capped at max_reps); once they hit the rep
+# ceiling we reset reps near the floor and cue a harder variant. NSCA progression
+# guidance for bodyweight = small rep increments per session; +2 keeps it achievable.
+REPS_PROGRESSION_STEP = 2
+
 
 def detect_unilateral(exercise_name: str, metadata: dict = None) -> bool:
     """
@@ -203,7 +210,56 @@ def format_exercise_for_workout(
         reps = max(reps, 15)
         rest = min(rest, 60)
 
-    # Generate set_targets
+    is_unilateral = detect_unilateral(exercise_name, exercise)
+    is_timed = exercise.get("is_timed", False)
+    hold_seconds = exercise.get("default_hold_seconds")
+
+    # FEATURE 3A: bodyweight rep progression. For a NON-timed bodyweight move with
+    # recorded history (last_reps), progressive overload = more reps: target
+    # min(last_reps + REPS_PROGRESSION_STEP, max_reps). When the user is already at the
+    # rep ceiling, reset to a lower rep range (min_reps + 2) and cue a harder variant so
+    # the engine doesn't stall at "12 reps forever". Weighted exercises are untouched.
+    is_bodyweight_ex = (
+        equipment_type == "bodyweight"
+        or equipment.lower() in ["bodyweight", "body weight", "none", ""]
+    )
+    harder_variant_note: Optional[str] = None
+    if is_bodyweight_ex and not is_timed and strength_history:
+        bw_history = strength_history.get(exercise_name)
+        if not bw_history:
+            for hist_name, hist_data in strength_history.items():
+                if hist_name.lower() == exercise_name.lower():
+                    bw_history = hist_data
+                    break
+        last_reps = None
+        if bw_history:
+            lr = bw_history.get("last_reps")
+            if isinstance(lr, (int, float)) and lr > 0:
+                last_reps = int(lr)
+        if last_reps is not None:
+            if last_reps >= max_reps:
+                # At the ceiling — reset reps low and suggest a harder variation.
+                reps = min(min_reps + 2, max_reps)
+                harder_variant_note = (
+                    f"You've been hitting {last_reps}+ reps on {exercise_name} — time to "
+                    f"progress to a harder variation (e.g. a tougher tempo, deficit range, "
+                    f"or a more advanced version) and rebuild your reps."
+                )
+                logger.info(
+                    f"[BW Progression] {exercise_name} at rep ceiling ({last_reps}>="
+                    f"{max_reps}) — reset to {reps} reps + harder-variant cue"
+                )
+            else:
+                progressed = min(last_reps + REPS_PROGRESSION_STEP, max_reps)
+                if progressed > reps:
+                    logger.info(
+                        f"[BW Progression] {exercise_name}: {reps} -> {progressed} reps "
+                        f"(last={last_reps}, +{REPS_PROGRESSION_STEP})"
+                    )
+                    reps = progressed
+
+    # Generate set_targets (built AFTER any bodyweight rep progression so the target
+    # reps reflect the progressed value).
     set_targets = _build_set_targets(
         sets=sets, reps=reps, starting_weight=starting_weight,
         exercise_type=exercise_type, equipment_type=equipment_type,
@@ -211,12 +267,22 @@ def format_exercise_for_workout(
         goals=goals,
     )
 
-    is_unilateral = detect_unilateral(exercise_name, exercise)
-    is_timed = exercise.get("is_timed", False)
-    hold_seconds = exercise.get("default_hold_seconds")
-
     if is_timed and hold_seconds:
         reps = 1
+
+    # H9: notes are derived from `instructions`. The library has many
+    # rows that share boilerplate first-step text (top note repeated 302×
+    # in pre-fix audit). When `instructions` is a list, join lines; when
+    # it starts with the boilerplate "1. " step-1 form and is short,
+    # keep it but the workout-level dedup post-pass will swap repeats.
+    _notes = (
+        "\n".join(exercise.get("instructions", []))
+        if isinstance(exercise.get("instructions"), list)
+        else (exercise.get("instructions") or "Focus on proper form")
+    )
+    # FEATURE 3A: prepend the harder-variant cue when the user has maxed reps.
+    if harder_variant_note:
+        _notes = f"{harder_variant_note}\n\n{_notes}"
 
     return {
         "name": exercise_name,
@@ -229,16 +295,7 @@ def format_exercise_for_workout(
         "weight_source": weight_source,
         "muscle_group": exercise.get("target_muscle", exercise.get("body_part", "")),
         "body_part": exercise.get("body_part", ""),
-        # H9: notes are derived from `instructions`. The library has many
-        # rows that share boilerplate first-step text (top note repeated 302×
-        # in pre-fix audit). When `instructions` is a list, join lines; when
-        # it starts with the boilerplate "1. " step-1 form and is short,
-        # keep it but the workout-level dedup post-pass will swap repeats.
-        "notes": (
-            "\n".join(exercise.get("instructions", []))
-            if isinstance(exercise.get("instructions"), list)
-            else (exercise.get("instructions") or "Focus on proper form")
-        ),
+        "notes": _notes,
         "gif_url": exercise.get("gif_url", ""),
         "video_url": exercise.get("video_url", ""),
         "image_url": exercise.get("image_url", ""),

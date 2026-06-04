@@ -150,6 +150,9 @@ class _ExerciseCache {
   final double maxVolume;
   final double max1RM;
   final DateTime cachedAt;
+  // FEATURE 3A: max reps ever logged at BODYWEIGHT (weight == 0) for this exercise,
+  // used to detect bodyweight rep PRs (more reps with no added load).
+  final int maxRepsAtBodyweight;
 
   _ExerciseCache({
     required this.exerciseName,
@@ -158,6 +161,7 @@ class _ExerciseCache {
     required this.maxVolume,
     required this.max1RM,
     required this.cachedAt,
+    this.maxRepsAtBodyweight = 0,
   });
 
   /// Check if cache is still valid (15 minutes)
@@ -262,6 +266,7 @@ class PRDetectionService {
           maxVolume: 0,
           max1RM: 0,
           cachedAt: DateTime.now(),
+          maxRepsAtBodyweight: 0,
         );
         return;
       }
@@ -271,6 +276,8 @@ class PRDetectionService {
       int maxRepsAtWeight = 0;
       double maxVolume = 0;
       double max1RM = 0;
+      // FEATURE 3A: track the best rep count at bodyweight (weight == 0).
+      int maxRepsAtBodyweight = 0;
 
       for (final session in history) {
         final weight = (session['weight_kg'] ?? session['weight'] ?? 0.0).toDouble();
@@ -282,6 +289,9 @@ class PRDetectionService {
         if (weight > maxWeight) {
           maxWeight = weight;
           maxRepsAtWeight = reps;
+        }
+        if (weight <= 0 && reps > maxRepsAtBodyweight) {
+          maxRepsAtBodyweight = reps;
         }
         if (volume > maxVolume) {
           maxVolume = volume;
@@ -298,6 +308,7 @@ class PRDetectionService {
         maxVolume: maxVolume,
         max1RM: max1RM,
         cachedAt: DateTime.now(),
+        maxRepsAtBodyweight: maxRepsAtBodyweight,
       );
     } catch (e) {
       debugPrint('Error loading exercise cache: $e');
@@ -342,6 +353,30 @@ class PRDetectionService {
 
     final detectedPRs = <DetectedPR>[];
     final now = DateTime.now();
+
+    // FEATURE 3A: bodyweight rep PR. With no external load, progress = more reps, so
+    // we compare against the best bodyweight rep count rather than weight/1RM (which
+    // would be 0 and never PR). A weight-PR/1RM-PR makes no sense for an unloaded set,
+    // so we emit only the rep PR and return early.
+    if (weight <= 0 && reps >= 1) {
+      if (reps > cache.maxRepsAtBodyweight) {
+        final improvement = cache.maxRepsAtBodyweight > 0
+            ? ((reps - cache.maxRepsAtBodyweight) / cache.maxRepsAtBodyweight) * 100.0
+            : 100.0;
+        detectedPRs.add(DetectedPR(
+          type: PRType.reps,
+          exerciseName: exerciseName,
+          newValue: reps.toDouble(),
+          previousValue:
+              cache.maxRepsAtBodyweight > 0 ? cache.maxRepsAtBodyweight.toDouble() : null,
+          improvementPercent: improvement,
+          reps: reps,
+          weight: 0,
+          achievedAt: now,
+        ));
+      }
+      return detectedPRs;
+    }
 
     // Check weight PR (must be at same or higher reps)
     if (weight > cache.maxWeight && reps >= 1) {
@@ -473,6 +508,10 @@ class PRDetectionService {
       maxVolume: pr.type == PRType.volume ? pr.newValue : existing.maxVolume,
       max1RM: pr.type == PRType.oneRM ? pr.newValue : existing.max1RM,
       cachedAt: existing.cachedAt,
+      // FEATURE 3A: a rep PR raises the bodyweight rep ceiling so it doesn't re-fire.
+      maxRepsAtBodyweight: pr.type == PRType.reps
+          ? pr.newValue.toInt()
+          : existing.maxRepsAtBodyweight,
     );
   }
 

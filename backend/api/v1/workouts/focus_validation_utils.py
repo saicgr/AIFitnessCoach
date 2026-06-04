@@ -86,12 +86,44 @@ def validate_exercise_matches_focus(
     return {"matches": True, "reason": "Unknown focus area, allowing exercise", "confidence": 0.5}
 
 
+def _coverage_group_for_exercise(ex: Dict[str, Any], coverage_groups: Dict[str, set]) -> Optional[str]:
+    """Return the first full-body coverage group an exercise matches, or None."""
+    muscle = (ex.get("muscle_group") or "").lower()
+    ex_name = (ex.get("name") or "").lower()
+    combined = f"{muscle} {ex_name}"
+    for group, keywords in coverage_groups.items():
+        if any(kw in combined for kw in keywords):
+            return group
+    return None
+
+
+def _is_core_exercise(ex: Dict[str, Any]) -> bool:
+    """Heuristic: is this exercise a core/ab movement? Used for the core cap."""
+    muscle = (ex.get("muscle_group") or "").lower()
+    ex_name = (ex.get("name") or "").lower()
+    blob = f"{muscle} {ex_name}"
+    _CORE_KW = ("core", "abs", "abdomin", "oblique", "plank", "crunch", "sit up",
+                "sit-up", "situp", "leg raise", "hollow", "dead bug", "v-up", "v up")
+    return any(kw in blob for kw in _CORE_KW)
+
+
 async def validate_and_filter_focus_mismatches(
     exercises: List[Dict[str, Any]],
     focus_area: str,
     workout_name: str,
+    candidate_pool: Optional[List[Dict[str, Any]]] = None,
+    core_cap: int = 2,
 ) -> Dict[str, Any]:
-    """Validate all exercises match the workout focus area and filter mismatches."""
+    """Validate all exercises match the workout focus area and filter mismatches.
+
+    FEATURE 3A — optional active coverage repair for full-body workouts:
+      * When ``candidate_pool`` is provided AND the focus is full-body, missing
+        coverage groups (legs / back-pull / chest-push) are actively TOPPED UP from
+        the pool, and core moves over ``core_cap`` are dropped. The returned
+        ``valid_exercises`` is the augmented list. The streaming generation path passes
+        ``candidate_pool=None`` (default) → behavior is byte-for-byte identical to
+        before (warn-only, no mutation), so streaming is unaffected.
+    """
     valid_exercises = []
     mismatched_exercises = []
     warnings = []
@@ -114,16 +146,63 @@ async def validate_and_filter_focus_mismatches(
             "chest_push": {"chest", "pectorals", "pecs", "shoulders", "deltoids", "triceps", "front delt"},
         }
 
+        # Work on a mutable copy so an active top-up can augment without surprising
+        # the caller's reference.
+        result_exercises = list(exercises)
+
         covered = {group: False for group in coverage_groups}
-        for ex in exercises:
-            muscle = (ex.get("muscle_group") or "").lower()
-            ex_name = (ex.get("name") or "").lower()
-            combined = f"{muscle} {ex_name}"
-            for group, keywords in coverage_groups.items():
-                if any(kw in combined for kw in keywords):
-                    covered[group] = True
+        for ex in result_exercises:
+            g = _coverage_group_for_exercise(ex, coverage_groups)
+            if g:
+                covered[g] = True
 
         missing_groups = [g for g, is_covered in covered.items() if not is_covered]
+
+        # ── Active coverage repair (only when a candidate pool is supplied) ──
+        if candidate_pool and missing_groups:
+            existing_names = {
+                (e.get("name") or "").strip().lower() for e in result_exercises
+            }
+            still_missing = []
+            for group in missing_groups:
+                topup = None
+                for cand in candidate_pool:
+                    cname = (cand.get("name") or "").strip().lower()
+                    if not cname or cname in existing_names:
+                        continue
+                    if _coverage_group_for_exercise(cand, coverage_groups) == group:
+                        topup = cand
+                        break
+                if topup is not None:
+                    result_exercises.append(topup)
+                    existing_names.add((topup.get("name") or "").strip().lower())
+                    covered[group] = True
+                    logger.info(
+                        f"✅ [Full Body Top-up] Added '{topup.get('name')}' to cover "
+                        f"missing group '{group}' in {workout_name}"
+                    )
+                else:
+                    still_missing.append(group)
+            missing_groups = still_missing
+
+        # ── Core cap (only meaningful when we are actively curating the list) ──
+        if candidate_pool is not None and core_cap >= 0:
+            core_kept = 0
+            capped: List[Dict[str, Any]] = []
+            dropped_core = 0
+            for ex in result_exercises:
+                if _is_core_exercise(ex):
+                    if core_kept >= core_cap:
+                        dropped_core += 1
+                        continue
+                    core_kept += 1
+                capped.append(ex)
+            if dropped_core:
+                logger.info(
+                    f"✅ [Full Body Core Cap] Dropped {dropped_core} core move(s) over "
+                    f"cap={core_cap} in {workout_name}"
+                )
+            result_exercises = capped
 
         if missing_groups:
             friendly = {"legs": "Legs/Glutes", "back": "Back/Pull", "chest_push": "Chest/Shoulders/Push"}
@@ -136,7 +215,7 @@ async def validate_and_filter_focus_mismatches(
             warnings.append(warning_msg)
 
         return {
-            "valid_exercises": exercises,
+            "valid_exercises": result_exercises,
             "mismatched_exercises": [],
             "mismatch_count": 0,
             "warnings": warnings,

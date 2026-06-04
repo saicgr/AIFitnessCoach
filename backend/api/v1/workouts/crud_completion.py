@@ -29,6 +29,7 @@ from .utils import (
 )
 
 from services.personal_records_service import PersonalRecordsService
+from services.exercise_rag.muscle_balance import bodyweight_proxy_load_kg
 from services.ai_insights_service import ai_insights_service
 from services.performance_comparison_service import PerformanceComparisonService
 from services.user_context_service import user_context_service
@@ -89,6 +90,24 @@ async def complete_workout(
         verify_resource_ownership(current_user, existing, "Workout")
 
         user_id = existing.get("user_id")
+
+        # FEATURE 3A: fetch the user's bodyweight ONCE here (same pattern the N2
+        # email path uses below). Reused for (a) bodyweight PR proxy load and
+        # (b) bodyweight volume math, so an unloaded set still contributes a real
+        # number. Defaults to 70.0 kg only if no measurement exists (honest base —
+        # bodyweight_proxy_load_kg returns 0 for a non-positive weight, never fake).
+        user_weight_kg: float = 70.0
+        try:
+            _wm = supabase.table("user_metrics") \
+                .select("weight_kg") \
+                .eq("user_id", user_id) \
+                .order("recorded_at", desc=True) \
+                .limit(1) \
+                .execute()
+            if _wm.data and _wm.data[0].get("weight_kg"):
+                user_weight_kg = float(_wm.data[0]["weight_kg"])
+        except Exception as _e:
+            logger.debug(f"Bodyweight lookup for PR/volume skipped for {user_id}: {_e}")
 
         # Per-gym progress: the WORKOUT's gym is the source of truth for every
         # logged row attributed to this completion (PRs, performance_logs).
@@ -196,6 +215,8 @@ async def complete_workout(
                     # Lets machine/cable PRs scope to this gym so a home session
                     # isn't crushed by an incomparable gym-machine record.
                     gym_profile_id=workout_gym_profile_id,
+                    # FEATURE 3A: bodyweight PR proxy load uses the user's bodyweight.
+                    user_bodyweight_kg=user_weight_kg,
                 )
 
                 logger.info(f"Detected {len(new_prs)} PRs in workout {workout_id}")
@@ -248,6 +269,9 @@ async def complete_workout(
                         # Per-gym progress: stamp the workout's gym so PRs can be
                         # labeled/segmented by gym. NULL is valid (legacy/ad-hoc).
                         "gym_profile_id": workout_gym_profile_id,
+                        # FEATURE 3A: PR type ('weight'/'reps') so the UI + analytics
+                        # can distinguish bodyweight rep PRs from loaded PRs.
+                        "pr_type": pr.pr_type,
                     })
                     detected_prs.append(PersonalRecordInfo(
                         exercise_name=pr.exercise_name,
@@ -399,8 +423,13 @@ async def complete_workout(
                 for entry in grouped.values():
                     set_count = len(entry["sets"])
                     ex_reps = sum(int(x["reps"] or 0) for x in entry["sets"])
+                    # FEATURE 3A: bodyweight volume. A set with no external load uses a
+                    # bodyweight proxy load so unloaded work isn't counted as 0 volume.
+                    _ex_name = entry.get("exercise_name") or ""
+                    _proxy = bodyweight_proxy_load_kg(_ex_name, user_weight_kg)
                     ex_volume = sum(
-                        (int(x["reps"] or 0)) * float(x["weight_kg"] or 0)
+                        (int(x["reps"] or 0))
+                        * (float(x["weight_kg"] or 0) if float(x["weight_kg"] or 0) > 0 else _proxy)
                         for x in entry["sets"]
                     )
                     total_sets += set_count
@@ -427,8 +456,12 @@ async def complete_workout(
                     elif not isinstance(sets, list):
                         sets = []
                     completed_sets = [s for s in sets if s.get("completed", True)]
+                    # FEATURE 3A: bodyweight volume proxy for unloaded sets.
+                    _ex_name = ex.get("name", "")
+                    _proxy = bodyweight_proxy_load_kg(_ex_name, user_weight_kg)
                     ex_volume = sum(
-                        (s.get("reps", 0) or s.get("reps_completed", 0)) * s.get("weight_kg", 0)
+                        (s.get("reps", 0) or s.get("reps_completed", 0))
+                        * (s.get("weight_kg", 0) if (s.get("weight_kg", 0) or 0) > 0 else _proxy)
                         for s in completed_sets
                     )
                     ex_reps = sum(s.get("reps", 0) or s.get("reps_completed", 0) for s in completed_sets)

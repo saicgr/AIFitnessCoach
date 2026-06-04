@@ -30,6 +30,15 @@ from .filters import (
     pre_filter_by_injuries,
     filter_by_avoided_muscles,
     parse_secondary_muscles,
+    _is_bodyweight_only,
+)
+# FEATURE 3A: bodyweight muscle-balance helpers. `_muscles_for_candidate` was MOVED
+# into muscle_balance.py (to break an import cycle) and is re-imported here so existing
+# call sites in this module keep working unchanged.
+from . import muscle_balance
+from .muscle_balance import (
+    _muscles_for_candidate,  # noqa: F401 - re-exported for backward compatibility
+    balance_candidate_window,
 )
 from .search import build_search_query, build_search_query_with_custom_goals
 from .difficulty import (  # noqa: F401 - re-exported for backward compatibility
@@ -330,28 +339,9 @@ async def fetch_safe_candidates(
     return out
 
 
-def _muscles_for_candidate(candidate: Dict[str, Any]) -> set:
-    """Best-effort set of lowercased muscle tokens a candidate trains.
-
-    Pulls from target_muscle, body_part, and parsed secondary_muscles so the
-    score-freshness bias and excluded-muscle skip can match against the same
-    muscle vocabulary used elsewhere in the pipeline.
-    """
-    out: set = set()
-    tm = (candidate.get("target_muscle") or "").strip().lower()
-    if tm:
-        out.add(tm)
-    bp = (candidate.get("body_part") or "").strip().lower()
-    if bp:
-        out.add(bp)
-    try:
-        for sm in parse_secondary_muscles(candidate.get("secondary_muscles")):
-            name = (sm.get("muscle") if isinstance(sm, dict) else sm)
-            if name:
-                out.add(str(name).strip().lower())
-    except Exception:  # noqa: BLE001 - secondary parsing must never break selection
-        pass
-    return out
+# NOTE: `_muscles_for_candidate` now lives in muscle_balance.py and is re-imported at
+# the top of this module (it was moved to break an import cycle). The definition that
+# used to be here was removed; all in-module call sites use the imported version.
 
 
 def _muscle_token_matches(candidate_muscles: set, target_muscle: str) -> bool:
@@ -1687,6 +1677,17 @@ class ExerciseRAGService:
             _AI_SELECT_WINDOW_CAP = 40
             ai_window = offset_candidates[:min(window, _AI_SELECT_WINDOW_CAP)]
 
+            # FEATURE 3A: when the user is bodyweight-only AND the focus is
+            # full-body/unspecified, re-order the AI window so the head guarantees a
+            # balanced push/pull/legs split with a core cap. This nudges BOTH the
+            # AI ranker (which sees a balanced candidate list) and the deterministic
+            # fallback below (which slices the head). No-op for equipped users or a
+            # specific-region focus (balance_candidate_window self-gates on focus).
+            if _is_bodyweight_only(eq_lower):
+                ai_window = balance_candidate_window(
+                    ai_window, remaining_count, focus_area=focus_area, core_cap=2
+                )
+
             # Use AI to select remaining exercises. On total failure (all
             # retries exhausted on transient errors like Vertex 504) fall
             # back to a deterministic ranking so the user gets a workout
@@ -2220,6 +2221,18 @@ EQUIPMENT PRIORITY RULE (user has: {', '.join(user_real_equipment)}):
 - Bodyweight exercises are acceptable ONLY as a warm-up or finisher, not as primary movements
 - Do NOT select easy cardio-style bodyweight moves (punches, jumping jacks, etc.)
 """
+        else:
+            # FEATURE 3A: bodyweight-only user. There is no equipment to prefer —
+            # bodyweight IS the equipment, so flip the rule to demand a balanced
+            # push/pull/legs split with a core cap instead of penalizing bodyweight.
+            equipment_priority_section = f"""
+BALANCED FULL-BODY RULE (user is bodyweight-only — bodyweight IS the equipment):
+- Mix movement patterns: include PUSH (e.g. push-up variations), PULL (e.g. rows /
+  pull-ups / chin-ups if available), and LEGS (e.g. squats / lunges / hinges)
+- Include AT MOST 2 core/ab exercises out of {count}
+- Treat bodyweight moves as PRIMARY movements, not just warm-ups
+- Do NOT select easy cardio-style filler (punches, jumping jacks, etc.)
+"""
 
         adjacent_day_section = ""
         if avoid_exercises:
@@ -2261,9 +2274,9 @@ SELECTION CRITERIA:
 2. Choose exercises that best target the focus area ({focus_area})
 3. CRITICAL: Each exercise number must be UNIQUE - do NOT repeat any numbers
 4. Ensure variety - select DIFFERENT exercises for balanced muscle development
-5. USE EQUIPMENT VARIETY - Include exercises with different equipment types (barbell, dumbbell, cable, machine) rather than only bodyweight exercises. The user has access to gym equipment.
+5. {"USE EQUIPMENT VARIETY - Include exercises with different equipment types (barbell, dumbbell, cable, machine) rather than only bodyweight exercises. The user has access to gym equipment." if user_real_equipment else "BALANCED FULL-BODY: this user has NO weights — bodyweight IS the equipment. Mix PUSH / PULL / LEGS patterns and include AT MOST 2 core exercises. Do not penalize bodyweight moves."}
 6. Progress from compound to isolation exercises
-7. Consider the fitness level - {fitness_level} (but still use weights - beginners benefit from learning barbell and dumbbell movements)
+7. Consider the fitness level - {fitness_level}{" (but still use weights - beginners benefit from learning barbell and dumbbell movements)" if user_real_equipment else " (bodyweight movements only — scale difficulty via harder variations, not added load)"}
 8. Align with goals: {', '.join(goals) if goals else 'General fitness'}
 {equipment_priority_section}
 {adjacent_day_section}
@@ -2433,9 +2446,20 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
             scored.append((score, c))
 
-        # Sort descending, take top N, format each for workout output.
+        # Sort descending by score.
         scored.sort(key=lambda x: x[0], reverse=True)
-        picked = [c for _, c in scored[:count]]
+        ranked = [c for _, c in scored]
+
+        # FEATURE 3A: bodyweight-only + full-body → rebalance the ranked pool so the
+        # top-`count` slice covers push/pull/legs with a core cap, instead of the
+        # similarity-greedy "6 push variations" failure mode. Self-gates on focus and
+        # is a pure re-order, so weighted/region-specific picks are unaffected.
+        if _is_bodyweight_only(equipment_set):
+            ranked = balance_candidate_window(
+                ranked, count, focus_area=focus_area, core_cap=2
+            )
+
+        picked = ranked[:count]
         return [
             self._format_exercise_for_workout(
                 c, fitness_level, workout_params, strength_history, progression_pace

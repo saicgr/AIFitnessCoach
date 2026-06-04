@@ -15,6 +15,7 @@ import logging
 
 from services.strength_calculator_service import StrengthCalculatorService
 from services.equipment_scope import default_scope, SCOPE_PER_GYM
+from services.exercise_rag.muscle_balance import bodyweight_proxy_load_kg
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,9 @@ class PersonalRecord:
     improvement_percent: Optional[float]
     is_all_time_pr: bool
     celebration_message: Optional[str]
+    # FEATURE 3A: PR type. 'weight'/'1rm' for loaded lifts, 'reps' for bodyweight
+    # rep PRs (more reps at bodyweight). Default keeps existing weighted PRs unchanged.
+    pr_type: str = "weight"
     # Per-gym progress (Gravl B-series). For machine/cable exercises a PR is
     # scoped to the gym it was set at, so a home cable can PR even when a gym
     # machine's incomparable record is higher. These tag the celebration.
@@ -184,11 +188,89 @@ class PersonalRecordsService:
             is_first_at_gym=is_first_at_gym,
         )
 
+    def check_for_reps_pr(
+        self,
+        exercise_name: str,
+        reps: int,
+        proxy_load_kg: float,
+        existing_prs: List[Dict],
+        gym_profile_id: Optional[str] = None,
+    ) -> PRComparison:
+        """Check if a bodyweight set is a new REP personal record (FEATURE 3A).
+
+        A bodyweight exercise can't add load, so progress = more reps. We compare on
+        TWO axes and fire a PR when EITHER improves:
+          * max reps (the headline rep PR), and
+          * proxy estimated-1RM (proxy_load_kg fed through the 1RM formula) so a set with
+            more reps at the same bodyweight still reads as a strength gain.
+
+        Mirrors check_for_pr's per-gym semantics (scoped baseline + first-at-gym), but
+        keyed on reps. ``existing_prs`` here should be the exercise's prior REP PRs
+        (pr_type='reps') so a rep PR never competes against a weighted PR's 1RM.
+        """
+        current_1rm = self.strength_calculator.calculate_1rm_average(proxy_load_kg, reps)
+
+        # Best prior REP performance (max reps) + best proxy 1RM, all-time.
+        if not existing_prs:
+            best_all_reps = 0
+            best_all_1rm = 0.0
+            last_pr_date = None
+        else:
+            best_all_reps = max(int(p.get("reps") or 0) for p in existing_prs)
+            best_all_1rm = max(float(p.get("estimated_1rm_kg") or 0) for p in existing_prs)
+            newest = max(existing_prs, key=lambda x: self._parse_date(x.get("achieved_at")))
+            last_pr_date = newest.get("achieved_at")
+
+        is_all_time_pr = reps > best_all_reps or current_1rm > best_all_1rm
+
+        # Per-gym baseline (bodyweight is usually combined, but a per-gym pull-up bar /
+        # dip station is possible, so honor the gym scope when supplied).
+        is_gym_pr = False
+        is_first_at_gym = False
+        if gym_profile_id is not None:
+            same_gym = [p for p in existing_prs if p.get("gym_profile_id") == gym_profile_id]
+            if not same_gym:
+                is_gym_pr = True
+                is_first_at_gym = True
+                baseline_reps = 0
+            else:
+                baseline_reps = max(int(p.get("reps") or 0) for p in same_gym)
+                is_gym_pr = reps > baseline_reps
+            comparison_baseline_reps = baseline_reps
+        else:
+            comparison_baseline_reps = best_all_reps
+
+        is_pr = is_all_time_pr or is_gym_pr
+
+        improvement_kg = None       # reps PRs improve in reps, not kg
+        improvement_percent = None
+        time_since_last_pr = None
+        if is_pr and comparison_baseline_reps > 0:
+            improvement_percent = round(
+                (reps - comparison_baseline_reps) / comparison_baseline_reps * 100, 2
+            )
+        if is_pr and last_pr_date:
+            parsed = self._parse_date(last_pr_date)
+            time_since_last_pr = (datetime.now(timezone.utc) - parsed).days
+
+        return PRComparison(
+            is_pr=is_pr,
+            is_all_time_pr=is_all_time_pr,
+            current_1rm=round(current_1rm, 2),
+            previous_1rm=round(best_all_1rm, 2) if best_all_1rm else None,
+            improvement_kg=improvement_kg,
+            improvement_percent=improvement_percent,
+            time_since_last_pr=time_since_last_pr,
+            is_gym_pr=is_gym_pr,
+            is_first_at_gym=is_first_at_gym,
+        )
+
     def detect_prs_in_workout(
         self,
         workout_exercises: List[Dict],
         existing_prs_by_exercise: Dict[str, List[Dict]],
         gym_profile_id: Optional[str] = None,
+        user_bodyweight_kg: float = 70.0,
     ) -> List[PersonalRecord]:
         """
         Detect all PRs in a workout.
@@ -236,6 +318,9 @@ class PersonalRecordsService:
                 self._normalize_exercise_name(exercise_name), []
             )
 
+            # Split existing PRs into weighted vs rep PRs so the two axes never compete.
+            existing_rep_prs = [p for p in existing_prs if (p.get("pr_type") == "reps")]
+
             # Check each set for PR
             for set_data in sets:
                 if not set_data.get("completed", True):
@@ -244,7 +329,70 @@ class PersonalRecordsService:
                 weight_kg = float(set_data.get("weight_kg", 0))
                 reps = int(set_data.get("reps", 0) or set_data.get("reps_completed", 0))
 
-                if weight_kg <= 0 or reps <= 0:
+                if reps <= 0:
+                    continue
+
+                if weight_kg <= 0:
+                    # ── FEATURE 3A: bodyweight rep PR branch ──────────────────
+                    # No external load → progress is more reps. Compare reps + a
+                    # bodyweight proxy-1RM. Weighted path below is unchanged.
+                    proxy_load = bodyweight_proxy_load_kg(exercise_name, user_bodyweight_kg)
+                    rep_comparison = self.check_for_reps_pr(
+                        exercise_name=exercise_name,
+                        reps=reps,
+                        proxy_load_kg=proxy_load,
+                        existing_prs=existing_rep_prs,
+                        gym_profile_id=effective_gym_id,
+                    )
+                    if rep_comparison.is_pr:
+                        muscle_groups = self.strength_calculator.get_exercise_muscle_groups(exercise_name)
+                        muscle_group = muscle_groups[0] if muscle_groups else None
+
+                        # First-ever bodyweight log for this exercise → celebrate the
+                        # baseline; otherwise a rep-PR celebration.
+                        is_first_bodyweight = not existing_rep_prs
+                        celebration = self._generate_celebration_message(
+                            exercise_name=exercise_name,
+                            improvement_kg=None,
+                            improvement_percent=rep_comparison.improvement_percent,
+                            is_all_time=rep_comparison.is_all_time_pr,
+                            is_first_at_gym=rep_comparison.is_first_at_gym,
+                            pr_type="reps",
+                            reps=reps,
+                            is_first_bodyweight=is_first_bodyweight,
+                        )
+
+                        pr = PersonalRecord(
+                            exercise_name=exercise_name,
+                            exercise_id=exercise.get("exercise_id"),
+                            muscle_group=muscle_group,
+                            weight_kg=proxy_load,   # store the proxy load so analytics has a kg
+                            reps=reps,
+                            estimated_1rm_kg=rep_comparison.current_1rm,
+                            set_type=set_data.get("set_type", "working"),
+                            rpe=set_data.get("rpe"),
+                            achieved_at=datetime.now(),
+                            workout_id=exercise.get("workout_id"),
+                            previous_weight_kg=None,
+                            previous_1rm_kg=rep_comparison.previous_1rm,
+                            improvement_kg=None,
+                            improvement_percent=rep_comparison.improvement_percent,
+                            is_all_time_pr=rep_comparison.is_all_time_pr,
+                            celebration_message=celebration,
+                            gym_profile_id=effective_gym_id,
+                            is_gym_pr=rep_comparison.is_gym_pr,
+                            is_first_at_gym=rep_comparison.is_first_at_gym,
+                            pr_type="reps",
+                        )
+                        new_prs.append(pr)
+                        # Carry into the rep-PR baseline for later sets.
+                        existing_rep_prs.append({
+                            "reps": reps,
+                            "estimated_1rm_kg": rep_comparison.current_1rm,
+                            "achieved_at": datetime.now(),
+                            "gym_profile_id": effective_gym_id,
+                            "pr_type": "reps",
+                        })
                     continue
 
                 comparison = self.check_for_pr(
@@ -290,6 +438,7 @@ class PersonalRecordsService:
                         gym_profile_id=effective_gym_id,
                         is_gym_pr=comparison.is_gym_pr,
                         is_first_at_gym=comparison.is_first_at_gym,
+                        pr_type="weight",
                     )
                     new_prs.append(pr)
 
@@ -490,6 +639,9 @@ class PersonalRecordsService:
         improvement_percent: Optional[float],
         is_all_time: bool,
         is_first_at_gym: bool = False,
+        pr_type: str = "weight",
+        reps: Optional[int] = None,
+        is_first_bodyweight: bool = False,
     ) -> str:
         """
         Generate a celebration message for a new PR.
@@ -501,16 +653,41 @@ class PersonalRecordsService:
             is_all_time: Whether this is an all-time PR
             is_first_at_gym: Whether this is the first logged set at this gym
                 (machine/cable per-gym PR with no prior gym history)
+            pr_type: 'weight' (loaded) or 'reps' (bodyweight rep PR)
+            reps: rep count (for rep-PR copy)
+            is_first_bodyweight: True when this is the first-ever bodyweight log for
+                this exercise (frame as a baseline, not a regression)
 
         Returns:
             Celebration message string
         """
+        import random
         display_name = exercise_name.replace("_", " ").title()
+
+        # FEATURE 3A: bodyweight rep PR copy. Two pools (>= 4 variants each): a
+        # first-bodyweight-log baseline pool, and a rep-PR pool with exact rep counts.
+        if pr_type == "reps":
+            if is_first_bodyweight:
+                first_bw = [
+                    f"First {display_name} logged{f' at {reps} reps' if reps else ''}. Baseline set!",
+                    f"Nice! Tracking {display_name} now{f' ({reps} reps)' if reps else ''}. Let's build it up!",
+                    f"{display_name} on the board{f' at {reps} reps' if reps else ''}. Every rep counts from here!",
+                    f"New movement unlocked! {display_name}{f' ({reps} reps)' if reps else ''} logged.",
+                    f"Day one of {display_name}{f' ({reps} reps)' if reps else ''}. The climb starts now!",
+                ]
+                return random.choice(first_bw)
+            rep_pr = [
+                f"Rep PR! {display_name}{f' at {reps} reps' if reps else ''}. More reps, more strength!",
+                f"New rep best on {display_name}{f': {reps} reps' if reps else ''}! Bodyweight progress.",
+                f"You squeezed out a rep PR on {display_name}{f' ({reps} reps)' if reps else ''}!",
+                f"{display_name} rep record{f' ({reps} reps)' if reps else ''}! Calisthenics gains.",
+                f"Stronger every set. {display_name}{f' hit {reps} reps' if reps else ''}, a new rep PR!",
+            ]
+            return random.choice(rep_pr)
 
         # First-ever set at this gym for a per-gym exercise — frame it as a
         # baseline, not a regression, even if another gym's record is higher.
         if is_first_at_gym:
-            import random
             first_at_gym = [
                 f"First time logging {display_name} here — baseline set!",
                 f"New gym, fresh start! {display_name} logged for this gym.",
@@ -527,7 +704,6 @@ class PersonalRecordsService:
             "Stronger than ever! ",
         ]
 
-        import random
         message = random.choice(base_celebrations)
 
         # Add exercise name
