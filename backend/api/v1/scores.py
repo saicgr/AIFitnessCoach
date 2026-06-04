@@ -710,9 +710,18 @@ async def get_readiness_for_date(
 @router.get("/strength", response_model=AllStrengthScoresResponse, tags=["Strength"])
 async def get_all_strength_scores(
     user_id: str = Query(...),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter strength scores to a specific gym profile "
+                          "(per-gym progress). Omit for the combined/all-gym score."),
     current_user: dict = Depends(get_current_user),
 ):
-    """Get all muscle group strength scores for a user."""
+    """Get all muscle group strength scores for a user.
+
+    Default (no gym_profile_id) reads `latest_strength_scores` — which now
+    contains ONLY the combined (NULL-gym) rows, so the overall/headline score is
+    byte-for-byte unchanged. When `gym_profile_id` is set, reads
+    `latest_strength_scores_by_gym` filtered to that gym (per-gym view).
+    """
     db = get_supabase_db()
     strength_service = StrengthCalculatorService()
 
@@ -726,10 +735,16 @@ async def get_all_strength_scores(
 
     bodyweight, gender = get_user_body_info(user_response.data)
 
-    # Get latest strength scores from database
-    scores_response = db.client.table("latest_strength_scores").select("*").eq(
-        "user_id", user_id
-    ).execute()
+    # Get latest strength scores from database. Per-gym → the by-gym view
+    # filtered to the requested gym; combined → the (now NULL-gym-only) view.
+    if gym_profile_id:
+        scores_response = db.client.table("latest_strength_scores_by_gym").select("*").eq(
+            "user_id", user_id
+        ).eq("gym_profile_id", gym_profile_id).execute()
+    else:
+        scores_response = db.client.table("latest_strength_scores").select("*").eq(
+            "user_id", user_id
+        ).execute()
 
     muscle_scores = {}
 
@@ -782,6 +797,9 @@ async def get_e1rm_trend(
     http_request: Request,
     user_id: str = Query(...),
     weeks: int = Query(12, ge=1, le=52, description="Number of ISO weeks to return"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter the e1RM trend to a specific gym profile "
+                          "(per-gym progress). Omit for combined/all-gym."),
     current_user: dict = Depends(get_current_user),
 ):
     """Per-muscle estimated-1RM trend for the last `weeks` ISO weeks.
@@ -823,11 +841,14 @@ async def get_e1rm_trend(
             - timedelta(days=1)
         ).astimezone(timezone.utc)
 
-        rows = db.client.table("performance_logs").select(
+        e1rm_query = db.client.table("performance_logs").select(
             "exercise_name, reps_completed, weight_kg, recorded_at, is_completed"
         ).eq("user_id", user_id).gte(
             "recorded_at", cutoff_utc.isoformat()
-        ).execute()
+        )
+        if gym_profile_id:
+            e1rm_query = e1rm_query.eq("gym_profile_id", gym_profile_id)
+        rows = e1rm_query.execute()
 
         # Ordered list of week-start ISO keys (oldest→newest).
         bucket_order: List[str] = [
@@ -924,9 +945,17 @@ async def get_e1rm_trend(
 async def get_strength_detail(
     muscle_group: str,
     user_id: str = Query(...),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter to a specific gym profile (per-gym progress). "
+                          "Omit for the combined/all-gym detail."),
     current_user: dict = Depends(get_current_user),
 ):
-    """Get detailed strength information for a specific muscle group."""
+    """Get detailed strength information for a specific muscle group.
+
+    Per-gym (gym_profile_id set) reads `latest_strength_scores_by_gym` and scopes
+    the historical trend to that gym's strength_scores rows. Combined (default)
+    reads the NULL-gym `latest_strength_scores` + NULL-gym trend rows.
+    """
     db = get_supabase_db()
     strength_service = StrengthCalculatorService()
 
@@ -946,25 +975,40 @@ async def get_strength_detail(
 
     bodyweight, gender = get_user_body_info(user_response.data)
 
-    # Get latest strength score
-    score_response = db.client.table("latest_strength_scores").select("*").eq(
-        "user_id", user_id
-    ).eq(
-        "muscle_group", muscle_group.lower()
-    ).maybe_single().execute()
+    # Get latest strength score (per-gym view when a gym is requested).
+    if gym_profile_id:
+        score_response = db.client.table("latest_strength_scores_by_gym").select("*").eq(
+            "user_id", user_id
+        ).eq(
+            "muscle_group", muscle_group.lower()
+        ).eq(
+            "gym_profile_id", gym_profile_id
+        ).maybe_single().execute()
+    else:
+        score_response = db.client.table("latest_strength_scores").select("*").eq(
+            "user_id", user_id
+        ).eq(
+            "muscle_group", muscle_group.lower()
+        ).maybe_single().execute()
 
     # Get exercises for this muscle group from workout history
     # This is simplified - in production, would query workout logs
     exercises = []
 
-    # Get trend data (historical scores)
-    trend_response = db.client.table("strength_scores").select(
+    # Get trend data (historical scores). Per-gym scopes to that gym's rows;
+    # combined uses the NULL-gym rows so the overall trend is unchanged.
+    trend_query = db.client.table("strength_scores").select(
         "strength_score, calculated_at"
     ).eq(
         "user_id", user_id
     ).eq(
         "muscle_group", muscle_group.lower()
-    ).order(
+    )
+    if gym_profile_id:
+        trend_query = trend_query.eq("gym_profile_id", gym_profile_id)
+    else:
+        trend_query = trend_query.is_("gym_profile_id", "null")
+    trend_response = trend_query.order(
         "calculated_at", desc=True
     ).limit(12).execute()
 
@@ -1028,8 +1072,11 @@ async def calculate_strength_scores(
     # column used by personal_bests and heatmap aggregations.
     cutoff = datetime.now(timezone.utc) - timedelta(days=90)
 
+    # NOTE: `gym_profile_id` is additionally selected so we can compute per-gym
+    # rows below. It is IGNORED by `_flatten_logs_for_strength`, so the combined
+    # (NULL-gym) computation is byte-for-byte unchanged.
     logs_response = db.client.table("workout_logs").select(
-        "sets_json, completed_at"
+        "sets_json, completed_at, gym_profile_id"
     ).eq(
         "user_id", user_id
     ).eq(
@@ -1038,10 +1085,12 @@ async def calculate_strength_scores(
         "completed_at", cutoff.isoformat()
     ).execute()
 
+    all_logs = logs_response.data or []
+
     # Extract exercise performances from sets_json. We emit one row per
     # exercise per log in the shape calculate_all_muscle_scores expects:
     #   { exercise_name, weight_kg, reps, sets }
-    workout_data = _flatten_logs_for_strength(logs_response.data or [])
+    workout_data = _flatten_logs_for_strength(all_logs)
 
     # Calculate scores for all muscle groups
     muscle_scores = strength_service.calculate_all_muscle_scores(
@@ -1099,10 +1148,85 @@ async def calculate_strength_scores(
 
         db.client.table("strength_scores").insert(record_data).execute()
 
+    # ── ADDITIVE: per-gym strength rows ──────────────────────────────────────
+    # Group the SAME 90-day completed logs by gym_profile_id and compute a
+    # parallel score set per gym, written with gym_profile_id SET. This is
+    # purely additive — the combined (NULL-gym) rows above are untouched, so the
+    # overall/headline score is unchanged. Logs with a NULL gym_profile_id are
+    # already covered by the combined rows and are skipped here (no fake gym).
+    try:
+        logs_by_gym: Dict[str, List[Dict[str, Any]]] = {}
+        for log in all_logs:
+            gid = log.get("gym_profile_id")
+            if not gid:
+                continue
+            logs_by_gym.setdefault(gid, []).append(log)
+
+        gym_count = 0
+        for gid, gym_logs in logs_by_gym.items():
+            gym_workout_data = _flatten_logs_for_strength(gym_logs)
+            if not gym_workout_data:
+                continue
+            gym_muscle_scores = strength_service.calculate_all_muscle_scores(
+                gym_workout_data, bodyweight, gender
+            )
+
+            # Previous per-gym scores for this gym's trend computation.
+            prev_gym_resp = db.client.table("strength_scores").select(
+                "muscle_group, strength_score"
+            ).eq("user_id", user_id).eq("gym_profile_id", gid).order(
+                "calculated_at", desc=True
+            ).execute()
+            prev_gym_scores: Dict[str, Any] = {}
+            for r in (prev_gym_resp.data or []):
+                mgk = r.get("muscle_group")
+                if mgk and mgk not in prev_gym_scores:
+                    prev_gym_scores[mgk] = r.get("strength_score")
+
+            for mg, score in gym_muscle_scores.items():
+                prev_score = prev_gym_scores.get(mg)
+                if prev_score is not None:
+                    if score.strength_score > prev_score + 2:
+                        g_trend = "improving"
+                    elif score.strength_score < prev_score - 2:
+                        g_trend = "declining"
+                    else:
+                        g_trend = "maintaining"
+                    g_change = score.strength_score - prev_score
+                else:
+                    g_trend = "maintaining"
+                    g_change = None
+
+                db.client.table("strength_scores").insert({
+                    "user_id": user_id,
+                    "gym_profile_id": gid,
+                    "muscle_group": mg,
+                    "strength_score": score.strength_score,
+                    "strength_level": score.strength_level.value,
+                    "best_exercise_name": score.best_exercise_name,
+                    "best_estimated_1rm_kg": score.best_estimated_1rm_kg,
+                    "bodyweight_ratio": score.bodyweight_ratio,
+                    "weekly_sets": score.weekly_sets,
+                    "weekly_volume_kg": score.weekly_volume_kg,
+                    "previous_score": prev_score,
+                    "score_change": g_change,
+                    "trend": g_trend,
+                    "calculated_at": now.isoformat(),
+                    "period_start": period_start.isoformat(),
+                    "period_end": period_end.isoformat(),
+                }).execute()
+            gym_count += 1
+    except Exception as e:
+        # Per-gym rows are a non-critical enhancement; never fail the combined
+        # recalc (which already succeeded) if the per-gym pass hits an issue.
+        logger.warning(f"Per-gym strength recalc failed (combined unaffected): {e}")
+        gym_count = 0
+
     return {
         "success": True,
         "message": f"Calculated strength scores for {len(muscle_scores)} muscle groups",
         "calculated_at": now.isoformat(),
+        "per_gym_profiles_scored": gym_count,
     }
 
 
@@ -1115,16 +1239,27 @@ async def get_personal_records(
     user_id: str = Query(...),
     limit: int = Query(10, ge=1, le=500),
     period_days: int = Query(30, ge=1, le=1825),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter PRs to a specific gym profile (per-gym progress). "
+                          "Omit for the combined/all-gym PR list."),
     current_user: dict = Depends(get_current_user),
 ):
-    """Get personal records and statistics for a user."""
+    """Get personal records and statistics for a user.
+
+    When `gym_profile_id` is supplied, only PRs achieved at that gym are
+    returned (machine/cable per-gym PRs); omit it for the combined cross-gym
+    PR list (unchanged behavior).
+    """
     db = get_supabase_db()
     pr_service = PersonalRecordsService()
 
-    # Get all PRs
-    response = db.client.table("personal_records").select("*").eq(
+    # Get all PRs (optionally scoped to one gym profile).
+    pr_query = db.client.table("personal_records").select("*").eq(
         "user_id", user_id
-    ).order(
+    )
+    if gym_profile_id:
+        pr_query = pr_query.eq("gym_profile_id", gym_profile_id)
+    response = pr_query.order(
         "achieved_at", desc=True
     ).execute()
 
@@ -1188,6 +1323,9 @@ async def get_volume_trend(
     http_request: Request,
     user_id: str = Query(...),
     weeks: int = Query(12, ge=1, le=52, description="Number of ISO weeks to return"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter the volume trend to a specific gym profile "
+                          "(per-gym progress). Omit for combined/all-gym."),
     current_user: dict = Depends(get_current_user),
 ):
     """Weekly training volume trend for the last `weeks` ISO weeks.
@@ -1231,11 +1369,14 @@ async def get_volume_trend(
             - timedelta(days=1)
         ).astimezone(timezone.utc)
 
-        rows = db.client.table("performance_logs").select(
+        vol_query = db.client.table("performance_logs").select(
             "reps_completed, weight_kg, workout_log_id, recorded_at, is_completed"
         ).eq("user_id", user_id).gte(
             "recorded_at", cutoff_utc.isoformat()
-        ).execute()
+        )
+        if gym_profile_id:
+            vol_query = vol_query.eq("gym_profile_id", gym_profile_id)
+        rows = vol_query.execute()
 
         # Build the zero-filled bucket scaffold keyed on each week's Monday ISO.
         buckets: Dict[str, Dict[str, Any]] = {}

@@ -103,6 +103,7 @@ def row_to_gym_profile(row: dict) -> GymProfile:
         program_custom_name=row.get("program_custom_name"),
         display_order=row.get("display_order", 0),
         is_active=row.get("is_active", False),
+        archived_at=row.get("archived_at"),
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -121,15 +122,17 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
     try:
         supabase = get_supabase()
 
-        # Check if user already has profiles
+        # Check if user already has a LIVE (non-archived) profile. A user whose
+        # only gym was archived should still get a fresh default.
         existing = supabase.client.table("gym_profiles") \
             .select("id") \
             .eq("user_id", user_id) \
+            .is_("archived_at", "null") \
             .limit(1) \
             .execute()
 
         if existing.data:
-            # User already has profiles
+            # User already has a live profile
             return None
 
         # Fetch user to check if they have workout_environment set
@@ -238,25 +241,34 @@ async def create_default_profile_if_needed(user_id: str) -> Optional[GymProfile]
 async def list_gym_profiles(
     user_id: str = Query(..., description="User ID"),
     include_stats: bool = Query(False, description="Include workout stats per profile"),
+    include_archived: bool = Query(
+        False,
+        description="Include archived (soft-deleted) profiles. Used by the "
+                    "per-gym progress filter so historical gyms stay selectable.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
     List all gym profiles for a user.
 
     Creates a default profile from user's current settings if no profiles exist.
-    Returns profiles ordered by display_order.
+    Returns profiles ordered by display_order. Archived profiles are EXCLUDED by
+    default (hidden from pickers/generation); pass `include_archived=true` to
+    surface them for per-gym progress segmentation.
     """
     logger.info(f"📋 [GymProfile] Listing profiles for user {user_id}")
 
     try:
         supabase = get_supabase()
 
-        # First check if user has any profiles
-        profiles_result = supabase.client.table("gym_profiles") \
+        # First check if user has any profiles. Archived rows are filtered out
+        # unless explicitly requested (the progress gym filter needs them).
+        list_query = supabase.client.table("gym_profiles") \
             .select("*") \
-            .eq("user_id", user_id) \
-            .order("display_order") \
-            .execute()
+            .eq("user_id", user_id)
+        if not include_archived:
+            list_query = list_query.is_("archived_at", "null")
+        profiles_result = list_query.order("display_order").execute()
 
         profiles = profiles_result.data or []
 
@@ -376,10 +388,11 @@ async def get_active_profile(
         if default_profile:
             return default_profile
 
-        # Check if any profiles exist and activate the first one
+        # Check if any NON-ARCHIVED profiles exist and activate the first one.
         any_result = supabase.client.table("gym_profiles") \
             .select("*") \
             .eq("user_id", user_id) \
+            .is_("archived_at", "null") \
             .order("display_order") \
             .limit(1) \
             .execute()

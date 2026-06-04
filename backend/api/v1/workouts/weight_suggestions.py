@@ -21,6 +21,8 @@ from pydantic import BaseModel
 
 from core.logger import get_logger
 from services.gemini_service import GeminiService
+from services.equipment_scope import default_scope, SCOPE_PER_GYM, SCOPE_COMBINED
+from api.v1.workouts._gym_profile_helpers import get_active_gym_profile_id
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -103,6 +105,11 @@ class WeightSuggestionRequest(BaseModel):
     # suggestion snaps to the nearest one of these instead of a generic
     # increment. Omitted/empty → current increment-based behavior (Gravl B2).
     available_weights: List[float] = []
+    # Per-gym progress (Gravl B-series): for machine/cable exercises the
+    # "vs last time" history is scoped to this gym so a 2:1 vs 1:1 cable doesn't
+    # pool. Omitted → equipment-aware default (active gym for per-gym, pooled for
+    # free weights). Server stays authoritative on set attribution.
+    gym_profile_id: Optional[str] = None
     # AI Settings from user preferences
     coaching_style: str = "motivational"
     communication_tone: str = "encouraging"
@@ -119,12 +126,17 @@ class WeightSuggestionResponse(BaseModel):
     encouragement: str
     confidence: float
     ai_powered: bool = True
+    # Where the backing history came from: 'same_gym' | 'other_gym' | 'default'
+    # | 'combined'. Lets the UI label "Based on your other gym's numbers".
+    suggestion_source: str = "combined"
+    resolved_scope: str = "combined"  # 'per_gym' | 'combined'
 
 
 async def get_exercise_history(
     user_id: str,
     exercise_name: str,
-    limit: int = 5
+    limit: int = 5,
+    gym_profile_id: Optional[str] = None,
 ) -> List[dict]:
     """
     Fetch user's recent performance history for an exercise.
@@ -133,40 +145,45 @@ async def get_exercise_history(
     including weight, reps, and intensity feedback.
 
     Uses the performance_logs table with efficient indexed queries instead of
-    parsing large JSON blobs from workout_logs.
+    parsing large JSON blobs from workout_logs. When `gym_profile_id` is set,
+    only that gym's sets are considered (per-gym progress); the RPC path is
+    bypassed in that case because it can't express the gym filter.
     """
     try:
         db = get_supabase_db()
 
-        # Try the efficient database function first (uses indexed performance_logs)
-        try:
-            result = db.client.rpc(
-                "get_exercise_history",
-                {
-                    "p_user_id": user_id,
-                    "p_exercise_name": exercise_name,
-                    "p_limit": limit,
-                }
-            ).execute()
+        # Try the efficient database function first (uses indexed performance_logs).
+        # Skipped entirely when a gym filter is requested — the RPC has no gym
+        # parameter, so we go straight to the gym-scoped direct query below.
+        if not gym_profile_id:
+            try:
+                result = db.client.rpc(
+                    "get_exercise_history",
+                    {
+                        "p_user_id": user_id,
+                        "p_exercise_name": exercise_name,
+                        "p_limit": limit,
+                    }
+                ).execute()
 
-            if result.data:
-                history = []
-                for row in result.data:
-                    history.append({
-                        "date": row.get("workout_date"),
-                        "weight_kg": row.get("weight_kg", 0),
-                        "reps": row.get("reps", 0),
-                        "sets": row.get("sets_count", 1),
-                        "rpe": row.get("rpe"),
-                        "rir": row.get("rir"),
-                    })
-                return history
+                if result.data:
+                    history = []
+                    for row in result.data:
+                        history.append({
+                            "date": row.get("workout_date"),
+                            "weight_kg": row.get("weight_kg", 0),
+                            "reps": row.get("reps", 0),
+                            "sets": row.get("sets_count", 1),
+                            "rpe": row.get("rpe"),
+                            "rir": row.get("rir"),
+                        })
+                    return history
 
-        except Exception as rpc_error:
-            logger.debug(f"RPC get_exercise_history not available, falling back to direct query: {rpc_error}")
+            except Exception as rpc_error:
+                logger.debug(f"RPC get_exercise_history not available, falling back to direct query: {rpc_error}")
 
-        # Fallback: Query performance_logs directly (still efficient with index)
-        result = db.client.table("performance_logs").select(
+        # Fallback (and gym-scoped path): query performance_logs directly.
+        direct_q = db.client.table("performance_logs").select(
             "workout_log_id, recorded_at, weight_kg, reps_completed, rpe, rir, "
             "target_weight_kg, target_reps, progression_model"
         ).eq(
@@ -175,7 +192,10 @@ async def get_exercise_history(
             "exercise_name", exercise_name
         ).eq(
             "is_completed", True
-        ).order(
+        )
+        if gym_profile_id:
+            direct_q = direct_q.eq("gym_profile_id", gym_profile_id)
+        result = direct_q.order(
             "recorded_at", desc=True
         ).limit(limit * 5).execute()  # Get more rows to group by workout
 
@@ -715,6 +735,19 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
         # Get equipment-specific increment
         equipment_increment = get_equipment_increment(body.equipment)
 
+        # Resolve per-gym scope. Machine/cable → per_gym (default to the supplied
+        # or active gym); free weights → combined (pool, today's behavior).
+        db = get_supabase_db()
+        resolved_scope = default_scope(body.equipment, body.exercise_name)
+        effective_gym_id: Optional[str] = None
+        if resolved_scope == SCOPE_PER_GYM:
+            effective_gym_id = body.gym_profile_id or get_active_gym_profile_id(db, body.user_id)
+
+        def _tag(resp: WeightSuggestionResponse, source: str) -> WeightSuggestionResponse:
+            resp.suggestion_source = source
+            resp.resolved_scope = resolved_scope
+            return resp
+
         # Check if we have intensity data for AI suggestion
         has_intensity_data = (
             body.current_set.rpe is not None or
@@ -722,20 +755,42 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
         )
 
         if not has_intensity_data:
-            # Without RPE/RIR, use rule-based
+            # Without RPE/RIR, use rule-based (driven by the current set, not
+            # history — source reflects the scope only).
             logger.info("No intensity data provided, using rule-based suggestion")
-            return apply_available_weights(
+            src = "same_gym" if effective_gym_id else "combined"
+            return _tag(apply_available_weights(
                 generate_rule_based_suggestion(body, equipment_increment),
                 body.current_set.weight_kg,
                 body.available_weights,
-            )
+            ), src)
 
-        # Fetch exercise history
-        history = await get_exercise_history(
-            user_id=body.user_id,
-            exercise_name=body.exercise_name,
-            limit=5
-        )
+        # Fetch exercise history — same-gym first for per-gym exercises, then
+        # fall back to all-gym history (labeled) so we never go blank.
+        suggestion_source = "combined"
+        if effective_gym_id:
+            history = await get_exercise_history(
+                user_id=body.user_id,
+                exercise_name=body.exercise_name,
+                limit=5,
+                gym_profile_id=effective_gym_id,
+            )
+            if history:
+                suggestion_source = "same_gym"
+            else:
+                history = await get_exercise_history(
+                    user_id=body.user_id,
+                    exercise_name=body.exercise_name,
+                    limit=5,
+                )
+                suggestion_source = "other_gym" if history else "default"
+        else:
+            history = await get_exercise_history(
+                user_id=body.user_id,
+                exercise_name=body.exercise_name,
+                limit=5,
+            )
+            suggestion_source = "combined" if history else "default"
 
         # Try AI-powered suggestion
         try:
@@ -751,19 +806,22 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
             suggestion = apply_available_weights(
                 suggestion, body.current_set.weight_kg, body.available_weights
             )
+            if suggestion_source == "other_gym":
+                suggestion.reason += " (based on your other gym's numbers)"
             logger.info(
                 f"AI suggestion: {suggestion.suggestion_type} to {suggestion.suggested_weight}kg "
-                f"(delta: {suggestion.weight_delta:+.1f}kg, confidence: {suggestion.confidence:.0%})"
+                f"(delta: {suggestion.weight_delta:+.1f}kg, confidence: {suggestion.confidence:.0%}, "
+                f"source: {suggestion_source}, scope: {resolved_scope})"
             )
-            return suggestion
+            return _tag(suggestion, suggestion_source)
 
         except Exception as ai_error:
             logger.warning(f"AI suggestion failed, falling back to rules: {ai_error}", exc_info=True)
-            return apply_available_weights(
+            return _tag(apply_available_weights(
                 generate_rule_based_suggestion(body, equipment_increment),
                 body.current_set.weight_kg,
                 body.available_weights,
-            )
+            ), suggestion_source)
 
     except Exception as e:
         logger.error(f"Weight suggestion failed: {e}", exc_info=True)
@@ -772,6 +830,7 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
 
 @router.get("/weight-suggestion/history/{user_id}/{exercise_name}")
 async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10,
+    gym_profile_id: Optional[str] = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -779,12 +838,14 @@ async def get_weight_history(user_id: str, exercise_name: str, limit: int = 10,
 
     Returns the user's recent performance data for the specified exercise,
     useful for displaying progress charts or informing manual weight selection.
+    When `gym_profile_id` is supplied, only that gym's history is returned.
     """
     try:
         history = await get_exercise_history(
             user_id=user_id,
             exercise_name=exercise_name,
-            limit=limit
+            limit=limit,
+            gym_profile_id=gym_profile_id,
         )
 
         return {

@@ -20,6 +20,8 @@ from pydantic import BaseModel, Field
 from enum import Enum
 
 from core.logger import get_logger
+from services.equipment_scope import default_scope, SCOPE_PER_GYM, SCOPE_COMBINED
+from api.v1.workouts._gym_profile_helpers import get_active_gym_profile_id
 
 router = APIRouter(prefix="/exercise-history", tags=["Exercise History"])
 logger = get_logger(__name__)
@@ -87,6 +89,18 @@ class ExerciseHistorySummary(BaseModel):
     last_performed_at: Optional[str] = None
 
 
+class GymBreakdownEntry(BaseModel):
+    """Per-gym history presence for an exercise (powers the gym filter + the
+    multi-series 'All gyms' chart). Includes ARCHIVED gyms that still have
+    history for this exercise. `gym_profile_id` is null for the legacy /
+    unassigned (combined) bucket."""
+    gym_profile_id: Optional[str] = None
+    gym_name: Optional[str] = None
+    gym_color: Optional[str] = None
+    session_count: int = 0
+    is_archived: bool = False
+
+
 class ExerciseHistoryResponse(BaseModel):
     """Response for exercise history endpoint."""
     user_id: str
@@ -98,6 +112,10 @@ class ExerciseHistoryResponse(BaseModel):
     total_pages: int
     has_more: bool
     summary: ExerciseHistorySummary
+    # Per-gym-progress segmentation (Gravl B-series).
+    resolved_scope: str = SCOPE_COMBINED  # 'per_gym' | 'combined'
+    gym_profile_id: Optional[str] = None   # the gym filter actually applied (null = combined)
+    gym_breakdown: List[GymBreakdownEntry] = []
 
 
 class ExerciseChartDataPoint(BaseModel):
@@ -128,6 +146,10 @@ class ExerciseChartDataResponse(BaseModel):
     time_range: str
     data_points: List[ExerciseChartDataPoint]
     trend: ExerciseChartTrend
+    # Per-gym-progress segmentation (Gravl B-series).
+    resolved_scope: str = SCOPE_COMBINED
+    gym_profile_id: Optional[str] = None
+    gym_breakdown: List["GymBreakdownEntry"] = []
 
 
 class PersonalRecord(BaseModel):
@@ -197,6 +219,143 @@ def get_days_for_time_range(time_range: TimeRange) -> int:
 
 
 # ============================================
+# Per-Gym Scope Resolution Helpers
+# ============================================
+
+def _lookup_exercise_equipment(db, exercise_name: str) -> Optional[str]:
+    """Best-effort equipment string for an exercise from the cleaned library MV.
+
+    Used only to pick the DEFAULT progress scope when the client sends neither
+    an explicit gym_profile_id nor scope. Never raises — a miss returns None so
+    `default_scope` falls back to name hints (and ultimately to combined).
+    """
+    try:
+        res = (
+            db.client.from_("exercise_library_cleaned")
+            .select("equipment")
+            .ilike("name", exercise_name)
+            .limit(1)
+            .execute()
+        )
+        if res and res.data:
+            return res.data[0].get("equipment")
+    except Exception as e:
+        logger.debug(f"equipment lookup failed for '{exercise_name}': {e}")
+    return None
+
+
+def _resolve_gym_scope(
+    db,
+    user_id: str,
+    exercise_name: str,
+    gym_profile_id: Optional[str],
+    scope: Optional[str],
+) -> tuple[str, Optional[str]]:
+    """Resolve (resolved_scope, effective_gym_profile_id) for a history request.
+
+    Precedence (matches the locked decision tree):
+      1. Explicit `gym_profile_id` → per_gym, filter to that gym. (Ownership is
+         validated by the caller; an unowned id simply returns no rows.)
+      2. `scope == 'all'` → combined, no gym filter.
+      3. `scope == 'current'` → per_gym scoped to the user's ACTIVE gym.
+      4. Neither → equipment-aware default. Machine/cable → per_gym @ active gym;
+         free weights / unknown → combined.
+
+    Returns the resolved scope label and the gym_profile_id to filter on
+    (None = no gym filter / combined).
+    """
+    # 1. Explicit gym wins.
+    if gym_profile_id:
+        return SCOPE_PER_GYM, gym_profile_id
+
+    # 2/3. Explicit scope override.
+    norm_scope = (scope or "").strip().lower()
+    if norm_scope == "all":
+        return SCOPE_COMBINED, None
+    if norm_scope == "current":
+        active = get_active_gym_profile_id(db, user_id)
+        # No active gym → behaves as combined (no-op filter).
+        return (SCOPE_PER_GYM, active) if active else (SCOPE_COMBINED, None)
+
+    # 4. Equipment-aware default.
+    equipment = _lookup_exercise_equipment(db, exercise_name)
+    resolved = default_scope(equipment, exercise_name)
+    if resolved == SCOPE_PER_GYM:
+        active = get_active_gym_profile_id(db, user_id)
+        return (SCOPE_PER_GYM, active) if active else (SCOPE_COMBINED, None)
+    return SCOPE_COMBINED, None
+
+
+def _build_gym_breakdown(
+    db, user_id: str, exercise_name: str
+) -> List[GymBreakdownEntry]:
+    """Per-gym session counts for this exercise across ALL gyms (incl. archived).
+
+    Built from exercise_workout_history (one row per workout_log session) joined
+    to gym_profiles for name/color/archived. Rows with a NULL gym_profile_id are
+    bucketed under the "Unassigned / All gyms" entry. Powers the client gym
+    filter chips + the multi-series chart. Never raises — returns [] on error.
+    """
+    try:
+        rows = (
+            db.client.from_("exercise_workout_history")
+            .select("gym_profile_id")
+            .eq("user_id", user_id)
+            .ilike("exercise_name", exercise_name.lower())
+            .execute()
+        )
+        history = rows.data or []
+        if not history:
+            return []
+
+        # Count sessions per gym_profile_id (None → unassigned bucket).
+        counts: Dict[Optional[str], int] = {}
+        for r in history:
+            gid = r.get("gym_profile_id")
+            counts[gid] = counts.get(gid, 0) + 1
+
+        # Resolve gym name/color/archived for the non-null ids in one query.
+        gym_ids = [gid for gid in counts.keys() if gid]
+        gym_meta: Dict[str, Dict[str, Any]] = {}
+        if gym_ids:
+            meta = (
+                db.client.from_("gym_profiles")
+                .select("id, name, color, archived_at")
+                .in_("id", gym_ids)
+                .execute()
+            )
+            for g in (meta.data or []):
+                gym_meta[g["id"]] = g
+
+        out: List[GymBreakdownEntry] = []
+        for gid, count in counts.items():
+            if gid and gid in gym_meta:
+                g = gym_meta[gid]
+                out.append(GymBreakdownEntry(
+                    gym_profile_id=gid,
+                    gym_name=g.get("name"),
+                    gym_color=g.get("color"),
+                    session_count=count,
+                    is_archived=g.get("archived_at") is not None,
+                ))
+            else:
+                # NULL gym (legacy/unassigned) or a gym row that no longer exists.
+                out.append(GymBreakdownEntry(
+                    gym_profile_id=gid,
+                    gym_name="Unassigned" if gid is None else None,
+                    gym_color=None,
+                    session_count=count,
+                    is_archived=False,
+                ))
+        # Stable order: live gyms by count desc, then archived, then unassigned.
+        out.sort(key=lambda e: (e.gym_profile_id is None, e.is_archived, -e.session_count))
+        return out
+    except Exception as e:
+        logger.debug(f"gym_breakdown build failed for '{exercise_name}': {e}")
+        return []
+
+
+# ============================================
 # Endpoints
 # ============================================
 
@@ -208,6 +367,11 @@ async def get_exercise_history(
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(20, ge=1, le=100, description="Items per page"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter history to a specific gym profile (per-gym progress)."),
+    scope: Optional[str] = Query(
+        None, description="'current' (active gym only) | 'all' (combined). "
+                          "Overrides the equipment-aware default when set."),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -215,6 +379,11 @@ async def get_exercise_history(
 
     Returns every session where the exercise was performed with
     sets, reps, volume, weight, and estimated 1RM.
+
+    Per-gym progress: when `gym_profile_id` is supplied (or the exercise's
+    equipment defaults to per-gym), history is filtered to that gym. The
+    response carries `resolved_scope` + `gym_breakdown` so the client can render
+    the gym filter + multi-series 'All gyms' chart.
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -225,6 +394,11 @@ async def get_exercise_history(
 
         logger.info(f"Getting exercise history for user {user_id}, exercise: {exercise_name}")
 
+        # Resolve the per-gym scope + effective gym filter (equipment-aware).
+        resolved_scope, eff_gym_id = _resolve_gym_scope(
+            db, user_id, exercise_name, gym_profile_id, scope
+        )
+
         # Query exercise_workout_history view
         start_date = (user_today_date(request, db, user_id) - timedelta(days=days_back)).isoformat()
 
@@ -234,6 +408,8 @@ async def get_exercise_history(
             .eq("user_id", user_id) \
             .ilike("exercise_name", exercise_name.lower()) \
             .gte("workout_date", start_date)
+        if eff_gym_id:
+            count_query = count_query.eq("gym_profile_id", eff_gym_id)
 
         count_result = count_query.execute()
         total_records = count_result.count or 0
@@ -246,16 +422,21 @@ async def get_exercise_history(
             .gte("workout_date", start_date) \
             .order("workout_date", desc=True) \
             .range(offset, offset + limit - 1)
+        if eff_gym_id:
+            history_query = history_query.eq("gym_profile_id", eff_gym_id)
 
         history_result = history_query.execute()
         history_data = history_result.data or []
 
-        # Get PRs for marking
+        # Get PRs for marking — scope to the same gym when per-gym so an
+        # incomparable other-gym machine record doesn't mismark sessions.
         pr_query = db.client.from_("exercise_personal_records") \
             .select("record_type, record_value, achieved_at") \
             .eq("user_id", user_id) \
             .ilike("exercise_name", exercise_name.lower()) \
             .eq("is_current_record", True)
+        if eff_gym_id:
+            pr_query = pr_query.eq("gym_profile_id", eff_gym_id)
 
         pr_result = pr_query.execute()
         pr_data = pr_result.data or []
@@ -286,6 +467,8 @@ async def get_exercise_history(
             .eq("user_id", user_id) \
             .ilike("exercise_name", exercise_name.lower()) \
             .gte("workout_date", start_date)
+        if eff_gym_id:
+            summary_query = summary_query.eq("gym_profile_id", eff_gym_id)
 
         summary_result = summary_query.execute()
         summary_data = summary_result.data or []
@@ -325,6 +508,8 @@ async def get_exercise_history(
 
         total_pages = (total_records + limit - 1) // limit if total_records > 0 else 1
 
+        gym_breakdown = _build_gym_breakdown(db, user_id, exercise_name)
+
         return ExerciseHistoryResponse(
             user_id=user_id,
             exercise_name=exercise_name,
@@ -335,6 +520,9 @@ async def get_exercise_history(
             total_pages=total_pages,
             has_more=page < total_pages,
             summary=summary,
+            resolved_scope=resolved_scope,
+            gym_profile_id=eff_gym_id,
+            gym_breakdown=gym_breakdown,
         )
 
     except Exception as e:
@@ -348,13 +536,19 @@ async def get_exercise_chart_data(
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for chart"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter chart to a specific gym profile (per-gym progress)."),
+    scope: Optional[str] = Query(
+        None, description="'current' (active gym only) | 'all' (combined)."),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Get chart data for visualizing exercise progression over time.
 
     Returns data points with weight, volume, and 1RM progression,
-    along with trend analysis.
+    along with trend analysis. Honors the same per-gym scope resolution as
+    /exercise-history (gym_profile_id + scope), and returns gym_breakdown so the
+    client can plot one gym-colored series per gym in the 'All gyms' view.
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -365,6 +559,11 @@ async def get_exercise_chart_data(
 
         logger.info(f"Getting exercise chart data for user {user_id}, exercise: {exercise_name}")
 
+        # Resolve per-gym scope + effective gym filter (equipment-aware default).
+        resolved_scope, eff_gym_id = _resolve_gym_scope(
+            db, user_id, exercise_name, gym_profile_id, scope
+        )
+
         # Query history data
         query = db.client.from_("exercise_workout_history") \
             .select("*") \
@@ -372,6 +571,8 @@ async def get_exercise_chart_data(
             .ilike("exercise_name", exercise_name.lower()) \
             .gte("workout_date", start_date) \
             .order("workout_date", desc=False)
+        if eff_gym_id:
+            query = query.eq("gym_profile_id", eff_gym_id)
 
         result = query.execute()
         data = result.data or []
@@ -429,12 +630,17 @@ async def get_exercise_chart_data(
                 current_1rm=0,
             )
 
+        gym_breakdown = _build_gym_breakdown(db, user_id, exercise_name)
+
         return ExerciseChartDataResponse(
             user_id=user_id,
             exercise_name=exercise_name,
             time_range=time_range.value,
             data_points=data_points,
             trend=trend,
+            resolved_scope=resolved_scope,
+            gym_profile_id=eff_gym_id,
+            gym_breakdown=gym_breakdown,
         )
 
     except Exception as e:
@@ -446,13 +652,19 @@ async def get_exercise_chart_data(
 async def get_exercise_personal_records(
     exercise_name: str,
     user_id: str = Query(..., description="User ID"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter PRs to a specific gym profile (per-gym progress)."),
+    scope: Optional[str] = Query(
+        None, description="'current' (active gym only) | 'all' (combined)."),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Get personal records for a specific exercise.
 
     Returns all current PRs including max weight, max volume,
-    max reps, and best estimated 1RM.
+    max reps, and best estimated 1RM. Honors per-gym scope: machine/cable PRs
+    default to the active gym; an explicit gym_profile_id filters to that gym;
+    scope='all' returns the combined (cross-gym) PRs.
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -461,6 +673,11 @@ async def get_exercise_personal_records(
 
         logger.info(f"Getting exercise PRs for user {user_id}, exercise: {exercise_name}")
 
+        # Resolve per-gym scope + effective gym filter (equipment-aware default).
+        resolved_scope, eff_gym_id = _resolve_gym_scope(
+            db, user_id, exercise_name, gym_profile_id, scope
+        )
+
         # Query current PRs
         query = db.client.from_("exercise_personal_records") \
             .select("*") \
@@ -468,6 +685,8 @@ async def get_exercise_personal_records(
             .ilike("exercise_name", exercise_name.lower()) \
             .eq("is_current_record", True) \
             .order("achieved_at", desc=True)
+        if eff_gym_id:
+            query = query.eq("gym_profile_id", eff_gym_id)
 
         result = query.execute()
         pr_data = result.data or []
@@ -518,13 +737,16 @@ async def get_exercise_personal_records(
 async def get_most_performed_exercises(
     user_id: str = Query(..., description="User ID"),
     limit: int = Query(10, ge=1, le=50, description="Number of exercises to return"),
+    gym_profile_id: Optional[str] = Query(
+        None, description="Filter to a specific gym profile (per-gym progress)."),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Get the most performed exercises for a user.
 
     Returns exercises sorted by times performed, with volume
-    and weight statistics.
+    and weight statistics. When `gym_profile_id` is supplied, the aggregation is
+    scoped to that gym via the exercise_workout_history view.
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -532,6 +754,43 @@ async def get_most_performed_exercises(
         db = get_supabase_db()
 
         logger.info(f"Getting most performed exercises for user {user_id}")
+
+        # When a gym filter is supplied the aggregation RPC can't express it, so
+        # aggregate directly from the gym-aware history view instead.
+        if gym_profile_id:
+            view_q = db.client.from_("exercise_workout_history") \
+                .select("exercise_name, muscle_group, total_volume_kg, max_weight_kg, workout_date") \
+                .eq("user_id", user_id) \
+                .eq("gym_profile_id", gym_profile_id)
+            view_rows = (view_q.execute().data) or []
+            agg: Dict[str, Dict[str, Any]] = {}
+            for row in view_rows:
+                name = row.get("exercise_name", "")
+                if not name:
+                    continue
+                entry = agg.setdefault(name, {
+                    "exercise_name": name,
+                    "muscle_group": row.get("muscle_group", "") or "",
+                    "times_performed": 0,
+                    "total_volume_kg": 0.0,
+                    "max_weight_kg": 0.0,
+                    "last_performed_at": None,
+                })
+                entry["times_performed"] += 1
+                entry["total_volume_kg"] += float(row.get("total_volume_kg", 0) or 0)
+                entry["max_weight_kg"] = max(
+                    entry["max_weight_kg"], float(row.get("max_weight_kg", 0) or 0))
+                wd = row.get("workout_date")
+                if wd and (entry["last_performed_at"] is None or wd > entry["last_performed_at"]):
+                    entry["last_performed_at"] = wd
+            sorted_ex = sorted(
+                agg.values(), key=lambda x: x["times_performed"], reverse=True)[:limit]
+            exercises = [MostPerformedExercise(**ex) for ex in sorted_ex]
+            return MostPerformedExercisesResponse(
+                user_id=user_id,
+                exercises=exercises,
+                total_unique_exercises=len(agg),
+            )
 
         # Query aggregated exercise data
         query = db.client.rpc(
@@ -671,6 +930,10 @@ class BatchExerciseHistoryRequest(BaseModel):
     exercise_names: List[str] = Field(..., min_length=1, max_length=30)
     limit_per_exercise: int = Field(6, ge=1, le=20)
     days_back: int = Field(84, ge=1, le=365)
+    # Optional per-gym scoping for the pre-set insight banner: when set, only
+    # this gym's per-set history is returned (machine/cable exercises), so the
+    # banner's "vs last time" line reflects the gym you're actually at.
+    gym_profile_id: Optional[str] = None
 
 
 class BatchExerciseHistoryResponse(BaseModel):
@@ -704,7 +967,7 @@ async def get_batch_exercise_history(
     try:
         # One query to grab all candidate rows for every exercise at once.
         # performance_logs is the source of truth for per-set data.
-        result = (
+        pl_query = (
             db.client.from_("performance_logs")
             .select(
                 "exercise_name, set_number, reps_completed, weight_kg, rpe, rir, "
@@ -713,6 +976,11 @@ async def get_batch_exercise_history(
             .eq("user_id", request.user_id)
             .in_("exercise_name", normalized)
             .gte("recorded_at", since)
+        )
+        if request.gym_profile_id:
+            pl_query = pl_query.eq("gym_profile_id", request.gym_profile_id)
+        result = (
+            pl_query
             .order("recorded_at", desc=True)
             .limit(request.limit_per_exercise * len(normalized) * 10)
             .execute()

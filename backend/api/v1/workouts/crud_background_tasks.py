@@ -13,7 +13,7 @@ Contains:
 import asyncio
 import json
 from datetime import datetime, date, timedelta
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 from core.logger import get_logger
 from core.timezone_utils import get_user_today
@@ -474,21 +474,106 @@ async def recalculate_user_fitness_score(user_id: str, supabase, timezone_str: s
         logger.error(f"Background: Failed to recalculate fitness score: {e}", exc_info=True)
 
 
+def _derive_gym_for_populate(
+    supabase,
+    workout_log_id: Optional[str],
+    workout_id: Optional[str],
+    user_id: str,
+) -> Optional[str]:
+    """Resolve the gym for server-populated performance_logs when the /complete
+    caller didn't thread one in.
+
+    Precedence mirrors the performance_db write path so both attribute identically:
+      1. parent workout_log.gym_profile_id (already stamped by create_workout_log)
+      2. workouts.gym_profile_id (the gym the workout was generated for)
+      3. users.active_gym_profile_id (legacy/ad-hoc fallback)
+      4. None (legacy/unassigned — valid, never crashes)
+
+    Takes the raw supabase client (this module is handed `supabase = db.client`),
+    so it queries tables directly rather than via the db facade.
+    """
+    # 1. Parent workout_log
+    if workout_log_id:
+        try:
+            resp = (
+                supabase.table("workout_logs")
+                .select("gym_profile_id")
+                .eq("id", workout_log_id)
+                .maybe_single()
+                .execute()
+            )
+            if resp is not None and resp.data and resp.data.get("gym_profile_id"):
+                return resp.data["gym_profile_id"]
+        except Exception as e:
+            logger.debug(f"[gym] populate: workout_log {workout_log_id} lookup failed: {e}")
+
+    # 2. Workout provenance
+    if workout_id:
+        try:
+            resp = (
+                supabase.table("workouts")
+                .select("gym_profile_id")
+                .eq("id", workout_id)
+                .maybe_single()
+                .execute()
+            )
+            if resp is not None and resp.data and resp.data.get("gym_profile_id"):
+                return resp.data["gym_profile_id"]
+        except Exception as e:
+            logger.debug(f"[gym] populate: workout {workout_id} lookup failed: {e}")
+
+    # 3. Active gym fallback
+    try:
+        resp = (
+            supabase.table("gym_profiles")
+            .select("id")
+            .eq("user_id", user_id)
+            .eq("is_active", True)
+            .single()
+            .execute()
+        )
+        if resp is not None and resp.data:
+            return resp.data.get("id")
+    except Exception as e:
+        logger.debug(f"[gym] populate: active-gym fallback failed for {user_id}: {e}")
+
+    return None
+
+
 async def populate_performance_logs(
     user_id: str,
     workout_id: str,
     workout_log_id: str,
     exercises: List[Dict],
     supabase,
+    gym_profile_id: Optional[str] = None,
 ):
     """
     Background task to populate performance_logs table with individual set data.
 
     This enables efficient exercise history queries for AI weight suggestions
     instead of parsing large JSON blobs from workout_logs.
+
+    Args:
+        gym_profile_id: Per-gym progress attribution for every set this run
+            inserts. The /complete caller passes the WORKOUT's gym
+            (workouts.gym_profile_id) so the server-populated rows attribute to
+            the SAME gym as the client `/logs/bulk` path. When None, we derive
+            it here from the parent workout_log (which the create-workout-log
+            endpoint already stamped), then the workout, then the active gym —
+            so a missing arg never leaves the rows unstamped when a gym exists.
+            NULL is valid (legacy/ad-hoc workout) and never crashes.
     """
     try:
         logger.info(f"Background: Populating performance_logs for workout_log {workout_log_id}")
+
+        # Resolve gym SERVER-SIDE if the caller didn't supply it. Same
+        # precedence as the performance_db write path so both paths agree:
+        # parent workout_log.gym_profile_id → workout.gym_profile_id → active.
+        if gym_profile_id is None:
+            gym_profile_id = _derive_gym_for_populate(
+                supabase, workout_log_id, workout_id, user_id
+            )
 
         records_to_insert = []
         recorded_at = datetime.now().isoformat()
@@ -578,6 +663,10 @@ async def populate_performance_logs(
                     "tempo": tempo,
                     "is_completed": is_completed,
                     "failed_at_rep": failed_at_rep,
+                    # Per-gym progress: server-derived gym for this session
+                    # (same value the /logs/bulk client path resolves). NULL
+                    # is valid (legacy/ad-hoc) — the column is nullable.
+                    "gym_profile_id": gym_profile_id,
                     # `notes` always emitted as a list (possibly empty) so the
                     # TEXT[] column gets a stable shape across client versions.
                     "notes": notes,

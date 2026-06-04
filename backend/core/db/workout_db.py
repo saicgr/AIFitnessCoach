@@ -548,8 +548,10 @@ class WorkoutDB(BaseDB):
         result = (
             self.client.table("workout_logs")
             .select(
+                # gym_profile_id surfaced for per-gym progress segmentation —
+                # readers (history/scores) key off the session-level gym.
                 "id, user_id, workout_id, sets_json, completed_at, "
-                "total_time_seconds, exercises_completed, status"
+                "total_time_seconds, exercises_completed, status, gym_profile_id"
             )
             .eq("user_id", user_id)
             .order("completed_at", desc=True)
@@ -563,7 +565,11 @@ class WorkoutDB(BaseDB):
         Create a workout log.
 
         Args:
-            data: Workout log data
+            data: Workout log data. `gym_profile_id` (nullable) is passed
+                through verbatim to the insert for per-gym progress tracking —
+                the caller (performance_db.create_workout_log) server-derives it
+                from the workout's provenance, so this layer stays a thin pass-
+                through. NULL is valid (legacy/ad-hoc workout).
 
         Returns:
             Created log record or None

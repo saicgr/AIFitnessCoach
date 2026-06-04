@@ -90,6 +90,13 @@ async def complete_workout(
 
         user_id = existing.get("user_id")
 
+        # Per-gym progress: the WORKOUT's gym is the source of truth for every
+        # logged row attributed to this completion (PRs, performance_logs).
+        # `workouts.gym_profile_id` is the gym the workout was *generated* for —
+        # stable provenance that survives a mid-session active-gym switch. NULL
+        # is valid (legacy/ad-hoc workout) → the combined/unassigned bucket.
+        workout_gym_profile_id = existing.get("gym_profile_id")
+
         from datetime import timezone
         now = datetime.now(timezone.utc)
         update_data = {
@@ -184,6 +191,11 @@ async def complete_workout(
                 new_prs = pr_service.detect_prs_in_workout(
                     workout_exercises=workout_exercises,
                     existing_prs_by_exercise=existing_prs_by_exercise,
+                    # Per-gym PR scoping. Optional trailing kwarg (owned by the
+                    # backend-read agent) — safe to pass even before it lands.
+                    # Lets machine/cable PRs scope to this gym so a home session
+                    # isn't crushed by an incomparable gym-machine record.
+                    gym_profile_id=workout_gym_profile_id,
                 )
 
                 logger.info(f"Detected {len(new_prs)} PRs in workout {workout_id}")
@@ -233,6 +245,9 @@ async def complete_workout(
                         "improvement_percent": pr.improvement_percent,
                         "is_all_time_pr": pr.is_all_time_pr,
                         "celebration_message": ai_celebration,
+                        # Per-gym progress: stamp the workout's gym so PRs can be
+                        # labeled/segmented by gym. NULL is valid (legacy/ad-hoc).
+                        "gym_profile_id": workout_gym_profile_id,
                     })
                     detected_prs.append(PersonalRecordInfo(
                         exercise_name=pr.exercise_name,
@@ -269,6 +284,10 @@ async def complete_workout(
                 workout_log_id=perf_log_workout_log_id,
                 exercises=exercises,
                 supabase=supabase,
+                # Per-gym progress: thread the WORKOUT's gym so the
+                # server-populated per-set rows attribute to the SAME gym as
+                # the client `/logs/bulk` path. NULL is valid (legacy/ad-hoc).
+                gym_profile_id=workout_gym_profile_id,
             )
 
         # Background: Recalculate Strength Scores and Fitness Score

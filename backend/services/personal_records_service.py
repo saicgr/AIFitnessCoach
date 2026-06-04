@@ -14,6 +14,7 @@ from decimal import Decimal
 import logging
 
 from services.strength_calculator_service import StrengthCalculatorService
+from services.equipment_scope import default_scope, SCOPE_PER_GYM
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,12 @@ class PersonalRecord:
     improvement_percent: Optional[float]
     is_all_time_pr: bool
     celebration_message: Optional[str]
+    # Per-gym progress (Gravl B-series). For machine/cable exercises a PR is
+    # scoped to the gym it was set at, so a home cable can PR even when a gym
+    # machine's incomparable record is higher. These tag the celebration.
+    gym_profile_id: Optional[str] = None
+    is_gym_pr: bool = False          # beats this gym's prior best (per-gym PR)
+    is_first_at_gym: bool = False    # first-ever logged set at this gym
 
 
 @dataclass
@@ -49,6 +56,9 @@ class PRComparison:
     improvement_kg: Optional[float]
     improvement_percent: Optional[float]
     time_since_last_pr: Optional[int]  # days
+    # Per-gym fields (populated when a gym_profile_id is in play).
+    is_gym_pr: bool = False
+    is_first_at_gym: bool = False
 
 
 class PersonalRecordsService:
@@ -74,18 +84,29 @@ class PersonalRecordsService:
         reps: int,
         existing_prs: List[Dict],
         rpe: Optional[float] = None,
+        gym_profile_id: Optional[str] = None,
     ) -> PRComparison:
         """
         Check if a lift is a new personal record.
 
         Compares estimated 1RM to find PRs across all rep ranges.
 
+        Per-gym semantics: when `gym_profile_id` is supplied, the "PR to beat"
+        comparison that drives `is_gym_pr` is scoped to existing PRs from that
+        SAME gym (so an incomparable other-gym machine record can't block a
+        legit per-gym PR). The all-time cross-gym best is STILL computed and
+        exposed as `is_all_time_pr`/`previous_1rm`. `is_pr` becomes true when the
+        lift beats EITHER the gym best (per-gym) OR the all-time best, so a first
+        set at a new gym registers as a PR ("first at this gym").
+
         Args:
             exercise_name: Name of the exercise
             weight_kg: Weight lifted
             reps: Number of reps completed
-            existing_prs: List of existing PRs for this exercise
+            existing_prs: List of existing PRs for this exercise (may span gyms;
+                each row may carry `gym_profile_id`).
             rpe: Optional RPE rating
+            gym_profile_id: When set, scope the per-gym PR comparison to this gym.
 
         Returns:
             PRComparison with PR status and details
@@ -93,67 +114,95 @@ class PersonalRecordsService:
         # Calculate current estimated 1RM
         current_1rm = self.strength_calculator.calculate_1rm_average(weight_kg, reps)
 
-        # Find best existing 1RM
+        # ── All-time (cross-gym) best — unchanged semantics ──────────────────
         if not existing_prs:
-            # First PR for this exercise
-            return PRComparison(
-                is_pr=True,
-                is_all_time_pr=True,
-                current_1rm=current_1rm,
-                previous_1rm=None,
-                improvement_kg=None,
-                improvement_percent=None,
-                time_since_last_pr=None,
-            )
+            best_all_1rm = 0.0
+            last_pr_date = None
+        else:
+            # `.get(k, 0)` returns the default only when the key is MISSING —
+            # not when the value is explicitly NULL — so coalesce with `or 0`.
+            best_all = max(existing_prs, key=lambda x: float(x.get("estimated_1rm_kg") or 0))
+            best_all_1rm = float(best_all.get("estimated_1rm_kg") or 0)
+            last_pr_date = best_all.get("achieved_at")
 
-        # Get best existing 1RM. `.get(k, 0)` returns the default only when
-        # the key is missing — NOT when the value is explicitly NULL — so a
-        # row with `estimated_1rm_kg = NULL` would still hit `float(None)`.
-        # Coalesce with `or 0` to handle both cases.
-        best_existing = max(existing_prs, key=lambda x: float(x.get("estimated_1rm_kg") or 0))
-        best_existing_1rm = float(best_existing.get("estimated_1rm_kg") or 0)
-        last_pr_date = best_existing.get("achieved_at")
+        is_all_time_pr = current_1rm > best_all_1rm
 
-        # Compare
-        is_pr = current_1rm > best_existing_1rm
+        # ── Per-gym best (only meaningful when a gym is in play) ──────────────
+        is_gym_pr = False
+        is_first_at_gym = False
+        if gym_profile_id is not None:
+            same_gym_prs = [
+                p for p in existing_prs
+                if p.get("gym_profile_id") == gym_profile_id
+            ]
+            if not same_gym_prs:
+                # No prior record at THIS gym → first time here. Always a
+                # per-gym PR (there's nothing to beat).
+                is_gym_pr = True
+                is_first_at_gym = True
+                best_gym_1rm = 0.0
+            else:
+                best_gym = max(
+                    same_gym_prs, key=lambda x: float(x.get("estimated_1rm_kg") or 0))
+                best_gym_1rm = float(best_gym.get("estimated_1rm_kg") or 0)
+                is_gym_pr = current_1rm > best_gym_1rm
+            # For per-gym exercises the "PR to beat" baseline shown to the user
+            # is the SAME gym's best, not the all-time (incomparable) record.
+            comparison_baseline = best_gym_1rm
+        else:
+            comparison_baseline = best_all_1rm
 
-        # Calculate improvement
+        # `is_pr` fires on either an all-time PR or a per-gym PR so a fresh gym
+        # never crushes a legit first-at-this-gym record.
+        is_pr = is_all_time_pr or is_gym_pr
+
+        # ── Improvement metrics (relative to the relevant baseline) ──────────
         improvement_kg = None
         improvement_percent = None
         time_since_last_pr = None
 
-        if is_pr and best_existing_1rm > 0:
-            improvement_kg = round(current_1rm - best_existing_1rm, 2)
-            improvement_percent = round((improvement_kg / best_existing_1rm) * 100, 2)
+        if is_pr and comparison_baseline > 0:
+            improvement_kg = round(current_1rm - comparison_baseline, 2)
+            improvement_percent = round((improvement_kg / comparison_baseline) * 100, 2)
 
-            if last_pr_date:
-                # _parse_date always returns an aware UTC datetime,
-                # so subtracting from `datetime.now(timezone.utc)` is safe
-                # whether the stored value was naive, ISO-Z, or datetime.
-                last_pr_date = self._parse_date(last_pr_date)
-                time_since_last_pr = (datetime.now(timezone.utc) - last_pr_date).days
+        if is_pr and last_pr_date:
+            # _parse_date always returns an aware UTC datetime, so subtracting
+            # from `datetime.now(timezone.utc)` is safe whether the stored value
+            # was naive, ISO-Z, or datetime.
+            parsed = self._parse_date(last_pr_date)
+            time_since_last_pr = (datetime.now(timezone.utc) - parsed).days
 
         return PRComparison(
             is_pr=is_pr,
-            is_all_time_pr=is_pr,  # If it beats the best, it's all-time
+            is_all_time_pr=is_all_time_pr,
             current_1rm=round(current_1rm, 2),
-            previous_1rm=round(best_existing_1rm, 2) if best_existing_1rm else None,
+            previous_1rm=round(comparison_baseline, 2) if comparison_baseline else None,
             improvement_kg=improvement_kg,
             improvement_percent=improvement_percent,
             time_since_last_pr=time_since_last_pr,
+            is_gym_pr=is_gym_pr,
+            is_first_at_gym=is_first_at_gym,
         )
 
     def detect_prs_in_workout(
         self,
         workout_exercises: List[Dict],
         existing_prs_by_exercise: Dict[str, List[Dict]],
+        gym_profile_id: Optional[str] = None,
     ) -> List[PersonalRecord]:
         """
         Detect all PRs in a workout.
 
         Args:
-            workout_exercises: List of exercises with sets/reps/weights
+            workout_exercises: List of exercises with sets/reps/weights. Each
+                exercise may carry an optional `equipment` string used to decide
+                whether PRs are scoped per-gym.
             existing_prs_by_exercise: Dict mapping exercise name to existing PRs
+                (each PR row may carry `gym_profile_id`).
+            gym_profile_id: The gym the workout was performed at (server-derived
+                from the workout, per the source-of-truth rule). When set, PR
+                detection for machine/cable exercises is scoped to this gym while
+                still tracking the all-time cross-gym best.
 
         Returns:
             List of new PersonalRecord objects
@@ -171,6 +220,16 @@ class PersonalRecordsService:
 
             if not sets:
                 continue
+
+            # Decide whether THIS exercise scopes PRs per gym. Free weights /
+            # bodyweight stay global (gym arg ignored); machine/cable scope to
+            # the workout's gym. Equipment may be absent → name-hint fallback.
+            equipment = exercise.get("equipment")
+            is_per_gym = (
+                gym_profile_id is not None
+                and default_scope(equipment, exercise_name) == SCOPE_PER_GYM
+            )
+            effective_gym_id = gym_profile_id if is_per_gym else None
 
             # Get existing PRs for this exercise
             existing_prs = existing_prs_by_exercise.get(
@@ -194,6 +253,7 @@ class PersonalRecordsService:
                     reps=reps,
                     existing_prs=existing_prs,
                     rpe=set_data.get("rpe"),
+                    gym_profile_id=effective_gym_id,
                 )
 
                 if comparison.is_pr:
@@ -201,12 +261,13 @@ class PersonalRecordsService:
                     muscle_groups = self.strength_calculator.get_exercise_muscle_groups(exercise_name)
                     muscle_group = muscle_groups[0] if muscle_groups else None
 
-                    # Generate celebration message
+                    # Generate celebration message (gym-aware first-at-gym copy).
                     celebration = self._generate_celebration_message(
                         exercise_name=exercise_name,
                         improvement_kg=comparison.improvement_kg,
                         improvement_percent=comparison.improvement_percent,
                         is_all_time=comparison.is_all_time_pr,
+                        is_first_at_gym=comparison.is_first_at_gym,
                     )
 
                     pr = PersonalRecord(
@@ -226,13 +287,18 @@ class PersonalRecordsService:
                         improvement_percent=comparison.improvement_percent,
                         is_all_time_pr=comparison.is_all_time_pr,
                         celebration_message=celebration,
+                        gym_profile_id=effective_gym_id,
+                        is_gym_pr=comparison.is_gym_pr,
+                        is_first_at_gym=comparison.is_first_at_gym,
                     )
                     new_prs.append(pr)
 
-                    # Update existing PRs for subsequent set comparisons
+                    # Update existing PRs for subsequent set comparisons (carry
+                    # the gym so later sets compare against the right baseline).
                     existing_prs.append({
                         "estimated_1rm_kg": comparison.current_1rm,
                         "achieved_at": datetime.now(),
+                        "gym_profile_id": effective_gym_id,
                     })
 
         return new_prs
@@ -423,6 +489,7 @@ class PersonalRecordsService:
         improvement_kg: Optional[float],
         improvement_percent: Optional[float],
         is_all_time: bool,
+        is_first_at_gym: bool = False,
     ) -> str:
         """
         Generate a celebration message for a new PR.
@@ -432,10 +499,25 @@ class PersonalRecordsService:
             improvement_kg: Improvement in kg
             improvement_percent: Improvement percentage
             is_all_time: Whether this is an all-time PR
+            is_first_at_gym: Whether this is the first logged set at this gym
+                (machine/cable per-gym PR with no prior gym history)
 
         Returns:
             Celebration message string
         """
+        display_name = exercise_name.replace("_", " ").title()
+
+        # First-ever set at this gym for a per-gym exercise — frame it as a
+        # baseline, not a regression, even if another gym's record is higher.
+        if is_first_at_gym:
+            import random
+            first_at_gym = [
+                f"First time logging {display_name} here — baseline set!",
+                f"New gym, fresh start! {display_name} logged for this gym.",
+                f"Tracking {display_name} at this gym now — let's build it up!",
+            ]
+            return random.choice(first_at_gym)
+
         # Basic celebrations
         base_celebrations = [
             "New PR! ",
@@ -449,7 +531,6 @@ class PersonalRecordsService:
         message = random.choice(base_celebrations)
 
         # Add exercise name
-        display_name = exercise_name.replace("_", " ").title()
         message += f"{display_name}"
 
         # Add improvement details

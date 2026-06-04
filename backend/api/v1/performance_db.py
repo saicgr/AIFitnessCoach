@@ -46,6 +46,84 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _derive_gym_profile_id_from_workout(db, workout_id: Optional[str], user_id: str) -> Optional[str]:
+    """Server-authoritative gym for a logged workout.
+
+    Source-of-truth precedence (per the per-gym-progress plan):
+      1. workouts.gym_profile_id — the gym the workout was *generated* for
+         (stable provenance; survives mid-session active-gym switches).
+      2. users.active_gym_profile_id (via get_active_gym_profile_id) — fallback
+         only when the workout's gym is NULL (legacy workouts predating the
+         stamp, ad-hoc/quick workouts).
+      3. None — legacy/unassigned bucket; treated as "combined". Never crashes.
+
+    The client-supplied value is intentionally NOT consulted here; callers
+    override it with this derived value so attribution can't be spoofed and
+    stays consistent regardless of which write path fires.
+    """
+    gym_id: Optional[str] = None
+    if workout_id:
+        try:
+            resp = (
+                db.client.table("workouts")
+                .select("gym_profile_id")
+                .eq("id", workout_id)
+                .maybe_single()
+                .execute()
+            )
+            if resp is not None and resp.data:
+                gym_id = resp.data.get("gym_profile_id")
+        except Exception as e:
+            logger.debug(f"[gym] workout {workout_id} gym lookup failed: {e}")
+
+    if gym_id:
+        return gym_id
+
+    # Legacy / ad-hoc workout with no stamped gym — fall back to the user's
+    # currently-active profile so going-forward logs still attribute somewhere.
+    try:
+        from api.v1.workouts._gym_profile_helpers import get_active_gym_profile_id
+        return get_active_gym_profile_id(db, user_id)
+    except Exception as e:
+        logger.debug(f"[gym] active-gym fallback failed for user {user_id}: {e}")
+        return None
+
+
+def _derive_gym_profile_id_from_workout_log(db, workout_log_id: Optional[str], user_id: str) -> Optional[str]:
+    """Gym for a performance_log row — inherit from the PARENT workout_log.
+
+    performance_logs must always agree with their parent workout_log
+    (edge case #22). So we read workout_logs.gym_profile_id first; only if the
+    parent is missing or unstamped do we fall back to deriving from the parent's
+    workout (and then the active gym). NULL is valid. Never raises.
+    """
+    if workout_log_id:
+        try:
+            resp = (
+                db.client.table("workout_logs")
+                .select("gym_profile_id, workout_id")
+                .eq("id", workout_log_id)
+                .maybe_single()
+                .execute()
+            )
+            if resp is not None and resp.data:
+                parent_gym = resp.data.get("gym_profile_id")
+                if parent_gym:
+                    return parent_gym
+                # Parent exists but is unstamped — derive from its workout.
+                return _derive_gym_profile_id_from_workout(
+                    db, resp.data.get("workout_id"), user_id
+                )
+        except Exception as e:
+            logger.debug(f"[gym] parent workout_log {workout_log_id} lookup failed: {e}")
+    # No parent found — best-effort active-gym fallback.
+    try:
+        from api.v1.workouts._gym_profile_helpers import get_active_gym_profile_id
+        return get_active_gym_profile_id(db, user_id)
+    except Exception:
+        return None
+
+
 def row_to_performance_log(row: dict) -> PerformanceLog:
     """Convert a Supabase row dict to PerformanceLog model."""
     return PerformanceLog(
@@ -129,6 +207,14 @@ async def create_performance_log(log: PerformanceLogCreate,
     try:
         db = get_supabase_db()
 
+        # Per-gym progress: inherit the gym from the PARENT workout_log row so a
+        # set always agrees with its session (edge case #22). Falls back to
+        # deriving from the workout, then the active gym; NULL is valid.
+        # Client value (log.gym_profile_id) is advisory only — overridden here.
+        derived_gym_profile_id = _derive_gym_profile_id_from_workout_log(
+            db, log.workout_log_id, log.user_id
+        )
+
         log_data = {
             "workout_log_id": log.workout_log_id,
             "user_id": log.user_id,
@@ -151,6 +237,7 @@ async def create_performance_log(log: PerformanceLogCreate,
             "set_duration_seconds": log.set_duration_seconds,
             "rest_duration_seconds": log.rest_duration_seconds,
             "logging_mode": log.logging_mode,
+            "gym_profile_id": derived_gym_profile_id,
         }
 
         created = db.create_performance_log(log_data)
@@ -177,6 +264,22 @@ async def create_performance_logs_bulk(
         return {"inserted": 0}
     try:
         db = get_supabase_db()
+
+        # Per-gym progress: resolve the gym ONCE per distinct parent
+        # workout_log_id (a bulk save is a single session, so this is one
+        # lookup in practice). Each set inherits its parent's gym — same value
+        # the server `populate_performance_logs` path resolves, so the dual
+        # write paths attribute identically. Client value is advisory/ignored.
+        gym_cache: dict = {}
+
+        def _gym_for(workout_log_id: Optional[str], user_id: str) -> Optional[str]:
+            key = (workout_log_id, user_id)
+            if key not in gym_cache:
+                gym_cache[key] = _derive_gym_profile_id_from_workout_log(
+                    db, workout_log_id, user_id
+                )
+            return gym_cache[key]
+
         records = [
             {
                 "workout_log_id": log.workout_log_id,
@@ -200,6 +303,7 @@ async def create_performance_logs_bulk(
                 "set_duration_seconds": log.set_duration_seconds,
                 "rest_duration_seconds": log.rest_duration_seconds,
                 "logging_mode": log.logging_mode,
+                "gym_profile_id": _gym_for(log.workout_log_id, log.user_id),
             }
             for log in logs
         ]
@@ -342,12 +446,22 @@ async def create_workout_log(log: WorkoutLogCreate,
         if log.total_time_seconds and log.total_time_seconds > 0:
             derived_minutes = max(1, round(log.total_time_seconds / 60))
 
+        # Per-gym progress: derive the gym SERVER-SIDE from the workout's
+        # provenance (workouts.gym_profile_id, fallback active gym). The
+        # client-supplied log.gym_profile_id is advisory only and is
+        # overridden here so attribution can't be spoofed and survives a
+        # mid-session active-gym switch. NULL is valid (legacy/ad-hoc).
+        derived_gym_profile_id = _derive_gym_profile_id_from_workout(
+            db, log.workout_id, log.user_id
+        )
+
         log_data = {
             "workout_id": log.workout_id,
             "user_id": log.user_id,
             "sets_json": sets_data,  # Pass as dict, not string
             "total_time_seconds": log.total_time_seconds,
             "duration_minutes": derived_minutes,
+            "gym_profile_id": derived_gym_profile_id,
         }
 
         # Include metadata if provided (progression patterns, increments, etc.)

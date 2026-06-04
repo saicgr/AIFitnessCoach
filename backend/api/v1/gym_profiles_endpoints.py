@@ -296,17 +296,24 @@ async def delete_gym_profile(
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Delete a gym profile.
+    Archive (soft-delete) a gym profile.
 
-    Cannot delete the last profile - users must have at least one profile.
-    If deleting the active profile, another profile will be activated.
+    Per-gym progress (Gravl B-series): "delete" no longer hard-deletes. It sets
+    `archived_at = now()` so the gym disappears from pickers/generation but its
+    `gym_profile_id` stays on every logged set, PR, and score — history remains
+    attributed and filterable under "Archived". A profile can be restored via
+    POST /{id}/restore.
+
+    Cannot archive the user's LAST live (non-archived) profile — they must keep
+    at least one active gym. If the archived profile was active, the next live
+    profile by display_order is activated.
     """
-    logger.info(f"🗑️ [GymProfile] Deleting profile {profile_id}")
+    logger.info(f"🗑️ [GymProfile] Archiving profile {profile_id}")
 
     try:
         supabase = get_supabase()
 
-        # Get the profile to delete
+        # Get the profile to archive
         profile_result = supabase.client.table("gym_profiles") \
             .select("*") \
             .eq("id", profile_id) \
@@ -319,32 +326,42 @@ async def delete_gym_profile(
         profile = profile_result.data
         user_id = profile["user_id"]
 
-        # Check if this is the only profile
+        # Already archived → idempotent success (nothing to do).
+        if profile.get("archived_at") is not None:
+            logger.info(f"ℹ️ [GymProfile] Profile {profile_id} already archived")
+            return {"success": True, "message": "Profile already archived"}
+
+        # Count the user's LIVE (non-archived) profiles. Mirror the old
+        # last-profile guard: a user must always keep at least one live gym.
         count_result = supabase.client.table("gym_profiles") \
             .select("id", count="exact") \
             .eq("user_id", user_id) \
+            .is_("archived_at", "null") \
             .execute()
 
-        if count_result.count <= 1:
+        if (count_result.count or 0) <= 1:
             raise HTTPException(
                 status_code=400,
-                detail="Cannot delete the last gym profile. Users must have at least one profile."
+                detail="Can't archive your last gym. You must keep at least one active gym profile."
             )
 
         was_active = profile.get("is_active", False)
 
-        # Delete the profile
+        # Soft-archive: stamp archived_at and clear is_active so it leaves the
+        # active/picker pool but keeps all historical attribution.
+        now_iso = datetime.utcnow().isoformat()
         supabase.client.table("gym_profiles") \
-            .delete() \
+            .update({"archived_at": now_iso, "is_active": False, "updated_at": now_iso}) \
             .eq("id", profile_id) \
             .execute()
 
-        # If deleted profile was active, activate another one
+        # If the archived profile was active, activate the next LIVE profile.
         if was_active:
-            # Get the first profile by display order
             next_result = supabase.client.table("gym_profiles") \
                 .select("id") \
                 .eq("user_id", user_id) \
+                .is_("archived_at", "null") \
+                .neq("id", profile_id) \
                 .order("display_order") \
                 .limit(1) \
                 .execute()
@@ -362,7 +379,7 @@ async def delete_gym_profile(
                 logger.info(f"🔄 [GymProfile] Activated next profile {next_profile_id}")
 
                 # Refill 14 days for the newly active profile so the home
-                # carousel doesn't go empty after a delete-active.
+                # carousel doesn't go empty after an archive-active.
                 try:
                     from api.v1.workouts.today import (
                         invalidate_today_workout_cache,
@@ -391,9 +408,9 @@ async def delete_gym_profile(
                             user_tz=user_tz,
                             horizon_days=14,
                         )
-                        logger.info(f"📅 [GymProfile] Queued pre-gen after delete-active fallback")
+                        logger.info(f"📅 [GymProfile] Queued pre-gen after archive-active fallback")
                 except Exception as gen_err:
-                    logger.warning(f"[GymProfile] Pre-gen on delete-fallback failed (non-fatal): {gen_err}", exc_info=True)
+                    logger.warning(f"[GymProfile] Pre-gen on archive-fallback failed (non-fatal): {gen_err}", exc_info=True)
 
         # Log to user context
         await user_context_service.log_event(
@@ -401,21 +418,91 @@ async def delete_gym_profile(
             event_type=EventType.FEATURE_INTERACTION,
             event_data={
                 "feature": "gym_profile",
-                "action": "deleted",
+                "action": "archived",
                 "profile_id": profile_id,
                 "profile_name": profile.get("name"),
             },
             context={"source": "gym_profiles_api"}
         )
 
-        logger.info(f"✅ [GymProfile] Deleted profile '{profile.get('name')}' (id: {profile_id})")
+        logger.info(f"✅ [GymProfile] Archived profile '{profile.get('name')}' (id: {profile_id})")
 
-        return {"success": True, "message": "Profile deleted successfully"}
+        return {"success": True, "message": "Profile archived successfully", "archived": True}
 
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"❌ [GymProfile] Failed to delete profile: {e}", exc_info=True)
+        logger.error(f"❌ [GymProfile] Failed to archive profile: {e}", exc_info=True)
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
+
+
+# =============================================================================
+# RESTORE (UN-ARCHIVE) PROFILE
+# =============================================================================
+
+
+@router.post("/{profile_id}/restore", response_model=GymProfile)
+async def restore_gym_profile(
+    profile_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Restore an archived gym profile (clears `archived_at`).
+
+    The restored profile reappears in pickers/generation. It is NOT auto-
+    activated — it returns to the live pool at its existing display_order and the
+    user can activate it explicitly. Idempotent for an already-live profile.
+    """
+    logger.info(f"♻️ [GymProfile] Restoring profile {profile_id}")
+
+    try:
+        supabase = get_supabase()
+
+        profile_result = supabase.client.table("gym_profiles") \
+            .select("*") \
+            .eq("id", profile_id) \
+            .single() \
+            .execute()
+
+        if not profile_result.data:
+            raise HTTPException(status_code=404, detail="Profile not found")
+
+        profile = profile_result.data
+        user_id = profile["user_id"]
+
+        if profile.get("archived_at") is None:
+            # Already live — return as-is (idempotent).
+            from .gym_profiles import row_to_gym_profile
+            return row_to_gym_profile(profile)
+
+        now_iso = datetime.utcnow().isoformat()
+        result = supabase.client.table("gym_profiles") \
+            .update({"archived_at": None, "updated_at": now_iso}) \
+            .eq("id", profile_id) \
+            .execute()
+
+        await user_context_service.log_event(
+            user_id=user_id,
+            event_type=EventType.FEATURE_INTERACTION,
+            event_data={
+                "feature": "gym_profile",
+                "action": "restored",
+                "profile_id": profile_id,
+                "profile_name": profile.get("name"),
+            },
+            context={"source": "gym_profiles_api"}
+        )
+
+        logger.info(f"✅ [GymProfile] Restored profile '{profile.get('name')}' (id: {profile_id})")
+
+        from .gym_profiles import row_to_gym_profile
+        row = result.data[0] if result.data else {**profile, "archived_at": None}
+        return row_to_gym_profile(row)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ [GymProfile] Failed to restore profile: {e}", exc_info=True)
         raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 

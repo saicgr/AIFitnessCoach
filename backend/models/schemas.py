@@ -439,6 +439,11 @@ class WorkoutLogCreate(BaseModel):
     sets_json: str = Field(..., max_length=100000)
     total_time_seconds: int = Field(..., ge=0, le=86400)  # max 24 hours
     metadata: Optional[Dict[str, Any]] = Field(default=None, description="Additional metadata: progression patterns, increment settings, etc.")
+    # Per-gym progress tracking. Client value is ADVISORY ONLY — the server
+    # re-derives the authoritative gym from the workout's provenance
+    # (workouts.gym_profile_id, fallback users.active_gym_profile_id) and
+    # overrides whatever the client sent. NULL is valid (legacy/unassigned).
+    gym_profile_id: Optional[str] = Field(default=None, max_length=100, description="Gym the set was logged at (server-derived; client value advisory).")
 
 
 class WorkoutLog(WorkoutLogCreate):
@@ -491,6 +496,10 @@ class PerformanceLogCreate(BaseModel):
     # Active-workout UI tier the user was on when they marked this set complete.
     # 'easy' | 'simple' | 'advanced'. NULL on legacy rows — treat as 'advanced' in analytics.
     logging_mode: Optional[str] = Field(default=None, max_length=10, description="Which UI tier was active when this set was logged")
+    # Per-gym progress tracking. Inherited from the parent workout_log row
+    # server-side (which itself derives from workouts.gym_profile_id); any
+    # client value is advisory and gets overridden. NULL is valid (legacy).
+    gym_profile_id: Optional[str] = Field(default=None, max_length=100, description="Gym the set was logged at (server-derived from parent workout_log; client value advisory).")
 
 
 class PerformanceLog(PerformanceLogCreate):

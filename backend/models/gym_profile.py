@@ -138,6 +138,11 @@ class GymProfile(GymProfileBase):
     display_order: int = 0
     is_active: bool = False
 
+    # Soft-delete (Gravl B-series): non-null = archived. Archived gyms are
+    # hidden from pickers/generation but keep their history attributed and
+    # filterable for per-gym progress.
+    archived_at: Optional[datetime] = None
+
     # Timestamps
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

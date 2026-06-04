@@ -22,6 +22,8 @@ from enum import Enum
 
 from core.logger import get_logger
 from services.strength_calculator_service import StrengthCalculatorService
+from services.equipment_scope import default_scope, SCOPE_PER_GYM, SCOPE_COMBINED
+from api.v1.workouts._gym_profile_helpers import get_active_gym_profile_id
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -100,6 +102,12 @@ class SmartWeightResponse(BaseModel):
     training_goal: str
     equipment_increment: float
     performance_modifier: float  # 1.0 = no change, >1 = increase, <1 = decrease
+    # Per-gym progress (Gravl B-series): tells the UI where the history backing
+    # this suggestion came from so it can label it (e.g. "Based on your other
+    # gym's numbers"). 'same_gym' = same gym's history, 'other_gym' = fell back
+    # to other gyms' history, 'default' = no history, 'combined' = pooled.
+    suggestion_source: str = "combined"
+    resolved_scope: str = "combined"  # 'per_gym' | 'combined'
 
 
 class RPEEstimate(BaseModel):
@@ -226,11 +234,15 @@ async def get_user_1rm(
     user_id: str,
     exercise_id: Optional[str] = None,
     exercise_name: Optional[str] = None,
+    gym_profile_id: Optional[str] = None,
 ) -> Optional[float]:
     """
     Get user's estimated 1RM for an exercise from strength_records.
 
-    Looks up the best estimated_1rm from the strength_records table.
+    Looks up the best estimated_1rm from the strength_records table. When
+    `gym_profile_id` is supplied, restricts the performance-log estimate to that
+    gym (strength_records is not gym-stamped, so the gym filter applies to the
+    performance_logs fallback only).
     """
     try:
         db = get_supabase_db()
@@ -248,19 +260,24 @@ async def get_user_1rm(
         else:
             return None
 
-        # Get recent records (last 90 days for 1RM relevance)
-        ninety_days_ago = (datetime.now() - timedelta(days=90)).isoformat()
-        query = query.gte("achieved_at", ninety_days_ago)
-        query = query.order("estimated_1rm", desc=True)
-        query = query.limit(1)
+        # Get recent records (last 90 days for 1RM relevance). When a gym filter
+        # is in play we skip strength_records (not gym-stamped) and go straight
+        # to the gym-scoped performance_logs so we never leak another gym's 1RM.
+        if not gym_profile_id:
+            ninety_days_ago = (datetime.now() - timedelta(days=90)).isoformat()
+            query = query.gte("achieved_at", ninety_days_ago)
+            query = query.order("estimated_1rm", desc=True)
+            query = query.limit(1)
 
-        result = query.execute()
+            result = query.execute()
 
-        if result.data and len(result.data) > 0:
-            return result.data[0].get("estimated_1rm")
+            if result.data and len(result.data) > 0:
+                return result.data[0].get("estimated_1rm")
 
-        # If no recent 1RM, try to calculate from performance_logs
-        return await estimate_1rm_from_performance(user_id, exercise_id, exercise_name)
+        # If no recent 1RM (or gym-scoped), calculate from performance_logs.
+        return await estimate_1rm_from_performance(
+            user_id, exercise_id, exercise_name, gym_profile_id
+        )
 
     except Exception as e:
         logger.warning(f"Error fetching 1RM: {e}", exc_info=True)
@@ -271,9 +288,13 @@ async def estimate_1rm_from_performance(
     user_id: str,
     exercise_id: Optional[str] = None,
     exercise_name: Optional[str] = None,
+    gym_profile_id: Optional[str] = None,
 ) -> Optional[float]:
     """
     Estimate 1RM from recent performance logs if no strength_records exist.
+
+    When `gym_profile_id` is supplied, only that gym's sets are considered
+    (per-gym progress for machine/cable exercises).
     """
     try:
         db = get_supabase_db()
@@ -289,6 +310,9 @@ async def estimate_1rm_from_performance(
             query = query.ilike("exercise_name", f"%{exercise_name}%")
         else:
             return None
+
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
 
         # Get last 30 days of data
         thirty_days_ago = (datetime.now() - timedelta(days=30)).isoformat()
@@ -321,11 +345,13 @@ async def get_last_session_data(
     user_id: str,
     exercise_id: Optional[str] = None,
     exercise_name: Optional[str] = None,
+    gym_profile_id: Optional[str] = None,
 ) -> Optional[LastSessionData]:
     """
     Get the user's last session data for this exercise.
 
-    Returns the most recent set data with weight, reps, and intensity.
+    Returns the most recent set data with weight, reps, and intensity. When
+    `gym_profile_id` is supplied, only that gym's sets are considered.
     """
     try:
         db = get_supabase_db()
@@ -341,6 +367,9 @@ async def get_last_session_data(
             query = query.ilike("exercise_name", f"%{exercise_name}%")
         else:
             return None
+
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
 
         query = query.order("recorded_at", desc=True)
         query = query.limit(1)
@@ -437,6 +466,12 @@ async def get_smart_weight_by_name(
                     "adjustable equipment. When set, the suggestion snaps to "
                     "the nearest one instead of a generic increment.",
     ),
+    gym_profile_id: Optional[str] = Query(
+        default=None,
+        description="Per-gym progress: for machine/cable exercises the history "
+                    "lookup defaults to this gym (or the active gym). Omit for "
+                    "the equipment-aware default.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -455,6 +490,7 @@ async def get_smart_weight_by_name(
         goal=goal,
         equipment=equipment,
         available_weights=available_weights,
+        gym_profile_id=gym_profile_id,
     )
 
 
@@ -473,6 +509,12 @@ async def get_smart_weight(
                     "adjustable equipment. When set, the suggestion snaps to "
                     "the nearest one instead of a generic increment.",
     ),
+    gym_profile_id: Optional[str] = Query(
+        default=None,
+        description="Per-gym progress: for machine/cable exercises the history "
+                    "lookup defaults to this gym (or the active gym). Omit for "
+                    "the equipment-aware default.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -483,6 +525,11 @@ async def get_smart_weight(
     2. Target reps and training goal (determines intensity %)
     3. Last session performance (RPE-based modifier)
     4. Equipment-aware rounding
+
+    Per-gym progress: machine/cable exercises pull history from the same gym
+    (the supplied or active gym). If no same-gym history exists, we fall back to
+    all-gym history but label `suggestion_source='other_gym'` so the UI can say
+    "Based on your other gym's numbers". Free-weight exercises pool across gyms.
 
     Used for pre-populating weight fields when starting a workout.
     """
@@ -499,6 +546,14 @@ async def get_smart_weight(
         # adjustable equipment). When present, suggestions snap to these stops.
         available_weights_list = parse_available_weights(available_weights)
 
+        # Resolve per-gym scope. Machine/cable → per_gym (default to supplied or
+        # active gym); free weights → combined (pool across gyms, today's path).
+        db = get_supabase_db()
+        resolved_scope = default_scope(equipment, exercise_name)
+        effective_gym_id: Optional[str] = None
+        if resolved_scope == SCOPE_PER_GYM:
+            effective_gym_id = gym_profile_id or get_active_gym_profile_id(db, user_id)
+
         # Handle bodyweight exercises (no selectable load AND no explicit list).
         # If a custom weight list IS supplied we keep going so e.g. a grip
         # trainer (whose generic increment may be 0 for ring/hand variants but
@@ -514,13 +569,30 @@ async def get_smart_weight(
                 training_goal=goal.value,
                 equipment_increment=0,
                 performance_modifier=1.0,
+                suggestion_source="default",
+                resolved_scope=resolved_scope,
             )
 
-        # Get user's 1RM
-        one_rm = await get_user_1rm(user_id, exercise_id, exercise_name)
-
-        # Get last session data
-        last_session = await get_last_session_data(user_id, exercise_id, exercise_name)
+        # Resolve history with same-gym-first, then all-gym fallback (labeled).
+        # suggestion_source: same_gym | other_gym | default | combined.
+        if effective_gym_id:
+            one_rm = await get_user_1rm(
+                user_id, exercise_id, exercise_name, gym_profile_id=effective_gym_id)
+            last_session = await get_last_session_data(
+                user_id, exercise_id, exercise_name, gym_profile_id=effective_gym_id)
+            if one_rm or last_session:
+                suggestion_source = "same_gym"
+            else:
+                # No same-gym history yet (first time at this gym) → fall back to
+                # all-gym history but flag the source so the UI can label it.
+                one_rm = await get_user_1rm(user_id, exercise_id, exercise_name)
+                last_session = await get_last_session_data(user_id, exercise_id, exercise_name)
+                suggestion_source = "other_gym" if (one_rm or last_session) else "default"
+        else:
+            # Combined (free-weight) path — pool across gyms exactly as today.
+            one_rm = await get_user_1rm(user_id, exercise_id, exercise_name)
+            last_session = await get_last_session_data(user_id, exercise_id, exercise_name)
+            suggestion_source = "combined" if (one_rm or last_session) else "default"
 
         # Calculate target intensity
         target_intensity = get_target_intensity(goal, target_reps)
@@ -591,13 +663,22 @@ async def get_smart_weight(
                 "Start with a comfortable weight and track your performance for future suggestions."
             )
 
+        # When we fell back to another gym's history for a per-gym exercise,
+        # surface that in the reasoning + trim confidence (the machine differs).
+        if suggestion_source == "other_gym":
+            reasoning += (
+                " Based on your other gym's numbers — adjust for this machine."
+            )
+            confidence = min(confidence, 0.5)
+
         # Ensure weight is non-negative
         suggested_weight = max(0, suggested_weight)
 
         logger.info(
             f"Smart weight suggestion: {suggested_weight}kg "
             f"(1RM: {one_rm}kg, intensity: {target_intensity:.0%}, "
-            f"modifier: {performance_modifier:.2f}, confidence: {confidence:.0%})"
+            f"modifier: {performance_modifier:.2f}, confidence: {confidence:.0%}, "
+            f"source: {suggestion_source}, scope: {resolved_scope})"
         )
 
         return SmartWeightResponse(
@@ -610,6 +691,8 @@ async def get_smart_weight(
             training_goal=goal.value,
             equipment_increment=equipment_increment,
             performance_modifier=performance_modifier,
+            suggestion_source=suggestion_source,
+            resolved_scope=resolved_scope,
         )
 
     except Exception as e:
