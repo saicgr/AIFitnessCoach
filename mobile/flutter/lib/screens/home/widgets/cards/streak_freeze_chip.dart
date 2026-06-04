@@ -1,6 +1,7 @@
 /// F3.47 / B9 — Banked streak-freeze chip. Surfaces how many freeze tokens the
 /// user has available plus the cadence toward their next AUTO-EARNED freeze
-/// (one per 10 weeks of activity). Tapping opens the streak timeframe sheet.
+/// (one per 10 weeks of activity). Tapping routes to the dedicated
+/// `/streak-freeze` screen (banked/armed tiles + earn-progress).
 ///
 /// Refreshed UI (B9):
 ///   * Reads the live `/xp/freeze-status` (auto-earns server-side) instead of
@@ -10,17 +11,19 @@
 ///   * Shows a thin "next free freeze" progress bar so the reward feels earned.
 ///   * Falls back to the cached `xpFreezesAvailableProvider` balance while the
 ///     network status is loading, so the chip never flickers empty.
+///   * Tapping deep-links to `/streak-freeze` (Gravl-parity dedicated home for
+///     freezes) rather than opening the streak-timeframe sheet inline.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/streak_freeze_provider.dart';
 import '../../../../data/providers/xp_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/freeze_earned_dialog.dart';
-import '../../../../widgets/streak_timeframe_sheet.dart';
 
 class StreakFreezeChip extends ConsumerStatefulWidget {
   const StreakFreezeChip({super.key});
@@ -72,7 +75,9 @@ class _StreakFreezeChipState extends ConsumerState<StreakFreezeChip> {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        showStreakTimeframeSheet(context);
+        // Deep-link to the dedicated freeze screen (banked/armed tiles +
+        // earn-progress) rather than the inline streak-timeframe sheet.
+        context.push('/streak-freeze');
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -114,6 +119,10 @@ class _StreakFreezeChipState extends ConsumerState<StreakFreezeChip> {
                     ),
                   ],
                 ),
+                const SizedBox(width: 6),
+                // Chevron signals the chip is now a route, not an inline sheet.
+                Icon(Icons.chevron_right_rounded,
+                    color: c.textSecondary.withValues(alpha: 0.6), size: 18),
               ],
             ),
             if (status != null) ...[

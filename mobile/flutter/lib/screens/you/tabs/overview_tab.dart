@@ -24,6 +24,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/stat_typography.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/hormonal_health.dart';
@@ -413,13 +414,23 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
             child: XpHeroTile(muted: serious),
           ),
 
-          // Streaks row hidden in Serious Mode — the most game-y surface.
-          if (!serious && _streaks != null && _streaks!.isNotEmpty) ...[
+          // ─── 7. STREAK HERO TILE (Gravl-parity discoverability upgrade).
+          // The streak number is the single most habit-forming metric, so it
+          // gets a full-width hero tile — a flame + a BIG count — instead of
+          // the old buried 20px-card horizontal strip. Shown EVEN in Serious
+          // Mode (toned down) so the number is always discoverable; taps route
+          // to the dedicated /streaks hub.
+          if (_streaks != null && _streaks!.isNotEmpty) ...[
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: _StreaksRow(
-                  streaks: _streaks, fg: fg, accent: accent),
+              child: _StreakHeroTile(
+                streaks: _streaks!,
+                fg: fg,
+                accent: accent,
+                isDark: isDark,
+                serious: serious,
+              ),
             ),
           ],
         ],
@@ -546,85 +557,217 @@ class _WeeklyRecapTeaser extends StatelessWidget {
   }
 }
 
-class _StreaksRow extends StatelessWidget {
-  final List<dynamic>? streaks;
+/// Prominent, discoverable streak HERO tile (Gravl-parity display upgrade).
+///
+/// Replaces the old buried `_StreaksRow` (a 20px-tall horizontal strip of tiny
+/// cards under a small "Active Streaks" label). The streak count is the single
+/// most habit-forming number in the app, so it now gets a full-width hero card:
+/// a flame, a BIG count-up number, a "Day streak" label, and a "View all"
+/// affordance. The whole tile taps through to the dedicated `/streaks` hub.
+///
+/// Shown EVEN in Serious Mode — just toned down (no glow halo, lower-alpha
+/// accent) so the number stays discoverable without the celebratory chrome.
+///
+/// Data: each entry of [streaks] is a `Map<String,dynamic>` with `streak_type`
+/// (e.g. `"workout"`, underscored) and `current_streak` (num). The hero number
+/// is the `workout` streak; if there's no `workout` entry we fall back to the
+/// highest current streak. Any OTHER active streak (>0, not the hero) surfaces
+/// as a small secondary chip so they stay visible without a horizontal strip.
+class _StreakHeroTile extends StatelessWidget {
+  final List<dynamic> streaks;
   final Color fg;
   final Color accent;
+  final bool isDark;
+  final bool serious;
 
-  const _StreaksRow({required this.streaks, required this.fg, required this.accent});
+  const _StreakHeroTile({
+    required this.streaks,
+    required this.fg,
+    required this.accent,
+    required this.isDark,
+    required this.serious,
+  });
+
+  /// Normalizes one raw streak entry into (type, count). Returns null for
+  /// malformed entries so they're skipped rather than crashing the tile.
+  static ({String type, int count})? _parse(dynamic raw) {
+    if (raw is! Map) return null;
+    final type = (raw['streak_type'] as String? ?? 'streak');
+    final count = (raw['current_streak'] as num?)?.toInt() ?? 0;
+    return (type: type, count: count);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final items = streaks ?? const [];
-    if (items.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    // Parse every entry, dropping malformed ones.
+    final parsed = streaks
+        .map(_parse)
+        .whereType<({String type, int count})>()
+        .toList();
+    if (parsed.isEmpty) return const SizedBox.shrink();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.of(context).overviewActiveStreaks,
-          style: TextStyle(
-            color: fg.withValues(alpha: 0.5),
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.3,
-          ),
+    // Hero = the workout streak when present, otherwise the largest streak.
+    final hero = parsed.firstWhere(
+      (s) => s.type == 'workout',
+      orElse: () => parsed.reduce((a, b) => a.count >= b.count ? a : b),
+    );
+
+    // Every OTHER active streak (>0, not the hero) becomes a secondary chip.
+    final others = parsed
+        .where((s) => s != hero && s.count > 0)
+        .toList();
+
+    // Friendly label for the hero — "Day streak" for daily-cadence types,
+    // "Week streak" for the weekly workout cadence. Defaults to a humanized
+    // version of the type ("login" → "Login streak").
+    final heroLabel = _labelFor(hero.type);
+
+    // Serious Mode tones the accent down and drops the glow halo, but the
+    // number stays full-size and fully visible (discoverability requirement).
+    final accentStrength = serious ? 0.18 : 0.32;
+    final numberColor = serious ? fg : accent;
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push('/streaks');
+      },
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accent.withValues(alpha: accentStrength)),
+          boxShadow: serious
+              ? null
+              : [
+                  BoxShadow(
+                    color: accent.withValues(alpha: 0.10),
+                    blurRadius: 20,
+                    spreadRadius: -6,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
         ),
-        const SizedBox(height: 10),
-        SizedBox(
-          height: 84,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: items.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (ctx, i) {
-              final s = items[i] as Map<String, dynamic>;
-              final type = (s['streak_type'] as String? ?? 'streak')
-                  .replaceAll('_', ' ');
-              final count = (s['current_streak'] as num?)?.toInt() ?? 0;
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: fg.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: accent.withValues(alpha: 0.25)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Flame badge.
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: serious ? 0.10 : 0.16),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Text('🔥', style: TextStyle(fontSize: 26)),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('🔥', style: TextStyle(fontSize: 16)),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$count',
-                          style: TextStyle(
-                            color: fg,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                          ),
+                const SizedBox(width: 14),
+                // Big count-up number + label.
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedStatNumber(
+                        value: hero.count.toDouble(),
+                        format: (v) => v.round().toString(),
+                        size: StatType.hero,
+                        color: numberColor,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        heroLabel,
+                        style: TextStyle(
+                          color: fg.withValues(alpha: 0.6),
+                          fontSize: StatType.label,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 2),
+                      ),
+                    ],
+                  ),
+                ),
+                // "View all" affordance.
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      type,
+                      'View all',
                       style: TextStyle(
-                        color: fg.withValues(alpha: 0.6),
-                        fontSize: 11,
+                        color: fg.withValues(alpha: 0.55),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
+                    Icon(Icons.chevron_right_rounded,
+                        color: fg.withValues(alpha: 0.4), size: 20),
                   ],
                 ),
-              );
-            },
-          ),
+              ],
+            ),
+            // Secondary streaks (e.g. login / nutrition) as compact chips so
+            // they stay visible without the old horizontal scroll strip.
+            if (others.isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final s in others)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: fg.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: fg.withValues(alpha: 0.08)),
+                      ),
+                      child: Text(
+                        '🔥 ${s.count} · ${_humanize(s.type)}',
+                        style: TextStyle(
+                          color: fg.withValues(alpha: 0.7),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ],
         ),
-      ],
+      ),
     );
+  }
+
+  /// Hero label: workout streaks read as a weekly cadence ("Week streak");
+  /// other types default to a daily cadence ("Day streak"). Anything else gets
+  /// a humanized `Type streak`.
+  static String _labelFor(String type) {
+    switch (type) {
+      case 'workout':
+        return 'Week streak';
+      case 'login':
+      case 'daily_login':
+      case 'nutrition':
+      case 'logging':
+        return 'Day streak';
+      default:
+        return '${_humanize(type)} streak';
+    }
+  }
+
+  /// "daily_login" → "Daily login".
+  static String _humanize(String type) {
+    final spaced = type.replaceAll('_', ' ').trim();
+    if (spaced.isEmpty) return 'Streak';
+    return spaced[0].toUpperCase() + spaced.substring(1);
   }
 }
 
