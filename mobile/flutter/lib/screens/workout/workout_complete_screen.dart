@@ -38,6 +38,7 @@ import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/hydration_dialog.dart';
 import 'widgets/sauna_dialog.dart';
+import 'widgets/score_level_up_celebration.dart'; // B6 — strength-score level-up celebration
 import 'widgets/ai_coach_report_card.dart';
 import 'widgets/share_templates/_share_common.dart';
 import '../../shareables/adapters/workout_adapter.dart';

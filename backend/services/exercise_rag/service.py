@@ -330,6 +330,140 @@ async def fetch_safe_candidates(
     return out
 
 
+def _muscles_for_candidate(candidate: Dict[str, Any]) -> set:
+    """Best-effort set of lowercased muscle tokens a candidate trains.
+
+    Pulls from target_muscle, body_part, and parsed secondary_muscles so the
+    score-freshness bias and excluded-muscle skip can match against the same
+    muscle vocabulary used elsewhere in the pipeline.
+    """
+    out: set = set()
+    tm = (candidate.get("target_muscle") or "").strip().lower()
+    if tm:
+        out.add(tm)
+    bp = (candidate.get("body_part") or "").strip().lower()
+    if bp:
+        out.add(bp)
+    try:
+        for sm in parse_secondary_muscles(candidate.get("secondary_muscles")):
+            name = (sm.get("muscle") if isinstance(sm, dict) else sm)
+            if name:
+                out.add(str(name).strip().lower())
+    except Exception:  # noqa: BLE001 - secondary parsing must never break selection
+        pass
+    return out
+
+
+def _muscle_token_matches(candidate_muscles: set, target_muscle: str) -> bool:
+    """Substring-tolerant match between a candidate's muscle set and a target
+    muscle name (e.g. "quads" ↔ "quadriceps", "glutes" ↔ "gluteus maximus").
+    """
+    t = (target_muscle or "").strip().lower()
+    if not t:
+        return False
+    # Normalize a few common synonyms so strength_scores muscle names line up
+    # with library target_muscle/body_part values.
+    synonyms = {
+        "quads": ("quad", "quadricep"),
+        "hamstrings": ("hamstring", "ham"),
+        "glutes": ("glute", "gluteus"),
+        "calves": ("calf", "calves", "gastro", "soleus"),
+        "back": ("back", "lat", "trap", "rhomboid"),
+        "core": ("core", "abdomin", "oblique", "waist"),
+        "chest": ("chest", "pec"),
+        "shoulders": ("shoulder", "delt"),
+        "biceps": ("bicep",),
+        "triceps": ("tricep",),
+        "forearms": ("forearm",),
+        "traps": ("trap",),
+    }
+    needles = synonyms.get(t, (t,))
+    for cm in candidate_muscles:
+        for n in needles:
+            if n in cm or cm in n:
+                return True
+    return False
+
+
+def apply_score_freshness_bias(
+    candidates: List[Dict[str, Any]],
+    freshness_priority: Dict[str, float],
+    excluded_muscles: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """B7 — SOFT bias toward exercises that train STALE / undertrained muscles
+    so selected exercises naturally refresh stale strength scores.
+
+    `freshness_priority` is {muscle_group: weight} (1.0 neutral, >1 = prioritize,
+    0.0 = excluded). For each candidate, take the MAX priority across the muscles
+    it trains and multiply its similarity by that weight (clamped to 1.0). This
+    is a re-ranking nudge, NOT a hard filter — every candidate survives unless
+    its muscle is in the hard `excluded_muscles` opt-out list.
+
+    Deterministic. Never raises (selection must not fail on a bias miss).
+    """
+    excluded = {(m or "").strip().lower() for m in (excluded_muscles or [])}
+
+    # Hard skip excluded muscles (the user opted out of training them entirely).
+    if excluded:
+        before = len(candidates)
+        kept: List[Dict[str, Any]] = []
+        for c in candidates:
+            cm = _muscles_for_candidate(c)
+            if any(_muscle_token_matches(cm, ex) for ex in excluded):
+                continue
+            kept.append(c)
+        # Never empty the pool on the excluded filter alone — if it would wipe
+        # everything (e.g. excluded the only trainable muscle for this focus),
+        # keep the original pool so the user still gets a workout.
+        if kept:
+            candidates = kept
+            if len(candidates) < before:
+                logger.info(
+                    "🚫 [ScoreBias] Excluded-muscle filter: %d -> %d (excluded=%s)",
+                    before, len(candidates), sorted(excluded),
+                )
+        else:
+            logger.warning(
+                "⚠️  [ScoreBias] Excluded-muscle filter would empty pool "
+                "(excluded=%s) — keeping original candidates.", sorted(excluded),
+            )
+
+    if not freshness_priority:
+        return candidates
+
+    boosted = 0
+    for c in candidates:
+        cm = _muscles_for_candidate(c)
+        best_weight = 1.0
+        matched_muscle = None
+        for muscle, weight in freshness_priority.items():
+            if weight == 0.0:
+                continue  # excluded — already handled above
+            if _muscle_token_matches(cm, muscle) and weight > best_weight:
+                best_weight = weight
+                matched_muscle = muscle
+        if best_weight > 1.0:
+            old = c.get("similarity", 0.0)
+            c["similarity"] = min(1.0, old * best_weight)
+            c["score_freshness_boosted"] = True
+            c["freshness_muscle"] = matched_muscle
+            if not c.get("boost_reason"):
+                c["boost_reason"] = "refresh_stale_score"
+            else:
+                c["boost_reason"] += "+refresh_stale_score"
+            boosted += 1
+
+    if boosted > 0:
+        candidates.sort(key=lambda x: x.get("similarity", 0), reverse=True)
+        logger.info(
+            "🔆 [ScoreBias] Score-freshness soft bias applied to %d candidates "
+            "(stale/undertrained muscles=%s)",
+            boosted,
+            sorted(m for m, w in freshness_priority.items() if w > 1.0),
+        )
+    return candidates
+
+
 class ExerciseRAGService:
     """
     RAG-based exercise selection service.
@@ -725,6 +859,77 @@ class ExerciseRAGService:
                 exc_info=True,
             )
             return {"ids": [[]], "metadatas": [[]], "distances": [[]], "documents": [[]]}
+
+    def _fetch_score_freshness_context(
+        self, user_id: Optional[str]
+    ) -> Tuple[Dict[str, float], List[str]]:
+        """Read the user's latest strength_scores + preferences.excluded_muscles
+        and compute the per-muscle freshness priority map (B7) plus the hard
+        excluded-muscle opt-out list (B6).
+
+        Synchronous Supabase reads (the client is sync); wrapped by the caller
+        via run_in_executor is unnecessary here because these are small indexed
+        reads and the surrounding selection already does sync Chroma calls.
+
+        Returns ({} , []) on any error — score bias is a nicety, never a blocker.
+        """
+        if not user_id:
+            return {}, []
+        try:
+            from services.volume_tracking_service import VolumeTrackingService
+
+            # Latest strength_scores row per muscle (no DISTINCT-ON in supabase-py).
+            rows = (
+                self.client.table("strength_scores")
+                .select("muscle_group, strength_score, weekly_sets, calculated_at")
+                .eq("user_id", user_id)
+                .order("calculated_at", desc=True)
+                .execute()
+            )
+            latest_by_muscle: Dict[str, Dict[str, Any]] = {}
+            for row in (rows.data or []):
+                mg = row.get("muscle_group")
+                if mg and mg not in latest_by_muscle:
+                    latest_by_muscle[mg] = row
+            latest_rows = list(latest_by_muscle.values())
+
+            # preferences.excluded_muscles — JSONB list on users (select '*').
+            excluded: List[str] = []
+            try:
+                user_row = (
+                    self.client.table("users")
+                    .select("preferences")
+                    .eq("id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+                if user_row.data:
+                    prefs = user_row.data[0].get("preferences") or {}
+                    raw = prefs.get("excluded_muscles")
+                    if isinstance(raw, list):
+                        excluded = [str(m).strip().lower() for m in raw if m]
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "⚠️  [ScoreBias] could not read preferences.excluded_muscles: %s",
+                    exc,
+                )
+
+            priority = VolumeTrackingService.compute_muscle_freshness_priority(
+                latest_rows,
+                excluded_muscles=excluded,
+            )
+            if priority or excluded:
+                logger.info(
+                    "🔆 [ScoreBias] freshness context: %d muscles scored, "
+                    "excluded=%s",
+                    len(priority), excluded,
+                )
+            return priority, excluded
+        except Exception as exc:  # noqa: BLE001 - never block selection
+            logger.warning(
+                "⚠️  [ScoreBias] _fetch_score_freshness_context failed: %s", exc
+            )
+            return {}, []
 
     async def select_exercises_for_workout(
         self,
@@ -1306,6 +1511,22 @@ class ExerciseRAGService:
 
         candidates = apply_avoided_muscles_filter(candidates, avoided_muscles)
         _stage_counts.append(("after_avoided_muscles", len(candidates)))
+
+        # B6/B7 — Excluded-muscle hard opt-out + score-freshness soft bias.
+        # Reads strength_scores + preferences.excluded_muscles server-side via
+        # the user_id we already have, so no caller needs to pass anything new.
+        # SOFT for stale/undertrained muscles (re-rank only), HARD for the
+        # user's explicit excluded_muscles opt-out.
+        try:
+            freshness_priority, excluded_muscles = self._fetch_score_freshness_context(user_id)
+            if freshness_priority or excluded_muscles:
+                candidates = apply_score_freshness_bias(
+                    candidates, freshness_priority, excluded_muscles
+                )
+                _stage_counts.append(("after_score_freshness_bias", len(candidates)))
+        except Exception as _bias_exc:  # noqa: BLE001 - never block selection
+            logger.warning("Score-freshness bias skipped: %s", _bias_exc)
+
         apply_workout_type_filter(candidates, workout_type_preference)
         apply_favorites_boost(candidates, favorite_exercises)
         apply_consistency_mode(candidates, recently_used_exercises, consistency_mode, variation_percentage)

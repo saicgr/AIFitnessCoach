@@ -16,11 +16,13 @@ import '../models/workout_state.dart';
 import '../shared/pre_set_insight_banner.dart';
 import '../widgets/workout_stats_strip.dart';
 import 'easy_active_workout_state_models.dart';
+import 'score_target_service.dart';
 import 'widgets/easy_chat_pill.dart';
 import 'widgets/easy_completed_dots.dart';
 import 'widgets/easy_exercise_header.dart';
 import 'widgets/easy_focal_column.dart';
 import 'widgets/easy_last_time_chip.dart';
+import 'widgets/easy_score_target_pill.dart';
 import 'widgets/easy_top_bar.dart';
 import 'widgets/easy_up_next_chip.dart';
 
@@ -67,6 +69,11 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// Cached "last time" data for the current exercise, or null if the user
   /// hasn't done this exercise before. Drives the `EasyLastTimeChip`.
   final ({double weightKg, int reps, DateTime when})? lastSet;
+
+  /// B6 — Strength-Score target for the current exercise's primary muscle,
+  /// or null when there's no target (already elite / excluded / unavailable).
+  /// Drives the `EasyScoreTargetPill`.
+  final ScoreTarget? scoreTarget;
 
   /// Opens the shared `EnhancedNotesSheet` for the current focal set.
   final VoidCallback? onEditNote;
@@ -127,6 +134,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.onAddSet,
     this.onRemoveSet,
     this.lastSet,
+    this.scoreTarget,
     this.onEditNote,
     this.hasNote = false,
     this.onSkipToNext,
@@ -207,6 +215,13 @@ class EasyActiveWorkoutView extends StatelessWidget {
             reps: lastSet?.reps,
             unit: useKg ? 'kg' : 'lb',
             when: lastSet?.when,
+          ),
+          // B6 — Strength-Score target pill: "Hit 80 lb × 8 to level up Chest".
+          // Hides (zero height) when there's no target for this muscle.
+          EasyScoreTargetPill(
+            target: scoreTarget,
+            useKg: useKg,
+            accent: accent,
           ),
           Expanded(
             // Long-press anywhere on the focal column body opens the same

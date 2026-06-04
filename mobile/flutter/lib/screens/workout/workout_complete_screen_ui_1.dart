@@ -3,13 +3,42 @@ part of 'workout_complete_screen.dart';
 /// UI builder methods extracted from _WorkoutCompleteScreenState
 extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
 
+  /// Strength-Score level-up celebration (B6) — confetti + card when the
+  /// just-finished workout pushed a muscle/overall score across a level
+  /// threshold. Self-contained: fetches `/scores/recent-level-ups`, fires its
+  /// own confetti, and collapses to zero height when nothing crossed. Surfaced
+  /// via `_buildExercisesSection()` so the parent's existing render hook picks
+  /// it up without any new parent state.
+  Widget _buildScoreLevelUpCelebration() {
+    // Muscles trained this workout — used to prioritize the headline when
+    // multiple muscles level up at once.
+    final trained = <String>{
+      for (final ex in widget.workout.exercises)
+        ...[
+          ex.primaryMuscle,
+          ex.muscleGroup,
+          ex.bodyPart,
+        ].whereType<String>().map((m) => m.trim().toLowerCase()).where(
+              (m) => m.isNotEmpty,
+            ),
+    };
+    return ScoreLevelUpCelebration(trainedMuscles: trained);
+  }
+
   /// Per-exercise breakdown — each exercise with sets x reps x avg weight and
-  /// a PR badge where the lift set a personal record. Returns null when there
-  /// is no logged performance to show. (The user wanted to see what they
+  /// a PR badge where the lift set a personal record. Prepends the
+  /// Strength-Score level-up celebration (B6) so a leveled-up muscle gets a
+  /// confetti moment. Returns null only when there is neither a level-up nor
+  /// any logged performance to show. (The user wanted to see what they
   /// actually did + which PRs landed, not just aggregate totals.)
   Widget? _buildExercisesSection() {
     final perf = widget.exercisesPerformance;
-    if (perf == null || perf.isEmpty) return null;
+    // Always render the celebration widget — it self-hides when there's no
+    // level-up. When there's also no exercise performance, return just the
+    // celebration (which collapses to zero height if nothing crossed).
+    if (perf == null || perf.isEmpty) {
+      return _buildScoreLevelUpCelebration();
+    }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -26,7 +55,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
         pr.exerciseName.toLowerCase().trim(),
     };
 
-    return Container(
+    final exercisesCard = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -58,6 +87,16 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 e, prNames, useKg, unit, textPrimary, textMuted),
         ],
       ),
+    );
+
+    // Prepend the Strength-Score level-up celebration (self-hiding; carries
+    // its own bottom spacing so no stray gap appears when nothing crossed).
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildScoreLevelUpCelebration(),
+        exercisesCard,
+      ],
     );
   }
 

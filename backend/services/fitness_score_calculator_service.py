@@ -20,11 +20,114 @@ Fitness Levels:
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, List, Dict, Any
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from core.timezone_utils import get_user_today
 import logging
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Gamification constants (B6 — Strength-Score gamification, out-punch Gravl)
+# ---------------------------------------------------------------------------
+# A score is "stale" once its underlying logged data is older than this. The
+# HOME nudge ("Your <muscle> score is going stale — train it to refresh it")
+# and the score-freshness RAG bias (B7) both key off this single threshold so
+# the product never drifts between surfaces.
+SCORE_STALE_DAYS = 10
+
+# Per-muscle strength-level thresholds (0-100). MUST match
+# StrengthCalculatorService.classify_strength_level's score banding so a
+# level-up celebration fires exactly when the muscle's level label changes.
+# Ordered ascending; the *next* threshold above the current score is the
+# milestone an in-workout target pill nudges the user toward.
+MUSCLE_LEVEL_THRESHOLDS: List[tuple] = [
+    ("beginner", 0),
+    ("novice", 25),
+    ("intermediate", 50),
+    ("advanced", 70),
+    ("elite", 90),
+]
+
+# Overall-fitness level thresholds (mirror LEVEL_THRESHOLDS below but as an
+# ordered ascending list for level-up crossing detection).
+OVERALL_LEVEL_THRESHOLDS: List[tuple] = [
+    ("beginner", 0),
+    ("developing", 25),
+    ("fit", 45),
+    ("athletic", 65),
+    ("elite", 85),
+]
+
+
+def _level_for_score(score: int, thresholds: List[tuple]) -> tuple:
+    """Return (level_name, level_index, floor, next_floor_or_None) for a score.
+
+    Deterministic — no LLM. Used for level-up crossing detection and for the
+    "points to next level" target pills shown in-workout.
+    """
+    level_name = thresholds[0][0]
+    level_index = 0
+    floor = thresholds[0][1]
+    next_floor: Optional[int] = None
+    for i, (name, t) in enumerate(thresholds):
+        if score >= t:
+            level_name = name
+            level_index = i
+            floor = t
+            next_floor = thresholds[i + 1][1] if i + 1 < len(thresholds) else None
+        else:
+            break
+    return level_name, level_index, floor, next_floor
+
+
+def muscle_level_for_score(score: int) -> str:
+    """Public helper: muscle strength-level label for a 0-100 score."""
+    return _level_for_score(score, MUSCLE_LEVEL_THRESHOLDS)[0]
+
+
+def overall_level_for_score(score: int) -> str:
+    """Public helper: overall fitness-level label for a 0-100 score."""
+    return _level_for_score(score, OVERALL_LEVEL_THRESHOLDS)[0]
+
+
+def detect_level_up(
+    previous_score: Optional[int],
+    new_score: int,
+    *,
+    thresholds: List[tuple] = MUSCLE_LEVEL_THRESHOLDS,
+) -> Optional[Dict[str, Any]]:
+    """Detect whether a score crossed UP into a new level band.
+
+    Returns a celebration payload (or None if no upward crossing). Deterministic.
+
+    Args:
+        previous_score: Prior score (None → treat as a fresh 0 baseline only if
+                        new_score is itself non-zero; a brand-new muscle hitting
+                        its first non-beginner band counts as a level-up).
+        new_score: Current score.
+        thresholds: Ordered ascending level thresholds.
+    """
+    if new_score is None:
+        return None
+    prev = previous_score if previous_score is not None else 0
+    if new_score <= prev:
+        return None
+    prev_level, prev_idx, _, _ = _level_for_score(prev, thresholds)
+    new_level, new_idx, new_floor, new_next = _level_for_score(new_score, thresholds)
+    if new_idx <= prev_idx:
+        return None
+    return {
+        "leveled_up": True,
+        "previous_level": prev_level,
+        "previous_level_index": prev_idx,
+        "new_level": new_level,
+        "new_level_index": new_idx,
+        "previous_score": prev,
+        "new_score": new_score,
+        "level_floor": new_floor,
+        "next_level_floor": new_next,
+        "levels_gained": new_idx - prev_idx,
+    }
 
 
 class FitnessLevel(str, Enum):
@@ -326,6 +429,174 @@ class FitnessScoreCalculatorService:
             FitnessLevel.BEGINNER: "Starting your fitness journey - focus on consistency.",
         }
         return descriptions.get(level, "")
+
+    # -------------------------------------------------------------------------
+    # B6 — In-workout score-target pills + stale-score detection
+    # -------------------------------------------------------------------------
+
+    def compute_exercise_score_target(
+        self,
+        *,
+        muscle_group: str,
+        current_score: int,
+        bodyweight_kg: float,
+        gender: str,
+        best_exercise_name: str,
+        best_estimated_1rm_kg: float,
+        target_reps: int = 8,
+    ) -> Optional[Dict[str, Any]]:
+        """Deterministically compute the weight×reps target that would raise a
+        muscle's strength score into its NEXT level band.
+
+        Shown as an in-workout pill ("Hit 80kg×8 to level up Chest"). No LLM —
+        inverts StrengthCalculatorService.classify_strength_level's bodyweight-ratio
+        banding, then converts the required 1RM back to a working weight at the
+        given rep target via the Brzycki relationship.
+
+        Returns None when the muscle is already at the top band (elite) or when
+        bodyweight is unknown (can't anchor the ratio).
+        """
+        # Lazy import to avoid a circular import at module load.
+        from services.strength_calculator_service import (
+            STRENGTH_STANDARDS,
+            StrengthCalculatorService,
+        )
+
+        if bodyweight_kg <= 0:
+            return None
+
+        _, _, _, next_floor = _level_for_score(current_score, MUSCLE_LEVEL_THRESHOLDS)
+        if next_floor is None:
+            # Already elite — nothing higher to target.
+            return None
+
+        next_level = _level_for_score(next_floor, MUSCLE_LEVEL_THRESHOLDS)[0]
+
+        # Resolve the bodyweight-ratio standard for the user's best lift on this
+        # muscle (falls back to the squat standard, matching classify logic).
+        normalized = StrengthCalculatorService._normalize_exercise_name(
+            best_exercise_name or ""
+        )
+        standards = STRENGTH_STANDARDS.get(normalized) or STRENGTH_STANDARDS["squat"]
+        if (gender or "male").lower() == "female":
+            standards = {k: v * 0.65 for k, v in standards.items()}
+
+        # Map the next level band → the ratio at its floor.
+        band_ratio = {
+            "novice": standards["novice"],
+            "intermediate": standards["intermediate"],
+            "advanced": standards["advanced"],
+            "elite": standards["elite"],
+        }.get(next_level)
+        if band_ratio is None:
+            return None
+
+        required_1rm_kg = round(band_ratio * bodyweight_kg, 1)
+
+        # Convert required 1RM → working weight at target_reps (invert Brzycki:
+        # weight = 1RM × (37 - reps) / 36).
+        reps = max(1, min(12, int(target_reps or 8)))
+        required_working_weight_kg = round(
+            required_1rm_kg * (37 - reps) / 36, 1
+        )
+
+        delta_1rm = round(max(0.0, required_1rm_kg - (best_estimated_1rm_kg or 0)), 1)
+
+        return {
+            "muscle_group": muscle_group,
+            "current_score": current_score,
+            "next_level": next_level,
+            "next_level_score_floor": next_floor,
+            "points_to_next_level": max(0, next_floor - current_score),
+            "best_exercise_name": best_exercise_name or "",
+            "current_best_1rm_kg": round(best_estimated_1rm_kg or 0, 1),
+            "target_1rm_kg": required_1rm_kg,
+            "target_reps": reps,
+            "target_working_weight_kg": required_working_weight_kg,
+            "delta_1rm_kg": delta_1rm,
+            # Human-readable, unit-agnostic label; the Flutter side localizes
+            # kg→lb using the user's workout-weight unit setting.
+            "target_label": f"{required_working_weight_kg:g} kg × {reps}",
+        }
+
+    @staticmethod
+    def is_score_stale(calculated_at: Optional[Any], now: Optional[datetime] = None) -> bool:
+        """True when a strength_scores row's data is older than SCORE_STALE_DAYS.
+
+        Accepts an ISO string or datetime. Naive/aware safe.
+        """
+        if not calculated_at:
+            return True
+        dt: Optional[datetime] = None
+        if isinstance(calculated_at, datetime):
+            dt = calculated_at
+        elif isinstance(calculated_at, str):
+            try:
+                dt = datetime.fromisoformat(calculated_at.replace("Z", "+00:00"))
+            except ValueError:
+                return True
+        if dt is None:
+            return True
+        ref = now or datetime.now(timezone.utc)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        if ref.tzinfo is None:
+            ref = ref.replace(tzinfo=timezone.utc)
+        return (ref - dt).days >= SCORE_STALE_DAYS
+
+    @classmethod
+    def detect_stale_muscles(
+        cls,
+        strength_score_rows: List[Dict[str, Any]],
+        *,
+        now: Optional[datetime] = None,
+        excluded_muscles: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Given strength_scores rows (latest per muscle), return the muscles
+        whose data is stale (>SCORE_STALE_DAYS old).
+
+        Excluded muscles (preferences.excluded_muscles) are never reported as
+        stale — the user opted out of training them, so nudging is noise.
+
+        Each entry: {muscle_group, last_trained_at, days_stale, strength_score}.
+        Sorted most-stale first.
+        """
+        ref = now or datetime.now(timezone.utc)
+        excluded = {(m or "").strip().lower() for m in (excluded_muscles or [])}
+        out: List[Dict[str, Any]] = []
+        seen: set = set()
+        for row in strength_score_rows or []:
+            mg = (row.get("muscle_group") or "").strip().lower()
+            if not mg or mg in seen:
+                continue
+            seen.add(mg)
+            if mg in excluded:
+                continue
+            calc = row.get("calculated_at")
+            if not cls.is_score_stale(calc, ref):
+                continue
+            days_stale = SCORE_STALE_DAYS
+            if calc:
+                try:
+                    dt = (
+                        calc if isinstance(calc, datetime)
+                        else datetime.fromisoformat(str(calc).replace("Z", "+00:00"))
+                    )
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    days_stale = (ref - dt).days
+                except (ValueError, TypeError):
+                    days_stale = 999
+            else:
+                days_stale = 999
+            out.append({
+                "muscle_group": mg,
+                "last_trained_at": str(calc) if calc else None,
+                "days_stale": days_stale,
+                "strength_score": int(row.get("strength_score") or 0),
+            })
+        out.sort(key=lambda e: e["days_stale"], reverse=True)
+        return out
 
     def get_score_breakdown_display(self, score: FitnessScore) -> List[Dict[str, Any]]:
         """

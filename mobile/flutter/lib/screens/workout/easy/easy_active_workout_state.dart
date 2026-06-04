@@ -56,6 +56,7 @@ import 'easy_insight_helpers.dart';
 import 'easy_persistence_helpers.dart';
 import 'easy_rest_controller.dart';
 import 'easy_sheet_helpers.dart';
+import 'score_target_service.dart';
 import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_help_sheet.dart';
 
@@ -76,6 +77,15 @@ class EasyActiveWorkoutScreenState
   /// to zero height when the server has no prior session.
   final Map<int, ({double weightKg, int reps, DateTime when})> _lastSetByEx =
       {};
+
+  /// B6 — per-exercise Strength-Score TARGET (weight×reps to level up that
+  /// exercise's primary muscle). Populated in parallel on init; renders via
+  /// `EasyScoreTargetPill`. Keyed by exercise index. A null entry means
+  /// "no target" (already elite / excluded / fetch failed) → pill hides.
+  final Map<int, ScoreTarget?> _scoreTargetByEx = {};
+  // Muscles already fetched (avoid re-querying the same muscle once cached;
+  // multiple exercises can share a primary muscle).
+  final Map<String, ScoreTarget?> _scoreTargetByMuscle = {};
 
   /// Note content the user is attaching to the next set they log (live
   /// mode). When editing a past set, notes are written straight into
@@ -183,6 +193,7 @@ class EasyActiveWorkoutScreenState
         _prService.preloadExerciseHistory(ref: ref, exercises: _exercises));
     unawaited(_preloadLastSetPerExercise());
     unawaited(_preloadSmartWeightPerExercise());
+    unawaited(_preloadScoreTargetsPerExercise());
 
     _currentSetStartTime = DateTime.now();
 
@@ -387,6 +398,46 @@ class EasyActiveWorkoutScreenState
       }));
     } catch (e) {
       debugPrint('⚠️ [EasyWorkout] smart-weight preload failed: $e');
+    }
+  }
+
+  /// B6 — preload each exercise's Strength-Score target (the weight×reps that
+  /// would level up its primary muscle's score). Deduped by muscle so a
+  /// chest day with 3 chest moves issues ONE request. Each target's
+  /// `target_reps` is anchored to the exercise's first planned set so the pill
+  /// number matches what the user is about to do. Failures are swallowed; the
+  /// pill simply doesn't render for that exercise.
+  Future<void> _preloadScoreTargetsPerExercise() async {
+    try {
+      if (_exercises.isEmpty) return;
+      await Future.wait(List.generate(_exercises.length, (i) async {
+        final ex = _exercises[i];
+        final muscle = (ex.primaryMuscle ?? ex.muscleGroup ?? ex.bodyPart ?? '')
+            .trim()
+            .toLowerCase();
+        if (muscle.isEmpty) return;
+        final targetReps = ex.getTargetForSet(1)?.targetReps ?? ex.reps ?? 8;
+        try {
+          // Cache by (muscle, reps) so different rep schemes still resolve,
+          // while same-muscle/same-reps exercises share one fetch.
+          final cacheKey = '$muscle|$targetReps';
+          ScoreTarget? target;
+          if (_scoreTargetByMuscle.containsKey(cacheKey)) {
+            target = _scoreTargetByMuscle[cacheKey];
+          } else {
+            target = await ScoreTargetService.fetch(
+              ref: ref,
+              muscleGroup: muscle,
+              targetReps: targetReps,
+            );
+            _scoreTargetByMuscle[cacheKey] = target;
+          }
+          _scoreTargetByEx[i] = target;
+        } catch (_) {/* swallow per-exercise failure */}
+      }));
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('⚠️ [EasyWorkout] score-target preload failed: $e');
     }
   }
 
@@ -1045,6 +1096,7 @@ class EasyActiveWorkoutScreenState
       onRemoveSet:
           state.totalSets > state.completed.length + 1 ? _removeSet : null,
       lastSet: _lastSetByEx[_currentIndex],
+      scoreTarget: _scoreTargetByEx[_currentIndex],
       onEditNote: _openNoteSheet,
       hasNote: _focalSetHasNote,
       onSkipToNext:
