@@ -87,6 +87,9 @@ class NotificationPrefsKeys {
   // Proactive health coaching (Phase C2) — per-type toggles + delivery times
   static const dailyBriefingNudge = 'notif_daily_briefing_nudge';
   static const dailyBriefingTime = 'notif_daily_briefing_time';
+  // Morning sleep-score push (FEATURE 1) — per-type toggle + delivery time.
+  static const sleepScoreNudge = 'notif_sleep_score_nudge';
+  static const sleepScoreTime = 'notif_sleep_score_time';
   static const healthAnomalyNudge = 'notif_health_anomaly_nudge';
   static const activityGoalNudge = 'notif_activity_goal_nudge';
   static const activityNudgeTime = 'notif_activity_nudge_time';
@@ -580,6 +583,9 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       // Proactive health coaching (Phase C2)
       dailyBriefingNudge: _prefs.getBool(NotificationPrefsKeys.dailyBriefingNudge) ?? true,
       dailyBriefingTime: _prefs.getString(NotificationPrefsKeys.dailyBriefingTime) ?? '08:00',
+      // Morning sleep-score push (FEATURE 1)
+      sleepScoreNudge: _prefs.getBool(NotificationPrefsKeys.sleepScoreNudge) ?? true,
+      sleepScoreTime: _prefs.getString(NotificationPrefsKeys.sleepScoreTime) ?? '08:00',
       healthAnomalyNudge: _prefs.getBool(NotificationPrefsKeys.healthAnomalyNudge) ?? true,
       activityGoalNudge: _prefs.getBool(NotificationPrefsKeys.activityGoalNudge) ?? true,
       activityNudgeTime: _prefs.getString(NotificationPrefsKeys.activityNudgeTime) ?? '15:00',
@@ -942,6 +948,20 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setDailyBriefingTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.dailyBriefingTime, time);
     state = state.copyWith(dailyBriefingTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  /// Morning sleep-score push (FEATURE 1) — server-side cron nudge. Shares the
+  /// morning slot with the readiness briefing; the backend fires only ONE.
+  Future<void> setSleepScoreNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.sleepScoreNudge, value);
+    state = state.copyWith(sleepScoreNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setSleepScoreTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.sleepScoreTime, time);
+    state = state.copyWith(sleepScoreTime: time);
     await _syncPreferencesToBackend();
   }
 

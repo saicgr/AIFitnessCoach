@@ -33,6 +33,16 @@ class DailyActivity {
   final int? sleepLatencyMinutes; // minutes from getting into bed to first asleep stage
   final double? sleepEfficiency;  // 0.0-1.0 = total asleep / time-in-bed
 
+  /// FEATURE 1 — the in-app 0-100 sleep score (computeSleepScore), stamped on
+  /// the client so the synced row carries the EXACT number the Sleep screen
+  /// shows and the morning sleep-score push can cite it. Null when the night
+  /// has no asleep minutes to score.
+  final int? sleepScore;
+
+  /// FEATURE 1 — count of distinct awakenings (each AWAKE segment >= 3 min;
+  /// see [SleepSummary.wakeUps]). Synced for the push copy. Null when unknown.
+  final int? wakeUps;
+
   const DailyActivity({
     this.steps = 0,
     this.caloriesBurned = 0,
@@ -54,6 +64,8 @@ class DailyActivity {
     this.sleepEnd,
     this.sleepLatencyMinutes,
     this.sleepEfficiency,
+    this.sleepScore,
+    this.wakeUps,
   });
 
   /// Lossless serialization for the SharedPreferences disk cache so the Home
@@ -82,6 +94,8 @@ class DailyActivity {
         'sleep_end': sleepEnd?.toIso8601String(),
         'sleep_latency_minutes': sleepLatencyMinutes,
         'sleep_efficiency': sleepEfficiency,
+        'sleep_score': sleepScore,
+        'wake_ups': wakeUps,
       };
 
   factory DailyActivity.fromJson(Map<String, dynamic> json) => DailyActivity(
@@ -109,6 +123,8 @@ class DailyActivity {
             : null,
         sleepLatencyMinutes: json['sleep_latency_minutes'] as int?,
         sleepEfficiency: (json['sleep_efficiency'] as num?)?.toDouble(),
+        sleepScore: json['sleep_score'] as int?,
+        wakeUps: json['wake_ups'] as int?,
       );
 }
 
@@ -120,6 +136,13 @@ class SleepSummary {
   final int remMinutes;
   final int lightMinutes;
   final int awakeMinutes;
+
+  /// Count of distinct awakenings during the night (each AWAKE segment >= 3
+  /// minutes; see [aggregateSleepSummary] / `_kAwakeningMinThreshold`). Cited
+  /// in the morning sleep-score push copy ("only a few wake-ups"). Defaults to
+  /// 0 — a night with no AWAKE segments (or un-staged sleep) has no wake-ups.
+  final int wakeUps;
+
   final DateTime? bedTime;
   final DateTime? wakeTime;
 
@@ -145,6 +168,7 @@ class SleepSummary {
     this.remMinutes = 0,
     this.lightMinutes = 0,
     this.awakeMinutes = 0,
+    this.wakeUps = 0,
     this.bedTime,
     this.wakeTime,
     this.timeInBedMinutes,
@@ -450,6 +474,11 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       // was a rolling 24h window that could surface yesterday's resting HR.
       final restingHR = vitalsData['restingHeartRate'] as int?;
 
+      // FEATURE 1 — compute the in-app sleep score now so the synced row carries
+      // the exact number the Sleep screen shows (the morning push cites it).
+      final int? sleepScore =
+          sleepData.hasData ? await _computeSleepScoreForSummary(sleepData) : null;
+
       final today = DailyActivity(
         steps: steps,
         caloriesBurned: activeEnergy,
@@ -469,6 +498,8 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         sleepEnd: sleepData.hasData ? sleepData.wakeTime : null,
         sleepLatencyMinutes: sleepData.hasData ? sleepData.latencyMinutes : null,
         sleepEfficiency: sleepData.hasData ? sleepData.efficiency : null,
+        sleepScore: sleepScore,
+        wakeUps: sleepData.hasData ? sleepData.wakeUps : null,
       );
 
       // Stamp the cache AFTER a successful fetch — failed fetches must not
@@ -516,6 +547,99 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
             DailyActivity(date: DateTime.now(), isFromHealthConnect: false),
       );
     }
+  }
+
+  /// Compute the 0-100 sleep score for [sleep] the SAME way the in-app Sleep
+  /// screen does (computeSleepScore), so the value we sync into
+  /// daily_activity.sleep_score equals the number the user sees — that exact
+  /// number is what the morning sleep-score push cites (FEATURE 1).
+  ///
+  /// Inputs mirror sleep_detail_screen.dart: the user's sleep-duration goal
+  /// (default 480 = 8h), efficiency, deep + REM minutes, last night's mid-sleep
+  /// clock time, and the recent 30-day mid-sleep average (the Consistency
+  /// component). The goal + history are fetched best-effort: any failure simply
+  /// drops the consistency component (computeSleepScore renormalises) or falls
+  /// back to the 480 default — never a fabricated score. Returns null when the
+  /// night has no asleep minutes (computeSleepScore returns null).
+  Future<int?> _computeSleepScoreForSummary(SleepSummary sleep) async {
+    if (!sleep.hasData) return null;
+    final goalMinutes = await _fetchSleepGoalMinutes();
+    final avgMidSleepMin = await _fetchAvgMidSleepMinutes();
+    return _scoreFromSummary(sleep, goalMinutes, avgMidSleepMin);
+  }
+
+  /// Sleep-duration goal (default 8h). Best-effort — the in-app screen uses the
+  /// same source and the same 480 default when goals are unavailable.
+  Future<int> _fetchSleepGoalMinutes() async {
+    try {
+      final userId = await _apiClient.getUserId();
+      if (userId != null) {
+        final goals = await HealthGoalsService(_apiClient).getGoals(userId);
+        return goals.sleepDurationGoalMinutes;
+      }
+    } catch (_) {
+      // Keep the 480 default — never block the score on a goals fetch failure.
+    }
+    return 480;
+  }
+
+  /// Recent 30-day mid-sleep average for the Consistency component. Same helper
+  /// the Sleep detail screen averages over; bins by wake date and excludes any
+  /// night without bed/wake times. On error returns null and the consistency
+  /// component is dropped (computeSleepScore renormalises over the rest).
+  Future<int?> _fetchAvgMidSleepMinutes() async {
+    try {
+      final history = await _healthService.getNightlySleepHistory(days: 30);
+      final midpoints = <int>[];
+      for (final night in history) {
+        final main = night.mainSleep;
+        final bt = main.bedTime;
+        final wt = main.wakeTime;
+        if (bt == null || wt == null) continue;
+        final mid = bt.add(
+            Duration(milliseconds: wt.difference(bt).inMilliseconds ~/ 2));
+        midpoints.add(_minutesFromLocalMidnight(mid));
+      }
+      if (midpoints.isNotEmpty) {
+        return midpoints.reduce((a, b) => a + b) ~/ midpoints.length;
+      }
+    } catch (_) {
+      // Non-fatal — just skip the consistency component.
+    }
+    return null;
+  }
+
+  /// Pure score computation for one night's [sleep] given the already-fetched
+  /// [goalMinutes] and [avgMidSleepMin]. Same call shape as the Sleep detail
+  /// screen. Returns null when the night has no asleep minutes.
+  int? _scoreFromSummary(
+      SleepSummary sleep, int goalMinutes, int? avgMidSleepMin) {
+    if (!sleep.hasData) return null;
+    int? midSleepMin;
+    final bt = sleep.bedTime;
+    final wt = sleep.wakeTime;
+    if (bt != null && wt != null) {
+      final mid = bt.add(
+          Duration(milliseconds: wt.difference(bt).inMilliseconds ~/ 2));
+      midSleepMin = _minutesFromLocalMidnight(mid);
+    }
+    final score = computeSleepScore(
+      asleepMinutes: sleep.totalMinutes,
+      goalMinutes: goalMinutes,
+      efficiency: sleep.efficiency,
+      deepMinutes: sleep.deepMinutes,
+      remMinutes: sleep.remMinutes,
+      midSleepMinutesFromMidnight: midSleepMin,
+      avgMidSleepMinutesFromMidnight: avgMidSleepMin,
+    );
+    return score?.total;
+  }
+
+  /// Local minutes-from-midnight for a clock time — mirrors the Sleep detail
+  /// screen / sleep_score_provider mid-sleep helper.
+  int _minutesFromLocalMidnight(DateTime t) {
+    final local = t.toLocal();
+    return local.hour * 60 + local.minute;
   }
 
   /// Sync activity to Supabase in the background
@@ -608,6 +732,13 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         debugPrint('⚠️ [Activity] Backfill sleep fetch failed: $e');
       }
 
+      // FEATURE 1 — fetch the sleep goal + 30-day mid-sleep average ONCE for the
+      // whole backfill, then compute each day's sleep score from them (cheap,
+      // pure). The avg is a window-level figure so reusing it per day matches
+      // how the Sleep detail screen scores recent nights.
+      final int backfillGoalMinutes = await _fetchSleepGoalMinutes();
+      final int? backfillAvgMidSleep = await _fetchAvgMidSleepMinutes();
+
       final perDay = <DailyActivity>[];
       for (int i = 1; i <= days; i++) {
         final dayStart =
@@ -639,6 +770,11 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
             sleepEnd: hasSleep ? sleep.wakeTime : null,
             sleepLatencyMinutes: hasSleep ? sleep.latencyMinutes : null,
             sleepEfficiency: hasSleep ? sleep.efficiency : null,
+            sleepScore: hasSleep
+                ? _scoreFromSummary(
+                    sleep, backfillGoalMinutes, backfillAvgMidSleep)
+                : null,
+            wakeUps: hasSleep ? sleep.wakeUps : null,
           ));
         } catch (e) {
           // Non-fatal — Health may reject some days; keep going.
@@ -699,6 +835,10 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       sleepEnd: current?.sleepEnd,
       sleepLatencyMinutes: current?.sleepLatencyMinutes,
       sleepEfficiency: current?.sleepEfficiency,
+      // Watch updates merge steps/HR only — carry the already-computed sleep
+      // score + wake-up count forward unchanged (FEATURE 1).
+      sleepScore: current?.sleepScore,
+      wakeUps: current?.wakeUps,
     );
 
     state = state.copyWith(today: updated);

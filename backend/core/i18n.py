@@ -31,12 +31,11 @@ logger = logging.getLogger(__name__)
 # inline as {var_name}.
 
 _EN_TEMPLATES: dict[str, str] = {
-    # ── Morning recovery nudge (HRV-based AM nudge) ───────────────────────
-    "morning_recovery_nudge_title": "Good morning, {name}!",
-    "morning_recovery_nudge_body": (
-        "Your HRV is {hrv_score} today — your body is {recovery_status}. "
-        "Here's what {coach_name} recommends for today."
-    ),
+    # NOTE: the old morning_recovery_nudge_title/_body keys were removed — they
+    # interpolated a {hrv_score} that no longer exists (HRV dropped 2026-05-07,
+    # Google Play minimum scope) and had no active reader: nudge_type
+    # "morning_recovery" is never sent by any cron job. The morning push is now
+    # FEATURE 1's sleep_score / the daily_readiness briefing.
 
     # ── Streak at risk (afternoon before quiet hours) ──────────────────────
     "streak_at_risk_title": "Your {streak_count}-day streak ends tonight!",

@@ -644,6 +644,35 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   ),
                 ),
                 Divider(height: 1, color: cardBorder, indent: 50),
+                // Sleep score (FEATURE 1) — morning recap naming last night's
+                // 0-100 sleep score, with a delivery time control. Shares the
+                // morning slot with Morning readiness (the backend fires only
+                // ONE morning push).
+                _buildNotificationToggleWithTime(
+                  sectionKey: 'sleep_score',
+                  icon: Icons.bedtime_rounded,
+                  iconColor: const Color(0xFF818CF8),
+                  title: 'Sleep score',
+                  subtitle: "A morning recap of last night's sleep score",
+                  value: notifPrefs.sleepScoreNudge,
+                  onChanged: (value) {
+                    ref.read(notificationPreferencesProvider.notifier)
+                        .setSleepScoreNudge(value);
+                  },
+                  textSecondary: textSecondary,
+                  textMuted: textMuted,
+                  isDark: isDark,
+                  timeWidget: TimePickerTile(
+                    label: AppLocalizations.of(context).notificationsDeliveryTime,
+                    time: notifPrefs.sleepScoreTime,
+                    onTimeChanged: (time) {
+                      ref.read(notificationPreferencesProvider.notifier)
+                          .setSleepScoreTime(time);
+                    },
+                    isDark: isDark,
+                  ),
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
                 // Evening recap — reflective end-of-day coaching push, with a
                 // delivery time control. Pairs with Morning readiness.
                 _buildNotificationToggleWithTime(

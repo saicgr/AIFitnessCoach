@@ -7,9 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'api_client.dart';
 import 'activity_service.dart';
+import 'health_goals_service.dart';
 import 'data_cache_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../providers/demo_health_mode_provider.dart';
+// FEATURE 1 — the pure computeSleepScore used by the daily-activity part file to
+// stamp DailyActivity.sleepScore (the same call shape the Sleep detail screen
+// uses), so the synced score equals the in-app Sleep screen's score. A part
+// file shares the parent library's imports, so the import lives here.
+import '../../screens/health/widgets/sleep_score.dart' show computeSleepScore;
 
 part 'health_service_part_daily_activity.dart';
 

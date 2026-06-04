@@ -495,6 +495,14 @@ class _SleepSessionAgg {
   int remMinutes = 0;
   int awakeMinutes = 0;
 
+  /// Count of DISTINCT awakenings this session — each SLEEP_AWAKE /
+  /// SLEEP_AWAKE_IN_BED segment whose duration is >= [_kAwakeningMinThreshold]
+  /// minutes. A brief sub-3-minute stir is normal sleep architecture and is
+  /// NOT counted as a wake-up (3 min is the common consumer-tracker / sleep
+  /// hygiene threshold for a "real" awakening). Surfaced as SleepSummary.wakeUps
+  /// for the morning sleep-score push copy ("only a few wake-ups").
+  int wakeUps = 0;
+
   /// Start of the SLEEP_SESSION envelope, if this session carried one.
   /// Preferred origin for the latency calculation: the envelope begins
   /// the instant the source considers the user "in bed".
@@ -589,6 +597,12 @@ class _SleepSessionAgg {
 /// This is the fix for the headline total dropping a watch-staged main
 /// sleep whenever a second, flat-logged session (e.g. a morning nap) was
 /// also present — see [HealthServiceExt.getSleepData].
+/// Minimum duration (minutes) of an AWAKE segment for it to count as a
+/// distinct awakening in [SleepSummary.wakeUps]. A stir shorter than this is
+/// normal sleep architecture, not a real wake-up. 3 minutes is the common
+/// consumer-tracker / sleep-hygiene threshold for a meaningful awakening.
+const int _kAwakeningMinThreshold = 3;
+
 @visibleForTesting
 SleepSummary aggregateSleepSummary(List<HealthDataPoint> points) {
   final sessions = <String, _SleepSessionAgg>{};
@@ -634,6 +648,12 @@ SleepSummary aggregateSleepSummary(List<HealthDataPoint> points) {
       case HealthDataType.SLEEP_AWAKE:
       case HealthDataType.SLEEP_AWAKE_IN_BED:
         agg.awakeMinutes += durationMin;
+        // Count this awake segment as a distinct awakening only when it is at
+        // least _kAwakeningMinThreshold minutes long (a brief stir is not a
+        // real wake-up). Summed per session, then across kept sessions below.
+        if (durationMin >= _kAwakeningMinThreshold) {
+          agg.wakeUps += 1;
+        }
         break;
       default:
         // Non-sleep point — ignore (defensive; the caller only queries
@@ -727,6 +747,7 @@ SleepSummary aggregateSleepSummary(List<HealthDataPoint> points) {
   int remMinutes = 0;
   int lightMinutes = 0;
   int awakeMinutes = 0;
+  int wakeUps = 0;
   int timeInBedMinutes = 0;
   int? longestKeptLatency;
   int longestKeptTimeInBed = -1; // span of the session owning the latency
@@ -741,6 +762,7 @@ SleepSummary aggregateSleepSummary(List<HealthDataPoint> points) {
     remMinutes += agg.remMinutes;
     lightMinutes += agg.lightMinutes;
     awakeMinutes += agg.awakeMinutes;
+    wakeUps += agg.wakeUps;
     timeInBedMinutes += agg.timeInBedMinutes;
 
     // Bed / wake window spans every kept stage AND every kept envelope.
@@ -771,6 +793,7 @@ SleepSummary aggregateSleepSummary(List<HealthDataPoint> points) {
     remMinutes: remMinutes,
     lightMinutes: lightMinutes,
     awakeMinutes: awakeMinutes,
+    wakeUps: wakeUps,
     bedTime: earliestBed,
     wakeTime: latestWake,
     timeInBedMinutes: timeInBedMinutes > 0 ? timeInBedMinutes : null,

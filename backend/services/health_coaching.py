@@ -72,6 +72,16 @@ _GOOD_NIGHT_MIN = 420  # 7h
 # Below this it is a clearly "poor night" and the briefing leads with recovery.
 _POOR_NIGHT_MIN = 360  # 6h
 
+# --- Morning sleep-score push (FEATURE 1) band thresholds --------------------
+# A sleep score at or above this is "high" — celebrate it.
+_SLEEP_SCORE_HIGH = 80
+# A sleep score below this is "poor" — reassure or encourage by recovery tier.
+_SLEEP_SCORE_POOR = 60
+# The recovery tiers that still count as "recovering well" on a poor-sleep night
+# (services/readiness_service.RECOVERY_TIERS). moderate/good => reassuring tone;
+# compromised/low (or no tier) => the encouraging "sleep more tonight" tone.
+_SLEEP_RECOVERING_TIERS = ("moderate", "good", "optimal")
+
 # Resting-HR anomaly: an elevation of at least this many bpm above the personal
 # baseline is "elevated". Sleep Foundation / ACSM note RHR commonly rises ~5-7
 # bpm with under-recovery, illness onset, or sleep debt — we use 7 as a
@@ -128,6 +138,62 @@ _BRIEFING_NO_SLEEP: List[str] = [
     "plan — go with {workout_phrase} and stop early if it feels off.",
     "No sleep data this morning. Your {workout_phrase} is unchanged; the "
     "Sleep Foundation's advice still holds — aim for 7+ hours tonight.",
+]
+
+
+# --- Morning sleep-score push (FEATURE 1) ------------------------------------
+# A separate morning push that names the EXACT 0-100 sleep score the in-app
+# Sleep screen shows. Three tone bands (selected deterministically in
+# build_sleep_score_briefing):
+#   * HIGH (score >= 80)         — celebrate the number.
+#   * POOR but still recovering  — reassure (recovery tier moderate/good).
+#   * POOR across the board      — encourage + a concrete "sleep more tonight".
+# Placeholders: {score} (0-100), {wake_ups} (count), {sleep_h}/{sleep_m}
+# (asleep duration). Every variant carries the {score} number verbatim. Copy is
+# human-voiced, NO em dashes, >= 4 variants per pool (feedback rules).
+
+# Pattern: a high score — the user got the hours they need with few wake-ups.
+_SLEEP_HIGH: List[str] = [
+    "High sleep score this morning. Getting the hours of sleep you need and "
+    "only a few wake-ups led to a {score}. Nice one.",
+    "Strong night. {sleep_h}h{sleep_m:02d}m asleep with minimal interruptions "
+    "scored you a {score} out of 100. That is the kind of night your body "
+    "rebuilds on.",
+    "Your sleep score is {score} today. Solid duration and a settled night "
+    "with only a handful of wake-ups did the work here. Carry that energy in.",
+    "Sleep score: {score}. You hit the hours that matter and stayed mostly "
+    "undisturbed, which is exactly what good recovery looks like.",
+    "A {score} sleep score this morning. {sleep_h}h{sleep_m:02d}m of mostly "
+    "unbroken sleep is a great base for today, so train with confidence.",
+]
+
+# Pattern: a poor score, but the recovery tier says the body is coping
+# (recovery tier moderate or good) — reassure, do not alarm.
+_SLEEP_POOR_RECOVERING: List[str] = [
+    "You had poor sleep, but you are still recovering well. Keep it up by "
+    "sleeping more tonight.",
+    "Last night scored a {score}, yet your body is holding up better than the "
+    "number suggests. Bank a longer night tonight and you will bounce right back.",
+    "Sleep score landed at {score} after a short night, but recovery is still "
+    "on your side. Aim for more hours tonight and keep the streak going.",
+    "A {score} this morning. Not your best sleep, but you are recovering well "
+    "all the same. Protect tonight's sleep and you will be back on track.",
+    "Rough night, {score} on the sleep score, but your recovery is steady. "
+    "One earlier bedtime tonight is all it takes to turn this around.",
+]
+
+# Pattern: a poor score AND poor recovery — encourage with a concrete fix.
+_SLEEP_POOR_ALL: List[str] = [
+    "Your sleep score is {score} this morning after a short, broken night. Go "
+    "easy today and make tonight's sleep the priority.",
+    "A {score} sleep score, and {wake_ups} wake-ups did not help. Today is a "
+    "good day to dial back the effort and get to bed earlier tonight.",
+    "Last night scored a {score}. Only {sleep_h}h{sleep_m:02d}m asleep means "
+    "your body is short on recovery, so keep today light and sleep more tonight.",
+    "Sleep score: {score}. That was a tough night, so listen to your body "
+    "today and aim for an earlier, longer night ahead.",
+    "Tough night with a {score} sleep score. Be kind to yourself today, "
+    "hydrate well, and give tonight's sleep your best shot.",
 ]
 
 
@@ -650,6 +716,124 @@ def build_daily_briefing(
         "brief_message": brief_message,
         "domains": game_plan["domains"],
         "facts": facts,
+    }
+
+
+def build_sleep_score_briefing(
+    snapshot: Dict[str, Any],
+    day: Optional[date] = None,
+) -> Dict[str, Any]:
+    """Build the morning SLEEP-SCORE push (FEATURE 1).
+
+    Names the EXACT 0-100 sleep score the in-app Sleep screen shows. The score
+    is resolved in this order (no fabrication):
+      1. ``snapshot.last_night_sleep['sleep_score']`` — the number the CLIENT
+         synced (it has the mid-sleep history the server snapshot lacks, so this
+         is the source of truth and matches the Sleep screen exactly);
+      2. else the Python port ``compute_sleep_score`` over the snapshot's
+         duration / efficiency / deep / REM — a faithful fallback that omits the
+         Consistency component just like the app's new-user path.
+    A night that yields no score (no asleep minutes) => ``has_message: False``.
+
+    Tone selection (deterministic, by band):
+      * score >= 80                       -> HIGH (celebrate).
+      * score < 60 + recovery tier
+        moderate/good/optimal             -> POOR but recovering (reassure).
+      * score < 60 + compromised/low/none -> POOR all (encourage, sleep more).
+      * 60 <= score < 80                  -> DEFER. The mid-band is left to the
+        daily_readiness briefing so the user gets exactly ONE high-signal
+        morning push; ``has_message: False`` with reason ``mid_band_defer``.
+
+    Returns the same dict shape as the other builders, or ``_no_message(reason)``
+    for the clean empty states (no data, no_sleep, no_score, mid_band_defer).
+    """
+    if not snapshot or not snapshot.get("has_data"):
+        return _no_message(snapshot.get("reason", "no_data") if snapshot else "no_data")
+
+    sleep = snapshot.get("last_night_sleep")
+    # Stale or empty sleep => no honest score to cite.
+    if not sleep or sleep.get("is_stale") or (sleep.get("total_minutes") or 0) <= 0:
+        return _no_message("no_sleep")
+
+    total = int(sleep.get("total_minutes") or 0)
+
+    # 1) Prefer the client-synced number (matches the Sleep screen exactly).
+    score = sleep.get("sleep_score")
+    if score is None:
+        # 2) Fallback: the Python port over what the snapshot has. Consistency is
+        #    omitted and the total renormalised, exactly like the app's no-history
+        #    path. Goal comes from the user's health_goals when present (default 8h).
+        goals = snapshot.get("goals") or {}
+        goal_minutes = goals.get("sleep_duration_goal_minutes") or 480
+        from services.sleep_score import compute_sleep_score
+
+        score = compute_sleep_score(
+            asleep_minutes=total,
+            goal_minutes=goal_minutes,
+            efficiency=sleep.get("efficiency"),
+            deep_minutes=int(sleep.get("deep_minutes") or 0),
+            rem_minutes=int(sleep.get("rem_minutes") or 0),
+        )
+    if score is None:
+        return _no_message("no_score")
+    score = int(score)
+
+    # Mid-band defers to the daily_readiness briefing — one morning push only.
+    if _SLEEP_SCORE_POOR <= score < _SLEEP_SCORE_HIGH:
+        return _no_message("mid_band_defer")
+
+    seed = _seed_for_day(day)
+    sleep_h, sleep_m = _hm(total)
+    # Wake-up count is synced from the client. When it is absent we have no
+    # honest count, so we never fabricate one — the {wake_ups}-citing POOR_ALL
+    # variant is only ever PICKED when a real count exists (see below).
+    wake_ups_raw = sleep.get("wake_ups")
+    has_wake_ups = wake_ups_raw is not None
+    wake_ups = int(wake_ups_raw or 0)
+
+    recovery = snapshot.get("recovery") or {}
+    tier = recovery.get("tier")
+
+    if score >= _SLEEP_SCORE_HIGH:
+        pattern = "high"
+        pool = _SLEEP_HIGH
+    elif tier in _SLEEP_RECOVERING_TIERS:
+        # Poor sleep, but the recovery tier says the body is coping — reassure.
+        pattern = "poor_recovering"
+        pool = _SLEEP_POOR_RECOVERING
+    else:
+        # Poor sleep AND poor/unknown recovery — encourage, sleep more tonight.
+        pattern = "poor_all"
+        pool = _SLEEP_POOR_ALL
+
+    # Pick a variant. If the wake-up count is unknown, drop any variant that
+    # cites {wake_ups} so we never print a fabricated "0 wake-ups".
+    candidates = pool
+    if not has_wake_ups:
+        filtered = [t for t in pool if "{wake_ups}" not in t]
+        if filtered:
+            candidates = filtered
+    template = _pick(candidates, seed, salt=8)
+
+    message = template.format(
+        score=score,
+        wake_ups=wake_ups,
+        sleep_h=sleep_h,
+        sleep_m=sleep_m,
+    )
+
+    return {
+        "has_message": True,
+        "type": "sleep_score",
+        "pattern": pattern,
+        "message": message,
+        "facts": {
+            "sleep_score": score,
+            "sleep_minutes": total,
+            "wake_ups": wake_ups,
+            "recovery_tier": tier,
+            "score_source": "synced" if sleep.get("sleep_score") is not None else "fallback",
+        },
     }
 
 

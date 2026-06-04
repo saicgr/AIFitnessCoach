@@ -5,7 +5,6 @@
 NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     'ar': {
         'morning_recovery_nudge_title': 'صباح الخير، {name}!',
-        'morning_recovery_nudge_body': 'مستوى HRV الخاص بك هو {hrv_score} اليوم — وجسمك في حالة {recovery_status}. إليك ما يوصي به {coach_name} لهذا اليوم.',
         'streak_at_risk_title': 'سلسلة أيامك {streak_count} ستنتهي الليلة!',
         'streak_at_risk_body': '{name}، لا يزال لديك وقت. جلسة سريعة واحدة ستحافظ على استمرار السلسلة. يمكنك فعلها!',
         'weekly_wrapped_title': 'ملخص أسبوعك، {name}!',
@@ -51,7 +50,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'bn': {
         'morning_recovery_nudge_title': 'শুভ সকাল, {name}!',
-        'morning_recovery_nudge_body': 'আজ আপনার HRV হলো {hrv_score} — আপনার শরীর {recovery_status} অবস্থায় আছে। আজকের জন্য {coach_name}-এর পরামর্শগুলো দেখে নিন।',
         'streak_at_risk_title': 'আপনার {streak_count}-দিনের স্ট্রিক আজ রাতেই শেষ হয়ে যাচ্ছে!',
         'streak_at_risk_body': '{name}, আপনার হাতে এখনো সময় আছে। একটি ছোট সেশনই আপনার স্ট্রিক ধরে রাখতে পারে। আপনি পারবেন!',
         'weekly_wrapped_title': 'আপনার সপ্তাহের সারসংক্ষেপ, {name}!',
@@ -97,7 +95,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'cs': {
         'morning_recovery_nudge_title': 'Dobré ráno, {name}!',
-        'morning_recovery_nudge_body': 'Tvé HRV je dnes {hrv_score} — tvé tělo je {recovery_status}. Zde je to, co {coach_name} doporučuje pro dnešní den.',
         'streak_at_risk_title': 'Tvá {streak_count}denní série končí dnes večer!',
         'streak_at_risk_body': '{name}, stále máš čas. Jeden rychlý trénink udrží řetězec naživu. Zvládneš to!',
         'weekly_wrapped_title': 'Tvůj týden v kostce, {name}!',
@@ -143,7 +140,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'de': {
         'morning_recovery_nudge_title': 'Guten Morgen, {name}!',
-        'morning_recovery_nudge_body': 'Dein HRV ist heute bei {hrv_score} — dein Körper ist {recovery_status}. Hier ist, was {coach_name} für heute empfiehlt.',
         'streak_at_risk_title': 'Deine {streak_count}-Tage-Serie endet heute!',
         'streak_at_risk_body': '{name}, du hast noch Zeit. Eine kurze Einheit hält die Serie am Leben. Du schaffst das!',
         'weekly_wrapped_title': 'Dein Wochenrückblick, {name}!',
@@ -189,7 +185,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'es': {
         'morning_recovery_nudge_title': '¡Buenos días, {name}!',
-        'morning_recovery_nudge_body': 'Tu HRV es {hrv_score} hoy — tu cuerpo está {recovery_status}. Esto es lo que {coach_name} recomienda para hoy.',
         'streak_at_risk_title': '¡Tu racha de {streak_count} días termina esta noche!',
         'streak_at_risk_body': '{name}, todavía tienes tiempo. Una sesión rápida mantiene la cadena viva. ¡Tú puedes!',
         'weekly_wrapped_title': 'Tu semana en resumen, {name}!',
@@ -235,7 +230,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'fi': {
         'morning_recovery_nudge_title': 'Hyvää huomenta, {name}!',
-        'morning_recovery_nudge_body': 'HRV-arvosi on tänään {hrv_score} — kehosi on {recovery_status}. Tässä {coach_name}:n suositukset tälle päivälle.',
         'streak_at_risk_title': '{streak_count} päivän putkesi päättyy tänään!',
         'streak_at_risk_body': '{name}, ehdit vielä. Yksi nopea treeni pitää putken elossa. Pystyt siihen!',
         'weekly_wrapped_title': 'Viikkosi pähkinänkuoressa, {name}!',
@@ -281,7 +275,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'fr': {
         'morning_recovery_nudge_title': 'Bonjour, {name} !',
-        'morning_recovery_nudge_body': "Votre HRV est de {hrv_score} aujourd'hui — votre corps est {recovery_status}. Voici ce que {coach_name} recommande pour aujourd'hui.",
         'streak_at_risk_title': 'Votre série de {streak_count} jours se termine ce soir !',
         'streak_at_risk_body': '{name}, il est encore temps. Une séance rapide permet de maintenir la série. Vous pouvez le faire !',
         'weekly_wrapped_title': 'Votre semaine en résumé, {name} !',
@@ -327,7 +320,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ha': {
         'morning_recovery_nudge_title': 'Barka da safiya, {name}!',
-        'morning_recovery_nudge_body': 'HRV dinka {hrv_score} ne a yau — jikinka yana {recovery_status}. Ga abin da {coach_name} ya ba da shawara don yau.',
         'streak_at_risk_title': 'Kwanakinka {streak_count} na ci gaba za su kare daren nan!',
         'streak_at_risk_body': '{name}, har yanzu kana da lokaci. Motsa jiki na ɗan lokaci kaɗan zai sa ka ci gaba. Za ka iya!',
         'weekly_wrapped_title': 'Takaitaccen bayanin makonku, {name}!',
@@ -373,7 +365,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'hi': {
         'morning_recovery_nudge_title': 'सुप्रभात, {name}!',
-        'morning_recovery_nudge_body': 'आज आपका HRV {hrv_score} है — आपका शरीर {recovery_status} है। देखिए {coach_name} आज के लिए क्या सुझाव देते हैं।',
         'streak_at_risk_title': 'आपकी {streak_count}-दिन की स्ट्रीक आज रात खत्म हो रही है!',
         'streak_at_risk_body': '{name}, आपके पास अभी भी समय है। एक छोटा सा सेशन इस चेन को बरकरार रखेगा। आप यह कर सकते हैं!',
         'weekly_wrapped_title': 'आपका साप्ताहिक सारांश, {name}!',
@@ -419,7 +410,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'id': {
         'morning_recovery_nudge_title': 'Selamat pagi, {name}!',
-        'morning_recovery_nudge_body': 'HRV kamu hari ini adalah {hrv_score} — kondisi tubuhmu {recovery_status}. Ini rekomendasi {coach_name} untuk hari ini.',
         'streak_at_risk_title': 'Streak {streak_count} hari kamu berakhir malam ini!',
         'streak_at_risk_body': '{name}, kamu masih punya waktu. Satu sesi singkat akan menjaga streak kamu tetap hidup. Kamu pasti bisa!',
         'weekly_wrapped_title': 'Ulasan mingguan kamu, {name}!',
@@ -465,7 +455,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'it': {
         'morning_recovery_nudge_title': 'Buongiorno, {name}!',
-        'morning_recovery_nudge_body': 'Il tuo HRV oggi è {hrv_score} — il tuo corpo è {recovery_status}. Ecco cosa consiglia {coach_name} per oggi.',
         'streak_at_risk_title': 'La tua serie di {streak_count} giorni finisce stasera!',
         'streak_at_risk_body': '{name}, sei ancora in tempo. Una sessione veloce mantiene viva la serie. Ce la puoi fare!',
         'weekly_wrapped_title': 'Il tuo riepilogo settimanale, {name}!',
@@ -511,7 +500,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ja': {
         'morning_recovery_nudge_title': 'おはようございます、{name}さん！',
-        'morning_recovery_nudge_body': '今日のHRVは{hrv_score}です。体の状態は{recovery_status}ですね。{coach_name}からの今日のアドバイスをチェックしましょう。',
         'streak_at_risk_title': '{streak_count}日間の連続記録が今夜で途切れてしまいます！',
         'streak_at_risk_body': '{name}さん、まだ間に合います。短いセッションでも行えば記録は維持できます。あなたならできます！',
         'weekly_wrapped_title': '今週の振り返り、{name}さん！',
@@ -557,7 +545,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'jv': {
         'morning_recovery_nudge_title': 'Sugeng enjang, {name}!',
-        'morning_recovery_nudge_body': 'HRV sampeyan {hrv_score} dinten niki — awak sampeyan {recovery_status}. Iki sing disaranake {coach_name} kanggo dinten niki.',
         'streak_at_risk_title': 'Streak {streak_count} dinten sampeyan bakal rampung bengi niki!',
         'streak_at_risk_body': '{name}, sampeyan isih duwe wektu. Siji sesi cepet bisa njaga streak sampeyan. Sampeyan mesthi bisa!',
         'weekly_wrapped_title': 'Ringkesan minggu sampeyan, {name}!',
@@ -603,7 +590,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'kn': {
         'morning_recovery_nudge_title': 'ಶುಭೋದಯೋದಯ, {name}!',
-        'morning_recovery_nudge_body': 'ಇಂದು ನಿಮ್ಮ HRV {hrv_score} ಆಗಿದೆ — ನಿಮ್ಮ ದೇಹವು {recovery_status} ಸ್ಥಿತಿಯಲ್ಲಿದೆ. ಇಂದಿನ ದಿನಕ್ಕಾಗಿ {coach_name} ಏನು ಶಿಫಾರಸು ಮಾಡುತ್ತಾರೆ ಎಂಬುದು ಇಲ್ಲಿದೆ.',
         'streak_at_risk_title': 'ನಿಮ್ಮ {streak_count}-ದಿನದ ಸ್ಟ್ರೀಕ್ ಇಂದು ರಾತ್ರಿ ಕೊನೆಗೊಳ್ಳುತ್ತದೆ!',
         'streak_at_risk_body': '{name}, ನಿಮ್ಮ ಬಳಿ ಇನ್ನೂ ಸಮಯವಿದೆ. ಒಂದು ಸಣ್ಣ ವ್ಯಾಯಾಮದ ಅವಧಿ ನಿಮ್ಮ ಸ್ಟ್ರೀಕ್ ಅನ್ನು ಉಳಿಸುತ್ತದೆ. ನಿಮ್ಮಿಂದ ಸಾಧ್ಯ!',
         'weekly_wrapped_title': 'ನಿಮ್ಮ ವಾರದ ಅವಲೋಕನ, {name}!',
@@ -649,7 +635,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ko': {
         'morning_recovery_nudge_title': '좋은 아침이에요, {name}님!',
-        'morning_recovery_nudge_body': '오늘의 HRV는 {hrv_score}이며, 현재 몸 상태는 {recovery_status}입니다. {coach_name} 코치가 추천하는 오늘 일정을 확인해보세요.',
         'streak_at_risk_title': '{streak_count}일 연속 기록이 오늘 밤 끝납니다!',
         'streak_at_risk_body': '{name}님, 아직 늦지 않았어요. 짧은 운동 하나로 기록을 이어가세요. 할 수 있어요!',
         'weekly_wrapped_title': '이번 주 요약, {name}님!',
@@ -695,7 +680,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ml': {
         'morning_recovery_nudge_title': 'സുപ്രഭാതം, {name}!',
-        'morning_recovery_nudge_body': 'ഇന്ന് നിങ്ങളുടെ HRV {hrv_score} ആണ് — നിങ്ങളുടെ ശരീരം {recovery_status} അവസ്ഥയിലാണ്. ഇന്നത്തേക്ക് {coach_name} നിർദ്ദേശിക്കുന്നത് ഇതാ.',
         'streak_at_risk_title': 'നിങ്ങളുടെ {streak_count}-ദിവസത്തെ സ്ട്രീക്ക് ഇന്ന് അവസാനിക്കും!',
         'streak_at_risk_body': '{name}, നിങ്ങൾക്ക് ഇപ്പോഴും സമയമുണ്ട്. ഒരു ചെറിയ സെഷൻ ചെയ്താൽ സ്ട്രീക്ക് നിലനിർത്താം. നിങ്ങൾക്ക് ഇത് സാധിക്കും!',
         'weekly_wrapped_title': 'ഈ ആഴ്ചയിലെ നിങ്ങളുടെ പ്രകടനം, {name}!',
@@ -741,7 +725,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'mr': {
         'morning_recovery_nudge_title': 'शुभ प्रभात, {name}!',
-        'morning_recovery_nudge_body': 'आज तुमचा HRV {hrv_score} आहे — तुमचे शरीर {recovery_status} आहे. आजसाठी {coach_name} काय शिफारस करतात ते पहा.',
         'streak_at_risk_title': 'तुमची {streak_count}-दिवसांची स्ट्रीक आज रात्री संपत आहे!',
         'streak_at_risk_body': '{name}, तुमच्याकडे अजून वेळ आहे. एक छोटा वर्कआउट तुमची स्ट्रीक जिवंत ठेवेल. तुम्ही हे करू शकता!',
         'weekly_wrapped_title': 'तुमचा आठवड्याचा आढावा, {name}!',
@@ -787,7 +770,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ms': {
         'morning_recovery_nudge_title': 'Selamat pagi, {name}!',
-        'morning_recovery_nudge_body': 'HRV anda ialah {hrv_score} hari ini — badan anda {recovery_status}. Ini cadangan {coach_name} untuk hari ini.',
         'streak_at_risk_title': 'Streak {streak_count} hari anda berakhir malam ini!',
         'streak_at_risk_body': '{name}, anda masih ada masa. Satu sesi ringkas akan mengekalkan rantaian anda. Anda boleh lakukannya!',
         'weekly_wrapped_title': 'Ulasan minggu anda, {name}!',
@@ -833,7 +815,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ne': {
         'morning_recovery_nudge_title': 'शुभ प्रभात, {name}!',
-        'morning_recovery_nudge_body': 'आज तपाईंको HRV {hrv_score} छ — तपाईंको शरीर {recovery_status} छ। आजका लागि {coach_name} ले के सिफारिस गर्नुहुन्छ, यहाँ हेर्नुहोस्।',
         'streak_at_risk_title': 'तपाईंको {streak_count}-दिनको स्ट्रिक आज राति सकिँदैछ!',
         'streak_at_risk_body': '{name}, तपाईंसँग अझै समय छ। एउटा छोटो सेसनले स्ट्रिक कायम राख्छ। तपाईं यो गर्न सक्नुहुन्छ!',
         'weekly_wrapped_title': 'तपाईंको हप्ताको समीक्षा, {name}!',
@@ -879,7 +860,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'nl': {
         'morning_recovery_nudge_title': 'Goedemorgen, {name}!',
-        'morning_recovery_nudge_body': 'Je HRV is vandaag {hrv_score} — je lichaam is {recovery_status}. Dit is wat {coach_name} voor vandaag aanbeveelt.',
         'streak_at_risk_title': 'Je streak van {streak_count} dagen eindigt vanavond!',
         'streak_at_risk_body': '{name}, je hebt nog tijd. Eén korte sessie houdt de keten in stand. Je kunt dit!',
         'weekly_wrapped_title': 'Je week in vogelvlucht, {name}!',
@@ -925,7 +905,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'or': {
         'morning_recovery_nudge_title': 'ସୁପ୍ରଭାତ, {name}!',
-        'morning_recovery_nudge_body': 'ଆଜି ଆପଣଙ୍କ HRV ହେଉଛି {hrv_score} — ଆପଣଙ୍କ ଶରୀର {recovery_status} ଅଛି। ଆଜି ପାଇଁ {coach_name} କଣ ପରାମର୍ଶ ଦେଉଛନ୍ତି ଦେଖନ୍ତୁ।',
         'streak_at_risk_title': 'ଆପଣଙ୍କ {streak_count}-ଦିନର ଷ୍ଟ୍ରିକ୍ ଆଜି ରାତିରେ ଶେଷ ହେଉଛି!',
         'streak_at_risk_body': '{name}, ଆପଣଙ୍କ ପାଖରେ ଏବେ ବି ସମୟ ଅଛି। ଗୋଟିଏ ଛୋଟ ସେସନ୍ ଏହି ଧାରାକୁ ବଜାୟ ରଖିବ। ଆପଣ ଏହା କରିପାରିବେ!',
         'weekly_wrapped_title': 'ଆପଣଙ୍କ ସପ୍ତାହର ସମୀକ୍ଷା, {name}!',
@@ -971,7 +950,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'pa': {
         'morning_recovery_nudge_title': 'ਸੁਭ ਸਵੇਰ, {name}!',
-        'morning_recovery_nudge_body': 'ਅੱਜ ਤੁਹਾਡਾ HRV {hrv_score} ਹੈ — ਤੁਹਾਡਾ ਸਰੀਰ {recovery_status} ਹੈ। ਅੱਜ ਲਈ {coach_name} ਦੀ ਸਿਫਾਰਸ਼ ਇਹ ਹੈ।',
         'streak_at_risk_title': 'ਤੁਹਾਡੀ {streak_count}-ਦਿਨਾਂ ਦੀ ਸਟ੍ਰੀਕ ਅੱਜ ਰਾਤ ਖਤਮ ਹੋ ਰਹੀ ਹੈ!',
         'streak_at_risk_body': '{name}, ਤੁਹਾਡੇ ਕੋਲ ਅਜੇ ਵੀ ਸਮਾਂ ਹੈ। ਇੱਕ ਛੋਟਾ ਸੈਸ਼ਨ ਇਸ ਚੇਨ ਨੂੰ ਬਰਕਰਾਰ ਰੱਖੇਗਾ। ਤੁਸੀਂ ਇਹ ਕਰ ਸਕਦੇ ਹੋ!',
         'weekly_wrapped_title': 'ਤੁਹਾਡਾ ਹਫਤਾਵਾਰੀ ਰਿਵਿਊ, {name}!',
@@ -1017,7 +995,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'pl': {
         'morning_recovery_nudge_title': 'Dzień dobry, {name}!',
-        'morning_recovery_nudge_body': 'Twój HRV wynosi dziś {hrv_score} — Twoje ciało jest {recovery_status}. Oto co {coach_name} poleca na dzisiaj.',
         'streak_at_risk_title': 'Twoja {streak_count}-dniowa passa kończy się dziś!',
         'streak_at_risk_body': '{name}, wciąż masz czas. Jeden szybki trening podtrzyma passę. Dasz radę!',
         'weekly_wrapped_title': 'Twój tydzień w pigułce, {name}!',
@@ -1063,7 +1040,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'pt': {
         'morning_recovery_nudge_title': 'Bom dia, {name}!',
-        'morning_recovery_nudge_body': 'Seu HRV está {hrv_score} hoje — seu corpo está {recovery_status}. Veja o que {coach_name} recomenda para hoje.',
         'streak_at_risk_title': 'Sua sequência de {streak_count} dias termina hoje!',
         'streak_at_risk_body': '{name}, você ainda tem tempo. Uma sessão rápida mantém a sequência viva. Você consegue!',
         'weekly_wrapped_title': 'Sua semana em resumo, {name}!',
@@ -1109,7 +1085,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ru': {
         'morning_recovery_nudge_title': 'Доброе утро, {name}!',
-        'morning_recovery_nudge_body': 'Ваш HRV сегодня — {hrv_score}, ваш организм {recovery_status}. Вот что {coach_name} рекомендует на сегодня.',
         'streak_at_risk_title': 'Ваша серия из {streak_count} дней прервется сегодня!',
         'streak_at_risk_body': '{name}, у вас еще есть время. Одна короткая тренировка поможет сохранить серию. Вы справитесь!',
         'weekly_wrapped_title': 'Итоги вашей недели, {name}!',
@@ -1155,7 +1130,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'sv': {
         'morning_recovery_nudge_title': 'God morgon, {name}!',
-        'morning_recovery_nudge_body': 'Din HRV är {hrv_score} idag — din kropp är {recovery_status}. Här är vad {coach_name} rekommenderar för idag.',
         'streak_at_risk_title': 'Din {streak_count}-dagars streak tar slut ikväll!',
         'streak_at_risk_body': '{name}, du har fortfarande tid. Ett snabbt pass håller kedjan vid liv. Du fixar det!',
         'weekly_wrapped_title': 'Din vecka i sammandrag, {name}!',
@@ -1201,7 +1175,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'sw': {
         'morning_recovery_nudge_title': 'Habari za asubuhi, {name}!',
-        'morning_recovery_nudge_body': 'HRV yako ni {hrv_score} leo — mwili wako uko {recovery_status}. Hivi ndivyo {coach_name} anavyopendekeza kwa leo.',
         'streak_at_risk_title': 'Streak yako ya siku {streak_count} inaisha usiku huu!',
         'streak_at_risk_body': '{name}, bado una muda. Mazoezi ya haraka yataifanya streak yako iendelee. Unaweza!',
         'weekly_wrapped_title': 'Muhtasari wa wiki yako, {name}!',
@@ -1247,7 +1220,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ta': {
         'morning_recovery_nudge_title': 'காலை வணக்கம், {name}!',
-        'morning_recovery_nudge_body': 'இன்று உங்கள் HRV {hrv_score} — உங்கள் உடல் {recovery_status} நிலையில் உள்ளது. இன்று என்ன செய்ய வேண்டும் என்று {coach_name} பரிந்துரைக்கிறார் இதோ.',
         'streak_at_risk_title': 'உங்கள் {streak_count}-நாள் தொடர் இன்று இரவு முடிவடைகிறது!',
         'streak_at_risk_body': '{name}, இன்னும் நேரம் உள்ளது. ஒரு சிறிய பயிற்சி உங்கள் தொடரைத் தக்கவைக்கும். உங்களால் முடியும்!',
         'weekly_wrapped_title': 'உங்கள் வாராந்திர ஆய்வு, {name}!',
@@ -1293,7 +1265,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'te': {
         'morning_recovery_nudge_title': 'శుభోదయం, {name}!',
-        'morning_recovery_nudge_body': 'ఈరోజు మీ HRV {hrv_score} — మీ శరీరం {recovery_status} స్థితిలో ఉంది. ఈరోజు కోసం {coach_name} ఏమి సిఫార్సు చేస్తున్నారో చూడండి.',
         'streak_at_risk_title': 'మీ {streak_count}-రోజుల స్ట్రీక్ ఈ రాత్రితో ముగుస్తుంది!',
         'streak_at_risk_body': '{name}, మీకు ఇంకా సమయం ఉంది. ఒక చిన్న సెషన్ మీ స్ట్రీక్\u200cను కాపాడుతుంది. మీరు చేయగలరు!',
         'weekly_wrapped_title': 'ఈ వారం మీ పురోగతి, {name}!',
@@ -1339,7 +1310,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'th': {
         'morning_recovery_nudge_title': 'อรุณสวัสดิ์ {name}!',
-        'morning_recovery_nudge_body': 'ค่า HRV ของคุณวันนี้คือ {hrv_score} — ร่างกายของคุณอยู่ในสถานะ {recovery_status} นี่คือสิ่งที่ {coach_name} แนะนำสำหรับวันนี้',
         'streak_at_risk_title': 'สตรีค {streak_count} วันของคุณจะสิ้นสุดคืนนี้!',
         'streak_at_risk_body': '{name} คุณยังมีเวลาเหลือ ออกกำลังกายสั้นๆ สักครั้งเพื่อรักษาความต่อเนื่องไว้ คุณทำได้!',
         'weekly_wrapped_title': 'สรุปผลรายสัปดาห์ของคุณ {name}!',
@@ -1385,7 +1355,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'tl': {
         'morning_recovery_nudge_title': 'Magandang umaga, {name}!',
-        'morning_recovery_nudge_body': 'Ang iyong HRV ay {hrv_score} ngayong araw — ang iyong katawan ay {recovery_status}. Narito ang inirerekomenda ni {coach_name} para sa araw na ito.',
         'streak_at_risk_title': 'Ang iyong {streak_count}-day streak ay magtatapos ngayong gabi!',
         'streak_at_risk_body': "{name}, may oras ka pa. Isang mabilis na session lang, buhay ang iyong streak. Kaya mo 'yan!",
         'weekly_wrapped_title': 'Ang iyong linggo sa review, {name}!',
@@ -1431,7 +1400,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'tr': {
         'morning_recovery_nudge_title': 'Günaydın, {name}!',
-        'morning_recovery_nudge_body': 'Bugün HRV değerin {hrv_score} — vücudun {recovery_status}. İşte {coach_name} tarafından bugün için önerilenler.',
         'streak_at_risk_title': '{streak_count} günlük serin bu gece sona eriyor!',
         'streak_at_risk_body': '{name}, hala vaktin var. Hızlı bir antrenman serini koruyacaktır. Bunu başarabilirsin!',
         'weekly_wrapped_title': 'Haftalık özetin, {name}!',
@@ -1477,7 +1445,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'ur': {
         'morning_recovery_nudge_title': 'صبح بخیر، {name}!',
-        'morning_recovery_nudge_body': 'آج آپ کا HRV {hrv_score} ہے — آپ کا جسم {recovery_status} ہے۔ آج کے لیے {coach_name} کی سفارشات یہ ہیں۔',
         'streak_at_risk_title': 'آپ کی {streak_count} دن کی سٹریک آج رات ختم ہو رہی ہے!',
         'streak_at_risk_body': '{name}، آپ کے پاس ابھی بھی وقت ہے۔ ایک مختصر سیشن اس سلسلے کو برقرار رکھے گا۔ آپ یہ کر سکتے ہیں!',
         'weekly_wrapped_title': 'آپ کا ہفتہ، {name}!',
@@ -1523,7 +1490,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'vi': {
         'morning_recovery_nudge_title': 'Chào buổi sáng, {name}!',
-        'morning_recovery_nudge_body': 'Chỉ số HRV của bạn hôm nay là {hrv_score} — cơ thể bạn đang {recovery_status}. Đây là những gì {coach_name} gợi ý cho bạn hôm nay.',
         'streak_at_risk_title': 'Chuỗi {streak_count} ngày của bạn sẽ kết thúc tối nay!',
         'streak_at_risk_body': '{name}, bạn vẫn còn thời gian. Chỉ cần một buổi tập nhanh để duy trì chuỗi. Bạn làm được mà!',
         'weekly_wrapped_title': 'Tổng kết tuần của bạn, {name}!',
@@ -1569,7 +1535,6 @@ NON_EN_TEMPLATES: dict[str, dict[str, str]] = {
     },
     'zh': {
         'morning_recovery_nudge_title': '早上好，{name}！',
-        'morning_recovery_nudge_body': '你今天的 HRV 是 {hrv_score}，身体状态为 {recovery_status}。来看看 {coach_name} 为你今天的安排建议。',
         'streak_at_risk_title': '你的 {streak_count} 天连续打卡记录今晚就要中断了！',
         'streak_at_risk_body': '{name}，你还有时间。只需一次快速训练就能保持记录。你可以的！',
         'weekly_wrapped_title': '你的本周回顾，{name}！',

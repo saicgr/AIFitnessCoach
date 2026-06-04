@@ -115,6 +115,9 @@ class ActivityService {
           'sleep_end': activity.sleepEnd?.toIso8601String(),
           'sleep_latency_minutes': activity.sleepLatencyMinutes,
           'sleep_efficiency': activity.sleepEfficiency,
+          // FEATURE 1 — the in-app sleep score + wake-up count for the morning push.
+          'sleep_score': activity.sleepScore,
+          'wake_ups': activity.wakeUps,
           'water_ml': activity.waterMl,
           // Active/exercise minutes — populated by the Apple Watch companion
           // sync (watch_sync). The phone Health Connect read does NOT request
@@ -322,6 +325,9 @@ class ActivityService {
         'sleep_end': a.sleepEnd?.toIso8601String(),
         'sleep_latency_minutes': a.sleepLatencyMinutes,
         'sleep_efficiency': a.sleepEfficiency,
+        // FEATURE 1 — the in-app sleep score + wake-up count for the morning push.
+        'sleep_score': a.sleepScore,
+        'wake_ups': a.wakeUps,
         'water_ml': a.waterMl,
         'source': Platform.isAndroid ? 'health_connect' : 'apple_health',
       }).toList();
@@ -374,6 +380,8 @@ class ActivityService {
       sleepEnd: json['sleep_end'] != null ? DateTime.tryParse(json['sleep_end'] as String) : null,
       sleepLatencyMinutes: json['sleep_latency_minutes'] as int?,
       sleepEfficiency: (json['sleep_efficiency'] as num?)?.toDouble(),
+      sleepScore: json['sleep_score'] as int?,
+      wakeUps: json['wake_ups'] as int?,
       waterMl: json['water_ml'] as int?,
     );
   }

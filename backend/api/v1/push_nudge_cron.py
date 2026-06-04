@@ -2396,6 +2396,13 @@ async def _job_daily_readiness(supabase, notif_svc, users: List[dict]) -> int:
             )
             continue
 
+        # FEATURE 1 — ONE morning push only. If today's sleep-score push already
+        # fired for this user, suppress the readiness briefing so they don't get
+        # two morning pushes in the same slot. The sleep-score job runs first in
+        # the jobs list, so its dedup row is present here when it sent.
+        if _sent_within_days(supabase, str(user["id"]), "sleep_score", 1):
+            continue
+
         user_id = str(user["id"])
         user_today = _get_user_local_date(tz_str)
 
@@ -2465,6 +2472,101 @@ async def _job_daily_readiness(supabase, notif_svc, users: List[dict]) -> int:
             message=message,
             route="/health/sleep",
             facts=facts,
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+async def _job_morning_sleep_score(supabase, notif_svc, users: List[dict]) -> int:
+    """Morning SLEEP-SCORE push (FEATURE 1) — names the exact in-app 0-100 score.
+
+    Mirrors ``_job_daily_readiness`` exactly (same morning slot, same gate
+    stack) but carries the deterministic ``build_sleep_score_briefing`` message
+    instead of the readiness briefing. It runs FIRST in the jobs list so its
+    once/day dedup row lands before daily_readiness, whose early guard then
+    suppresses the readiness push for any user who got this one — ONE morning
+    push per day.
+
+    Gates (identical to daily_readiness):
+      - per-type pref ``sleep_score_nudge`` on (default True);
+      - account >= 3 days old;
+      - local hour == the user's sleep-score hour (``sleep_score_time``,
+        defaulting to ``daily_briefing_time`` then "08:00");
+      - not in quiet hours;
+      - NOT a DST-transition night (last night's sleep window crossed a clock
+        change, so the score could be spurious — skip, edge case E24);
+      - the snapshot yields a usable, banded message (``has_message``). A
+        no-wearable / no-consent / no-sleep / mid-band user is skipped SILENTLY
+        (the mid-band 60-79 defers to daily_readiness — one high-signal push).
+
+    Vacation / comeback suppression is applied inside
+    ``_send_health_coaching_nudge`` (should_suppress_notification) — NOT a
+    parallel check here.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("sleep_score_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        # Defaults to the morning briefing time so the two morning pushes share a
+        # slot (and the daily_readiness early guard makes them mutually exclusive).
+        default_time = prefs.get("daily_briefing_time", "08:00")
+        score_hour = _parse_time_hour(prefs.get("sleep_score_time", default_time))
+        if local_hour != score_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+        # DST-transition night → skip (tone-safety; same as the readiness job).
+        if _is_dst_transition_night(tz_str):
+            logger.debug(
+                f"🔕 [HealthNudge] sleep_score skipped for {user['id']} — "
+                f"DST-transition night"
+            )
+            continue
+
+        user_id = str(user["id"])
+
+        # Build the snapshot + sleep-score briefing. Any failure → skip silently.
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            from services.health_coaching import build_sleep_score_briefing
+
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+            briefing = build_sleep_score_briefing(snapshot)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] sleep_score build failed for {user_id}: {e}"
+            )
+            continue
+
+        if not briefing.get("has_message"):
+            # No wearable / no consent / no sleep / mid-band defer — skip silently.
+            continue
+
+        ai = user.get("_ai_settings") or {}
+        coach_name = ai.get("coach_name") or "Your Coach"
+
+        # Data-grounded insight title (carries no digits, so it stays grounded by
+        # construction) — never a generic "<coach>'s briefing" label.
+        from services.coach.grounding import deterministic_insight_title
+
+        title = deterministic_insight_title(snapshot, moment="morning_readiness")
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "sleep_score",
+            title=title,
+            message=briefing["message"],
+            route="/health/sleep",
+            facts=briefing.get("facts") or {},
         )
         if success:
             sent += 1
@@ -3851,6 +3953,10 @@ async def run_push_nudge_cron(
         # ── Gamification ──
         ("daily_crate", _job_daily_crate_available(supabase, notif_svc, users)),
         # ── Proactive health coaching (Phase C2) ──
+        # sleep_score runs BEFORE daily_readiness so its dedup row lands first;
+        # the daily_readiness early guard then suppresses the readiness push for
+        # any user who got the sleep-score push — ONE morning push per day (F1).
+        ("sleep_score", _job_morning_sleep_score(supabase, notif_svc, users)),
         ("daily_readiness", _job_daily_readiness(supabase, notif_svc, users)),
         ("health_anomaly", _job_health_anomaly(supabase, notif_svc, users)),
         ("activity_goal", _job_activity_goal(supabase, notif_svc, users)),
@@ -3940,6 +4046,8 @@ async def test_nudge(
         "week1_day1", "week1_day3_completed", "week1_day3_stalled", "week1_day5", "week1_day7",
         # Proactive health coaching (Phase C2)
         "daily_readiness", "health_anomaly", "activity_goal",
+        # Morning sleep-score push (FEATURE 1)
+        "sleep_score",
         # Flagship evening recap (data-grounded, LLM)
         "evening_recap",
     }
@@ -3951,7 +4059,7 @@ async def test_nudge(
     #    Each is exercised here against the real Phase-B1 snapshot — no mock
     #    data; if the test user has no wearable / no consent the builder
     #    returns has_message=False and the test reports that honestly.
-    if nudge_type in ("daily_readiness", "health_anomaly", "activity_goal", "evening_recap"):
+    if nudge_type in ("daily_readiness", "health_anomaly", "activity_goal", "evening_recap", "sleep_score"):
         supabase = get_supabase()
         notif_svc = get_notification_service()
         try:
@@ -4014,6 +4122,16 @@ async def test_nudge(
             else:
                 built = {"has_message": False, "reason": "no_grounded_recap"}
                 title, route = "", "/home"
+        elif nudge_type == "sleep_score":
+            # FEATURE 1 — deterministic morning sleep-score push. Exercises the
+            # real builder against the live snapshot; an empty state (no sleep /
+            # mid-band defer) is reported honestly below.
+            from services.health_coaching import build_sleep_score_briefing
+            from services.coach.grounding import deterministic_insight_title
+
+            built = build_sleep_score_briefing(snapshot)
+            title = deterministic_insight_title(snapshot, moment="morning_readiness")
+            route = "/health/sleep"
         elif nudge_type == "health_anomaly":
             from services.health_coaching import build_health_anomaly
 

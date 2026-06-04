@@ -88,6 +88,13 @@ class DailyActivityInput(BaseModel):
         None, ge=0, le=1,
         description="asleep_time / time_in_bed, a 0.0-1.0 fraction",
     )
+    # FEATURE 1 (migration 2239). sleep_score is the EXACT in-app 0-100 sleep
+    # score the client computes (it has the mid-sleep history the server lacks),
+    # synced so the morning sleep-score push cites the same number the Sleep
+    # screen shows. wake_ups is the night's distinct-awakening count. Both
+    # Optional so older app builds upsert cleanly.
+    sleep_score: Optional[int] = Field(None, ge=0, le=100)
+    wake_ups: Optional[int] = Field(None, ge=0, le=50)
     water_ml: Optional[int] = Field(default=0, ge=0)
     source: str = Field(default="health_connect", description="health_connect or apple_health")
 
@@ -120,6 +127,9 @@ class DailyActivityResponse(BaseModel):
     sleep_end: Optional[datetime]
     sleep_latency_minutes: Optional[int]
     sleep_efficiency: Optional[float]
+    # FEATURE 1 (migration 2239) — the synced in-app sleep score + wake-up count.
+    sleep_score: Optional[int]
+    wake_ups: Optional[int]
     water_ml: int
     source: str
     synced_at: datetime
@@ -228,6 +238,8 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
         sleep_end=row.get("sleep_end"),
         sleep_latency_minutes=row.get("sleep_latency_minutes"),
         sleep_efficiency=row.get("sleep_efficiency"),
+        sleep_score=row.get("sleep_score"),
+        wake_ups=row.get("wake_ups"),
         water_ml=row.get("water_ml") or 0,
         source=row.get("source") or "health_connect",
         synced_at=row.get("synced_at"),
@@ -271,6 +283,8 @@ async def sync_daily_activity(input: DailyActivityInput, background_tasks: Backg
         "sleep_end": input.sleep_end.isoformat() if input.sleep_end else None,
         "sleep_latency_minutes": input.sleep_latency_minutes,
         "sleep_efficiency": input.sleep_efficiency,
+        "sleep_score": input.sleep_score,
+        "wake_ups": input.wake_ups,
         "water_ml": input.water_ml or 0,
         "source": input.source,
     }

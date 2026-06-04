@@ -56,6 +56,12 @@ class NotificationPreferences {
   // notification_preferences JSON; each type drives one cron nudge job.
   final bool dailyBriefingNudge;   // morning readiness briefing (anchor push)
   final String dailyBriefingTime;  // local delivery time, e.g. "08:00"
+  // Morning SLEEP-SCORE push (FEATURE 1). Shares the morning slot with the
+  // readiness briefing (the backend fires only ONE morning push). Time defaults
+  // to "08:00" but the backend falls back to daily_briefing_time when this is
+  // absent, so the two stay aligned unless the user picks a different time.
+  final bool sleepScoreNudge;      // morning sleep-score recap
+  final String sleepScoreTime;     // local delivery time, e.g. "08:00"
   final bool healthAnomalyNudge;   // resting-HR anomaly alert (event-driven)
   final bool activityGoalNudge;    // afternoon step-goal nudge
   final String activityNudgeTime;  // local delivery time for the step nudge
@@ -194,6 +200,9 @@ class NotificationPreferences {
     // Proactive health coaching (Phase C2)
     this.dailyBriefingNudge = true,
     this.dailyBriefingTime = '08:00',
+    // Morning sleep-score push (FEATURE 1) — default ON, user-local morning.
+    this.sleepScoreNudge = true,
+    this.sleepScoreTime = '08:00',
     this.healthAnomalyNudge = true,
     this.activityGoalNudge = true,
     this.activityNudgeTime = '15:00',
@@ -301,6 +310,9 @@ class NotificationPreferences {
     // Proactive health coaching (Phase C2)
     bool? dailyBriefingNudge,
     String? dailyBriefingTime,
+    // Morning sleep-score push (FEATURE 1)
+    bool? sleepScoreNudge,
+    String? sleepScoreTime,
     bool? healthAnomalyNudge,
     bool? activityGoalNudge,
     String? activityNudgeTime,
@@ -403,6 +415,9 @@ class NotificationPreferences {
       // Proactive health coaching (Phase C2)
       dailyBriefingNudge: dailyBriefingNudge ?? this.dailyBriefingNudge,
       dailyBriefingTime: dailyBriefingTime ?? this.dailyBriefingTime,
+      // Morning sleep-score push (FEATURE 1)
+      sleepScoreNudge: sleepScoreNudge ?? this.sleepScoreNudge,
+      sleepScoreTime: sleepScoreTime ?? this.sleepScoreTime,
       healthAnomalyNudge: healthAnomalyNudge ?? this.healthAnomalyNudge,
       activityGoalNudge: activityGoalNudge ?? this.activityGoalNudge,
       activityNudgeTime: activityNudgeTime ?? this.activityNudgeTime,
@@ -513,6 +528,10 @@ class NotificationPreferences {
         // push_nudge_cron daily_readiness / health_anomaly / activity_goal jobs.
         'daily_briefing_nudge': dailyBriefingNudge,
         'daily_briefing_time': dailyBriefingTime,
+        // Morning sleep-score push (FEATURE 1) — keys consumed by the
+        // push_nudge_cron sleep_score job.
+        'sleep_score_nudge': sleepScoreNudge,
+        'sleep_score_time': sleepScoreTime,
         'health_anomaly_nudge': healthAnomalyNudge,
         'activity_goal_nudge': activityGoalNudge,
         'activity_nudge_time': activityNudgeTime,

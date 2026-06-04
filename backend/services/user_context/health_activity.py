@@ -326,6 +326,14 @@ class HealthActivityMixin:
                 "bedtime": sleep_row.get("sleep_start"),
                 "wake_time": sleep_row.get("sleep_end"),
                 "is_stale": sleep_is_stale,
+                # FEATURE 1 — the client-synced in-app sleep score (0-100) and the
+                # night's distinct wake-up count (migration 2239). The row is read
+                # via SELECT * so these columns arrive when present; both are None
+                # for older rows synced before the columns existed. The morning
+                # sleep-score push (build_sleep_score_briefing) reads sleep_score
+                # first and falls back to the Python port only when it is None.
+                "sleep_score": _opt_int(sleep_row.get("sleep_score")),
+                "wake_ups": _opt_int(sleep_row.get("wake_ups")),
             }
 
         # --- recovery score + tier (deterministic) ---------------------------
