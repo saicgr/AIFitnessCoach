@@ -36,12 +36,36 @@ enum _Period {
 const _kSharePeriodKey = 'share_period';
 
 class SharePlanPeriodSheet extends ConsumerStatefulWidget {
-  const SharePlanPeriodSheet({super.key});
+  /// When true the sheet offers "This week" / "This month" tiles that render
+  /// a share IMAGE (via [onPickImage]) instead of minting a zealova.com link.
+  /// Defaults to false so the link-share path stays byte-for-byte identical
+  /// for every existing caller / the `/share-plan` route shell.
+  final bool imageMode;
 
-  static Future<void> show(BuildContext context) {
+  /// Called in image mode when the user picks a period. `isMonth` is false for
+  /// "This week", true for "This month". The sheet pops itself first, then
+  /// invokes this with the original (pre-pop) context's navigator ancestor.
+  final void Function(BuildContext context, bool isMonth)? onPickImage;
+
+  const SharePlanPeriodSheet({
+    super.key,
+    this.imageMode = false,
+    this.onPickImage,
+  });
+
+  static Future<void> show(
+    BuildContext context, {
+    bool imageMode = false,
+    void Function(BuildContext context, bool isMonth)? onPickImage,
+  }) {
     return showGlassSheet<void>(
       context: context,
-      builder: (_) => const GlassSheet(child: SharePlanPeriodSheet()),
+      builder: (_) => GlassSheet(
+        child: SharePlanPeriodSheet(
+          imageMode: imageMode,
+          onPickImage: onPickImage,
+        ),
+      ),
     );
   }
 
@@ -102,6 +126,25 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
     }
   }
 
+  /// Image mode: pop the sheet, then hand the chosen period back to the
+  /// caller so it can build the Shareable and open the gallery. We capture the
+  /// parent navigator's context before popping so [onPickImage] still has a
+  /// live ancestor to push the gallery sheet onto.
+  void _onPickImage(bool isMonth) {
+    if (_busy) return;
+    final cb = widget.onPickImage;
+    if (cb == null) return;
+    final navigator = Navigator.of(context);
+    final outerContext = navigator.context;
+    // Persist last-used so the next open badges this tile.
+    // ignore: unawaited_futures
+    ref
+        .read(lastUsedServiceProvider)
+        .set(_kSharePeriodKey, isMonth ? 'thisMonth' : 'thisWeek');
+    navigator.pop();
+    cb(outerContext, isMonth);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -112,11 +155,31 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
             Text(
-              'What would you like to share?',
+              widget.imageMode
+                  ? 'Share which period?'
+                  : 'What would you like to share?',
               style: theme.textTheme.titleMedium
                   ?.copyWith(fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 12),
+            if (widget.imageMode) ...[
+              _PeriodTile(
+                label: 'This week',
+                icon: Icons.calendar_view_week_rounded,
+                color: AppColors.info,
+                isLastUsed: _lastUsedKey == 'thisWeek',
+                enabled: !_busy,
+                onTap: () => _onPickImage(false),
+              ),
+              _PeriodTile(
+                label: 'This month',
+                icon: Icons.calendar_month_rounded,
+                color: AppColors.purple,
+                isLastUsed: _lastUsedKey == 'thisMonth',
+                enabled: !_busy,
+                onTap: () => _onPickImage(true),
+              ),
+            ] else
             ...[
               for (final p in _Period.values)
                 _PeriodTile(

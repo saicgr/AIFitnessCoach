@@ -1979,6 +1979,12 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       ...?widget.data.foodImageUrls,
       if (widget.data.customPhotoPath != null) widget.data.customPhotoPath!,
       if (widget.data.heroImageUrl != null) widget.data.heroImageUrl!,
+      // Plan-grid (Week / Month) thumbnails — decode every day's exercise
+      // illustration before the first capture so the day cells aren't blank
+      // in the saved PNG (`toImage` paints only decoded pixels).
+      for (final day in (widget.data.planDays ?? const <SharablePlanDay>[]))
+        for (final ex in day.exercises)
+          if (ex.imageUrl != null) ex.imageUrl!,
     }.where((u) => u.startsWith('http')).toList();
     if (urls.isEmpty) return;
     _warmImagesFuture = Future.wait(

@@ -656,6 +656,12 @@ class ShareableTemplateSpec {
   final bool requiresExercises;
   final bool requiresStreak;
   final bool requiresWeeklyVector;
+
+  /// True when this template renders [Shareable.planDays] (the week / month
+  /// grids). The catalog declines to offer it when `planDays` is null or
+  /// every day in it is a rest day — so an empty plan never shows a blank grid.
+  final bool requiresPlanDays;
+
   final bool cosmeticGated;
 
   /// Minimum number of `foodImageUrls` the payload must carry for this
@@ -687,6 +693,7 @@ class ShareableTemplateSpec {
     this.requiresExercises = false,
     this.requiresStreak = false,
     this.requiresWeeklyVector = false,
+    this.requiresPlanDays = false,
     this.cosmeticGated = false,
     this.requiresPhotoCount = 0,
   });
@@ -728,6 +735,12 @@ class ShareableTemplateSpec {
     if (requiresWeeklyVector) {
       final hasWeekly = data.subMetrics.length >= 7;
       if (!hasWeekly) return false;
+    }
+    if (requiresPlanDays) {
+      final days = data.planDays;
+      if (days == null || days.isEmpty) return false;
+      // Decline an all-rest plan — there's no workout to put in the grid.
+      if (days.every((d) => d.isRestDay)) return false;
     }
     if (requiresPhotoCount > 0) {
       final photos = data.foodImageUrls?.length ?? 0;
@@ -975,6 +988,8 @@ class ShareableCatalog {
         name: 'Week Grid',
         category: ShareableCategory.rich,
         kinds: const {ShareableKind.weeklyPlan, ShareableKind.weeklySummary},
+        minHighlights: 2,
+        requiresPlanDays: true,
         builder: (d, w) =>
             WeeklyPlanGridTemplate(data: d, showWatermark: w),
         docBuilder: weeklyPlanGridDoc,
@@ -987,6 +1002,8 @@ class ShareableCatalog {
           ShareableKind.monthlyPlan,
           ShareableKind.wrapped,
         },
+        minHighlights: 2,
+        requiresPlanDays: true,
         builder: (d, w) =>
             MonthlyPlanGridTemplate(data: d, showWatermark: w),
         docBuilder: monthlyPlanGridDoc,

@@ -64,10 +64,23 @@ class WeeklyPlanGridTemplate extends StatelessWidget {
               Text(
                 data.title,
                 style: TextStyle(
-                  fontSize: 22 * mul,
-                  fontWeight: FontWeight.w900,
-                  height: 1.05,
+                  fontFamily: 'Anton',
+                  fontSize: 26 * mul,
+                  fontWeight: FontWeight.w400,
+                  height: 1.0,
+                  letterSpacing: 0.2,
                   color: const Color(0xFF111111),
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Accent header rule: picks up the user's in-app accent so the
+              // card reads as colored, not hardcoded green.
+              Container(
+                height: 3,
+                width: 64,
+                decoration: BoxDecoration(
+                  color: data.accentColor,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 12),
@@ -79,7 +92,11 @@ class WeeklyPlanGridTemplate extends StatelessWidget {
                           style: TextStyle(color: Color(0xFF888888)),
                         ),
                       )
-                    : _DayGrid(days: days, mul: mul),
+                    : _DayGrid(
+                        days: days,
+                        mul: mul,
+                        accentColor: data.accentColor,
+                      ),
               ),
               if (url != null && url.isNotEmpty)
                 Padding(
@@ -104,8 +121,13 @@ class WeeklyPlanGridTemplate extends StatelessWidget {
 class _DayGrid extends StatelessWidget {
   final List<SharablePlanDay> days;
   final double mul;
+  final Color accentColor;
 
-  const _DayGrid({required this.days, required this.mul});
+  const _DayGrid({
+    required this.days,
+    required this.mul,
+    required this.accentColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -119,10 +141,11 @@ class _DayGrid extends StatelessWidget {
             crossAxisCount: cols,
             mainAxisSpacing: 8,
             crossAxisSpacing: 8,
-            childAspectRatio: 0.78,
+            childAspectRatio: 0.74,
           ),
           itemCount: days.length,
-          itemBuilder: (_, i) => _DayCell(day: days[i], mul: mul),
+          itemBuilder: (_, i) =>
+              _DayCell(day: days[i], mul: mul, accentColor: accentColor),
         );
       },
     );
@@ -132,8 +155,13 @@ class _DayGrid extends StatelessWidget {
 class _DayCell extends StatelessWidget {
   final SharablePlanDay day;
   final double mul;
+  final Color accentColor;
 
-  const _DayCell({required this.day, required this.mul});
+  const _DayCell({
+    required this.day,
+    required this.mul,
+    required this.accentColor,
+  });
 
   static const _weekdayShort = [
     'MON',
@@ -149,13 +177,28 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final wd = _weekdayShort[day.date.weekday - 1];
     final monthDay = '${day.date.month}/${day.date.day}';
+    final completed = day.isCompleted;
+    // Completed days get an accent-tinted fill + border so they pop, rather
+    // than a hardcoded green.
+    final fill = day.isRestDay
+        ? const Color(0xFFF0F0F0)
+        : completed
+            ? Color.alphaBlend(
+                accentColor.withValues(alpha: 0.08), Colors.white)
+            : Colors.white;
+    final borderColor = completed && !day.isRestDay
+        ? accentColor.withValues(alpha: 0.45)
+        : const Color(0xFFE0E0E0);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
-        color: day.isRestDay ? const Color(0xFFF0F0F0) : Colors.white,
+        color: fill,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE0E0E0), width: 0.5),
+        border: Border.all(
+          color: borderColor,
+          width: completed && !day.isRestDay ? 1.0 : 0.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -165,17 +208,21 @@ class _DayCell extends StatelessWidget {
             children: [
               Text(
                 wd,
-                style: const TextStyle(
-                  fontSize: 9,
+                style: TextStyle(
+                  fontFamily: 'Barlow Condensed',
+                  fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF888888),
+                  color: completed && !day.isRestDay
+                      ? accentColor
+                      : const Color(0xFF888888),
                   letterSpacing: 1.4,
                 ),
               ),
               Text(
                 monthDay,
                 style: const TextStyle(
-                  fontSize: 9,
+                  fontFamily: 'Barlow Condensed',
+                  fontSize: 10,
                   color: Color(0xFFAAAAAA),
                   fontWeight: FontWeight.w600,
                 ),
@@ -189,8 +236,10 @@ class _DayCell extends StatelessWidget {
                 child: Text(
                   'Rest',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontFamily: 'Barlow Condensed',
+                    fontSize: 12,
                     color: Color(0xFFAAAAAA),
+                    fontWeight: FontWeight.w600,
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -202,8 +251,10 @@ class _DayCell extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12 * mul,
                 fontWeight: FontWeight.w900,
-                color: day.isCompleted
-                    ? const Color(0xFF065F46)
+                color: completed
+                    ? Color.alphaBlend(
+                        accentColor.withValues(alpha: 0.85),
+                        const Color(0xFF111111))
                     : const Color(0xFF111111),
               ),
               maxLines: 2,
@@ -217,32 +268,58 @@ class _DayCell extends StatelessWidget {
                     (day.exercises.length > 6 ? 1 : 0),
                 itemBuilder: (_, i) {
                   if (i >= day.exercises.length) {
-                    return Text(
-                      '+${day.exercises.length - 6} more',
-                      style: const TextStyle(
-                        fontSize: 9,
-                        color: Color(0xFF999999),
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 1),
+                      child: Text(
+                        '+${day.exercises.length - 6} more',
+                        style: const TextStyle(
+                          fontFamily: 'Barlow Condensed',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF999999),
+                        ),
                       ),
                     );
                   }
                   final ex = day.exercises[i];
+                  final subtitle = _setsRepsLine(ex);
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 3),
+                    padding: const EdgeInsets.only(bottom: 4),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _MicroThumb(url: ex.imageUrl),
                         const SizedBox(width: 5),
                         Expanded(
-                          child: Text(
-                            ex.name,
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: Color(0xFF333333),
-                              fontWeight: FontWeight.w600,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                ex.name,
+                                style: const TextStyle(
+                                  fontSize: 9.5,
+                                  color: Color(0xFF222222),
+                                  fontWeight: FontWeight.w700,
+                                  height: 1.1,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (subtitle != null)
+                                Text(
+                                  subtitle,
+                                  style: const TextStyle(
+                                    fontFamily: 'Barlow Condensed',
+                                    fontSize: 9,
+                                    color: Color(0xFF8A8A8A),
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.2,
+                                    height: 1.1,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
                           ),
                         ),
                       ],
@@ -255,6 +332,26 @@ class _DayCell extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// "{n} sets · {reps} reps" subtitle under each exercise name, BW-aware.
+  /// Returns null when the exercise carries no set data so the row collapses
+  /// to just the name rather than showing a hollow "0 sets" line.
+  static String? _setsRepsLine(ShareableExercise ex) {
+    final sets = ex.sets;
+    if (sets.isEmpty) return null;
+    final setCount = sets.length;
+    // Representative rep count: prefer the modal target/logged reps so the
+    // line reads "3 sets · 10 reps" rather than a per-set range.
+    final reps = sets.first.targetReps ?? sets.first.reps;
+    final setLabel = setCount == 1 ? '1 set' : '$setCount sets';
+    if (ex.sets.every((s) => s.isBodyweight)) {
+      // Bodyweight movement: show "BW" instead of a weight.
+      return reps > 0 ? '$setLabel · $reps reps · BW' : '$setLabel · BW';
+    }
+    if (reps <= 0) return setLabel;
+    final repLabel = reps == 1 ? '1 rep' : '$reps reps';
+    return '$setLabel · $repLabel';
   }
 }
 

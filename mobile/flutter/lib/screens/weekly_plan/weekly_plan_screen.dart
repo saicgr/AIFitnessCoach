@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/providers/week_start_provider.dart';
 import '../../data/models/weekly_plan.dart';
+import '../../data/models/workout.dart';
 import '../../data/providers/weekly_plan_provider.dart';
+import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
+import '../../data/services/image_url_cache.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
+import '../../shareables/adapters/weekly_plan_adapter.dart';
+import '../../shareables/shareable_catalog.dart';
+import '../../shareables/shareable_sheet.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'widgets/day_card.dart';
 import 'widgets/plan_header.dart';
 import 'widgets/generate_plan_sheet.dart';
@@ -52,6 +62,132 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
     );
   }
 
+  /// Top-level share chooser: "Share as image" opens the period picker in
+  /// image mode (Week Grid / Month Grid gallery); "Share link" keeps the
+  /// existing zealova.com/p/{token} link flow unchanged.
+  void _showShareChooser() {
+    showGlassSheet(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Share your plan',
+                style: Theme.of(sheetContext)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 12),
+              _ShareOptionTile(
+                label: 'Share as image',
+                subtitle: 'A polished card for stories and feeds',
+                icon: Icons.image_rounded,
+                color: AppColors.purple,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  SharePlanPeriodSheet.show(
+                    context,
+                    imageMode: true,
+                    onPickImage: _shareImage,
+                  );
+                },
+              ),
+              const SizedBox(height: 8),
+              _ShareOptionTile(
+                label: 'Share link',
+                subtitle: 'A web link anyone can open',
+                icon: Icons.link_rounded,
+                color: AppColors.info,
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  SharePlanPeriodSheet.show(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build the Week / Month plan-grid Shareable and open the gallery. Reads
+  /// the user's loaded workouts, computes the window (week anchored at the
+  /// user's week-start preference; month = 1st..last), warms exercise
+  /// thumbnails, then opens [ShareableSheet] on the right grid template.
+  Future<void> _shareImage(BuildContext shareContext, bool isMonth) async {
+    final workouts = ref.read(workoutsProvider).valueOrNull ?? <Workout>[];
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final DateTime windowStart;
+    final DateTime windowEnd;
+    if (isMonth) {
+      windowStart = DateTime(today.year, today.month, 1);
+      // Day 0 of next month == last day of this month.
+      windowEnd = DateTime(today.year, today.month + 1, 0);
+    } else {
+      final config = ref.read(weekDisplayConfigProvider);
+      windowStart = config.weekStart(today);
+      windowEnd = windowStart.add(const Duration(days: 6));
+    }
+
+    final shareable = WeeklyPlanAdapter.fromWorkouts(
+      ref: ref,
+      workouts: workouts,
+      windowStart: windowStart,
+      windowEnd: windowEnd,
+      isMonth: isMonth,
+    );
+
+    if (shareable == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Not enough data yet')),
+      );
+      return;
+    }
+
+    // Warm exercise thumbnails so the day cells aren't blank in the captured
+    // PNG. Batch-fetch any uncached names, then precache the resolved URLs.
+    final names = <String>{
+      for (final day in (shareable.planDays ?? const []))
+        for (final ex in day.exercises) ex.name,
+    }.toList();
+    if (names.isNotEmpty) {
+      final api = ref.read(apiClientProvider);
+      await ImageUrlCache.batchPreFetch(names, api);
+    }
+    if (!mounted) return;
+    final thumbUrls = <String>{
+      for (final day in (shareable.planDays ?? const []))
+        for (final ex in day.exercises)
+          if (ex.imageUrl != null && ex.imageUrl!.startsWith('http'))
+            ex.imageUrl!,
+    };
+    for (final url in thumbUrls) {
+      // ignore: unawaited_futures
+      precacheImage(NetworkImage(url), context).catchError((_) {});
+    }
+
+    if (!mounted) return;
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      initialTemplate: isMonth
+          ? ShareableTemplate.monthlyPlanGrid
+          : ShareableTemplate.weeklyPlanGrid,
+    );
+    if (mounted) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final planState = ref.watch(weeklyPlanProvider);
@@ -64,7 +200,7 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
-            onTap: () => SharePlanPeriodSheet.show(context),
+            onTap: _showShareChooser,
           ),
           if (planState.currentPlan != null)
             PillAppBarAction(icon: Icons.refresh, onTap: _showGeneratePlanSheet),
@@ -234,6 +370,77 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
         // Bottom padding
         const SliverPadding(padding: EdgeInsets.only(bottom: 80)),
       ],
+    );
+  }
+}
+
+/// One row in the top-level "Share your plan" chooser (image vs link).
+class _ShareOptionTile extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ShareOptionTile({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right,
+                size: 18, color: color.withValues(alpha: 0.7)),
+          ],
+        ),
+      ),
     );
   }
 }
