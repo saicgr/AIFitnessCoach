@@ -6,6 +6,8 @@ for both overall workout and individual exercises.
 
 Also includes AI Coach feedback using RAG for personalized workout analysis.
 """
+import json
+
 from core.db import get_supabase_db
 
 from .feedback_models import *  # noqa: F401, F403
@@ -27,7 +29,8 @@ from models.schemas import (
 from services.gemini_service import GeminiService
 from services.workout_feedback_rag_service import (
     WorkoutFeedbackRAGService,
-    generate_workout_feedback
+    generate_workout_feedback,
+    generate_workout_recap,
 )
 from services.feedback_analysis_service import (
     update_exercise_mastery,
@@ -883,6 +886,229 @@ async def get_ai_coach_workout_history(
     except Exception as e:
         logger.error(f"Failed to get AI Coach workout history: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
+
+
+# ============================================
+# B8 — Persisted post-workout AI recap
+# (deeper than the /ai-coach one-liner: structured, persisted, idempotent)
+# ============================================
+
+class WorkoutRecapExercise(BaseModel):
+    """One completed exercise for recap generation."""
+    name: str
+    sets: int = 0
+    reps: int = 0
+    weight_kg: float = 0.0
+    time_seconds: int = 0
+
+
+class GenerateRecapRequest(BaseModel):
+    """Request body for POST /feedback/recap (generate, idempotent per workout)."""
+    user_id: str
+    workout_id: str
+    workout_log_id: Optional[str] = None
+    workout_name: str = "Workout"
+    workout_type: str = "strength"
+    exercises: List[WorkoutRecapExercise] = []
+    planned_exercises: List[WorkoutRecapExercise] = []
+    total_time_seconds: int = 0
+    total_rest_seconds: int = 0
+    avg_rest_seconds: float = 0.0
+    calories_burned: int = 0
+    total_sets: int = 0
+    total_reps: int = 0
+    total_volume_kg: float = 0.0
+    # PRs hit this session: [{exercise_name, detail}]
+    earned_prs: Optional[List[dict]] = None
+    # Multi-modal-ready: free-text set/workout notes the user logged this session.
+    logged_notes: Optional[List[str]] = None
+    total_workouts_completed: Optional[int] = None
+    # When true, regenerate even if a recap already exists (re-bills Gemini).
+    force: bool = False
+
+
+def _serialize_recap_row(row: dict) -> dict:
+    """Shape a workout_ai_recaps DB row into the client recap response."""
+    payload = row.get("payload") or {}
+    if isinstance(payload, str):
+        try:
+            payload = json.loads(payload)
+        except (json.JSONDecodeError, TypeError):
+            payload = {}
+    return {
+        "exists": True,
+        "workout_id": row.get("workout_id"),
+        "workout_log_id": row.get("workout_log_id"),
+        "generated_at": row.get("generated_at"),
+        "model_version": row.get("model_version"),
+        "recap": payload,
+    }
+
+
+@router.get("/recap/{workout_id}")
+async def get_workout_recap(
+    workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Fetch the persisted AI recap for a workout (instant, no LLM).
+
+    Returns {"exists": false} when no recap has been generated yet — the client
+    shows its optimistic skeleton then calls POST /recap to generate.
+    """
+    try:
+        db = get_supabase_db()
+        supabase = db.client
+        user_id = current_user["id"]
+
+        result = (
+            supabase.table("workout_ai_recaps")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("workout_id", workout_id)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        if not rows:
+            return {"exists": False, "workout_id": workout_id}
+        return _serialize_recap_row(rows[0])
+    except Exception as e:
+        logger.error(f"[recap] fetch failed for {workout_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_recap")
+
+
+@router.post("/recap")
+@limiter.limit("10/minute")
+async def generate_recap_endpoint(
+    request: Request,
+    body: GenerateRecapRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate + persist a post-workout AI recap. Idempotent per workout.
+
+    If a recap already exists for (user_id, workout_id) and `force` is false, the
+    stored recap is returned without re-calling Gemini. Otherwise it generates a
+    structured recap (volume vs last comparable session, PRs, what stood out, one
+    coaching cue), upserts it (migration 2232), and returns it.
+    """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        db = get_supabase_db()
+        supabase = db.client
+        user_id = current_user["id"]
+
+        # Idempotency: return the existing recap unless forced.
+        if not body.force:
+            existing = (
+                supabase.table("workout_ai_recaps")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("workout_id", body.workout_id)
+                .limit(1)
+                .execute()
+            )
+            if existing.data:
+                logger.info(f"[recap] returning cached recap for workout {body.workout_id}")
+                return _serialize_recap_row(existing.data[0])
+
+        gemini_service = get_gemini_service()
+        rag_service = get_feedback_rag_service()
+
+        exercises_data = [
+            {
+                "name": ex.name,
+                "sets": ex.sets,
+                "reps": ex.reps,
+                "weight_kg": ex.weight_kg,
+                "time_seconds": ex.time_seconds,
+            }
+            for ex in body.exercises
+        ]
+        planned_data = [
+            {
+                "name": ex.name,
+                "target_sets": ex.sets,
+                "target_reps": ex.reps,
+                "target_weight_kg": ex.weight_kg,
+            }
+            for ex in body.planned_exercises
+        ]
+        current_session = {
+            "workout_log_id": body.workout_log_id,
+            "workout_id": body.workout_id,
+            "workout_name": body.workout_name,
+            "workout_type": body.workout_type,
+            "exercises": exercises_data,
+            "planned_exercises": planned_data,
+            "total_time_seconds": body.total_time_seconds,
+            "total_rest_seconds": body.total_rest_seconds,
+            "avg_rest_seconds": body.avg_rest_seconds,
+            "calories_burned": body.calories_burned,
+            "total_sets": body.total_sets,
+            "total_reps": body.total_reps,
+            "total_volume_kg": body.total_volume_kg,
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        recap = await generate_workout_recap(
+            gemini_service=gemini_service,
+            rag_service=rag_service,
+            user_id=body.user_id,
+            current_session=current_session,
+            earned_prs=body.earned_prs,
+            logged_notes=body.logged_notes,
+            total_workouts_completed=body.total_workouts_completed,
+        )
+
+        # Split derived denormalized fields (prefixed with _) from the stored payload.
+        delta_pct = recap.pop("_volume_delta_pct", None)
+        pr_count = recap.pop("_pr_count", 0)
+        referenced_notes = recap.pop("_referenced_notes", False)
+        total_volume_kg = recap.pop("_total_volume_kg", body.total_volume_kg)
+
+        model_version = getattr(gemini_service, "model", None)
+        now = datetime.now(timezone.utc).isoformat()
+        upsert_row = {
+            "user_id": user_id,
+            "workout_id": body.workout_id,
+            "workout_log_id": body.workout_log_id,
+            "payload": recap,
+            "headline": recap.get("headline"),
+            "coaching_cue": recap.get("coaching_cue"),
+            "total_volume_kg": total_volume_kg,
+            "volume_delta_pct": delta_pct,
+            "pr_count": pr_count,
+            "referenced_notes": referenced_notes,
+            "model_version": model_version,
+            "generated_at": now,
+            "updated_at": now,
+        }
+
+        try:
+            supabase.table("workout_ai_recaps").upsert(
+                upsert_row, on_conflict="user_id,workout_id"
+            ).execute()
+        except Exception as persist_err:
+            # Never fail the request on a persistence error — the user still gets
+            # their recap; we just log the write failure (table may be pre-migration).
+            logger.warning(f"[recap] persist failed (returning recap anyway): {persist_err}")
+
+        return {
+            "exists": True,
+            "workout_id": body.workout_id,
+            "workout_log_id": body.workout_log_id,
+            "generated_at": now,
+            "model_version": model_version,
+            "recap": recap,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[recap] generation failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_recap")
 
 
 # Include secondary endpoints

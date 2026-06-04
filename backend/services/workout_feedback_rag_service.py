@@ -16,6 +16,8 @@ from datetime import datetime
 import uuid
 import json
 
+from pydantic import BaseModel, Field
+
 from core.config import get_settings
 from core.chroma_cloud import get_chroma_cloud_client
 from core.logger import get_logger
@@ -936,3 +938,374 @@ def get_workout_feedback_rag_service() -> WorkoutFeedbackRAGService:
         gemini = get_gemini_service()
         _workout_feedback_rag_instance = WorkoutFeedbackRAGService(gemini)
     return _workout_feedback_rag_instance
+
+
+# =============================================================================
+# B8 — PERSISTED POST-WORKOUT AI RECAP (deeper than a one-line feedback string)
+#
+# Distinct from `generate_workout_feedback` (an ephemeral coach one-liner held in
+# RAG only). The recap is STRUCTURED + PERSISTED (migration 2232): total volume
+# vs the last COMPARABLE session, PRs hit, "what stood out", and ONE concrete
+# coaching cue for next time. Multi-modal-ready: it can reference logged notes.
+# =============================================================================
+
+
+class WorkoutRecapVolumeComparison(BaseModel):
+    """How this session's volume stacks against the last comparable session."""
+    current_volume_kg: float = Field(
+        ..., description="Total volume (kg) lifted this session."
+    )
+    previous_volume_kg: Optional[float] = Field(
+        default=None,
+        description="Total volume (kg) of the last comparable session, or null if none.",
+    )
+    delta_pct: Optional[float] = Field(
+        default=None,
+        description="Percent change vs the comparable session (positive = up). Null if no comparable session.",
+    )
+    comparable_workout_name: Optional[str] = Field(
+        default=None,
+        description="Name of the comparable session being compared against, if any.",
+    )
+    summary: str = Field(
+        ...,
+        description="One human sentence on the volume trend, e.g. 'Up 12% over your last Push day.'",
+    )
+
+
+class WorkoutRecapPR(BaseModel):
+    """A personal record hit this session."""
+    exercise_name: str = Field(..., description="Exercise the PR was set on.")
+    detail: str = Field(
+        ..., description="Short description, e.g. 'New 5-rep max at 80kg.'"
+    )
+
+
+class WorkoutAiRecapPayload(BaseModel):
+    """Structured, persisted post-workout recap (B8).
+
+    Used both as the Gemini `response_schema` (guaranteed-valid JSON) and as the
+    shape stored in `workout_ai_recaps.payload` and returned to the client.
+    """
+    headline: str = Field(
+        ..., description="Punchy one-line summary of the session (no emojis)."
+    )
+    what_stood_out: List[str] = Field(
+        default_factory=list,
+        description="1-3 specific highlights: a weak point that progressed, "
+        "consistency, a strong lift, completion. Each is one short sentence.",
+    )
+    volume_comparison: WorkoutRecapVolumeComparison = Field(
+        ..., description="Volume vs the last comparable session."
+    )
+    prs: List[WorkoutRecapPR] = Field(
+        default_factory=list, description="PRs hit this session (may be empty)."
+    )
+    coaching_cue: str = Field(
+        ...,
+        description="EXACTLY ONE concrete, actionable cue for next time "
+        "(e.g. 'Add 2.5kg to your bench next session — your last set had 2 reps in reserve.').",
+    )
+    notes_reference: Optional[str] = Field(
+        default=None,
+        description="If the user logged notes this session, one sentence acknowledging "
+        "or acting on them; otherwise null.",
+    )
+
+
+def _find_last_comparable_session(
+    current_session: Dict[str, Any],
+    past_sessions: List[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    """Pick the most recent PAST session comparable to the current one.
+
+    Comparability, best-effort and deterministic (NOT an LLM call):
+      1. Same workout_id (the same plan repeated) — strongest signal.
+      2. Else same workout_type (e.g. another 'strength'/'push' day).
+      3. Else the most recent session of any kind.
+
+    Excludes the current session itself (by workout_log_id) so re-completing a
+    workout never compares against its own row.
+    """
+    current_log_id = str(current_session.get("workout_log_id") or "")
+    current_workout_id = str(current_session.get("workout_id") or "")
+    current_type = (current_session.get("workout_type") or "").lower()
+
+    def _meta(s: Dict[str, Any]) -> Dict[str, Any]:
+        return s.get("metadata", {}) or {}
+
+    # Drop the current session + sort most-recent-first.
+    candidates = [
+        s for s in past_sessions
+        if str(_meta(s).get("workout_log_id") or "") != current_log_id
+    ]
+    candidates.sort(
+        key=lambda s: _meta(s).get("completed_at") or "", reverse=True
+    )
+
+    # Tier 1: same workout_id.
+    if current_workout_id:
+        for s in candidates:
+            if str(_meta(s).get("workout_id") or "") == current_workout_id:
+                return s
+    # Tier 2: same workout_type.
+    if current_type:
+        for s in candidates:
+            if (_meta(s).get("workout_type") or "").lower() == current_type:
+                return s
+    # Tier 3: most recent anything.
+    return candidates[0] if candidates else None
+
+
+async def generate_workout_recap(
+    gemini_service: GeminiService,
+    rag_service: WorkoutFeedbackRAGService,
+    user_id: str,
+    current_session: Dict[str, Any],
+    earned_prs: Optional[List[Dict[str, Any]]] = None,
+    logged_notes: Optional[List[str]] = None,
+    total_workouts_completed: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Generate a STRUCTURED post-workout recap (B8).
+
+    Args:
+        gemini_service: Gemini service for the LLM call.
+        rag_service: Workout feedback RAG service (history + weight progressions).
+        user_id: User ID.
+        current_session: Completed session dict (same shape `generate_workout_feedback`
+            consumes — workout_name, workout_type, exercises, totals, etc.).
+        earned_prs: PRs hit this session (exercise_name + optional detail).
+        logged_notes: Free-text set/workout notes the user logged this session
+            (multi-modal-ready signal). Empty/None => recap won't reference notes.
+        total_workouts_completed: Lifetime workout count, for consistency framing.
+
+    Returns:
+        Dict matching WorkoutAiRecapPayload, PLUS denormalized derived fields the
+        endpoint persists: `_volume_delta_pct`, `_pr_count`, `_referenced_notes`,
+        `_total_volume_kg`. Never raises for an empty model response — falls back
+        to a deterministic recap so the card is never blank.
+    """
+    from google.genai import types
+    from services.gemini.constants import gemini_generate_with_retry
+
+    # --- Gather comparison context (deterministic, no LLM) ----------------
+    past_sessions = await rag_service.get_user_workout_history(user_id, n_results=10)
+    comparable = _find_last_comparable_session(current_session, past_sessions)
+
+    current_volume = float(current_session.get("total_volume_kg", 0) or 0)
+    previous_volume: Optional[float] = None
+    comparable_name: Optional[str] = None
+    delta_pct: Optional[float] = None
+    if comparable:
+        cmeta = comparable.get("metadata", {}) or {}
+        comparable_name = cmeta.get("workout_name")
+        try:
+            previous_volume = float(cmeta.get("total_volume_kg", 0) or 0)
+        except (TypeError, ValueError):
+            previous_volume = None
+        if previous_volume and previous_volume > 0:
+            delta_pct = round((current_volume - previous_volume) / previous_volume * 100, 1)
+
+    # Per-exercise weight progression (reuse existing RAG helper).
+    weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
+    for ex in (current_session.get("exercises", []) or [])[:5]:
+        ex_name = ex.get("name", "")
+        if ex_name:
+            history = await rag_service.get_exercise_weight_history(
+                user_id, ex_name, n_results=5
+            )
+            if history:
+                weight_progressions[ex_name] = history
+
+    context = rag_service.format_feedback_context(
+        current_session, past_sessions, weight_progressions
+    )
+
+    # Deterministic comparison line handed to the model so it never invents numbers.
+    if previous_volume and delta_pct is not None:
+        direction = "up" if delta_pct >= 0 else "down"
+        vol_line = (
+            f"Total volume this session: {current_volume:.0f}kg. "
+            f"Last comparable session ('{comparable_name}'): {previous_volume:.0f}kg "
+            f"({direction} {abs(delta_pct):.1f}%)."
+        )
+    else:
+        vol_line = (
+            f"Total volume this session: {current_volume:.0f}kg. "
+            f"No comparable prior session to compare against (first of its kind)."
+        )
+
+    pr_lines = ""
+    if earned_prs:
+        pr_lines = "PRs HIT THIS SESSION:\n" + "\n".join(
+            f"- {pr.get('exercise_name', 'exercise')}: {pr.get('detail') or pr.get('description') or 'new personal record'}"
+            for pr in earned_prs[:5]
+        )
+
+    notes_block = ""
+    has_notes = bool(logged_notes)
+    if has_notes:
+        notes_block = "USER LOGGED NOTES THIS SESSION:\n" + "\n".join(
+            f"- {n}" for n in logged_notes[:8] if n
+        )
+
+    consistency_line = ""
+    if total_workouts_completed:
+        consistency_line = f"Lifetime workouts completed: {total_workouts_completed}."
+
+    system_prompt = (
+        "You are an elite strength coach writing a SHORT, data-grounded recap of a "
+        "client's just-finished workout. Be specific and honest; never generic. "
+        "Use ONLY the numbers provided — do not invent volume, weights, or PRs. "
+        "No emojis. No markdown. The coaching cue must be ONE concrete, actionable "
+        "instruction for the next session, tied to the actual data."
+    )
+
+    user_prompt = f"""Write a structured recap of this workout.
+
+{context}
+
+VOLUME COMPARISON (use these exact numbers):
+{vol_line}
+
+{pr_lines}
+
+{notes_block}
+
+{consistency_line}
+
+Requirements:
+- headline: punchy one-liner about THIS session.
+- what_stood_out: 1-3 specific highlights (weak point progressed, consistency streak, strongest lift, completion). Each one short sentence.
+- volume_comparison: fill from the VOLUME COMPARISON numbers above (do not change them).
+- prs: only the PRs listed above (empty if none).
+- coaching_cue: EXACTLY ONE concrete cue for next time, grounded in the data.
+- notes_reference: {"one sentence acknowledging/acting on the user's notes above" if has_notes else "null (no notes were logged)"}.
+"""
+
+    payload_dict: Dict[str, Any]
+    try:
+        response = await gemini_generate_with_retry(
+            model=gemini_service.model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type="application/json",
+                response_schema=WorkoutAiRecapPayload,
+                temperature=0.6,
+                max_output_tokens=1200,
+            ),
+            timeout=30,
+            method_name="workout_recap",
+        )
+        parsed = response.parsed
+        if parsed:
+            payload_dict = parsed.model_dump()
+        else:
+            raise ValueError("Empty recap response")
+    except Exception as e:
+        logger.warning(f"[recap] LLM recap failed, using deterministic fallback: {e}")
+        payload_dict = _deterministic_recap(
+            current_session, current_volume, previous_volume,
+            delta_pct, comparable_name, earned_prs, has_notes,
+        )
+
+    # Force the volume_comparison numbers to the deterministic truth (the model
+    # is told to use them, but we never trust it to echo numbers correctly).
+    payload_dict["volume_comparison"] = {
+        "current_volume_kg": current_volume,
+        "previous_volume_kg": previous_volume,
+        "delta_pct": delta_pct,
+        "comparable_workout_name": comparable_name,
+        "summary": (
+            payload_dict.get("volume_comparison", {}).get("summary")
+            if isinstance(payload_dict.get("volume_comparison"), dict)
+            else None
+        ) or _volume_summary(delta_pct, comparable_name),
+    }
+
+    # If the user logged no notes, never fabricate a notes reference.
+    if not has_notes:
+        payload_dict["notes_reference"] = None
+
+    referenced_notes = has_notes and bool(payload_dict.get("notes_reference"))
+
+    # Attach denormalized derived fields for the endpoint to persist.
+    payload_dict["_volume_delta_pct"] = delta_pct
+    payload_dict["_pr_count"] = len(payload_dict.get("prs", []) or [])
+    payload_dict["_referenced_notes"] = referenced_notes
+    payload_dict["_total_volume_kg"] = current_volume
+
+    logger.info(
+        f"[recap] Generated for user {user_id}: "
+        f"{payload_dict.get('headline', '')[:60]!r} (Δvol={delta_pct})"
+    )
+    return payload_dict
+
+
+def _volume_summary(delta_pct: Optional[float], comparable_name: Optional[str]) -> str:
+    """Deterministic one-liner for the volume trend."""
+    if delta_pct is None:
+        return "First session of its kind — this is your new baseline to beat."
+    where = f" your last {comparable_name}" if comparable_name else " your last comparable session"
+    if delta_pct >= 1:
+        return f"Up {delta_pct:.0f}% in total volume over{where}."
+    if delta_pct <= -1:
+        return f"Down {abs(delta_pct):.0f}% in total volume vs{where} — recovery or a lighter day."
+    return f"Right in line with{where} on total volume."
+
+
+def _deterministic_recap(
+    current_session: Dict[str, Any],
+    current_volume: float,
+    previous_volume: Optional[float],
+    delta_pct: Optional[float],
+    comparable_name: Optional[str],
+    earned_prs: Optional[List[Dict[str, Any]]],
+    has_notes: bool,
+) -> Dict[str, Any]:
+    """Build a usable recap with NO LLM (used on model failure so the card is
+    never blank). Honest and data-grounded from the session totals."""
+    name = current_session.get("workout_name", "your workout")
+    total_sets = current_session.get("total_sets", 0)
+    duration_min = (current_session.get("total_time_seconds", 0) or 0) // 60
+
+    stood_out: List[str] = []
+    if delta_pct is not None and delta_pct >= 1:
+        stood_out.append(f"You moved {delta_pct:.0f}% more total volume than last time.")
+    if total_sets:
+        stood_out.append(f"You logged {total_sets} working sets across {duration_min} minutes.")
+    if earned_prs:
+        stood_out.append(f"You set {len(earned_prs)} personal record(s) this session.")
+    if not stood_out:
+        stood_out.append("You showed up and got the work in — consistency compounds.")
+
+    prs = [
+        {
+            "exercise_name": pr.get("exercise_name", "exercise"),
+            "detail": pr.get("detail") or pr.get("description") or "New personal record.",
+        }
+        for pr in (earned_prs or [])[:5]
+    ]
+
+    if delta_pct is not None and delta_pct < -1:
+        cue = "Next time, aim to match last session's top set before adding load."
+    elif earned_prs:
+        cue = "Repeat the load that earned today's PR for one more session to cement it before progressing."
+    else:
+        cue = "Add a small load increase (about 2.5kg) on your strongest lift next session."
+
+    return {
+        "headline": f"{name} done — {total_sets} sets, {duration_min} min in the books.",
+        "what_stood_out": stood_out[:3],
+        "volume_comparison": {
+            "current_volume_kg": current_volume,
+            "previous_volume_kg": previous_volume,
+            "delta_pct": delta_pct,
+            "comparable_workout_name": comparable_name,
+            "summary": _volume_summary(delta_pct, comparable_name),
+        },
+        "prs": prs,
+        "coaching_cue": cue,
+        "notes_reference": None,
+    }
