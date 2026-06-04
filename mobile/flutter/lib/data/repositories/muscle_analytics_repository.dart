@@ -15,9 +15,13 @@ class MuscleAnalyticsRepository {
 
   MuscleAnalyticsRepository(this._apiClient);
 
-  /// Get muscle heatmap data for body diagram visualization
+  /// Get muscle heatmap data for body diagram visualization.
+  ///
+  /// When [gymProfileId] is non-null the heatmap is scoped to that gym
+  /// (per-gym progress); null = all gyms combined.
   Future<MuscleHeatmapData> getMuscleHeatmap({
     String timeRange = '4_weeks',
+    String? gymProfileId,
   }) async {
     try {
       final userId = await _apiClient.getUserId();
@@ -25,13 +29,14 @@ class MuscleAnalyticsRepository {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('🔍 [MuscleAnalytics] Fetching muscle heatmap');
+      debugPrint('🔍 [MuscleAnalytics] Fetching muscle heatmap (gym: $gymProfileId)');
 
       final response = await _apiClient.get(
         '/muscle-analytics/heatmap',
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
       );
 
@@ -67,20 +72,26 @@ class MuscleAnalyticsRepository {
     }
   }
 
-  /// Get training frequency per muscle group
-  Future<MuscleTrainingFrequency> getMuscleFrequency() async {
+  /// Get training frequency per muscle group.
+  ///
+  /// When [gymProfileId] is non-null the frequency is scoped to that gym
+  /// (per-gym progress); null = all gyms combined.
+  Future<MuscleTrainingFrequency> getMuscleFrequency({
+    String? gymProfileId,
+  }) async {
     try {
       final userId = await _apiClient.getUserId();
       if (userId == null) {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('🔍 [MuscleAnalytics] Fetching muscle frequency');
+      debugPrint('🔍 [MuscleAnalytics] Fetching muscle frequency (gym: $gymProfileId)');
 
       final response = await _apiClient.get(
         '/muscle-analytics/frequency',
         queryParameters: {
           'user_id': userId,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
       );
 
@@ -118,20 +129,26 @@ class MuscleAnalyticsRepository {
     }
   }
 
-  /// Get muscle balance analysis (push/pull, upper/lower ratios)
-  Future<MuscleBalanceData> getMuscleBalance() async {
+  /// Get muscle balance analysis (push/pull, upper/lower ratios).
+  ///
+  /// When [gymProfileId] is non-null the balance is scoped to that gym
+  /// (per-gym progress); null = all gyms combined.
+  Future<MuscleBalanceData> getMuscleBalance({
+    String? gymProfileId,
+  }) async {
     try {
       final userId = await _apiClient.getUserId();
       if (userId == null) {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('🔍 [MuscleAnalytics] Fetching muscle balance');
+      debugPrint('🔍 [MuscleAnalytics] Fetching muscle balance (gym: $gymProfileId)');
 
       final response = await _apiClient.get(
         '/muscle-analytics/balance',
         queryParameters: {
           'user_id': userId,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
       );
 
@@ -248,10 +265,14 @@ class MuscleAnalyticsRepository {
     }
   }
 
-  /// Get historical training data for a specific muscle group
+  /// Get historical training data for a specific muscle group.
+  ///
+  /// When [gymProfileId] is non-null the history is scoped to that gym
+  /// (per-gym progress); null = all gyms combined.
   Future<MuscleHistoryData> getMuscleHistory({
     required String muscleGroup,
     String timeRange = '12_weeks',
+    String? gymProfileId,
   }) async {
     try {
       final userId = await _apiClient.getUserId();
@@ -259,7 +280,7 @@ class MuscleAnalyticsRepository {
         throw Exception('User not authenticated');
       }
 
-      debugPrint('🔍 [MuscleAnalytics] Fetching history for: $muscleGroup');
+      debugPrint('🔍 [MuscleAnalytics] Fetching history for: $muscleGroup (gym: $gymProfileId)');
 
       final encodedMuscle = Uri.encodeComponent(muscleGroup);
       final response = await _apiClient.get(
@@ -267,6 +288,7 @@ class MuscleAnalyticsRepository {
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
       );
 

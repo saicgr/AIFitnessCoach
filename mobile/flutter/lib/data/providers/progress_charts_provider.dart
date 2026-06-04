@@ -17,6 +17,10 @@ class ProgressChartsState {
   final ProgressTimeRange selectedTimeRange;
   final String? selectedMuscleGroup;
   final String? selectedExercise;
+
+  /// The gym filter applied to the charts. `null` = all gyms combined (the
+  /// default). When set, strength + volume trends are scoped to that gym.
+  final String? selectedGymProfileId;
   final bool isLoading;
   final bool isLoadingVolume;
   final bool isLoadingStrength;
@@ -33,6 +37,7 @@ class ProgressChartsState {
     this.selectedTimeRange = ProgressTimeRange.oneDay,
     this.selectedMuscleGroup,
     this.selectedExercise,
+    this.selectedGymProfileId,
     this.isLoading = false,
     this.isLoadingVolume = false,
     this.isLoadingStrength = false,
@@ -50,6 +55,7 @@ class ProgressChartsState {
     ProgressTimeRange? selectedTimeRange,
     String? selectedMuscleGroup,
     String? selectedExercise,
+    String? selectedGymProfileId,
     bool? isLoading,
     bool? isLoadingVolume,
     bool? isLoadingStrength,
@@ -60,6 +66,7 @@ class ProgressChartsState {
     bool clearMuscleGroup = false,
     bool clearExercise = false,
     bool clearExerciseData = false,
+    bool clearGym = false,
   }) {
     return ProgressChartsState(
       summary: summary ?? this.summary,
@@ -74,6 +81,9 @@ class ProgressChartsState {
       selectedExercise: clearExercise
           ? null
           : (selectedExercise ?? this.selectedExercise),
+      selectedGymProfileId: clearGym
+          ? null
+          : (selectedGymProfileId ?? this.selectedGymProfileId),
       isLoading: isLoading ?? this.isLoading,
       isLoadingVolume: isLoadingVolume ?? this.isLoadingVolume,
       isLoadingStrength: isLoadingStrength ?? this.isLoadingStrength,
@@ -139,11 +149,13 @@ class ProgressChartsNotifier extends StateNotifier<ProgressChartsState> {
         _repository.getVolumeOverTime(
           userId: uid,
           timeRange: state.selectedTimeRange,
+          gymProfileId: state.selectedGymProfileId,
         ),
         _repository.getStrengthOverTime(
           userId: uid,
           timeRange: state.selectedTimeRange,
           muscleGroup: state.selectedMuscleGroup,
+          gymProfileId: state.selectedGymProfileId,
         ),
         _repository.getAvailableMuscleGroups(userId: uid),
       ]);
@@ -183,6 +195,7 @@ class ProgressChartsNotifier extends StateNotifier<ProgressChartsState> {
       final volumeData = await _repository.getVolumeOverTime(
         userId: uid,
         timeRange: state.selectedTimeRange,
+        gymProfileId: state.selectedGymProfileId,
       );
 
       state = state.copyWith(
@@ -214,6 +227,7 @@ class ProgressChartsNotifier extends StateNotifier<ProgressChartsState> {
         userId: uid,
         timeRange: state.selectedTimeRange,
         muscleGroup: state.selectedMuscleGroup,
+        gymProfileId: state.selectedGymProfileId,
       );
 
       state = state.copyWith(
@@ -298,6 +312,26 @@ class ProgressChartsNotifier extends StateNotifier<ProgressChartsState> {
     if (_currentUserId != null) {
       await loadStrengthData();
     }
+  }
+
+  /// Update the selected gym filter and reload both trend charts.
+  ///
+  /// `gymProfileId == null` means "All gyms" (combined) — both strength and
+  /// volume trends re-pool across gyms. A non-null id scopes both to that gym.
+  Future<void> setGymFilter(String? gymProfileId, {required String userId}) async {
+    if (state.selectedGymProfileId == gymProfileId) return;
+    _currentUserId = userId;
+
+    state = state.copyWith(
+      selectedGymProfileId: gymProfileId,
+      clearGym: gymProfileId == null,
+    );
+
+    // Reload both charts so the gym scope reaches each query.
+    await Future.wait([
+      loadVolumeData(userId: userId),
+      loadStrengthData(userId: userId),
+    ]);
   }
 
   /// Clear selected exercise data

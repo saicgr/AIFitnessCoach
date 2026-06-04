@@ -246,9 +246,11 @@ class _ProgressAtGymRow extends ConsumerWidget {
               HapticService.light();
               // Seed the read-only progress filters with this gym (separate
               // from the active workout gym).
+              // Seed the surfaces the exercise-history screen actually reads:
+              // its list filter ('exercise-list') + the strength card
+              // ('strength_overview'). Keys must match the screens' surfaceKeys.
               ref
-                  .read(gymProgressFilterProvider('exercise_history_list')
-                      .notifier)
+                  .read(gymProgressFilterProvider('exercise-list').notifier)
                   .seedGym(gymId);
               ref
                   .read(gymProgressFilterProvider('strength_overview').notifier)

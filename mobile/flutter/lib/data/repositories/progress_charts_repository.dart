@@ -19,15 +19,19 @@ class ProgressChartsRepository {
   // Strength Progression
   // ============================================
 
-  /// Get weekly strength progression per muscle group
+  /// Get weekly strength progression per muscle group.
+  ///
+  /// When [gymProfileId] is non-null the backend scopes the underlying weekly
+  /// volume to that gym (per-gym progress); null = all gyms combined.
   Future<StrengthProgressionData> getStrengthOverTime({
     required String userId,
     ProgressTimeRange timeRange = ProgressTimeRange.twelveWeeks,
     String? muscleGroup,
+    String? gymProfileId,
   }) async {
     try {
       debugPrint(
-          '🔍 [ProgressCharts] Getting strength progression for $userId, range: ${timeRange.value}');
+          '🔍 [ProgressCharts] Getting strength progression for $userId, range: ${timeRange.value}, gym: $gymProfileId');
 
       final queryParams = <String, dynamic>{
         'user_id': userId,
@@ -36,6 +40,10 @@ class ProgressChartsRepository {
 
       if (muscleGroup != null && muscleGroup.isNotEmpty) {
         queryParams['muscle_group'] = muscleGroup;
+      }
+
+      if (gymProfileId != null) {
+        queryParams['gym_profile_id'] = gymProfileId;
       }
 
       final response = await _client.get(
@@ -55,20 +63,25 @@ class ProgressChartsRepository {
   // Volume Progression
   // ============================================
 
-  /// Get weekly total volume progression
+  /// Get weekly total volume progression.
+  ///
+  /// When [gymProfileId] is non-null the backend scopes the underlying weekly
+  /// volume to that gym (per-gym progress); null = all gyms combined.
   Future<VolumeProgressionData> getVolumeOverTime({
     required String userId,
     ProgressTimeRange timeRange = ProgressTimeRange.twelveWeeks,
+    String? gymProfileId,
   }) async {
     try {
       debugPrint(
-          '🔍 [ProgressCharts] Getting volume progression for $userId, range: ${timeRange.value}');
+          '🔍 [ProgressCharts] Getting volume progression for $userId, range: ${timeRange.value}, gym: $gymProfileId');
 
       final response = await _client.get(
         '/progress/volume-over-time',
         queryParameters: {
           'user_id': userId,
           'time_range': timeRange.value,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
       );
 

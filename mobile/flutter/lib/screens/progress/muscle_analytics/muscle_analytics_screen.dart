@@ -132,10 +132,22 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
               SegmentedTabItem(label: l10n.muscleAnalyticsBalance),
             ],
           ),
-          // Gym progress filter — hides itself when ≤1 gym.
-          const Padding(
-            padding: EdgeInsets.only(top: 8, bottom: 4),
-            child: GymProgressFilter(surfaceKey: 'muscle_analytics'),
+          // Gym progress filter — hides itself when ≤1 gym. The heatmap /
+          // frequency / balance providers watch this same surface's selection
+          // (via muscleAnalyticsGymProfileIdProvider), so tapping a chip
+          // re-scopes all three tabs automatically. onChanged invalidates them
+          // belt-and-suspenders so a refetch fires even on a re-tap of the same
+          // resolved value.
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: GymProgressFilter(
+              surfaceKey: muscleAnalyticsGymSurfaceKey,
+              onChanged: (_) {
+                ref.invalidate(muscleHeatmapProvider);
+                ref.invalidate(muscleFrequencyProvider);
+                ref.invalidate(muscleBalanceProvider);
+              },
+            ),
           ),
           Expanded(
             child: TabBarView(

@@ -6,6 +6,7 @@ import '../../../core/services/posthog_service.dart';
 import '../../../data/models/progress_charts.dart';
 import '../../../widgets/app_loading.dart';
 import '../../../data/providers/progress_charts_provider.dart';
+import '../../../data/providers/gym_progress_filter_provider.dart';
 import '../../../data/services/api_client.dart';
 import 'widgets/volume_chart.dart';
 import 'widgets/strength_chart.dart';
@@ -56,6 +57,12 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
       });
       ref.read(progressChartsProvider.notifier).setUserId(userId);
       ref.read(progressChartsProvider.notifier).loadAllData(userId: userId);
+      // Seed the gym filter to "All gyms" (combined) on first load — strength
+      // trends pool free weights fine; users opt into a specific gym. Only
+      // applies while the selection is still unresolved (no persisted pick).
+      ref
+          .read(gymProgressFilterProvider('progress_charts_strength').notifier)
+          .seedDefault(perGym: false);
     }
   }
 
@@ -181,12 +188,21 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Gym progress filter — sits beside the muscle/time filters. Hides
-          // itself when ≤1 gym so single-gym users see no change.
-          const Padding(
-            padding: EdgeInsets.only(bottom: 8),
+          // itself when ≤1 gym so single-gym users see no change. Selecting a
+          // chip re-scopes BOTH trend charts to that gym (null = all gyms).
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
             child: GymProgressFilter(
               surfaceKey: 'progress_charts_strength',
               padding: EdgeInsets.zero,
+              onChanged: (selection) {
+                final uid = _userId;
+                if (uid == null) return;
+                ref.read(progressChartsProvider.notifier).setGymFilter(
+                      selection.isAllGyms ? null : selection.gymProfileId,
+                      userId: uid,
+                    );
+              },
             ),
           ),
           // Muscle Group Filter

@@ -232,6 +232,74 @@ def get_balance_status(ratio: float, ideal_min: float, ideal_max: float) -> tupl
         return "imbalanced", f"Slight imbalance detected"
 
 
+# Per-gym view name — the gym-aware mirror of `muscle_group_weekly_volume`, with
+# the same columns plus a `gym_profile_id`. Used only when a caller passes an
+# explicit `gym_profile_id` (the gym-blind RPC path is bypassed in that case).
+_MUSCLE_WEEKLY_BY_GYM = "muscle_group_weekly_volume_by_gym"
+
+
+def _aggregate_gym_muscle_volume(
+    db,
+    user_id: str,
+    gym_profile_id: str,
+    days_back: Optional[int] = None,
+) -> Dict[str, Dict[str, Any]]:
+    """Aggregate per-muscle-group totals for ONE gym from the gym-aware weekly view.
+
+    Reads `muscle_group_weekly_volume_by_gym` filtered to `gym_profile_id`,
+    optionally limited to the last `days_back` days (by `week_start`), and folds
+    the weekly muscle-group rows into one bucket per muscle group:
+
+        { muscle_group: {
+            "sets_count": int, "volume_kg": float, "total_reps": int,
+            "max_weight_kg": float, "workout_count": int,
+            "last_week": "YYYY-MM-DD" | None,
+        }, ... }
+
+    `workout_count` is the max weekly workout_count for that muscle (weeks aren't
+    additive workouts); `last_week` is the most recent `week_start`. Never raises
+    — returns {} on error so callers degrade to a friendly empty state.
+    """
+    agg: Dict[str, Dict[str, Any]] = {}
+    try:
+        query = db.client.from_(_MUSCLE_WEEKLY_BY_GYM) \
+            .select("muscle_group, week_start, workout_count, total_sets, "
+                    "total_reps, total_volume_kg, max_weight_kg") \
+            .eq("user_id", user_id) \
+            .eq("gym_profile_id", gym_profile_id)
+        if days_back is not None:
+            cutoff = (datetime.now(timezone.utc) - timedelta(days=days_back)).date().isoformat()
+            query = query.gte("week_start", cutoff)
+        rows = query.execute().data or []
+    except Exception as e:
+        logger.warning(f"gym muscle-volume aggregate failed: {e}", exc_info=True)
+        return {}
+
+    for row in rows:
+        mg = (row.get("muscle_group") or "").lower()
+        if not mg:
+            continue
+        bucket = agg.setdefault(mg, {
+            "sets_count": 0,
+            "volume_kg": 0.0,
+            "total_reps": 0,
+            "max_weight_kg": 0.0,
+            "workout_count": 0,
+            "last_week": None,
+        })
+        bucket["sets_count"] += int(row.get("total_sets", 0) or 0)
+        bucket["volume_kg"] += float(row.get("total_volume_kg", 0) or 0)
+        bucket["total_reps"] += int(row.get("total_reps", 0) or 0)
+        bucket["max_weight_kg"] = max(
+            bucket["max_weight_kg"], float(row.get("max_weight_kg", 0) or 0))
+        bucket["workout_count"] = max(
+            bucket["workout_count"], int(row.get("workout_count", 0) or 0))
+        wk = row.get("week_start")
+        if wk and (bucket["last_week"] is None or wk > bucket["last_week"]):
+            bucket["last_week"] = wk
+    return agg
+
+
 # ============================================
 # Endpoints
 # ============================================
@@ -240,6 +308,11 @@ def get_balance_status(ratio: float, ideal_min: float, ideal_max: float) -> tupl
 async def get_muscle_heatmap_data(
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.FOUR_WEEKS, description="Time range for heatmap"),
+    gym_profile_id: Optional[str] = Query(
+        None,
+        description="Filter the heatmap to a specific gym profile (per-gym "
+                    "progress). Default (no param) = all gyms combined.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -247,13 +320,73 @@ async def get_muscle_heatmap_data(
 
     Returns intensity scores and colors for each muscle group
     based on training volume in the specified time period.
+
+    Per-gym progress: when `gym_profile_id` is supplied, the gym-blind RPC is
+    bypassed and intensities are computed from `muscle_group_weekly_volume_by_gym`
+    filtered to that gym. Without it, behavior is unchanged (RPC + the combined
+    `workout_logs` fallback).
     """
     verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
         days_back = get_days_for_time_range(time_range)
 
-        logger.info(f"Getting muscle heatmap for user {user_id}, range: {time_range.value}")
+        logger.info(
+            f"Getting muscle heatmap for user {user_id}, range: {time_range.value}, "
+            f"gym_profile_id: {gym_profile_id}"
+        )
+
+        # Per-gym path: bypass the gym-blind RPC and compute from the gym-aware
+        # weekly muscle-volume view filtered to this gym.
+        if gym_profile_id:
+            now_utc = datetime.now(timezone.utc)
+            agg = _aggregate_gym_muscle_volume(db, user_id, gym_profile_id, days_back)
+
+            max_volume = max((b["volume_kg"] for b in agg.values()), default=0.0)
+            if max_volume <= 0:
+                max_volume = 1.0  # avoid div-by-zero; intensities stay 0
+
+            muscles: List[MuscleHeatmapItem] = []
+            for mg, stats in agg.items():
+                intensity = stats["volume_kg"] / max_volume if max_volume > 0 else 0
+                color, hex_color = get_intensity_color(intensity)
+                days_since = None
+                if stats["last_week"]:
+                    try:
+                        last_dt = datetime.fromisoformat(
+                            str(stats["last_week"])
+                        )
+                        days_since = (now_utc.date() - last_dt.date()).days
+                    except Exception:
+                        days_since = None
+                muscles.append(MuscleHeatmapItem(
+                    muscle_group=mg,
+                    intensity=round(intensity, 4),
+                    intensity_score=int(intensity * 100),
+                    sets_count=stats["sets_count"],
+                    volume_kg=round(stats["volume_kg"], 2),
+                    workout_count=stats["workout_count"],
+                    last_trained=stats["last_week"],
+                    days_since_training=days_since,
+                    color=color,
+                    hex_color=hex_color,
+                ))
+
+            sorted_muscles = sorted(muscles, key=lambda x: x.volume_kg, reverse=True)
+            most_trained = sorted_muscles[0].muscle_group if sorted_muscles else ""
+            least_trained = sorted_muscles[-1].muscle_group if sorted_muscles else ""
+
+            return MuscleHeatmapResponse(
+                user_id=user_id,
+                time_range=time_range.value,
+                period_days=days_back,
+                muscles=muscles,
+                most_trained=most_trained,
+                least_trained=least_trained,
+                total_sets=sum(m.sets_count for m in muscles),
+                total_volume_kg=round(sum(m.volume_kg for m in muscles), 2),
+                max_volume_kg=round(max_volume if max_volume > 1 else 0.0, 2),
+            )
 
         # Try to use the database function first
         try:
@@ -479,6 +612,11 @@ async def get_muscle_heatmap_data(
 @router.get("/frequency", response_model=MuscleFrequencyResponse)
 async def get_muscle_training_frequency(
     user_id: str = Query(..., description="User ID"),
+    gym_profile_id: Optional[str] = Query(
+        None,
+        description="Filter training frequency to a specific gym profile "
+                    "(per-gym progress). Default (no param) = all gyms combined.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -486,19 +624,75 @@ async def get_muscle_training_frequency(
 
     Shows how often each muscle is trained with recommendations
     for optimal training frequency.
+
+    Per-gym progress: when `gym_profile_id` is supplied, frequency is computed
+    from `muscle_group_weekly_volume_by_gym` filtered to that gym (weekly
+    granularity). Without it, behavior is unchanged (the combined
+    `exercise_workout_history` aggregation).
     """
     verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
 
-        logger.info(f"Getting muscle frequency for user {user_id}")
+        logger.info(
+            f"Getting muscle frequency for user {user_id}, gym_profile_id: {gym_profile_id}"
+        )
 
-        # Compute frequency from exercise_workout_history (no dedicated view needed)
         from datetime import timezone
         from collections import defaultdict
         now = datetime.now(timezone.utc)
         d7 = (now - timedelta(days=7)).date().isoformat()
         d30 = (now - timedelta(days=30)).date().isoformat()
+
+        # Per-gym path: weekly-granular frequency from the gym-aware view.
+        if gym_profile_id:
+            agg = _aggregate_gym_muscle_volume(db, user_id, gym_profile_id, days_back=30)
+            frequencies: List[MuscleFrequencyItem] = []
+            undertrained_count = 0
+            overtrained_count = 0
+            for mg, stats in agg.items():
+                # Each row in the view is a (muscle, week) — workout_count is the
+                # sessions for that muscle that week. We summed weekly sets above
+                # but kept the MAX workout_count; for frequency we re-derive a
+                # 30-day session count from the per-week workout counts.
+                count_30d = stats.get("workout_count", 0)
+                weekly_freq = count_30d / 4 if count_30d else 0
+                recommendation = get_frequency_recommendation(weekly_freq)
+                if recommendation == "undertrained":
+                    undertrained_count += 1
+                elif recommendation == "overtrained":
+                    overtrained_count += 1
+                last_week = stats.get("last_week")
+                days_since = None
+                if last_week:
+                    try:
+                        last_dt = datetime.fromisoformat(str(last_week))
+                        days_since = (now.date() - last_dt.date()).days
+                    except Exception:
+                        days_since = None
+                # 7-day count: 1 if the most recent training week is within 7 days.
+                count_7d = 1 if (last_week and last_week >= d7) else 0
+                frequencies.append(MuscleFrequencyItem(
+                    muscle_group=mg,
+                    workout_count_last_7_days=count_7d,
+                    workout_count_last_30_days=count_30d,
+                    total_workout_count=count_30d,
+                    weekly_frequency=round(weekly_freq, 1),
+                    total_volume_kg=round(stats.get("volume_kg", 0.0), 2),
+                    avg_days_between_training=None,
+                    last_trained_date=last_week,
+                    days_since_last_training=days_since,
+                    recommendation=recommendation,
+                ))
+            total_weekly_sessions = sum(f.weekly_frequency for f in frequencies)
+            avg_weekly = total_weekly_sessions / len(frequencies) if frequencies else 0
+            return MuscleFrequencyResponse(
+                user_id=user_id,
+                frequencies=frequencies,
+                avg_weekly_workouts=round(avg_weekly, 1),
+                undertrained_count=undertrained_count,
+                overtrained_count=overtrained_count,
+            )
 
         # Use exercise_workout_history (same table the exercises endpoint uses)
         try:
@@ -588,6 +782,11 @@ async def get_muscle_training_frequency(
 @router.get("/balance", response_model=MuscleBalanceResponse)
 async def get_muscle_balance(
     user_id: str = Query(..., description="User ID"),
+    gym_profile_id: Optional[str] = Query(
+        None,
+        description="Filter balance analysis to a specific gym profile "
+                    "(per-gym progress). Default (no param) = all gyms combined.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -595,36 +794,48 @@ async def get_muscle_balance(
 
     Analyzes push/pull ratio, upper/lower ratio, and other
     antagonist muscle pair balances.
+
+    Per-gym progress: when `gym_profile_id` is supplied, per-muscle volume is
+    read from `muscle_group_weekly_volume_by_gym` filtered to that gym (last 90
+    days). Without it, behavior is unchanged (the combined
+    `exercise_workout_history` aggregation).
     """
     verify_user_ownership(current_user, user_id)
     try:
         db = get_supabase_db()
 
-        logger.info(f"Getting muscle balance for user {user_id}")
+        logger.info(
+            f"Getting muscle balance for user {user_id}, gym_profile_id: {gym_profile_id}"
+        )
 
         # Compute balance from exercise_workout_history (no dedicated view needed)
         from datetime import timezone
         from collections import defaultdict
-        d90 = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
 
-        try:
-            result = db.client.from_("exercise_workout_history") \
-                .select("muscle_group, total_volume_kg") \
-                .eq("user_id", user_id) \
-                .gte("workout_date", d90) \
-                .not_.is_("muscle_group", "null") \
-                .execute()
-        except Exception:
-            result = type('R', (), {'data': []})()
-
-        rows = result.data or []
-
-        # Aggregate volume by muscle group
+        # Aggregate volume by muscle group (last 90 days).
         vol_by_muscle = defaultdict(float)
-        for row in rows:
-            mg = (row.get("muscle_group") or "").lower()
-            if mg:
-                vol_by_muscle[mg] += float(row.get("total_volume_kg", 0) or 0)
+        if gym_profile_id:
+            # Per-gym path: gym-aware weekly view filtered to this gym.
+            agg = _aggregate_gym_muscle_volume(db, user_id, gym_profile_id, days_back=90)
+            for mg, stats in agg.items():
+                vol_by_muscle[mg] += float(stats.get("volume_kg", 0.0) or 0)
+        else:
+            d90 = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+            try:
+                result = db.client.from_("exercise_workout_history") \
+                    .select("muscle_group, total_volume_kg") \
+                    .eq("user_id", user_id) \
+                    .gte("workout_date", d90) \
+                    .not_.is_("muscle_group", "null") \
+                    .execute()
+            except Exception:
+                result = type('R', (), {'data': []})()
+
+            rows = result.data or []
+            for row in rows:
+                mg = (row.get("muscle_group") or "").lower()
+                if mg:
+                    vol_by_muscle[mg] += float(row.get("total_volume_kg", 0) or 0)
 
         # Muscle group classifications
         push_muscles = {"chest", "shoulders", "triceps"}
@@ -819,12 +1030,21 @@ async def get_muscle_history(
     request: Request,
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for history"),
+    gym_profile_id: Optional[str] = Query(
+        None,
+        description="Filter muscle history to a specific gym profile (per-gym "
+                    "progress). Default (no param) = all gyms combined.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Get historical training data for a specific muscle group.
 
     Shows weekly training volume trends over time.
+
+    Per-gym progress: when `gym_profile_id` is supplied, the weekly data is read
+    from `muscle_group_weekly_volume_by_gym` filtered to that gym. Without it,
+    behavior is unchanged (the combined `muscle_group_weekly_volume` view).
     """
     verify_user_ownership(current_user, user_id)
     try:
@@ -832,15 +1052,22 @@ async def get_muscle_history(
         days_back = get_days_for_time_range(time_range)
         start_date = (user_today_date(request) - timedelta(days=days_back)).isoformat()
 
-        logger.info(f"Getting muscle history for {muscle_group}, user {user_id}")
+        logger.info(
+            f"Getting muscle history for {muscle_group}, user {user_id}, "
+            f"gym_profile_id: {gym_profile_id}"
+        )
 
-        # Query weekly volume data
-        query = db.client.from_("muscle_group_weekly_volume") \
+        # Per-gym path reads the gym-aware view + filters to the gym; the
+        # combined path keeps the original view.
+        table_name = _MUSCLE_WEEKLY_BY_GYM if gym_profile_id else "muscle_group_weekly_volume"
+        query = db.client.from_(table_name) \
             .select("*") \
             .eq("user_id", user_id) \
             .ilike("muscle_group", muscle_group.lower()) \
-            .gte("week_start", start_date) \
-            .order("week_start", desc=False)
+            .gte("week_start", start_date)
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
+        query = query.order("week_start", desc=False)
 
         result = query.execute()
         data = result.data or []

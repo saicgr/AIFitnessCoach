@@ -1,6 +1,26 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/muscle_analytics.dart';
 import '../repositories/muscle_analytics_repository.dart';
+import 'gym_progress_filter_provider.dart';
+
+// ============================================================================
+// Per-gym filter wiring
+// ============================================================================
+
+/// Surface key for the muscle-analytics gym filter chips. Shared by the data
+/// providers below and the screen's [GymProgressFilter].
+const muscleAnalyticsGymSurfaceKey = 'muscle_analytics';
+
+/// The gym id the muscle-analytics surface is currently scoped to, or null for
+/// the pooled "All gyms" view. Reads the shared per-surface filter selection so
+/// the data providers refetch whenever the user taps a gym chip.
+final muscleAnalyticsGymProfileIdProvider = Provider<String?>((ref) {
+  final selection =
+      ref.watch(gymProgressFilterProvider(muscleAnalyticsGymSurfaceKey));
+  // isAllGyms (or unresolved) → combined; a specific gym → that gym.
+  if (selection.isAllGyms) return null;
+  return selection.gymProfileId;
+});
 
 // ============================================================================
 // State Providers for UI selections
@@ -20,25 +40,32 @@ final muscleAnalyticsTabProvider = StateProvider<int>((ref) => 0);
 // ============================================================================
 
 /// Provider for muscle heatmap data
-/// Note: Removed autoDispose to prevent refetching on navigation
+/// Note: Removed autoDispose to prevent refetching on navigation.
+/// Watches the gym filter selection so it refetches when the user picks a gym.
 final muscleHeatmapProvider = FutureProvider<MuscleHeatmapData>((ref) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
-  return repository.getMuscleHeatmap(timeRange: timeRange);
+  final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
+  return repository.getMuscleHeatmap(
+      timeRange: timeRange, gymProfileId: gymProfileId);
 });
 
 /// Provider for muscle training frequency
-/// Note: Removed autoDispose to prevent refetching on navigation
+/// Note: Removed autoDispose to prevent refetching on navigation.
+/// Watches the gym filter selection so it refetches when the user picks a gym.
 final muscleFrequencyProvider = FutureProvider<MuscleTrainingFrequency>((ref) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
-  return repository.getMuscleFrequency();
+  final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
+  return repository.getMuscleFrequency(gymProfileId: gymProfileId);
 });
 
 /// Provider for muscle balance analysis
-/// Note: Removed autoDispose to prevent refetching on navigation
+/// Note: Removed autoDispose to prevent refetching on navigation.
+/// Watches the gym filter selection so it refetches when the user picks a gym.
 final muscleBalanceProvider = FutureProvider<MuscleBalanceData>((ref) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
-  return repository.getMuscleBalance();
+  final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
+  return repository.getMuscleBalance(gymProfileId: gymProfileId);
 });
 
 /// Provider for exercises targeting a specific muscle (family provider)
@@ -49,11 +76,14 @@ final muscleExercisesProvider = FutureProvider.family<MuscleExerciseData, String
 });
 
 /// Provider for muscle training history (family provider)
-/// Note: Removed autoDispose to prevent refetching on navigation
+/// Note: Removed autoDispose to prevent refetching on navigation.
+/// Watches the gym filter selection so it refetches when the user picks a gym.
 final muscleHistoryProvider = FutureProvider.family<MuscleHistoryData, String>((ref, muscleGroup) async {
   final repository = ref.watch(muscleAnalyticsRepositoryProvider);
   final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
-  return repository.getMuscleHistory(muscleGroup: muscleGroup, timeRange: timeRange);
+  final gymProfileId = ref.watch(muscleAnalyticsGymProfileIdProvider);
+  return repository.getMuscleHistory(
+      muscleGroup: muscleGroup, timeRange: timeRange, gymProfileId: gymProfileId);
 });
 
 // ============================================================================

@@ -25,6 +25,12 @@ from core.logger import get_logger
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
 
+# Per-gym view names — mirrors of the combined views with a gym_profile_id column.
+# Used only when the caller passes an explicit `gym_profile_id`. There is no
+# `weekly_progress_summary_by_gym`, so the gym-scoped volume path aggregates
+# weekly totals from `muscle_group_weekly_volume_by_gym` instead.
+_MUSCLE_WEEKLY_BY_GYM = "muscle_group_weekly_volume_by_gym"
+
 # Thread pool for running synchronous Supabase calls concurrently
 _db_executor = ThreadPoolExecutor(max_workers=10)
 logger = get_logger(__name__)
@@ -156,6 +162,11 @@ async def get_strength_over_time(
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
     muscle_group: Optional[str] = Query(None, description="Filter by muscle group"),
+    gym_profile_id: Optional[str] = Query(
+        None,
+        description="Filter strength progression to a specific gym profile "
+                    "(per-gym progress). Default (no param) = all gyms combined.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -165,8 +176,16 @@ async def get_strength_over_time(
     - Total sets, reps, and volume per muscle group
     - Max weight lifted
     - Workout count
+
+    Per-gym progress: when `gym_profile_id` is supplied, the underlying weekly
+    volume is read from `muscle_group_weekly_volume_by_gym` filtered to that gym
+    so machine/cable numbers stay comparable. Without it, behavior is unchanged
+    (the combined `muscle_group_weekly_volume` view).
     """
-    logger.info(f"Getting strength progression for user {user_id}, range: {time_range}")
+    logger.info(
+        f"Getting strength progression for user {user_id}, range: {time_range}, "
+        f"gym_profile_id: {gym_profile_id}"
+    )
 
     try:
         db = get_supabase_db()
@@ -174,10 +193,15 @@ async def get_strength_over_time(
         # Calculate date cutoff based on time range
         cutoff_date = _get_cutoff_date(time_range)
 
-        # Query muscle group weekly volume view
-        query = db.client.table("muscle_group_weekly_volume") \
+        # Per-gym path reads the gym-aware view + filters to the gym; the
+        # combined path keeps the original view (byte-for-byte unchanged).
+        table_name = _MUSCLE_WEEKLY_BY_GYM if gym_profile_id else "muscle_group_weekly_volume"
+        query = db.client.table(table_name) \
             .select("*") \
             .eq("user_id", user_id)
+
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
 
         if cutoff_date:
             query = query.gte("week_start", cutoff_date.isoformat())
@@ -230,6 +254,11 @@ async def get_strength_over_time(
 async def get_volume_over_time(
     user_id: str = Query(..., description="User ID"),
     time_range: TimeRange = Query(TimeRange.TWELVE_WEEKS, description="Time range for data"),
+    gym_profile_id: Optional[str] = Query(
+        None,
+        description="Filter volume progression to a specific gym profile "
+                    "(per-gym progress). Default (no param) = all gyms combined.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -240,8 +269,19 @@ async def get_volume_over_time(
     - Total duration
     - Total volume in kg
     - Total sets and reps
+
+    Per-gym progress: when `gym_profile_id` is supplied, there is no
+    `weekly_progress_summary_by_gym` view, so weekly totals are aggregated from
+    `muscle_group_weekly_volume_by_gym` (summed across muscle groups per week)
+    filtered to that gym. Per-gym duration isn't tracked at the muscle-group
+    level, so `total_minutes`/`avg_duration_minutes` are 0 in that path.
+    Without the param, behavior is unchanged (the combined
+    `weekly_progress_summary` view).
     """
-    logger.info(f"Getting volume progression for user {user_id}, range: {time_range}")
+    logger.info(
+        f"Getting volume progression for user {user_id}, range: {time_range}, "
+        f"gym_profile_id: {gym_profile_id}"
+    )
 
     try:
         db = get_supabase_db()
@@ -249,34 +289,85 @@ async def get_volume_over_time(
         # Calculate date cutoff
         cutoff_date = _get_cutoff_date(time_range)
 
-        # Query weekly progress summary view
-        query = db.client.table("weekly_progress_summary") \
-            .select("*") \
-            .eq("user_id", user_id)
+        if gym_profile_id:
+            # Per-gym: aggregate weekly totals from the gym-aware muscle volume
+            # view (one row per muscle-group/week → fold into one row per week).
+            mg_query = db.client.table(_MUSCLE_WEEKLY_BY_GYM) \
+                .select("week_start, workout_count, total_sets, total_reps, total_volume_kg") \
+                .eq("user_id", user_id) \
+                .eq("gym_profile_id", gym_profile_id)
 
-        if cutoff_date:
-            query = query.gte("week_start", cutoff_date.isoformat())
+            if cutoff_date:
+                mg_query = mg_query.gte("week_start", cutoff_date.isoformat())
 
-        query = query.order("week_start", desc=False)
-        result = query.execute()
+            mg_result = mg_query.order("week_start", desc=False).execute()
+            mg_rows = mg_result.data or []
 
-        data = result.data or []
+            # Fold muscle-group rows into one bucket per week. A single workout
+            # hits multiple muscle groups, so summing workout_count across groups
+            # would over-count completed workouts — use the per-week max instead.
+            week_buckets: Dict[str, Dict[str, Any]] = {}
+            for row in mg_rows:
+                wk = row.get("week_start")
+                if not wk:
+                    continue
+                bucket = week_buckets.setdefault(wk, {
+                    "week_start": wk,
+                    "workouts_completed": 0,
+                    "total_volume_kg": 0.0,
+                    "total_sets": 0,
+                    "total_reps": 0,
+                })
+                bucket["total_volume_kg"] += float(row.get("total_volume_kg", 0) or 0)
+                bucket["total_sets"] += int(row.get("total_sets", 0) or 0)
+                bucket["total_reps"] += int(row.get("total_reps", 0) or 0)
+                bucket["workouts_completed"] = max(
+                    bucket["workouts_completed"], int(row.get("workout_count", 0) or 0)
+                )
 
-        # Transform data
-        weekly_data = [
-            WeeklyVolumeData(
-                week_start=row["week_start"],
-                week_number=row.get("week_number", _get_week_number(row["week_start"])),
-                year=row.get("year", _get_year(row["week_start"])),
-                workouts_completed=row.get("workouts_completed", 0),
-                total_minutes=row.get("total_minutes", 0),
-                avg_duration_minutes=float(row.get("avg_duration_minutes", 0)),
-                total_volume_kg=float(row.get("total_volume_kg", 0)),
-                total_sets=row.get("total_sets", 0),
-                total_reps=row.get("total_reps", 0)
-            )
-            for row in data
-        ]
+            weekly_data = [
+                WeeklyVolumeData(
+                    week_start=b["week_start"],
+                    week_number=_get_week_number(b["week_start"]),
+                    year=_get_year(b["week_start"]),
+                    workouts_completed=b["workouts_completed"],
+                    total_minutes=0,
+                    avg_duration_minutes=0.0,
+                    total_volume_kg=round(b["total_volume_kg"], 2),
+                    total_sets=b["total_sets"],
+                    total_reps=b["total_reps"],
+                )
+                for b in sorted(week_buckets.values(), key=lambda x: x["week_start"])
+            ]
+        else:
+            # Combined path — unchanged. Query weekly progress summary view.
+            query = db.client.table("weekly_progress_summary") \
+                .select("*") \
+                .eq("user_id", user_id)
+
+            if cutoff_date:
+                query = query.gte("week_start", cutoff_date.isoformat())
+
+            query = query.order("week_start", desc=False)
+            result = query.execute()
+
+            data = result.data or []
+
+            # Transform data
+            weekly_data = [
+                WeeklyVolumeData(
+                    week_start=row["week_start"],
+                    week_number=row.get("week_number", _get_week_number(row["week_start"])),
+                    year=row.get("year", _get_year(row["week_start"])),
+                    workouts_completed=row.get("workouts_completed", 0),
+                    total_minutes=row.get("total_minutes", 0),
+                    avg_duration_minutes=float(row.get("avg_duration_minutes", 0)),
+                    total_volume_kg=float(row.get("total_volume_kg", 0)),
+                    total_sets=row.get("total_sets", 0),
+                    total_reps=row.get("total_reps", 0)
+                )
+                for row in data
+            ]
 
         # Calculate trend
         trend = _calculate_volume_trend(weekly_data)
