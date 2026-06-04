@@ -744,6 +744,26 @@ class _ContextPanel extends StatelessWidget {
           _TableControls(controller: controller, props: props),
         if (props is RepeaterProps)
           _RepeaterControls(controller: controller, props: props),
+        if (props is ChatBubbleProps)
+          _ChatBubbleControls(controller: controller, props: props),
+        if (props is AvatarRowProps)
+          _AvatarRowControls(controller: controller, props: props),
+        if (props is ScrubberProps)
+          _ScrubberControls(controller: controller, props: props),
+        if (props is RingStatProps)
+          _RingStatControls(controller: controller, props: props),
+        if (props is RingTrioProps)
+          _RingTrioControls(controller: controller, props: props),
+        if (props is StatGridProps)
+          _StatGridControls(controller: controller, props: props),
+        if (props is GridHeatmapProps)
+          _GridHeatmapControls(controller: controller, props: props),
+        if (props is RatingStarsProps)
+          _RatingStarsControls(controller: controller, props: props),
+        if (props is BarcodeProps)
+          _BarcodeControls(controller: controller, props: props),
+        if (props is PerforationProps)
+          _PerforationControls(controller: controller, props: props),
         _opacityRow(),
         const SizedBox(height: 4),
         _commonRow(context),
@@ -1792,6 +1812,609 @@ class _RepeaterControls extends StatelessWidget {
   }
 }
 
+// ─────────────────────────── Chat-bubble controls ─────────────────────────
+
+class _ChatBubbleControls extends StatelessWidget {
+  final CardEditorController controller;
+  final ChatBubbleProps props;
+  const _ChatBubbleControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _editRow(context,
+                label: 'Edit message', onTap: () => _editText(context)),
+            _editRow(context,
+                label: 'Edit name', onTap: () => _editSender(context)),
+          ],
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Side',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            const SizedBox(width: 8),
+            for (final s in ChatSide.values)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: ChoiceChip(
+                  label: Text(s.name),
+                  selected: props.side == s,
+                  onSelected: (_) => controller.updateSelected(
+                    (e) => e.copyWith(props: props.copyWith(side: s)),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.tint,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(tint: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editText(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Message', initial: props.text, hint: 'Type the message…');
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(text: r, textBinding: DataBinding.none),
+        ));
+  }
+
+  Future<void> _editSender(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Sender name',
+        initial: props.sender,
+        hint: 'Leave blank to hide');
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(sender: r, senderBinding: DataBinding.none),
+        ));
+  }
+}
+
+// ─────────────────────────── Avatar-row controls ──────────────────────────
+
+class _AvatarRowControls extends StatelessWidget {
+  final CardEditorController controller;
+  final AvatarRowProps props;
+  const _AvatarRowControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _editRow(context,
+                label: 'Edit handle', onTap: () => _editHandle(context)),
+            _editRow(context,
+                label: 'Edit subtitle', onTap: () => _editSub(context)),
+          ],
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Verified',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Switch.adaptive(
+              value: props.verified,
+              onChanged: (v) => controller.updateSelected(
+                (e) => e.copyWith(props: props.copyWith(verified: v)),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.textColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(textColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editHandle(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Handle', initial: props.handle, hint: '@yourhandle');
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(handle: r, handleBinding: DataBinding.none),
+        ));
+  }
+
+  Future<void> _editSub(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Subtitle',
+        initial: props.sub,
+        hint: 'e.g. 1,204 followers');
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(sub: r, subBinding: DataBinding.none),
+        ));
+  }
+}
+
+// ─────────────────────────── Scrubber controls ────────────────────────────
+
+class _ScrubberControls extends StatelessWidget {
+  final CardEditorController controller;
+  final ScrubberProps props;
+  const _ScrubberControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _editRow(context,
+                label: 'Elapsed', onTap: () => _editLeft(context)),
+            _editRow(context,
+                label: 'Total', onTap: () => _editRight(context)),
+          ],
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Progress',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.progress.clamp(0.0, 1.0),
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(progress: v)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.fillColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(fillColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editLeft(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Elapsed time', initial: props.leftLabel, hint: '1:23');
+    if (r == null) return;
+    controller.updateSelected(
+      (e) => e.copyWith(props: props.copyWith(leftLabel: r)),
+    );
+  }
+
+  Future<void> _editRight(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Total time', initial: props.rightLabel, hint: '3:05');
+    if (r == null) return;
+    controller.updateSelected(
+      (e) => e.copyWith(props: props.copyWith(rightLabel: r)),
+    );
+  }
+}
+
+// ─────────────────────────── Ring-stat controls ───────────────────────────
+
+class _RingStatControls extends StatelessWidget {
+  final CardEditorController controller;
+  final RingStatProps props;
+  const _RingStatControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _editRow(context,
+                label: 'Edit value', onTap: () => _editValue(context)),
+            _editRow(context,
+                label: 'Edit label', onTap: () => _editLabel(context)),
+          ],
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Fill',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.progress.clamp(0.0, 1.0),
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(
+                    // Adjusting the slider detaches from any data binding.
+                    props: props.copyWith(
+                        progress: v, valueBinding: DataBinding.none),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.ringColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(ringColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editValue(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Center value', initial: props.centerValue, hint: 'e.g. 72%');
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props:
+              props.copyWith(centerValue: r, centerBinding: DataBinding.none),
+        ));
+  }
+
+  Future<void> _editLabel(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Label', initial: props.label, hint: 'e.g. GOAL');
+    if (r == null) return;
+    controller.updateSelected(
+      (e) => e.copyWith(props: props.copyWith(label: r)),
+    );
+  }
+}
+
+// ─────────────────────────── Ring-trio controls ───────────────────────────
+
+class _RingTrioControls extends StatelessWidget {
+  final CardEditorController controller;
+  final RingTrioProps props;
+  const _RingTrioControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget ringSlider(
+        String label, double value, RingTrioProps Function(double) build) {
+      return Row(
+        children: [
+          const SizedBox(width: 4),
+          SizedBox(
+            width: 54,
+            child: Text(label,
+                style: const TextStyle(color: Colors.white54, fontSize: 12)),
+          ),
+          Expanded(
+            child: Slider(
+              value: value.clamp(0.0, 1.0),
+              onChanged: (v) => controller.updateSelected(
+                (e) => e.copyWith(props: build(v)),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ringSlider(
+            'Outer', props.outer, (v) => props.copyWith(outer: v)),
+        ringSlider(
+            'Middle', props.middle, (v) => props.copyWith(middle: v)),
+        ringSlider(
+            'Inner', props.inner, (v) => props.copyWith(inner: v)),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── Stat-grid controls ───────────────────────────
+
+class _StatGridControls extends StatelessWidget {
+  final CardEditorController controller;
+  final StatGridProps props;
+  const _StatGridControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _editRow(context, label: 'Edit tiles', onTap: () => _edit(context)),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Columns',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.columns.clamp(1, 4).toDouble(),
+                min: 1,
+                max: 4,
+                divisions: 3,
+                label: '${props.columns}',
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(columns: v.round())),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.valueColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(valueColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    // One `value: label` tile per line.
+    final initial = props.tiles
+        .map((t) => '${t.isNotEmpty ? t[0] : ''}: '
+            '${t.length > 1 ? t[1] : ''}')
+        .join('\n');
+    final ctrl = TextEditingController(text: initial);
+    final r = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Stat tiles'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: null,
+          decoration: const InputDecoration(
+            hintText: 'One per line:\n12: WORKOUTS\n7: PRs',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (r == null) return;
+    final tiles = <List<String>>[];
+    for (final line in r.split('\n')) {
+      if (line.trim().isEmpty) continue;
+      final i = line.indexOf(':');
+      if (i < 0) {
+        tiles.add([line.trim(), '']);
+      } else {
+        tiles.add([line.substring(0, i).trim(), line.substring(i + 1).trim()]);
+      }
+    }
+    controller.updateSelected(
+      (e) => e.copyWith(props: props.copyWith(tiles: tiles)),
+    );
+  }
+}
+
+// ─────────────────────────── Heatmap controls ─────────────────────────────
+
+class _GridHeatmapControls extends StatelessWidget {
+  final CardEditorController controller;
+  final GridHeatmapProps props;
+  const _GridHeatmapControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Columns',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.columns.clamp(4, 20).toDouble(),
+                min: 4,
+                max: 20,
+                divisions: 16,
+                label: '${props.columns}',
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(columns: v.round())),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.cellColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(cellColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── Rating-stars controls ────────────────────────
+
+class _RatingStarsControls extends StatelessWidget {
+  final CardEditorController controller;
+  final RatingStarsProps props;
+  const _RatingStarsControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Rating',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.rating.clamp(0.0, props.count.toDouble()),
+                min: 0,
+                max: props.count.toDouble(),
+                divisions: props.count * 2,
+                label: props.rating.toStringAsFixed(1),
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(rating: v)),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.filledColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(filledColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── Barcode controls ─────────────────────────────
+
+class _BarcodeControls extends StatelessWidget {
+  final CardEditorController controller;
+  final BarcodeProps props;
+  const _BarcodeControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _editRow(context,
+                label: 'Edit code', onTap: () => _editData(context)),
+            _editRow(context,
+                label: 'Edit caption', onTap: () => _editCaption(context)),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.barColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(barColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _editData(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Barcode value',
+        initial: props.data,
+        hint: 'Drives the stripe pattern');
+    if (r == null) return;
+    controller.updateSelected(
+      (e) => e.copyWith(props: props.copyWith(data: r)),
+    );
+  }
+
+  Future<void> _editCaption(BuildContext context) async {
+    final r = await _promptText(context,
+        title: 'Caption',
+        initial: props.caption,
+        hint: 'Leave blank to hide');
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(
+            caption: r,
+            captionBinding: DataBinding.none,
+            showCaption: r.trim().isNotEmpty,
+          ),
+        ));
+  }
+}
+
+// ─────────────────────────── Perforation controls ─────────────────────────
+
+class _PerforationControls extends StatelessWidget {
+  final CardEditorController controller;
+  final PerforationProps props;
+  const _PerforationControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final ed in PerforationEdge.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(ed.name),
+                    selected: props.edge == ed,
+                    onSelected: (_) => controller.updateSelected(
+                      (e) => e.copyWith(props: props.copyWith(edge: ed)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Notches',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Switch.adaptive(
+              value: props.showNotches,
+              onChanged: (v) => controller.updateSelected(
+                (e) => e.copyWith(props: props.copyWith(showNotches: v)),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.color,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(color: c)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ─────────────────────────── Background sheet ──────────────────────────────
 
 class _BackgroundSheet extends StatefulWidget {
@@ -2454,6 +3077,26 @@ class _LayersSheet extends StatelessWidget {
         return (Icons.qr_code_2_rounded, 'QR');
       case CardElementType.texture:
         return (Icons.grain_rounded, 'Texture');
+      case CardElementType.chatBubble:
+        return (Icons.chat_bubble_rounded, 'Bubble');
+      case CardElementType.avatarRow:
+        return (Icons.account_circle_rounded, 'Avatar');
+      case CardElementType.scrubber:
+        return (Icons.graphic_eq_rounded, 'Scrubber');
+      case CardElementType.ringStat:
+        return (Icons.donut_small_rounded, 'Ring');
+      case CardElementType.ringTrio:
+        return (Icons.track_changes_rounded, 'Rings');
+      case CardElementType.statGrid:
+        return (Icons.grid_view_rounded, 'Stat grid');
+      case CardElementType.gridHeatmap:
+        return (Icons.calendar_view_month_rounded, 'Heatmap');
+      case CardElementType.ratingStars:
+        return (Icons.star_rounded, 'Stars');
+      case CardElementType.barcode:
+        return (Icons.view_week_rounded, 'Barcode');
+      case CardElementType.perforation:
+        return (Icons.more_horiz_rounded, 'Perforation');
     }
   }
 

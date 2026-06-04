@@ -358,3 +358,320 @@ CardElement iconEl({
   Color color = const Color(0xFFFFFFFF),
 }) =>
     _el(CardElementType.icon, pos, size, IconProps(emoji: emoji, color: color));
+
+// ───────────── Social / AI / collectible element helpers ───────────────────
+
+/// A chat / DM / comment bubble — iMessage / WhatsApp / AI-chat styling.
+CardElement chatBubbleEl({
+  required Offset pos,
+  required Size size,
+  String text = 'Crushed leg day today 💪',
+  DataBinding textBinding = DataBinding.none,
+  String sender = '',
+  DataBinding senderBinding = DataBinding.none,
+  ChatSide side = ChatSide.right,
+  Color tint = const Color(0xFF2563EB),
+  Color textColor = const Color(0xFFFFFFFF),
+  double fontSize = 28,
+  int font = 0,
+  double cornerRadius = 22,
+  bool showTail = true,
+}) =>
+    _el(
+      CardElementType.chatBubble,
+      pos,
+      size,
+      ChatBubbleProps(
+        text: text,
+        textBinding: textBinding,
+        sender: sender,
+        senderBinding: senderBinding,
+        side: side,
+        tint: tint,
+        textColor: textColor,
+        fontSize: fontSize,
+        fontIndex: font,
+        cornerRadius: cornerRadius,
+        showTail: showTail,
+      ),
+    );
+
+/// A social-header row — circular avatar + handle + sub-line.
+CardElement avatarRowEl({
+  required Offset pos,
+  required Size size,
+  DataBinding avatarBinding = const DataBinding(BindingSource.avatarUrl),
+  String fallbackGlyph = '🏋️',
+  String handle = '@yourhandle',
+  DataBinding handleBinding = const DataBinding(BindingSource.socialHandle),
+  String sub = 'just now',
+  DataBinding subBinding = DataBinding.none,
+  Color textColor = const Color(0xFFFFFFFF),
+  Color subColor = const Color(0x99FFFFFF),
+  double fontSize = 30,
+  int font = 0,
+  bool verified = false,
+}) =>
+    _el(
+      CardElementType.avatarRow,
+      pos,
+      size,
+      AvatarRowProps(
+        avatar: CardPhotoRef(binding: avatarBinding),
+        fallbackGlyph: fallbackGlyph,
+        handle: handle,
+        handleBinding: handleBinding,
+        sub: sub,
+        subBinding: subBinding,
+        textColor: textColor,
+        subColor: subColor,
+        fontSize: fontSize,
+        fontIndex: font,
+        verified: verified,
+      ),
+    );
+
+/// A now-playing / podcast scrubber — progress track + two time labels.
+CardElement scrubberEl({
+  required Offset pos,
+  required Size size,
+  double progress = 0.42,
+  String leftLabel = '1:23',
+  String rightLabel = '3:05',
+  Color trackColor = const Color(0x33FFFFFF),
+  Color fillColor = const Color(0xFFFFFFFF),
+  Color knobColor = const Color(0xFFFFFFFF),
+  Color textColor = const Color(0xCCFFFFFF),
+  double trackHeight = 6,
+  double fontSize = 20,
+  bool showKnob = true,
+}) =>
+    _el(
+      CardElementType.scrubber,
+      pos,
+      size,
+      ScrubberProps(
+        progress: progress,
+        leftLabel: leftLabel,
+        rightLabel: rightLabel,
+        trackColor: trackColor,
+        fillColor: fillColor,
+        knobColor: knobColor,
+        textColor: textColor,
+        trackHeight: trackHeight,
+        fontSize: fontSize,
+        showKnob: showKnob,
+      ),
+    );
+
+/// A single radial progress ring with a big center value + small label.
+CardElement ringStatEl({
+  required Offset pos,
+  required Size size,
+  double progress = 0.72,
+  DataBinding valueBinding = DataBinding.none,
+  double maxValue = 100,
+  String centerValue = '72%',
+  DataBinding centerBinding = DataBinding.none,
+  String label = 'GOAL',
+  Color ringColor = const Color(0xFFF97316),
+  Color trackColor = const Color(0x22FFFFFF),
+  Color textColor = const Color(0xFFFFFFFF),
+  double strokeFraction = 0.12,
+  double centerFontSize = 64,
+  double labelFontSize = 18,
+  int font = 0,
+}) =>
+    _el(
+      CardElementType.ringStat,
+      pos,
+      size,
+      RingStatProps(
+        progress: progress,
+        valueBinding: valueBinding,
+        maxValue: maxValue,
+        centerValue: centerValue,
+        centerBinding: centerBinding,
+        label: label,
+        ringColor: ringColor,
+        trackColor: trackColor,
+        textColor: textColor,
+        strokeFraction: strokeFraction,
+        centerFontSize: centerFontSize,
+        labelFontSize: labelFontSize,
+        fontIndex: font,
+      ),
+    );
+
+/// An Apple-rings trio — three concentric radial rings.
+CardElement ringTrioEl({
+  required Offset pos,
+  required Size size,
+  double outer = 0.82,
+  double middle = 0.7,
+  double inner = 0.6,
+  Color outerColor = const Color(0xFFFA114F),
+  Color middleColor = const Color(0xFF92E82A),
+  Color innerColor = const Color(0xFF1AD6FD),
+  double strokeFraction = 0.09,
+  double trackOpacity = 0.2,
+}) =>
+    _el(
+      CardElementType.ringTrio,
+      pos,
+      size,
+      RingTrioProps(
+        outer: outer,
+        middle: middle,
+        inner: inner,
+        outerColor: outerColor,
+        middleColor: middleColor,
+        innerColor: innerColor,
+        strokeFraction: strokeFraction,
+        trackOpacity: trackOpacity,
+      ),
+    );
+
+/// A 2×N grid of label/value tiles. Each tile is `[value, label]`.
+CardElement statGridEl({
+  required Offset pos,
+  required Size size,
+  List<List<String>> tiles = const [
+    ['12', 'WORKOUTS'],
+    ['48.2k', 'VOLUME LB'],
+    ['7', 'PRs'],
+    ['14', 'DAY STREAK'],
+  ],
+  int columns = 2,
+  Color tileColor = const Color(0x14FFFFFF),
+  Color valueColor = const Color(0xFFFFFFFF),
+  Color labelColor = const Color(0x99FFFFFF),
+  double valueFontSize = 44,
+  double labelFontSize = 16,
+  int valueFont = 0,
+  double cornerRadius = 16,
+  double spacing = 10,
+}) =>
+    _el(
+      CardElementType.statGrid,
+      pos,
+      size,
+      StatGridProps(
+        tiles: tiles,
+        columns: columns,
+        tileColor: tileColor,
+        valueColor: valueColor,
+        labelColor: labelColor,
+        valueFontSize: valueFontSize,
+        labelFontSize: labelFontSize,
+        valueFontIndex: valueFont,
+        cornerRadius: cornerRadius,
+        spacing: spacing,
+      ),
+    );
+
+/// A calendar / contribution-style heatmap grid. Empty [cells] → demo data.
+CardElement gridHeatmapEl({
+  required Offset pos,
+  required Size size,
+  List<double> cells = const [],
+  int columns = 13,
+  Color cellColor = const Color(0xFF22C55E),
+  Color emptyColor = const Color(0x1FFFFFFF),
+  double cellRadius = 3,
+  double gapFraction = 0.18,
+}) =>
+    _el(
+      CardElementType.gridHeatmap,
+      pos,
+      size,
+      GridHeatmapProps(
+        cells: cells,
+        columns: columns,
+        cellColor: cellColor,
+        emptyColor: emptyColor,
+        cellRadius: cellRadius,
+        gapFraction: gapFraction,
+      ),
+    );
+
+/// A 5-star rating row (reviews). [rating] is 0..[count], supports halves.
+CardElement ratingStarsEl({
+  required Offset pos,
+  required Size size,
+  double rating = 4.5,
+  int count = 5,
+  Color filledColor = const Color(0xFFFFD23F),
+  Color emptyColor = const Color(0x33FFFFFF),
+  double spacingFraction = 0.18,
+}) =>
+    _el(
+      CardElementType.ratingStars,
+      pos,
+      size,
+      RatingStarsProps(
+        rating: rating,
+        count: count,
+        filledColor: filledColor,
+        emptyColor: emptyColor,
+        spacingFraction: spacingFraction,
+      ),
+    );
+
+/// A decorative barcode (deterministic stripes) + optional caption.
+CardElement barcodeEl({
+  required Offset pos,
+  required Size size,
+  String data = 'ZEALOVA-2026',
+  String caption = 'ZEALOVA · 2026',
+  DataBinding captionBinding = DataBinding.none,
+  Color barColor = const Color(0xFF111111),
+  Color background = const Color(0xFFFFFFFF),
+  Color captionColor = const Color(0xFF111111),
+  double captionFontSize = 18,
+  bool showCaption = true,
+}) =>
+    _el(
+      CardElementType.barcode,
+      pos,
+      size,
+      BarcodeProps(
+        data: data,
+        caption: caption,
+        captionBinding: captionBinding,
+        barColor: barColor,
+        background: background,
+        captionColor: captionColor,
+        captionFontSize: captionFontSize,
+        showCaption: showCaption,
+      ),
+    );
+
+/// A ticket / boarding-pass perforation — dashed tear line + punched notches.
+CardElement perforationEl({
+  required Offset pos,
+  required Size size,
+  PerforationEdge edge = PerforationEdge.horizontalCenter,
+  Color color = const Color(0x66FFFFFF),
+  double dashLength = 12,
+  double gapLength = 9,
+  double thickness = 2,
+  double notchRadius = 16,
+  Color notchColor = const Color(0xFF15171C),
+  bool showNotches = true,
+}) =>
+    _el(
+      CardElementType.perforation,
+      pos,
+      size,
+      PerforationProps(
+        edge: edge,
+        color: color,
+        dashLength: dashLength,
+        gapLength: gapLength,
+        thickness: thickness,
+        notchRadius: notchRadius,
+        notchColor: notchColor,
+        showNotches: showNotches,
+      ),
+    );

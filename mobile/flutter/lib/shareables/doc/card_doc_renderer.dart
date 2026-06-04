@@ -223,6 +223,16 @@ class _ElementBody extends StatelessWidget {
     if (p is FrameProps) return _frame(p);
     if (p is QrProps) return _qr(p);
     if (p is TextureProps) return _texture(p);
+    if (p is ChatBubbleProps) return _chatBubble(p);
+    if (p is AvatarRowProps) return _avatarRow(p);
+    if (p is ScrubberProps) return _scrubber(p);
+    if (p is RingStatProps) return _ringStat(p);
+    if (p is RingTrioProps) return _ringTrio(p);
+    if (p is StatGridProps) return _statGrid(p);
+    if (p is GridHeatmapProps) return _gridHeatmap(p);
+    if (p is RatingStarsProps) return _ratingStars(p);
+    if (p is BarcodeProps) return _barcode(p);
+    if (p is PerforationProps) return _perforation(p);
     return const SizedBox.shrink();
   }
 
@@ -790,6 +800,400 @@ class _ElementBody extends StatelessWidget {
       child: const SizedBox.expand(),
     );
   }
+
+  // ─── chat bubble (iMessage / WhatsApp / AI-chat / comment / DM) ───
+  Widget _chatBubble(ChatBubbleProps p) {
+    final sender =
+        resolveText(p.senderBinding, data, literalFallback: p.sender);
+    final text = resolveText(p.textBinding, data, literalFallback: p.text);
+    final base = cardFontByIndex(p.fontIndex).style;
+    final isRight = p.side == ChatSide.right;
+    final bubble = Container(
+      padding: EdgeInsets.symmetric(
+          horizontal: p.fontSize * 0.7, vertical: p.fontSize * 0.5),
+      decoration: BoxDecoration(
+        color: p.tint,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(p.cornerRadius),
+          topRight: Radius.circular(p.cornerRadius),
+          bottomLeft: Radius.circular(
+              p.showTail && !isRight ? p.cornerRadius * 0.18 : p.cornerRadius),
+          bottomRight: Radius.circular(
+              p.showTail && isRight ? p.cornerRadius * 0.18 : p.cornerRadius),
+        ),
+      ),
+      child: Text(
+        text,
+        style: base.copyWith(
+          color: p.textColor,
+          fontSize: p.fontSize,
+          height: 1.18,
+        ),
+      ),
+    );
+    return Align(
+      alignment: isRight ? Alignment.centerRight : Alignment.centerLeft,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment:
+            isRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          if (sender.trim().isNotEmpty)
+            Padding(
+              padding: EdgeInsets.only(
+                  bottom: p.fontSize * 0.22,
+                  left: p.fontSize * 0.3,
+                  right: p.fontSize * 0.3),
+              child: Text(
+                sender,
+                style: base.copyWith(
+                  color: p.textColor.withValues(alpha: 0.7),
+                  fontSize: p.fontSize * 0.62,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          Flexible(child: bubble),
+        ],
+      ),
+    );
+  }
+
+  // ─── avatar row (social header) ───
+  Widget _avatarRow(AvatarRowProps p) {
+    final handle = resolveText(p.handleBinding, data, literalFallback: p.handle);
+    final sub = resolveText(p.subBinding, data, literalFallback: p.sub);
+    final avatarUrl = resolvePhotoUrl(p.avatar, data);
+    final base = cardFontByIndex(p.fontIndex).style;
+    final dim = box.height.clamp(1.0, double.infinity);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ClipOval(
+          child: SizedBox(
+            width: dim,
+            height: dim,
+            child: ColoredBox(
+              color: p.textColor.withValues(alpha: 0.12),
+              child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                  ? FoodImage(url: avatarUrl, fit: BoxFit.cover)
+                  : Center(
+                      child: Text(p.fallbackGlyph,
+                          style: TextStyle(fontSize: dim * 0.5)),
+                    ),
+            ),
+          ),
+        ),
+        SizedBox(width: dim * 0.28),
+        Flexible(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      handle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: base.copyWith(
+                        color: p.textColor,
+                        fontSize: p.fontSize,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  if (p.verified) ...[
+                    SizedBox(width: p.fontSize * 0.2),
+                    Icon(Icons.verified_rounded,
+                        color: const Color(0xFF1DA1F2),
+                        size: p.fontSize * 0.85),
+                  ],
+                ],
+              ),
+              if (sub.trim().isNotEmpty)
+                Text(
+                  sub,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: base.copyWith(
+                    color: p.subColor,
+                    fontSize: p.fontSize * 0.66,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── scrubber (now-playing / podcast) ───
+  Widget _scrubber(ScrubberProps p) {
+    final labelStyle = TextStyle(
+      color: p.textColor,
+      fontSize: p.fontSize,
+      fontWeight: FontWeight.w600,
+      fontFeatures: const [ui.FontFeature.tabularFigures()],
+    );
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          height: math.max(p.trackHeight, p.showKnob ? p.trackHeight * 2.6 : p.trackHeight),
+          child: CustomPaint(
+            size: Size.infinite,
+            painter: _ScrubberPainter(
+              progress: p.progress.clamp(0.0, 1.0),
+              trackColor: p.trackColor,
+              fillColor: p.fillColor,
+              knobColor: p.knobColor,
+              trackHeight: p.trackHeight,
+              showKnob: p.showKnob,
+            ),
+          ),
+        ),
+        SizedBox(height: p.fontSize * 0.4),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(p.leftLabel, style: labelStyle),
+            Text(p.rightLabel, style: labelStyle),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ─── ring stat (single radial + center value) ───
+  Widget _ringStat(RingStatProps p) {
+    final maxV = p.maxValue == 0 ? 1.0 : p.maxValue;
+    final bound = resolveNumber(p.valueBinding, data);
+    final frac = (p.valueBinding.isLiteral || bound == null
+            ? p.progress
+            : bound / maxV)
+        .clamp(0.0, 1.0)
+        .toDouble();
+    final center =
+        resolveText(p.centerBinding, data, literalFallback: p.centerValue);
+    final base = cardFontByIndex(p.fontIndex).style;
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        CustomPaint(
+          size: Size.infinite,
+          painter: _RingStatPainter(
+            progress: frac,
+            ringColor: p.ringColor,
+            trackColor: p.trackColor,
+            strokeFraction: p.strokeFraction,
+          ),
+        ),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                center,
+                style: base.copyWith(
+                  color: p.textColor,
+                  fontSize: p.centerFontSize,
+                  fontWeight: FontWeight.w900,
+                  height: 0.95,
+                ),
+              ),
+              if (p.label.trim().isNotEmpty)
+                Text(
+                  p.label,
+                  style: base.copyWith(
+                    color: p.textColor.withValues(alpha: 0.75),
+                    fontSize: p.labelFontSize,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── ring trio (Apple rings) ───
+  Widget _ringTrio(RingTrioProps p) {
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _RingTrioPainter(
+        fracs: [
+          p.outer.clamp(0.0, 1.0),
+          p.middle.clamp(0.0, 1.0),
+          p.inner.clamp(0.0, 1.0),
+        ],
+        colors: [p.outerColor, p.middleColor, p.innerColor],
+        strokeFraction: p.strokeFraction,
+        trackOpacity: p.trackOpacity,
+      ),
+    );
+  }
+
+  // ─── stat grid (2×N label/value tiles) ───
+  Widget _statGrid(StatGridProps p) {
+    final cols = p.columns < 1 ? 1 : p.columns;
+    final base = cardFontByIndex(p.valueFontIndex).style;
+    Widget tile(List<String> t) => Container(
+          padding: EdgeInsets.all(p.spacing * 1.1),
+          decoration: BoxDecoration(
+            color: p.tileColor,
+            borderRadius: BorderRadius.circular(p.cornerRadius),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  t.isNotEmpty ? t[0] : '',
+                  style: base.copyWith(
+                    color: p.valueColor,
+                    fontSize: p.valueFontSize,
+                    fontWeight: FontWeight.w900,
+                    height: 1.0,
+                  ),
+                ),
+              ),
+              SizedBox(height: p.spacing * 0.35),
+              Text(
+                t.length > 1 ? t[1] : '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: base.copyWith(
+                  color: p.labelColor,
+                  fontSize: p.labelFontSize,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+        );
+    final rows = <Widget>[];
+    for (var i = 0; i < p.tiles.length; i += cols) {
+      final rowTiles = <Widget>[];
+      for (var c = 0; c < cols; c++) {
+        final idx = i + c;
+        if (c > 0) rowTiles.add(SizedBox(width: p.spacing));
+        rowTiles.add(Expanded(
+          child: idx < p.tiles.length
+              ? tile(p.tiles[idx])
+              : const SizedBox.shrink(),
+        ));
+      }
+      if (rows.isNotEmpty) rows.add(SizedBox(height: p.spacing));
+      rows.add(Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: rowTiles));
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: rows,
+    );
+  }
+
+  // ─── grid heatmap (calendar / contribution grid) ───
+  Widget _gridHeatmap(GridHeatmapProps p) {
+    final cells = p.cells.isNotEmpty
+        ? p.cells
+        : List<double>.generate(
+            p.columns * 7, (i) => ((i * 53 + 17) % 11) / 10.0);
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _GridHeatmapPainter(
+        cells: cells,
+        columns: p.columns < 1 ? 1 : p.columns,
+        cellColor: p.cellColor,
+        emptyColor: p.emptyColor,
+        cellRadius: p.cellRadius,
+        gapFraction: p.gapFraction,
+      ),
+    );
+  }
+
+  // ─── rating stars (reviews) ───
+  Widget _ratingStars(RatingStarsProps p) {
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _StarsPainter(
+        rating: p.rating,
+        count: p.count < 1 ? 1 : p.count,
+        filledColor: p.filledColor,
+        emptyColor: p.emptyColor,
+        spacingFraction: p.spacingFraction,
+      ),
+    );
+  }
+
+  // ─── barcode (ticket / boarding-pass / receipt / stamp) ───
+  Widget _barcode(BarcodeProps p) {
+    final caption =
+        resolveText(p.captionBinding, data, literalFallback: p.caption);
+    return DecoratedBox(
+      decoration: BoxDecoration(color: p.background),
+      child: Padding(
+        padding: EdgeInsets.all(box.shortestSide * 0.06),
+        child: Column(
+          children: [
+            Expanded(
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: _BarcodePainter(data: p.data, barColor: p.barColor),
+              ),
+            ),
+            if (p.showCaption && caption.trim().isNotEmpty) ...[
+              SizedBox(height: box.shortestSide * 0.04),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  caption,
+                  style: TextStyle(
+                    color: p.captionColor,
+                    fontSize: p.captionFontSize,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2.0,
+                    fontFamily: 'Space Mono',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── perforation (ticket / boarding-pass tear line) ───
+  Widget _perforation(PerforationProps p) {
+    return CustomPaint(
+      size: Size.infinite,
+      painter: _PerforationPainter(
+        edge: p.edge,
+        color: p.color,
+        dashLength: p.dashLength,
+        gapLength: p.gapLength,
+        thickness: p.thickness,
+        notchRadius: p.notchRadius,
+        notchColor: p.notchColor,
+        showNotches: p.showNotches,
+      ),
+    );
+  }
 }
 
 // ─────────────────────────── Painters ─────────────────────────────────────
@@ -1027,4 +1431,378 @@ class _TexturePainter extends CustomPainter {
   @override
   bool shouldRepaint(_TexturePainter old) =>
       old.kind != kind || old.intensity != intensity || old.tint != tint;
+}
+
+class _ScrubberPainter extends CustomPainter {
+  final double progress;
+  final Color trackColor;
+  final Color fillColor;
+  final Color knobColor;
+  final double trackHeight;
+  final bool showKnob;
+  const _ScrubberPainter({
+    required this.progress,
+    required this.trackColor,
+    required this.fillColor,
+    required this.knobColor,
+    required this.trackHeight,
+    required this.showKnob,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cy = size.height / 2;
+    final r = trackHeight / 2;
+    final track = RRect.fromRectAndRadius(
+        Rect.fromLTWH(0, cy - r, size.width, trackHeight), Radius.circular(r));
+    canvas.drawRRect(track, Paint()..color = trackColor);
+    final fillW = (size.width * progress).clamp(0.0, size.width);
+    if (fillW > 0) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+            Rect.fromLTWH(0, cy - r, fillW, trackHeight), Radius.circular(r)),
+        Paint()..color = fillColor,
+      );
+    }
+    if (showKnob) {
+      canvas.drawCircle(
+          Offset(fillW.clamp(0.0, size.width), cy),
+          math.max(trackHeight * 1.3, 6),
+          Paint()..color = knobColor);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ScrubberPainter old) =>
+      old.progress != progress ||
+      old.trackColor != trackColor ||
+      old.fillColor != fillColor ||
+      old.knobColor != knobColor ||
+      old.trackHeight != trackHeight ||
+      old.showKnob != showKnob;
+}
+
+class _RingStatPainter extends CustomPainter {
+  final double progress;
+  final Color ringColor;
+  final Color trackColor;
+  final double strokeFraction;
+  const _RingStatPainter({
+    required this.progress,
+    required this.ringColor,
+    required this.trackColor,
+    required this.strokeFraction,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sw = size.shortestSide * strokeFraction.clamp(0.02, 0.4);
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2 - sw / 2;
+    if (r <= 0) return;
+    canvas.drawCircle(
+        c,
+        r,
+        Paint()
+          ..color = trackColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = sw);
+    canvas.drawArc(
+        Rect.fromCircle(center: c, radius: r),
+        -math.pi / 2,
+        2 * math.pi * progress,
+        false,
+        Paint()
+          ..color = ringColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = sw
+          ..strokeCap = StrokeCap.round);
+  }
+
+  @override
+  bool shouldRepaint(_RingStatPainter old) =>
+      old.progress != progress ||
+      old.ringColor != ringColor ||
+      old.trackColor != trackColor ||
+      old.strokeFraction != strokeFraction;
+}
+
+class _RingTrioPainter extends CustomPainter {
+  final List<double> fracs;
+  final List<Color> colors;
+  final double strokeFraction;
+  final double trackOpacity;
+  const _RingTrioPainter({
+    required this.fracs,
+    required this.colors,
+    required this.strokeFraction,
+    required this.trackOpacity,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final sw = size.shortestSide * strokeFraction.clamp(0.02, 0.2);
+    for (var i = 0; i < 3; i++) {
+      final r = size.shortestSide / 2 - sw / 2 - i * (sw * 1.4);
+      if (r <= 0) continue;
+      canvas.drawCircle(
+          c,
+          r,
+          Paint()
+            ..color = colors[i].withValues(alpha: trackOpacity.clamp(0.0, 1.0))
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = sw);
+      canvas.drawArc(
+          Rect.fromCircle(center: c, radius: r),
+          -math.pi / 2,
+          2 * math.pi * fracs[i],
+          false,
+          Paint()
+            ..color = colors[i]
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = sw
+            ..strokeCap = StrokeCap.round);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingTrioPainter old) =>
+      old.fracs != fracs ||
+      old.colors != colors ||
+      old.strokeFraction != strokeFraction ||
+      old.trackOpacity != trackOpacity;
+}
+
+class _GridHeatmapPainter extends CustomPainter {
+  final List<double> cells;
+  final int columns;
+  final Color cellColor;
+  final Color emptyColor;
+  final double cellRadius;
+  final double gapFraction;
+  const _GridHeatmapPainter({
+    required this.cells,
+    required this.columns,
+    required this.cellColor,
+    required this.emptyColor,
+    required this.cellRadius,
+    required this.gapFraction,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rows = (cells.length / columns).ceil().clamp(1, 999);
+    final cell = math.min(size.width / columns, size.height / rows);
+    final gap = cell * gapFraction.clamp(0.0, 0.5);
+    final inner = cell - gap;
+    if (inner <= 0) return;
+    // Center the grid within the slot.
+    final gridW = columns * cell;
+    final gridH = rows * cell;
+    final ox = (size.width - gridW) / 2;
+    final oy = (size.height - gridH) / 2;
+    for (var i = 0; i < columns * rows; i++) {
+      final col = i % columns;
+      final row = i ~/ columns;
+      final v = i < cells.length ? cells[i].clamp(0.0, 1.0) : 0.0;
+      final color = v <= 0.001
+          ? emptyColor
+          : Color.lerp(emptyColor, cellColor, 0.25 + 0.75 * v)!;
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(ox + col * cell + gap / 2, oy + row * cell + gap / 2,
+              inner, inner),
+          Radius.circular(cellRadius),
+        ),
+        Paint()..color = color,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_GridHeatmapPainter old) =>
+      old.cells != cells ||
+      old.columns != columns ||
+      old.cellColor != cellColor ||
+      old.emptyColor != emptyColor ||
+      old.cellRadius != cellRadius ||
+      old.gapFraction != gapFraction;
+}
+
+class _StarsPainter extends CustomPainter {
+  final double rating;
+  final int count;
+  final Color filledColor;
+  final Color emptyColor;
+  final double spacingFraction;
+  const _StarsPainter({
+    required this.rating,
+    required this.count,
+    required this.filledColor,
+    required this.emptyColor,
+    required this.spacingFraction,
+  });
+
+  Path _starPath(Offset c, double r) {
+    final path = Path();
+    const points = 5;
+    final inner = r * 0.42;
+    for (var i = 0; i < points * 2; i++) {
+      final radius = i.isEven ? r : inner;
+      final a = -math.pi / 2 + i * math.pi / points;
+      final pt = c + Offset(math.cos(a), math.sin(a)) * radius;
+      i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
+    }
+    path.close();
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gap = size.width * spacingFraction.clamp(0.0, 0.5) / count;
+    final slot = (size.width - gap * (count - 1)) / count;
+    final r = math.min(slot, size.height) / 2;
+    for (var i = 0; i < count; i++) {
+      final cx = i * (slot + gap) + slot / 2;
+      final c = Offset(cx, size.height / 2);
+      final fill = (rating - i).clamp(0.0, 1.0);
+      final star = _starPath(c, r);
+      canvas.drawPath(star, Paint()..color = emptyColor);
+      if (fill > 0) {
+        if (fill >= 1) {
+          canvas.drawPath(star, Paint()..color = filledColor);
+        } else {
+          canvas.save();
+          canvas.clipRect(
+              Rect.fromLTWH(cx - r, c.dy - r, 2 * r * fill, 2 * r));
+          canvas.drawPath(star, Paint()..color = filledColor);
+          canvas.restore();
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_StarsPainter old) =>
+      old.rating != rating ||
+      old.count != count ||
+      old.filledColor != filledColor ||
+      old.emptyColor != emptyColor ||
+      old.spacingFraction != spacingFraction;
+}
+
+class _BarcodePainter extends CustomPainter {
+  final String data;
+  final Color barColor;
+  const _BarcodePainter({required this.data, required this.barColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = barColor;
+    // Deterministic stripe widths seeded from [data] — looks like a real
+    // Code-128 barcode without needing an encoder.
+    final seed = data.isEmpty ? 'ZEALOVA'.codeUnits : data.codeUnits;
+    var x = 0.0;
+    var i = 0;
+    var bar = true;
+    while (x < size.width) {
+      final unit = size.width / 64;
+      final w = unit * (1 + (seed[i % seed.length] % 4));
+      if (bar) {
+        canvas.drawRect(
+            Rect.fromLTWH(x, 0, math.min(w, size.width - x), size.height),
+            paint);
+      }
+      x += w;
+      bar = !bar;
+      i++;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BarcodePainter old) =>
+      old.data != data || old.barColor != barColor;
+}
+
+class _PerforationPainter extends CustomPainter {
+  final PerforationEdge edge;
+  final Color color;
+  final double dashLength;
+  final double gapLength;
+  final double thickness;
+  final double notchRadius;
+  final Color notchColor;
+  final bool showNotches;
+  const _PerforationPainter({
+    required this.edge,
+    required this.color,
+    required this.dashLength,
+    required this.gapLength,
+    required this.thickness,
+    required this.notchRadius,
+    required this.notchColor,
+    required this.showNotches,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bool vertical =
+        edge == PerforationEdge.left || edge == PerforationEdge.right;
+    // Resolve the line endpoints for the chosen edge.
+    late Offset a;
+    late Offset b;
+    switch (edge) {
+      case PerforationEdge.top:
+        a = const Offset(0, 0);
+        b = Offset(size.width, 0);
+      case PerforationEdge.bottom:
+        a = Offset(0, size.height);
+        b = Offset(size.width, size.height);
+      case PerforationEdge.left:
+        a = const Offset(0, 0);
+        b = Offset(0, size.height);
+      case PerforationEdge.right:
+        a = Offset(size.width, 0);
+        b = Offset(size.width, size.height);
+      case PerforationEdge.horizontalCenter:
+        a = Offset(0, size.height / 2);
+        b = Offset(size.width, size.height / 2);
+    }
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = thickness
+      ..strokeCap = StrokeCap.round;
+    final notchPaint = Paint()..color = notchColor;
+    final total = vertical ? size.height : size.width;
+    final step = dashLength + gapLength;
+    final start = showNotches ? notchRadius : 0.0;
+    final endPad = showNotches ? notchRadius : 0.0;
+    var pos = start;
+    while (pos < total - endPad) {
+      final end = math.min(pos + dashLength, total - endPad);
+      if (vertical) {
+        canvas.drawLine(Offset(a.dx, pos), Offset(a.dx, end), paint);
+      } else {
+        canvas.drawLine(Offset(pos, a.dy), Offset(end, a.dy), paint);
+      }
+      pos += step;
+    }
+    if (showNotches) {
+      // Punched circles cut at each end of the tear line.
+      canvas.drawCircle(a, notchRadius, notchPaint);
+      canvas.drawCircle(b, notchRadius, notchPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PerforationPainter old) =>
+      old.edge != edge ||
+      old.color != color ||
+      old.dashLength != dashLength ||
+      old.gapLength != gapLength ||
+      old.thickness != thickness ||
+      old.notchRadius != notchRadius ||
+      old.notchColor != notchColor ||
+      old.showNotches != showNotches;
 }

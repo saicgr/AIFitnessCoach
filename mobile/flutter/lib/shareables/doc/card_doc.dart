@@ -417,6 +417,17 @@ enum CardElementType {
   frame,
   qr,
   texture,
+  // ── Appended for the social / AI / collectible redesign (append-only). ──
+  chatBubble,
+  avatarRow,
+  scrubber,
+  ringStat,
+  ringTrio,
+  statGrid,
+  gridHeatmap,
+  ratingStars,
+  barcode,
+  perforation,
 }
 
 /// Base class for every element's type-specific payload. Each concrete
@@ -466,6 +477,26 @@ abstract class ElementProps {
         return QrProps.fromJson(m);
       case CardElementType.texture:
         return TextureProps.fromJson(m);
+      case CardElementType.chatBubble:
+        return ChatBubbleProps.fromJson(m);
+      case CardElementType.avatarRow:
+        return AvatarRowProps.fromJson(m);
+      case CardElementType.scrubber:
+        return ScrubberProps.fromJson(m);
+      case CardElementType.ringStat:
+        return RingStatProps.fromJson(m);
+      case CardElementType.ringTrio:
+        return RingTrioProps.fromJson(m);
+      case CardElementType.statGrid:
+        return StatGridProps.fromJson(m);
+      case CardElementType.gridHeatmap:
+        return GridHeatmapProps.fromJson(m);
+      case CardElementType.ratingStars:
+        return RatingStarsProps.fromJson(m);
+      case CardElementType.barcode:
+        return BarcodeProps.fromJson(m);
+      case CardElementType.perforation:
+        return PerforationProps.fromJson(m);
     }
   }
 
@@ -506,6 +537,26 @@ abstract class ElementProps {
         return const QrProps();
       case CardElementType.texture:
         return const TextureProps();
+      case CardElementType.chatBubble:
+        return const ChatBubbleProps();
+      case CardElementType.avatarRow:
+        return const AvatarRowProps();
+      case CardElementType.scrubber:
+        return const ScrubberProps();
+      case CardElementType.ringStat:
+        return const RingStatProps();
+      case CardElementType.ringTrio:
+        return const RingTrioProps();
+      case CardElementType.statGrid:
+        return const StatGridProps();
+      case CardElementType.gridHeatmap:
+        return const GridHeatmapProps();
+      case CardElementType.ratingStars:
+        return const RatingStarsProps();
+      case CardElementType.barcode:
+        return const BarcodeProps();
+      case CardElementType.perforation:
+        return const PerforationProps();
     }
   }
 }
@@ -1534,6 +1585,815 @@ class TextureProps extends ElementProps {
         kind: _enumFromJson(v['kind'], TextureKind.values, TextureKind.grain),
         intensity: (v['intensity'] as num?)?.toDouble() ?? 0.12,
         tint: _colorFromJson(v['tint'], const Color(0xFF000000)),
+      );
+}
+
+// ─────────────── Social / AI / collectible element props ───────────────────
+
+/// Which side a chat bubble sits on (sender vs receiver).
+enum ChatSide { left, right }
+
+/// A single chat / DM / comment bubble — iMessage / WhatsApp / AI-chat /
+/// social-comment styling. [sender] is an optional name line above the
+/// [text]; [side] decides bubble alignment + tail; [tint] is the bubble fill.
+@immutable
+class ChatBubbleProps extends ElementProps {
+  final String sender;
+  final DataBinding senderBinding;
+  final String text;
+  final DataBinding textBinding;
+  final ChatSide side;
+  final Color tint;
+  final Color textColor;
+  final double fontSize;
+  final int fontIndex;
+  final double cornerRadius;
+  final bool showTail;
+
+  const ChatBubbleProps({
+    this.sender = '',
+    this.senderBinding = DataBinding.none,
+    this.text = 'Crushed leg day today 💪',
+    this.textBinding = DataBinding.none,
+    this.side = ChatSide.right,
+    this.tint = const Color(0xFF2563EB),
+    this.textColor = const Color(0xFFFFFFFF),
+    this.fontSize = 28,
+    this.fontIndex = 0,
+    this.cornerRadius = 22,
+    this.showTail = true,
+  });
+
+  @override
+  CardElementType get type => CardElementType.chatBubble;
+
+  ChatBubbleProps copyWith({
+    String? sender,
+    DataBinding? senderBinding,
+    String? text,
+    DataBinding? textBinding,
+    ChatSide? side,
+    Color? tint,
+    Color? textColor,
+    double? fontSize,
+    int? fontIndex,
+    double? cornerRadius,
+    bool? showTail,
+  }) =>
+      ChatBubbleProps(
+        sender: sender ?? this.sender,
+        senderBinding: senderBinding ?? this.senderBinding,
+        text: text ?? this.text,
+        textBinding: textBinding ?? this.textBinding,
+        side: side ?? this.side,
+        tint: tint ?? this.tint,
+        textColor: textColor ?? this.textColor,
+        fontSize: fontSize ?? this.fontSize,
+        fontIndex: fontIndex ?? this.fontIndex,
+        cornerRadius: cornerRadius ?? this.cornerRadius,
+        showTail: showTail ?? this.showTail,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'sender': sender,
+        'senderBinding': senderBinding.toJson(),
+        'text': text,
+        'textBinding': textBinding.toJson(),
+        'side': side.name,
+        'tint': _colorToJson(tint),
+        'textColor': _colorToJson(textColor),
+        'fontSize': fontSize,
+        'fontIndex': fontIndex,
+        'cornerRadius': cornerRadius,
+        'showTail': showTail,
+      };
+
+  factory ChatBubbleProps.fromJson(Map v) => ChatBubbleProps(
+        sender: v['sender'] as String? ?? '',
+        senderBinding: DataBinding.fromJson(v['senderBinding']),
+        text: v['text'] as String? ?? 'Crushed leg day today 💪',
+        textBinding: DataBinding.fromJson(v['textBinding']),
+        side: _enumFromJson(v['side'], ChatSide.values, ChatSide.right),
+        tint: _colorFromJson(v['tint'], const Color(0xFF2563EB)),
+        textColor: _colorFromJson(v['textColor']),
+        fontSize: (v['fontSize'] as num?)?.toDouble() ?? 28,
+        fontIndex: (v['fontIndex'] as num?)?.toInt() ?? 0,
+        cornerRadius: (v['cornerRadius'] as num?)?.toDouble() ?? 22,
+        showTail: v['showTail'] as bool? ?? true,
+      );
+}
+
+/// A social-header row — circular avatar + handle + sub-line (followers,
+/// timestamp, location). Avatar is photo-bound by default, with an emoji /
+/// initial fallback when there's no image.
+@immutable
+class AvatarRowProps extends ElementProps {
+  final CardPhotoRef avatar;
+  final String fallbackGlyph;
+  final String handle;
+  final DataBinding handleBinding;
+  final String sub;
+  final DataBinding subBinding;
+  final Color textColor;
+  final Color subColor;
+  final double fontSize;
+  final int fontIndex;
+  final bool verified;
+
+  const AvatarRowProps({
+    this.avatar = const CardPhotoRef(
+        binding: DataBinding(BindingSource.avatarUrl)),
+    this.fallbackGlyph = '🏋️',
+    this.handle = '@yourhandle',
+    this.handleBinding = const DataBinding(BindingSource.socialHandle),
+    this.sub = 'just now',
+    this.subBinding = DataBinding.none,
+    this.textColor = const Color(0xFFFFFFFF),
+    this.subColor = const Color(0x99FFFFFF),
+    this.fontSize = 30,
+    this.fontIndex = 0,
+    this.verified = false,
+  });
+
+  @override
+  CardElementType get type => CardElementType.avatarRow;
+
+  AvatarRowProps copyWith({
+    CardPhotoRef? avatar,
+    String? fallbackGlyph,
+    String? handle,
+    DataBinding? handleBinding,
+    String? sub,
+    DataBinding? subBinding,
+    Color? textColor,
+    Color? subColor,
+    double? fontSize,
+    int? fontIndex,
+    bool? verified,
+  }) =>
+      AvatarRowProps(
+        avatar: avatar ?? this.avatar,
+        fallbackGlyph: fallbackGlyph ?? this.fallbackGlyph,
+        handle: handle ?? this.handle,
+        handleBinding: handleBinding ?? this.handleBinding,
+        sub: sub ?? this.sub,
+        subBinding: subBinding ?? this.subBinding,
+        textColor: textColor ?? this.textColor,
+        subColor: subColor ?? this.subColor,
+        fontSize: fontSize ?? this.fontSize,
+        fontIndex: fontIndex ?? this.fontIndex,
+        verified: verified ?? this.verified,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'avatar': avatar.toJson(),
+        'fallbackGlyph': fallbackGlyph,
+        'handle': handle,
+        'handleBinding': handleBinding.toJson(),
+        'sub': sub,
+        'subBinding': subBinding.toJson(),
+        'textColor': _colorToJson(textColor),
+        'subColor': _colorToJson(subColor),
+        'fontSize': fontSize,
+        'fontIndex': fontIndex,
+        'verified': verified,
+      };
+
+  factory AvatarRowProps.fromJson(Map v) => AvatarRowProps(
+        avatar: CardPhotoRef.fromJson(v['avatar']),
+        fallbackGlyph: v['fallbackGlyph'] as String? ?? '🏋️',
+        handle: v['handle'] as String? ?? '@yourhandle',
+        handleBinding: DataBinding.fromJson(v['handleBinding']),
+        sub: v['sub'] as String? ?? 'just now',
+        subBinding: DataBinding.fromJson(v['subBinding']),
+        textColor: _colorFromJson(v['textColor']),
+        subColor: _colorFromJson(v['subColor'], const Color(0x99FFFFFF)),
+        fontSize: (v['fontSize'] as num?)?.toDouble() ?? 30,
+        fontIndex: (v['fontIndex'] as num?)?.toInt() ?? 0,
+        verified: v['verified'] as bool? ?? false,
+      );
+}
+
+/// A now-playing / podcast scrubber — a progress track with a knob and two
+/// time labels (elapsed left, total right). [progress] is 0..1.
+@immutable
+class ScrubberProps extends ElementProps {
+  final double progress;
+  final String leftLabel;
+  final String rightLabel;
+  final Color trackColor;
+  final Color fillColor;
+  final Color knobColor;
+  final Color textColor;
+  final double trackHeight;
+  final double fontSize;
+  final bool showKnob;
+
+  const ScrubberProps({
+    this.progress = 0.42,
+    this.leftLabel = '1:23',
+    this.rightLabel = '3:05',
+    this.trackColor = const Color(0x33FFFFFF),
+    this.fillColor = const Color(0xFFFFFFFF),
+    this.knobColor = const Color(0xFFFFFFFF),
+    this.textColor = const Color(0xCCFFFFFF),
+    this.trackHeight = 6,
+    this.fontSize = 20,
+    this.showKnob = true,
+  });
+
+  @override
+  CardElementType get type => CardElementType.scrubber;
+
+  ScrubberProps copyWith({
+    double? progress,
+    String? leftLabel,
+    String? rightLabel,
+    Color? trackColor,
+    Color? fillColor,
+    Color? knobColor,
+    Color? textColor,
+    double? trackHeight,
+    double? fontSize,
+    bool? showKnob,
+  }) =>
+      ScrubberProps(
+        progress: progress ?? this.progress,
+        leftLabel: leftLabel ?? this.leftLabel,
+        rightLabel: rightLabel ?? this.rightLabel,
+        trackColor: trackColor ?? this.trackColor,
+        fillColor: fillColor ?? this.fillColor,
+        knobColor: knobColor ?? this.knobColor,
+        textColor: textColor ?? this.textColor,
+        trackHeight: trackHeight ?? this.trackHeight,
+        fontSize: fontSize ?? this.fontSize,
+        showKnob: showKnob ?? this.showKnob,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'progress': progress,
+        'leftLabel': leftLabel,
+        'rightLabel': rightLabel,
+        'trackColor': _colorToJson(trackColor),
+        'fillColor': _colorToJson(fillColor),
+        'knobColor': _colorToJson(knobColor),
+        'textColor': _colorToJson(textColor),
+        'trackHeight': trackHeight,
+        'fontSize': fontSize,
+        'showKnob': showKnob,
+      };
+
+  factory ScrubberProps.fromJson(Map v) => ScrubberProps(
+        progress: (v['progress'] as num?)?.toDouble() ?? 0.42,
+        leftLabel: v['leftLabel'] as String? ?? '1:23',
+        rightLabel: v['rightLabel'] as String? ?? '3:05',
+        trackColor: _colorFromJson(v['trackColor'], const Color(0x33FFFFFF)),
+        fillColor: _colorFromJson(v['fillColor']),
+        knobColor: _colorFromJson(v['knobColor']),
+        textColor: _colorFromJson(v['textColor'], const Color(0xCCFFFFFF)),
+        trackHeight: (v['trackHeight'] as num?)?.toDouble() ?? 6,
+        fontSize: (v['fontSize'] as num?)?.toDouble() ?? 20,
+        showKnob: v['showKnob'] as bool? ?? true,
+      );
+}
+
+/// A single radial progress ring with a big center value + small label —
+/// goal-progress / score / completion. Fill fraction is [progress] (0..1) when
+/// unbound, or `resolveNumber(valueBinding) / maxValue` when bound.
+@immutable
+class RingStatProps extends ElementProps {
+  final double progress;
+  final DataBinding valueBinding;
+  final double maxValue;
+  final String centerValue;
+  final DataBinding centerBinding;
+  final String label;
+  final Color ringColor;
+  final Color trackColor;
+  final Color textColor;
+  final double strokeFraction;
+  final double centerFontSize;
+  final double labelFontSize;
+  final int fontIndex;
+
+  const RingStatProps({
+    this.progress = 0.72,
+    this.valueBinding = DataBinding.none,
+    this.maxValue = 100,
+    this.centerValue = '72%',
+    this.centerBinding = DataBinding.none,
+    this.label = 'GOAL',
+    this.ringColor = const Color(0xFFF97316),
+    this.trackColor = const Color(0x22FFFFFF),
+    this.textColor = const Color(0xFFFFFFFF),
+    this.strokeFraction = 0.12,
+    this.centerFontSize = 64,
+    this.labelFontSize = 18,
+    this.fontIndex = 0,
+  });
+
+  @override
+  CardElementType get type => CardElementType.ringStat;
+
+  RingStatProps copyWith({
+    double? progress,
+    DataBinding? valueBinding,
+    double? maxValue,
+    String? centerValue,
+    DataBinding? centerBinding,
+    String? label,
+    Color? ringColor,
+    Color? trackColor,
+    Color? textColor,
+    double? strokeFraction,
+    double? centerFontSize,
+    double? labelFontSize,
+    int? fontIndex,
+  }) =>
+      RingStatProps(
+        progress: progress ?? this.progress,
+        valueBinding: valueBinding ?? this.valueBinding,
+        maxValue: maxValue ?? this.maxValue,
+        centerValue: centerValue ?? this.centerValue,
+        centerBinding: centerBinding ?? this.centerBinding,
+        label: label ?? this.label,
+        ringColor: ringColor ?? this.ringColor,
+        trackColor: trackColor ?? this.trackColor,
+        textColor: textColor ?? this.textColor,
+        strokeFraction: strokeFraction ?? this.strokeFraction,
+        centerFontSize: centerFontSize ?? this.centerFontSize,
+        labelFontSize: labelFontSize ?? this.labelFontSize,
+        fontIndex: fontIndex ?? this.fontIndex,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'progress': progress,
+        'valueBinding': valueBinding.toJson(),
+        'maxValue': maxValue,
+        'centerValue': centerValue,
+        'centerBinding': centerBinding.toJson(),
+        'label': label,
+        'ringColor': _colorToJson(ringColor),
+        'trackColor': _colorToJson(trackColor),
+        'textColor': _colorToJson(textColor),
+        'strokeFraction': strokeFraction,
+        'centerFontSize': centerFontSize,
+        'labelFontSize': labelFontSize,
+        'fontIndex': fontIndex,
+      };
+
+  factory RingStatProps.fromJson(Map v) => RingStatProps(
+        progress: (v['progress'] as num?)?.toDouble() ?? 0.72,
+        valueBinding: DataBinding.fromJson(v['valueBinding']),
+        maxValue: (v['maxValue'] as num?)?.toDouble() ?? 100,
+        centerValue: v['centerValue'] as String? ?? '72%',
+        centerBinding: DataBinding.fromJson(v['centerBinding']),
+        label: v['label'] as String? ?? 'GOAL',
+        ringColor: _colorFromJson(v['ringColor'], const Color(0xFFF97316)),
+        trackColor: _colorFromJson(v['trackColor'], const Color(0x22FFFFFF)),
+        textColor: _colorFromJson(v['textColor']),
+        strokeFraction: (v['strokeFraction'] as num?)?.toDouble() ?? 0.12,
+        centerFontSize: (v['centerFontSize'] as num?)?.toDouble() ?? 64,
+        labelFontSize: (v['labelFontSize'] as num?)?.toDouble() ?? 18,
+        fontIndex: (v['fontIndex'] as num?)?.toInt() ?? 0,
+      );
+}
+
+/// An Apple-rings trio — three concentric radial rings (move / exercise /
+/// stand). Each fraction is 0..1; colors are individually editable.
+@immutable
+class RingTrioProps extends ElementProps {
+  final double outer;
+  final double middle;
+  final double inner;
+  final Color outerColor;
+  final Color middleColor;
+  final Color innerColor;
+  final double strokeFraction;
+  final double trackOpacity;
+
+  const RingTrioProps({
+    this.outer = 0.82,
+    this.middle = 0.7,
+    this.inner = 0.6,
+    this.outerColor = const Color(0xFFFA114F),
+    this.middleColor = const Color(0xFF92E82A),
+    this.innerColor = const Color(0xFF1AD6FD),
+    this.strokeFraction = 0.09,
+    this.trackOpacity = 0.2,
+  });
+
+  @override
+  CardElementType get type => CardElementType.ringTrio;
+
+  RingTrioProps copyWith({
+    double? outer,
+    double? middle,
+    double? inner,
+    Color? outerColor,
+    Color? middleColor,
+    Color? innerColor,
+    double? strokeFraction,
+    double? trackOpacity,
+  }) =>
+      RingTrioProps(
+        outer: outer ?? this.outer,
+        middle: middle ?? this.middle,
+        inner: inner ?? this.inner,
+        outerColor: outerColor ?? this.outerColor,
+        middleColor: middleColor ?? this.middleColor,
+        innerColor: innerColor ?? this.innerColor,
+        strokeFraction: strokeFraction ?? this.strokeFraction,
+        trackOpacity: trackOpacity ?? this.trackOpacity,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'outer': outer,
+        'middle': middle,
+        'inner': inner,
+        'outerColor': _colorToJson(outerColor),
+        'middleColor': _colorToJson(middleColor),
+        'innerColor': _colorToJson(innerColor),
+        'strokeFraction': strokeFraction,
+        'trackOpacity': trackOpacity,
+      };
+
+  factory RingTrioProps.fromJson(Map v) => RingTrioProps(
+        outer: (v['outer'] as num?)?.toDouble() ?? 0.82,
+        middle: (v['middle'] as num?)?.toDouble() ?? 0.7,
+        inner: (v['inner'] as num?)?.toDouble() ?? 0.6,
+        outerColor: _colorFromJson(v['outerColor'], const Color(0xFFFA114F)),
+        middleColor: _colorFromJson(v['middleColor'], const Color(0xFF92E82A)),
+        innerColor: _colorFromJson(v['innerColor'], const Color(0xFF1AD6FD)),
+        strokeFraction: (v['strokeFraction'] as num?)?.toDouble() ?? 0.09,
+        trackOpacity: (v['trackOpacity'] as num?)?.toDouble() ?? 0.2,
+      );
+}
+
+/// A 2×N grid of label/value tiles — stat-brag / box-score / sportscard back.
+/// Each tile is `[value, label]`; both strings are individually editable.
+@immutable
+class StatGridProps extends ElementProps {
+  /// Each entry is `[value, label]`.
+  final List<List<String>> tiles;
+  final int columns;
+  final Color tileColor;
+  final Color valueColor;
+  final Color labelColor;
+  final double valueFontSize;
+  final double labelFontSize;
+  final int valueFontIndex;
+  final double cornerRadius;
+  final double spacing;
+
+  const StatGridProps({
+    this.tiles = const [
+      ['12', 'WORKOUTS'],
+      ['48.2k', 'VOLUME LB'],
+      ['7', 'PRs'],
+      ['14', 'DAY STREAK'],
+    ],
+    this.columns = 2,
+    this.tileColor = const Color(0x14FFFFFF),
+    this.valueColor = const Color(0xFFFFFFFF),
+    this.labelColor = const Color(0x99FFFFFF),
+    this.valueFontSize = 44,
+    this.labelFontSize = 16,
+    this.valueFontIndex = 0,
+    this.cornerRadius = 16,
+    this.spacing = 10,
+  });
+
+  @override
+  CardElementType get type => CardElementType.statGrid;
+
+  StatGridProps copyWith({
+    List<List<String>>? tiles,
+    int? columns,
+    Color? tileColor,
+    Color? valueColor,
+    Color? labelColor,
+    double? valueFontSize,
+    double? labelFontSize,
+    int? valueFontIndex,
+    double? cornerRadius,
+    double? spacing,
+  }) =>
+      StatGridProps(
+        tiles: tiles ?? this.tiles,
+        columns: columns ?? this.columns,
+        tileColor: tileColor ?? this.tileColor,
+        valueColor: valueColor ?? this.valueColor,
+        labelColor: labelColor ?? this.labelColor,
+        valueFontSize: valueFontSize ?? this.valueFontSize,
+        labelFontSize: labelFontSize ?? this.labelFontSize,
+        valueFontIndex: valueFontIndex ?? this.valueFontIndex,
+        cornerRadius: cornerRadius ?? this.cornerRadius,
+        spacing: spacing ?? this.spacing,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'tiles': tiles,
+        'columns': columns,
+        'tileColor': _colorToJson(tileColor),
+        'valueColor': _colorToJson(valueColor),
+        'labelColor': _colorToJson(labelColor),
+        'valueFontSize': valueFontSize,
+        'labelFontSize': labelFontSize,
+        'valueFontIndex': valueFontIndex,
+        'cornerRadius': cornerRadius,
+        'spacing': spacing,
+      };
+
+  factory StatGridProps.fromJson(Map v) => StatGridProps(
+        tiles: (v['tiles'] as List?)
+                ?.map((t) => (t as List).map((e) => e.toString()).toList())
+                .toList(growable: false) ??
+            const [
+              ['12', 'WORKOUTS'],
+              ['48.2k', 'VOLUME LB'],
+              ['7', 'PRs'],
+              ['14', 'DAY STREAK'],
+            ],
+        columns: (v['columns'] as num?)?.toInt() ?? 2,
+        tileColor: _colorFromJson(v['tileColor'], const Color(0x14FFFFFF)),
+        valueColor: _colorFromJson(v['valueColor']),
+        labelColor: _colorFromJson(v['labelColor'], const Color(0x99FFFFFF)),
+        valueFontSize: (v['valueFontSize'] as num?)?.toDouble() ?? 44,
+        labelFontSize: (v['labelFontSize'] as num?)?.toDouble() ?? 16,
+        valueFontIndex: (v['valueFontIndex'] as num?)?.toInt() ?? 0,
+        cornerRadius: (v['cornerRadius'] as num?)?.toDouble() ?? 16,
+        spacing: (v['spacing'] as num?)?.toDouble() ?? 10,
+      );
+}
+
+/// A calendar / contribution-style heatmap grid (GitHub-style activity). Cells
+/// are intensities 0..1; an empty [cells] list renders fail-soft demo data.
+@immutable
+class GridHeatmapProps extends ElementProps {
+  final List<double> cells;
+  final int columns;
+  final Color cellColor;
+  final Color emptyColor;
+  final double cellRadius;
+  final double gapFraction;
+
+  const GridHeatmapProps({
+    this.cells = const [],
+    this.columns = 13,
+    this.cellColor = const Color(0xFF22C55E),
+    this.emptyColor = const Color(0x1FFFFFFF),
+    this.cellRadius = 3,
+    this.gapFraction = 0.18,
+  });
+
+  @override
+  CardElementType get type => CardElementType.gridHeatmap;
+
+  GridHeatmapProps copyWith({
+    List<double>? cells,
+    int? columns,
+    Color? cellColor,
+    Color? emptyColor,
+    double? cellRadius,
+    double? gapFraction,
+  }) =>
+      GridHeatmapProps(
+        cells: cells ?? this.cells,
+        columns: columns ?? this.columns,
+        cellColor: cellColor ?? this.cellColor,
+        emptyColor: emptyColor ?? this.emptyColor,
+        cellRadius: cellRadius ?? this.cellRadius,
+        gapFraction: gapFraction ?? this.gapFraction,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'cells': cells,
+        'columns': columns,
+        'cellColor': _colorToJson(cellColor),
+        'emptyColor': _colorToJson(emptyColor),
+        'cellRadius': cellRadius,
+        'gapFraction': gapFraction,
+      };
+
+  factory GridHeatmapProps.fromJson(Map v) => GridHeatmapProps(
+        cells: (v['cells'] as List?)
+                ?.map((c) => (c as num).toDouble())
+                .toList(growable: false) ??
+            const [],
+        columns: (v['columns'] as num?)?.toInt() ?? 13,
+        cellColor: _colorFromJson(v['cellColor'], const Color(0xFF22C55E)),
+        emptyColor: _colorFromJson(v['emptyColor'], const Color(0x1FFFFFFF)),
+        cellRadius: (v['cellRadius'] as num?)?.toDouble() ?? 3,
+        gapFraction: (v['gapFraction'] as num?)?.toDouble() ?? 0.18,
+      );
+}
+
+/// A 5-star rating row (reviews). [rating] is 0..[count], supports halves.
+@immutable
+class RatingStarsProps extends ElementProps {
+  final double rating;
+  final int count;
+  final Color filledColor;
+  final Color emptyColor;
+  final double spacingFraction;
+
+  const RatingStarsProps({
+    this.rating = 4.5,
+    this.count = 5,
+    this.filledColor = const Color(0xFFFFD23F),
+    this.emptyColor = const Color(0x33FFFFFF),
+    this.spacingFraction = 0.18,
+  });
+
+  @override
+  CardElementType get type => CardElementType.ratingStars;
+
+  RatingStarsProps copyWith({
+    double? rating,
+    int? count,
+    Color? filledColor,
+    Color? emptyColor,
+    double? spacingFraction,
+  }) =>
+      RatingStarsProps(
+        rating: rating ?? this.rating,
+        count: count ?? this.count,
+        filledColor: filledColor ?? this.filledColor,
+        emptyColor: emptyColor ?? this.emptyColor,
+        spacingFraction: spacingFraction ?? this.spacingFraction,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'rating': rating,
+        'count': count,
+        'filledColor': _colorToJson(filledColor),
+        'emptyColor': _colorToJson(emptyColor),
+        'spacingFraction': spacingFraction,
+      };
+
+  factory RatingStarsProps.fromJson(Map v) => RatingStarsProps(
+        rating: (v['rating'] as num?)?.toDouble() ?? 4.5,
+        count: (v['count'] as num?)?.toInt() ?? 5,
+        filledColor: _colorFromJson(v['filledColor'], const Color(0xFFFFD23F)),
+        emptyColor: _colorFromJson(v['emptyColor'], const Color(0x33FFFFFF)),
+        spacingFraction: (v['spacingFraction'] as num?)?.toDouble() ?? 0.18,
+      );
+}
+
+/// A decorative barcode (deterministic stripe pattern from [data]) with an
+/// optional caption — ticket / boarding-pass / receipt / stamp.
+@immutable
+class BarcodeProps extends ElementProps {
+  final String data;
+  final String caption;
+  final DataBinding captionBinding;
+  final Color barColor;
+  final Color background;
+  final Color captionColor;
+  final double captionFontSize;
+  final bool showCaption;
+
+  const BarcodeProps({
+    this.data = 'ZEALOVA-2026',
+    this.caption = 'ZEALOVA · 2026',
+    this.captionBinding = DataBinding.none,
+    this.barColor = const Color(0xFF111111),
+    this.background = const Color(0xFFFFFFFF),
+    this.captionColor = const Color(0xFF111111),
+    this.captionFontSize = 18,
+    this.showCaption = true,
+  });
+
+  @override
+  CardElementType get type => CardElementType.barcode;
+
+  BarcodeProps copyWith({
+    String? data,
+    String? caption,
+    DataBinding? captionBinding,
+    Color? barColor,
+    Color? background,
+    Color? captionColor,
+    double? captionFontSize,
+    bool? showCaption,
+  }) =>
+      BarcodeProps(
+        data: data ?? this.data,
+        caption: caption ?? this.caption,
+        captionBinding: captionBinding ?? this.captionBinding,
+        barColor: barColor ?? this.barColor,
+        background: background ?? this.background,
+        captionColor: captionColor ?? this.captionColor,
+        captionFontSize: captionFontSize ?? this.captionFontSize,
+        showCaption: showCaption ?? this.showCaption,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'data': data,
+        'caption': caption,
+        'captionBinding': captionBinding.toJson(),
+        'barColor': _colorToJson(barColor),
+        'background': _colorToJson(background),
+        'captionColor': _colorToJson(captionColor),
+        'captionFontSize': captionFontSize,
+        'showCaption': showCaption,
+      };
+
+  factory BarcodeProps.fromJson(Map v) => BarcodeProps(
+        data: v['data'] as String? ?? 'ZEALOVA-2026',
+        caption: v['caption'] as String? ?? 'ZEALOVA · 2026',
+        captionBinding: DataBinding.fromJson(v['captionBinding']),
+        barColor: _colorFromJson(v['barColor'], const Color(0xFF111111)),
+        background: _colorFromJson(v['background']),
+        captionColor: _colorFromJson(v['captionColor'], const Color(0xFF111111)),
+        captionFontSize: (v['captionFontSize'] as num?)?.toDouble() ?? 18,
+        showCaption: v['showCaption'] as bool? ?? true,
+      );
+}
+
+/// Which edge(s) a perforation runs along.
+enum PerforationEdge { top, bottom, left, right, horizontalCenter }
+
+/// A ticket / boarding-pass perforation — a dashed tear line with optional
+/// punched-out notch circles at each end of the line.
+@immutable
+class PerforationProps extends ElementProps {
+  final PerforationEdge edge;
+  final Color color;
+  final double dashLength;
+  final double gapLength;
+  final double thickness;
+  final double notchRadius;
+  final Color notchColor;
+  final bool showNotches;
+
+  const PerforationProps({
+    this.edge = PerforationEdge.horizontalCenter,
+    this.color = const Color(0x66FFFFFF),
+    this.dashLength = 12,
+    this.gapLength = 9,
+    this.thickness = 2,
+    this.notchRadius = 16,
+    this.notchColor = const Color(0xFF15171C),
+    this.showNotches = true,
+  });
+
+  @override
+  CardElementType get type => CardElementType.perforation;
+
+  PerforationProps copyWith({
+    PerforationEdge? edge,
+    Color? color,
+    double? dashLength,
+    double? gapLength,
+    double? thickness,
+    double? notchRadius,
+    Color? notchColor,
+    bool? showNotches,
+  }) =>
+      PerforationProps(
+        edge: edge ?? this.edge,
+        color: color ?? this.color,
+        dashLength: dashLength ?? this.dashLength,
+        gapLength: gapLength ?? this.gapLength,
+        thickness: thickness ?? this.thickness,
+        notchRadius: notchRadius ?? this.notchRadius,
+        notchColor: notchColor ?? this.notchColor,
+        showNotches: showNotches ?? this.showNotches,
+      );
+
+  @override
+  Map<String, Object?> toJson() => {
+        'edge': edge.name,
+        'color': _colorToJson(color),
+        'dashLength': dashLength,
+        'gapLength': gapLength,
+        'thickness': thickness,
+        'notchRadius': notchRadius,
+        'notchColor': _colorToJson(notchColor),
+        'showNotches': showNotches,
+      };
+
+  factory PerforationProps.fromJson(Map v) => PerforationProps(
+        edge: _enumFromJson(
+            v['edge'], PerforationEdge.values, PerforationEdge.horizontalCenter),
+        color: _colorFromJson(v['color'], const Color(0x66FFFFFF)),
+        dashLength: (v['dashLength'] as num?)?.toDouble() ?? 12,
+        gapLength: (v['gapLength'] as num?)?.toDouble() ?? 9,
+        thickness: (v['thickness'] as num?)?.toDouble() ?? 2,
+        notchRadius: (v['notchRadius'] as num?)?.toDouble() ?? 16,
+        notchColor: _colorFromJson(v['notchColor'], const Color(0xFF15171C)),
+        showNotches: v['showNotches'] as bool? ?? true,
       );
 }
 
