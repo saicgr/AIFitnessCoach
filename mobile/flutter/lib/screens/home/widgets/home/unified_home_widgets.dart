@@ -24,6 +24,12 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/providers/sleep_score_provider.dart';
 import '../../../../data/providers/user_history_snapshot_provider.dart';
 import '../../../../data/services/api_client.dart';
+import '../../../../data/providers/consistency_provider.dart';
+import '../../../../shareables/adapters/workout_adapter.dart';
+import '../../../../shareables/shareable_sheet.dart';
+import '../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../settings/sections/social_privacy_section.dart'
+    show publicShareLinksProvider;
 import '../../../../services/strain_recommendation_service.dart';
 import '../score_colors.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -894,119 +900,275 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
 
   /// Completed-workout hero — same 132pt footprint as the live hero, but
   /// rendered as a celebration: a heavily blurred shot of the exercise art
-  /// sits behind a frosted accent-green scrim, with a prominent green check,
-  /// "Workout complete" and the workout name centered on top. Tapping anywhere
-  /// opens the summary; the top-right menu still exposes repeat / share / undo.
-  /// This mirrors the Workouts-tab carousel's completed overlay so the two
-  /// surfaces read identically.
+  /// sits behind a frosted accent-green scrim, with a green check, "Workout
+  /// complete", the workout name, and the same Repeat / Summary / Share
+  /// actions the Workouts-tab carousel offers — so the two surfaces read and
+  /// behave identically. The action buttons own their own taps; the card body
+  /// is deliberately not a single tap target so the buttons never bleed.
   Widget _buildCompletedHero(ThemeColors c, Workout workout) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = c.success;
-    return GestureDetector(
-      onTap: () {
-        HapticService.medium();
-        context.push('/workout-summary/${workout.id}?tab=summary');
-      },
-      // A5: isolate the blurred-image paint so sibling tile repaints (e.g. the
-      // per-second fasting tick) never re-rasterise this expensive layer.
-      child: RepaintBoundary(
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: SizedBox(
-            height: _kWorkoutHeroHeight,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                // Blurred exercise art (or accent gradient when none).
-                _buildCompletedBackground(c, accent),
-                // Frosted accent-green tint over the blur — keeps the check and
-                // text legible over any image and gives the card its "done" hue.
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: isDark ? 0.32 : 0.26),
-                  ),
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          height: _kWorkoutHeroHeight,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Blurred exercise art (or accent gradient when none).
+              _buildCompletedBackground(c, accent),
+              // Frosted accent-green tint over the blur — keeps the check, text
+              // and buttons legible over any image and gives the card its hue.
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: isDark ? 0.34 : 0.28),
                 ),
-                // Repeat / share / undo access stays reachable.
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: _OverImageMenuButton(workout: workout),
-                ),
-                // Centered completion content.
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Container(
-                          width: 46,
-                          height: 46,
+                          width: 30,
+                          height: 30,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: accent,
-                            border:
-                                Border.all(color: Colors.white, width: 2.5),
+                            border: Border.all(color: Colors.white, width: 2),
                             boxShadow: [
                               BoxShadow(
                                 color: accent.withValues(alpha: 0.45),
-                                blurRadius: 14,
+                                blurRadius: 12,
                               ),
                             ],
                           ),
                           child: const Icon(
                             Icons.check_rounded,
                             color: Colors.white,
-                            size: 28,
+                            size: 18,
                             weight: 800,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          AppLocalizations.of(context)
-                              .workoutShowcaseWorkoutComplete,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                blurRadius: 6,
-                                color: Color(0x66000000),
-                                offset: Offset(0, 1),
+                        const SizedBox(width: 9),
+                        Flexible(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)
+                                    .workoutShowcaseWorkoutComplete,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.1,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 6,
+                                      color: Color(0x66000000),
+                                      offset: Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          workout.name ?? '',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white.withValues(alpha: 0.85),
-                            shadows: const [
-                              Shadow(
-                                blurRadius: 5,
-                                color: Color(0x55000000),
-                                offset: Offset(0, 1),
-                              ),
+                              if ((workout.name ?? '').isNotEmpty) ...[
+                                const SizedBox(height: 1),
+                                Text(
+                                  workout.name!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white.withValues(alpha: 0.88),
+                                    shadows: const [
+                                      Shadow(
+                                        blurRadius: 5,
+                                        color: Color(0x55000000),
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _completedActionButton(
+                            icon: Icons.replay,
+                            label: AppLocalizations.of(context)
+                                .heroWorkoutCardRepeat,
+                            onTap: _repeatWorkout,
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _completedActionButton(
+                            icon: Icons.bar_chart,
+                            label: AppLocalizations.of(context)
+                                .workoutCompleteSummary,
+                            onTap: _viewSummary,
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _completedActionButton(
+                            icon: Icons.ios_share_rounded,
+                            label: AppLocalizations.of(context).commonShare,
+                            onTap: _shareCompletedWorkout,
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  /// A single compact pill action on the completed hero (Repeat / Summary /
+  /// Share). Frosted translucent fill so it reads over the blurred art, sized
+  /// to share the row equally via the parent [Expanded].
+  Widget _completedActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required bool isDark,
+  }) {
+    return Material(
+      color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.24),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () {
+          HapticService.light();
+          onTap();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 13, color: Colors.white),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Repeat: start the just-completed workout again (same as the live hero's
+  /// play button and the carousel's Repeat).
+  void _repeatWorkout() {
+    HapticService.medium();
+    context.push('/active-workout', extra: widget.workout);
+  }
+
+  /// Summary: deep-link to the Summary pane of the workout summary screen.
+  void _viewSummary() {
+    HapticService.selection();
+    context.push('/workout-summary/${widget.workout.id}?tab=summary');
+  }
+
+  /// Share a completed workout through the unified `ShareableSheet` — the same
+  /// gallery (Wrapped / Trading Card / Receipt / Workout Details + public
+  /// share-link pill) the Workouts-tab carousel uses, so Home and Workouts
+  /// share one share flow.
+  Future<void> _shareCompletedWorkout() async {
+    HapticService.light();
+    final workout = widget.workout;
+    final id = workout.id;
+    if (id == null || id.isEmpty) return;
+
+    final streak = ref.read(currentStreakProvider);
+    final shareable = WorkoutAdapter.fromCompletion(
+      ref: ref,
+      workoutName: workout.name ?? 'Workout',
+      durationSeconds:
+          (workout.estimatedDurationMinutes ?? workout.durationMinutes ?? 45) *
+              60,
+      plannedExercises: workout.exercises,
+      totalSets: workout.exercises.fold<int>(0, (a, e) => a + (e.sets ?? 0)),
+      totalReps: workout.exercises
+          .fold<int>(0, (a, e) => a + ((e.sets ?? 0) * (e.reps ?? 0))),
+      currentStreak: streak > 0 ? streak : null,
+    );
+    if (shareable == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                AppLocalizations.of(context).heroWorkoutCardNothingToShareYet),
+          ),
+        );
+      }
+      return;
+    }
+
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    final allowPublicLinks = ref.read(publicShareLinksProvider);
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      onGenerateShareLink: !allowPublicLinks
+          ? null
+          : () async {
+              try {
+                final api = ref.read(apiClientProvider);
+                final res = await api.dio.post('/workouts/$id/share-link');
+                final data = res.data;
+                if (data is Map && data['url'] is String) {
+                  return data['url'] as String;
+                }
+                return null;
+              } catch (e) {
+                debugPrint('❌ [HomeHero] share-link failed: $e');
+                return null;
+              }
+            },
+    );
+    if (mounted) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    }
   }
 
   /// Background for the completed hero: the exercise photo blurred behind the
