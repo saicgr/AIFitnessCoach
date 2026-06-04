@@ -8,6 +8,10 @@
 /// `coachBody()` from `score_coach_line.dart` so the hero card never blanks.
 library;
 
+import 'dart:async';
+
+import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
@@ -16,6 +20,7 @@ import '../repositories/auth_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
 import 'today_score_provider.dart';
+import '../../core/services/sentry_service.dart';
 import '../../services/score_coach_line.dart';
 import '../../core/providers/timezone_provider.dart';
 
@@ -387,42 +392,90 @@ final dailyCoachInsightRefreshProvider =
 Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
     {String? cacheKey}) async {
   final api = ref.read(apiClientProvider);
-  try {
-    // NOTE: path is `/coach/daily-insight`, NOT `/api/v1/coach/daily-insight`.
-    // The api client's baseUrl already carries `/api/v1`, and Dio 5.9.x
-    // merges via plain `baseUrl + path` string concat (then `Uri.normalizePath()`
-    // which does NOT collapse repeated segments). Passing `/api/v1/...` here
-    // produces `/api/v1/api/v1/...` 404s — verified empirically against
-    // dio-5.9.2/lib/src/options.dart line 631.
-    final res = await api.get<Map<String, dynamic>>(
-      '/coach/daily-insight',
-      queryParameters: {
-        'date': args.dateString,
-        'tz': args.tz,
-        'source': args.source,
-        if (args.refresh) 'refresh': 'true',
-      },
-    );
-    final data = res.data;
-    if (data is Map<String, dynamic>) {
-      // Write-through the REAL response so the next warm start paints instantly
-      // from disk. Only the home provider passes a cacheKey.
-      if (cacheKey != null) {
-        final uid = Supabase.instance.client.auth.currentUser?.id;
-        await DataCacheService.instance.cache(cacheKey, data, userId: uid);
-        // Pin only a REAL fetched insight (home provider). A fallback is never
-        // pinned, so a transient failure retries on the next watch instead of
-        // freezing for the session. The chat-open / refresh providers pass no
-        // cacheKey and intentionally stay un-pinned (greeting rotates; refresh
-        // is a one-shot cache-buster).
-        ref.keepAlive();
+  // Up to 2 attempts. The retry exists because the most likely on-device
+  // failure is a TRANSIENT one — a stale access token mid-refresh at cold
+  // start, or a just-deployed/cold backend — which a ~1.5s backoff lets
+  // settle (the auth interceptor refreshes the token on a 401 in between).
+  // We deliberately do NOT retry a receiveTimeout (it would double a 30s
+  // stall) or a 200-with-non-map body (a retry won't change the shape).
+  DioException? lastErr;
+  for (var attempt = 0; attempt < 2; attempt++) {
+    try {
+      // NOTE: path is `/coach/daily-insight`, NOT `/api/v1/coach/daily-insight`.
+      // The api client's baseUrl already carries `/api/v1`, and Dio 5.9.x
+      // merges via plain `baseUrl + path` string concat (then
+      // `Uri.normalizePath()` which does NOT collapse repeated segments).
+      // Passing `/api/v1/...` here produces `/api/v1/api/v1/...` 404s.
+      final res = await api.get<Map<String, dynamic>>(
+        '/coach/daily-insight',
+        queryParameters: {
+          'date': args.dateString,
+          'tz': args.tz,
+          'source': args.source,
+          if (args.refresh) 'refresh': 'true',
+        },
+      );
+      final data = res.data;
+      if (data is Map<String, dynamic>) {
+        // Write-through the REAL response so the next warm start paints
+        // instantly from disk. Only the home provider passes a cacheKey.
+        if (cacheKey != null) {
+          final uid = Supabase.instance.client.auth.currentUser?.id;
+          await DataCacheService.instance.cache(cacheKey, data, userId: uid);
+          // Pin only a REAL fetched insight (home provider). A fallback is never
+          // pinned, so a transient failure retries on the next watch instead of
+          // freezing for the session. The chat-open / refresh providers pass no
+          // cacheKey and intentionally stay un-pinned.
+          ref.keepAlive();
+        }
+        return DailyCoachInsight.fromJson(data);
       }
-      return DailyCoachInsight.fromJson(data);
+      // 200 but the body wasn't a JSON map — a retry won't fix the shape.
+      if (kDebugMode) {
+        debugPrint('⚠️ [coach-insight] HTTP ${res.statusCode} but body is '
+            '${data.runtimeType}, not a JSON map — using fallback');
+      }
+      unawaited(SentryService.captureMessage(
+        'coach daily-insight: non-map 200 body',
+        tags: {'surface': 'daily_insight'},
+      ));
+      break;
+    } on DioException catch (e) {
+      lastErr = e;
+      final status = e.response?.statusCode;
+      if (kDebugMode) {
+        debugPrint('❌ [coach-insight] attempt ${attempt + 1}/2 failed: '
+            'status=$status type=${e.type.name} msg=${e.message}');
+      }
+      final retryable = e.type != DioExceptionType.receiveTimeout &&
+          e.type != DioExceptionType.sendTimeout;
+      if (attempt == 0 && retryable) {
+        await Future<void>.delayed(const Duration(milliseconds: 1500));
+        continue;
+      }
+      break;
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [coach-insight] unexpected error: $e');
+      }
+      break;
     }
-    return _buildClientFallback(ref);
-  } catch (_) {
-    return _buildClientFallback(ref);
   }
+  // Surface the real cause (the catch used to swallow it, and 401s are excluded
+  // from Sentry's Dio auto-capture) so we can see WHY the device falls back.
+  if (lastErr != null) {
+    unawaited(SentryService.captureError(
+      lastErr,
+      lastErr.stackTrace,
+      hint: 'coach daily-insight fetch failed (after retry)',
+      tags: {
+        'surface': 'daily_insight',
+        'http_status': '${lastErr.response?.statusCode ?? 'none'}',
+        'dio_type': lastErr.type.name,
+      },
+    ));
+  }
+  return _buildClientFallback(ref);
 }
 
 /// Client-side deterministic fallback when the server is unreachable. Reuses
