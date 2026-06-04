@@ -65,6 +65,11 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     required String setsJson,
     required int totalTimeSeconds,
     String? metadata,
+    // Per-gym progress tracking fallback. The server re-derives the
+    // authoritative gym_profile_id from the workout row (workout_id →
+    // workouts.gym_profile_id), so this client value is advisory only and
+    // omitted from the body when null.
+    String? gymProfileId,
   }) async {
     try {
       debugPrint('🔍 [Workout] Creating workout log for workout: $workoutId');
@@ -73,6 +78,7 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
         'user_id': userId,
         'sets_json': setsJson,
         'total_time_seconds': totalTimeSeconds,
+        if (gymProfileId != null) 'gym_profile_id': gymProfileId,
       };
       // Add metadata as a Map (backend expects dict, not JSON string)
       if (metadata != null) {
@@ -177,6 +183,10 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     // zero-stamped placeholder rows it inserts for unlogged sets so
     // analytics can distinguish padded rows from real working sets.
     bool isCompleted = true,
+    // Per-gym progress tracking fallback (server re-derives the
+    // authoritative value from the parent workout_log → workout). Omitted
+    // from the body when null.
+    String? gymProfileId,
   }) async {
     try {
       debugPrint('🔍 [Workout] Logging set $setNumber ($setType) for $exerciseName');
@@ -192,6 +202,7 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
           'weight_kg': weightKg,
           'is_completed': isCompleted,
           'set_type': setType,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
           if (rpe != null) 'rpe': rpe,
           if (rir != null) 'rir': rir,
           if (notes != null && notes.isNotEmpty) 'notes': notes,
@@ -227,9 +238,21 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
   /// per-set POST loop that took ~3–5s for a typical 20-set workout.
   /// Accepts a list of pre-built set records keyed exactly like the POST body
   /// of [logSetPerformance].
-  Future<int> logSetPerformancesBulk(List<Map<String, dynamic>> setRecords) async {
+  Future<int> logSetPerformancesBulk(
+    List<Map<String, dynamic>> setRecords, {
+    // Per-gym progress tracking fallback. When provided, stamp it onto any
+    // record that doesn't already carry its own `gym_profile_id` (callers
+    // that build per-set maps usually set it inline). Server still re-derives
+    // the authoritative value from the workout row.
+    String? gymProfileId,
+  }) async {
     if (setRecords.isEmpty) return 0;
     try {
+      if (gymProfileId != null) {
+        for (final record in setRecords) {
+          record.putIfAbsent('gym_profile_id', () => gymProfileId);
+        }
+      }
       debugPrint('🔍 [Workout] Bulk-logging ${setRecords.length} sets');
       final response = await apiClient.post(
         '/performance/logs/bulk',
@@ -499,17 +522,27 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     }
   }
 
-  /// Get exercise weight progression from RAG
+  /// Get exercise weight progression from RAG.
+  ///
+  /// [gymProfileId]: when non-null, scopes the returned history to a single
+  /// gym (per-gym progress tracking for machine/cable exercises, whose load
+  /// isn't comparable across gyms). Null = combined/all-gym history (free
+  /// weights). The server treats it as an optional filter; older backends
+  /// that ignore the param simply return combined history.
   Future<List<Map<String, dynamic>>> getExerciseProgress({
     required String userId,
     required String exerciseName,
     int limit = 10,
+    String? gymProfileId,
   }) async {
     try {
       debugPrint('🔍 [Workout] Fetching exercise progress for: $exerciseName');
       final response = await apiClient.get(
         '/feedback/ai-coach/exercise-progress/$userId/${Uri.encodeComponent(exerciseName)}',
-        queryParameters: {'limit': limit},
+        queryParameters: {
+          'limit': limit,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
+        },
       );
 
       if (response.statusCode == 200) {

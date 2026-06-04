@@ -10,8 +10,20 @@ class WorkoutLogDao extends DatabaseAccessor<AppDatabase>
     with _$WorkoutLogDaoMixin {
   WorkoutLogDao(super.db);
 
-  Future<void> insertLog(CachedWorkoutLogsCompanion entry) {
-    return into(cachedWorkoutLogs).insert(entry);
+  /// Insert a cached workout-log row.
+  ///
+  /// [gymProfileId] (per-gym progress tracking) is captured at log time as an
+  /// offline fallback. When provided and the companion doesn't already carry
+  /// its own gym, it's merged in before insert; passing it via the companion
+  /// directly works too. Server re-derives the authoritative value on sync.
+  Future<void> insertLog(
+    CachedWorkoutLogsCompanion entry, {
+    String? gymProfileId,
+  }) {
+    final row = (gymProfileId != null && !entry.gymProfileId.present)
+        ? entry.copyWith(gymProfileId: Value(gymProfileId))
+        : entry;
+    return into(cachedWorkoutLogs).insert(row);
   }
 
   Future<List<CachedWorkoutLog>> getLogsForWorkout(String workoutId) {

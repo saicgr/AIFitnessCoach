@@ -19,6 +19,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/services/rating_prompt_service.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/milestones_provider.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/providers/scores_provider.dart';
@@ -53,12 +54,20 @@ Future<String?> persistEasySet({
     final userId = await repo.getCurrentUserId();
     if (userId == null) return cachedWorkoutLogId;
 
+    // Per-gym progress tracking: attribute this Easy-tier set + its parent
+    // workout-log to the currently-active gym. The Easy path only holds a
+    // workoutId (not the Workout), so we resolve from the active gym; the
+    // server still re-derives the authoritative value from the workout row.
+    // NULL → combined/unassigned bucket.
+    final String? gymProfileId = ref.read(activeGymProfileIdProvider);
+
     var logId = cachedWorkoutLogId;
     logId ??= await _createWorkoutLog(
       repo: repo,
       workoutId: workoutId,
       userId: userId,
       totalTimeSeconds: totalTimeSeconds,
+      gymProfileId: gymProfileId,
     );
     if (logId == null) return null;
 
@@ -95,6 +104,7 @@ Future<String?> persistEasySet({
       notes: log.notes,
       notesAudioUrl: audioUrl,
       notesPhotoUrls: photoUrls,
+      gymProfileId: gymProfileId,
       // Zero-stamped padding rows from "Complete workout now" must NOT
       // count as completed sets in analytics / streaks / PR detection.
       isCompleted: !isPlaceholder,
@@ -111,6 +121,7 @@ Future<String?> _createWorkoutLog({
   required String workoutId,
   required String userId,
   required int totalTimeSeconds,
+  String? gymProfileId,
 }) async {
   try {
     final response = await repo.createWorkoutLog(
@@ -118,6 +129,7 @@ Future<String?> _createWorkoutLog({
       userId: userId,
       setsJson: '[]',
       totalTimeSeconds: totalTimeSeconds,
+      gymProfileId: gymProfileId,
     );
     return response?['id'] as String?;
   } catch (e) {
@@ -201,6 +213,13 @@ EasyLocalAggregates computeEasyAggregates({
   final exercisesPerformance = <Map<String, dynamic>>[];
   final setsJsonList = <Map<String, dynamic>>[];
 
+  // Per-gym progress tracking: stamp each set in the persisted sets_json with
+  // the workout's gym (stable provenance). This is a pure function with no
+  // WidgetRef, so only the workout-level gym is used here; the active-gym
+  // fallback is applied on the per-set POST paths (persistEasySet / bulk).
+  // The server re-derives the authoritative value either way.
+  final String? gymProfileId = workout.gymProfileId;
+
   for (int i = 0; i < exercises.length; i++) {
     final exercise = exercises[i];
     final st = perExercise[i];
@@ -231,6 +250,7 @@ EasyLocalAggregates computeEasyAggregates({
         'set_type': s.setType,
         'is_completed': !isPlaceholder,
         'logging_mode': 'easy',
+        if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         if (s.targetReps > 0) 'target_reps': s.targetReps,
         if (s.durationSeconds != null) 'set_duration_seconds': s.durationSeconds,
         if (s.restDurationSeconds != null)
@@ -300,12 +320,18 @@ Future<void> runEasyBackgroundSave({
     } else if (workout.id != null) {
       final userId = await repo.getCurrentUserId();
       if (userId != null) {
+        // Per-gym progress tracking: prefer the workout's own gym (stable
+        // provenance), fall back to the active gym. Server re-derives the
+        // authoritative value. NULL → combined bucket.
+        final String? gymProfileId =
+            workout.gymProfileId ?? ref.read(activeGymProfileIdProvider);
         final created = await repo.createWorkoutLog(
           workoutId: workout.id!,
           userId: userId,
           setsJson: aggregates.setsJson,
           totalTimeSeconds: totalTimeSeconds,
           metadata: jsonEncode(metadata),
+          gymProfileId: gymProfileId,
         );
         workoutLogId = created?['id'] as String?;
       }

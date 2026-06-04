@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/utils/equipment_scope.dart';
 import '../models/exercise.dart';
 import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
@@ -182,10 +183,20 @@ class PRDetectionService {
     _lastCelebrationTime = null;
   }
 
-  /// Load and cache exercise history for a list of exercises
+  /// Load and cache exercise history for a list of exercises.
+  ///
+  /// [gymProfileId] (per-gym progress tracking): the gym this workout is being
+  /// performed at (workout.gymProfileId ?? activeGymProfileIdProvider). For
+  /// machine/cable exercises — whose load isn't comparable across gyms — the
+  /// cache + the history fetch are scoped to this gym so a home-gym set can
+  /// legitimately PR instead of being crushed by an incomparable other-gym
+  /// machine record. Free-weight exercises stay combined (null scope), since
+  /// the same barbell weight IS comparable everywhere. Null when unknown →
+  /// every exercise behaves combined (legacy behavior, never crashes).
   Future<void> preloadExerciseHistory({
     required WidgetRef ref,
     required List<WorkoutExercise> exercises,
+    String? gymProfileId,
   }) async {
     final workoutRepo = ref.read(workoutRepositoryProvider);
     final apiClient = ref.read(apiClientProvider);
@@ -194,33 +205,57 @@ class PRDetectionService {
     if (userId == null) return;
 
     for (final exercise in exercises) {
+      // Per-gym scope only applies to machine/cable/etc. exercises AND only
+      // when we actually know which gym we're at. Free weights → null (combined).
+      final scopedGym = (gymProfileId != null &&
+              isPerGymExercise(exercise.equipment, exerciseName: exercise.name))
+          ? gymProfileId
+          : null;
       await _loadExerciseCache(
         exerciseName: exercise.name,
         workoutRepo: workoutRepo,
         userId: userId,
+        gymProfileId: scopedGym,
       );
     }
+  }
+
+  /// Cache key for an exercise. For per-gym exercises the key is namespaced by
+  /// gym so the same machine's history at two gyms never collides (and so the
+  /// live "vs last time" / PR comparison reads only same-gym numbers). Free
+  /// weights (gymProfileId == null) keep the plain name key — combined.
+  String _cacheKey(String exerciseName, String? gymProfileId) {
+    final base = exerciseName.toLowerCase();
+    return gymProfileId == null ? base : '$base@@gym:$gymProfileId';
   }
 
   Future<void> _loadExerciseCache({
     required String exerciseName,
     required WorkoutRepository workoutRepo,
     required String userId,
+    String? gymProfileId,
   }) async {
     try {
+      final cacheKey = _cacheKey(exerciseName, gymProfileId);
       // Check if we already have valid cache
-      final existing = _cache[exerciseName.toLowerCase()];
+      final existing = _cache[cacheKey];
       if (existing != null && existing.isValid) return;
 
-      // Fetch exercise history
+      // Fetch exercise history. For per-gym exercises this scopes the history
+      // to the same gym (the flutter-ui agent adds the optional `gymProfileId`
+      // named param on getExerciseProgress; null = combined). Resilient if the
+      // param defaults — a null gym just returns combined history.
       final history = await workoutRepo.getExerciseProgress(
         userId: userId,
         exerciseName: exerciseName,
+        gymProfileId: gymProfileId,
       );
 
       if (history.isEmpty) {
-        // No history - any performance will be a PR
-        _cache[exerciseName.toLowerCase()] = _ExerciseCache(
+        // No history - any performance will be a PR. (For a per-gym exercise
+        // with no same-gym history, this is the "first at this gym" case — a
+        // legit PR rather than a regression vs another gym.)
+        _cache[cacheKey] = _ExerciseCache(
           exerciseName: exerciseName,
           maxWeight: 0,
           maxRepsAtWeight: 0,
@@ -256,7 +291,7 @@ class PRDetectionService {
         }
       }
 
-      _cache[exerciseName.toLowerCase()] = _ExerciseCache(
+      _cache[cacheKey] = _ExerciseCache(
         exerciseName: exerciseName,
         maxWeight: maxWeight,
         maxRepsAtWeight: maxRepsAtWeight,
@@ -269,17 +304,37 @@ class PRDetectionService {
     }
   }
 
+  /// Resolve the cached history for an exercise, preferring the gym-scoped
+  /// entry (machine/cable) and falling back to the combined entry. The
+  /// fallback guards against a caller that preloaded combined but checks with
+  /// a gym (or vice-versa) so PR detection never silently no-ops.
+  _ExerciseCache? _resolveCache(String exerciseName, String? gymProfileId) {
+    if (gymProfileId != null) {
+      final scoped = _cache[_cacheKey(exerciseName, gymProfileId)];
+      if (scoped != null) return scoped;
+    }
+    return _cache[exerciseName.toLowerCase()];
+  }
+
   /// Check if a completed set is a PR
   ///
-  /// Returns detected PRs (can be multiple types from one set)
+  /// Returns detected PRs (can be multiple types from one set).
+  ///
+  /// [gymProfileId] (per-gym progress tracking): pass the gym this set was
+  /// performed at for machine/cable exercises so the comparison reads only
+  /// same-gym history (matching the gym-scoped cache key written at preload).
+  /// Null = combined (free weights, or unknown gym). If a gym-scoped cache
+  /// entry is missing we fall back to the combined entry so detection never
+  /// silently breaks when a caller hasn't been threaded for gym yet.
   List<DetectedPR> checkForPR({
     required String exerciseName,
     required double weight,
     required int reps,
     required int totalSets,
     required double totalVolume,
+    String? gymProfileId,
   }) {
-    final cache = _cache[exerciseName.toLowerCase()];
+    final cache = _resolveCache(exerciseName, gymProfileId);
     if (cache == null) {
       // No cache - can't detect PR (but may still be one)
       return [];
@@ -398,13 +453,20 @@ class PRDetectionService {
     return weight * (1 + 0.0333 * reps);
   }
 
-  /// Update cache after PR is achieved (to avoid re-triggering)
-  void updateCacheAfterPR(DetectedPR pr) {
-    final key = pr.exerciseName.toLowerCase();
-    final existing = _cache[key];
+  /// Update cache after PR is achieved (to avoid re-triggering).
+  ///
+  /// [gymProfileId] must match the scope used in [checkForPR] so the updated
+  /// ceiling lands on the same (gym-scoped or combined) cache entry. Null =
+  /// combined. Falls back to the combined entry if no gym-scoped entry exists.
+  void updateCacheAfterPR(DetectedPR pr, {String? gymProfileId}) {
+    final scopedKey = (gymProfileId != null &&
+            _cache.containsKey(_cacheKey(pr.exerciseName, gymProfileId)))
+        ? _cacheKey(pr.exerciseName, gymProfileId)
+        : pr.exerciseName.toLowerCase();
+    final existing = _cache[scopedKey];
     if (existing == null) return;
 
-    _cache[key] = _ExerciseCache(
+    _cache[scopedKey] = _ExerciseCache(
       exerciseName: pr.exerciseName,
       maxWeight: pr.type == PRType.weight ? pr.newValue : existing.maxWeight,
       maxRepsAtWeight: existing.maxRepsAtWeight,

@@ -103,7 +103,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -146,6 +146,15 @@ class AppDatabase extends _$AppDatabase {
             await customStatement(
               'CREATE INDEX IF NOT EXISTS idx_pending_sync_status_created '
               'ON pending_sync_queue(status, created_at);',
+            );
+          }
+          if (from < 8) {
+            // Per-gym progress tracking: the gym a set was logged at, kept as
+            // an offline fallback on the local mirror (server re-derives the
+            // authoritative value from the workout row on sync).
+            await m.addColumn(
+              cachedWorkoutLogs,
+              cachedWorkoutLogs.gymProfileId,
             );
           }
         },

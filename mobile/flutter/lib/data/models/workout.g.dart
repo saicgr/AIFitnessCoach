@@ -29,6 +29,7 @@ Workout _$WorkoutFromJson(Map<String, dynamic> json) => Workout(
   completedAt: json['completed_at'] as String?,
   completionMethod: json['completion_method'] as String?,
   isFavorite: json['is_favorite'] as bool?,
+  gymProfileId: json['gym_profile_id'] as String?,
 );
 
 Map<String, dynamic> _$WorkoutToJson(Workout instance) => <String, dynamic>{
@@ -53,4 +54,5 @@ Map<String, dynamic> _$WorkoutToJson(Workout instance) => <String, dynamic>{
   'completed_at': instance.completedAt,
   'completion_method': instance.completionMethod,
   'is_favorite': instance.isFavorite,
+  'gym_profile_id': instance.gymProfileId,
 };

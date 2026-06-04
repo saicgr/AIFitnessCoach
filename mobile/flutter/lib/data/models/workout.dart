@@ -84,6 +84,13 @@ class Workout extends Equatable {
   @JsonKey(name: 'is_favorite')
   final bool? isFavorite;
 
+  /// The gym profile this workout was generated for. Stable provenance for
+  /// per-gym progress tracking — every set logged from this workout is
+  /// attributed to this gym (server is authoritative; the client sends this
+  /// as a fallback). NULL for legacy/ad-hoc workouts (combined bucket).
+  @JsonKey(name: 'gym_profile_id')
+  final String? gymProfileId;
+
   /// Optional known exercise count (used when exercises aren't fully loaded)
   /// This is set when converting from TodayWorkoutSummary which has count from API
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -111,6 +118,7 @@ class Workout extends Equatable {
     this.completedAt,
     this.completionMethod,
     this.isFavorite,
+    this.gymProfileId,
     this.knownExerciseCount,
   });
 
@@ -461,6 +469,7 @@ class Workout extends Equatable {
         completedAt,
         completionMethod,
         isFavorite,
+        gymProfileId,
         knownExerciseCount,
       ];
 
@@ -483,6 +492,7 @@ class Workout extends Equatable {
     String? completedAt,
     String? completionMethod,
     bool? isFavorite,
+    String? gymProfileId,
     int? knownExerciseCount,
   }) {
     return Workout(
@@ -504,6 +514,7 @@ class Workout extends Equatable {
       completedAt: completedAt ?? this.completedAt,
       completionMethod: completionMethod ?? this.completionMethod,
       isFavorite: isFavorite ?? this.isFavorite,
+      gymProfileId: gymProfileId ?? this.gymProfileId,
       knownExerciseCount: knownExerciseCount ?? this.knownExerciseCount,
     );
   }

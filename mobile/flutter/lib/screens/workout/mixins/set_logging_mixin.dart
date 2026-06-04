@@ -57,6 +57,11 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   bool get unitInitialized;
   double get weightIncrement;
 
+  // The host StatefulWidget exposing the active `Workout` (same getter the
+  // host provides to WorkoutFlowMixin). Used to attribute every logged set
+  // to the gym the workout was generated for (per-gym progress tracking).
+  dynamic get workoutWidget;
+
   SetLog? get pendingSetLog;
   set pendingSetLog(SetLog? value);
   int? get lastSetRpe;
@@ -956,6 +961,16 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   String buildSetsJson() {
     final List<Map<String, dynamic>> allSets = [];
 
+    // Per-gym progress tracking: stamp every set with the gym it was performed
+    // at. Prefer the workout's own gym_profile_id (stable provenance — the
+    // workout was generated for that gym's equipment), falling back to the
+    // currently-active gym for legacy workouts. NULL → combined/unassigned
+    // bucket. The server still re-derives the authoritative value from the
+    // workout row; this is a fallback the offline path also reuses.
+    final String? gymProfileId =
+        (workoutWidget?.workout?.gymProfileId as String?) ??
+            ref.read(activeGymProfileIdProvider);
+
     for (int i = 0; i < exercises.length; i++) {
       final exercise = exercises[i];
       final sets = completedSets[i] ?? [];
@@ -981,6 +996,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           'set_number': j + 1,
           'reps': sets[j].reps,
           'weight_kg': sets[j].weight,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
           'completed_at': sets[j].completedAt.toIso8601String(),
           if (sets[j].rpe != null) 'rpe': sets[j].rpe,
           if (sets[j].rir != null) 'rir': sets[j].rir,

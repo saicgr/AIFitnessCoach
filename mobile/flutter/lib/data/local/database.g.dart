@@ -2151,6 +2151,17 @@ class $CachedWorkoutLogsTable extends CachedWorkoutLogs
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _gymProfileIdMeta = const VerificationMeta(
+    'gymProfileId',
+  );
+  @override
+  late final GeneratedColumn<String> gymProfileId = GeneratedColumn<String>(
+    'gym_profile_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _completedAtMeta = const VerificationMeta(
     'completedAt',
   );
@@ -2200,6 +2211,7 @@ class $CachedWorkoutLogsTable extends CachedWorkoutLogs
     rpe,
     rir,
     notes,
+    gymProfileId,
     completedAt,
     syncStatus,
     syncRetryCount,
@@ -2301,6 +2313,15 @@ class $CachedWorkoutLogsTable extends CachedWorkoutLogs
         notes.isAcceptableOrUnknown(data['notes']!, _notesMeta),
       );
     }
+    if (data.containsKey('gym_profile_id')) {
+      context.handle(
+        _gymProfileIdMeta,
+        gymProfileId.isAcceptableOrUnknown(
+          data['gym_profile_id']!,
+          _gymProfileIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('completed_at')) {
       context.handle(
         _completedAtMeta,
@@ -2384,6 +2405,10 @@ class $CachedWorkoutLogsTable extends CachedWorkoutLogs
         DriftSqlType.string,
         data['${effectivePrefix}notes'],
       ),
+      gymProfileId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gym_profile_id'],
+      ),
       completedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}completed_at'],
@@ -2419,6 +2444,7 @@ class CachedWorkoutLog extends DataClass
   final int? rpe;
   final int? rir;
   final String? notes;
+  final String? gymProfileId;
   final DateTime completedAt;
   final String syncStatus;
   final int syncRetryCount;
@@ -2435,6 +2461,7 @@ class CachedWorkoutLog extends DataClass
     this.rpe,
     this.rir,
     this.notes,
+    this.gymProfileId,
     required this.completedAt,
     required this.syncStatus,
     required this.syncRetryCount,
@@ -2466,6 +2493,9 @@ class CachedWorkoutLog extends DataClass
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    if (!nullToAbsent || gymProfileId != null) {
+      map['gym_profile_id'] = Variable<String>(gymProfileId);
+    }
     map['completed_at'] = Variable<DateTime>(completedAt);
     map['sync_status'] = Variable<String>(syncStatus);
     map['sync_retry_count'] = Variable<int>(syncRetryCount);
@@ -2494,6 +2524,9 @@ class CachedWorkoutLog extends DataClass
       notes: notes == null && nullToAbsent
           ? const Value.absent()
           : Value(notes),
+      gymProfileId: gymProfileId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gymProfileId),
       completedAt: Value(completedAt),
       syncStatus: Value(syncStatus),
       syncRetryCount: Value(syncRetryCount),
@@ -2518,6 +2551,7 @@ class CachedWorkoutLog extends DataClass
       rpe: serializer.fromJson<int?>(json['rpe']),
       rir: serializer.fromJson<int?>(json['rir']),
       notes: serializer.fromJson<String?>(json['notes']),
+      gymProfileId: serializer.fromJson<String?>(json['gymProfileId']),
       completedAt: serializer.fromJson<DateTime>(json['completedAt']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
       syncRetryCount: serializer.fromJson<int>(json['syncRetryCount']),
@@ -2539,6 +2573,7 @@ class CachedWorkoutLog extends DataClass
       'rpe': serializer.toJson<int?>(rpe),
       'rir': serializer.toJson<int?>(rir),
       'notes': serializer.toJson<String?>(notes),
+      'gymProfileId': serializer.toJson<String?>(gymProfileId),
       'completedAt': serializer.toJson<DateTime>(completedAt),
       'syncStatus': serializer.toJson<String>(syncStatus),
       'syncRetryCount': serializer.toJson<int>(syncRetryCount),
@@ -2558,6 +2593,7 @@ class CachedWorkoutLog extends DataClass
     Value<int?> rpe = const Value.absent(),
     Value<int?> rir = const Value.absent(),
     Value<String?> notes = const Value.absent(),
+    Value<String?> gymProfileId = const Value.absent(),
     DateTime? completedAt,
     String? syncStatus,
     int? syncRetryCount,
@@ -2576,6 +2612,7 @@ class CachedWorkoutLog extends DataClass
     rpe: rpe.present ? rpe.value : this.rpe,
     rir: rir.present ? rir.value : this.rir,
     notes: notes.present ? notes.value : this.notes,
+    gymProfileId: gymProfileId.present ? gymProfileId.value : this.gymProfileId,
     completedAt: completedAt ?? this.completedAt,
     syncStatus: syncStatus ?? this.syncStatus,
     syncRetryCount: syncRetryCount ?? this.syncRetryCount,
@@ -2600,6 +2637,9 @@ class CachedWorkoutLog extends DataClass
       rpe: data.rpe.present ? data.rpe.value : this.rpe,
       rir: data.rir.present ? data.rir.value : this.rir,
       notes: data.notes.present ? data.notes.value : this.notes,
+      gymProfileId: data.gymProfileId.present
+          ? data.gymProfileId.value
+          : this.gymProfileId,
       completedAt: data.completedAt.present
           ? data.completedAt.value
           : this.completedAt,
@@ -2627,6 +2667,7 @@ class CachedWorkoutLog extends DataClass
           ..write('rpe: $rpe, ')
           ..write('rir: $rir, ')
           ..write('notes: $notes, ')
+          ..write('gymProfileId: $gymProfileId, ')
           ..write('completedAt: $completedAt, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('syncRetryCount: $syncRetryCount')
@@ -2648,6 +2689,7 @@ class CachedWorkoutLog extends DataClass
     rpe,
     rir,
     notes,
+    gymProfileId,
     completedAt,
     syncStatus,
     syncRetryCount,
@@ -2668,6 +2710,7 @@ class CachedWorkoutLog extends DataClass
           other.rpe == this.rpe &&
           other.rir == this.rir &&
           other.notes == this.notes &&
+          other.gymProfileId == this.gymProfileId &&
           other.completedAt == this.completedAt &&
           other.syncStatus == this.syncStatus &&
           other.syncRetryCount == this.syncRetryCount);
@@ -2686,6 +2729,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
   final Value<int?> rpe;
   final Value<int?> rir;
   final Value<String?> notes;
+  final Value<String?> gymProfileId;
   final Value<DateTime> completedAt;
   final Value<String> syncStatus;
   final Value<int> syncRetryCount;
@@ -2703,6 +2747,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
     this.rpe = const Value.absent(),
     this.rir = const Value.absent(),
     this.notes = const Value.absent(),
+    this.gymProfileId = const Value.absent(),
     this.completedAt = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.syncRetryCount = const Value.absent(),
@@ -2721,6 +2766,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
     this.rpe = const Value.absent(),
     this.rir = const Value.absent(),
     this.notes = const Value.absent(),
+    this.gymProfileId = const Value.absent(),
     required DateTime completedAt,
     this.syncStatus = const Value.absent(),
     this.syncRetryCount = const Value.absent(),
@@ -2744,6 +2790,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
     Expression<int>? rpe,
     Expression<int>? rir,
     Expression<String>? notes,
+    Expression<String>? gymProfileId,
     Expression<DateTime>? completedAt,
     Expression<String>? syncStatus,
     Expression<int>? syncRetryCount,
@@ -2762,6 +2809,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
       if (rpe != null) 'rpe': rpe,
       if (rir != null) 'rir': rir,
       if (notes != null) 'notes': notes,
+      if (gymProfileId != null) 'gym_profile_id': gymProfileId,
       if (completedAt != null) 'completed_at': completedAt,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (syncRetryCount != null) 'sync_retry_count': syncRetryCount,
@@ -2782,6 +2830,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
     Value<int?>? rpe,
     Value<int?>? rir,
     Value<String?>? notes,
+    Value<String?>? gymProfileId,
     Value<DateTime>? completedAt,
     Value<String>? syncStatus,
     Value<int>? syncRetryCount,
@@ -2800,6 +2849,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
       rpe: rpe ?? this.rpe,
       rir: rir ?? this.rir,
       notes: notes ?? this.notes,
+      gymProfileId: gymProfileId ?? this.gymProfileId,
       completedAt: completedAt ?? this.completedAt,
       syncStatus: syncStatus ?? this.syncStatus,
       syncRetryCount: syncRetryCount ?? this.syncRetryCount,
@@ -2846,6 +2896,9 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (gymProfileId.present) {
+      map['gym_profile_id'] = Variable<String>(gymProfileId.value);
+    }
     if (completedAt.present) {
       map['completed_at'] = Variable<DateTime>(completedAt.value);
     }
@@ -2876,6 +2929,7 @@ class CachedWorkoutLogsCompanion extends UpdateCompanion<CachedWorkoutLog> {
           ..write('rpe: $rpe, ')
           ..write('rir: $rir, ')
           ..write('notes: $notes, ')
+          ..write('gymProfileId: $gymProfileId, ')
           ..write('completedAt: $completedAt, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('syncRetryCount: $syncRetryCount, ')
@@ -9710,6 +9764,7 @@ typedef $$CachedWorkoutLogsTableCreateCompanionBuilder =
       Value<int?> rpe,
       Value<int?> rir,
       Value<String?> notes,
+      Value<String?> gymProfileId,
       required DateTime completedAt,
       Value<String> syncStatus,
       Value<int> syncRetryCount,
@@ -9729,6 +9784,7 @@ typedef $$CachedWorkoutLogsTableUpdateCompanionBuilder =
       Value<int?> rpe,
       Value<int?> rir,
       Value<String?> notes,
+      Value<String?> gymProfileId,
       Value<DateTime> completedAt,
       Value<String> syncStatus,
       Value<int> syncRetryCount,
@@ -9801,6 +9857,11 @@ class $$CachedWorkoutLogsTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
     column: $table.notes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gymProfileId => $composableBuilder(
+    column: $table.gymProfileId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -9889,6 +9950,11 @@ class $$CachedWorkoutLogsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get gymProfileId => $composableBuilder(
+    column: $table.gymProfileId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
     builder: (column) => ColumnOrderings(column),
@@ -9955,6 +10021,11 @@ class $$CachedWorkoutLogsTableAnnotationComposer
 
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
+
+  GeneratedColumn<String> get gymProfileId => $composableBuilder(
+    column: $table.gymProfileId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<DateTime> get completedAt => $composableBuilder(
     column: $table.completedAt,
@@ -10024,6 +10095,7 @@ class $$CachedWorkoutLogsTableTableManager
                 Value<int?> rpe = const Value.absent(),
                 Value<int?> rir = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> gymProfileId = const Value.absent(),
                 Value<DateTime> completedAt = const Value.absent(),
                 Value<String> syncStatus = const Value.absent(),
                 Value<int> syncRetryCount = const Value.absent(),
@@ -10041,6 +10113,7 @@ class $$CachedWorkoutLogsTableTableManager
                 rpe: rpe,
                 rir: rir,
                 notes: notes,
+                gymProfileId: gymProfileId,
                 completedAt: completedAt,
                 syncStatus: syncStatus,
                 syncRetryCount: syncRetryCount,
@@ -10060,6 +10133,7 @@ class $$CachedWorkoutLogsTableTableManager
                 Value<int?> rpe = const Value.absent(),
                 Value<int?> rir = const Value.absent(),
                 Value<String?> notes = const Value.absent(),
+                Value<String?> gymProfileId = const Value.absent(),
                 required DateTime completedAt,
                 Value<String> syncStatus = const Value.absent(),
                 Value<int> syncRetryCount = const Value.absent(),
@@ -10077,6 +10151,7 @@ class $$CachedWorkoutLogsTableTableManager
                 rpe: rpe,
                 rir: rir,
                 notes: notes,
+                gymProfileId: gymProfileId,
                 completedAt: completedAt,
                 syncStatus: syncStatus,
                 syncRetryCount: syncRetryCount,

@@ -18,6 +18,7 @@ import '../../../core/services/workout_tour_steps.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/milestones_provider.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/providers/scores_provider.dart';
@@ -334,6 +335,15 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       final setsJson = buildSetsJson();
       final metadata = _buildWorkoutMetadata(workout);
 
+      // Per-gym progress tracking: attribute this workout-log (and its bulk
+      // set-performance rows) to the gym the workout was generated for.
+      // Prefer the workout's own gym_profile_id (stable provenance), fall
+      // back to the active gym for legacy workouts. NULL → combined bucket.
+      // The server is still authoritative (it re-derives from the workout
+      // row); this is a fallback.
+      final String? gymProfileId =
+          workout.gymProfileId ?? ref.read(activeGymProfileIdProvider);
+
       final totalCompletedSets = completedSets.values
           .fold<int>(0, (sum, list) => sum + list.length);
       final exercisesWithSets =
@@ -351,6 +361,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         setsJson: setsJson,
         totalTimeSeconds: timerController.workoutSeconds,
         metadata: jsonEncode(metadata),
+        gymProfileId: gymProfileId,
       );
 
       final ancillaryFutures = <Future>[];
@@ -381,7 +392,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         if (workoutLog != null) {
           workoutLogId = workoutLog['id'] as String;
           debugPrint('✅ [Complete] Workout log created: $workoutLogId');
-          await logAllSetPerformances(workoutLogId!, userId);
+          await logAllSetPerformances(workoutLogId!, userId,
+              gymProfileId: gymProfileId);
         } else {
           debugPrint('❌ [Complete] createWorkoutLog returned null');
         }
@@ -631,7 +643,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   /// by the slowest single upload, not the sum. Upload failures drop the
   /// missing media but never block the workout — the rest of the set
   /// still saves.
-  Future<void> logAllSetPerformances(String workoutLogId, String userId) async {
+  Future<void> logAllSetPerformances(String workoutLogId, String userId,
+      {String? gymProfileId}) async {
     final workoutRepo = ref.read(workoutRepositoryProvider);
     final mediaSvc = SetNoteMediaService(ref.read(apiClientProvider));
 
@@ -699,6 +712,9 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           'weight_kg': setLog.weight,
           'is_completed': !isPlaceholder,
           'set_type': setLog.setType,
+          // Per-gym progress tracking — attribute every set row to the gym
+          // the workout was performed at (server re-derives authoritatively).
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
           if (setLog.rpe != null) 'rpe': setLog.rpe!.toDouble(),
           if (setLog.rir != null) 'rir': setLog.rir,
           // Always emit `notes` as a list (possibly empty) so the TEXT[]

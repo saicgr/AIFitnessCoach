@@ -14,6 +14,10 @@ class CachedWorkoutLogs extends Table {
   IntColumn get rpe => integer().nullable()();
   IntColumn get rir => integer().nullable()();
   TextColumn get notes => text().nullable()();
+  // Per-gym progress tracking: the gym this set was performed at, captured at
+  // log time as an offline fallback (the server re-derives the authoritative
+  // value from the workout row on sync). Nullable → combined/unassigned.
+  TextColumn get gymProfileId => text().nullable()();
   DateTimeColumn get completedAt => dateTime()();
   TextColumn get syncStatus =>
       text().withDefault(const Constant('pending'))();
