@@ -101,15 +101,25 @@ class ScoresRepository {
   // Strength Score Endpoints
   // ============================================
 
-  /// Get all muscle group strength scores
+  /// Get all muscle group strength scores.
+  ///
+  /// [gymProfileId] is OPTIONAL: when set, the score is computed from sets
+  /// logged at that gym only (so the score stops bouncing when the user
+  /// switches gyms); when omitted, the combined cross-gym score is returned
+  /// exactly as before.
   Future<AllStrengthScores> getAllStrengthScores({
     required String userId,
+    String? gymProfileId,
   }) async {
     try {
-      debugPrint('🏋️ [Scores] Getting all strength scores for $userId');
+      debugPrint('🏋️ [Scores] Getting all strength scores for $userId'
+          '${gymProfileId != null ? ' (gym=$gymProfileId)' : ''}');
       final response = await _client.get(
         '/scores/strength',
-        queryParameters: {'user_id': userId},
+        queryParameters: {
+          'user_id': userId,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
+        },
       );
       debugPrint('✅ [Scores] Got all strength scores');
       return AllStrengthScores.fromJson(response.data);
@@ -160,20 +170,27 @@ class ScoresRepository {
   // Personal Records Endpoints
   // ============================================
 
-  /// Get personal records and statistics
+  /// Get personal records and statistics.
+  ///
+  /// [gymProfileId] is OPTIONAL: when set, the PR list is scoped to records set
+  /// at that gym (machine/cable PRs no longer get crushed by an incomparable
+  /// record at another gym); combined otherwise.
   Future<PRStats> getPersonalRecords({
     required String userId,
     int limit = 10,
     int periodDays = 30,
+    String? gymProfileId,
   }) async {
     try {
-      debugPrint('🏆 [Scores] Getting personal records for $userId');
+      debugPrint('🏆 [Scores] Getting personal records for $userId'
+          '${gymProfileId != null ? ' (gym=$gymProfileId)' : ''}');
       final response = await _client.get(
         '/scores/personal-records',
         queryParameters: {
           'user_id': userId,
           'limit': limit,
           'period_days': periodDays,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
         },
       );
       debugPrint('✅ [Scores] Got personal records');
@@ -181,6 +198,58 @@ class ScoresRepository {
     } catch (e) {
       debugPrint('❌ [Scores] Error getting personal records: $e');
       rethrow;
+    }
+  }
+
+  /// Per-PR gym attribution, keyed by lowercased exercise name.
+  ///
+  /// The shared `PersonalRecordScore` model (owned elsewhere) drops the gym
+  /// columns, so the Personal Records screen reads the raw `/scores/personal-
+  /// records` JSON here to recover `{gym_profile_id, gym_name, gym_color}` per
+  /// exercise. Returns an empty map on any error so the screen degrades to no
+  /// gym labels rather than failing.
+  Future<Map<String, Map<String, String?>>> getPersonalRecordGymTags({
+    required String userId,
+    int limit = 50,
+    int periodDays = 365,
+    String? gymProfileId,
+  }) async {
+    try {
+      final response = await _client.get(
+        '/scores/personal-records',
+        queryParameters: {
+          'user_id': userId,
+          'limit': limit,
+          'period_days': periodDays,
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
+        },
+      );
+      final data = response.data;
+      if (data is! Map) return const {};
+      final recent = data['recent_prs'];
+      final result = <String, Map<String, String?>>{};
+      if (recent is List) {
+        for (final r in recent) {
+          if (r is! Map) continue;
+          final name = r['exercise_name']?.toString();
+          if (name == null) continue;
+          final gymId = r['gym_profile_id']?.toString();
+          if (gymId == null || gymId.isEmpty) continue;
+          // Keep the first (most-recent) gym tag per exercise.
+          result.putIfAbsent(
+            name.toLowerCase(),
+            () => {
+              'gym_profile_id': gymId,
+              'gym_name': r['gym_name']?.toString(),
+              'gym_color': r['gym_color']?.toString(),
+            },
+          );
+        }
+      }
+      return result;
+    } catch (e) {
+      debugPrint('⚠️ [Scores] PR gym-tags fetch failed: $e');
+      return const {};
     }
   }
 

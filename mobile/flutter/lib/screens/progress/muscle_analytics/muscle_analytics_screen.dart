@@ -10,6 +10,7 @@ import '../../../utils/share_report_helper.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import '../widgets/gym_progress_filter.dart';
 import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
 import 'widgets/muscle_frequency_chart.dart';
@@ -130,6 +131,11 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
               SegmentedTabItem(label: l10n.muscleAnalyticsFrequency),
               SegmentedTabItem(label: l10n.muscleAnalyticsBalance),
             ],
+          ),
+          // Gym progress filter — hides itself when ≤1 gym.
+          const Padding(
+            padding: EdgeInsets.only(top: 8, bottom: 4),
+            child: GymProgressFilter(surfaceKey: 'muscle_analytics'),
           ),
           Expanded(
             child: TabBarView(

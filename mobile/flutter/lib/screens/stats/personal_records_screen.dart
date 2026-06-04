@@ -9,8 +9,10 @@ import '../../core/constants/stat_typography.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
+import '../../data/models/gym_profile.dart';
 import '../../data/models/scores.dart';
 import '../../data/models/training_intensity.dart';
+import '../../data/providers/gym_progress_filter_provider.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/scores_repository.dart';
 import '../../data/services/api_client.dart';
@@ -21,6 +23,7 @@ import '../../shareables/shareable_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../data/providers/trend_series_provider.dart';
+import '../progress/widgets/gym_progress_filter.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 // ============================================================================
@@ -88,11 +91,16 @@ class PersonalRecordsScreen extends ConsumerStatefulWidget {
 }
 
 class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
+  static const _gymSurfaceKey = 'personal_records';
+
   final _searchController = TextEditingController();
   final GlobalKey _reportKey = GlobalKey();
   String _searchQuery = '';
   _SortMode _sortMode = _SortMode.recentPr;
   bool _sortAscending = false;
+
+  /// Resolved user id (for the per-PR gym-tag fetch). Captured once.
+  String? _resolvedUserId;
 
   /// Disk-cache host for `PRStats` (see [_PrDiskCache]).
   final _PrDiskCache _diskCache = _PrDiskCache();
@@ -121,6 +129,10 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
   Future<void> _warmDiskCache() async {
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId == null || !mounted) return;
+    // Surface the resolved id so the gym-tag provider can fetch per-PR labels.
+    if (_resolvedUserId != userId) {
+      setState(() => _resolvedUserId = userId);
+    }
     final repo = ref.read(scoresRepositoryProvider);
     await _diskCache.warmPrStats(
       userId: userId,
@@ -187,6 +199,22 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     // Group PRs by exercise, keep best per exercise
     final grouped = _groupAndFilter(prStats?.recentPrs ?? [], oneRmMap);
 
+    // Per-exercise gym attribution (color + name) for the PR cards. The shared
+    // PR model drops gym columns, so this comes from the raw PR JSON. Scoped to
+    // the selected gym when one is active.
+    final gymSelection = ref.watch(gymProgressFilterProvider(_gymSurfaceKey));
+    final gymScopedId =
+        gymSelection.isAllGyms ? null : gymSelection.gymProfileId;
+    final gymTags = (_resolvedUserId != null)
+        ? (ref
+                .watch(prGymTagsProvider((
+                  userId: _resolvedUserId!,
+                  gymProfileId: gymScopedId,
+                )))
+                .valueOrNull ??
+            const <String, Map<String, String?>>{})
+        : const <String, Map<String, String?>>{};
+
     return Scaffold(
       backgroundColor: bg,
       appBar: PillAppBar(
@@ -224,6 +252,13 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 if (prStats != null)
                   _buildSummaryRow(prStats, dotsScore, isDark, accentColor),
 
+                // Gym progress filter — scopes the whole PR list to one gym
+                // (hides itself when ≤1 gym).
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 4),
+                  child: GymProgressFilter(surfaceKey: _gymSurfaceKey),
+                ),
+
                 // Search bar
                 _buildSearchBar(isDark, accentColor),
 
@@ -233,12 +268,14 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 // PR list
                 Expanded(
                   child: grouped.isEmpty
-                      ? _buildEmptyState(isDark)
+                      ? _buildEmptyState(isDark, gymScoped: gymScopedId != null)
                       : ListView.builder(
                           padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                           itemCount: grouped.length,
                           itemBuilder: (context, index) {
                             final entry = grouped[index];
+                            final gymTag = gymTags[
+                                entry.bestPr.exerciseName.toLowerCase()];
                             return _ExercisePRCard(
                               pr: entry.bestPr,
                               oneRm: entry.oneRm,
@@ -247,8 +284,18 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                               useKg: useKg,
                               accentColor: accentColor,
                               isDark: isDark,
+                              gymName: gymTag?['gym_name'],
+                              gymColorHex: gymTag?['gym_color'],
                               onTap: () {
                                 HapticService.light();
+                                // Carry the gym scope into the drill-down.
+                                if (gymScopedId != null) {
+                                  ref
+                                      .read(gymProgressFilterProvider(
+                                              'exercise:${entry.bestPr.exerciseName}')
+                                          .notifier)
+                                      .seedGym(gymScopedId);
+                                }
                                 context.push(
                                   '/stats/exercise-history/${Uri.encodeComponent(entry.bestPr.exerciseName)}',
                                 );
@@ -640,7 +687,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     );
   }
 
-  Widget _buildEmptyState(bool isDark) {
+  Widget _buildEmptyState(bool isDark, {bool gymScoped = false}) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -655,13 +702,18 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
                 size: 64, color: Colors.amber.withValues(alpha: 0.5)),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
+              gymScoped
+                  ? 'No PRs at this gym yet'
+                  : AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
               style: TextStyle(
                   fontSize: 18, fontWeight: FontWeight.w600, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
-              AppLocalizations.of(context).personalRecordsCompleteWorkoutsToStart,
+              gymScoped
+                  ? 'Log a PR here, or switch to "All gyms".'
+                  : AppLocalizations.of(context).personalRecordsCompleteWorkoutsToStart,
               style: TextStyle(fontSize: 14, color: textMuted),
               textAlign: TextAlign.center,
             ),
@@ -694,6 +746,11 @@ class _ExercisePRCard extends StatelessWidget {
   final bool useKg;
   final Color accentColor;
   final bool isDark;
+
+  /// Gym this PR was set at (null when unknown / single-gym user). Drives a
+  /// colored gym chip on the card so home + gym PRs visibly coexist.
+  final String? gymName;
+  final String? gymColorHex;
   final VoidCallback onTap;
 
   const _ExercisePRCard({
@@ -703,6 +760,8 @@ class _ExercisePRCard extends StatelessWidget {
     required this.useKg,
     required this.accentColor,
     required this.isDark,
+    this.gymName,
+    this.gymColorHex,
     required this.onTap,
   });
 
@@ -795,6 +854,13 @@ class _ExercisePRCard extends StatelessWidget {
                             style:
                                 TextStyle(fontSize: 12, color: textMuted),
                           ),
+                        ),
+                      // Gym attribution chip — colored dot + gym name so a
+                      // home + gym PR for the same lift visibly coexist.
+                      if (gymName != null && gymName!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: _gymChip(gymName!, gymColorHex),
                         ),
                     ],
                   ),
@@ -906,6 +972,39 @@ class _ExercisePRCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Small colored gym chip ("● Gold's Gym") shown under the muscle group.
+  Widget _gymChip(String name, String? colorHex) {
+    final color = (colorHex != null && colorHex.isNotEmpty)
+        ? GymProfileColors.fromHex(colorHex)
+        : accentColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

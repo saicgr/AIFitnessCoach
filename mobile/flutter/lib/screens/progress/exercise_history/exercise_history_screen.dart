@@ -9,6 +9,8 @@ import '../../../data/models/scores.dart';
 import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
+import '../../../data/providers/gym_progress_filter_provider.dart';
+import '../widgets/gym_progress_filter.dart';
 import '../../../data/services/api_client.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -27,6 +29,10 @@ class ExerciseHistoryScreen extends ConsumerStatefulWidget {
 
 class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
     with SingleTickerProviderStateMixin {
+  // Surface key for the per-gym progress filter on the exercise list. Selecting
+  // a gym here carries into each exercise's detail chart on tap-through.
+  static const _kExerciseListGymSurface = 'exercise-list';
+
   final _searchController = TextEditingController();
   final GlobalKey _reportKey = GlobalKey();
   late final TabController _tabController;
@@ -151,6 +157,12 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
 
     return Column(
       children: [
+        // Per-gym progress filter. Segments the per-exercise charts you drill
+        // into by gym; hides itself automatically when the user has ≤1 gym.
+        const Padding(
+          padding: EdgeInsets.only(top: 8),
+          child: GymProgressFilter(surfaceKey: _kExerciseListGymSurface),
+        ),
         // Search field
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -214,6 +226,18 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
                       exercise: exercise,
                       rank: index + 1,
                       onTap: () {
+                        // Carry the list's gym selection into the exercise's
+                        // detail chart (seedGym marks it resolved, so the
+                        // detail screen's own default won't override it).
+                        final sel = ref.read(
+                            gymProgressFilterProvider(_kExerciseListGymSurface));
+                        if (!sel.isAllGyms && sel.gymProfileId != null) {
+                          ref
+                              .read(gymProgressFilterProvider(
+                                      'exercise:${exercise.exerciseName}')
+                                  .notifier)
+                              .seedGym(sel.gymProfileId!);
+                        }
                         context.push('/stats/exercise-history/${Uri.encodeComponent(exercise.exerciseName)}');
                       },
                     );

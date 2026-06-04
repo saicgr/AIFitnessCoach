@@ -6,9 +6,11 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/models/muscle_status.dart';
 import '../../../data/models/scores.dart';
+import '../../../data/providers/gym_progress_filter_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
 import 'body_score_overlay.dart';
+import 'gym_progress_filter.dart';
 import 'share_strength_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -103,12 +105,30 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
     } catch (_) {}
   }
 
+  static const _gymSurfaceKey = 'strength_overview';
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final scoresState = ref.watch(scoresProvider);
-    final strengthScores = scoresState.strengthScores;
-    final isLoading = scoresState.isLoading;
+
+    // When a specific gym is selected, read the gym-filtered strength score so
+    // the score stops bouncing on gym switch. "All gyms"/unresolved falls back
+    // to the combined scoresProvider exactly as before.
+    final gymSelection = ref.watch(gymProgressFilterProvider(_gymSurfaceKey));
+    final gymScoped = !gymSelection.isAllGyms && gymSelection.gymProfileId != null;
+    final gymScoresAsync = gymScoped
+        ? ref.watch(gymStrengthScoresProvider(GymStrengthScoresArgs(
+            userId: widget.userId,
+            gymProfileId: gymSelection.gymProfileId,
+          )))
+        : null;
+
+    final AllStrengthScores? strengthScores =
+        gymScoped ? gymScoresAsync?.valueOrNull : scoresState.strengthScores;
+    final bool isLoading = gymScoped
+        ? (gymScoresAsync?.isLoading ?? false)
+        : scoresState.isLoading;
 
     return Container(
       decoration: BoxDecoration(
@@ -171,13 +191,20 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
             ),
           ),
 
+          // Compact gym selector — hides itself when ≤1 gym. Selecting a gym
+          // re-reads the strength score scoped to that gym.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: GymProgressFilter(surfaceKey: _gymSurfaceKey),
+          ),
+
           if (isLoading && strengthScores == null)
             const Padding(
               padding: EdgeInsets.all(32),
               child: Center(child: CircularProgressIndicator()),
             )
           else if (strengthScores == null)
-            _buildEmptyState(colorScheme)
+            _buildEmptyState(colorScheme, gymScoped: gymScoped)
           else
             _buildContent(strengthScores, colorScheme),
         ],
@@ -314,7 +341,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
 
   // ─── Empty State ───────────────────────────────────────────────────
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(ColorScheme colorScheme, {bool gymScoped = false}) {
     return Padding(
       padding: const EdgeInsets.all(32),
       child: Column(
@@ -326,16 +353,21 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
           ),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context).strengthOverviewCardNoStrengthDataYet,
+            gymScoped
+                ? 'Not enough data at this gym'
+                : AppLocalizations.of(context).strengthOverviewCardNoStrengthDataYet,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: colorScheme.onSurface,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
-            AppLocalizations.of(context).strengthOverviewCardCompleteWorkoutsWithResista,
+            gymScoped
+                ? 'Log a few weighted sets at this gym, or switch to "All gyms".'
+                : AppLocalizations.of(context).strengthOverviewCardCompleteWorkoutsWithResista,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

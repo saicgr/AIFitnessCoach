@@ -12,6 +12,7 @@ import 'widgets/strength_chart.dart';
 import 'widgets/summary_cards.dart';
 import 'widgets/time_range_selector.dart';
 import 'widgets/muscle_group_filter.dart';
+import '../widgets/gym_progress_filter.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../core/constants/app_colors.dart';
@@ -179,6 +180,15 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Gym progress filter — sits beside the muscle/time filters. Hides
+          // itself when ≤1 gym so single-gym users see no change.
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: GymProgressFilter(
+              surfaceKey: 'progress_charts_strength',
+              padding: EdgeInsets.zero,
+            ),
+          ),
           // Muscle Group Filter
           MuscleGroupFilter(
             muscleGroups: state.availableMuscleGroupsList,

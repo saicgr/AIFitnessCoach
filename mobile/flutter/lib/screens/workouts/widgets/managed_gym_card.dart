@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/gym_profile_provider.dart';
+import '../../../data/providers/gym_progress_filter_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../home/widgets/manage_gym_profiles_sheet.dart';
@@ -54,7 +56,10 @@ class ManagedGymCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
       ),
-      child: Material(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Material(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
@@ -152,6 +157,17 @@ class ManagedGymCard extends ConsumerWidget {
             ),
           ),
         ),
+          ),
+          // "Progress at this gym" tap-through — opens the exercise history
+          // pre-filtered to the active gym. Only when a profile exists.
+          if (activeProfile != null)
+            _ProgressAtGymRow(
+              gymId: activeProfile.id,
+              tint: tint,
+              cardBorder: cardBorder,
+              textSecondary: textSecondary,
+            ),
+        ],
       ),
     );
   }
@@ -193,5 +209,76 @@ class ManagedGymCard extends ConsumerWidget {
       return '$env · no equipment added yet';
     }
     return '$env · $equipmentCount equipment item${equipmentCount == 1 ? '' : 's'}';
+  }
+}
+
+/// "Progress at this gym" tap-through row at the foot of the Managed Gym card.
+///
+/// Seeds the exercise-history list filter (and the strength-overview filter)
+/// with this gym's id, then opens the exercise history screen so the user lands
+/// pre-scoped to this gym. Does NOT change the active workout gym.
+class _ProgressAtGymRow extends ConsumerWidget {
+  final String gymId;
+  final Color tint;
+  final Color cardBorder;
+  final Color textSecondary;
+
+  const _ProgressAtGymRow({
+    required this.gymId,
+    required this.tint,
+    required this.cardBorder,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Divider(height: 1, thickness: 1, color: cardBorder),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(16),
+            ),
+            onTap: () {
+              HapticService.light();
+              // Seed the read-only progress filters with this gym (separate
+              // from the active workout gym).
+              ref
+                  .read(gymProgressFilterProvider('exercise_history_list')
+                      .notifier)
+                  .seedGym(gymId);
+              ref
+                  .read(gymProgressFilterProvider('strength_overview').notifier)
+                  .seedGym(gymId);
+              context.push('/stats/exercise-history');
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              child: Row(
+                children: [
+                  Icon(Icons.insights_rounded, size: 18, color: tint),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Progress at this gym',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 20, color: textSecondary.withValues(alpha: 0.6)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }
