@@ -391,3 +391,103 @@ async def score_target(
         "stale_days_threshold": SCORE_STALE_DAYS,
         "target": target,  # None when already elite
     }
+
+
+# ---------------------------------------------------------------------------
+# Per-EXERCISE strength score for the in-workout hexagon badge + best-lift card.
+# Gravl parity (Image #2): a numeric score in a glowing hexagon, "Best lift from
+# the last 3 months", with weight / reps / one-rep-max / date of that best set.
+#
+# We already have per-MUSCLE scores; this surfaces the same scoring math scoped
+# to a SINGLE exercise so the active-workout screen can render it inline.
+# Deterministic (no LLM) — reuses StrengthCalculatorService, the same engine
+# that powers the muscle scores, so the number is consistent app-wide.
+# ---------------------------------------------------------------------------
+@router.get("/scores/exercise/{exercise_name}")
+async def exercise_strength_score(
+    exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Best lift (last 90 days) + a 0-100 strength score & level for one exercise."""
+    from services.strength_calculator_service import (
+        StrengthCalculatorService,
+        strength_calculator_service,
+    )
+
+    user_id = current_user["id"]
+    name = exercise_name.strip()
+    db = get_supabase_db()
+
+    # Body info drives the bodyweight-ratio classification (same as muscle scores).
+    user_response = (
+        db.client.table("users")
+        .select("weight_kg, gender, preferences")
+        .eq("id", user_id)
+        .maybe_single()
+        .execute()
+    )
+    if not user_response or not user_response.data:
+        raise HTTPException(status_code=404, detail="User not found")
+    from api.v1.scores import get_user_body_info
+    bodyweight, gender = get_user_body_info(user_response.data)
+
+    since = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat()
+    # performance_logs is the flat per-set source (also powers exercise history).
+    perf = (
+        db.client.table("performance_logs")
+        .select("exercise_name, reps_completed, weight_kg, recorded_at, is_pr")
+        .eq("user_id", user_id)
+        .ilike("exercise_name", name)  # case-insensitive exact (no wildcards)
+        .gte("recorded_at", since)
+        .order("recorded_at", desc=True)
+        .execute()
+    )
+    rows = perf.data or []
+
+    best: Optional[dict] = None
+    # Best e1RM per calendar day → a small sparkline trail for the card.
+    day_best: dict[str, float] = {}
+    for r in rows:
+        weight = float(r.get("weight_kg") or 0)
+        reps = int(r.get("reps_completed") or 0)
+        if weight <= 0 or reps <= 0:
+            continue
+        e1rm = StrengthCalculatorService.calculate_1rm_average(weight, reps)
+        recorded = r.get("recorded_at")
+        if best is None or e1rm > best["estimated_1rm_kg"]:
+            best = {
+                "weight_kg": round(weight, 1),
+                "reps": reps,
+                "estimated_1rm_kg": round(e1rm, 1),
+                "achieved_at": recorded,
+            }
+        day = str(recorded or "")[:10]
+        if day and e1rm > day_best.get(day, 0):
+            day_best[day] = round(e1rm, 1)
+
+    if best is None:
+        return {
+            "exercise_name": name,
+            "has_data": False,
+            "score": 0,
+            "level": "beginner",
+            "best": None,
+            "history": [],
+        }
+
+    level, ratio, score = strength_calculator_service.classify_strength_level(
+        name, best["estimated_1rm_kg"], bodyweight, gender
+    )
+    history = [
+        {"date": d, "e1rm": v} for d, v in sorted(day_best.items())
+    ][-12:]  # last 12 sessions for the sparkline
+
+    return {
+        "exercise_name": name,
+        "has_data": True,
+        "score": score,
+        "level": level.value,
+        "bodyweight_ratio": ratio,
+        "best": best,
+        "history": history,
+    }

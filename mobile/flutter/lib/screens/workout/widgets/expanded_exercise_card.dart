@@ -12,12 +12,16 @@ import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
 import '../../../data/models/exercise.dart';
+import '../../../data/models/exercise_strength_score.dart';
+import '../../../data/providers/exercise_strength_score_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/hexagon_badge.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
 import 'exercise_options_info_sheet.dart';
 import 'exercise_info_sheet.dart';
+import 'exercise_strength_score_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'expanded_exercise_card_ui_1.dart';
@@ -78,6 +82,10 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
   bool _isLoadingImage = true;
   late bool _isExpanded;
   bool? _useKgOverride; // Local override for kg/lbs toggle, null = use provider
+  // Warmup sets are grouped into a muted, collapsible section above the
+  // highlighted "Effective sets" section. Default to SHOWN so users still see
+  // their full ramp-up; the "Hide" toggle just declutters once they're warm.
+  bool _warmupsHidden = false;
   static final Map<String, String> _imageCache = {};
 
   @override
@@ -305,6 +313,9 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
                     textSecondary: textSecondary,
                     accentColor: accentColor,
                   ),
+
+                  // Per-exercise strength score card (Surface 2) below the sets.
+                  _buildStrengthScoreSection(),
 
                   const SizedBox(height: 8),
                 ],
@@ -996,4 +1007,27 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
         return accentColor; // working
     }
   }
+}
+
+/// A flattened, render-ready description of one set in an exercise card.
+///
+/// Decouples the "what sets exist + their labels/RIR" computation from the
+/// "how do we group + paint them" rendering, so warmup/effective grouping
+/// (Surface 6a) never has to reshuffle working-set numbering.
+class _SetDescriptor {
+  final String label;
+  final bool isWarmup;
+  final String setType;
+  final double? weightKg;
+  final int? targetReps;
+  final int? targetRir;
+
+  const _SetDescriptor({
+    required this.label,
+    required this.isWarmup,
+    required this.setType,
+    required this.weightKg,
+    required this.targetReps,
+    required this.targetRir,
+  });
 }

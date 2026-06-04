@@ -3,7 +3,20 @@ part of 'expanded_exercise_card.dart';
 /// UI builder methods extracted from _ExpandedExerciseCardState
 extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
 
-  /// Build set rows from AI setTargets or fallback to legacy format
+  /// Build the set list, grouped into a muted, collapsible "Warmup sets"
+  /// section above a highlighted "Effective sets" section (Surface 6a).
+  ///
+  /// A set is a WARMUP when its [setType] is exactly `'warmup'` (the only
+  /// warmup literal used by the AI target schema + the legacy fallback).
+  /// Everything else — `working`/`failure`/`amrap`/`drop` — is EFFECTIVE.
+  ///
+  /// All states are handled gracefully:
+  ///   • warmup-only            → only the warmup section renders.
+  ///   • no-warmup / all-working → only the effective section renders (no
+  ///                               empty warmup header).
+  ///   • mixed                  → both sections render.
+  ///   • single-set             → renders in the correct section, no toggle
+  ///                               clutter when there are no warmups.
   List<Widget> _buildSetRows({
     required WorkoutExercise exercise,
     required bool useKg,
@@ -14,7 +27,95 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
     required Color textSecondary,
     required Color accentColor,
   }) {
-    // Use AI-generated setTargets if available
+    final descriptors = _buildSetDescriptors(exercise);
+    final warmups = descriptors.where((d) => d.isWarmup).toList();
+    final effective = descriptors.where((d) => !d.isWarmup).toList();
+
+    Widget rowFor(_SetDescriptor d) => _buildSetRow(
+          setLabel: d.label,
+          isWarmup: d.isWarmup,
+          setType: d.setType,
+          weightKg: d.weightKg,
+          targetReps: d.targetReps,
+          targetRir: d.targetRir,
+          useKg: useKg,
+          cardBorder: cardBorder,
+          glassSurface: glassSurface,
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+          textSecondary: textSecondary,
+          accentColor: accentColor,
+        );
+
+    final rows = <Widget>[];
+
+    // ── Warmup section (muted, collapsible) — only when warmups exist.
+    if (warmups.isNotEmpty) {
+      rows.add(_buildSetGroupHeader(
+        label: warmups.length == 1 ? 'Warmup set' : 'Warmup sets',
+        count: warmups.length,
+        color: AppColors.orange,
+        textMuted: textMuted,
+        glassSurface: glassSurface,
+        cardBorder: cardBorder,
+        collapsible: true,
+        collapsed: _warmupsHidden,
+        onToggle: () {
+          HapticService.light();
+          setState(() => _warmupsHidden = !_warmupsHidden);
+        },
+      ));
+      if (!_warmupsHidden) {
+        rows.addAll(warmups.map(rowFor));
+      }
+    }
+
+    // ── Effective section (highlighted) — render whenever any effective set
+    // exists. When there were NO warmups we skip the header entirely so a
+    // plain all-working exercise reads exactly like before (no redundant
+    // "Effective sets" banner above a single ungrouped list).
+    if (effective.isNotEmpty) {
+      if (warmups.isNotEmpty) {
+        rows.add(_buildSetGroupHeader(
+          label: effective.length == 1 ? 'Effective set' : 'Effective sets',
+          count: effective.length,
+          color: accentColor,
+          textMuted: textMuted,
+          glassSurface: glassSurface,
+          cardBorder: cardBorder,
+          collapsible: false,
+          highlighted: true,
+        ));
+      }
+      // Tint the effective block with an accent-left-border when grouped, so
+      // the user's eye lands on the sets that actually count.
+      if (warmups.isNotEmpty) {
+        rows.add(
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                left: BorderSide(color: accentColor.withOpacity(0.6), width: 2),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: effective.map(rowFor).toList(),
+            ),
+          ),
+        );
+      } else {
+        rows.addAll(effective.map(rowFor));
+      }
+    }
+
+    return rows;
+  }
+
+  /// Flatten an exercise into ordered set descriptors (AI targets if present,
+  /// else the legacy 2-warmup + N-working fallback). Working-set numbering
+  /// (1, 2, 3…) and algorithmic RIR are computed here so grouping never
+  /// reshuffles the labels the user expects.
+  List<_SetDescriptor> _buildSetDescriptors(WorkoutExercise exercise) {
     if (exercise.hasSetTargets && exercise.setTargets!.isNotEmpty) {
       int workingSetNumber = 0;
       final totalWorkingSets = exercise.setTargets!
@@ -22,7 +123,6 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           .length;
 
       return exercise.setTargets!.map((target) {
-        // For working sets, track the number (1, 2, 3...)
         String setLabel;
         int currentWorkingIndex = 0;
         if (target.setType.toLowerCase() == 'working') {
@@ -33,67 +133,175 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
           setLabel = target.setTypeLabel; // W, D, F, A
         }
 
-        // Use AI RIR if available, otherwise calculate algorithmically
         final calculatedRir = target.targetRir ??
             _calculateRir(target.setType, currentWorkingIndex, totalWorkingSets);
 
-        return _buildSetRow(
-          setLabel: setLabel,
+        return _SetDescriptor(
+          label: setLabel,
           isWarmup: target.isWarmup,
           setType: target.setType,
           weightKg: target.targetWeightKg,
           targetReps: target.targetReps,
           targetRir: calculatedRir,
-          useKg: useKg,
-          cardBorder: cardBorder,
-          glassSurface: glassSurface,
-          textPrimary: textPrimary,
-          textMuted: textMuted,
-          textSecondary: textSecondary,
-          accentColor: accentColor,
         );
       }).toList();
     }
 
     // Fallback to legacy format (hardcoded 2 warmups + working sets)
     final totalSets = exercise.sets ?? 3;
-    final warmupSets = 2;
+    const warmupSets = 2;
     final defaultReps = exercise.reps ?? 10;
 
     return [
-      ...List.generate(warmupSets, (i) => _buildSetRow(
-        setLabel: 'W',
-        isWarmup: true,
-        setType: 'warmup',
-        weightKg: null,
-        targetReps: defaultReps,
-        targetRir: null, // Warmups don't have RIR
-        useKg: useKg,
-        cardBorder: cardBorder,
-        glassSurface: glassSurface,
-        textPrimary: textPrimary,
-        textMuted: textMuted,
-        textSecondary: textSecondary,
-        accentColor: accentColor,
-      )),
-      ...List.generate(totalSets, (i) => _buildSetRow(
-        setLabel: '${i + 1}',
-        isWarmup: false,
-        setType: 'working',
-        weightKg: exercise.weight,
-        targetReps: defaultReps,
-        targetRir: _calculateRir('working', i, totalSets), // Algorithmic RIR
-        useKg: useKg,
-        cardBorder: cardBorder,
-        glassSurface: glassSurface,
-        textPrimary: textPrimary,
-        textMuted: textMuted,
-        textSecondary: textSecondary,
-        accentColor: accentColor,
-      )),
+      ...List.generate(
+        warmupSets,
+        (i) => _SetDescriptor(
+          label: 'W',
+          isWarmup: true,
+          setType: 'warmup',
+          weightKg: null,
+          targetReps: defaultReps,
+          targetRir: null, // Warmups don't have RIR
+        ),
+      ),
+      ...List.generate(
+        totalSets,
+        (i) => _SetDescriptor(
+          label: '${i + 1}',
+          isWarmup: false,
+          setType: 'working',
+          weightKg: exercise.weight,
+          targetReps: defaultReps,
+          targetRir: _calculateRir('working', i, totalSets),
+        ),
+      ),
     ];
   }
 
+  /// Section header for the Warmup / Effective groups. The warmup header is
+  /// collapsible (shows a "Hide"/"Show" toggle); the effective header carries
+  /// an accent tint so it reads as the "sets that count".
+  Widget _buildSetGroupHeader({
+    required String label,
+    required int count,
+    required Color color,
+    required Color textMuted,
+    required Color glassSurface,
+    required Color cardBorder,
+    required bool collapsible,
+    bool collapsed = false,
+    bool highlighted = false,
+    VoidCallback? onToggle,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayColor = isDark ? color : _darkenColor(color);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 12, 6),
+      decoration: BoxDecoration(
+        color: highlighted
+            ? color.withOpacity(isDark ? 0.06 : 0.08)
+            : glassSurface.withOpacity(0.25),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: displayColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.4,
+              color: highlighted ? displayColor : textMuted,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: textMuted.withOpacity(0.8),
+            ),
+          ),
+          const Spacer(),
+          if (collapsible && onToggle != null)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: onToggle,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      collapsed ? 'Show' : 'Hide',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: displayColor,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      collapsed
+                          ? Icons.keyboard_arrow_down
+                          : Icons.keyboard_arrow_up,
+                      size: 16,
+                      color: displayColor,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+
+  /// Small glowing hexagon score chip for the header chip-row (Surface 2).
+  /// Renders nothing until the score loads AND has data, so the header stays
+  /// quiet for brand-new exercises and never shows a "0" placeholder.
+  Widget _buildStrengthScoreChip(Color accentColor) {
+    return Consumer(
+      builder: (context, ref, _) {
+        final scoreAsync =
+            ref.watch(exerciseStrengthScoreProvider(widget.exercise.name));
+        final ExerciseStrengthScore? score = scoreAsync.asData?.value;
+        if (score == null || !score.hasData) {
+          return const SizedBox.shrink();
+        }
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final color = isDark ? accentColor : _darkenColor(accentColor);
+        return HexagonBadge(
+          value: '${score.score}',
+          color: color,
+          size: 34,
+          numberSize: 14,
+        );
+      },
+    );
+  }
+
+  /// Per-exercise strength score card (Surface 2 / Gravl Image #2), shown
+  /// below the set list inside the expanded card. The card itself handles its
+  /// loading / empty / populated states, so we just give it side padding so it
+  /// doesn't run edge-to-edge like the set rows do.
+  Widget _buildStrengthScoreSection() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: ExerciseStrengthScoreCard(exerciseName: widget.exercise.name),
+    );
+  }
 
   /// Build the card body, optionally wrapped with LongPressDraggable for superset creation
   Widget _buildCardBodyWithOptionalDrag({
@@ -157,6 +365,8 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                     textSecondary: textSecondary,
                     accentColor: accentColor,
                   ),
+                  // Per-exercise strength score card (Surface 2) below the sets.
+                  _buildStrengthScoreSection(),
                   const SizedBox(height: 8),
                 ],
               ),
@@ -390,7 +600,13 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                   Wrap(
                     spacing: 6,
                     runSpacing: 4,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
+                      // Small strength-score hexagon chip (Surface 2) — only
+                      // when the exercise has logged history. Sits alongside the
+                      // existing muscle / equipment / preference chips and
+                      // shares the row's horizontal wrap so it never overflows.
+                      _buildStrengthScoreChip(accentColor),
                       if (exercise.muscleGroup != null || exercise.primaryMuscle != null)
                         _buildInfoChip(
                           Icons.fitness_center,
@@ -898,17 +1114,28 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
                   ),
                 ),
               ),
-              // TARGET column - AI recommended weight × reps
+              // TARGET column - AI recommended weight × reps.
+              // Surface 6a: a per-DB weight badge (dumbbell exercises) and/or a
+              // per-arm reps badge (unilateral exercises) clarify what the
+              // number means — so "30 lb × 10" reads as "per dumbbell" not
+              // "total", and reps as "per arm".
               Expanded(
                 flex: 3,
-                child: Text(
-                  l.exerciseTableHeaderTarget,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: accentColor.withOpacity(0.9),
-                    letterSpacing: 0.3,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l.exerciseTableHeaderTarget,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: accentColor.withOpacity(0.9),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    _buildPerSideLabels(textMuted, accentColor),
+                  ],
                 ),
               ),
             ],
@@ -938,6 +1165,60 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
             ),
           ),
       ],
+    );
+  }
+
+  /// Per-DB / per-arm clarifier badges under the TARGET header.
+  ///
+  /// • "PER DB"  when the exercise's equipment (lowercased) contains
+  ///   "dumbbell" — the loaded weight is per dumbbell, not the pair total.
+  /// • "PER ARM" when the model's [WorkoutExercise.isUnilateral] flag is true —
+  ///   the reps are per arm/side (the model exposes a real laterality flag, so
+  ///   no brittle name whitelist is needed). `alternatingHands` (single
+  ///   dumbbell passed hand-to-hand) is treated as unilateral too.
+  ///
+  /// Renders nothing when neither applies (the common bilateral barbell case).
+  Widget _buildPerSideLabels(Color textMuted, Color accentColor) {
+    final equipment = widget.exercise.equipment?.toLowerCase() ?? '';
+    final isPerDb = equipment.contains('dumbbell');
+    final isPerArm = widget.exercise.isUnilateral == true ||
+        widget.exercise.alternatingHands == true;
+
+    if (!isPerDb && !isPerArm) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          if (isPerDb) _buildColumnTag('PER DB', accentColor),
+          if (isPerArm) _buildColumnTag('PER ARM', AppColors.orange),
+        ],
+      ),
+    );
+  }
+
+  /// Tiny uppercase tag used for the per-DB / per-arm column clarifiers.
+  Widget _buildColumnTag(String text, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final displayColor = isDark ? color : _darkenColor(color);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+      decoration: BoxDecoration(
+        color: color.withOpacity(isDark ? 0.12 : 0.15),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: displayColor.withOpacity(0.3), width: 0.5),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontSize: 8.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.4,
+          color: displayColor,
+        ),
+      ),
     );
   }
 
