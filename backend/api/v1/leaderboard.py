@@ -130,6 +130,11 @@ async def get_leaderboard(
     # Get friend IDs for flags
     friend_ids_set = set(leaderboard_service._get_friend_ids(user_id))
 
+    # B10 — batch the overall strength score for every entry so we can render
+    # a strength-score badge per friend (one query for the whole page).
+    entry_user_ids = [e["user_id"] for e in entries_data if e.get("user_id")]
+    strength_by_user = leaderboard_service.get_strength_scores_for_users(entry_user_ids)
+
     # Convert to LeaderboardEntry models
     entries = []
     for idx, entry in enumerate(entries_data):
@@ -138,7 +143,8 @@ async def get_leaderboard(
         is_current_user = entry["user_id"] == user_id
 
         entries.append(_build_leaderboard_entry(
-            entry, rank, leaderboard_type, is_friend, is_current_user
+            entry, rank, leaderboard_type, is_friend, is_current_user,
+            strength_score=strength_by_user.get(entry["user_id"]),
         ))
 
     # Get user's rank
@@ -444,6 +450,7 @@ def _build_leaderboard_entry(
     leaderboard_type: LeaderboardType,
     is_friend: bool,
     is_current_user: bool,
+    strength_score: Optional[int] = None,
 ) -> LeaderboardEntry:
     """Build LeaderboardEntry from database row."""
     entry = LeaderboardEntry(
@@ -454,6 +461,7 @@ def _build_leaderboard_entry(
         country_code=data.get("country_code"),
         is_friend=is_friend,
         is_current_user=is_current_user,
+        strength_score=strength_score,
     )
 
     # Add type-specific stats

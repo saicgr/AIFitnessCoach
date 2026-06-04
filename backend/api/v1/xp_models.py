@@ -108,6 +108,63 @@ class LoginStreakInfo(NullTolerantResponse):
 
 
 # =============================================================================
+# STREAK FREEZE (B9 — auto-earn + ledger, migration 2233)
+# =============================================================================
+
+class StreakFreezeLedgerEntry(NullTolerantResponse):
+    """One row of the streak-freeze audit ledger (xp_streak_freeze_ledger)."""
+    delta: int                       # +1 earned, -1 used/auto-used
+    reason: str                      # auto_earn_10wk | manual_use | auto_protect | admin_gift
+    balance_after: int
+    streak_day: Optional[int] = None
+    event_date: Optional[str] = None
+    created_at: Optional[str] = None
+
+
+class StreakFreezeStatusResponse(NullTolerantResponse):
+    """Live freeze balance + auto-earn progress + recent ledger.
+
+    Backs the refreshed streak UI (freeze chip count) and the celebration
+    when a freeze is auto-earned. `streak_until_next_freeze` powers the
+    "X days until your next free freeze" progress copy.
+    """
+    freezes_available: int = 0
+    current_streak: int = 0
+    freezes_earned_total: int = 0
+    # Auto-earn cadence: 1 freeze per 70 streak-days (10 weeks).
+    streak_per_freeze: int = 70
+    # Streak-days remaining until the next auto-earned freeze.
+    streak_until_next_freeze: int = 70
+    # Did THIS request's processing just auto-earn a freeze? Drives celebration.
+    just_earned_freeze: bool = False
+    recent_ledger: List[StreakFreezeLedgerEntry] = Field(default_factory=list)
+
+
+# =============================================================================
+# STREAK TIMEFRAME (B9 — week / month / all progress sheet)
+# =============================================================================
+
+class StreakTimeframeDay(NullTolerantResponse):
+    """A single day in the streak timeframe sheet."""
+    date: str                        # ISO yyyy-mm-dd
+    active: bool = False             # logged in / completed a goal that day
+    frozen: bool = False             # a freeze bridged this day
+    is_today: bool = False
+
+
+class StreakTimeframeResponse(NullTolerantResponse):
+    """Week / month / all-time streak + progress for the timeframe sheet."""
+    timeframe: str = "week"          # week | month | all
+    current_streak: int = 0
+    longest_streak: int = 0
+    # Count of active days within the requested window.
+    active_days: int = 0
+    total_days: int = 0
+    freezes_used: int = 0
+    days: List[StreakTimeframeDay] = Field(default_factory=list)
+
+
+# =============================================================================
 # XP EVENTS / BONUS TEMPLATES
 # =============================================================================
 

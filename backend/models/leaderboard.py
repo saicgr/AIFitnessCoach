@@ -80,6 +80,11 @@ class LeaderboardEntry(BaseModel):
     minigame_high_score: Optional[int] = None
     minigame_plays: Optional[int] = None
 
+    # Strength score (B10 — friend strength-score badge). Overall 0-100 score
+    # from `latest_strength_scores`. Populated for the streaks/volume boards so
+    # the client can render a small strength chip per friend.
+    strength_score: Optional[int] = None
+
     # Metadata
     is_friend: bool = False  # Is this user in requester's friends list?
     is_current_user: bool = False  # Is this the requesting user?

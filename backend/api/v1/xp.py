@@ -185,12 +185,342 @@ async def use_streak_freeze(
         # above) — that is the authoritative signal. The `xp_events.used_freeze`
         # column from migration 2095 is unused because `xp_events` is an event
         # catalog with no user_id column.
+
+        # Record the spend in the freeze ledger (migration 2233). Best-effort:
+        # the ledger is an audit trail, not on the happy-path critical chain.
+        _record_freeze_ledger(
+            db, user_id, delta=-1, reason="manual_use",
+            balance_after=new_balance, event_date=str(user_today),
+        )
+
         return {"ok": True, "freezes_available": new_balance}
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"[XP] use-freeze error: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+# =============================================================================
+# STREAK FREEZE — auto-earn (1 per 10 weeks), ledger, status (B9)
+# =============================================================================
+
+# Auto-earn cadence: one freeze per 70 streak-days (10 weeks of activity).
+STREAK_DAYS_PER_FREEZE = 70
+# Cap on how many freezes a user can BANK. Matches the migration-2095 default
+# semantics (Duolingo-style) but allows headroom for auto-earned freezes.
+FREEZE_BANK_CAP = 5
+
+
+def _record_freeze_ledger(
+    db,
+    user_id: str,
+    *,
+    delta: int,
+    reason: str,
+    balance_after: int,
+    streak_day: Optional[int] = None,
+    event_date: Optional[str] = None,
+) -> None:
+    """Append one row to xp_streak_freeze_ledger (migration 2233).
+
+    Best-effort: a ledger write must never break the calling endpoint. The
+    unique partial index (user_id, streak_day) WHERE reason='auto_earn_10wk'
+    makes a retried auto-earn a no-op rather than a double grant.
+    """
+    try:
+        db.client.table("xp_streak_freeze_ledger").insert({
+            "user_id": user_id,
+            "delta": delta,
+            "reason": reason,
+            "balance_after": balance_after,
+            "streak_day": streak_day,
+            "event_date": event_date,
+        }).execute()
+    except Exception as e:
+        # Duplicate auto-earn (unique index) is expected on retries — log quietly.
+        logger.warning(f"[XP] freeze ledger insert skipped ({reason}): {e}")
+
+
+def _maybe_auto_earn_freeze(db, user_id: str, current_streak: int) -> dict:
+    """Auto-grant a streak freeze every 70 streak-days (10 weeks).
+
+    Reads the current freeze balance + the streak-day at which the last freeze
+    was auto-earned. If `current_streak` has crossed the next 70-day boundary
+    AND the bank isn't at cap, grants +1 freeze, bumps the bank, stamps the
+    login-streak row, and records a ledger entry.
+
+    Returns a dict the caller can splice into a status response:
+      {freezes_available, freezes_earned_total, just_earned_freeze,
+       last_freeze_earned_streak}.
+    """
+    out = {
+        "freezes_available": 0,
+        "freezes_earned_total": 0,
+        "just_earned_freeze": False,
+        "last_freeze_earned_streak": 0,
+    }
+    try:
+        # Read live balance.
+        bal_row = (
+            db.client.table("users")
+            .select("xp_streak_freezes_available")
+            .eq("id", user_id).limit(1).execute()
+        )
+        balance = 2
+        if bal_row.data:
+            raw = bal_row.data[0].get("xp_streak_freezes_available")
+            if isinstance(raw, int):
+                balance = raw
+
+        # Read auto-earn bookkeeping (migration 2233 columns on login-streak).
+        ls_row = (
+            db.client.table("user_login_streaks")
+            .select("freezes_earned_total, last_freeze_earned_streak")
+            .eq("user_id", user_id).limit(1).execute()
+        )
+        earned_total = 0
+        last_earned_streak = 0
+        if ls_row.data:
+            earned_total = int(ls_row.data[0].get("freezes_earned_total") or 0)
+            last_earned_streak = int(ls_row.data[0].get("last_freeze_earned_streak") or 0)
+
+        out["freezes_available"] = balance
+        out["freezes_earned_total"] = earned_total
+        out["last_freeze_earned_streak"] = last_earned_streak
+
+        if current_streak < STREAK_DAYS_PER_FREEZE:
+            return out
+
+        # The streak-day boundary the user has most recently crossed.
+        milestone = (current_streak // STREAK_DAYS_PER_FREEZE) * STREAK_DAYS_PER_FREEZE
+        # Already granted for this (or a later) milestone → nothing to do.
+        if milestone <= last_earned_streak:
+            return out
+
+        # At bank cap → still advance the bookkeeping so we don't re-check
+        # forever, but don't grant (the user can't hold more freezes).
+        if balance >= FREEZE_BANK_CAP:
+            db.client.table("user_login_streaks").update({
+                "last_freeze_earned_streak": milestone,
+            }).eq("user_id", user_id).execute()
+            out["last_freeze_earned_streak"] = milestone
+            return out
+
+        new_balance = balance + 1
+        new_earned_total = earned_total + 1
+
+        db.client.table("users").update({
+            "xp_streak_freezes_available": new_balance,
+        }).eq("id", user_id).execute()
+
+        db.client.table("user_login_streaks").update({
+            "freezes_earned_total": new_earned_total,
+            "last_freeze_earned_streak": milestone,
+        }).eq("user_id", user_id).execute()
+
+        _record_freeze_ledger(
+            db, user_id, delta=1, reason="auto_earn_10wk",
+            balance_after=new_balance, streak_day=milestone,
+        )
+
+        out.update({
+            "freezes_available": new_balance,
+            "freezes_earned_total": new_earned_total,
+            "just_earned_freeze": True,
+            "last_freeze_earned_streak": milestone,
+        })
+        logger.info(
+            f"[XP] Auto-earned streak freeze for user {user_id} at streak={milestone} "
+            f"(balance {balance}->{new_balance})"
+        )
+    except Exception as e:
+        # Auto-earn is a reward, not a contract — never break the caller.
+        logger.warning(f"[XP] auto-earn freeze check failed: {e}")
+    return out
+
+
+@router.get("/freeze-status", response_model=StreakFreezeStatusResponse)
+async def get_streak_freeze_status(
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    """B9 — Live freeze balance, auto-earn progress, and recent ledger.
+
+    Side-effect: running this also evaluates the 10-week auto-earn so a user
+    who just crossed a 70-day boundary gets their freeze without waiting for a
+    separate cron. `just_earned_freeze=True` lets the client fire the
+    celebration dialog.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+
+        # Read current streak.
+        current_streak = 0
+        try:
+            streak_res = db.client.rpc(
+                "get_login_streak", {"p_user_id": user_id}
+            ).execute()
+            if streak_res.data:
+                current_streak = int(streak_res.data.get("current_streak") or 0)
+        except Exception as e:
+            logger.warning(f"[XP] freeze-status streak read failed: {e}")
+
+        earn = _maybe_auto_earn_freeze(db, user_id, current_streak)
+
+        # Recent ledger (newest first). Best-effort — empty on any failure.
+        recent: list = []
+        try:
+            led = (
+                db.client.table("xp_streak_freeze_ledger")
+                .select("delta, reason, balance_after, streak_day, event_date, created_at")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(20)
+                .execute()
+            )
+            recent = led.data or []
+        except Exception as e:
+            logger.warning(f"[XP] freeze-status ledger read failed: {e}")
+
+        # Streak-days until the next auto-earned freeze.
+        next_boundary = (
+            (current_streak // STREAK_DAYS_PER_FREEZE) + 1
+        ) * STREAK_DAYS_PER_FREEZE
+        until_next = max(next_boundary - current_streak, 0)
+
+        return StreakFreezeStatusResponse(
+            freezes_available=earn["freezes_available"],
+            current_streak=current_streak,
+            freezes_earned_total=earn["freezes_earned_total"],
+            streak_per_freeze=STREAK_DAYS_PER_FREEZE,
+            streak_until_next_freeze=until_next,
+            just_earned_freeze=earn["just_earned_freeze"],
+            recent_ledger=[StreakFreezeLedgerEntry(**r) for r in recent],
+        )
+
+    except Exception as e:
+        logger.error(f"[XP] freeze-status error: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.get("/streak-timeframe", response_model=StreakTimeframeResponse)
+async def get_streak_timeframe(
+    request: Request,
+    timeframe: str = Query("week", description="'week', 'month', or 'all'"),
+    current_user=Depends(get_current_user),
+):
+    """B9 — Per-day streak/progress for the timeframe sheet (week/month/all).
+
+    Builds a calendar of active days from `xp_transactions` (any XP-earning
+    action on a day marks it active) over the requested window, plus the
+    current/longest streak headline. Days bridged by a freeze are flagged.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        user_tz = resolve_timezone(request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
+
+        if timeframe == "month":
+            window_days = 30
+        elif timeframe == "all":
+            window_days = 365
+        else:
+            timeframe = "week"
+            window_days = 7
+
+        window_start = today - timedelta(days=window_days - 1)
+        start_iso = datetime.combine(window_start, datetime.min.time()).isoformat()
+
+        # Active days: any XP transaction on that local day. Bucketed by the
+        # user's timezone is approximated with UTC day-boundaries here — good
+        # enough for a calendar heatmap; the streak headline comes from the RPC.
+        active_dates: set = set()
+        try:
+            tx = (
+                db.client.table("xp_transactions")
+                .select("created_at")
+                .eq("user_id", user_id)
+                .gte("created_at", start_iso)
+                .execute()
+            )
+            for row in (tx.data or []):
+                ts = row.get("created_at")
+                if not ts:
+                    continue
+                try:
+                    d = datetime.fromisoformat(ts.replace("Z", "+00:00")).date()
+                    active_dates.add(d)
+                except Exception:
+                    continue
+        except Exception as e:
+            logger.warning(f"[XP] streak-timeframe tx read failed: {e}")
+
+        # Frozen days from the ledger (auto_protect / manual_use within window).
+        frozen_dates: set = set()
+        freezes_used = 0
+        try:
+            led = (
+                db.client.table("xp_streak_freeze_ledger")
+                .select("reason, event_date")
+                .eq("user_id", user_id)
+                .lt("delta", 0)
+                .gte("event_date", str(window_start))
+                .execute()
+            )
+            for row in (led.data or []):
+                ed = row.get("event_date")
+                if ed:
+                    try:
+                        frozen_dates.add(date.fromisoformat(str(ed)[:10]))
+                        freezes_used += 1
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.warning(f"[XP] streak-timeframe ledger read failed: {e}")
+
+        days: list = []
+        active_count = 0
+        for i in range(window_days):
+            d = window_start + timedelta(days=i)
+            is_active = d in active_dates
+            if is_active:
+                active_count += 1
+            days.append(StreakTimeframeDay(
+                date=d.isoformat(),
+                active=is_active,
+                frozen=d in frozen_dates,
+                is_today=(d == today),
+            ))
+
+        # Headline streak from the authoritative RPC.
+        current_streak = 0
+        longest_streak = 0
+        try:
+            streak_res = db.client.rpc(
+                "get_login_streak", {"p_user_id": user_id}
+            ).execute()
+            if streak_res.data:
+                current_streak = int(streak_res.data.get("current_streak") or 0)
+                longest_streak = int(streak_res.data.get("longest_streak") or 0)
+        except Exception as e:
+            logger.warning(f"[XP] streak-timeframe streak read failed: {e}")
+
+        return StreakTimeframeResponse(
+            timeframe=timeframe,
+            current_streak=current_streak,
+            longest_streak=longest_streak,
+            active_days=active_count,
+            total_days=window_days,
+            freezes_used=freezes_used,
+            days=days,
+        )
+
+    except Exception as e:
+        logger.error(f"[XP] streak-timeframe error: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 

@@ -349,6 +349,57 @@ class LeaderboardService:
 
         return [f["friend_id"] for f in result.data] if result.data else []
 
+    # Muscle-group weights for the overall strength score. Mirrors
+    # StrengthCalculatorService.calculate_overall_strength_score so the badge
+    # on the leaderboard matches the user's own strength screen.
+    _STRENGTH_WEIGHTS = {
+        "quads": 1.5, "hamstrings": 1.2, "glutes": 1.2, "chest": 1.5,
+        "back": 1.5, "shoulders": 1.0, "biceps": 0.7, "triceps": 0.7,
+        "forearms": 0.5, "calves": 0.5, "core": 0.8, "traps": 0.6,
+    }
+
+    def get_strength_scores_for_users(self, user_ids: List[str]) -> Dict[str, int]:
+        """B10 — Batch overall strength score (0-100) for a list of users.
+
+        Reads per-muscle scores from `latest_strength_scores` in ONE query for
+        all requested users and computes each user's weighted overall score
+        (same weighting as the strength screen). Users with no strength data
+        are simply absent from the returned map (caller renders no badge).
+
+        Returns: {user_id: overall_score_int}.
+        """
+        if not user_ids:
+            return {}
+        try:
+            result = (
+                self.supabase.table("latest_strength_scores")
+                .select("user_id, muscle_group, strength_score")
+                .in_("user_id", user_ids)
+                .execute()
+            )
+        except Exception as e:
+            logger.warning(f"[Leaderboard] strength-score batch read failed: {e}")
+            return {}
+
+        # Accumulate weighted sums per user.
+        weighted: Dict[str, float] = {}
+        weights: Dict[str, float] = {}
+        for row in (result.data or []):
+            uid = row.get("user_id")
+            mg = row.get("muscle_group")
+            score = row.get("strength_score") or 0
+            if not uid or not mg:
+                continue
+            w = self._STRENGTH_WEIGHTS.get(mg, 1.0)
+            weighted[uid] = weighted.get(uid, 0.0) + (score * w)
+            weights[uid] = weights.get(uid, 0.0) + w
+
+        out: Dict[str, int] = {}
+        for uid, total_w in weights.items():
+            if total_w > 0:
+                out[uid] = int(weighted[uid] / total_w)
+        return out
+
     def _log_async_challenge(
         self,
         user_id: str,
