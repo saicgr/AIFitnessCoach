@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/first_workout_forecast_sheet.dart';
@@ -47,6 +48,10 @@ import '../../shareables/shareable_sheet.dart';
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
+import '../../widgets/metric_grid.dart';
+import '../../core/constants/stat_typography.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../data/providers/health_import_provider.dart';
 import '../../core/providers/heart_rate_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
@@ -77,6 +82,18 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Map<int, int>? exerciseTimeSeconds; // NEW: Per-exercise timing
   final int? totalRestSeconds;
   final double? avgRestSeconds;
+
+  /// Median rest between sets/exercises, in seconds (Gravl-parity "Median
+  /// rest" stat). Optional — when null the stats grid derives a median from
+  /// [restIntervals] if the raw per-interval list was passed, otherwise it
+  /// shows the median-of-available-aggregates. The completion route may wire
+  /// this through directly from the workout-flow median computation.
+  final double? medianRestSeconds;
+
+  /// Raw rest-interval maps (each carries a `rest_seconds`), passed straight
+  /// from the active-workout flow. Lets the stats grid compute a TRUE median
+  /// on the completion screen without re-fetching. Optional.
+  final List<Map<String, dynamic>>? restIntervals;
   final int? totalSets;
   final int? totalReps;
   final double? totalVolumeKg;
@@ -113,6 +130,8 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     this.exerciseTimeSeconds,
     this.totalRestSeconds,
     this.avgRestSeconds,
+    this.medianRestSeconds,
+    this.restIntervals,
     this.totalSets,
     this.totalReps,
     this.totalVolumeKg,
@@ -185,18 +204,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   // Total workout count for milestone detection
   int _totalWorkoutCount = 0;
 
-  // Whether the 6-block stats grid is showing the secondary row
-  // (Exercises / Sets / Reps). Collapsed by default per user request
-  // to reduce vertical scroll on the completion screen.
-  bool _showAllStats = false;
-
-  /// Toggle used by the "Show all stats / Hide details" button in the
-  /// _WorkoutCompleteScreenStateUI1 extension. Defined on the State
-  /// class so `setState` has proper access (extension methods cannot
-  /// call the protected `setState` directly).
-  void toggleShowAllStats() {
-    setState(() => _showAllStats = !_showAllStats);
-  }
+  // Surface 6c — Apple Health / Health Connect HR backfill. Populated only
+  // when the live BLE/Watch capture (widget.heartRateReadings) was empty AND
+  // the platform health store had HR samples in the workout window. Null
+  // until the async fetch resolves; stays null (card hidden) on no-data /
+  // no-permission.
+  HeartRateBackfillResult? _hrBackfill;
+  bool _hrBackfillAttempted = false;
 
   // Milestone thresholds
   static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
@@ -205,6 +219,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   void initState() {
     super.initState();
     _extInitState();
+    // Surface 6c — when no live HR was captured during the workout, try to
+    // backfill the heart-rate card from Apple Health / Health Connect for the
+    // workout window. Permission-guarded + silent: renders nothing on no data.
+    _maybeBackfillHeartRate();
     // Silently invalidate leaderboard-derived providers so Discover and the
     // fitness radar reflect this workout immediately on the next visit. No
     // user action required — data just updates.
@@ -283,6 +301,84 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   // Sauna logging state
   int? _saunaMinutes;
   int? _saunaCalories;
+
+  /// Surface 6c — backfill HR from Apple Health / Health Connect when the
+  /// live BLE/Watch capture produced no samples. Reads HR for the workout
+  /// window [start, end] = [now - duration, now], computes avg/min/max +
+  /// series, and stores it for the heart-rate section to render labeled
+  /// "From Apple Health" / "From Health Connect". Fully guarded: no-ops when
+  /// live HR already exists, and silently renders nothing on no-data /
+  /// no-permission.
+  Future<void> _maybeBackfillHeartRate() async {
+    // Skip entirely when the workout already captured live HR.
+    final live = widget.heartRateReadings;
+    if (live != null && live.isNotEmpty) return;
+    if (_hrBackfillAttempted) return;
+    _hrBackfillAttempted = true;
+
+    try {
+      final end = DateTime.now();
+      final start = end.subtract(Duration(seconds: widget.duration));
+      final result = await ref
+          .read(healthImportProvider.notifier)
+          .readHeartRateForRange(start, end);
+      if (!mounted) return;
+      if (result.hasData) {
+        setState(() => _hrBackfill = result);
+        if (kDebugMode) {
+          debugPrint('❤️ [Complete] HR backfilled from health store: '
+              '${result.series.length} samples (${result.sourceLabel})');
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❤️ [Complete] HR backfill failed (non-critical): $e');
+      }
+    }
+  }
+
+  /// Median of a list of rest_seconds values (sorted; average of the two
+  /// middle values for even counts). Returns null for an empty list.
+  static double? medianOfRestSeconds(List<int> restSeconds) {
+    final values = restSeconds.where((v) => v > 0).toList()..sort();
+    if (values.isEmpty) return null;
+    final mid = values.length ~/ 2;
+    if (values.length.isOdd) {
+      return values[mid].toDouble();
+    }
+    return (values[mid - 1] + values[mid]) / 2.0;
+  }
+
+  /// The median rest (seconds) to display on the stats grid. Prefers the
+  /// explicit [WorkoutCompleteScreen.medianRestSeconds] (wired from the
+  /// workout-flow median), then a TRUE median computed from raw
+  /// [WorkoutCompleteScreen.restIntervals], and finally falls back to the
+  /// average rest (so the cell is never blank when we at least know the avg).
+  double? get _effectiveMedianRestSeconds {
+    if (widget.medianRestSeconds != null && widget.medianRestSeconds! > 0) {
+      return widget.medianRestSeconds;
+    }
+    final intervals = widget.restIntervals;
+    if (intervals != null && intervals.isNotEmpty) {
+      final secs = <int>[
+        for (final i in intervals)
+          ((i['rest_seconds'] as num?)?.toInt() ?? 0),
+      ];
+      final m = medianOfRestSeconds(secs);
+      if (m != null) return m;
+    }
+    final avg = widget.avgRestSeconds;
+    if (avg != null && avg > 0) return avg;
+    return null;
+  }
+
+  /// Format seconds as mm:ss (e.g. 95 → "1:35", 8 → "0:08").
+  String _formatMmSs(num seconds) {
+    final total = seconds.round();
+    final m = total ~/ 60;
+    final s = total % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
 
   /// Fire-and-forget: write completed workout to Health Connect / HealthKit.
   Future<void> _syncWorkoutToHealth() async {
@@ -714,13 +810,21 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Compact Stats Grid (2 rows x 3 cols)
+                  // Always-visible Gravl-style 2×N stats grid (Duration /
+                  // Energy / Volume / Exercises / Sets / Reps / Median rest /
+                  // Records). No "show more" toggle — every metric glanceable.
                   _buildCompactStatsGrid().animate().fadeIn(delay: 200.ms),
 
-                  // Heart Rate Section (if watch data available)
+                  // Heart Rate Section — live watch/BLE capture takes priority;
+                  // otherwise the Apple Health / Health Connect backfill (6c).
                   if (widget.heartRateReadings != null && widget.heartRateReadings!.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildHeartRateSection(elevated).animate().fadeIn(delay: 250.ms),
+                  ] else if (_hrBackfill != null && _hrBackfill!.hasData) ...[
+                    const SizedBox(height: 16),
+                    _buildBackfilledHeartRateSection(elevated, _hrBackfill!)
+                        .animate()
+                        .fadeIn(delay: 250.ms),
                   ],
 
                   const SizedBox(height: 12),

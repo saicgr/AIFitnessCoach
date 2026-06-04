@@ -12,10 +12,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/stat_typography.dart';
 import '../../core/providers/heart_rate_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/utils/muscle_aliases.dart' as muscle_util;
 import '../../data/models/workout.dart';
 import '../../widgets/heart_rate_chart.dart';
+import '../../widgets/metric_grid.dart';
 import '../library/providers/muscle_group_images_provider.dart';
 import 'widgets/summary_exercise_table.dart';
 import '../../widgets/glass_sheet.dart';
@@ -105,11 +108,14 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           // 2. Hero Stats Grid — render even when wc is null so older
           // workouts without a workout_performance_summary row still show
           // duration/exercises/volume/sets/reps computed from set_logs.
+          // DISPLAY UPGRADE: always-visible 2×N MetricGrid (Gravl parity) now
+          // also shows Energy, Median rest, and Records (PR count).
           _HeroStatsGrid(
             workoutComparison: wc,
             setLogs: summary.setLogs,
             exercises: exercises,
             metadata: metadata,
+            personalRecordCount: personalRecords.length,
           )
               .animate()
               .fadeIn(
@@ -690,13 +696,43 @@ class _HeroStatsGrid extends StatelessWidget {
   final List<SetLogInfo> setLogs;
   final List<Map<String, dynamic>> exercises;
   final Map<String, dynamic>? metadata;
+  final int personalRecordCount;
 
   const _HeroStatsGrid({
     required this.workoutComparison,
     this.setLogs = const [],
     this.exercises = const [],
     this.metadata,
+    this.personalRecordCount = 0,
   });
+
+  /// Median rest (seconds) across all logged rest intervals in
+  /// metadata['rest_intervals']. Sorted; average of the two middle values for
+  /// even counts. Returns null when there are no positive rest samples.
+  double? _medianRestSeconds() {
+    final raw = metadata?['rest_intervals'];
+    if (raw is! List || raw.isEmpty) return null;
+    final values = <int>[];
+    for (final e in raw) {
+      if (e is Map) {
+        final s = (e['rest_seconds'] as num?)?.toInt() ?? 0;
+        if (s > 0) values.add(s);
+      }
+    }
+    if (values.isEmpty) return null;
+    values.sort();
+    final mid = values.length ~/ 2;
+    if (values.length.isOdd) return values[mid].toDouble();
+    return (values[mid - 1] + values[mid]) / 2.0;
+  }
+
+  /// Format seconds as mm:ss (e.g. 95 → "1:35").
+  String _formatMmSs(num seconds) {
+    final total = seconds.round();
+    final m = total ~/ 60;
+    final s = total % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
 
   /// Aggregate per-set logs into (volumeKg, sets, reps). Counts only sets
   /// that were actually completed (or that recorded reps > 0 — older logs
@@ -771,7 +807,6 @@ class _HeroStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final wc = workoutComparison;
 
     // Backend aggregates can be 0 (or wc itself null) for older workouts
@@ -796,166 +831,73 @@ class _HeroStatsGrid extends StatelessWidget {
         (wc?.currentExercises ?? 0) > 0 ? wc!.currentExercises : exercises.length;
     final currentCalories = wc?.currentCalories ?? 0;
 
-    final durationDelta = wc?.durationDiffPercent;
-    final volumeDelta = wc?.volumeDiffPercent;
+    final c = ThemeColors.of(context);
+    final accent = c.accent;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
+    final medianRest = _medianRestSeconds();
+
+    // DISPLAY UPGRADE — always-visible Gravl 2×N grid (no toggle). Every
+    // metric glanceable: Duration · Energy · Volume · Exercises · Sets · Reps
+    // · Median rest · Records. Volume is shown in lb (user preference) via the
+    // existing _formatVolume helper.
+    final cells = <MetricCell>[
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
+        value: _formatDuration(currentDurationSeconds),
+        icon: Icons.timer_outlined,
+        accent: accent,
       ),
-      child: Column(
-        children: [
-          // Row 1
-          Row(
-            children: [
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.timer_outlined,
-                  value: _formatDuration(currentDurationSeconds),
-                  label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
-                  delta: durationDelta,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.fitness_center,
-                  value: '$currentExercises',
-                  label: AppLocalizations.of(context).authIntroExercises,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.local_fire_department_outlined,
-                  value: currentCalories > 0 ? '$currentCalories' : '--',
-                  label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-                  isDark: isDark,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          // Row 2
-          Row(
-            children: [
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.show_chart,
-                  value: _formatVolume(currentVolumeKg),
-                  label: AppLocalizations.of(context).workoutSummaryGeneralVolumeLb,
-                  delta: volumeDelta,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.layers_outlined,
-                  value: '$currentSets',
-                  label: AppLocalizations.of(context).workoutSummaryGeneralSets,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _StatTile(
-                  icon: Icons.repeat,
-                  value: '$currentReps',
-                  label: AppLocalizations.of(context).workoutSummaryGeneralReps,
-                  isDark: isDark,
-                ),
-              ),
-            ],
-          ),
-        ],
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
+        value: currentCalories > 0 ? '$currentCalories' : '--',
+        unit: currentCalories > 0 ? 'kcal' : null,
+        icon: Icons.local_fire_department_outlined,
+        accent: accent,
       ),
-    );
-  }
-}
-
-class _StatTile extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final double? delta;
-  final bool isDark;
-
-  const _StatTile({
-    required this.icon,
-    required this.value,
-    required this.label,
-    this.delta,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasValidDelta = delta != null && delta != 0;
-    final isPositive = (delta ?? 0) >= 0;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withOpacity(0.04)
-            : Colors.black.withOpacity(0.03),
-        borderRadius: BorderRadius.circular(10),
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralVolumeLb,
+        value: _formatVolume(currentVolumeKg),
+        unit: 'lb',
+        icon: Icons.show_chart,
+        accent: accent,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: AppColors.orange,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.textPrimary : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w500,
-              color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-            ),
-          ),
-          if (hasValidDelta) ...[
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: (isPositive ? AppColors.green : AppColors.red)
-                    .withOpacity(0.15),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                '${isPositive ? '+' : ''}${delta!.toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: isPositive ? AppColors.green : AppColors.red,
-                ),
-              ),
-            ),
-          ],
-        ],
+      MetricCell(
+        label: AppLocalizations.of(context).authIntroExercises,
+        value: '$currentExercises',
+        icon: Icons.fitness_center,
+        accent: accent,
       ),
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralSets,
+        value: '$currentSets',
+        icon: Icons.layers_outlined,
+        accent: accent,
+      ),
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralReps,
+        value: '$currentReps',
+        icon: Icons.repeat,
+        accent: accent,
+      ),
+      MetricCell(
+        label: 'Median rest',
+        value: medianRest != null ? _formatMmSs(medianRest) : '--',
+        icon: Icons.av_timer_outlined,
+        accent: accent,
+      ),
+      MetricCell(
+        label: 'Records',
+        value: '$personalRecordCount',
+        icon: Icons.emoji_events_outlined,
+        accent: personalRecordCount > 0 ? c.success : accent,
+      ),
+    ];
+
+    return MetricGrid(
+      items: cells,
+      columns: 2,
+      spacing: 10,
+      numberSize: StatType.secondary,
     );
   }
 }

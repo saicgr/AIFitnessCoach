@@ -173,114 +173,83 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     );
   }
 
-  /// Compact stats grid for single-screen layout.
+  /// Always-visible Gravl-style 2×N stats grid (DISPLAY UPGRADE — Surface 1).
   ///
-  /// Primary row (Time / Cal / Volume) is always visible. Secondary row
-  /// (Exercises / Sets / Reps) is hidden behind a "Show all stats" toggle
-  /// to reduce vertical scroll. Volume respects the user's workout weight
-  /// unit preference — kg values are converted to lb when the user set
-  /// `preferredWorkoutWeightUnit=lbs`.
+  /// Replaces the old 3-primary + 3-behind-a-toggle layout: ALL stats are now
+  /// glanceable at once via the shared [MetricGrid] (big numbers, strong
+  /// hierarchy, no "show all" toggle). Shows Duration, Energy (kcal), Volume,
+  /// Exercises, Sets, Reps, Median rest, and Records (PR count). Volume
+  /// respects the user's workout weight-unit preference (kg→lb conversion when
+  /// `preferredWorkoutWeightUnit=lbs`). Median rest is formatted mm:ss.
   Widget _buildCompactStatsGrid() {
     final useKg = ref.watch(useKgForWorkoutProvider);
     final volumeKg = widget.totalVolumeKg ?? 0;
     final displayVolume = useKg ? volumeKg : WeightUtils.kgToLbs(volumeKg);
     final unit = useKg ? 'kg' : 'lb';
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final c = ThemeColors.of(context);
+    final accent = c.accent;
 
-    return Column(
-      children: [
-        // Primary row — always visible
-        Row(
-          children: [
-            Expanded(
-              child: CompactStatTile(
-                icon: Icons.timer,
-                value: _formatDuration(widget.duration),
-                label: AppLocalizations.of(context).workoutShowcaseTime,
-                color: AppColors.orange,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CompactStatTile(
-                icon: Icons.local_fire_department,
-                value: '${widget.calories}',
-                label: AppLocalizations.of(context).workoutShowcaseCal,
-                color: AppColors.orange,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: CompactStatTile(
-                icon: Icons.scale,
-                value: '${displayVolume.toStringAsFixed(0)}$unit',
-                label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-                color: AppColors.green,
-              ),
-            ),
-          ],
-        ),
-        // Secondary row — collapsed by default
-        AnimatedCrossFade(
-          firstChild: const SizedBox(width: double.infinity, height: 0),
-          secondChild: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: CompactStatTile(
-                    icon: Icons.fitness_center,
-                    value: '${widget.workout.exercises.length}',
-                    label: AppLocalizations.of(context).authIntroExercises,
-                    color: AppColors.purple,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: CompactStatTile(
-                    icon: Icons.repeat,
-                    value: '${widget.totalSets ?? 0}',
-                    label: AppLocalizations.of(context).workoutSummaryGeneralSets,
-                    color: AppColors.purple,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: CompactStatTile(
-                    icon: Icons.tag,
-                    value: '${widget.totalReps ?? 0}',
-                    label: AppLocalizations.of(context).workoutSummaryGeneralReps,
-                    color: AppColors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          crossFadeState: _showAllStats
-              ? CrossFadeState.showSecond
-              : CrossFadeState.showFirst,
-          duration: const Duration(milliseconds: 200),
-        ),
-        // Toggle button
-        TextButton.icon(
-          onPressed: toggleShowAllStats,
-          icon: Icon(
-            _showAllStats ? Icons.expand_less : Icons.expand_more,
-            size: 16,
-            color: textMuted,
-          ),
-          label: Text(
-            _showAllStats ? AppLocalizations.of(context).workoutSummaryAdvancedHideDetails : AppLocalizations.of(context).workoutCompleteScreenShowAllStats,
-            style: TextStyle(fontSize: 12, color: textMuted),
-          ),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            minimumSize: Size.zero,
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-        ),
-      ],
+    final prCount = widget.personalRecords?.length ?? 0;
+    final medianRest = _effectiveMedianRestSeconds;
+
+    final cells = <MetricCell>[
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
+        value: _formatDuration(widget.duration),
+        icon: Icons.timer_outlined,
+        accent: accent,
+      ),
+      MetricCell(
+        label: 'Energy',
+        value: '${widget.calories}',
+        unit: 'kcal',
+        icon: Icons.local_fire_department_outlined,
+        accent: accent,
+      ),
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
+        value: displayVolume.toStringAsFixed(0),
+        unit: unit,
+        icon: Icons.fitness_center,
+        accent: accent,
+      ),
+      MetricCell(
+        label: AppLocalizations.of(context).authIntroExercises,
+        value: '${widget.workout.exercises.length}',
+        icon: Icons.format_list_bulleted_rounded,
+        accent: accent,
+      ),
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralSets,
+        value: '${widget.totalSets ?? 0}',
+        icon: Icons.layers_outlined,
+        accent: accent,
+      ),
+      MetricCell(
+        label: AppLocalizations.of(context).workoutSummaryGeneralReps,
+        value: '${widget.totalReps ?? 0}',
+        icon: Icons.repeat,
+        accent: accent,
+      ),
+      MetricCell(
+        label: 'Median rest',
+        value: medianRest != null ? _formatMmSs(medianRest) : '--',
+        icon: Icons.av_timer_outlined,
+        accent: accent,
+      ),
+      MetricCell(
+        label: 'Records',
+        value: '$prCount',
+        icon: Icons.emoji_events_outlined,
+        accent: prCount > 0 ? c.success : accent,
+      ),
+    ];
+
+    return MetricGrid(
+      items: cells,
+      columns: 2,
+      spacing: 10,
+      numberSize: StatType.secondary,
     );
   }
 
@@ -366,6 +335,142 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           const SizedBox(height: 12),
 
           // View All Metrics button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _showHeartRateMetricsSheet(
+                readings: readings,
+                maxHR: maxHR,
+                restingHR: restingHR,
+                durationMinutes: durationMinutes,
+              ),
+              icon: Icon(Icons.analytics_outlined, size: 18, color: accentColor),
+              label: Text(
+                AppLocalizations.of(context).workoutCompleteScreenViewAllMetrics,
+                style: TextStyle(color: accentColor),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: accentColor,
+                side: BorderSide(
+                  color: accentColor.withValues(alpha: 0.4),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  /// Surface 6c — Heart-rate section rendered from the Apple Health /
+  /// Health Connect BACKFILL (when no live BLE/Watch HR was captured during
+  /// the workout). Same visual treatment as [_buildHeartRateSection] plus a
+  /// provenance chip labeling the source ("From Apple Health" on iOS /
+  /// "From Health Connect" on Android), matching Gravl Image #1.
+  Widget _buildBackfilledHeartRateSection(
+    Color elevated,
+    HeartRateBackfillResult backfill,
+  ) {
+    // Adapt the backfilled samples into the chart's reading model.
+    final readings = backfill.series
+        .map((s) => HeartRateReading(bpm: s.bpm, timestamp: s.timestamp))
+        .toList();
+
+    final authState = ref.watch(authStateProvider);
+    final userAge = authState.user?.age ?? 30;
+    final maxHR = calculateMaxHR(userAge);
+
+    final activityState = ref.watch(dailyActivityProvider);
+    final restingHR = activityState.today?.restingHeartRate;
+
+    final durationMinutes = (widget.duration / 60).round();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with provenance chip ("From Apple Health" / "Health Connect").
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.favorite,
+                  size: 18,
+                  color: accentColor,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)
+                      .workoutCompleteScreenHeartRateAnalysis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+              // Source provenance chip.
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  backfill.sourceLabel,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          HeartRateWorkoutChart(
+            readings: readings,
+            avgBpm: backfill.avgBpm,
+            maxBpm: backfill.maxBpm,
+            minBpm: backfill.minBpm,
+            maxHR: maxHR,
+            restingHR: restingHR,
+            durationMinutes: durationMinutes,
+            totalCalories: widget.calories,
+            showZoneBreakdown: true,
+            showTrainingEffect: false,
+            showVO2Max: false,
+            showFatBurnMetrics: false,
+          ),
+          const SizedBox(height: 12),
+
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(

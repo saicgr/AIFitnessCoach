@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:health/health.dart' show HealthDataType, NumericHealthValue;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -14,6 +15,62 @@ import '../services/background_sync_service.dart'
     show kAutoImportExternalWorkoutsKey;
 import '../services/health_import_service.dart';
 import '../services/health_service.dart';
+
+// ---------------------------------------------------------------------------
+// HeartRateSample + HeartRateBackfill (Surface 6c — Gravl "From Apple Health")
+//
+// When a workout finishes with NO live BLE/Watch HR samples (widget.heart-
+// RateReadings empty), the completed-workout / summary screens fall back to
+// pulling HR for the workout window straight from Apple Health (iOS) /
+// Health Connect (Android). This mirrors Gravl's "From Apple Health" HR card.
+//
+// Permission-guarded: returns an EMPTY result when Health isn't connected,
+// READ isn't granted, or the window has no samples — callers render nothing
+// (no error UI) in that case.
+// ---------------------------------------------------------------------------
+
+/// One heart-rate sample pulled from the platform health store for a workout
+/// window. Hand-written (no codegen) — intentionally tiny so it can cross the
+/// provider→screen boundary without dragging in the full `health` package.
+class HeartRateSample {
+  final int bpm;
+  final DateTime timestamp;
+
+  const HeartRateSample({required this.bpm, required this.timestamp});
+}
+
+/// Aggregated HR backfill result: the ordered series plus avg/min/max.
+/// `series` is empty when nothing was read (permission denied / no data) —
+/// callers should treat `hasData == false` as "render nothing".
+class HeartRateBackfillResult {
+  final List<HeartRateSample> series;
+  final int? avgBpm;
+  final int? minBpm;
+  final int? maxBpm;
+
+  /// Platform-appropriate provenance label for the HR card
+  /// ("From Apple Health" on iOS, "From Health Connect" on Android).
+  final String sourceLabel;
+
+  const HeartRateBackfillResult({
+    required this.series,
+    this.avgBpm,
+    this.minBpm,
+    this.maxBpm,
+    required this.sourceLabel,
+  });
+
+  bool get hasData => series.isNotEmpty;
+
+  /// Empty result for the "no data / not permitted" path.
+  factory HeartRateBackfillResult.empty() => HeartRateBackfillResult(
+        series: const [],
+        sourceLabel: HeartRateBackfillResult.platformSourceLabel(),
+      );
+
+  static String platformSourceLabel() =>
+      Platform.isIOS ? 'From Apple Health' : 'From Health Connect';
+}
 
 // ---------------------------------------------------------------------------
 // WatchSessionHandoff (B12)
@@ -557,6 +614,107 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     } catch (e) {
       debugPrint('❌ [HealthImport] Re-enrich failed for $workoutId: $e');
       return false;
+    }
+  }
+
+  /// Surface 6c — Apple Health / Health Connect HR backfill.
+  ///
+  /// Reads heart-rate samples for the `[start, end]` workout window straight
+  /// from the platform health store, then computes avg/min/max + the ordered
+  /// series. Used by the completed-workout / summary screens when the live
+  /// BLE/Watch capture produced no samples, so the HR card still renders
+  /// "From Apple Health" / "From Health Connect" data (Gravl Image #1 parity).
+  ///
+  /// Permission-guarded and never throws: returns
+  /// [HeartRateBackfillResult.empty] (hasData == false) when Health isn't
+  /// connected, READ isn't granted for HEART_RATE, or the window has no
+  /// samples. Callers should render nothing in that case (no error UI).
+  Future<HeartRateBackfillResult> readHeartRateForRange(
+    DateTime start,
+    DateTime end,
+  ) async {
+    // Guard 1: Health must be connected (mirrors every other read path here).
+    if (!_syncState.isConnected) {
+      if (kDebugMode) {
+        debugPrint('❤️ [HR backfill] skipped — Health not connected');
+      }
+      return HeartRateBackfillResult.empty();
+    }
+
+    // Guard against an inverted / empty window.
+    if (!end.isAfter(start)) {
+      if (kDebugMode) {
+        debugPrint('❤️ [HR backfill] skipped — non-positive window '
+            '($start → $end)');
+      }
+      return HeartRateBackfillResult.empty();
+    }
+
+    try {
+      // Guard 2: only attempt the read when HEART_RATE READ isn't explicitly
+      // denied. On iOS this returns true (null→true) so the read proceeds;
+      // on Android it skips the read when Play-policy hasn't granted the scope
+      // (avoids the plugin's internal SecurityException log spam).
+      final canRead =
+          await _healthService.hasReadAccess([HealthDataType.HEART_RATE]);
+      if (!canRead) {
+        if (kDebugMode) {
+          debugPrint('❤️ [HR backfill] skipped — HEART_RATE read not granted');
+        }
+        return HeartRateBackfillResult.empty();
+      }
+
+      final points = await _healthService.getHeartRateForTimeRange(start, end);
+      if (points.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('❤️ [HR backfill] no HR samples in window '
+              '($start → $end)');
+        }
+        return HeartRateBackfillResult.empty();
+      }
+
+      final samples = <HeartRateSample>[];
+      for (final p in points) {
+        final value = p.value;
+        if (value is! NumericHealthValue) continue;
+        final bpm = value.numericValue.toInt();
+        if (bpm <= 0) continue;
+        samples.add(HeartRateSample(bpm: bpm, timestamp: p.dateFrom));
+      }
+
+      if (samples.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('❤️ [HR backfill] all HR samples were non-numeric/zero');
+        }
+        return HeartRateBackfillResult.empty();
+      }
+
+      // Order chronologically so the chart plots left→right correctly.
+      samples.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+      final bpms = samples.map((s) => s.bpm).toList();
+      final minBpm = bpms.reduce((a, b) => a < b ? a : b);
+      final maxBpm = bpms.reduce((a, b) => a > b ? a : b);
+      final avgBpm =
+          (bpms.reduce((a, b) => a + b) / bpms.length).round();
+
+      if (kDebugMode) {
+        debugPrint('❤️ [HR backfill] ${samples.length} samples '
+            '(avg $avgBpm, min $minBpm, max $maxBpm) for $start → $end');
+      }
+
+      return HeartRateBackfillResult(
+        series: samples,
+        avgBpm: avgBpm,
+        minBpm: minBpm,
+        maxBpm: maxBpm,
+        sourceLabel: HeartRateBackfillResult.platformSourceLabel(),
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❤️ [HR backfill] error reading HR for range: $e');
+      }
+      return HeartRateBackfillResult.empty();
     }
   }
 }

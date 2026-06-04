@@ -769,6 +769,21 @@ class _RestAnalysisSection extends StatelessWidget {
 
   const _RestAnalysisSection({required this.intervals, required this.isDark});
 
+  /// Median rest (seconds) across a list of interval maps. Sorted; average of
+  /// the two middle values for even counts. Returns 0 for an empty list.
+  static int medianOf(List<Map<String, dynamic>> list) {
+    final values = <int>[];
+    for (final e in list) {
+      final s = (e['rest_seconds'] as num?)?.toInt() ?? 0;
+      if (s > 0) values.add(s);
+    }
+    if (values.isEmpty) return 0;
+    values.sort();
+    final mid = values.length ~/ 2;
+    if (values.length.isOdd) return values[mid];
+    return ((values[mid - 1] + values[mid]) / 2.0).round();
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context)!;
@@ -787,6 +802,11 @@ class _RestAnalysisSection extends StatelessWidget {
       return (total / list.length).round();
     }
 
+    // Overall avg + median across ALL intervals (Gravl-parity: surface BOTH
+    // central-tendency measures so a few long pauses don't skew the picture).
+    final overallAvg = avgOf(intervals);
+    final overallMedian = medianOf(intervals);
+
     return _SectionCard(
       isDark: isDark,
       icon: Icons.timer_outlined,
@@ -794,17 +814,20 @@ class _RestAnalysisSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Summary row
-          Row(
+          // Summary row — Total / Avg / Median always; per-type avgs when
+          // present. Wrap (not Row) so the extra Median stat never overflows
+          // on a 320pt-wide iPhone SE.
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
             children: [
               _MiniStat(label: l.summaryTotalRest, value: _fmtRest(totalRest), isDark: isDark),
-              const SizedBox(width: 16),
+              _MiniStat(label: 'Avg rest', value: _fmtRest(overallAvg), isDark: isDark),
+              _MiniStat(label: 'Median rest', value: _fmtRest(overallMedian), isDark: isDark),
               if (betweenSets.isNotEmpty)
                 _MiniStat(label: l.summaryAvgSets, value: _fmtRest(avgOf(betweenSets)), isDark: isDark),
-              if (betweenExercises.isNotEmpty) ...[
-                const SizedBox(width: 16),
+              if (betweenExercises.isNotEmpty)
                 _MiniStat(label: l.summaryAvgExercises, value: _fmtRest(avgOf(betweenExercises)), isDark: isDark),
-              ],
             ],
           ),
           const SizedBox(height: 10),
