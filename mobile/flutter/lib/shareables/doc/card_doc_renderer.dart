@@ -565,6 +565,7 @@ class _ElementBody extends StatelessWidget {
 
   // ─── repeater (data-bound list) ───
   Widget _repeater(RepeaterProps p) {
+    if (p.exerciseMode) return _exerciseRepeater(p);
     final items = resolveFoodItems(data, max: p.maxItems);
     final base = cardFontByIndex(p.fontIndex).style;
     final style = base.copyWith(color: p.textColor, fontSize: p.fontSize);
@@ -590,6 +591,93 @@ class _ElementBody extends StatelessWidget {
                 const SizedBox(width: 12),
                 Text('${items[i].calories}', style: style),
               ],
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  // ─── exercise list (Hevy-style: thumbnail + name + top set) ───
+  Widget _exerciseRepeater(RepeaterProps p) {
+    final list = (data.exercises ?? const <ShareableExercise>[])
+        .take(p.maxItems)
+        .toList();
+    final base = cardFontByIndex(p.fontIndex).style;
+    final nameStyle = base.copyWith(
+        color: p.textColor, fontSize: p.fontSize, fontWeight: FontWeight.w700);
+    final subStyle = base.copyWith(
+        color: p.textColor.withValues(alpha: 0.55),
+        fontSize: p.fontSize * 0.6,
+        fontWeight: FontWeight.w500);
+    final thumb = p.fontSize * 1.55;
+    String topSet(ShareableExercise e) {
+      if (e.sets.isEmpty) return '';
+      var top = e.sets.first;
+      for (final s in e.sets) {
+        if ((s.weight ?? 0) > (top.weight ?? 0)) top = s;
+      }
+      final n = e.sets.length;
+      final sets = '$n ${n == 1 ? 'set' : 'sets'}';
+      if (top.isBodyweight || top.weight == null) {
+        return '$sets · BW × ${top.reps}';
+      }
+      return '$sets · ${top.weight!.round()} ${top.unit} × ${top.reps}';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < list.length; i++) ...[
+          if (i > 0) SizedBox(height: p.rowSpacing),
+          Row(
+            children: [
+              if (p.showImage) ...[
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(thumb * 0.26),
+                  child: SizedBox(
+                    width: thumb,
+                    height: thumb,
+                    child: ColoredBox(
+                      color: p.textColor.withValues(alpha: 0.08),
+                      child: list[i].imageUrl == null
+                          ? const SizedBox.shrink()
+                          : FoodImage(url: list[i].imageUrl, fit: BoxFit.cover),
+                    ),
+                  ),
+                ),
+                SizedBox(width: p.fontSize * 0.45),
+              ],
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(list[i].name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: nameStyle),
+                        ),
+                        if (list[i].isPr) ...[
+                          const SizedBox(width: 5),
+                          Text('PR',
+                              style: subStyle.copyWith(
+                                  color: doc.accentColor,
+                                  fontWeight: FontWeight.w800)),
+                        ],
+                      ],
+                    ),
+                    if (topSet(list[i]).isNotEmpty)
+                      Text(topSet(list[i]),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: subStyle),
+                  ],
+                ),
+              ),
             ],
           ),
         ],

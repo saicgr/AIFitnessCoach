@@ -1,6 +1,8 @@
-/// Editable-card preset for the **Now Playing** template — Spotify-style
-/// "Now Working Out" card: blurred album-art backdrop, square cover, track
-/// title, artist line, a progress bar, and transport-control glyphs.
+/// Editable-card preset for the **Now Playing** template — REDESIGNED as a
+/// faithful iOS "now playing" media widget: blurred photo backdrop, a single
+/// glassmorphic control card with square album art, track title + stats
+/// subtitle, a real scrubber with time labels, and a monochrome transport row
+/// (◀◀ ❚❚ ▶▶) — replacing the old portrait-poster + lone ⏸️ emoji.
 library;
 
 import 'package:flutter/material.dart';
@@ -12,6 +14,8 @@ import 'doc_kit.dart';
 CardDoc nowPlayingDoc(Shareable data, ShareableAspect aspect) {
   final accent = data.accentColor;
   const white = Color(0xFFFFFFFF);
+  const white70 = Color(0xB3FFFFFF);
+  const white54 = Color(0x8AFFFFFF);
   return cardDoc(
     aspect: aspect,
     presetId: 'nowPlaying',
@@ -21,74 +25,98 @@ CardDoc nowPlayingDoc(Shareable data, ShareableAspect aspect) {
       blurred: true,
     ),
     elements: [
+      // Darken the blurred backdrop so the glass card pops.
       scrimEl(
         pos: const Offset(0.5, 0.5),
         size: const Size(1, 1),
-        colors: const [Color(0x8C000000), Color(0x8C000000)],
+        colors: const [Color(0xB3000000), Color(0xCC000000)],
       ),
-      textEl(
-        pos: const Offset(0.5, 0.07),
-        size: const Size(0.86, 0.03),
-        literal: 'NOW WORKING OUT',
-        font: 1,
-        fontSize: 22,
-        color: white,
-        align: TextAlign.center,
-        letterSpacing: 2.4,
-      ),
-      photoEl(
-        pos: const Offset(0.5, 0.4),
-        size: const Size(0.78, 0.44),
-        binding: const DataBinding(BindingSource.heroImageUrl),
-        cornerRadius: 14,
-      ),
-      textEl(
-        pos: const Offset(0.5, 0.62),
-        size: const Size(0.86, 0.09),
-        binding: const DataBinding(BindingSource.title),
-        font: 1,
-        fontSize: 60,
-        color: white,
-        align: TextAlign.center,
-        lineHeight: 1.05,
-        letterSpacing: -0.5,
-        maxLines: 2,
-      ),
-      textEl(
-        pos: const Offset(0.5, 0.69),
-        size: const Size(0.86, 0.035),
-        literal: 'Zealova',
-        fontSize: 28,
-        color: Colors.white70,
-        align: TextAlign.center,
-      ),
+      // Glassmorphic control card.
       shapeEl(
-        pos: const Offset(0.5, 0.76),
-        size: const Size(0.86, 0.006),
+        pos: const Offset(0.5, 0.5),
+        size: const Size(0.88, 0.30),
+        shape: ShapeKind.rounded,
+        fill: const Color(0x66121216),
+        stroke: const Color(0x33FFFFFF),
+        strokeWidth: 1.2,
+        cornerRadius: 28,
+      ),
+      // Square album art (the user's photo).
+      photoEl(
+        pos: const Offset(0.215, 0.435),
+        size: const Size(0.15, 0.12),
+        binding: const DataBinding(BindingSource.heroImageUrl),
+        cornerRadius: 10,
+      ),
+      // Eyebrow.
+      textEl(
+        pos: const Offset(0.605, 0.388),
+        size: const Size(0.5, 0.02),
+        literal: 'NOW WORKING OUT',
+        font: CardFontIx.cond,
+        fontSize: 15,
+        color: accent,
+        letterSpacing: 2.2,
+      ),
+      // Track title.
+      textEl(
+        pos: const Offset(0.605, 0.432),
+        size: const Size(0.5, 0.045),
+        binding: const DataBinding(BindingSource.title),
+        font: CardFontIx.condMid,
+        fontSize: 30,
+        color: white,
+        maxLines: 1,
+      ),
+      // Stats subtitle (volume · calories).
+      textEl(
+        pos: const Offset(0.605, 0.474),
+        size: const Size(0.5, 0.025),
+        binding: const DataBinding(BindingSource.heroString),
+        font: CardFontIx.mono,
+        fontSize: 18,
+        color: white70,
+      ),
+      // Scrubber track + accent fill.
+      shapeEl(
+        pos: const Offset(0.5, 0.555),
+        size: const Size(0.74, 0.006),
         shape: ShapeKind.pill,
         fill: const Color(0x33FFFFFF),
       ),
       shapeEl(
-        pos: const Offset(0.5, 0.76),
-        size: const Size(0.86, 0.006),
+        pos: const Offset(0.345, 0.555),
+        size: const Size(0.43, 0.006),
         shape: ShapeKind.pill,
         gradient: [accent, accent],
       ),
       textEl(
-        pos: const Offset(0.5, 0.81),
-        size: const Size(0.86, 0.04),
-        binding: const DataBinding(BindingSource.heroString),
-        fontSize: 26,
-        color: Colors.white70,
+        pos: const Offset(0.18, 0.585),
+        size: const Size(0.16, 0.02),
+        literal: '6:51',
+        font: CardFontIx.mono,
+        fontSize: 14,
+        color: white54,
+      ),
+      textEl(
+        pos: const Offset(0.82, 0.585),
+        size: const Size(0.16, 0.02),
+        literal: '48:00',
+        font: CardFontIx.mono,
+        fontSize: 14,
+        color: white54,
+        align: TextAlign.right,
+      ),
+      // Monochrome transport row (crisp glyphs, not a colour emoji).
+      textEl(
+        pos: const Offset(0.5, 0.625),
+        size: const Size(0.62, 0.04),
+        literal: '⏮     ❚❚     ⏭',
+        fontSize: 24,
+        color: white,
         align: TextAlign.center,
       ),
-      iconEl(
-        pos: const Offset(0.5, 0.88),
-        size: const Size(0.16, 0.08),
-        emoji: '⏸️',
-        color: white,
-      ),
-      watermarkEl(pos: const Offset(0.3, 0.95), color: white),
+      watermarkEl(pos: const Offset(0.3, 0.95), color: white70),
     ],
   );
 }

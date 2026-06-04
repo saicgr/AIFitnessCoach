@@ -10,6 +10,17 @@ import 'card_doc.dart';
 /// Formats grams as a compact string ("13g", "104g").
 String _grams(double g) => '${g.round()}g';
 
+/// Thousands-separated integer ("1042318" -> "1,042,318").
+String _commas(int v) {
+  final s = v.abs().toString();
+  final b = StringBuffer(v < 0 ? '-' : '');
+  for (var i = 0; i < s.length; i++) {
+    if (i > 0 && (s.length - i) % 3 == 0) b.write(',');
+    b.write(s[i]);
+  }
+  return b.toString();
+}
+
 /// Resolves a text-producing binding to a string.
 ///
 /// [literalFallback] is the element's own stored value, used when the binding
@@ -64,12 +75,30 @@ String resolveText(
       return idx >= 0 && idx < data.highlights.length
           ? data.highlights[idx].value
           : literalFallback;
+    case BindingSource.lifetimeVolume:
+      return data.lifetimeVolumeKg != null
+          ? _commas(data.lifetimeVolumeKg!.round())
+          : literalFallback;
+    case BindingSource.currentStreak:
+      return data.currentStreak?.toString() ?? literalFallback;
+    case BindingSource.prCount:
+      return data.prCount?.toString() ?? literalFallback;
+    case BindingSource.rank:
+      return data.rank ?? literalFallback;
+    case BindingSource.socialHandle:
+      return data.socialHandle ?? literalFallback;
+    case BindingSource.recoveryPct:
+      return data.recoveryPct != null ? '${data.recoveryPct}%' : literalFallback;
+    case BindingSource.exerciseCount:
+      return (data.exercises?.length ?? 0).toString();
     // Sources that don't resolve to display text.
     case BindingSource.nutrition:
     case BindingSource.foodImageUrl:
     case BindingSource.customPhotoPath:
     case BindingSource.customPhotoPathSecondary:
     case BindingSource.heroImageUrl:
+    case BindingSource.avatarUrl:
+    case BindingSource.weeklyBars:
       return literalFallback;
   }
 }
@@ -91,6 +120,16 @@ num? resolveNumber(DataBinding binding, Shareable data) {
       return data.healthScore;
     case BindingSource.heroString:
       return data.heroValue;
+    case BindingSource.lifetimeVolume:
+      return data.lifetimeVolumeKg;
+    case BindingSource.currentStreak:
+      return data.currentStreak;
+    case BindingSource.prCount:
+      return data.prCount;
+    case BindingSource.recoveryPct:
+      return data.recoveryPct;
+    case BindingSource.exerciseCount:
+      return data.exercises?.length;
     default:
       return null;
   }
@@ -118,6 +157,8 @@ String? resolvePhotoUrl(CardPhotoRef ref, Shareable data) {
       return data.customPhotoPathSecondary;
     case BindingSource.heroImageUrl:
       return data.heroImageUrl;
+    case BindingSource.avatarUrl:
+      return data.userAvatarUrl;
     default:
       // Fall back to the first food photo so a photo element is never blank
       // when a preset bound it loosely.

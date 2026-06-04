@@ -84,6 +84,16 @@ enum BindingSource {
   heroImageUrl,
   highlightLabel,
   highlightValue,
+  // ── Appended for the redesign (new formats); append-only for JSON safety. ──
+  lifetimeVolume,
+  currentStreak,
+  prCount,
+  rank,
+  socialHandle,
+  recoveryPct,
+  exerciseCount,
+  avatarUrl,
+  weeklyBars,
 }
 
 /// A reference from an element to a [Shareable] field (optionally indexed for
@@ -1242,6 +1252,10 @@ class RepeaterProps extends ElementProps {
   final Color textColor;
   final bool showAmount;
   final bool showCalories;
+  /// When true, the repeater renders `data.exercises` (name + top set, with an
+  /// optional thumbnail) instead of food items — the Hevy-style workout list.
+  final bool exerciseMode;
+  final bool showImage;
 
   const RepeaterProps({
     this.itemsBinding = const DataBinding(BindingSource.foodItemName),
@@ -1253,6 +1267,8 @@ class RepeaterProps extends ElementProps {
     this.textColor = const Color(0xFFFFFFFF),
     this.showAmount = true,
     this.showCalories = true,
+    this.exerciseMode = false,
+    this.showImage = false,
   });
 
   @override
@@ -1268,6 +1284,8 @@ class RepeaterProps extends ElementProps {
     Color? textColor,
     bool? showAmount,
     bool? showCalories,
+    bool? exerciseMode,
+    bool? showImage,
   }) =>
       RepeaterProps(
         itemsBinding: itemsBinding ?? this.itemsBinding,
@@ -1279,6 +1297,8 @@ class RepeaterProps extends ElementProps {
         textColor: textColor ?? this.textColor,
         showAmount: showAmount ?? this.showAmount,
         showCalories: showCalories ?? this.showCalories,
+        exerciseMode: exerciseMode ?? this.exerciseMode,
+        showImage: showImage ?? this.showImage,
       );
 
   @override
@@ -1292,6 +1312,8 @@ class RepeaterProps extends ElementProps {
         'textColor': _colorToJson(textColor),
         'showAmount': showAmount,
         'showCalories': showCalories,
+        'exerciseMode': exerciseMode,
+        'showImage': showImage,
       };
 
   factory RepeaterProps.fromJson(Map v) => RepeaterProps(
@@ -1304,6 +1326,8 @@ class RepeaterProps extends ElementProps {
         textColor: _colorFromJson(v['textColor']),
         showAmount: v['showAmount'] as bool? ?? true,
         showCalories: v['showCalories'] as bool? ?? true,
+        exerciseMode: v['exerciseMode'] as bool? ?? false,
+        showImage: v['showImage'] as bool? ?? false,
       );
 }
 
@@ -1776,25 +1800,52 @@ const List<CardFont> kCardFonts = [
       TextStyle(fontWeight: FontWeight.w900, letterSpacing: -1.0)),
   CardFont('Light',
       TextStyle(fontWeight: FontWeight.w300, letterSpacing: 0.5)),
+  // Index 3 ('Serif') now resolves to the real editorial serif (Fraunces),
+  // index 4 ('Mono') to Space Mono — upgrading every template that used the
+  // platform-generic 'serif'/'monospace' fallbacks.
   CardFont('Serif',
-      TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w600)),
+      TextStyle(fontFamily: 'Fraunces', fontWeight: FontWeight.w600)),
   CardFont('Mono',
-      TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.w600)),
+      TextStyle(fontFamily: 'Space Mono', fontWeight: FontWeight.w400)),
   CardFont('Wide',
       TextStyle(fontWeight: FontWeight.w700, letterSpacing: 6.0)),
   CardFont('Italic',
       TextStyle(fontStyle: FontStyle.italic, fontWeight: FontWeight.w600)),
   CardFont('Pop',
       TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.0)),
-  // Display / editorial faces for masthead-style presets.
+  // Display / editorial faces — now real bundled fonts (were 'serif').
   CardFont('Masthead',
-      TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w900,
-          letterSpacing: -2.0, height: 0.92)),
+      TextStyle(fontFamily: 'Anton', letterSpacing: 0, height: 0.9)),
   CardFont('Editorial',
-      TextStyle(fontFamily: 'serif', fontWeight: FontWeight.w700)),
+      TextStyle(fontFamily: 'Fraunces', fontWeight: FontWeight.w700)),
   CardFont('Condensed',
-      TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+      TextStyle(fontFamily: 'Barlow Condensed', fontWeight: FontWeight.w800,
+          letterSpacing: -0.2)),
+  // ── Appended (stable indices 11+) — explicit redesign display faces. ──
+  CardFont('Anton', TextStyle(fontFamily: 'Anton', height: 0.9)), // 11
+  CardFont('Barlow', // 12
+      TextStyle(fontFamily: 'Barlow Condensed', fontWeight: FontWeight.w800,
+          letterSpacing: 0.4)),
+  CardFont('Barlow Mid', // 13
+      TextStyle(fontFamily: 'Barlow Condensed', fontWeight: FontWeight.w600,
+          letterSpacing: 0.8)),
+  CardFont('Fraunces', // 14
+      TextStyle(fontFamily: 'Fraunces', fontWeight: FontWeight.w900)),
+  CardFont('Archivo', // 15
+      TextStyle(fontFamily: 'Archivo', fontWeight: FontWeight.w800,
+          letterSpacing: -0.3)),
+  CardFont('Space Mono', TextStyle(fontFamily: 'Space Mono')), // 16
 ];
+
+/// Stable font-index constants for the redesign doc-builders.
+class CardFontIx {
+  static const display = 11; // Anton
+  static const cond = 12; // Barlow Condensed ExtraBold
+  static const condMid = 13; // Barlow Condensed SemiBold
+  static const serif = 14; // Fraunces
+  static const grotesk = 15; // Archivo
+  static const mono = 16; // Space Mono
+}
 
 /// Resolves a [CardFont] by index, clamped (a stale index never crashes).
 CardFont cardFontByIndex(int index) =>

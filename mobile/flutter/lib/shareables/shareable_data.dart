@@ -391,6 +391,20 @@ class Shareable {
   /// collage. Photo templates require this list to be non-empty.
   final List<String>? foodImageUrls;
 
+  // ─── Cross-cutting stats (new redesign share bindings) ───────────────────
+  /// Lifetime total volume (kg) — milestone / odometer cards.
+  final num? lifetimeVolumeKg;
+  /// Current consecutive day/week streak count.
+  final int? currentStreak;
+  /// Lifetime / session PR count.
+  final int? prCount;
+  /// Rank / tier label ("Athlete", "Elite").
+  final String? rank;
+  /// Social handle ("@chetan.lifts") for social-format cards.
+  final String? socialHandle;
+  /// Recovery readiness percentage (0-100).
+  final int? recoveryPct;
+
   final Color accentColor;
   final String? deepLinkUrl;
   final ShareableAspect aspect;
@@ -424,6 +438,12 @@ class Shareable {
     this.healthScore,
     this.logText,
     this.foodImageUrls,
+    this.lifetimeVolumeKg,
+    this.currentStreak,
+    this.prCount,
+    this.rank,
+    this.socialHandle,
+    this.recoveryPct,
     this.deepLinkUrl,
     this.aspect = ShareableAspect.story,
     this.caption,
@@ -482,6 +502,12 @@ class Shareable {
       healthScore: healthScore,
       logText: logText,
       foodImageUrls: foodImageUrls,
+      lifetimeVolumeKg: lifetimeVolumeKg,
+      currentStreak: currentStreak,
+      prCount: prCount,
+      rank: rank,
+      socialHandle: socialHandle,
+      recoveryPct: recoveryPct,
       accentColor: accentColor ?? this.accentColor,
       deepLinkUrl: deepLinkUrl ?? this.deepLinkUrl,
       aspect: aspect ?? this.aspect,

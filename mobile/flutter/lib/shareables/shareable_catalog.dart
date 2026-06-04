@@ -114,6 +114,7 @@ import 'templates/weight_graph_doc.dart';
 import 'templates/what_i_ate_card_doc.dart';
 import 'templates/widget_doc.dart';
 import 'templates/workout_details_doc.dart';
+import 'templates/workout_plan_doc.dart';
 import 'templates/workout_muscle_card_doc.dart';
 import 'templates/workout_program_doc.dart';
 import 'templates/workout_score_doc.dart';
@@ -202,6 +203,7 @@ enum ShareableTemplate {
   levelUp,
   elite,
   workoutDetails,
+  workoutPlan,
   workoutMuscleCard,
   workoutProgram,
   workoutSummary,
@@ -656,6 +658,19 @@ class ShareableCatalog {
         requiresExercises: true,
         builder: (d, w) => WorkoutDetailsTemplate(data: d, showWatermark: w),
         docBuilder: workoutDetailsDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.workoutPlan,
+        name: 'Plan',
+        category: ShareableCategory.rich,
+        kinds: const {ShareableKind.workoutComplete},
+        aspects: const {
+          ShareableAspect.story,
+          ShareableAspect.portrait,
+          ShareableAspect.square,
+        },
+        requiresExercises: true,
+        docBuilder: workoutPlanDoc,
       ),
       ShareableTemplateSpec(
         template: ShareableTemplate.workoutMuscleCard,

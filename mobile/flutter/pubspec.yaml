@@ -266,3 +266,34 @@ flutter:
     - assets/audio/workout_complete/
     - assets/audio/rest_end/
     - assets/svg/
+    - assets/images/shareable_backgrounds/workout/
+    - assets/images/shareable_backgrounds/nutrition/
+    - assets/images/shareable_backgrounds/abstract/
+    - assets/fonts/
+
+  # Bundled OFL display faces for the shareables redesign (Anton = display
+  # grotesque, Barlow Condensed = labels/ledger, Space Mono = mono, Fraunces =
+  # editorial serif, Archivo = alt grotesque). All SIL Open Font License.
+  fonts:
+    - family: Anton
+      fonts:
+        - asset: assets/fonts/Anton-Regular.ttf
+    - family: Barlow Condensed
+      fonts:
+        - asset: assets/fonts/BarlowCondensed-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/BarlowCondensed-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/BarlowCondensed-ExtraBold.ttf
+          weight: 800
+    - family: Space Mono
+      fonts:
+        - asset: assets/fonts/SpaceMono-Regular.ttf
+        - asset: assets/fonts/SpaceMono-Bold.ttf
+          weight: 700
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces.ttf
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/Archivo.ttf

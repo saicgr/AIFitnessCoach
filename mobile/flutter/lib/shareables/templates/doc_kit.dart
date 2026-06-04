@@ -286,6 +286,9 @@ CardElement repeaterEl({
   Color textColor = const Color(0xFFFFFFFF),
   bool showAmount = true,
   bool showCalories = true,
+  bool exerciseMode = false,
+  bool showImage = false,
+  double rowSpacing = 6,
 }) =>
     _el(
       CardElementType.repeater,
@@ -297,6 +300,9 @@ CardElement repeaterEl({
         textColor: textColor,
         showAmount: showAmount,
         showCalories: showCalories,
+        exerciseMode: exerciseMode,
+        showImage: showImage,
+        rowSpacing: rowSpacing,
       ),
     );
 
