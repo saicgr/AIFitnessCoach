@@ -1,13 +1,66 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
+import '../services/background_sync_service.dart'
+    show kAutoImportExternalWorkoutsKey;
 import '../services/health_import_service.dart';
 import '../services/health_service.dart';
+
+// ---------------------------------------------------------------------------
+// WatchSessionHandoff (B12)
+//
+// When the user opens the app on their phone we proactively ask the paired
+// Apple Watch to begin (or resume) a workout session so the watch starts
+// recording HR/calories without the user fumbling for the watch app first.
+//
+// This is the Dart half of a phone→watch handoff. It calls a native iOS
+// MethodChannel that must be wired in the iOS Runner via WatchConnectivity
+// (WCSession) — see the INTEGRATION snippet in the agent report. The channel
+// is a no-op on Android (no first-party watch session API parity) and degrades
+// silently if the native side isn't present (MissingPluginException caught).
+// ---------------------------------------------------------------------------
+
+class WatchSessionHandoff {
+  WatchSessionHandoff._();
+
+  static const MethodChannel _channel =
+      MethodChannel('com.zealova.app/watch_session');
+
+  /// Ask the paired Apple Watch to auto-start a workout session. Best-effort:
+  /// returns false on Android, when no watch is reachable, or when the native
+  /// handler isn't installed yet. Never throws.
+  static Future<bool> autoStartWatchSession({String? activityKind}) async {
+    if (!Platform.isIOS) return false;
+    try {
+      final ok = await _channel.invokeMethod<bool>(
+        'autoStartWatchSession',
+        <String, dynamic>{
+          if (activityKind != null) 'activityKind': activityKind,
+        },
+      );
+      debugPrint('⌚ [WatchHandoff] autoStartWatchSession → $ok');
+      return ok ?? false;
+    } on MissingPluginException {
+      // Native side not wired yet — expected until the iOS Runner snippet ships.
+      debugPrint('⌚ [WatchHandoff] native channel not installed (no-op)');
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('⌚ [WatchHandoff] native error: ${e.message}');
+      return false;
+    } catch (e) {
+      debugPrint('⌚ [WatchHandoff] unexpected error: $e');
+      return false;
+    }
+  }
+}
 
 // ---------------------------------------------------------------------------
 // HealthImportState
@@ -346,6 +399,44 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     debugPrint(
         '✅ [HealthImport] Auto-imported $successCount/${toImport.length} workouts');
     return successCount;
+  }
+
+  /// Foreground external-workout sync (B12): discover + auto-import workouts
+  /// recorded outside the app (Apple Watch / Apple Health / Health Connect),
+  /// honoring the user's "auto-import external workouts" toggle. Dedupes by
+  /// the platform UUID (shared tracker with the background isolate), so a
+  /// workout imported here won't re-surface in the background task.
+  ///
+  /// Returns the count imported. No-op (returns 0) when the toggle is off,
+  /// Health isn't connected, or there's nothing new. Use this on app
+  /// foreground; the periodic background task covers the app-closed case.
+  Future<int> syncExternalWorkouts() async {
+    // Respect the user opt-out (default ON to match historical behavior).
+    bool enabled = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      enabled = prefs.getBool(kAutoImportExternalWorkoutsKey) ?? true;
+    } catch (_) {}
+    if (!enabled) {
+      debugPrint('ℹ️ [HealthImport] External auto-import disabled — skipping');
+      return 0;
+    }
+
+    if (!_syncState.isConnected) return 0;
+
+    await checkForUnimportedWorkouts();
+    if (state.pendingImports.isEmpty) return 0;
+
+    return autoImportAll();
+  }
+
+  /// Phone→watch handoff (B12): when the app is opened on the phone, ask the
+  /// paired Apple Watch to auto-start a workout session. Best-effort, never
+  /// throws. iOS-only; no-ops on Android and when the native channel is absent.
+  Future<bool> maybeAutoStartWatchSession({String? activityKind}) {
+    return WatchSessionHandoff.autoStartWatchSession(
+      activityKind: activityKind,
+    );
   }
 
   /// Build a user-friendly workout name from the granular kind.

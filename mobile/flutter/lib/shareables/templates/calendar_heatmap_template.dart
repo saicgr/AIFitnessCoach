@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
+import '../../core/providers/week_start_provider.dart';
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
 import '../widgets/app_watermark.dart';
@@ -8,20 +9,32 @@ import '../widgets/app_watermark.dart';
 /// CalendarHeatmap — GitHub-style 52-week × 7-day grid filled from
 /// `data.subMetrics` (treated as activity counts), accent-tinted cells,
 /// total + streak chips below. Year-in-review staple.
+///
+/// [weekStartsSunday] (B11) controls the first day of the week so the
+/// day-of-week row labels honor the user's preference. Default false =
+/// Monday-first, matching `weekStartsSundayProvider`'s default. Pass
+/// `ref.watch(weekStartsSundayProvider)` from the catalog builder.
 class CalendarHeatmapTemplate extends StatelessWidget {
   final Shareable data;
   final bool showWatermark;
+  final bool weekStartsSunday;
 
   const CalendarHeatmapTemplate({
     super.key,
     required this.data,
     this.showWatermark = true,
+    this.weekStartsSunday = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final mul = data.aspect.bodyFontMultiplier;
     final accent = data.accentColor;
+    // First-day-of-week preference (B11). `WeekDisplayConfig` gives the
+    // ordered single-letter day labels (Mon-first: M T W T F S S;
+    // Sun-first: S M T W T F S) and the row rotation the painter applies so
+    // the data's Monday-relative rows line up under the right label.
+    final weekConfig = WeekDisplayConfig.from(weekStartsSunday);
     final hasRealData = _hasEnoughRealData(data);
     final values = hasRealData ? _values(data) : const <int>[];
     // "Active days" = days WITH activity, not the sum of intensity values.
@@ -120,7 +133,9 @@ class CalendarHeatmapTemplate extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      for (final d in const ['M', '', 'W', '', 'F', '', ''])
+                      // Sparse labels (every other row) so the column doesn't
+                      // crowd, but ordered by the user's first-day-of-week.
+                      for (final d in _sparseDayLabels(weekConfig.dayLabels))
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 1.2),
                           child: SizedBox(
@@ -142,7 +157,14 @@ class CalendarHeatmapTemplate extends StatelessWidget {
                   child: AspectRatio(
                     aspectRatio: 52 / 7,
                     child: CustomPaint(
-                      painter: _HeatmapPainter(values: values, accent: accent),
+                      painter: _HeatmapPainter(
+                        values: values,
+                        accent: accent,
+                        // displayOrder maps display-row -> data-row so the
+                        // Monday-relative intensity vector lines up under the
+                        // preference-ordered day labels (B11).
+                        displayOrder: weekConfig.displayOrder,
+                      ),
                     ),
                   ),
                 ),
@@ -253,6 +275,17 @@ class CalendarHeatmapTemplate extends StatelessWidget {
     );
   }
 
+  /// Build the 7-row sparse day-label column: show the label on rows
+  /// 0, 2, 4 (matching the original M / W / F cadence) and blank the rest so
+  /// the column stays uncrowded. `labels` is already ordered by the user's
+  /// first-day-of-week (e.g. [M,T,W,T,F,S,S] or [S,M,T,W,T,F,S]).
+  List<String> _sparseDayLabels(List<String> labels) {
+    return List.generate(
+      7,
+      (i) => (i.isEven && i < labels.length) ? labels[i] : '',
+    );
+  }
+
   /// Returns true only when the adapter provided real per-day data.
   /// Threshold: 30+ subMetric entries so we have enough signal for a
   /// believable visualization. Below that we render the empty-state in
@@ -280,7 +313,15 @@ class _HeatmapPainter extends CustomPainter {
   final List<int> values;
   final Color accent;
 
-  _HeatmapPainter({required this.values, required this.accent});
+  /// display-row index -> data-row index (Mon=0..Sun=6 in the source vector).
+  /// Monday-first = [0..6]; Sunday-first = [6,0,1,2,3,4,5].
+  final List<int> displayOrder;
+
+  _HeatmapPainter({
+    required this.values,
+    required this.accent,
+    this.displayOrder = const [0, 1, 2, 3, 4, 5, 6],
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -294,7 +335,10 @@ class _HeatmapPainter extends CustomPainter {
     final paint = Paint();
     for (int c = 0; c < cols; c++) {
       for (int r = 0; r < rows; r++) {
-        final idx = c * rows + r;
+        // r is the DISPLAY row; map it to the source data row so Sunday-first
+        // pulls Sunday (data row 6) to the top (B11).
+        final dataRow = r < displayOrder.length ? displayOrder[r] : r;
+        final idx = c * rows + dataRow;
         final v = idx < values.length ? values[idx] : 0;
         if (v == 0) {
           paint.color = Colors.white.withValues(alpha: 0.05);
@@ -314,5 +358,7 @@ class _HeatmapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _HeatmapPainter old) =>
-      old.values != values || old.accent != accent;
+      old.values != values ||
+      old.accent != accent ||
+      old.displayOrder != displayOrder;
 }

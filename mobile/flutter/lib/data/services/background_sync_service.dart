@@ -3,16 +3,30 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../local/database.dart';
+import 'health_import_service.dart';
+import 'health_service.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Task identifiers for background work.
 const String backgroundSyncTask = 'com.fitwiz.backgroundSync';
 const String backgroundPreCacheTask = 'com.fitwiz.backgroundPreCache';
+
+/// Periodic external-workout import (Apple Watch / Apple Health / Health
+/// Connect). Workouts recorded OUTSIDE the app are auto-imported headlessly
+/// so they don't depend on the user opening the home screen (B12).
+const String backgroundExternalWorkoutSyncTask =
+    'com.fitwiz.backgroundExternalWorkoutSync';
+
+/// SharedPreferences key — user opt-out of background external-workout import.
+/// Default true (matches the existing foreground auto-import-when-connected
+/// behavior). The settings "Auto-import external workouts" toggle writes here.
+const String kAutoImportExternalWorkoutsKey = 'auto_import_external_workouts';
 
 /// Notification channel for sync failures.
 const String _syncNotificationChannelId = 'fitwiz_sync';
@@ -55,6 +69,9 @@ void callbackDispatcher() {
           debugPrint('🔄 [BackgroundSync] Pre-caching upcoming workouts...');
           // Pre-cache logic will be integrated when precache service is ready.
           return true;
+
+        case backgroundExternalWorkoutSyncTask:
+          return await _processExternalWorkoutImport();
 
         default:
           debugPrint('⚠️ [BackgroundSync] Unknown task: $taskName');
@@ -192,6 +209,214 @@ Future<bool> _processBackgroundSync() async {
   }
 }
 
+/// Resolve the current Supabase access token in a background isolate.
+/// Returns null when signed out / refresh token expired (callers should
+/// no-op, not error). Mirrors the auth handling in [_processBackgroundSync].
+Future<String?> _resolveBackgroundToken() async {
+  try {
+    var token = Supabase.instance.client.auth.currentSession?.accessToken;
+    if (token == null) {
+      final refreshed = await Supabase.instance.client.auth
+          .refreshSession()
+          .timeout(ApiConstants.tokenRefreshTimeout);
+      token = refreshed.session?.accessToken;
+    }
+    return token;
+  } on AuthSessionMissingException {
+    return null;
+  } catch (e) {
+    debugPrint('⚠️ [ExternalWorkoutSync] Auth resolve failed (skip): $e');
+    return null;
+  }
+}
+
+/// Headless import of workouts recorded outside the app (Apple Watch / Apple
+/// Health / Health Connect). Runs in the WorkManager isolate so external
+/// workouts auto-import even when the user never opens the home screen (B12).
+///
+/// Dedup: by the platform workout UUID via [ImportedWorkoutTracker] — the same
+/// tracker the foreground path uses, so a workout imported in background won't
+/// re-surface in the foreground sheet and vice-versa.
+///
+/// Time handling: each workout's `scheduled_date` is its real start instant
+/// serialized as UTC ISO (`startTime.toUtc()`). The absolute instant is
+/// timezone-correct on read because the backend resolves the user's local day
+/// from `users.timezone` — we never substitute a server/UTC "now" for the
+/// workout's own clock (see feedback_user_local_time_only).
+Future<bool> _processExternalWorkoutImport() async {
+  // Respect the user opt-out toggle (default ON).
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final enabled = prefs.getBool(kAutoImportExternalWorkoutsKey) ?? true;
+    if (!enabled) {
+      debugPrint('ℹ️ [ExternalWorkoutSync] Disabled by user — skipping');
+      return true;
+    }
+  } catch (_) {
+    // If prefs can't be read, default to enabled (fail-open to the
+    // historical behavior) rather than silently dropping imports.
+  }
+
+  final token = await _resolveBackgroundToken();
+  if (token == null) {
+    debugPrint('ℹ️ [ExternalWorkoutSync] No auth token — skipping');
+    return true;
+  }
+
+  // The /workouts endpoints need the backend user id in the create payload.
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) {
+    debugPrint('ℹ️ [ExternalWorkoutSync] No user id — skipping');
+    return true;
+  }
+
+  final healthService = HealthService();
+  final importService = HealthImportService();
+
+  // Verify read access before querying. No permission = nothing to do (user
+  // hasn't connected Health on this device). hasHealthPermissions() configures
+  // the plugin internally, so no separate configure call is needed.
+  try {
+    final hasPerms = await healthService.hasHealthPermissions();
+    if (!hasPerms) {
+      debugPrint('ℹ️ [ExternalWorkoutSync] No Health permission — skipping');
+      return true;
+    }
+  } catch (e) {
+    debugPrint('⚠️ [ExternalWorkoutSync] Health configure/perm check failed: $e');
+    return true;
+  }
+
+  List<PendingWorkoutImport> pending;
+  try {
+    pending = await importService.getUnimportedWorkouts(healthService);
+  } catch (e) {
+    debugPrint('❌ [ExternalWorkoutSync] Discovery failed: $e');
+    return true; // don't thrash retries on a transient plugin error
+  }
+
+  if (pending.isEmpty) {
+    debugPrint('✅ [ExternalWorkoutSync] No new external workouts');
+    return true;
+  }
+
+  final dio = Dio(BaseOptions(
+    baseUrl: ApiConstants.apiBaseUrl,
+    connectTimeout: const Duration(seconds: 15),
+    receiveTimeout: const Duration(seconds: 30),
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+  ));
+
+  int imported = 0;
+  for (final p in pending) {
+    try {
+      // Enrich (HR series, zones, cadence, training load) when possible.
+      var enriched = p;
+      try {
+        enriched =
+            await importService.enrichWithFullMetrics(p, healthService);
+      } catch (e) {
+        debugPrint('⚠️ [ExternalWorkoutSync] Enrich failed (raw import): $e');
+      }
+
+      final metadata = enriched.toMetadata();
+      if (enriched.caloriesBurned != null) {
+        metadata['calories_burned'] = enriched.caloriesBurned;
+      }
+      if (enriched.distanceMeters != null) {
+        metadata['distance_meters'] = enriched.distanceMeters;
+      }
+      if (enriched.totalSteps != null) {
+        metadata['total_steps'] = enriched.totalSteps;
+      }
+
+      final createResp = await dio.post(
+        '${ApiConstants.workouts}/',
+        data: {
+          'user_id': userId,
+          'name': _externalWorkoutName(enriched.activityKind),
+          'type': enriched.activityType,
+          'difficulty': 'intermediate',
+          'scheduled_date': enriched.startTime.toUtc().toIso8601String(),
+          'exercises_json': '[]',
+          'duration_minutes': enriched.durationMinutes,
+          'generation_method': 'health_connect_import',
+          'generation_source': 'health_connect',
+          'generation_metadata': jsonEncode(metadata),
+        },
+      );
+
+      final workoutId = (createResp.data as Map?)?['id'] as String?;
+      if (workoutId == null) continue;
+
+      await dio.post(
+        '${ApiConstants.workouts}/$workoutId/complete',
+        queryParameters: {'completion_method': 'marked_done'},
+      );
+
+      // Dedup: mark UUID so neither background nor foreground re-imports it.
+      await importService.markImported(p.uuid);
+      imported++;
+    } catch (e) {
+      // Skip this one, keep going — a single bad row shouldn't fail the batch.
+      debugPrint('⚠️ [ExternalWorkoutSync] Import failed for ${p.uuid}: $e');
+    }
+  }
+
+  debugPrint(
+      '✅ [ExternalWorkoutSync] Imported $imported/${pending.length} external workouts');
+  return true;
+}
+
+/// User-friendly title for a headlessly-imported external workout, keyed by the
+/// granular activity kind. Mirrors `HealthImportNotifier._buildWorkoutName`.
+String _externalWorkoutName(String kind) {
+  switch (kind) {
+    case 'walking':
+      return 'Walking';
+    case 'running':
+      return 'Running';
+    case 'cycling':
+      return 'Cycling';
+    case 'swimming':
+      return 'Swimming';
+    case 'rowing':
+      return 'Rowing';
+    case 'hiking':
+      return 'Hiking';
+    case 'elliptical':
+      return 'Elliptical';
+    case 'stairs':
+      return 'Stair Climb';
+    case 'skating':
+      return 'Skating';
+    case 'dance':
+      return 'Dance';
+    case 'yoga':
+      return 'Yoga';
+    case 'pilates':
+      return 'Pilates';
+    case 'hiit':
+      return 'HIIT';
+    case 'tennis':
+      return 'Tennis';
+    case 'basketball':
+      return 'Basketball';
+    case 'football':
+      return 'Football';
+    case 'soccer':
+      return 'Soccer';
+    case 'strength':
+      return 'Strength Session';
+    default:
+      return 'Workout';
+  }
+}
+
 /// Show a local notification when sync fails persistently.
 Future<void> _showSyncFailureNotification() async {
   try {
@@ -256,8 +481,59 @@ class BackgroundSyncService {
       backoffPolicyDelay: const Duration(minutes: 5),
     );
 
+    // Register periodic external-workout import (Apple Watch / Health) — every
+    // 30 minutes. Imports workouts recorded outside the app even when the user
+    // never opens the home screen (B12). Internally no-ops when the user has
+    // disabled auto-import or hasn't granted Health permission.
+    await Workmanager().registerPeriodicTask(
+      backgroundExternalWorkoutSyncTask,
+      backgroundExternalWorkoutSyncTask,
+      frequency: const Duration(minutes: 30),
+      constraints: Constraints(
+        networkType: NetworkType.connected,
+      ),
+      existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+      backoffPolicy: BackoffPolicy.exponential,
+      backoffPolicyDelay: const Duration(minutes: 5),
+    );
+
     debugPrint(
         '✅ [BackgroundSync] Workmanager initialized and tasks registered');
+  }
+
+  /// Persist the user's "auto-import external workouts" preference. The
+  /// background task reads this on each firing. Settings toggle calls this.
+  static Future<void> setAutoImportExternalWorkouts(bool enabled) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(kAutoImportExternalWorkoutsKey, enabled);
+      debugPrint('🔄 [BackgroundSync] auto-import external workouts = $enabled');
+    } catch (e) {
+      debugPrint('❌ [BackgroundSync] Failed to persist auto-import pref: $e');
+    }
+  }
+
+  /// Read the current "auto-import external workouts" preference (default ON).
+  static Future<bool> isAutoImportExternalWorkoutsEnabled() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(kAutoImportExternalWorkoutsKey) ?? true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Kick a one-off external-workout import immediately (e.g. right after the
+  /// user grants Health permission, or on app foreground) instead of waiting
+  /// for the next 30-minute periodic tick.
+  static Future<void> triggerExternalWorkoutSyncNow() async {
+    await Workmanager().registerOneOffTask(
+      '$backgroundExternalWorkoutSyncTask.oneoff',
+      backgroundExternalWorkoutSyncTask,
+      constraints: Constraints(networkType: NetworkType.connected),
+      existingWorkPolicy: ExistingWorkPolicy.replace,
+    );
+    debugPrint('🔄 [BackgroundSync] Triggered one-off external-workout sync');
   }
 
   /// Cancel all background tasks (e.g. on logout).

@@ -98,6 +98,48 @@ def calculate_weekly_trend(rates: List[float]) -> str:
     return "stable"
 
 
+# ============================================================================
+# First-day-of-week preference (B11)
+# ============================================================================
+#
+# `users.week_starts_sunday` is a real boolean column on the users table
+# (NULL = not set → default Monday-first, matching the Flutter
+# `weekStartsSundayProvider` default and the GET/PATCH /users/me/preferences
+# endpoint that already round-trips this exact value). We read the column
+# directly rather than from the `preferences` JSONB so weekly aggregations
+# stay consistent with the single source of truth the app already syncs.
+
+def get_week_starts_sunday(db, user_id: str) -> bool:
+    """Resolve the user's first-day-of-week preference.
+
+    Returns True for Sunday-first, False (default) for Monday-first. Any read
+    failure / NULL degrades to Monday so a missing preference never 500s an
+    analytics endpoint.
+    """
+    try:
+        res = db.client.table("users").select(
+            "week_starts_sunday"
+        ).eq("id", user_id).limit(1).execute()
+        rows = res.data or []
+        if rows and rows[0].get("week_starts_sunday") is not None:
+            return bool(rows[0]["week_starts_sunday"])
+    except Exception as _e:
+        logger.debug(f"week_starts_sunday read failed (defaulting Monday): {_e}")
+    return False
+
+
+def week_start_for(d: date, starts_sunday: bool) -> date:
+    """First day of the calendar week containing `d`, honoring the preference.
+
+    Python `date.weekday()` is Mon=0..Sun=6. For Monday-first the week starts
+    `weekday()` days back; for Sunday-first it starts `(weekday()+1) % 7` days
+    back (Sunday→0, Monday→1, … Saturday→6).
+    """
+    if starts_sunday:
+        return d - timedelta(days=(d.weekday() + 1) % 7)
+    return d - timedelta(days=d.weekday())
+
+
 def get_recovery_message(days_since: int, previous_streak: int) -> str:
     """Generate an encouraging recovery message."""
     if days_since == 1:
@@ -155,6 +197,7 @@ async def get_consistency_insights(
     db = get_supabase_db()
     user_tz = resolve_timezone(request, db, user_id)
     today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
+    starts_sunday = get_week_starts_sunday(db, user_id)
 
     try:
         logger.info(f"Fetching consistency insights for user {user_id}")
@@ -331,9 +374,13 @@ async def get_consistency_insights(
                     p.is_preferred = True
                     break
 
-        # Get monthly + weekly stats in ONE query instead of 10 separate ones
+        # Get monthly + weekly stats in ONE query instead of 10 separate ones.
+        # Weekly buckets are calendar-aligned to the user's first-day-of-week
+        # preference (B11): the current week starts at `current_week_start`,
+        # and we walk back 3 more full weeks for a 4-week window.
         month_start = today.replace(day=1)
-        oldest_week_start = today - timedelta(days=3 * 7 + 6)  # 4 weeks back
+        current_week_start = week_start_for(today, starts_sunday)
+        oldest_week_start = current_week_start - timedelta(days=3 * 7)  # 4 weeks back
         range_start = min(month_start, oldest_week_start)
 
         all_workouts_resp = db.client.table("workouts").select(
@@ -365,8 +412,11 @@ async def get_consistency_insights(
         rates_for_trend = []
 
         for week_offset in range(4):
-            week_end = today - timedelta(days=week_offset * 7)
-            week_start = week_end - timedelta(days=6)
+            # Calendar-aligned weeks anchored at the user's first-day-of-week.
+            # week_offset 0 = current week, 1 = previous week, … The current
+            # week's end is capped at `today` (don't count future days).
+            week_start = current_week_start - timedelta(days=week_offset * 7)
+            week_end = min(week_start + timedelta(days=6), today)
 
             week_scheduled = sum(1 for d, _ in parsed_workouts if week_start <= d <= week_end)
             week_completed = sum(1 for d, c in parsed_workouts if week_start <= d <= week_end and c)

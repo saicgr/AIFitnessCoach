@@ -63,6 +63,18 @@ def _iso(d: date) -> str:
     return d.isoformat()
 
 
+def _week_start_for(d: date, starts_sunday: bool) -> date:
+    """First day of the calendar week containing `d`, honoring the user's
+    first-day-of-week preference (B11).
+
+    `date.weekday()` is Mon=0..Sun=6. Monday-first → go back `weekday()` days;
+    Sunday-first → go back `(weekday() + 1) % 7` days (Sunday→0 … Saturday→6).
+    """
+    if starts_sunday:
+        return d - timedelta(days=(d.weekday() + 1) % 7)
+    return d - timedelta(days=d.weekday())
+
+
 def _date_range_label(start: date, end: date) -> str:
     days = (end - start).days + 1
     if days <= 7:
@@ -113,11 +125,17 @@ def _collect_user(user_id: str) -> Dict[str, Any]:
     if latest_weight_kg is not None:
         bodyweight_lb = round(latest_weight_kg * 2.20462, 1)
 
+    # First-day-of-week preference (B11). Real boolean column on `users`
+    # (NULL → default Monday-first). Read alongside the profile so the weekly
+    # aggregation in `_collect_workouts` honors the same boundary the app uses.
+    week_starts_sunday = bool(user.get("week_starts_sunday")) if user.get("week_starts_sunday") is not None else False
+
     return {
         "name": name,
         "primary_goal": primary_goal,
         "bodyweight_kg": round(latest_weight_kg, 1) if latest_weight_kg is not None else None,
         "bodyweight_lb": bodyweight_lb,
+        "week_starts_sunday": week_starts_sunday,
         "raw": user,  # templates may peek if needed
     }
 
@@ -126,8 +144,14 @@ def _collect_user(user_id: str) -> Dict[str, Any]:
 # Workouts section
 # ---------------------------------------------------------------------------
 
-def _collect_workouts(user_id: str, start: date, end: date) -> Dict[str, Any]:
-    """Counts of planned vs completed workouts in range + exercise diversity."""
+def _collect_workouts(
+    user_id: str, start: date, end: date, week_starts_sunday: bool = False
+) -> Dict[str, Any]:
+    """Counts of planned vs completed workouts in range + exercise diversity.
+
+    `week_starts_sunday` (B11) controls the calendar boundary used to bucket
+    the per-week adherence list — defaults to Monday-first.
+    """
     client = _get_client()
     rows = _safe_query(
         lambda: client.table("workouts")
@@ -189,7 +213,8 @@ def _collect_workouts(user_id: str, start: date, end: date) -> Dict[str, Any]:
             d = date.fromisoformat(sd)
         except ValueError:
             continue
-        week_key = (d - timedelta(days=d.weekday())).isoformat()  # Monday of that week
+        # First day of that calendar week, honoring the user's preference (B11).
+        week_key = _week_start_for(d, week_starts_sunday).isoformat()
         weekly[week_key]["planned"] += 1
         if r.get("is_completed") or r.get("completed_at"):
             weekly[week_key]["completed"] += 1
@@ -204,8 +229,12 @@ def _collect_workouts(user_id: str, start: date, end: date) -> Dict[str, Any]:
         for k, v in sorted(weekly.items())
     ]
 
+    # dow_counts is indexed Mon=0..Sun=6 (Python weekday()). Order the rendered
+    # heatmap by the user's first-day-of-week (B11): Sunday-first rotates Sun
+    # (index 6) to the front, Monday-first keeps the natural order.
     dow_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    dow_heatmap = [{"day": dow_labels[i], "count": dow_counts[i]} for i in range(7)]
+    dow_order = [6, 0, 1, 2, 3, 4, 5] if week_starts_sunday else [0, 1, 2, 3, 4, 5, 6]
+    dow_heatmap = [{"day": dow_labels[i], "count": dow_counts[i]} for i in dow_order]
 
     return {
         "planned_count": planned,
@@ -601,7 +630,8 @@ async def collect_report_data(
 
     def _build() -> Dict[str, Any]:
         user = _collect_user(user_id)
-        workouts = _collect_workouts(user_id, start, end)
+        week_starts_sunday = bool(user.get("week_starts_sunday", False))
+        workouts = _collect_workouts(user_id, start, end, week_starts_sunday)
         workout_rows = workouts.pop("raw_rows", [])
 
         base: Dict[str, Any] = {
@@ -616,6 +646,7 @@ async def collect_report_data(
             },
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "user": user,
+            "week_starts_sunday": week_starts_sunday,
         }
 
         if report_type in ("weekly_summary", "monthly_summary"):
