@@ -741,6 +741,8 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
                 "sleep_end": activity.sleep_end.isoformat() if activity.sleep_end else None,
                 "sleep_latency_minutes": activity.sleep_latency_minutes,
                 "sleep_efficiency": activity.sleep_efficiency,
+                "sleep_score": activity.sleep_score,
+                "wake_ups": activity.wake_ups,
                 "water_ml": activity.water_ml,
                 "source": activity.source,
             }
