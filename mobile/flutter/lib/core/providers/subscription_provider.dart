@@ -713,8 +713,17 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         orElse: () => SubscriptionTier.free,
       );
 
-      // Only update if RevenueCat didn't provide data
-      if (!state.isRevenueCatConfigured) {
+      // Apply the backend tier when RevenueCat isn't the source of truth
+      // (not configured / billing unavailable — e.g. emulators, or devices
+      // with no Play billing), OR when the backend reports a paid tier the
+      // user doesn't already have. The second clause lets server-side comped /
+      // admin premium (QA reviewer accounts, web-granted premium) take effect
+      // even on devices where RevenueCat IS configured but reports Free. It
+      // only ever UPGRADES from Free, so a real RevenueCat subscriber's tier
+      // is never regressed.
+      final backendGrantsPremium = tier != SubscriptionTier.free;
+      if (!state.isRevenueCatConfigured ||
+          (backendGrantsPremium && !state.isPremiumOrHigher)) {
         // Backend payload exposes `product_id` and/or `billing_period` —
         // either is sufficient to derive the cadence shown in the UI. Prefer
         // the explicit `billing_period` string when present.
