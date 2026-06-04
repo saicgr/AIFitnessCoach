@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../models/today_score.dart';
+import '../repositories/auth_repository.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
 import 'today_score_provider.dart';
@@ -215,14 +216,22 @@ class _InsightArgs {
 /// when `timezoneProvider` settles, so the real fetch happens then.
 final dailyCoachInsightProvider =
     FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
-  // Keep alive so leaving/returning Home doesn't tear this down and refetch
-  // the coach hero — it's often the FIRST card on Home.
-  ref.keepAlive();
+  // Gate REACTIVELY on auth + timezone. Watching `authStateProvider` (instead
+  // of a one-shot `Supabase…currentSession` read) is the fix for the
+  // freeze-on-fallback bug: if this first evaluates during the cold-start
+  // window — timezone already resolved from cache but the Supabase session not
+  // yet restored (e.g. via MainShell's prewarm read) — we return the
+  // deterministic fallback, and previously `ref.keepAlive()` PINNED that
+  // fallback for the whole app session because nothing re-fired. Now the
+  // provider re-runs the moment auth transitions to `authenticated` and fetches
+  // the real, data-grounded insight.
+  //
+  // keepAlive is deliberately DEFERRED to a successful fetch (cache hit below /
+  // `_fetchInsight` on a real response). A gate-not-ready or network-error
+  // fallback is never pinned — it stays autoDispose so the next watch retries.
+  final authStatus = ref.watch(authStateProvider.select((s) => s.status));
   final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading) {
-    return _buildClientFallback(ref);
-  }
-  if (Supabase.instance.client.auth.currentSession == null) {
+  if (tzState.isLoading || authStatus != AuthStatus.authenticated) {
     return _buildClientFallback(ref);
   }
   final localDate = DateTime.now();
@@ -245,6 +254,9 @@ final dailyCoachInsightProvider =
     userId: uid,
   );
   if (cached != null) {
+    // A real, previously-fetched insight — pin it so leaving/returning Home
+    // doesn't tear it down and refetch (it's often the FIRST card on Home).
+    ref.keepAlive();
     return DailyCoachInsight.fromJson(cached);
   }
 
@@ -313,9 +325,9 @@ final chatOpenInsightProvider =
   // RICH briefings (morning_brief / evening_recap) are instead served
   // cache-first below so the chat open paints them instantly on a warm second
   // open instead of blocking on the Gemini round-trip.
+  final authStatus = ref.watch(authStateProvider.select((s) => s.status));
   final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading ||
-      Supabase.instance.client.auth.currentSession == null) {
+  if (tzState.isLoading || authStatus != AuthStatus.authenticated) {
     return _buildClientFallback(ref);
   }
   final now = DateTime.now();
@@ -356,9 +368,9 @@ final dailyCoachInsightRefreshProvider =
         .family<DailyCoachInsight, DateTime>((ref, date) async {
   // NOTE: intentionally NOT keepAlive — this is the manual `refresh=true`
   // cache-buster; pinning it would defeat its purpose.
+  final authStatus = ref.watch(authStateProvider.select((s) => s.status));
   final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading ||
-      Supabase.instance.client.auth.currentSession == null) {
+  if (tzState.isLoading || authStatus != AuthStatus.authenticated) {
     return _buildClientFallback(ref);
   }
   return _fetchInsight(
@@ -398,6 +410,12 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
       if (cacheKey != null) {
         final uid = Supabase.instance.client.auth.currentUser?.id;
         await DataCacheService.instance.cache(cacheKey, data, userId: uid);
+        // Pin only a REAL fetched insight (home provider). A fallback is never
+        // pinned, so a transient failure retries on the next watch instead of
+        // freezing for the session. The chat-open / refresh providers pass no
+        // cacheKey and intentionally stay un-pinned (greeting rotates; refresh
+        // is a one-shot cache-buster).
+        ref.keepAlive();
       }
       return DailyCoachInsight.fromJson(data);
     }
@@ -412,8 +430,16 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
 /// always renders something coherent.
 DailyCoachInsight _buildClientFallback(Ref ref) {
   final score = ref.read(todayScoreProvider);
-  final headline = coachHeadline(score) ?? 'Your coach is gathering thoughts.';
-  final body = coachBody(score) ??
+  // Personalize the offline fallback with the user's real first name (watched
+  // so it fills in the moment auth resolves). Without this the fallback read
+  // "Eat your way back on track, You." — the literal "You" was the giveaway
+  // that the card was on the fallback path, not the server insight.
+  final fullName = ref.watch(authStateProvider.select((s) => s.user?.name));
+  final firstName = (fullName ?? '').trim().split(RegExp(r'\s+')).first;
+  final fn = firstName.isEmpty ? null : firstName;
+  final headline = coachHeadline(score, firstName: fn) ??
+      'Your coach is gathering thoughts.';
+  final body = coachBody(score, firstName: fn) ??
       'Open a few items on the score card to get a fresh take.';
 
   // Best-leverage pillar drives the default CTAs.

@@ -193,20 +193,28 @@ String? coachBody(
   if (bucket == CoachTimeBucket.morning) {
     final pool = _morningBodies;
     final template = pool[_dailyIndex(pool.length, t)];
-    return _interpolate(template,
-        name: firstName,
-        workout: workoutName,
-        reach: ctx?.reach ?? score.score,
-        kind: ctx?.kind ?? ContributorKind.train);
+    final kind = ctx?.kind ?? ContributorKind.train;
+    return _appendData(
+        _interpolate(template,
+            name: firstName,
+            workout: workoutName,
+            reach: ctx?.reach ?? score.score,
+            kind: kind),
+        score,
+        kind);
   }
   if (bucket == CoachTimeBucket.late) {
     final pool = _lateBodies;
     final template = pool[_dailyIndex(pool.length, t)];
-    return _interpolate(template,
-        name: firstName,
-        workout: workoutName,
-        reach: ctx?.reach ?? score.score,
-        kind: ctx?.kind ?? ContributorKind.sleep);
+    final kind = ctx?.kind ?? ContributorKind.sleep;
+    return _appendData(
+        _interpolate(template,
+            name: firstName,
+            workout: workoutName,
+            reach: ctx?.reach ?? score.score,
+            kind: kind),
+        score,
+        kind);
   }
 
   if (ctx == null) {
@@ -214,8 +222,31 @@ String? coachBody(
   }
   final pool = _bodyPoolFor(ctx.kind);
   final template = pool[_dailyIndex(pool.length, t)];
-  return _interpolate(template,
-      name: firstName, workout: workoutName, reach: ctx.reach, kind: ctx.kind);
+  return _appendData(
+      _interpolate(template,
+          name: firstName, workout: workoutName, reach: ctx.reach, kind: ctx.kind),
+      score,
+      ctx.kind);
+}
+
+/// Ground a fallback body in the user's OWN data by appending the chosen
+/// pillar's concrete status (e.g. "2,588 steps to go", "7h 12m last night",
+/// "3 of 5 exercises") — drawn from the already-vetted `statusText` on the
+/// matching contributor, so nothing is invented. Statuses without a digit
+/// (qualitative, e.g. "Protein running low", "Workout complete") are skipped
+/// so we never pad the body with filler.
+String _appendData(String body, TodayScore score, ContributorKind kind) {
+  ScoreContributor? match;
+  for (final c in score.contributors) {
+    if (c.kind == kind) {
+      match = c;
+      break;
+    }
+  }
+  final status = match?.statusText.trim() ?? '';
+  if (status.isEmpty || !RegExp(r'\d').hasMatch(status)) return body;
+  final tail = status.endsWith('.') ? status : '$status.';
+  return '$body $tail';
 }
 
 // ──────────────────────────────────────────────────────────────────────
