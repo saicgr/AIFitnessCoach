@@ -43,6 +43,35 @@ EQUIPMENT_BASELINES = {
     "machine": 10.0,       # Minimum machine weight = 10kg (20 lbs)
     "bodyweight": 0.0,     # No external weight
     "resistance_band": 0.0, # Variable resistance
+    # --- Custom / adjustable equipment (Gravl community asks) ---
+    # Grip trainers commonly start ~4.5kg (10 lb) and go to ~72kg (160 lb).
+    "grip_trainer": 4.5,   # Lightest common grip trainer setting (10 lb)
+    "grip_ring": 0.0,      # Fixed-resistance ring, no selectable load
+    "hand_exerciser": 0.0, # Finger/hand exerciser, fixed/spring resistance
+    # Adjustable dumbbells behave like a discrete dumbbell rack; snapping
+    # uses the user's explicit weight list when present.
+    "adjustable_dumbbell": 2.5,
+}
+
+
+# Custom / adjustable equipment increments (Gravl community asks). Kept local
+# to weight_utils so the shared core.exercise_data EQUIPMENT_INCREMENTS dict
+# doesn't have to change. Grip rings / hand exercisers carry no selectable
+# external load (0 → no weight UI / no increment math). Grip trainers and
+# adjustable dumbbells DO load weight; their real stops come from the user's
+# equipment_details list (snap_to_weight_list), with these as the fallback jump.
+CUSTOM_EQUIPMENT_INCREMENTS = {
+    "grip_trainer": 4.5,        # ~10 lb between common grip-trainer stops
+    "grip trainer": 4.5,
+    "grip_ring": 0.0,           # Fixed resistance, no selectable load
+    "grip ring": 0.0,
+    "hand_exerciser": 0.0,      # Finger/hand exerciser, spring/fixed resistance
+    "hand exerciser": 0.0,
+    "finger_exerciser": 0.0,
+    "finger exerciser": 0.0,
+    "adjustable_dumbbell": 2.5, # Discrete dumbbell stops (real list preferred)
+    "adjustable dumbbell": 2.5,
+    "adjustable_dumbbells": 2.5,
 }
 
 
@@ -61,6 +90,11 @@ def get_equipment_increment(equipment_type: str) -> float:
 
     # Normalize equipment type
     eq_lower = equipment_type.lower().strip()
+
+    # Custom / adjustable equipment first (so grip_ring/hand_exerciser resolve
+    # to 0 instead of partial-matching their way to a bogus 2.5 default).
+    if eq_lower in CUSTOM_EQUIPMENT_INCREMENTS:
+        return CUSTOM_EQUIPMENT_INCREMENTS[eq_lower]
 
     # Direct lookup
     if eq_lower in EQUIPMENT_INCREMENTS:
@@ -104,20 +138,81 @@ def round_to_equipment_increment(weight_kg: float, equipment_type: str) -> float
     return round(rounded, 1)
 
 
-def snap_to_available_weights(weight_kg: float, equipment_type: str) -> float:
+def snap_to_weight_list(
+    target_kg: float,
+    available_kg_list: Optional[List[float]],
+    equipment_type: Optional[str] = None,
+) -> float:
+    """
+    Snap a target weight to the nearest weight the user actually owns.
+
+    This powers custom / adjustable equipment (Gravl-parity community ask):
+    a grip trainer that only offers 10/20/.../160 lb, a set of adjustable
+    dumbbells with discrete stops, or a banded movement with a fixed set of
+    band tensions. The caller passes the EXACT weights available for that
+    equipment (already converted to kg) and we return the closest one rather
+    than a generic increment round.
+
+    Args:
+        target_kg: Desired/computed weight in kilograms.
+        available_kg_list: The user's real available weights for this
+            equipment, in kg. May be None or empty.
+        equipment_type: Optional equipment name used for the fallback path
+            (round-to-increment) when no explicit list is available.
+
+    Returns:
+        - If `available_kg_list` has at least one positive entry: the nearest
+          available weight (never below the smallest available when the
+          target is at/below zero).
+        - Otherwise: falls back to `round_to_equipment_increment` so current
+          behavior is preserved when no weight list is supplied.
+    """
+    # Keep only valid, positive weights — a 0/negative entry is not a real
+    # selectable load and would let snapping collapse to nothing.
+    valid = [w for w in (available_kg_list or []) if isinstance(w, (int, float)) and w > 0]
+
+    if not valid:
+        # No explicit list — preserve the existing increment-round behavior.
+        return round_to_equipment_increment(target_kg, equipment_type or "")
+
+    if target_kg <= 0:
+        # Below the rack — give the lightest the user owns.
+        return round(min(valid), 2)
+
+    nearest = min(valid, key=lambda x: abs(x - target_kg))
+    return round(nearest, 2)
+
+
+def snap_to_available_weights(
+    weight_kg: float,
+    equipment_type: str,
+    available_kg_list: Optional[List[float]] = None,
+) -> float:
     """
     Snap weight to the nearest available standard weight for the equipment type.
 
     For dumbbells and kettlebells, this finds the closest weight that actually
     exists on a standard gym rack. For other equipment, it rounds to increment.
 
+    When `available_kg_list` is provided (the user's real, explicit weights for
+    this exercise's equipment — e.g. a grip trainer's 10/20/.../160 lb stops or
+    a set of adjustable dumbbells), snapping uses that list verbatim and the
+    standard-rack tables are bypassed. This keeps current behavior intact when
+    no explicit list is passed.
+
     Args:
         weight_kg: Desired weight in kilograms
         equipment_type: Equipment name
+        available_kg_list: Optional explicit list of available weights (kg)
 
     Returns:
         Nearest available standard weight in kg
     """
+    # Explicit per-equipment weight list wins over the generic standard tables.
+    valid = [w for w in (available_kg_list or []) if isinstance(w, (int, float)) and w > 0]
+    if valid:
+        return snap_to_weight_list(weight_kg, valid, equipment_type)
+
     if not equipment_type:
         return round_to_equipment_increment(weight_kg, "dumbbell")
 
@@ -201,6 +296,30 @@ def detect_equipment_type(
         if kw in name_lower:
             return "bodyweight"
 
+    # Custom / adjustable equipment (Gravl community asks). Checked BEFORE
+    # the generic list so "Grip Trainer Crush" matches grip_trainer and not
+    # the bare "trainer"/bodyweight path, and so these never silently fall
+    # through to bodyweight (no increment / no weight UI). Phrases are
+    # specific to avoid colliding with "close grip press" / "neutral grip".
+    custom_equipment_keywords = [
+        ("grip trainer", "grip_trainer"),
+        ("grip strengthener", "grip_trainer"),
+        ("hand gripper", "grip_trainer"),
+        ("hand grip", "grip_trainer"),
+        ("gripper", "grip_trainer"),
+        ("captains of crush", "grip_trainer"),
+        ("captain of crush", "grip_trainer"),
+        ("grip ring", "grip_ring"),
+        ("finger exerciser", "hand_exerciser"),
+        ("hand exerciser", "hand_exerciser"),
+        ("finger trainer", "hand_exerciser"),
+        ("adjustable dumbbell", "adjustable_dumbbell"),
+        ("adjustable dumbbells", "adjustable_dumbbell"),
+    ]
+    for keyword, equipment_type in custom_equipment_keywords:
+        if keyword in name_lower:
+            return equipment_type
+
     # Check for specific equipment keywords in exercise name
     equipment_keywords = [
         ("dumbbell", "dumbbell"),
@@ -269,6 +388,17 @@ def detect_equipment_type(
                      "none", "no_equipment") for e in eq_lower):
             return "bodyweight"
 
+        if any("grip_trainer" in e or "grip trainer" in e or "gripper" in e
+               for e in eq_lower):
+            return "grip_trainer"
+        if any("grip_ring" in e or "grip ring" in e for e in eq_lower):
+            return "grip_ring"
+        if any("hand_exerciser" in e or "hand exerciser" in e
+               or "finger exerciser" in e for e in eq_lower):
+            return "hand_exerciser"
+        if any("adjustable_dumbbell" in e or "adjustable dumbbell" in e
+               for e in eq_lower):
+            return "adjustable_dumbbell"
         if "dumbbells" in eq_lower or "dumbbell" in eq_lower:
             return "dumbbell"
         elif "barbell" in eq_lower:

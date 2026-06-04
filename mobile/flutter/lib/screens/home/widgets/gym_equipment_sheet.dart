@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../models/equipment_item.dart';
@@ -284,6 +285,23 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     });
   }
 
+  /// Names of all built-in (catalog) equipment slugs across categories.
+  Set<String> get _catalogNames =>
+      {for (final items in gymEquipmentCategories.values) ...items};
+
+  /// User-added custom equipment slugs (anything in the map that isn't part of
+  /// the built-in catalog). Custom items are rendered in their own section.
+  List<String> get _customEquipmentNames {
+    final catalog = _catalogNames;
+    final names = _equipmentMap.values
+        .where((e) => e.isCustom || !catalog.contains(e.name))
+        .map((e) => e.name)
+        .toSet()
+        .toList()
+      ..sort();
+    return names;
+  }
+
   List<MapEntry<String, List<String>>> get _filteredCategories {
     if (_searchQuery.isEmpty) {
       return gymEquipmentCategories.entries.toList();
@@ -305,6 +323,60 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     }
 
     return filtered.entries.toList();
+  }
+
+  /// Custom equipment names filtered by the active search query.
+  List<String> get _filteredCustomEquipment {
+    final all = _customEquipmentNames;
+    if (_searchQuery.isEmpty) return all;
+    final query = _searchQuery.toLowerCase();
+    return all.where((name) {
+      final display = (_equipmentMap[name]?.displayName ??
+              _formatEquipmentName(name))
+          .toLowerCase();
+      return name.contains(query) || display.contains(query);
+    }).toList();
+  }
+
+  /// Open the add-custom-equipment dialog and merge the result into the map.
+  Future<void> _addCustomEquipment() async {
+    final result = await showDialog<EquipmentItem>(
+      context: context,
+      builder: (ctx) => const _CustomEquipmentDialog(),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      // Avoid clobbering an existing slug — suffix if needed.
+      var slug = result.name;
+      if (_equipmentMap.containsKey(slug) &&
+          _equipmentMap[slug]?.displayName != result.displayName) {
+        slug = '${slug}_${DateTime.now().millisecondsSinceEpoch % 100000}';
+      }
+      _equipmentMap[slug] = result.copyWith(name: slug, isCustom: true);
+      _selectedEquipment.add(slug);
+    });
+  }
+
+  /// Edit an existing custom equipment item via the same dialog.
+  Future<void> _editCustomEquipment(String slug) async {
+    final existing = _equipmentMap[slug];
+    if (existing == null) return;
+    final result = await showDialog<EquipmentItem>(
+      context: context,
+      builder: (ctx) => _CustomEquipmentDialog(initial: existing),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _equipmentMap[slug] = result.copyWith(name: slug, isCustom: true);
+      _selectedEquipment.add(slug);
+    });
+  }
+
+  void _removeCustomEquipment(String slug) {
+    setState(() {
+      _equipmentMap.remove(slug);
+      _selectedEquipment.remove(slug);
+    });
   }
 
   @override
@@ -395,13 +467,22 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
               ),
             ),
 
-          // Equipment list
+          // Equipment list — custom-equipment section first, then the catalog.
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.only(bottom: 16),
-              itemCount: _filteredCategories.length,
+              // +1 leading slot for the custom-equipment section / CTA.
+              itemCount: _filteredCategories.length + 1,
               itemBuilder: (context, index) {
-                final category = _filteredCategories[index];
+                if (index == 0) {
+                  return _buildCustomEquipmentSection(
+                    isDark,
+                    textMuted,
+                    bgColor,
+                    accentColor,
+                  );
+                }
+                final category = _filteredCategories[index - 1];
                 return _buildCategorySection(
                   category.key,
                   category.value,
@@ -542,6 +623,219 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
               accentColor,
             )),
       ],
+    );
+  }
+
+  /// Custom-equipment section: a header, an "Add custom equipment" CTA, and a
+  /// row per user-added item. Supports grip trainers, grip rings, finger
+  /// exercisers, adjustable dumbbells / banded ranges — anything not in the
+  /// built-in catalog, with an optional weight range/increment.
+  Widget _buildCustomEquipmentSection(
+    bool isDark,
+    Color textMuted,
+    Color bgColor,
+    Color accentColor,
+  ) {
+    final custom = _filteredCustomEquipment;
+    // Hide the section entirely while searching unless a custom item matches —
+    // but always keep the CTA when not searching so users can discover it.
+    final showCta = _searchQuery.isEmpty;
+    if (!showCta && custom.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+          child: Row(
+            children: [
+              Text(
+                'Custom Equipment',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Existing custom items
+        ...custom.map((name) => _buildCustomEquipmentItem(
+              name,
+              isDark,
+              textMuted,
+              bgColor,
+              accentColor,
+            )),
+
+        // Add CTA (only when not searching)
+        if (showCta)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: InkWell(
+              onTap: _addCustomEquipment,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: accentColor.withValues(alpha: 0.4),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.add_circle_outline_rounded,
+                        color: accentColor, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Add custom equipment',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isDark
+                                  ? Colors.white
+                                  : AppColorsLight.textPrimary,
+                            ),
+                          ),
+                          Text(
+                            'Grip trainer, bands, adjustable dumbbells…',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildCustomEquipmentItem(
+    String name,
+    bool isDark,
+    Color textMuted,
+    Color bgColor,
+    Color accentColor,
+  ) {
+    final isSelected = _selectedEquipment.contains(name);
+    final equipment = _equipmentMap[name];
+    final summary = equipment?.summary ?? '';
+
+    return InkWell(
+      onTap: () => _toggleEquipment(name),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: (isDark ? AppColors.elevated : AppColorsLight.cardBorder)
+                  .withOpacity(0.5),
+            ),
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.build_circle_outlined,
+                color: isSelected ? accentColor : textMuted,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    equipment?.displayName ?? _formatEquipmentName(name),
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color:
+                          isDark ? Colors.white : AppColorsLight.textPrimary,
+                    ),
+                  ),
+                  if (summary.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      summary,
+                      style: TextStyle(fontSize: 13, color: textMuted),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => _editCustomEquipment(name),
+                        child: Text(
+                          AppLocalizations.of(context).commonEdit,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: accentColor,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      GestureDetector(
+                        onTap: () => _removeCustomEquipment(name),
+                        child: Text(
+                          AppLocalizations.of(context).commonDelete,
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.red.shade400,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: isSelected ? accentColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: isSelected ? accentColor : textMuted.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -716,6 +1010,294 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     // post-frame callback so we don't pop during build.
     //
     // We watch the gymProfilesProvider from a helper consumer below.
+  }
+}
+
+/// Dialog to add / edit a custom or adjustable piece of equipment.
+///
+/// Captures an arbitrary name plus an OPTIONAL weight range (min / max /
+/// increment) and unit. The range is expanded into concrete selectable stops
+/// (via [EquipmentItem.expandRange]) so progression snaps to real available
+/// weights downstream (Gravl B2: grip trainer 10-160 lb, adjustable dumbbells,
+/// banded ranges). Leaving the range blank creates a plain named item (e.g. a
+/// grip ring with fixed resistance).
+class _CustomEquipmentDialog extends StatefulWidget {
+  final EquipmentItem? initial;
+
+  const _CustomEquipmentDialog({this.initial});
+
+  @override
+  State<_CustomEquipmentDialog> createState() => _CustomEquipmentDialogState();
+}
+
+class _CustomEquipmentDialogState extends State<_CustomEquipmentDialog> {
+  late final TextEditingController _nameCtrl;
+  late final TextEditingController _minCtrl;
+  late final TextEditingController _maxCtrl;
+  late final TextEditingController _stepCtrl;
+  late final TextEditingController _notesCtrl;
+  late String _unit; // 'lbs' | 'kg'
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final init = widget.initial;
+    _nameCtrl = TextEditingController(text: init?.displayName ?? '');
+    _minCtrl = TextEditingController(
+        text: init?.weightMin != null ? _fmt(init!.weightMin!) : '');
+    _maxCtrl = TextEditingController(
+        text: init?.weightMax != null ? _fmt(init!.weightMax!) : '');
+    _stepCtrl = TextEditingController(
+        text: init?.weightIncrement != null
+            ? _fmt(init!.weightIncrement!)
+            : '');
+    _notesCtrl = TextEditingController(text: init?.notes ?? '');
+    _unit = init?.weightUnit ?? 'lbs';
+  }
+
+  static String _fmt(double v) =>
+      v == v.roundToDouble() ? v.toInt().toString() : v.toString();
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _minCtrl.dispose();
+    _maxCtrl.dispose();
+    _stepCtrl.dispose();
+    _notesCtrl.dispose();
+    super.dispose();
+  }
+
+  String _slugify(String name) {
+    final slug = name
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'^_+|_+$'), '');
+    if (slug.isNotEmpty) return slug;
+    return 'custom_${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  double? _parse(String s) {
+    final t = s.trim();
+    if (t.isEmpty) return null;
+    return double.tryParse(t);
+  }
+
+  void _submit() {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) {
+      setState(() => _error = 'Enter a name');
+      return;
+    }
+    final min = _parse(_minCtrl.text);
+    final max = _parse(_maxCtrl.text);
+    final step = _parse(_stepCtrl.text);
+
+    // Range is optional, but if one bound is given the other must be too and
+    // the range must be valid.
+    if ((min != null) != (max != null)) {
+      setState(() => _error = 'Enter both min and max, or leave both blank');
+      return;
+    }
+    if (min != null && max != null && max < min) {
+      setState(() => _error = 'Max must be ≥ min');
+      return;
+    }
+
+    final notes = _notesCtrl.text.trim();
+    final item = EquipmentItem(
+      name: _slugify(name),
+      displayName: name,
+      weightUnit: _unit,
+      isCustom: true,
+      weightMin: min,
+      weightMax: max,
+      weightIncrement: step,
+      notes: notes.isEmpty ? null : notes,
+    );
+    Navigator.of(context).pop(item);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = isDark ? AppColors.cyan : AppColorsLight.accent;
+    final textPrimary =
+        isDark ? Colors.white : AppColorsLight.textPrimary;
+    final isEdit = widget.initial != null;
+
+    InputDecoration deco(String hint) => InputDecoration(
+          hintText: hint,
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        );
+
+    return AlertDialog(
+      title: Text(isEdit ? 'Edit Equipment' : 'Add Custom Equipment'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _nameCtrl,
+              autofocus: true,
+              textCapitalization: TextCapitalization.words,
+              decoration: deco('Name (e.g. Grip Trainer)'),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                Text('Weight range (optional)',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary)),
+                const Spacer(),
+                // Unit toggle
+                _UnitToggle(
+                  unit: _unit,
+                  accent: accent,
+                  onChanged: (u) => setState(() => _unit = u),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _minCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9.]')),
+                    ],
+                    decoration: deco('Min'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _maxCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9.]')),
+                    ],
+                    decoration: deco('Max'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _stepCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'[0-9.]')),
+                    ],
+                    decoration: deco('Step'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'e.g. 10 to 160 step 10 → snaps weights to real stops.',
+              style: TextStyle(
+                  fontSize: 11,
+                  color: textPrimary.withValues(alpha: 0.6)),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notesCtrl,
+              decoration: deco('Notes (optional)'),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 10),
+              Text(_error!,
+                  style: TextStyle(
+                      color: Colors.red.shade400, fontSize: 12)),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(AppLocalizations.of(context).commonCancel),
+        ),
+        ElevatedButton(
+          onPressed: _submit,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: accent,
+            foregroundColor: Colors.white,
+          ),
+          child: Text(AppLocalizations.of(context).commonDone),
+        ),
+      ],
+    );
+  }
+}
+
+/// Small lbs/kg pill toggle used inside [_CustomEquipmentDialog].
+class _UnitToggle extends StatelessWidget {
+  final String unit;
+  final Color accent;
+  final ValueChanged<String> onChanged;
+
+  const _UnitToggle({
+    required this.unit,
+    required this.accent,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget pill(String value, String label) {
+      final selected = unit == value;
+      return GestureDetector(
+        onTap: () => onChanged(value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          decoration: BoxDecoration(
+            color: selected ? accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: selected
+                  ? Colors.white
+                  : Theme.of(context).textTheme.bodyMedium?.color,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: accent.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [pill('lbs', 'lb'), pill('kg', 'kg')],
+      ),
+    );
   }
 }
 

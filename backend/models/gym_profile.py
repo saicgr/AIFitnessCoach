@@ -34,8 +34,19 @@ class GymProfileBase(BaseModel):
     color: str = Field(default="#00BCD4", max_length=7, description="Hex color for profile accent")
 
     # Equipment configuration
-    equipment: List[str] = Field(default=[], description="List of equipment IDs (e.g., ['dumbbells', 'barbell'])")
-    equipment_details: List[dict] = Field(default=[], description="Detailed equipment with quantities and weights")
+    equipment: List[str] = Field(default=[], description="List of equipment IDs (e.g., ['dumbbells', 'barbell']). May include custom equipment slugs (e.g. 'grip_trainer', or a user-named item like 'my_grip_ring').")
+    equipment_details: List[dict] = Field(
+        default=[],
+        description=(
+            "Detailed equipment with quantities and weights. Each item: "
+            "{name, display_name?, quantity?, weights?: [kg/lb], weight_inventory?: {weight: qty}, "
+            "weight_unit?: 'lbs'|'kg', notes?, is_custom?: bool, "
+            "weight_min?, weight_max?, weight_increment?}. Custom / adjustable "
+            "equipment (grip trainer 10-160 lb, adjustable dumbbells, banded "
+            "ranges) is stored here with an explicit weight list / range so "
+            "progression snaps to real available weights (Gravl B2)."
+        ),
+    )
 
     @field_validator("equipment", mode="before")
     @classmethod

@@ -46,6 +46,22 @@ EQUIPMENT_INCREMENTS = {
     "cable": 2.5,
     "kettlebell": 4.0,
     "bodyweight": 0,
+    # --- Custom / adjustable equipment (Gravl community asks) ---
+    # Recognized so these aren't silently treated as bodyweight (0 increment).
+    "grip_trainer": 4.5,        # ~10 lb between common grip-trainer stops
+    "grip trainer": 4.5,
+    "gripper": 4.5,
+    "grip_ring": 0,             # Fixed resistance, no selectable load
+    "grip ring": 0,
+    "hand_exerciser": 0,        # Finger/hand exerciser, spring/fixed resistance
+    "hand exerciser": 0,
+    "finger_exerciser": 0,
+    "finger exerciser": 0,
+    "adjustable_dumbbell": 2.5, # Discrete dumbbell stops (real list preferred)
+    "adjustable dumbbell": 2.5,
+    "adjustable_dumbbells": 2.5,
+    "resistance_band": 0,       # Variable resistance, no fixed increment
+    "resistance band": 0,
 }
 
 
@@ -81,6 +97,12 @@ class WeightSuggestionRequest(BaseModel):
     is_last_set: bool = False
     fitness_level: str = "intermediate"
     goals: List[str] = []
+    # The user's real available weights (kg) for this exercise's equipment —
+    # custom / adjustable equipment (e.g. a grip trainer's 10/20/.../160 lb
+    # stops or a set of adjustable dumbbells). When present, the next-set
+    # suggestion snaps to the nearest one of these instead of a generic
+    # increment. Omitted/empty → current increment-based behavior (Gravl B2).
+    available_weights: List[float] = []
     # AI Settings from user preferences
     coaching_style: str = "motivational"
     communication_tone: str = "encouraging"
@@ -257,6 +279,48 @@ def get_equipment_increment(equipment: str) -> float:
 def is_bodyweight(equipment: str) -> bool:
     """True for bodyweight exercises where weight increments don't apply."""
     return "bodyweight" in (equipment or "").lower()
+
+
+def snap_to_weight_list(weight: float, available_weights: Optional[List[float]]) -> Optional[float]:
+    """Snap a weight to the nearest of the user's real available weights.
+
+    Powers custom / adjustable equipment. Returns None when no usable list is
+    supplied so callers keep their existing increment-based behavior.
+    """
+    valid = [w for w in (available_weights or []) if isinstance(w, (int, float)) and w > 0]
+    if not valid:
+        return None
+    if weight <= 0:
+        return round(min(valid), 2)
+    return round(min(valid, key=lambda x: abs(x - weight)), 2)
+
+
+def apply_available_weights(
+    response: WeightSuggestionResponse,
+    current_weight: float,
+    available_weights: Optional[List[float]],
+) -> WeightSuggestionResponse:
+    """Re-snap a suggestion to the user's real available weights when known.
+
+    Applied uniformly to both rule-based and AI suggestions so custom /
+    adjustable equipment (grip trainer stops, adjustable dumbbells) always
+    lands on a weight the user actually owns. The delta and suggestion_type
+    are recomputed from the snapped value. No-op when no usable list exists.
+    """
+    snapped = snap_to_weight_list(response.suggested_weight, available_weights)
+    if snapped is None:
+        return response
+    delta = round(snapped - current_weight, 2)
+    if delta > 0:
+        suggestion_type = "increase"
+    elif delta < 0:
+        suggestion_type = "decrease"
+    else:
+        suggestion_type = "maintain"
+    response.suggested_weight = snapped
+    response.weight_delta = delta
+    response.suggestion_type = suggestion_type
+    return response
 
 
 def generate_rule_based_suggestion(
@@ -660,7 +724,11 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
         if not has_intensity_data:
             # Without RPE/RIR, use rule-based
             logger.info("No intensity data provided, using rule-based suggestion")
-            return generate_rule_based_suggestion(body, equipment_increment)
+            return apply_available_weights(
+                generate_rule_based_suggestion(body, equipment_increment),
+                body.current_set.weight_kg,
+                body.available_weights,
+            )
 
         # Fetch exercise history
         history = await get_exercise_history(
@@ -678,6 +746,11 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
                 history=history,
                 equipment_increment=equipment_increment
             )
+            # Snap to the user's real available weights (custom / adjustable
+            # equipment) when known — overrides the AI's increment rounding.
+            suggestion = apply_available_weights(
+                suggestion, body.current_set.weight_kg, body.available_weights
+            )
             logger.info(
                 f"AI suggestion: {suggestion.suggestion_type} to {suggestion.suggested_weight}kg "
                 f"(delta: {suggestion.weight_delta:+.1f}kg, confidence: {suggestion.confidence:.0%})"
@@ -686,7 +759,11 @@ async def get_weight_suggestion(body: WeightSuggestionRequest,
 
         except Exception as ai_error:
             logger.warning(f"AI suggestion failed, falling back to rules: {ai_error}", exc_info=True)
-            return generate_rule_based_suggestion(body, equipment_increment)
+            return apply_available_weights(
+                generate_rule_based_suggestion(body, equipment_increment),
+                body.current_set.weight_kg,
+                body.available_weights,
+            )
 
     except Exception as e:
         logger.error(f"Weight suggestion failed: {e}", exc_info=True)

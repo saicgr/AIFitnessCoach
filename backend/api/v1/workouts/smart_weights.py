@@ -60,6 +60,22 @@ EQUIPMENT_INCREMENTS = {
     "smith_machine": 2.5,
     "ez_bar": 2.5,
     "bodyweight": 0,  # No weight suggestion for bodyweight
+    # --- Custom / adjustable equipment (Gravl community asks) ---
+    # Recognized so these aren't silently treated as bodyweight (0 increment).
+    "grip_trainer": 4.5,        # ~10 lb between common grip-trainer stops
+    "grip trainer": 4.5,
+    "gripper": 4.5,
+    "grip_ring": 0,             # Fixed resistance, no selectable load
+    "grip ring": 0,
+    "hand_exerciser": 0,        # Finger/hand exerciser, spring/fixed resistance
+    "hand exerciser": 0,
+    "finger_exerciser": 0,
+    "finger exerciser": 0,
+    "adjustable_dumbbell": 2.5, # Discrete dumbbell stops (real list preferred)
+    "adjustable dumbbell": 2.5,
+    "adjustable_dumbbells": 2.5,
+    "resistance_band": 0,       # Variable resistance, no fixed increment
+    "resistance band": 0,
 }
 
 
@@ -109,6 +125,46 @@ def round_to_increment(weight: float, increment: float) -> float:
     if increment <= 0:
         return weight
     return round(weight / increment) * increment
+
+
+def parse_available_weights(raw: Optional[str]) -> List[float]:
+    """Parse a comma-separated list of available weights (kg) into floats.
+
+    Powers custom / adjustable equipment: the client can pass the user's real
+    weight stops for this exercise's equipment (e.g. "4.5,9,13.6,...,72.6" for
+    a grip trainer's 10/20/.../160 lb). Invalid / non-positive entries are
+    dropped. Returns [] when nothing usable is supplied so callers fall back to
+    increment rounding (current behavior preserved).
+    """
+    if not raw:
+        return []
+    out: List[float] = []
+    for token in raw.split(","):
+        token = token.strip()
+        if not token:
+            continue
+        try:
+            val = float(token)
+        except (ValueError, TypeError):
+            continue
+        if val > 0:
+            out.append(val)
+    return out
+
+
+def snap_or_round(
+    weight: float,
+    increment: float,
+    available_weights: Optional[List[float]],
+) -> float:
+    """Snap to the user's real available weights when known, else round to the
+    equipment increment. Keeps current behavior when no explicit list exists."""
+    valid = [w for w in (available_weights or []) if w and w > 0]
+    if valid:
+        if weight <= 0:
+            return round(min(valid), 2)
+        return round(min(valid, key=lambda x: abs(x - weight)), 2)
+    return round_to_increment(weight, increment)
 
 
 def calculate_performance_modifier(
@@ -374,6 +430,13 @@ async def get_smart_weight_by_name(
     target_reps: int = Query(default=10, ge=1, le=50),
     goal: TrainingGoal = Query(default=TrainingGoal.HYPERTROPHY),
     equipment: str = Query(default="dumbbell"),
+    available_weights: Optional[str] = Query(
+        default=None,
+        description="Comma-separated list of the user's real available weights "
+                    "(kg) for this exercise's equipment, e.g. custom / "
+                    "adjustable equipment. When set, the suggestion snaps to "
+                    "the nearest one instead of a generic increment.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -391,6 +454,7 @@ async def get_smart_weight_by_name(
         target_reps=target_reps,
         goal=goal,
         equipment=equipment,
+        available_weights=available_weights,
     )
 
 
@@ -402,6 +466,13 @@ async def get_smart_weight(
     target_reps: int = Query(default=10, ge=1, le=50),
     goal: TrainingGoal = Query(default=TrainingGoal.HYPERTROPHY),
     equipment: str = Query(default="dumbbell"),
+    available_weights: Optional[str] = Query(
+        default=None,
+        description="Comma-separated list of the user's real available weights "
+                    "(kg) for this exercise's equipment, e.g. custom / "
+                    "adjustable equipment. When set, the suggestion snaps to "
+                    "the nearest one instead of a generic increment.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -424,8 +495,15 @@ async def get_smart_weight(
         # Get equipment increment
         equipment_increment = get_equipment_increment(equipment)
 
-        # Handle bodyweight exercises
-        if equipment_increment == 0:
+        # Parse the user's real available weights for this equipment (custom /
+        # adjustable equipment). When present, suggestions snap to these stops.
+        available_weights_list = parse_available_weights(available_weights)
+
+        # Handle bodyweight exercises (no selectable load AND no explicit list).
+        # If a custom weight list IS supplied we keep going so e.g. a grip
+        # trainer (whose generic increment may be 0 for ring/hand variants but
+        # which has a real weight list) still gets a snapped suggestion.
+        if equipment_increment == 0 and not available_weights_list:
             return SmartWeightResponse(
                 suggested_weight=0,
                 reasoning="Bodyweight exercise - no external weight needed.",
@@ -466,7 +544,9 @@ async def get_smart_weight(
             # We have 1RM data - use percentage-based calculation
             base_weight = one_rm * target_intensity
             adjusted_weight = base_weight * performance_modifier
-            suggested_weight = round_to_increment(adjusted_weight, equipment_increment)
+            suggested_weight = snap_or_round(
+                adjusted_weight, equipment_increment, available_weights_list
+            )
 
             confidence = 0.85 if last_session else 0.70
 
@@ -485,7 +565,9 @@ async def get_smart_weight(
             # No 1RM but we have last session data
             # Use last session weight with performance modifier
             adjusted_weight = last_session.weight_kg * performance_modifier
-            suggested_weight = round_to_increment(adjusted_weight, equipment_increment)
+            suggested_weight = snap_or_round(
+                adjusted_weight, equipment_increment, available_weights_list
+            )
 
             confidence = 0.60
 

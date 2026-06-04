@@ -52,6 +52,8 @@ class ProgressionService:
         template_id: Optional[str] = None,
         progression_strategy: Optional[str] = None,
         form_score: Optional[float] = None,
+        equipment_type: Optional[str] = None,
+        available_weights_kg: Optional[List[float]] = None,
     ) -> ProgressionRecommendation:
         """
         Generate a progression recommendation for an exercise.
@@ -73,12 +75,25 @@ class ProgressionService:
             progression_strategy: The template's `progression_strategy` -
                 "linear" | "wave" | "double" | "none". Only honored when
                 `template_id` is set.
+            equipment_type: Equipment for this exercise (detected from name
+                when omitted). Threaded through so snapping uses the right
+                increment / weight table.
+            available_weights_kg: The user's ACTUAL available weights for this
+                exercise's equipment (kg), e.g. a grip trainer's
+                10/20/.../160 lb stops or a set of adjustable dumbbells. When
+                provided, the recommended weight snaps to the nearest one of
+                these instead of a generic increment round. When omitted,
+                current behavior is preserved (Gravl custom-equipment ask B2).
 
         Returns:
             ProgressionRecommendation with weight/rep suggestions
         """
         if not last_performance:
-            return self._get_initial_recommendation(exercise_id, exercise_name)
+            return self._get_initial_recommendation(
+                exercise_id, exercise_name,
+                equipment_type=equipment_type,
+                available_weights_kg=available_weights_kg,
+            )
 
         # === Template-driven progression =================================
         # When the workout came from a user-authored / imported template, the
@@ -96,7 +111,9 @@ class ProgressionService:
                 return self._calculate_progression(
                     exercise_id, exercise_name, last_performance,
                     strategy, reason,
+                    equipment_type=equipment_type,
                     form_score=form_score,
+                    available_weights_kg=available_weights_kg,
                 )
 
         avg_rpe = self._calculate_average_rpe(performance_history[-3:])
@@ -129,7 +146,9 @@ class ProgressionService:
 
         return self._calculate_progression(
             exercise_id, exercise_name, last_performance, strategy, reason,
+            equipment_type=equipment_type,
             form_score=form_score,
+            available_weights_kg=available_weights_kg,
         )
 
     # ------------------------------------------------------------------
@@ -188,6 +207,7 @@ class ProgressionService:
         exercise_name: str,
         equipment_type: Optional[str] = None,
         fitness_level: str = "beginner",
+        available_weights_kg: Optional[List[float]] = None,
     ) -> ProgressionRecommendation:
         """
         Get recommendation for first-time exercise.
@@ -217,6 +237,15 @@ class ProgressionService:
             equipment_type=equipment_type,
             fitness_level=fitness_level,
         )
+
+        # Snap the starting weight to the user's real available weights when
+        # known (custom / adjustable equipment), e.g. a grip trainer that only
+        # offers 10/20/.../160 lb. Falls back to the equipment-rounded value.
+        if available_weights_kg:
+            starting_weight = snap_to_available_weights(
+                starting_weight, equipment_type,
+                available_kg_list=available_weights_kg,
+            )
 
         # Adjust reps based on fitness level
         if fitness_level == "beginner":
@@ -251,6 +280,7 @@ class ProgressionService:
         reason: str,
         equipment_type: Optional[str] = None,
         form_score: Optional[float] = None,
+        available_weights_kg: Optional[List[float]] = None,
     ) -> ProgressionRecommendation:
         """
         Calculate specific weight/rep recommendations using equipment-aware increments.
@@ -364,8 +394,14 @@ class ProgressionService:
                 confidence = min(0.95, confidence + 0.05)
                 reason = f"{reason} · Form score {form_score:.1f}/10 — small overload bonus."
 
-        # Snap to valid equipment weights (e.g., standard dumbbell increments)
-        final_weight = snap_to_available_weights(new_weight, equipment_type)
+        # Snap to valid equipment weights. When the user's real available
+        # weights are known (custom / adjustable equipment) snap to those —
+        # e.g. a grip-trainer set lands on 10/20/.../160 lb, not a generic
+        # 2.5 kg round. Otherwise the standard rack tables / increments apply.
+        final_weight = snap_to_available_weights(
+            new_weight, equipment_type,
+            available_kg_list=available_weights_kg,
+        )
 
         return ProgressionRecommendation(
             exercise_id=exercise_id,

@@ -23,6 +23,23 @@ class EquipmentItem {
   /// Optional notes (e.g., "adjustable 5-50lbs")
   final String? notes;
 
+  /// Whether this is a user-added custom / adjustable piece of equipment
+  /// (e.g. a grip trainer, grip ring, finger exerciser, adjustable dumbbells,
+  /// or a banded movement with a weight range). Custom items aren't part of
+  /// the built-in `gymEquipmentCategories` catalog.
+  final bool isCustom;
+
+  /// Optional minimum selectable weight (for adjustable / range equipment like
+  /// a grip trainer 10-160 lb). In [weightUnit]. Null when not range-based.
+  final double? weightMin;
+
+  /// Optional maximum selectable weight for range equipment. In [weightUnit].
+  final double? weightMax;
+
+  /// Optional step between selectable weights for range equipment (e.g. 10 lb
+  /// jumps on a grip trainer). In [weightUnit]. Null → use [weights] verbatim.
+  final double? weightIncrement;
+
   const EquipmentItem({
     required this.name,
     required this.displayName,
@@ -31,7 +48,34 @@ class EquipmentItem {
     this.weightInventory = const {},
     this.weightUnit = 'lbs',
     this.notes,
+    this.isCustom = false,
+    this.weightMin,
+    this.weightMax,
+    this.weightIncrement,
   });
+
+  /// Build the concrete list of selectable weights implied by a min/max/step
+  /// range (inclusive of both ends). Returns [] when the range is invalid.
+  /// Used so adjustable / range equipment still snaps to real stops downstream.
+  static List<double> expandRange(double? min, double? max, double? step) {
+    if (min == null || max == null) return const [];
+    if (max < min) return const [];
+    final s = (step == null || step <= 0) ? (max - min) : step;
+    if (s <= 0) return [min];
+    final out = <double>[];
+    var w = min;
+    // Guard against pathological tiny steps producing huge lists.
+    var guard = 0;
+    while (w <= max + 1e-6 && guard < 1000) {
+      out.add(double.parse(w.toStringAsFixed(3)));
+      w += s;
+      guard++;
+    }
+    if (out.isEmpty || (out.last - max).abs() > 1e-6 && out.last < max) {
+      out.add(double.parse(max.toStringAsFixed(3)));
+    }
+    return out;
+  }
 
   /// Create from JSON map
   factory EquipmentItem.fromJson(Map<String, dynamic> json) {
@@ -50,9 +94,23 @@ class EquipmentItem {
             .toList() ??
         [];
 
+    // Custom / adjustable equipment range fields (optional).
+    final weightMin = (json['weight_min'] as num?)?.toDouble();
+    final weightMax = (json['weight_max'] as num?)?.toDouble();
+    final weightIncrement = (json['weight_increment'] as num?)?.toDouble();
+
     // If no inventory but has legacy weights, migrate them (assume quantity 2 for pairs)
     if (inventory.isEmpty && legacyWeights.isNotEmpty) {
       inventory = {for (final w in legacyWeights) w: 2};
+    }
+
+    // Expand an adjustable range (min/max/step) into selectable stops so
+    // downstream pickers + the backend snap-to-weight logic see real weights.
+    if (inventory.isEmpty && weightMin != null && weightMax != null) {
+      final expanded = expandRange(weightMin, weightMax, weightIncrement);
+      if (expanded.isNotEmpty) {
+        inventory = {for (final w in expanded) w: 1};
+      }
     }
 
     return EquipmentItem(
@@ -64,6 +122,10 @@ class EquipmentItem {
       weightInventory: inventory,
       weightUnit: json['weight_unit'] as String? ?? 'lbs',
       notes: json['notes'] as String?,
+      isCustom: json['is_custom'] as bool? ?? false,
+      weightMin: weightMin,
+      weightMax: weightMax,
+      weightIncrement: weightIncrement,
     );
   }
 
@@ -85,6 +147,10 @@ class EquipmentItem {
       'weight_inventory': inventoryJson,
       'weight_unit': weightUnit,
       if (notes != null) 'notes': notes,
+      if (isCustom) 'is_custom': true,
+      if (weightMin != null) 'weight_min': weightMin,
+      if (weightMax != null) 'weight_max': weightMax,
+      if (weightIncrement != null) 'weight_increment': weightIncrement,
     };
   }
 
@@ -176,6 +242,10 @@ class EquipmentItem {
     Map<double, int>? weightInventory,
     String? weightUnit,
     String? notes,
+    bool? isCustom,
+    double? weightMin,
+    double? weightMax,
+    double? weightIncrement,
   }) {
     return EquipmentItem(
       name: name ?? this.name,
@@ -185,6 +255,10 @@ class EquipmentItem {
       weightInventory: weightInventory ?? this.weightInventory,
       weightUnit: weightUnit ?? this.weightUnit,
       notes: notes ?? this.notes,
+      isCustom: isCustom ?? this.isCustom,
+      weightMin: weightMin ?? this.weightMin,
+      weightMax: weightMax ?? this.weightMax,
+      weightIncrement: weightIncrement ?? this.weightIncrement,
     );
   }
 
