@@ -18,40 +18,29 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/theme_colors.dart';
+import 'self_hiding_card_section.dart';
 import 'cards/accountability_partner_nudge.dart';
 import 'cards/app_anniversary_card.dart';
 import 'cards/birthday_card.dart';
 import 'cards/body_comp_milestone_card.dart';
 import 'cards/busy_week_compressed_card.dart';
-import 'cards/daily_strain_target_tile.dart';
 import 'cards/fast_streak_tile.dart';
 import 'cards/fast_zone_strip.dart';
 import 'cards/first_of_month_card.dart';
 import 'cards/friend_activity_snippet.dart';
 import 'cards/group_challenge_progress.dart';
-import 'cards/hr_zone_breakdown_card.dart';
 import 'cards/injury_workaround_banner.dart';
 import 'cards/jet_lag_adjust_card.dart';
 import 'cards/macro_pattern_callout.dart';
-import 'cards/one_rm_recompute_banner.dart';
 import 'cards/plan_adjustments_card.dart';
-import 'cards/planned_vs_actual_card.dart';
-import 'cards/postworkout_mood_strip.dart';
-import 'cards/postworkout_progress_photo_prompt.dart';
-import 'cards/postworkout_tomorrow_adjust_card.dart';
-import 'cards/recovery_countdown_tile.dart';
 import 'cards/referral_gift_tile.dart';
 import 'cards/return_to_exercise_card.dart';
-import 'cards/rhr_delta_card.dart';
 import 'cards/smoothed_weight_trend_chip.dart';
 import 'cards/stale_score_nudge_card.dart';
 import 'cards/stand_reminder_chip.dart';
 import 'cards/step_streak_tile.dart';
-import 'cards/training_effect_card.dart';
 import 'cards/weekly_plan_strip.dart';
 import 'cards/weigh_in_day_chip.dart';
-import 'cards/workout_felt_journal_prompt.dart';
 import 'cards/workout_milestone_card.dart';
 import 'cards/workout_sleep_correlation_card.dart';
 import 'cards/zone_minutes_bar.dart';
@@ -79,7 +68,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // as selectable metric tiles (user feedback) — readiness == the
         // existing Recovery ring. The evening sleep-story tile was removed from
         // home (user feedback); the widget still exists, just unmounted here.
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Activity',
           children: const [
             StandReminderChip(),
@@ -87,7 +76,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             ZoneMinutesBar(),
           ],
         ),
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Nutrition & body',
           children: const [
             // MicronutrientGapChip removed from Home — micronutrients live in
@@ -105,7 +94,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // into the single PlanAdjustmentsCard, which lists only the currently
         // active adjustments (each a row with its own CTA). The four cards are
         // no longer rendered separately on home.
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Plan & adjustments',
           children: const [
             WeeklyPlanStrip(),
@@ -117,14 +106,14 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             BusyWeekCompressedCard(),
           ],
         ),
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Patterns & insights',
           children: const [
             WorkoutSleepCorrelationCard(),
             MacroPatternCallout(),
           ],
         ),
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Social',
           children: const [
             FriendActivitySnippet(),
@@ -132,7 +121,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
             AccountabilityPartnerNudge(),
           ],
         ),
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Milestones',
           children: const [
             AppAnniversaryCard(),
@@ -150,7 +139,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // header only paints when the tile itself renders (the tile self-hides
         // when there's no referral offer), so a hidden tile leaves no orphan
         // header.
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Refer & earn',
           children: const [
             ReferralGiftTile(),
@@ -160,7 +149,7 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // (MissingDataChip) was removed from home; the user prefers reaching
         // these via the timeline + workout card. The MissingDataChip widget
         // file stays in place, unused.
-        _HomeCardSection(
+        SelfHidingCardSection(
           title: 'Fasting',
           children: const [
             FastZoneStrip(),
@@ -171,109 +160,20 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // PreWorkoutWarmupCard, PreWorkoutRpeChip, EquipmentPreflightBanner)
         // are no longer rendered on home; the timeline + workout card cover
         // pre-workout prep. The widget files stay in place, unused.
-        _HomeCardSection(
-          title: 'Around your workout',
-          children: const [
-            DailyStrainTargetTile(),
-            TrainingEffectCard(),
-            RecoveryCountdownTile(),
-            PlannedVsActualCard(),
-            PostWorkoutTomorrowAdjustCard(),
-            HrZoneBreakdownCard(),
-            PostWorkoutMoodStrip(),
-            RhrDeltaCard(),
-            OneRmRecomputeBanner(),
-            PostWorkoutProgressPhotoPrompt(),
-            WorkoutFeltJournalPrompt(),
-          ],
-        ),
+        //
+        // #15 — the "Around your workout" post-workout card group (Training
+        // effect, Planned vs actual, mood/journal prompts, Tomorrow tweak, …)
+        // moved OFF Home and INTO the Workouts tab (user feedback). It now
+        // mounts beneath today's workout via `AroundYourWorkoutSection` in
+        // `workouts_screen.dart`. The 11 card widgets stay in
+        // `home/widgets/cards/`; only the mount point moved.
       ],
       ),
     );
   }
 }
 
-/// A labeled group of contextual home cards whose header **only appears when
-/// at least one child actually renders content** (issue 7).
-///
-/// The child cards each self-collapse to `SizedBox.shrink()` when their gate
-/// fails, so a group can be entirely empty on any given day. Rather than
-/// duplicate every card's gating logic, this wrapper measures the rendered
-/// height of the card column after layout and shows/hides the header
-/// accordingly — no orphan "RECOVERY" header floating over nothing.
-class _HomeCardSection extends StatefulWidget {
-  final String title;
-  final List<Widget> children;
-  const _HomeCardSection({required this.title, required this.children});
-
-  @override
-  State<_HomeCardSection> createState() => _HomeCardSectionState();
-}
-
-class _HomeCardSectionState extends State<_HomeCardSection> {
-  final GlobalKey _bodyKey = GlobalKey();
-  bool _hasContent = false;
-  // Guards the post-frame measurement so it runs ONCE per build, not on every
-  // frame. The old code re-armed addPostFrameCallback on every build, turning
-  // each section into a per-frame layout probe (findRenderObject) — a major
-  // source of home-scroll jank with ~11 sections live.
-  bool _measureScheduled = false;
-
-  void _measure() {
-    _measureScheduled = false;
-    if (!mounted) return;
-    final ctx = _bodyKey.currentContext;
-    if (ctx == null) return;
-    final ro = ctx.findRenderObject();
-    final h = (ro is RenderBox && ro.hasSize) ? ro.size.height : 0.0;
-    final has = h > 1.0;
-    if (has != _hasContent) setState(() => _hasContent = has);
-  }
-
-  void _scheduleMeasure() {
-    if (_measureScheduled) return;
-    _measureScheduled = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Measure once per build (de-duped via _measureScheduled) instead of
-    // re-arming a post-frame layout probe on every frame. The child cards
-    // self-collapse via their own providers; when one flips it rebuilds the
-    // affected card subtree, the parent SliverList relayouts, and this build
-    // runs again — re-arming exactly one measurement. setState only fires on an
-    // actual content flip, so there's no rebuild loop.
-    _scheduleMeasure();
-    final c = ThemeColors.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        AnimatedSize(
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
-          child: _hasContent
-              ? Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 10, 16, 6),
-                  child: Text(
-                    widget.title.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.8,
-                      color: c.textMuted,
-                    ),
-                  ),
-                )
-              : const SizedBox.shrink(),
-        ),
-        Column(
-          key: _bodyKey,
-          mainAxisSize: MainAxisSize.min,
-          children: widget.children,
-        ),
-      ],
-    );
-  }
-}
+// The self-hiding section wrapper formerly defined here as `_HomeCardSection`
+// now lives in `self_hiding_card_section.dart` as the public
+// `SelfHidingCardSection`, shared with the Workouts tab's
+// `AroundYourWorkoutSection`.

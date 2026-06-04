@@ -20,6 +20,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
 import 'widgets/workout_planner_section.dart';
+import 'widgets/around_your_workout_section.dart';
 import 'widgets/workout_stats/workout_stats_section.dart';
 import 'widgets/exercise_preferences_card.dart';
 import 'widgets/workout_library_grid.dart';
@@ -457,6 +458,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           key: _planSectionKey,
           child: const WorkoutPlannerSection(),
         ),
+
+        // "Around your workout" — post-workout cards (Training effect, mood /
+        // journal prompts, Tomorrow tweak, …) moved here off Home (user
+        // feedback). Self-hides entirely until today's workout is completed, so
+        // it adds no header and no gap on non-workout days.
+        const SizedBox(height: 4),
+        const AroundYourWorkoutSection(),
 
         const SizedBox(height: 20),
 
