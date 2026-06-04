@@ -753,6 +753,34 @@ async def get_calendar_heatmap(
                 "completed": is_completed,
             }
 
+        # Per-day training volume (kg) for the blue volume-intensity heatmap.
+        # Aggregated from performance_logs (the flat per-set source); a failure
+        # here must NOT 500 the whole heatmap, so it degrades to volume=0.
+        volume_by_date: dict = {}
+        try:
+            perf_logs = db.client.table("performance_logs").select(
+                "weight_kg, reps_completed, recorded_at"
+            ).eq("user_id", user_id).gte(
+                "recorded_at", start_date.isoformat()
+            ).lte(
+                "recorded_at", end_date.isoformat() + "T23:59:59+00:00"
+            ).execute()
+            for r in (perf_logs.data or []):
+                recorded = str(r.get("recorded_at") or "")
+                if not recorded:
+                    continue
+                date_part = recorded.replace("T", " ").split(" ")[0]
+                try:
+                    vol_date = date.fromisoformat(date_part)
+                except ValueError:
+                    continue
+                w = float(r.get("weight_kg") or 0)
+                reps = float(r.get("reps_completed") or 0)
+                if w > 0 and reps > 0:
+                    volume_by_date[vol_date] = volume_by_date.get(vol_date, 0.0) + w * reps
+        except Exception as vol_err:  # noqa: BLE001
+            logger.warning(f"calendar heatmap volume aggregation failed: {vol_err}")
+
         # Build calendar data
         calendar_data = []
         total_completed = 0
@@ -784,6 +812,7 @@ async def get_calendar_heatmap(
                 day_of_week=sql_dow,
                 status=status,
                 workout_name=workout_name,
+                volume=round(volume_by_date.get(current_date, 0.0), 1),
             ))
 
             current_date += timedelta(days=1)

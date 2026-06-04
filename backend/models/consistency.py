@@ -336,6 +336,10 @@ class CalendarHeatmapData(BaseModel):
     day_of_week: int
     status: str  # "completed", "missed", "rest", "future"
     workout_name: Optional[str] = None
+    # Total training volume (kg) lifted that day = sum(weight_kg * reps). Powers
+    # the blue volume-intensity heatmap (Gravl parity). 0 for rest/missed days
+    # and for completed-but-non-lifting (e.g. health-imported cardio) days.
+    volume: float = 0
 
 
 class CalendarHeatmapResponse(BaseModel):

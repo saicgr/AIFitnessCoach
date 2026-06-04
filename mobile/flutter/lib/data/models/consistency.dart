@@ -472,11 +472,17 @@ class CalendarHeatmapData {
   @JsonKey(name: 'workout_name')
   final String? workoutName;
 
+  /// Total training volume (kg) lifted that day = sum(weight × reps). Drives the
+  /// blue volume-intensity heatmap. 0 for rest/missed/non-lifting days.
+  @JsonKey(name: 'volume')
+  final double volume;
+
   const CalendarHeatmapData({
     required this.date,
     required this.dayOfWeek,
     required this.status,
     this.workoutName,
+    this.volume = 0,
   });
 
   factory CalendarHeatmapData.fromJson(Map<String, dynamic> json) =>
