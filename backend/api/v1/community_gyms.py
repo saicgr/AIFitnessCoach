@@ -594,6 +594,15 @@ async def adopt_gym(
     of display_order). Returns the created GymProfile.
     """
     try:
+        # Defense-in-depth: a user may only adopt a gym onto their OWN profile.
+        # (report_equipment derives user_id straight from the token; adopt keeps
+        # the query param for the client contract but must match the caller so a
+        # forged user_id can't create a profile owned by someone else.)
+        if str(user_id) != str(current_user.get("id")):
+            raise HTTPException(
+                status_code=403, detail="Cannot adopt a gym for another user"
+            )
+
         supabase = get_supabase()
 
         gym_result = supabase.client.table("gyms") \
