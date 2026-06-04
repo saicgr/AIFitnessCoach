@@ -113,7 +113,8 @@ chardet>=5.2.0                 # CSV encoding auto-detection (UTF-8/16, Windows-
 dateparser>=1.2.0              # Hevy / year-less / locale date parsing
 python-magic>=0.4.27           # MIME sniffing via libmagic (needs apt libmagic1 on Render)
 lxml>=5.2.0                    # streaming Apple Health XML (500MB+ files)
-fitparse>=1.2.0                # Garmin .FIT binary decoder
+fitparse>=1.2.0                # Garmin .FIT binary decoder (read path)
+fit-tool>=0.9.13              # Garmin .FIT ENCODER (cardio export; distinct from fitparse) — lazy-imported in cardio_export_service
 gpxpy>=1.6.2                   # Strava / Nike / Runkeeper GPX cardio files
 stravalib>=1.7.0               # Strava OAuth + activity API
 fitbit>=0.3.1                  # Fitbit Web API
@@ -137,3 +138,7 @@ webvtt-py>=0.5.1               # WebVTT caption parsing (yt-dlp subtitle path)
 
 # --- Analytics ------------------------------------------------------------
 posthog>=3.5.0                 # Product analytics + lifecycle event capture
+
+# --- Caching / utilities --------------------------------------------------
+cachetools>=5.3.0              # In-memory TTLCache — imported at module load by
+                               # exercise_preferences_endpoints (build blocker if absent)
