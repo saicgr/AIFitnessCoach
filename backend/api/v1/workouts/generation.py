@@ -209,7 +209,38 @@ async def generate_next_day_background(user_id: str, target_date: str):
             # has no HTTP request context and should not be rate-limited.
             # request=None means resolve_timezone() falls back to DB/UTC.
             unwrapped = getattr(generate_workout, "__wrapped__", generate_workout)
-            result = await unwrapped(None, body=gen_body, background_tasks=BackgroundTasks(), current_user={"id": user_id})
+            try:
+                result = await unwrapped(None, body=gen_body, background_tasks=BackgroundTasks(), current_user={"id": user_id})
+            except HTTPException as he:
+                # The preferred-day gate rejects pre-caching a rest day. That is
+                # EXPECTED, not a failure — so don't log a scary ERROR traceback.
+                # Instead retry once against the user's actual next workout day,
+                # which the gate hands back as `suggested_date`, so the next real
+                # session is still pre-cached and instantly available.
+                detail = he.detail if isinstance(he.detail, dict) else {}
+                if he.status_code == 409 and detail.get("error") == "not_a_workout_day":
+                    suggested = detail.get("suggested_date")
+                    if not suggested or suggested == target_date:
+                        logger.info(f"[NEXT-DAY] {target_date} is a rest day for {user_id} and no next "
+                                    f"workout day was suggested; skipping pre-cache")
+                        return
+                    # Don't regenerate if the next workout day is already cached.
+                    existing_suggested = db.list_workouts(
+                        user_id=user_id, from_date=suggested, to_date=suggested, limit=1,
+                    )
+                    if existing_suggested:
+                        logger.info(f"[NEXT-DAY] {target_date} is a rest day for {user_id}; workout already "
+                                    f"exists for next workout day {suggested}, skipping")
+                        return
+                    logger.info(f"[NEXT-DAY] {target_date} is a rest day for {user_id}; pre-caching next "
+                                f"workout day {suggested} instead")
+                    gen_body.scheduled_date = suggested
+                    result = await unwrapped(None, body=gen_body, background_tasks=BackgroundTasks(), current_user={"id": user_id})
+                    logger.info(f"[NEXT-DAY] Successfully pre-cached workout for {user_id} on {suggested}: "
+                                f"{result.name if result else 'unknown'}")
+                    return
+                # Any other HTTP error is genuinely unexpected.
+                raise
             logger.info(f"[NEXT-DAY] Successfully pre-cached workout for {user_id} on {target_date}: "
                         f"{result.name if result else 'unknown'}")
 
