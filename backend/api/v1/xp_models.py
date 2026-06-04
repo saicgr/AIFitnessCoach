@@ -95,6 +95,10 @@ class DailyLoginResponse(NullTolerantResponse):
     streak_saved_by_shield: bool = False
     shields_remaining: int = 0
     saved_streak_count: int = 0
+    # Migration 2234: banked streak-freeze auto-consume (B9). The
+    # process_daily_login RPC spends a banked freeze to bridge a missed day.
+    auto_protected: bool = False        # a banked freeze auto-bridged a missed day
+    freezes_available: int = 0          # live banked-freeze balance after this login
 
 
 class LoginStreakInfo(NullTolerantResponse):

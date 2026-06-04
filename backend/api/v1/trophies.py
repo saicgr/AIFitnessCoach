@@ -710,6 +710,152 @@ class UserXPResponse(BaseModel):
     progress_fraction: float = 0.0
 
 
+class XPLeaderboardEntry(BaseModel):
+    """One ranked row of the XP leaderboard.
+
+    Field names match the Flutter `XPLeaderboardEntry` model
+    (mobile/flutter/lib/data/models/user_xp.dart): full_name / avatar_url /
+    total_xp / current_level / title / prestige_level / rank.
+    """
+    user_id: str
+    full_name: Optional[str] = None
+    avatar_url: Optional[str] = None
+    total_xp: int = 0
+    current_level: int = 1
+    title: str = "Beginner"
+    prestige_level: int = 0
+    rank: int = 0
+
+
+@router.get("/xp/leaderboard", response_model=List[XPLeaderboardEntry])
+async def get_xp_leaderboard(
+    limit: int = Query(100, ge=1, le=200),
+    scope: str = Query("global", pattern="^(global|friends)$"),
+    current_user: dict = Depends(get_current_user),
+):
+    """XP-ranked leaderboard (total_xp DESC), friend-scoped or global.
+
+    Backs the XP tab's leaderboard screen. Previously there was NO backend
+    route for `/progress/xp/leaderboard`, so `XPRepository.getXPLeaderboard`
+    swallowed the 404 and rendered an empty board.
+
+    Privacy (mirrors the streaks/workouts boards):
+      * Rows whose user has `users.show_on_leaderboard = false` are excluded
+        entirely — EXCEPT the requesting user always sees their own row so the
+        client can highlight "you" and compute the user's rank.
+      * Rows whose user has `users.leaderboard_anonymous = true` are returned
+        with name/avatar stripped (shown as "Anonymous" by the client), but the
+        requesting user's own row is never anonymised to themselves.
+
+    `scope=friends` restricts the board to the requesting user plus their
+    accepted friends (`user_friends.status = 'accepted'`); `scope=global`
+    (default) ranks every opted-in user.
+
+    Ranks are 1-based and dense over the RETURNED rows (after the
+    show_on_leaderboard filter), so the displayed #1..#N is contiguous.
+    """
+    requester_id = current_user["id"]
+    logger.info(
+        f"[XP] leaderboard requested by {requester_id} (scope={scope}, limit={limit})"
+    )
+
+    try:
+        db = get_supabase_db()
+
+        # --- 1. Resolve the candidate user-id set for friend scope --------------
+        friend_scoped_ids: Optional[List[str]] = None
+        if scope == "friends":
+            friends_result = (
+                db.client.table("user_friends")
+                .select("friend_id")
+                .eq("user_id", requester_id)
+                .eq("status", "accepted")
+                .execute()
+            )
+            friend_ids = [
+                r["friend_id"] for r in (friends_result.data or []) if r.get("friend_id")
+            ]
+            # Always include the requester so they see themselves on the board.
+            friend_scoped_ids = list({requester_id, *friend_ids})
+
+        # --- 2. Pull XP rows ordered by total_xp DESC --------------------------
+        # Over-fetch when global so the show_on_leaderboard filter below can drop
+        # opted-out users without leaving the page short.
+        xp_query = (
+            db.client.table("user_xp")
+            .select("user_id, total_xp, current_level, prestige_level, title")
+            .order("total_xp", desc=True)
+        )
+        if friend_scoped_ids is not None:
+            if not friend_scoped_ids:
+                return []
+            xp_query = xp_query.in_("user_id", friend_scoped_ids)
+            # Friend lists are small; fetch the whole set then rank.
+            xp_rows = (xp_query.execute().data) or []
+        else:
+            # Global: over-fetch to survive the privacy filter, then trim.
+            xp_rows = (xp_query.limit(limit * 3).execute().data) or []
+
+        if not xp_rows:
+            return []
+
+        # --- 3. Batch-fetch profile + privacy for those users ------------------
+        user_ids = [r["user_id"] for r in xp_rows if r.get("user_id")]
+        users_result = (
+            db.client.table("users")
+            .select("id, name, avatar_url, show_on_leaderboard, leaderboard_anonymous")
+            .in_("id", user_ids)
+            .execute()
+        )
+        users_by_id = {u["id"]: u for u in (users_result.data or [])}
+
+        # --- 4. Filter by visibility, anonymise, assign ranks ------------------
+        entries: List[XPLeaderboardEntry] = []
+        rank = 0
+        for row in xp_rows:
+            uid = row.get("user_id")
+            if not uid:
+                continue
+            profile = users_by_id.get(uid, {})
+            is_self = uid == requester_id
+
+            # show_on_leaderboard default is TRUE; only an explicit False hides
+            # the row (the requester always sees their own row regardless).
+            visible = profile.get("show_on_leaderboard", True)
+            if visible is None:
+                visible = True
+            if not visible and not is_self:
+                continue
+
+            # Anonymise other users who opted in; never anonymise self-view.
+            anonymous = bool(profile.get("leaderboard_anonymous", False)) and not is_self
+            full_name = None if anonymous else profile.get("name")
+            avatar_url = None if anonymous else profile.get("avatar_url")
+
+            rank += 1
+            entries.append(
+                XPLeaderboardEntry(
+                    user_id=uid,
+                    full_name=full_name,
+                    avatar_url=avatar_url,
+                    total_xp=int(row.get("total_xp") or 0),
+                    current_level=int(row.get("current_level") or 1),
+                    title=row.get("title") or "Beginner",
+                    prestige_level=int(row.get("prestige_level") or 0),
+                    rank=rank,
+                )
+            )
+            if rank >= limit:
+                break
+
+        logger.info(f"[XP] leaderboard returning {len(entries)} entries (scope={scope})")
+        return entries
+
+    except Exception as e:
+        logger.error(f"Failed to get XP leaderboard: {e}", exc_info=True)
+        raise safe_internal_error(e, "trophies")
+
+
 @router.get("/xp/{user_id}", response_model=UserXPResponse)
 async def get_user_xp(user_id: str,
     current_user: dict = Depends(get_current_user),
