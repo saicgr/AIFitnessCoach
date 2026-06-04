@@ -7,10 +7,11 @@
 /// separate target that dispatches the action directly. Swipe-left snoozes
 /// the nudge for 4 hours via `nudgeSnoozeProvider`.
 ///
-/// i18n width handling: the title + body Column uses `Expanded` with
-/// `softWrap: false` + ellipsis on body so long localizations clip cleanly
-/// (the same fix we shipped to the old `_BreakfastSlotRow` to resolve the
-/// 61px overflow).
+/// i18n width handling: the title + body Column uses `Expanded`. The title
+/// stays 1 line (`softWrap: false` + ellipsis). The body wraps to 2 lines so
+/// full coach copy reads completely; because it lives inside `Expanded`,
+/// wrapping grows row height — never width — so it can't reintroduce the
+/// old 61px horizontal overflow. Ellipsis remains as a 3rd-line safety net.
 library;
 
 import 'dart:async';
@@ -186,9 +187,15 @@ class CoachContextualNudgeRow extends ConsumerWidget {
                             height: 1.3,
                             color: c.textSecondary,
                           ),
-                          maxLines: 1,
+                          // Allow the body to wrap to a second line so full
+                          // coach copy (e.g. "Aim for ~30 g protein within the
+                          // next hour.") reads completely instead of clipping
+                          // to "...within the next …". The body lives inside an
+                          // Expanded Column, so wrapping grows row height, never
+                          // width — no horizontal overflow. Ellipsis stays as a
+                          // safety net for the rare 3-line localization.
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          softWrap: false,
                         ),
                       ],
                     ),
