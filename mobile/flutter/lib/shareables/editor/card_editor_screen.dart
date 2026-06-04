@@ -7,18 +7,30 @@
 library;
 
 import 'dart:math' as math;
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../doc/card_doc.dart';
+import '../doc/card_doc_bindings.dart';
 import '../doc/card_doc_renderer.dart';
 import '../doc/card_palette.dart';
+import '../shareable_catalog.dart';
 import '../shareable_data.dart';
+import '../widgets/food_image.dart';
 import 'card_editor_controller.dart';
 import 'card_video_export_screen.dart';
 import '../../widgets/glass_sheet.dart';
+
+/// Volt-lime — the redesign signature accent (proofs.html). First swatch in
+/// the palette panel and the default the Studio nudges users toward.
+const Color _kVoltLime = Color(0xFFD8FF3A);
+
+/// The editor's selection-chrome accent (kept neutral so it never clashes
+/// with a card whose own accent is volt-lime).
+const Color _kEditorAccent = Color(0xFF3B82F6);
 
 class CardEditorScreen extends StatefulWidget {
   final CardDoc initialDoc;
@@ -136,6 +148,16 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
             onPressed: _close,
           ),
           IconButton(
+            tooltip: 'Variations',
+            icon: const Icon(Icons.grid_view_rounded, color: Colors.white),
+            onPressed: _openVariations,
+          ),
+          IconButton(
+            tooltip: 'Palette',
+            icon: const Icon(Icons.palette_rounded, color: Colors.white),
+            onPressed: _openPalette,
+          ),
+          IconButton(
             tooltip: 'Background',
             icon: const Icon(Icons.gradient_rounded, color: Colors.white),
             onPressed: _editBackground,
@@ -203,6 +225,28 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
           ),
           const SizedBox(width: 4),
         ],
+      ),
+    );
+  }
+
+  void _openVariations() {
+    HapticFeedback.selectionClick();
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _VariationsSheet(controller: _c, data: widget.data),
+      ),
+    );
+  }
+
+  void _openPalette() {
+    HapticFeedback.selectionClick();
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _PaletteSheet(controller: _c),
       ),
     );
   }
@@ -678,6 +722,28 @@ class _ContextPanel extends StatelessWidget {
           _PhotoControls(controller: controller, props: props),
         if (props is ShapeProps)
           _ShapeControls(controller: controller, props: props),
+        if (props is BadgeProps)
+          _BadgeControls(controller: controller, props: props),
+        if (props is DateStampProps)
+          _DateStampControls(controller: controller, props: props),
+        if (props is IconProps)
+          _IconControls(controller: controller, props: props),
+        if (props is ImageProps)
+          _ImageControls(controller: controller, props: props),
+        if (props is DividerProps)
+          _DividerControls(controller: controller, props: props),
+        if (props is FrameProps)
+          _FrameControls(controller: controller, props: props),
+        if (props is TextureProps)
+          _TextureControls(controller: controller, props: props),
+        if (props is QrProps)
+          _QrControls(controller: controller, props: props),
+        if (props is ChipGroupProps)
+          _ChipGroupControls(controller: controller, props: props),
+        if (props is TableProps)
+          _TableControls(controller: controller, props: props),
+        if (props is RepeaterProps)
+          _RepeaterControls(controller: controller, props: props),
         _opacityRow(),
         const SizedBox(height: 4),
         _commonRow(context),
@@ -1091,6 +1157,641 @@ class _ShapeControls extends StatelessWidget {
   }
 }
 
+// ─────────────────────────── Shared inspector bits ────────────────────────
+
+/// A single-field text-edit dialog used by the value inspectors. Returns the
+/// new value, or null on cancel.
+Future<String?> _promptText(
+  BuildContext context, {
+  required String title,
+  required String initial,
+  String hint = 'Type here…',
+}) async {
+  final ctrl = TextEditingController(text: initial);
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: TextField(
+        controller: ctrl,
+        autofocus: true,
+        decoration: InputDecoration(hintText: hint),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, ctrl.text),
+          child: const Text('Save'),
+        ),
+      ],
+    ),
+  );
+}
+
+/// A compact horizontal colour-swatch row shared by the value inspectors.
+class _SwatchRow extends StatelessWidget {
+  final Color selected;
+  final ValueChanged<Color> onPick;
+  const _SwatchRow({required this.selected, required this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (final c in _kTextColors)
+            GestureDetector(
+              onTap: () => onPick(c),
+              child: Container(
+                width: 30,
+                height: 30,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: c,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selected.toARGB32() == c.toARGB32()
+                        ? _kEditorAccent
+                        : Colors.white24,
+                    width: selected.toARGB32() == c.toARGB32() ? 3 : 1,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _editRow(BuildContext context,
+    {required String label, required VoidCallback onTap}) {
+  return Align(
+    alignment: Alignment.centerLeft,
+    child: TextButton.icon(
+      icon: const Icon(Icons.edit_rounded, size: 16),
+      label: Text(label),
+      onPressed: onTap,
+    ),
+  );
+}
+
+// ─────────────────────────── Badge controls ───────────────────────────────
+
+class _BadgeControls extends StatelessWidget {
+  final CardEditorController controller;
+  final BadgeProps props;
+  const _BadgeControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            _editRow(context,
+                label: 'Edit value', onTap: () => _edit(context, value: true)),
+            _editRow(context,
+                label: 'Edit label',
+                onTap: () => _edit(context, value: false)),
+          ],
+        ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final s in BadgeShape.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(s.name),
+                    selected: props.shape == s,
+                    onSelected: (_) => controller.updateSelected(
+                      (e) => e.copyWith(props: props.copyWith(shape: s)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _edit(BuildContext context, {required bool value}) async {
+    final r = await _promptText(
+      context,
+      title: value ? 'Badge value' : 'Badge label',
+      initial: value ? props.valueLiteral : props.label,
+    );
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: value
+              // Editing the value detaches it from its data binding.
+              ? props.copyWith(
+                  valueLiteral: r,
+                  valueBinding: DataBinding.none,
+                )
+              : props.copyWith(label: r),
+        ));
+  }
+}
+
+// ─────────────────────────── Date-stamp controls ──────────────────────────
+
+class _DateStampControls extends StatelessWidget {
+  final CardEditorController controller;
+  final DateStampProps props;
+  const _DateStampControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            _editRow(context, label: 'Edit text', onTap: () => _edit(context)),
+            const Spacer(),
+            const Text('Pill',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Switch.adaptive(
+              value: props.pill,
+              onChanged: (v) => controller.updateSelected(
+                (e) => e.copyWith(props: props.copyWith(pill: v)),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.color,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(color: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    final r = await _promptText(
+      context,
+      title: 'Date / label',
+      initial: props.literal,
+      hint: 'Leave blank to use the log date',
+    );
+    if (r == null) return;
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(
+            literal: r,
+            // A non-empty literal wins over the bound period label.
+            binding: r.isEmpty
+                ? const DataBinding(BindingSource.periodLabel)
+                : DataBinding.none,
+          ),
+        ));
+  }
+}
+
+// ─────────────────────────── Icon / sticker controls ──────────────────────
+
+class _IconControls extends StatelessWidget {
+  final CardEditorController controller;
+  final IconProps props;
+  const _IconControls({required this.controller, required this.props});
+
+  static const List<String> _emojis = [
+    '✨', '🔥', '💪', '🏆', '⚡', '🎯', '🚀', '💯', '🥇', '❤️', '😤', '🧠',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final e in _emojis)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(e, style: const TextStyle(fontSize: 18)),
+                    selected: props.isEmoji && props.emoji == e,
+                    onSelected: (_) => controller.updateSelected(
+                      (el) => el.copyWith(
+                        // Switching to an emoji clears any icon codepoint.
+                        props: const IconProps().copyWith(
+                          emoji: e,
+                          color: props.color,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _SwatchRow(
+          selected: props.color,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(color: c)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── Image / GIF controls ─────────────────────────
+
+class _ImageControls extends StatelessWidget {
+  final CardEditorController controller;
+  final ImageProps props;
+  const _ImageControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return _editRow(context,
+        label: props.url.isEmpty ? 'Set image URL' : 'Edit image URL',
+        onTap: () async {
+      final r = await _promptText(
+        context,
+        title: 'Image URL',
+        initial: props.url,
+        hint: 'https://…',
+      );
+      if (r == null) return;
+      controller.updateSelected(
+        (e) => e.copyWith(props: props.copyWith(url: r)),
+      );
+    });
+  }
+}
+
+// ─────────────────────────── Divider controls ─────────────────────────────
+
+class _DividerControls extends StatelessWidget {
+  final CardEditorController controller;
+  final DividerProps props;
+  const _DividerControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final s in DividerStyle.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(s.name),
+                    selected: props.style == s,
+                    onSelected: (_) => controller.updateSelected(
+                      (e) => e.copyWith(props: props.copyWith(style: s)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _SwatchRow(
+          selected: props.color,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(color: c)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── Frame controls ───────────────────────────────
+
+class _FrameControls extends StatelessWidget {
+  final CardEditorController controller;
+  final FrameProps props;
+  const _FrameControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final s in FrameStyle.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(s.name),
+                    selected: props.style == s,
+                    onSelected: (_) => controller.updateSelected(
+                      (e) => e.copyWith(props: props.copyWith(style: s)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        _SwatchRow(
+          selected: props.color,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(color: c)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── Texture controls ─────────────────────────────
+
+class _TextureControls extends StatelessWidget {
+  final CardEditorController controller;
+  final TextureProps props;
+  const _TextureControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final k in TextureKind.values)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
+                  child: ChoiceChip(
+                    label: Text(k.name),
+                    selected: props.kind == k,
+                    onSelected: (_) => controller.updateSelected(
+                      (e) => e.copyWith(props: props.copyWith(kind: k)),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Intensity',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.intensity.clamp(0.0, 1.0),
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(intensity: v)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────── QR controls ──────────────────────────────────
+
+class _QrControls extends StatelessWidget {
+  final CardEditorController controller;
+  final QrProps props;
+  const _QrControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return _editRow(context,
+        label: props.data.isEmpty ? 'Set QR link' : 'Edit QR link',
+        onTap: () async {
+      final r = await _promptText(
+        context,
+        title: 'QR code link',
+        initial: props.data,
+        hint: 'https://zealova.com/…',
+      );
+      if (r == null) return;
+      controller.updateSelected(
+        (e) => e.copyWith(props: props.copyWith(data: r)),
+      );
+    });
+  }
+}
+
+// ─────────────────────────── Chip-group controls ──────────────────────────
+
+class _ChipGroupControls extends StatelessWidget {
+  final CardEditorController controller;
+  final ChipGroupProps props;
+  const _ChipGroupControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _editRow(context, label: 'Edit chips', onTap: () => _edit(context)),
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Max',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.maxItems.clamp(1, 12).toDouble(),
+                min: 1,
+                max: 12,
+                divisions: 11,
+                label: '${props.maxItems}',
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(maxItems: v.round())),
+                ),
+              ),
+            ),
+          ],
+        ),
+        _SwatchRow(
+          selected: props.textColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(textColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    final r = await _promptText(
+      context,
+      title: 'Chips (comma-separated)',
+      initial: props.literalItems.join(', '),
+      hint: 'e.g. Bench, Squat, Deadlift',
+    );
+    if (r == null) return;
+    final items = r
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    controller.updateSelected((e) => e.copyWith(
+          props: props.copyWith(
+            literalItems: items,
+            // Literal chips detach from any data binding.
+            itemsBinding: DataBinding.none,
+          ),
+        ));
+  }
+}
+
+// ─────────────────────────── Table controls ───────────────────────────────
+
+class _TableControls extends StatelessWidget {
+  final CardEditorController controller;
+  final TableProps props;
+  const _TableControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _editRow(context, label: 'Edit rows', onTap: () => _edit(context)),
+        _SwatchRow(
+          selected: props.textColor,
+          onPick: (c) => controller.updateSelected(
+            (e) => e.copyWith(props: props.copyWith(textColor: c)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _edit(BuildContext context) async {
+    // One `label: value` row per line.
+    final initial =
+        props.rows.map((r) => '${r.isNotEmpty ? r[0] : ''}: '
+            '${r.length > 1 ? r[1] : ''}').join('\n');
+    final ctrl = TextEditingController(text: initial);
+    final r = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Table rows'),
+        content: TextField(
+          controller: ctrl,
+          autofocus: true,
+          maxLines: null,
+          decoration: const InputDecoration(
+            hintText: 'One per line:\nProtein: 32g\nCarbs: 40g',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ctrl.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (r == null) return;
+    final rows = <List<String>>[];
+    for (final line in r.split('\n')) {
+      if (line.trim().isEmpty) continue;
+      final i = line.indexOf(':');
+      if (i < 0) {
+        rows.add([line.trim(), '']);
+      } else {
+        rows.add([line.substring(0, i).trim(), line.substring(i + 1).trim()]);
+      }
+    }
+    controller.updateSelected(
+      (e) => e.copyWith(props: props.copyWith(rows: rows)),
+    );
+  }
+}
+
+// ─────────────────────────── Repeater (list) controls ─────────────────────
+
+class _RepeaterControls extends StatelessWidget {
+  final CardEditorController controller;
+  final RepeaterProps props;
+  const _RepeaterControls({required this.controller, required this.props});
+
+  @override
+  Widget build(BuildContext context) {
+    // The repeater is data-bound (food items / exercises) — there's no free
+    // text to edit, but the user can tune how many rows and the toggles.
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            const SizedBox(width: 4),
+            const Text('Rows',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Expanded(
+              child: Slider(
+                value: props.maxItems.clamp(1, 12).toDouble(),
+                min: 1,
+                max: 12,
+                divisions: 11,
+                label: '${props.maxItems}',
+                onChanged: (v) => controller.updateSelected(
+                  (e) => e.copyWith(props: props.copyWith(maxItems: v.round())),
+                ),
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            _toggle('Amount', props.showAmount,
+                (v) => props.copyWith(showAmount: v)),
+            _toggle('Calories', props.showCalories,
+                (v) => props.copyWith(showCalories: v)),
+            if (props.exerciseMode)
+              _toggle('Image', props.showImage,
+                  (v) => props.copyWith(showImage: v)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _toggle(
+      String label, bool value, RepeaterProps Function(bool) build) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: FilterChip(
+        label: Text(label),
+        selected: value,
+        onSelected: (v) => controller.updateSelected(
+          (e) => e.copyWith(props: build(v)),
+        ),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────── Background sheet ──────────────────────────────
 
 class _BackgroundSheet extends StatefulWidget {
@@ -1119,6 +1820,30 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
     [Color(0xFF6366F1), Color(0xFF0D1117)],
   ];
 
+  /// Bundled background packs (foundation A1 shipped them to
+  /// `assets/images/shareable_backgrounds/{pack}`). Each entry is an asset
+  /// path; applying it sets a photo CardBackground whose `staticPath` is the
+  /// asset. See INTEGRATION NEEDED: the renderer's image resolver must learn
+  /// to load `assets/`-prefixed paths for these to paint (today they fall to
+  /// FoodImage's File branch).
+  static final Map<String, List<String>> _packs = {
+    'Workout': [
+      for (var i = 1; i <= 20; i++)
+        'assets/images/shareable_backgrounds/workout/'
+            'bg-${i.toString().padLeft(2, '0')}.jpg',
+    ],
+    'Nutrition': [
+      for (var i = 1; i <= 16; i++)
+        'assets/images/shareable_backgrounds/nutrition/'
+            'bg-${i.toString().padLeft(2, '0')}.jpg',
+    ],
+    'Abstract': [
+      for (var i = 21; i <= 26; i++)
+        'assets/images/shareable_backgrounds/abstract/'
+            'bg-${i.toString().padLeft(2, '0')}.jpg',
+    ],
+  };
+
   /// Colours extracted from the user's meal photo (the AI palette assist).
   List<Color> _photoPalette = const [];
 
@@ -1126,6 +1851,46 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
   void initState() {
     super.initState();
     _loadPalette();
+  }
+
+  /// Applies a bundled-asset background image.
+  void _setAssetPhoto(String assetPath, {bool blurred = false}) {
+    widget.controller.setBackground(
+      CardBackground(
+        kind: blurred
+            ? CardBackgroundKind.blurredPhoto
+            : CardBackgroundKind.photo,
+        photo: CardPhotoRef(staticPath: assetPath),
+        photoFit: BoxFit.cover,
+      ),
+    );
+  }
+
+  /// Binds the background to THIS log's own photo — hero image for a workout,
+  /// the first food photo for a meal. Re-renders live against the payload.
+  void _setLogPhoto(BindingSource source) {
+    widget.controller.setBackground(
+      CardBackground(
+        kind: CardBackgroundKind.photo,
+        photo: CardPhotoRef(binding: DataBinding(source)),
+        photoFit: BoxFit.cover,
+      ),
+    );
+  }
+
+  /// The log-photo source available for this payload (hero for workouts,
+  /// food photo for meals), or null when the log carries no photo.
+  BindingSource? get _logPhotoSource {
+    final d = widget.data;
+    if (d.heroImageUrl != null && d.heroImageUrl!.isNotEmpty) {
+      return BindingSource.heroImageUrl;
+    }
+    final foods = d.foodImageUrls;
+    if (foods != null && foods.isNotEmpty) return BindingSource.foodImageUrl;
+    if (d.customPhotoPath != null && d.customPhotoPath!.isNotEmpty) {
+      return BindingSource.customPhotoPath;
+    }
+    return null;
   }
 
   Future<void> _loadPalette() async {
@@ -1191,6 +1956,38 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
                       ],
                     ),
                   ],
+                  // ── This log's own photo ──
+                  if (_logPhotoSource != null) ...[
+                    const SizedBox(height: 14),
+                    const Text("This log's photo",
+                        style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        _logPhotoTile(blurred: false),
+                        const SizedBox(width: 10),
+                        _logPhotoTile(blurred: true),
+                      ],
+                    ),
+                  ],
+                  // ── Bundled background packs ──
+                  for (final entry in _packs.entries) ...[
+                    const SizedBox(height: 14),
+                    Text(entry.key,
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 84,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: entry.value.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (_, i) =>
+                            _packTile(entry.value[i]),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 14),
                   const Text('Solid',
                       style: TextStyle(color: Colors.white54, fontSize: 12)),
@@ -1251,6 +2048,366 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
           border: Border.all(color: Colors.white24),
         ),
       ),
+    );
+  }
+
+  /// One bundled-pack thumbnail. Highlights when the current background uses
+  /// this asset.
+  Widget _packTile(String assetPath) {
+    final bg = widget.controller.doc.background;
+    final selected = (bg.kind == CardBackgroundKind.photo ||
+            bg.kind == CardBackgroundKind.blurredPhoto) &&
+        bg.photo?.staticPath == assetPath;
+    return GestureDetector(
+      onTap: () => _setAssetPhoto(assetPath),
+      onLongPress: () => _setAssetPhoto(assetPath, blurred: true),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: 64,
+          height: 84,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: selected ? _kVoltLime : Colors.white24,
+              width: selected ? 2.4 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Image.asset(
+            assetPath,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const ColoredBox(
+              color: Color(0xFF1C2128),
+              child: Icon(Icons.image_rounded,
+                  color: Colors.white24, size: 20),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The "this log's photo" tile (sharp or blurred). Renders the bound photo
+  /// live via the same FoodImage path the card uses.
+  Widget _logPhotoTile({required bool blurred}) {
+    final source = _logPhotoSource;
+    if (source == null) return const SizedBox.shrink();
+    final url = resolvePhotoUrl(CardPhotoRef(binding: DataBinding(source)),
+        widget.data);
+    final bg = widget.controller.doc.background;
+    final selected = bg.photo?.binding.source == source &&
+        bg.photo?.staticPath == null &&
+        ((blurred && bg.kind == CardBackgroundKind.blurredPhoto) ||
+            (!blurred && bg.kind == CardBackgroundKind.photo));
+    return GestureDetector(
+      onTap: () {
+        if (blurred) {
+          widget.controller.setBackground(
+            CardBackground(
+              kind: CardBackgroundKind.blurredPhoto,
+              photo: CardPhotoRef(binding: DataBinding(source)),
+              photoFit: BoxFit.cover,
+            ),
+          );
+        } else {
+          _setLogPhoto(source);
+        }
+      },
+      child: Stack(
+        alignment: Alignment.bottomCenter,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              width: 64,
+              height: 84,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: selected ? _kVoltLime : Colors.white24,
+                  width: selected ? 2.4 : 1,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: blurred
+                  ? ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                      child: FoodImage(url: url, fit: BoxFit.cover),
+                    )
+                  : FoodImage(url: url, fit: BoxFit.cover),
+            ),
+          ),
+          if (blurred)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 4),
+              child: Text('Blur',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700)),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────── Variations browser ───────────────────────────
+
+/// The phone-customizer "Variations" gallery: every editable template that
+/// fits the current [Shareable.kind], rendered as a live thumbnail. Tapping
+/// one rebuilds the whole [CardDoc] from that template's `docBuilder` (one
+/// undo step). Keeps the current aspect so the layout reflows in place.
+class _VariationsSheet extends StatelessWidget {
+  final CardEditorController controller;
+  final Shareable data;
+  const _VariationsSheet({required this.controller, required this.data});
+
+  /// Editable templates available for this payload, in catalog order.
+  List<ShareableTemplateSpec> _specs() => ShareableCatalog.availableFor(data)
+      .where((s) => s.docBuilder != null)
+      .toList(growable: false);
+
+  @override
+  Widget build(BuildContext context) {
+    final specs = _specs();
+    final aspect = controller.doc.aspect;
+    final currentPreset = controller.doc.presetId;
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Text('Variations',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800)),
+                Spacer(),
+                Text('tap to switch template',
+                    style: TextStyle(color: Colors.white38, fontSize: 11)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (specs.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: Center(
+                  child: Text('No other layouts for this share',
+                      style: TextStyle(color: Colors.white54, fontSize: 13)),
+                ),
+              )
+            else
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 360),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 0.62,
+                  ),
+                  itemCount: specs.length,
+                  itemBuilder: (context, i) {
+                    final spec = specs[i];
+                    final selected = spec.template.name == currentPreset;
+                    return _VariationTile(
+                      spec: spec,
+                      data: data,
+                      aspect: aspect,
+                      selected: selected,
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        // Build at the editor's current aspect so the swap
+                        // lands in the same ratio the user is editing in.
+                        final next = spec.docBuilder!(data, aspect);
+                        controller.swapDoc(next);
+                        Navigator.of(context).pop();
+                      },
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VariationTile extends StatelessWidget {
+  final ShareableTemplateSpec spec;
+  final Shareable data;
+  final ShareableAspect aspect;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _VariationTile({
+    required this.spec,
+    required this.data,
+    required this.aspect,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Build the preset once for the thumbnail. Cheap value objects; a single
+    // render at thumbnail scale.
+    final doc = spec.docBuilder!(data, aspect);
+    final design = aspect.size;
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: selected ? _kVoltLime : Colors.white12,
+                    width: selected ? 2.4 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(
+                    width: design.width,
+                    height: design.height,
+                    child: Directionality(
+                      textDirection:
+                          Directionality.maybeOf(context) ?? TextDirection.ltr,
+                      child: CardDocRenderer(
+                        doc: doc,
+                        data: data,
+                        // Thumbnails never show the watermark — keeps the
+                        // gallery clean and avoids 60 tiny logos.
+                        showWatermark: false,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            spec.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: selected ? _kVoltLime : Colors.white70,
+              fontSize: 11,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────── Palette / accent panel ───────────────────────
+
+/// A swatch sheet that recolors the whole card's accent
+/// ([CardDoc.accentColor]). Volt-lime leads (the redesign signature); the
+/// rest are a curated editorial spread.
+class _PaletteSheet extends StatelessWidget {
+  final CardEditorController controller;
+  const _PaletteSheet({required this.controller});
+
+  static const List<Color> _accents = [
+    _kVoltLime, // signature
+    Color(0xFFF97316), // orange (legacy default)
+    Color(0xFFFF2D55), // hot red
+    Color(0xFFFF6B6B), // coral
+    Color(0xFFFFD23F), // amber
+    Color(0xFF34D399), // mint
+    Color(0xFF22C55E), // green
+    Color(0xFF06B6D4), // cyan
+    Color(0xFF3B82F6), // blue
+    Color(0xFF6366F1), // indigo
+    Color(0xFFA855F7), // violet
+    Color(0xFFEC4899), // magenta
+    Color(0xFFFFFFFF), // white
+    Color(0xFF9CA3AF), // steel
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final current = controller.doc.accentColor;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Accent',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800)),
+                const SizedBox(height: 4),
+                const Text('Recolors charts, scores and accent text',
+                    style: TextStyle(color: Colors.white38, fontSize: 11)),
+                const SizedBox(height: 14),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    for (final c in _accents)
+                      GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          controller.setAccentColor(c);
+                        },
+                        child: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: current.toARGB32() == c.toARGB32()
+                                  ? Colors.white
+                                  : Colors.white24,
+                              width: current.toARGB32() == c.toARGB32() ? 3 : 1,
+                            ),
+                          ),
+                          child: current.toARGB32() == c.toARGB32()
+                              ? Icon(Icons.check_rounded,
+                                  size: 22,
+                                  color: ThemeData.estimateBrightnessForColor(
+                                              c) ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors.black)
+                              : null,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

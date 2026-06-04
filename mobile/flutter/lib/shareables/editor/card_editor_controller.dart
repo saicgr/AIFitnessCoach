@@ -153,6 +153,33 @@ class CardEditorController extends ChangeNotifier {
   void setBackground(CardBackground background) =>
       _mutate((d) => d.copyWith(background: background));
 
+  // ─────────────────────────── Accent / palette ──────────────────────────
+
+  /// Recolors the whole document's accent — every accent-bound element
+  /// (charts, badges, score rings, accent text) repaints. One undo step.
+  void setAccentColor(Color color) {
+    if (_doc.accentColor == color) return;
+    _mutate((d) => d.copyWith(accentColor: color));
+  }
+
+  // ─────────────────────────── Variations (swap template) ────────────────
+
+  /// Replaces the working document wholesale with [next] — the Variations
+  /// browser uses this to jump to a different template preset for the same
+  /// underlying [Shareable]. Recorded as ONE undo step (so the user can step
+  /// back to the previous template). Re-seeds the id counter past [next]'s
+  /// ids so newly-added elements never collide, and clears any selection
+  /// that no longer exists in the new document.
+  void swapDoc(CardDoc next) {
+    _snapshot();
+    _doc = next;
+    CardDoc.seedIdCounter(next);
+    if (_selectedId != null && _doc.elementById(_selectedId!) == null) {
+      _selectedId = null;
+    }
+    notifyListeners();
+  }
+
   // ─────────────────────────── Aspect (magic resize) ─────────────────────
 
   /// Re-fits the whole document to a new aspect ratio, preserving every
