@@ -139,6 +139,7 @@ class WorkoutGenerationMixin(WorkoutGenerationMixinPart2):
         intensity_preference: Optional[str] = None,
         custom_program_description: Optional[str] = None,
         workout_type_preference: Optional[str] = None,
+        cardio_finisher: bool = False,
         custom_exercises: Optional[List[Dict]] = None,
         workout_environment: Optional[str] = None,
         equipment_details: Optional[List[Dict]] = None,
@@ -427,9 +428,26 @@ HELL MODE NAMING: Use intense, aggressive names like "Inferno", "Apocalypse", "D
 
         safety_instruction += difficulty_scaling_instruction
 
-        # Determine workout type (strength, cardio, or mixed)
+        # Determine workout type (strength, cardio, mixed, mobility).
         # Addresses competitor feedback: "I hate how you can't pick cardio for one of your workouts"
-        workout_type = workout_type_preference if workout_type_preference else "strength"
+        # Normalize casing + synonyms so the branches below actually fire — the
+        # UI sends capitalized labels ("Cardio", "HIIT", "Flexibility") and the
+        # branches match exact lowercase, so without this every non-"strength"
+        # pick silently degraded to a strength workout. Benefits BOTH callers
+        # (the db-generation path + the RAG path) of generate_workout_plan.
+        _wt_raw = (workout_type_preference or "strength").strip().lower()
+        _WT_ALIASES = {
+            "hiit": "cardio",
+            "conditioning": "cardio",
+            "boxing": "cardio",
+            "combat": "cardio",
+            "endurance": "cardio",
+            "flexibility": "mobility",
+            "stretch": "mobility",
+            "stretching": "mobility",
+            "yoga": "mobility",
+        }
+        workout_type = _WT_ALIASES.get(_wt_raw, _wt_raw)
         workout_type_instruction = ""
         if workout_type == "cardio":
             workout_type_instruction = """
@@ -526,6 +544,23 @@ RECOVERY-SPECIFIC NOTES:
 - Perfect for rest days or after intense training
 - Focus on areas that feel tight or sore
 - Encourage slow, controlled breathing throughout"""
+
+        # Cardio-in-split: append a short conditioning finisher to a
+        # strength/hypertrophy day when the user asked for one. Community ask:
+        # "let me add a bit of cardio to the end of a lifting workout." Skipped
+        # for pure cardio / mixed / mobility / recovery (redundant there).
+        if cardio_finisher and workout_type not in ("cardio", "mixed", "mobility", "recovery"):
+            workout_type_instruction += """
+
+🏃 CARDIO FINISHER (append to the very END of this workout):
+The user wants a short cardio finisher AFTER the main strength work. You MUST:
+1. Add ONE 5-10 minute conditioning block as the LAST 1-3 exercises.
+2. Use time-based moves with duration_seconds (NOT reps): e.g., Rowing, Assault Bike,
+   Jump Rope, Burpees, Mountain Climbers, Kettlebell Swings, High Knees.
+3. Short rest (15-30s); sets=1-4; total finisher time 5-10 min — it CAPS the session,
+   it does NOT replace or shrink the strength work.
+4. Name them so they clearly read as a finisher (e.g., "Finisher: Row Intervals",
+   "Finisher: Jump Rope")."""
 
         # Build custom program instruction if user has specified a custom training goal
         custom_program_instruction = ""

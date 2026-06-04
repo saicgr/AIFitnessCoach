@@ -104,6 +104,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
             _selectedEquipment.contains('Kettlebell') ? _kettlebellCount : null,
         newScheduledDate: newScheduledDate,
         forceNonPreferredDay: forceNonPreferredDay,
+        cardioFinisher: _cardioFinisher,
       )) {
         if (!mounted) return;
 
@@ -317,6 +318,7 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
         workoutName: suggestion['name'] as String?,
         newScheduledDate: newScheduledDate,
         forceNonPreferredDay: forceNonPreferredDay,
+        cardioFinisher: _cardioFinisher,
       )) {
         if (!mounted) return;
 

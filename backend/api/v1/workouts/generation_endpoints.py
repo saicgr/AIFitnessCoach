@@ -745,6 +745,8 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     focus_areas=body.focus_areas,
                     avoid_name_words=avoid_name_words,
                     intensity_preference=intensity_preference,
+                    workout_type_preference=body.workout_type or "strength",
+                    cardio_finisher=getattr(body, "cardio_finisher", False),
                     custom_exercises=custom_exercises if custom_exercises else None,
                     workout_environment=workout_environment,
                     equipment_details=equipment_details if equipment_details else None,

@@ -194,6 +194,12 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                     workout_day_overrides=_parse_workout_day_overrides(
                         _prefs_raw.get("workout_day_overrides")
                     ),
+                    # Thread the user's chosen workout type so cardio / mixed
+                    # splits actually generate. The cardio+mixed pipeline already
+                    # exists in generate_workout_plan; this caller silently
+                    # dropped the param. (Gravl's #1 community request.)
+                    workout_type_preference=body.workout_type or "strength",
+                    cardio_finisher=body.cardio_finisher,
                 )
 
                 workout_data = ensure_workout_data_dict(workout_data, context="generate")

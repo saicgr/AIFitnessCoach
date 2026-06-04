@@ -14,6 +14,9 @@ class _RegenerateWorkoutSheetState
   double _selectedDurationMin = 45;
   double _selectedDurationMax = 60;
   String? _selectedWorkoutType;
+  // Cardio-in-split: append a 5-10 min cardio finisher to a strength/hypertrophy
+  // regeneration. Only surfaced (and only sent) for strength-style types.
+  bool _cardioFinisher = false;
   final Set<String> _selectedFocusAreas = {};
   final Set<String> _selectedInjuries = {};
   final Set<String> _selectedEquipment = {};
@@ -754,6 +757,59 @@ class _RegenerateWorkoutSheetState
             customInputController: _workoutTypeController,
             disabled: _isRegenerating,
           ),
+          // Cardio-in-split: only meaningful on a strength-style session.
+          // Hidden for cardio / HIIT / mobility / recovery (redundant there).
+          Builder(builder: (context) {
+            final t = (_customWorkoutType.isNotEmpty
+                    ? _customWorkoutType
+                    : (_selectedWorkoutType ?? ''))
+                .toLowerCase();
+            const cardioish = {
+              'cardio', 'hiit', 'mixed', 'mobility',
+              'recovery', 'flexibility', 'stretch', 'yoga',
+            };
+            if (cardioish.contains(t)) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: _cardioFinisher
+                      ? colors.cyan.withOpacity(0.10)
+                      : colors.glassSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _cardioFinisher
+                        ? colors.cyan.withOpacity(0.6)
+                        : colors.cardBorder.withOpacity(0.3),
+                    width: _cardioFinisher ? 1.5 : 1,
+                  ),
+                ),
+                child: SwitchListTile.adaptive(
+                  value: _cardioFinisher,
+                  onChanged: _isRegenerating
+                      ? null
+                      : (v) => setState(() => _cardioFinisher = v),
+                  activeThumbColor: colors.cyan,
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                  secondary: Icon(Icons.directions_run_rounded,
+                      color: colors.cyan, size: 22),
+                  title: Text(
+                    'Add a cardio finisher',
+                    style: TextStyle(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: Text(
+                    'Cap your lifting with 5-10 min of conditioning',
+                    style: TextStyle(color: colors.textMuted, fontSize: 12),
+                  ),
+                ),
+              ),
+            );
+          }),
           DifficultySelector(
             selectedDifficulty: _selectedDifficulty,
             onSelectionChanged: (d) =>

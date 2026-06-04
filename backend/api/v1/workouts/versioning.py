@@ -980,6 +980,24 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     logger.info(
                         f"[STREAM] inferred workout_type={_inferred} from ai_prompt"
                     )
+
+            # Cardio-in-split finisher (community ask: "let me add a bit of cardio
+            # to the end of a lifting day"). Fold the instruction into the prompt
+            # the generator already consumes (custom_program_description / ai_prompt
+            # downstream), so every regenerate branch honors it without new params.
+            # Skipped for cardio / mixed / mobility / recovery types — redundant.
+            if body.cardio_finisher and (workout_type_override or "strength").lower() not in (
+                "cardio", "hiit", "mixed", "mobility", "recovery", "flexibility", "stretch", "yoga",
+            ):
+                _finisher_note = (
+                    "Add a 5-10 minute cardio finisher at the very end (time-based "
+                    "conditioning such as rowing, jump rope, burpees, or bike intervals). "
+                    "Keep the main strength work intact; the finisher only caps the session."
+                )
+                body.ai_prompt = (
+                    f"{body.ai_prompt}\n\n{_finisher_note}".strip()
+                    if body.ai_prompt else _finisher_note
+                )
             focus_areas = body.focus_areas or []
 
             # Step 2: Select exercises using RAG

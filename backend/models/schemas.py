@@ -255,6 +255,7 @@ class GenerateWorkoutRequest(BaseModel):
     adjacent_day_exercises: Optional[List[str]] = Field(default=None, description="Exercises from adjacent-day workouts to avoid for variety")
     batch_offset: int = Field(default=0, ge=0, description="Offset index for batch generation to ensure exercise variety across days")
     force_non_preferred_day: bool = Field(default=False, description="Set True when the user deliberately chose a date outside their preferred workout days (e.g., 'do this today' on a rest day). Bypasses the preferred-day gate.")
+    cardio_finisher: bool = Field(default=False, description="Append a 5-10 min cardio finisher to a strength/hypertrophy workout (cardio-in-split). Ignored for pure cardio/mobility types.")
 
 
 class GenerateWeeklyRequest(BaseModel):
@@ -377,6 +378,7 @@ class RegenerateWorkoutRequest(BaseModel):
     kettlebell_count: Optional[int] = Field(default=None, ge=1, le=10)  # Number of kettlebells available
     new_scheduled_date: Optional[str] = Field(default=None, max_length=20, description="If set (YYYY-MM-DD), move the regenerated workout to this date instead of keeping the original's date. Used by 'Do this today' in the Regenerate sheet.")
     force_non_preferred_day: bool = Field(default=False, description="Required to be True when new_scheduled_date falls outside the user's preferred workout days.")
+    cardio_finisher: bool = Field(default=False, description="Append a 5-10 min cardio finisher to a strength/hypertrophy regeneration (cardio-in-split). Ignored for pure cardio/mobility types.")
 
     @field_validator("difficulty", mode="before")
     @classmethod
