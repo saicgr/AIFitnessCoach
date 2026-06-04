@@ -208,124 +208,27 @@ def _calculate_completion_calories(
 async def recalculate_user_strength_scores(user_id: str, supabase, timezone_str: str):
     """
     Background task to recalculate strength scores after workout completion.
+
+    FEATURE 4: delegates to the SHARED recompute (strength_recalc) so the background
+    task and the manual POST /strength/calculate endpoint run identical code. This fixes
+    two pre-existing divergences:
+      1. it used to read `workouts.exercises_json` (often empty on logged sessions)
+         instead of `workout_logs.sets_json` (the actual source of truth);
+      2. it used `on_conflict="user_id,muscle_group,period_end"` — a unique constraint
+         migration 2237 DROPPED (replaced by a gym-aware unique index), so the upsert
+         would error. The shared recompute inserts (matching the endpoint) instead.
     """
     try:
         logger.info(f"Background: Recalculating strength scores for user {user_id}")
+        from services.strength_recalc import _recompute_strength_for_user
 
-        strength_service = StrengthCalculatorService()
-
-        # Get user info
-        user_response = supabase.table("users").select("weight_kg, gender").eq(
-            "id", user_id
-        ).maybe_single().execute()
-
-        if not user_response.data:
-            logger.warning(f"User not found for strength recalc: {user_id}")
-            return
-
-        user = user_response.data
-        bodyweight = float(user.get("weight_kg", 70))
-        gender = user.get("gender", "male")
-
-        # Get workout data from last 90 days
-        start_date = (date.fromisoformat(get_user_today(timezone_str)) - timedelta(days=90)).isoformat()
-
-        workouts_response = supabase.table("workouts").select(
-            "id, exercises_json, completed_at"
-        ).eq(
-            "user_id", user_id
-        ).eq(
-            "is_completed", True
-        ).gte(
-            "scheduled_date", start_date
-        ).execute()
-
-        # Extract exercise performances
-        workout_data = []
-        for workout in (workouts_response.data or []):
-            exercises = workout.get("exercises_json", [])
-            if isinstance(exercises, str):
-                exercises = json.loads(exercises)
-            for exercise in exercises:
-                if isinstance(exercise, dict):
-                    sets = exercise.get("sets", [])
-                    # Handle case where sets is an integer count instead of a list
-                    if isinstance(sets, int) or not isinstance(sets, list):
-                        continue
-                    if sets:
-                        best_set = max(
-                            (s for s in sets if s.get("completed", True)),
-                            key=lambda s: float(s.get("weight_kg", 0)) * int(s.get("reps", 0)),
-                            default=None,
-                        )
-                        if best_set:
-                            workout_data.append({
-                                "exercise_name": exercise.get("name", ""),
-                                "weight_kg": float(best_set.get("weight_kg", 0)),
-                                "reps": int(best_set.get("reps", 0)),
-                                "sets": len(sets),
-                            })
-
-        # Calculate scores for all muscle groups
-        muscle_scores = strength_service.calculate_all_muscle_scores(
-            workout_data, bodyweight, gender
+        gym_count = _recompute_strength_for_user(
+            user_id=user_id, supabase=supabase, tz=timezone_str
         )
-
-        # Get previous scores for trend calculation
-        previous_response = supabase.from_("latest_strength_scores").select(
-            "muscle_group, strength_score"
-        ).eq("user_id", user_id).execute()
-
-        previous_scores = {
-            r["muscle_group"]: r["strength_score"]
-            for r in (previous_response.data or [])
-        }
-
-        # Save new scores
-        now = datetime.now()
-        period_end = date.fromisoformat(get_user_today(timezone_str))
-        period_start = period_end - timedelta(days=7)
-
-        for mg, score in muscle_scores.items():
-            prev_score = previous_scores.get(mg)
-
-            # Determine trend
-            if prev_score is not None:
-                if score.strength_score > prev_score + 2:
-                    trend = "improving"
-                elif score.strength_score < prev_score - 2:
-                    trend = "declining"
-                else:
-                    trend = "maintaining"
-                score_change = score.strength_score - prev_score
-            else:
-                trend = "maintaining"
-                score_change = None
-
-            record_data = {
-                "user_id": user_id,
-                "muscle_group": mg,
-                "strength_score": score.strength_score,
-                "strength_level": score.strength_level.value,
-                "best_exercise_name": score.best_exercise_name,
-                "best_estimated_1rm_kg": score.best_estimated_1rm_kg,
-                "bodyweight_ratio": score.bodyweight_ratio,
-                "weekly_sets": score.weekly_sets,
-                "weekly_volume_kg": score.weekly_volume_kg,
-                "previous_score": prev_score,
-                "score_change": score_change,
-                "trend": trend,
-                "calculated_at": now.isoformat(),
-                "period_start": period_start.isoformat(),
-                "period_end": period_end.isoformat(),
-            }
-
-            supabase.table("strength_scores").upsert(
-                record_data,
-                on_conflict="user_id,muscle_group,period_end",
-            ).execute()
-
-        logger.info(f"Background: Updated strength scores for {len(muscle_scores)} muscle groups")
+        logger.info(
+            f"Background: Recomputed composite strength scores for {user_id} "
+            f"({gym_count} gym profiles)"
+        )
 
     except Exception as e:
         logger.error(f"Background: Failed to recalculate strength scores: {e}", exc_info=True)

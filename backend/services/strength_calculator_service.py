@@ -14,7 +14,34 @@ from dataclasses import dataclass
 from enum import Enum
 import logging
 
+from services.strength_movement_patterns import standards_for as _pattern_standards_for
+
 logger = logging.getLogger(__name__)
+
+
+# FEATURE 4: per-muscle weekly-volume landmarks (MEV / MAV / MRV) in working sets/week.
+# Ported from the Flutter info-sheet table `volumeGuidelinesTable` in
+# mobile/flutter/lib/data/models/muscle_status.dart — KEEP IN SYNC with that table.
+# Used by the composite score's volume-tolerance sub-score (S2). MAV is stored as the
+# midpoint of the client's mavRange string so the backend has a single number to curve
+# against. Sources: Israetel/Renaissance Periodization volume-landmark research.
+VOLUME_LANDMARKS: Dict[str, Dict[str, float]] = {
+    "chest":      {"mev": 10, "mav": 16, "mrv": 22},   # client mavRange "12-20"
+    "back":       {"mev": 10, "mav": 18, "mrv": 25},   # "14-22"
+    "shoulders":  {"mev": 8,  "mav": 19, "mrv": 26},   # "16-22"
+    "quads":      {"mev": 8,  "mav": 15, "mrv": 20},   # "12-18"
+    "hamstrings": {"mev": 6,  "mav": 13, "mrv": 20},   # "10-16"
+    "biceps":     {"mev": 8,  "mav": 17, "mrv": 26},   # "14-20"
+    "triceps":    {"mev": 6,  "mav": 12, "mrv": 18},   # "10-14"
+    "calves":     {"mev": 8,  "mav": 14, "mrv": 20},   # "12-16"
+    "glutes":     {"mev": 4,  "mav": 10, "mrv": 16},   # "8-12"
+    "core":       {"mev": 4,  "mav": 12, "mrv": 20},   # Abs "8-16"
+    "traps":      {"mev": 6,  "mav": 16, "mrv": 26},   # "12-20"
+    # Lower Back maps to a generic posterior fallback for muscles without a row.
+    "forearms":   {"mev": 6,  "mav": 12, "mrv": 18},   # not in client table; conservative
+}
+# Fallback when a muscle group isn't in the table (e.g. "lower_back").
+_DEFAULT_LANDMARK = {"mev": 6, "mav": 12, "mrv": 18}
 
 
 class StrengthLevel(str, Enum):
@@ -297,6 +324,12 @@ class StrengthScore:
     trend: str  # 'improving', 'maintaining', 'declining'
     previous_score: Optional[int]
     score_change: Optional[int]
+    # FEATURE 4 (composite score) additive fields. Default so every existing
+    # constructor call (legacy single-factor path) keeps working unchanged.
+    is_establishing: bool = False
+    score_range_low: Optional[int] = None
+    score_range_high: Optional[int] = None
+    composite_breakdown: Optional[Dict[str, Any]] = None
 
 
 class StrengthCalculatorService:
@@ -402,12 +435,35 @@ class StrengthCalculatorService:
     # Strength Level Classification
     # -------------------------------------------------------------------------
 
+    def _resolve_standards(
+        self,
+        exercise_name: str,
+        equipment: Optional[str] = None,
+    ) -> Dict[str, float]:
+        """Resolve the beginner..elite bodyweight-ratio ladder for an exercise.
+
+        FEATURE 4 — fixes the old "fall back to SQUAT" bug (which over-scaled every
+        unmapped isolation move to ~0). Lookup order:
+            1. exact STRENGTH_STANDARDS entry (hand-curated, most accurate)
+            2. strength_movement_patterns.standards_for (movement-pattern ladder)
+            3. isolation_upper ladder (conservative default — NEVER squat)
+        """
+        normalized_name = self._normalize_exercise_name(exercise_name)
+        standards = STRENGTH_STANDARDS.get(normalized_name)
+        if standards:
+            return standards
+        # Tier 2 + tier 3 both live in strength_movement_patterns: standards_for
+        # returns the pattern ladder, and an unclassifiable name resolves to its
+        # isolation_upper default there (never squat).
+        return _pattern_standards_for(exercise_name, equipment)
+
     def classify_strength_level(
         self,
         exercise_name: str,
         estimated_1rm: float,
         bodyweight_kg: float,
         gender: str = "male",
+        equipment: Optional[str] = None,
     ) -> Tuple[StrengthLevel, float, int]:
         """
         Classify strength level based on bodyweight ratio.
@@ -417,18 +473,16 @@ class StrengthCalculatorService:
             estimated_1rm: Estimated 1RM in kg
             bodyweight_kg: User's bodyweight in kg
             gender: 'male' or 'female' (affects thresholds)
+            equipment: Optional equipment string — threaded into the movement-pattern
+                standards resolver so machine/cable moves classify against a sensible
+                ladder instead of the old squat fallback.
 
         Returns:
             Tuple of (level, bodyweight_ratio, score_0_100)
         """
-        # Normalize exercise name
-        normalized_name = self._normalize_exercise_name(exercise_name)
-
-        # Get standards for this exercise
-        standards = STRENGTH_STANDARDS.get(normalized_name)
-        if not standards:
-            # Use generic compound exercise standards
-            standards = STRENGTH_STANDARDS["squat"]
+        # Get standards for this exercise via the pattern-aware resolver (NEVER the
+        # bare squat fallback the old code used).
+        standards = self._resolve_standards(exercise_name, equipment)
 
         # Calculate bodyweight ratio
         ratio = estimated_1rm / bodyweight_kg if bodyweight_kg > 0 else 0
@@ -475,20 +529,136 @@ class StrengthCalculatorService:
         exercise_performances: List[Dict],
         bodyweight_kg: float,
         gender: str = "male",
+        *,
+        context: Optional[Dict[str, Any]] = None,
     ) -> StrengthScore:
         """
         Calculate strength score for a specific muscle group.
+
+        Delegates to ``compute_composite_muscle_score`` (FEATURE 4). The optional
+        ``context`` carries the per-muscle inputs the composite needs (carry-forward
+        effective 1RM, weekly sets, sessions_28d, bodyweight trend, etc.). With no
+        context it falls back to safe defaults so legacy callers are unaffected.
 
         Args:
             muscle_group: Target muscle group
             exercise_performances: List of exercise data with weight/reps
             bodyweight_kg: User's bodyweight
             gender: User's gender
+            context: Optional dict of composite-score inputs (see compute_composite).
 
         Returns:
             Complete StrengthScore for the muscle group
         """
-        if not exercise_performances:
+        return self.compute_composite_muscle_score(
+            muscle_group=muscle_group,
+            exercise_performances=exercise_performances,
+            bodyweight_kg=bodyweight_kg,
+            gender=gender,
+            context=context or {},
+        )
+
+    # -------------------------------------------------------------------------
+    # FEATURE 4 — Composite muscle score
+    # -------------------------------------------------------------------------
+
+    @staticmethod
+    def _volume_tolerance_score(weekly_sets: float, muscle_group: str) -> float:
+        """S2 — weekly-sets vs MEV/MAV/MRV curve (0-100).
+
+            <MEV         : 40 * (sets / MEV)            (ramp toward the floor)
+            MEV..MAV     : 40 + 60 * (sets-MEV)/(MAV-MEV)
+            MAV..MRV     : 100                          (optimal plateau)
+            >MRV         : max(70, 100 - 6*excess)      (overreaching penalty)
+        """
+        lm = VOLUME_LANDMARKS.get((muscle_group or "").lower(), _DEFAULT_LANDMARK)
+        mev, mav, mrv = lm["mev"], lm["mav"], lm["mrv"]
+        s = max(0.0, float(weekly_sets))
+        if s <= 0:
+            return 0.0
+        if s < mev:
+            return 40.0 * (s / mev) if mev > 0 else 0.0
+        if s <= mav:
+            denom = (mav - mev) or 1.0
+            return 40.0 + 60.0 * ((s - mev) / denom)
+        if s <= mrv:
+            return 100.0
+        excess = s - mrv
+        return max(70.0, 100.0 - 6.0 * excess)
+
+    @staticmethod
+    def _consistency_score(sessions_28d: float, days_since_last_set: Optional[float]) -> float:
+        """S3 — frequency * recency (0-100).
+
+            freqScore  = min(100, sessions_28d / 8 * 100)
+            recencyMult = 1.0 if <=7d
+                          else clamp(0.5, 1.0, 1 - 0.5*(days-7)/21)
+        """
+        freq = min(100.0, (max(0.0, float(sessions_28d)) / 8.0) * 100.0)
+        if days_since_last_set is None:
+            recency_mult = 1.0
+        else:
+            d = max(0.0, float(days_since_last_set))
+            if d <= 7:
+                recency_mult = 1.0
+            else:
+                recency_mult = max(0.5, min(1.0, 1.0 - 0.5 * (d - 7) / 21.0))
+        return freq * recency_mult
+
+    @staticmethod
+    def _bodyweight_context_delta(
+        score_change: float,
+        bodyweight_trend_pct: Optional[float],
+    ) -> int:
+        """bwContextDelta in [-5, +5], applied ONLY when |scoreChange| >= 2.
+
+            relStrength up & bodyweight DOWN > 1.5%   -> +5  (recomposition win)
+            relStrength up & bodyweight UP   > 3%     -> -3  (gains partly from mass)
+            else                                       ->  0
+            missing weight history                     ->  0
+        """
+        if abs(score_change) < 2:
+            return 0
+        if bodyweight_trend_pct is None:
+            return 0
+        going_up = score_change > 0
+        if going_up and bodyweight_trend_pct < -1.5:
+            return 5
+        if going_up and bodyweight_trend_pct > 3.0:
+            return -3
+        return 0
+
+    def compute_composite_muscle_score(
+        self,
+        muscle_group: str,
+        exercise_performances: List[Dict],
+        bodyweight_kg: float,
+        gender: str = "male",
+        *,
+        context: Optional[Dict[str, Any]] = None,
+    ) -> StrengthScore:
+        """Composite per-muscle strength score (FEATURE 4).
+
+            composite = clamp(0, 100, round(0.60*S1 + 0.25*S2 + 0.15*S3 + bwDelta))
+
+        where:
+          * S1 relStrength — classify_strength_level interpolation on the carry-forward
+            effective 1RM (from context["effective_1rm_kg"] if present, else the best
+            fresh 1RM), machine-aware via equipment, with a bodyweight model for
+            unloaded muscles (proxy load = bodyweight_proxy_load_kg, reps → relative
+            ladder via the estimated 1RM of that proxy).
+          * S2 volTolerance — weekly_sets vs MEV/MAV/MRV (see _volume_tolerance_score).
+          * S3 consistency — frequency * recency (see _consistency_score).
+          * bwContextDelta — [-5, +5] recomposition nudge (see _bodyweight_context_delta).
+
+        context keys (all optional, safe defaults):
+          effective_1rm_kg, effective_1rm_exercise, effective_1rm_equipment,
+          weekly_sets, sessions_28d, days_since_last_set, distinct_exercises_alltime,
+          days_since_first_set, bodyweight_trend_pct, previous_score.
+        """
+        ctx = context or {}
+
+        if not exercise_performances and not ctx.get("effective_1rm_kg"):
             return StrengthScore(
                 muscle_group=muscle_group,
                 strength_score=0,
@@ -496,54 +666,146 @@ class StrengthCalculatorService:
                 best_exercise_name="",
                 best_estimated_1rm_kg=0,
                 bodyweight_ratio=0,
-                weekly_sets=0,
+                weekly_sets=int(ctx.get("weekly_sets", 0) or 0),
                 weekly_volume_kg=0,
                 trend="maintaining",
-                previous_score=None,
+                previous_score=ctx.get("previous_score"),
                 score_change=None,
+                is_establishing=False,
+                score_range_low=None,
+                score_range_high=None,
+                composite_breakdown={"s1": 0, "s2": 0, "s3": 0, "bw_delta": 0},
             )
 
-        # Find the best 1RM among exercises for this muscle group
-        best_1rm = 0
+        # ── Find the best fresh 1RM + accumulate volume from this window ──────
+        best_1rm = 0.0
         best_exercise = ""
+        best_equipment: Optional[str] = None
         total_sets = 0
-        total_volume = 0
+        total_volume = 0.0
+
+        # Lazy import to avoid an import cycle (muscle_balance imports filters which
+        # is fine; strength service must not pull RAG at module load).
+        try:
+            from services.exercise_rag.muscle_balance import bodyweight_proxy_load_kg
+        except Exception:  # noqa: BLE001
+            bodyweight_proxy_load_kg = None  # type: ignore
 
         for perf in exercise_performances:
             exercise_name = perf.get("exercise_name", "")
-            weight_kg = float(perf.get("weight_kg", 0))
-            reps = int(perf.get("reps", 0))
-            sets = int(perf.get("sets", 1))
+            weight_kg = float(perf.get("weight_kg", 0) or 0)
+            reps = int(perf.get("reps", 0) or 0)
+            sets = int(perf.get("sets", 1) or 1)
+            equipment = perf.get("equipment")
 
-            # Calculate 1RM
-            one_rm = self.calculate_1rm_average(weight_kg, reps)
+            # Bodyweight model: unloaded set → proxy load from bodyweight so an
+            # unloaded muscle still produces a non-zero relative-strength signal.
+            effective_weight = weight_kg
+            if weight_kg <= 0 and reps > 0 and bodyweight_proxy_load_kg is not None:
+                effective_weight = bodyweight_proxy_load_kg(exercise_name, bodyweight_kg)
 
+            one_rm = self.calculate_1rm_average(effective_weight, reps)
             if one_rm > best_1rm:
                 best_1rm = one_rm
                 best_exercise = exercise_name
+                best_equipment = equipment
 
-            # Accumulate volume
             total_sets += sets
-            total_volume += weight_kg * reps * sets
+            total_volume += effective_weight * reps * sets
 
-        # Classify strength level
-        level, ratio, score = self.classify_strength_level(
-            best_exercise, best_1rm, bodyweight_kg, gender
+        # Carry-forward effective 1RM (decayed all-time best) wins over the fresh
+        # window if it's higher — the score shouldn't crater on a light week.
+        carry_1rm = float(ctx.get("effective_1rm_kg") or 0)
+        if carry_1rm > best_1rm:
+            best_1rm = carry_1rm
+            best_exercise = ctx.get("effective_1rm_exercise") or best_exercise
+            best_equipment = ctx.get("effective_1rm_equipment") or best_equipment
+
+        # ── S1 relative strength ─────────────────────────────────────────────
+        level, ratio, s1 = self.classify_strength_level(
+            best_exercise, best_1rm, bodyweight_kg, gender, equipment=best_equipment
         )
+
+        # ── S2 volume tolerance ──────────────────────────────────────────────
+        weekly_sets = float(ctx.get("weekly_sets", total_sets) or 0)
+        s2 = self._volume_tolerance_score(weekly_sets, muscle_group)
+
+        # ── S3 consistency ───────────────────────────────────────────────────
+        sessions_28d = float(ctx.get("sessions_28d", 0) or 0)
+        days_since_last = ctx.get("days_since_last_set")
+        s3 = self._consistency_score(sessions_28d, days_since_last)
+
+        # ── Composite (pre-bw-delta) + bodyweight context delta ──────────────
+        base_composite = 0.60 * s1 + 0.25 * s2 + 0.15 * s3
+        previous_score = ctx.get("previous_score")
+        provisional = int(round(base_composite))
+        score_change_for_delta = (
+            (provisional - previous_score) if previous_score is not None else 0
+        )
+        bw_delta = self._bodyweight_context_delta(
+            score_change_for_delta, ctx.get("bodyweight_trend_pct")
+        )
+
+        composite = max(0, min(100, int(round(base_composite + bw_delta))))
+
+        # ── Establishing flag + score range ──────────────────────────────────
+        distinct_alltime = int(ctx.get("distinct_exercises_alltime", 0) or 0)
+        days_since_first = ctx.get("days_since_first_set")
+        # A muscle is ESTABLISHED (trusted, show a firm number) only once it has
+        # enough signal: trained >=3 times in the last 28d, across >=2 distinct
+        # lifts, with its first set >=14 days ago. Until then it is still
+        # establishing/calibrating and we show a soft range so an early dip never
+        # reads as a real regression. (Establishing is the NEGATION of established.)
+        is_established = (
+            sessions_28d >= 3
+            and distinct_alltime >= 2
+            and (days_since_first is not None and float(days_since_first) >= 14)
+        )
+        is_establishing = not is_established
+        score_range_low: Optional[int] = None
+        score_range_high: Optional[int] = None
+        if is_establishing:
+            score_range_low = max(0, composite - 8)
+            score_range_high = min(100, composite + 8)
+
+        # Re-derive level from the FINAL composite so the badge matches the number.
+        final_level = self._level_from_score(composite)
 
         return StrengthScore(
             muscle_group=muscle_group,
-            strength_score=score,
-            strength_level=level,
+            strength_score=composite,
+            strength_level=final_level,
             best_exercise_name=best_exercise,
             best_estimated_1rm_kg=round(best_1rm, 2),
             bodyweight_ratio=ratio,
-            weekly_sets=total_sets,
+            weekly_sets=int(weekly_sets),
             weekly_volume_kg=round(total_volume, 2),
-            trend="maintaining",  # Will be calculated separately with historical data
-            previous_score=None,
-            score_change=None,
+            trend="maintaining",  # filled by the caller from historical scores
+            previous_score=previous_score,
+            score_change=None,     # filled by the caller (vs persisted previous)
+            is_establishing=is_establishing,
+            score_range_low=score_range_low,
+            score_range_high=score_range_high,
+            composite_breakdown={
+                "s1_rel_strength": round(s1, 1),
+                "s2_vol_tolerance": round(s2, 1),
+                "s3_consistency": round(s3, 1),
+                "bw_context_delta": bw_delta,
+            },
         )
+
+    @staticmethod
+    def _level_from_score(score: int) -> StrengthLevel:
+        """Map a 0-100 score to a StrengthLevel band (same bands as overall)."""
+        if score >= 90:
+            return StrengthLevel.ELITE
+        if score >= 70:
+            return StrengthLevel.ADVANCED
+        if score >= 50:
+            return StrengthLevel.INTERMEDIATE
+        if score >= 25:
+            return StrengthLevel.NOVICE
+        return StrengthLevel.BEGINNER
 
     def calculate_all_muscle_scores(
         self,

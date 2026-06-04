@@ -309,6 +309,14 @@ class StrengthScoreData {
   final int? scoreChange;
   @JsonKey(name: 'calculated_at')
   final String? calculatedAt;
+  // FEATURE 4 (composite score): "calibrating" flag + the +/-8 confidence band shown
+  // while a muscle is still establishing a reliable baseline.
+  @JsonKey(name: 'is_establishing')
+  final bool isEstablishing;
+  @JsonKey(name: 'score_range_low')
+  final int scoreRangeLow;
+  @JsonKey(name: 'score_range_high')
+  final int scoreRangeHigh;
 
   const StrengthScoreData({
     this.id,
@@ -325,6 +333,9 @@ class StrengthScoreData {
     this.previousScore,
     this.scoreChange,
     this.calculatedAt,
+    this.isEstablishing = false,
+    this.scoreRangeLow = 0,
+    this.scoreRangeHigh = 0,
   });
 
   factory StrengthScoreData.fromJson(Map<String, dynamic> json) =>
@@ -374,6 +385,14 @@ class StrengthScoreData {
   String get levelDisplayName {
     return strengthLevel[0].toUpperCase() + strengthLevel.substring(1);
   }
+
+  /// FEATURE 4: true when a valid calibrating confidence band exists.
+  bool get hasRange =>
+      isEstablishing && scoreRangeHigh > scoreRangeLow;
+
+  /// FEATURE 4: approximate score label shown while calibrating (e.g. "~62").
+  /// Uses the score itself (the band centre) so the headline reads as an estimate.
+  String get rangeLabel => '~$strengthScore';
 
   /// Get color for strength level (0xAARRGGBB format)
   int get levelColor {

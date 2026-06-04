@@ -110,6 +110,9 @@ StrengthScoreData _$StrengthScoreDataFromJson(Map<String, dynamic> json) =>
       previousScore: (json['previous_score'] as num?)?.toInt(),
       scoreChange: (json['score_change'] as num?)?.toInt(),
       calculatedAt: json['calculated_at'] as String?,
+      isEstablishing: json['is_establishing'] as bool? ?? false,
+      scoreRangeLow: (json['score_range_low'] as num?)?.toInt() ?? 0,
+      scoreRangeHigh: (json['score_range_high'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$StrengthScoreDataToJson(StrengthScoreData instance) =>
@@ -128,6 +131,9 @@ Map<String, dynamic> _$StrengthScoreDataToJson(StrengthScoreData instance) =>
       'previous_score': instance.previousScore,
       'score_change': instance.scoreChange,
       'calculated_at': instance.calculatedAt,
+      'is_establishing': instance.isEstablishing,
+      'score_range_low': instance.scoreRangeLow,
+      'score_range_high': instance.scoreRangeHigh,
     };
 
 AllStrengthScores _$AllStrengthScoresFromJson(Map<String, dynamic> json) =>

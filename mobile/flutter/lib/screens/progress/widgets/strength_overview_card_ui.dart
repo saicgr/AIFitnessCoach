@@ -1,7 +1,86 @@
 part of 'strength_overview_card.dart';
 
+/// FEATURE 4: de-emphasized copy shown when a muscle score ticks DOWN. A score dip is
+/// usually a fresh-data or recovery artefact, not a real loss, so we frame it neutrally
+/// (>= 4 variants; the surface picks one deterministically per muscle so it doesn't
+/// flicker between rebuilds).
+const List<String> _dropCopyVariants = <String>[
+  'Settling in',
+  'Recalibrating',
+  'Easing back',
+  'Finding its level',
+  'Catching its breath',
+];
+
 /// UI builder methods extracted from _StrengthOverviewCardState
 extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
+
+  /// FEATURE 4: build the score-delta / calibrating badge for a muscle tile.
+  /// - establishing  -> amber "Calibrating" chip (no caret; the number is approximate)
+  /// - gain (>0)     -> green up-caret with +N
+  /// - drop (<0)     -> NEUTRAL grey down-caret + de-emphasized copy (variant pool)
+  /// - flat / null   -> nothing
+  Widget? _buildScoreDeltaBadge(StrengthScoreData muscle, ColorScheme colorScheme) {
+    if (muscle.isEstablishing) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFB300).withValues(alpha: 0.18),
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: const Text(
+          'Calibrating',
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFB07800),
+          ),
+        ),
+      );
+    }
+
+    final change = muscle.scoreChange;
+    if (change == null || change == 0) return null;
+
+    if (change > 0) {
+      // Gains keep the existing green up-caret with +N.
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.arrow_drop_up, size: 16, color: Color(0xFF4CAF50)),
+          Text(
+            '+$change',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF4CAF50),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Drop: neutral grey caret + soft copy (no red, no minus shaming).
+    final neutral = colorScheme.onSurfaceVariant.withValues(alpha: 0.7);
+    final copy = _dropCopyVariants[muscle.muscleGroup.hashCode.abs() % _dropCopyVariants.length];
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.arrow_drop_down, size: 16, color: neutral),
+        Flexible(
+          child: Text(
+            copy,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w500,
+              color: neutral,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildHooperChip(String label, int value, ColorScheme colorScheme) {
     // 1 = best, 7 = worst → color green→red
@@ -423,12 +502,26 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
                   const SizedBox(height: 3),
                   _buildMuscleStatusBar(status, colorScheme),
                 ],
+                // FEATURE 4: score-delta / calibrating badge under the name.
+                Builder(builder: (_) {
+                  final badge = _buildScoreDeltaBadge(muscle, colorScheme);
+                  if (badge == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: SizedBox(width: 56, child: badge),
+                  );
+                }),
               ],
             ),
             const SizedBox(width: 10),
-            // Center: score grid
+            // Center: score grid. While calibrating, overlay the approximate
+            // range label (e.g. "~62") instead of a hard number.
             Expanded(
-              child: _buildScoreGridWithOverlay(score, isDark),
+              child: _buildScoreGridWithOverlay(
+                score,
+                isDark,
+                approxLabel: muscle.hasRange ? muscle.rangeLabel : null,
+              ),
             ),
             // Right: pin + drag handle
             const SizedBox(width: 4),
@@ -545,6 +638,55 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// FEATURE 4: a "What goes into your score" factor row (label + weight + blurb).
+  Widget _buildFactorRow(
+    String name,
+    String weight,
+    String description,
+    ColorScheme colorScheme,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              name,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          SizedBox(
+            width: 44,
+            child: Text(
+              weight,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: colorScheme.primary,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+                height: 1.35,
               ),
             ),
           ),

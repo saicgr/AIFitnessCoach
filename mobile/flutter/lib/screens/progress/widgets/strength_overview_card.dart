@@ -538,7 +538,10 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
     );
   }
 
-  Widget _buildScoreGridWithOverlay(int score, bool isDark) {
+  Widget _buildScoreGridWithOverlay(int score, bool isDark, {String? approxLabel}) {
+    // FEATURE 4: while calibrating, show the approximate range label (e.g. "~62")
+    // instead of a hard number so the score reads as an estimate, not a verdict.
+    final overlayText = approxLabel ?? '$score';
     return Stack(
       children: [
         _buildScoreGrid(score, isDark),
@@ -546,7 +549,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
           bottom: 0,
           right: 0,
           child: Text(
-            '$score',
+            overlayText,
             style: TextStyle(
               fontSize: 14 + (score / 100 * 14),
               fontWeight: FontWeight.bold,
@@ -646,11 +649,78 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                 ),
                 const SizedBox(height: 8),
 
-                _buildLevelRow('Beginner', '0-24', '< 0.75x bodyweight', const Color(0xFF9E9E9E), colorScheme),
-                _buildLevelRow('Novice', '25-49', '0.75-1.25x bodyweight', const Color(0xFFFF9800), colorScheme),
-                _buildLevelRow('Intermediate', '50-69', '1.25-1.5x bodyweight', const Color(0xFF4CAF50), colorScheme),
-                _buildLevelRow('Advanced', '70-89', '1.5-2x bodyweight', const Color(0xFF2196F3), colorScheme),
-                _buildLevelRow('Elite', '90-100', '> 2x bodyweight', const Color(0xFF9C27B0), colorScheme),
+                _buildLevelRow('Beginner', '0-24', 'Building your base', const Color(0xFF9E9E9E), colorScheme),
+                _buildLevelRow('Novice', '25-49', 'Solid foundation', const Color(0xFFFF9800), colorScheme),
+                _buildLevelRow('Intermediate', '50-69', 'Trained and consistent', const Color(0xFF4CAF50), colorScheme),
+                _buildLevelRow('Advanced', '70-89', 'Strong and well-developed', const Color(0xFF2196F3), colorScheme),
+                _buildLevelRow('Elite', '90-100', 'Top-tier strength', const Color(0xFF9C27B0), colorScheme),
+
+                const SizedBox(height: 16),
+
+                // FEATURE 4: composite-score breakdown. Replaces the old single
+                // bodyweight-ratio explainer — the score now blends four signals.
+                Text(
+                  'What goes into your score',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildFactorRow(
+                  'Strength', '60%',
+                  'How much you lift relative to your bodyweight, machine-aware, with a bodyweight model for unweighted moves.',
+                  colorScheme,
+                ),
+                _buildFactorRow(
+                  'Volume', '25%',
+                  'Your weekly working sets per muscle vs. evidence-based MEV/MAV/MRV landmarks.',
+                  colorScheme,
+                ),
+                _buildFactorRow(
+                  'Consistency', '15%',
+                  'How often and how recently you have trained the muscle over the last 28 days.',
+                  colorScheme,
+                ),
+                _buildFactorRow(
+                  'Bodyweight context', '+/-5',
+                  'A small nudge when strength rises while your bodyweight moves (recomposition).',
+                  colorScheme,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFB300).withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Calibrating',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFB07800),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Shown as an approximate range (like ~62) for the first couple of weeks while we gather enough sessions to lock in a reliable number.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
 
                 const SizedBox(height: 16),
 

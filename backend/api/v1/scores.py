@@ -321,6 +321,10 @@ class StrengthScoreResponse(BaseModel):
     previous_score: Optional[int] = None
     score_change: Optional[int] = None
     calculated_at: Optional[datetime] = None
+    # FEATURE 4 (composite score) — additive fields. Defaults keep older clients safe.
+    is_establishing: bool = False
+    score_range_low: Optional[int] = None
+    score_range_high: Optional[int] = None
 
 
 class AllStrengthScoresResponse(BaseModel):
@@ -343,6 +347,10 @@ class StrengthDetailResponse(BaseModel):
     exercises: List[Dict[str, Any]]
     trend_data: List[Dict[str, Any]]
     recommendations: List[str]
+    # FEATURE 4 (composite score) — additive fields.
+    is_establishing: bool = False
+    score_range_low: Optional[int] = None
+    score_range_high: Optional[int] = None
 
 
 # ============================================================================
@@ -761,6 +769,10 @@ async def get_all_strength_scores(
                 bodyweight_ratio=record.get("bodyweight_ratio"),
                 trend=record.get("trend", "maintaining"),
                 calculated_at=datetime.fromisoformat(record["calculated_at"]) if record.get("calculated_at") else None,
+                # FEATURE 4 composite fields (additive; views project them via mig 2244).
+                is_establishing=bool(record.get("is_establishing") or False),
+                score_range_low=record.get("score_range_low"),
+                score_range_high=record.get("score_range_high"),
             )
 
     # Fill in missing muscle groups with defaults
@@ -1036,6 +1048,10 @@ async def get_strength_detail(
             "Track your lifts consistently for accurate scoring",
             "Aim for progressive overload each week",
         ],
+        # FEATURE 4 composite fields (additive).
+        is_establishing=bool(score_data.get("is_establishing") or False),
+        score_range_low=score_data.get("score_range_low"),
+        score_range_high=score_data.get("score_range_high"),
     )
 
 
@@ -1052,179 +1068,32 @@ async def calculate_strength_scores(
     Analyzes workout history and updates all muscle group scores.
     """
     db = get_supabase_db()
-    strength_service = StrengthCalculatorService()
     today = user_today_date(http_request, db, user_id)
+    tz = resolve_timezone(http_request, db, user_id)
 
-    # Get user info (check column first, then preferences JSON)
-    user_response = db.client.table("users").select("weight_kg, gender, preferences").eq(
+    # Verify the user exists before recomputing (keeps the 404 contract).
+    user_response = db.client.table("users").select("id").eq(
         "id", user_id
     ).maybe_single().execute()
-
     if not user_response or not user_response.data:
         raise HTTPException(status_code=404, detail="User not found")
 
-    bodyweight, gender = get_user_body_info(user_response.data)
+    # FEATURE 4: the recompute body is EXTRACTED into strength_recalc so the manual
+    # endpoint AND the background task run the SAME code (they used to diverge). It
+    # reads workout_logs.sets_json, runs the composite scorer with per-muscle context
+    # (effective 1RM carry-forward via strength_exercise_bests, weekly sets,
+    # sessions_28d, bodyweight trend), and writes BOTH the combined NULL-gym rows AND
+    # the per-gym rows + is_establishing / score_range_low / score_range_high.
+    from services.strength_recalc import _recompute_strength_for_user
 
-    # Get workout data from last 90 days — PROD schema note:
-    # `workouts.completed` does NOT exist and `workouts.exercises` is
-    # frequently empty on logged (post-hoc) sessions. The source of
-    # truth for volume is `workout_logs.sets_json`, the same jsonb
-    # column used by personal_bests and heatmap aggregations.
-    cutoff = datetime.now(timezone.utc) - timedelta(days=90)
-
-    # NOTE: `gym_profile_id` is additionally selected so we can compute per-gym
-    # rows below. It is IGNORED by `_flatten_logs_for_strength`, so the combined
-    # (NULL-gym) computation is byte-for-byte unchanged.
-    logs_response = db.client.table("workout_logs").select(
-        "sets_json, completed_at, gym_profile_id"
-    ).eq(
-        "user_id", user_id
-    ).eq(
-        "status", "completed"
-    ).gte(
-        "completed_at", cutoff.isoformat()
-    ).execute()
-
-    all_logs = logs_response.data or []
-
-    # Extract exercise performances from sets_json. We emit one row per
-    # exercise per log in the shape calculate_all_muscle_scores expects:
-    #   { exercise_name, weight_kg, reps, sets }
-    workout_data = _flatten_logs_for_strength(all_logs)
-
-    # Calculate scores for all muscle groups
-    muscle_scores = strength_service.calculate_all_muscle_scores(
-        workout_data, bodyweight, gender
+    gym_count = _recompute_strength_for_user(
+        user_id=user_id, supabase=db.client, tz=tz, today=today
     )
 
-    # Get previous scores for trend calculation
-    previous_response = db.client.table("latest_strength_scores").select(
-        "muscle_group, strength_score"
-    ).eq("user_id", user_id).execute()
-
-    previous_scores = {
-        r["muscle_group"]: r["strength_score"]
-        for r in (previous_response.data or [])
-    }
-
-    # Save new scores
     now = datetime.now()
-    period_end = today
-    period_start = period_end - timedelta(days=7)
-
-    for mg, score in muscle_scores.items():
-        prev_score = previous_scores.get(mg)
-
-        # Determine trend
-        if prev_score is not None:
-            if score.strength_score > prev_score + 2:
-                trend = "improving"
-            elif score.strength_score < prev_score - 2:
-                trend = "declining"
-            else:
-                trend = "maintaining"
-            score_change = score.strength_score - prev_score
-        else:
-            trend = "maintaining"
-            score_change = None
-
-        record_data = {
-            "user_id": user_id,
-            "muscle_group": mg,
-            "strength_score": score.strength_score,
-            "strength_level": score.strength_level.value,
-            "best_exercise_name": score.best_exercise_name,
-            "best_estimated_1rm_kg": score.best_estimated_1rm_kg,
-            "bodyweight_ratio": score.bodyweight_ratio,
-            "weekly_sets": score.weekly_sets,
-            "weekly_volume_kg": score.weekly_volume_kg,
-            "previous_score": prev_score,
-            "score_change": score_change,
-            "trend": trend,
-            "calculated_at": now.isoformat(),
-            "period_start": period_start.isoformat(),
-            "period_end": period_end.isoformat(),
-        }
-
-        db.client.table("strength_scores").insert(record_data).execute()
-
-    # ── ADDITIVE: per-gym strength rows ──────────────────────────────────────
-    # Group the SAME 90-day completed logs by gym_profile_id and compute a
-    # parallel score set per gym, written with gym_profile_id SET. This is
-    # purely additive — the combined (NULL-gym) rows above are untouched, so the
-    # overall/headline score is unchanged. Logs with a NULL gym_profile_id are
-    # already covered by the combined rows and are skipped here (no fake gym).
-    try:
-        logs_by_gym: Dict[str, List[Dict[str, Any]]] = {}
-        for log in all_logs:
-            gid = log.get("gym_profile_id")
-            if not gid:
-                continue
-            logs_by_gym.setdefault(gid, []).append(log)
-
-        gym_count = 0
-        for gid, gym_logs in logs_by_gym.items():
-            gym_workout_data = _flatten_logs_for_strength(gym_logs)
-            if not gym_workout_data:
-                continue
-            gym_muscle_scores = strength_service.calculate_all_muscle_scores(
-                gym_workout_data, bodyweight, gender
-            )
-
-            # Previous per-gym scores for this gym's trend computation.
-            prev_gym_resp = db.client.table("strength_scores").select(
-                "muscle_group, strength_score"
-            ).eq("user_id", user_id).eq("gym_profile_id", gid).order(
-                "calculated_at", desc=True
-            ).execute()
-            prev_gym_scores: Dict[str, Any] = {}
-            for r in (prev_gym_resp.data or []):
-                mgk = r.get("muscle_group")
-                if mgk and mgk not in prev_gym_scores:
-                    prev_gym_scores[mgk] = r.get("strength_score")
-
-            for mg, score in gym_muscle_scores.items():
-                prev_score = prev_gym_scores.get(mg)
-                if prev_score is not None:
-                    if score.strength_score > prev_score + 2:
-                        g_trend = "improving"
-                    elif score.strength_score < prev_score - 2:
-                        g_trend = "declining"
-                    else:
-                        g_trend = "maintaining"
-                    g_change = score.strength_score - prev_score
-                else:
-                    g_trend = "maintaining"
-                    g_change = None
-
-                db.client.table("strength_scores").insert({
-                    "user_id": user_id,
-                    "gym_profile_id": gid,
-                    "muscle_group": mg,
-                    "strength_score": score.strength_score,
-                    "strength_level": score.strength_level.value,
-                    "best_exercise_name": score.best_exercise_name,
-                    "best_estimated_1rm_kg": score.best_estimated_1rm_kg,
-                    "bodyweight_ratio": score.bodyweight_ratio,
-                    "weekly_sets": score.weekly_sets,
-                    "weekly_volume_kg": score.weekly_volume_kg,
-                    "previous_score": prev_score,
-                    "score_change": g_change,
-                    "trend": g_trend,
-                    "calculated_at": now.isoformat(),
-                    "period_start": period_start.isoformat(),
-                    "period_end": period_end.isoformat(),
-                }).execute()
-            gym_count += 1
-    except Exception as e:
-        # Per-gym rows are a non-critical enhancement; never fail the combined
-        # recalc (which already succeeded) if the per-gym pass hits an issue.
-        logger.warning(f"Per-gym strength recalc failed (combined unaffected): {e}")
-        gym_count = 0
-
     return {
         "success": True,
-        "message": f"Calculated strength scores for {len(muscle_scores)} muscle groups",
+        "message": "Recalculated composite strength scores",
         "calculated_at": now.isoformat(),
         "per_gym_profiles_scored": gym_count,
     }
