@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/providers/user_provider.dart';
 import '../services/api_client.dart';
 
 /// One day of recorded activity. Only the fields the sparklines need are
@@ -60,7 +61,11 @@ final activityHistoryProvider =
   ref.keepAlive();
   final session = Supabase.instance.client.auth.currentSession;
   if (session == null) return const [];
-  final userId = Supabase.instance.client.auth.currentUser?.id;
+  // Use the APP user id (public.users.id), NOT the Supabase auth `sub`. The
+  // /activity/history/{user_id} endpoint authorizes against current_user["id"]
+  // (the app id), so passing the auth sub here 403s. This is the same id source
+  // fasting/consistency callers use.
+  final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return const [];
 
   try {
