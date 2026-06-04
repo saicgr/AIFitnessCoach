@@ -85,6 +85,18 @@ class FoodImage extends StatelessWidget {
       );
     }
 
+    // Bundled asset background (the shareable_backgrounds packs). Without this
+    // branch an `assets/`-prefixed source falls into the File() path below and
+    // shows the gradient fallback in the rendered card + captured PNG.
+    if (src.startsWith('assets/')) {
+      return Image.asset(
+        src,
+        fit: fit,
+        gaplessPlayback: true,
+        errorBuilder: (_, __, ___) => _fallback(),
+      );
+    }
+
     // Local file path (image_picker output, cached download, etc.).
     final file = File(src);
     return Image.file(

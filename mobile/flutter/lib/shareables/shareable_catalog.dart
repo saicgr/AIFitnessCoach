@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/providers/week_start_provider.dart';
 
 import 'doc/card_doc.dart';
 import 'shareable_data.dart';
@@ -781,8 +784,13 @@ class ShareableCatalog {
           ShareableKind.periodInsights,
         },
         aspects: const {ShareableAspect.story, ShareableAspect.portrait},
-        builder: (d, w) =>
-            CalendarHeatmapTemplate(data: d, showWatermark: w),
+        builder: (d, w) => Consumer(
+          builder: (_, ref, __) => CalendarHeatmapTemplate(
+            data: d,
+            showWatermark: w,
+            weekStartsSunday: ref.watch(weekStartsSundayProvider),
+          ),
+        ),
         docBuilder: calendarHeatmapDoc,
       ),
       ShareableTemplateSpec(

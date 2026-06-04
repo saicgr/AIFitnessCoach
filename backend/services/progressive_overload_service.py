@@ -41,10 +41,21 @@ class ProgressiveOverloadService:
         user_id: int,
         last_performance: Optional[ExercisePerformance],
         performance_history: List[ExercisePerformance],
+        equipment_type: Optional[str] = None,
+        available_weights_kg: Optional[List[float]] = None,
     ) -> ProgressionRecommendation:
-        """Generate a progression recommendation for an exercise."""
+        """Generate a progression recommendation for an exercise.
+
+        When the caller knows the exercise's equipment and the user's actual
+        available weights (from the gym profile's equipment_details), pass them
+        so the recommendation snaps to a real rack/range (e.g. a grip trainer's
+        10/20/.../160 lb) instead of a generic increment. Both are optional and
+        backward-compatible — omitting them preserves prior behavior. (B2)
+        """
         return self._progression.get_recommendation(
-            exercise_id, exercise_name, last_performance, performance_history
+            exercise_id, exercise_name, last_performance, performance_history,
+            equipment_type=equipment_type,
+            available_weights_kg=available_weights_kg,
         )
 
     # ============ Strength Tracking ============

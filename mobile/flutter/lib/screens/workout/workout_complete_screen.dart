@@ -40,6 +40,7 @@ import 'widgets/hydration_dialog.dart';
 import 'widgets/sauna_dialog.dart';
 import 'widgets/score_level_up_celebration.dart'; // B6 — strength-score level-up celebration
 import 'widgets/ai_coach_report_card.dart';
+import 'widgets/workout_ai_recap_card.dart'; // B8 — persisted post-workout AI recap
 import 'widgets/share_templates/_share_common.dart';
 import '../../shareables/adapters/workout_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
@@ -738,6 +739,32 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     performanceComparison: widget.performanceComparison,
                     useKg: ref.watch(useKgForWorkoutProvider),
                   ).animate().fadeIn(delay: 300.ms),
+
+                  // Persisted post-workout AI recap (B8) — volume vs last
+                  // comparable session, PRs, what stood out, one coaching cue.
+                  const SizedBox(height: 12),
+                  WorkoutAiRecapCard(
+                    workoutId: widget.workout.id ?? '',
+                    workoutLogId: widget.workoutLogId,
+                    workoutName: widget.workout.name ?? 'Workout',
+                    workoutType: widget.workout.type ?? 'strength',
+                    exercises: widget.workout.exercises
+                        .map((e) => <String, dynamic>{
+                              'name': e.name,
+                              'sets': e.sets ?? 0,
+                              'reps': e.reps ?? 0,
+                              'weight_kg': e.weight ?? 0,
+                              'time_seconds': e.durationSeconds ?? 0,
+                            })
+                        .toList(),
+                    totalSets: widget.totalSets ?? 0,
+                    totalReps: widget.totalReps ?? 0,
+                    totalVolumeKg: widget.totalVolumeKg ?? 0,
+                    totalTimeSeconds: widget.duration,
+                    earnedPRs: _newPRs,
+                    totalWorkoutsCompleted: _totalWorkoutCount,
+                    useKg: ref.watch(useKgForWorkoutProvider),
+                  ).animate().fadeIn(delay: 340.ms),
 
                   // Per-exercise breakdown (sets x reps x weight + PR badges).
                   if (_buildExercisesSection() != null) ...[
