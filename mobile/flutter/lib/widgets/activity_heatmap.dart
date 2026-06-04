@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/stat_typography.dart';
 import '../core/theme/accent_color_provider.dart';
+import '../core/theme/theme_colors.dart';
 import '../data/models/consistency.dart';
 import '../data/providers/consistency_provider.dart';
 import '../data/services/api_client.dart';
@@ -67,212 +69,142 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
             : (userId: userId, weeks: timeRange.weeks, startDate: null as String?, endDate: null as String?);
         final heatmapAsync = ref.watch(activityHeatmapProvider(heatmapParams));
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header with time range selector
-            _buildHeader(context),
-            const SizedBox(height: 12),
-
-            // Heatmap grid
-            heatmapAsync.when(
-              data: (data) {
-                // Scroll to most recent after grid builds
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_scrollController.hasClients) {
-                    _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-                  }
-                });
-                return _buildHeatmapGrid(context, data);
-              },
-              loading: () => const _HeatmapLoading(),
-              // Retry invalidates the EXACT params tuple in scope (including
-              // startDate/endDate for the YTD range), so the rebuild re-runs
-              // the same provider instance that failed.
-              error: (e, _) => _HeatmapError(
+        // The header shows a big "{totalCompleted} workouts" count, so it lives
+        // inside the data branch (count only known once data resolves). During
+        // loading/error we render a lightweight header that still exposes the
+        // range dropdown so the user can change range to recover.
+        return heatmapAsync.when(
+          data: (data) {
+            // Scroll to most recent after grid builds
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_scrollController.hasClients) {
+                _scrollController
+                    .jumpTo(_scrollController.position.maxScrollExtent);
+              }
+            });
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context, totalCompleted: data.totalCompleted),
+                const SizedBox(height: 16),
+                _buildHeatmapGrid(context, data),
+                const SizedBox(height: 14),
+                _buildLegend(context),
+              ],
+            );
+          },
+          loading: () => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context, totalCompleted: null),
+              const SizedBox(height: 16),
+              const _HeatmapLoading(),
+            ],
+          ),
+          // Retry invalidates the EXACT params tuple in scope (including
+          // startDate/endDate for the YTD range), so the rebuild re-runs
+          // the same provider instance that failed.
+          error: (e, _) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context, totalCompleted: null),
+              const SizedBox(height: 16),
+              _HeatmapError(
                 error: e.toString(),
                 onRetry: () =>
                     ref.invalidate(activityHeatmapProvider(heatmapParams)),
               ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Legend
-            _buildLegend(context),
-          ],
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  /// Clean Gravl-style header: a big "{totalCompleted} workouts" count on the
+  /// left + a range dropdown on the right, plus an optional search icon.
+  /// [totalCompleted] is null while the grid is loading or errored — we then
+  /// fall back to a generic "Workouts" label so the chrome stays put.
+  Widget _buildHeader(BuildContext context, {required int? totalCompleted}) {
     final timeRange = ref.watch(heatmapTimeRangeProvider);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
     final accentEnum = ref.watch(accentColorProvider);
-    final apiClient = ref.read(apiClientProvider);
     final accentColor = accentEnum.getColor(isDark);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Row(
-          children: [
-            Text(
-              AppLocalizations.of(context).activityHeatmapActivity,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-            ),
-            const SizedBox(width: 8),
-            // Search button
-            if (widget.onSearchTapped != null)
-              GestureDetector(
-                onTap: widget.onSearchTapped,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: widget.isSearchActive
-                        ? accentColor.withValues(alpha: 0.2)
-                        : (isDark ? AppColors.elevated : AppColorsLight.elevated),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: widget.isSearchActive
-                          ? accentColor.withValues(alpha: 0.5)
-                          : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-                      width: 1,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.search,
-                    size: 14,
-                    color: widget.isSearchActive
-                        ? accentColor
-                        : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            const Spacer(),
-            // Refresh button — rebuild the SAME full params the data branch
-            // watches. The YTD range keys on startDate/endDate (weeks:0), so a
-            // weeks-only invalidate targeted a non-existent provider instance
-            // and silently no-op'd. Mirror the build()'s heatmapParams logic.
-            GestureDetector(
-              onTap: () {
-                final timeRange = ref.read(heatmapTimeRangeProvider);
-                final now = DateTime.now();
-                apiClient.getUserId().then((uid) {
-                  if (uid != null) {
-                    final params = timeRange == HeatmapTimeRange.ytd
-                        ? (
-                            userId: uid,
-                            weeks: 0,
-                            startDate: '${now.year}-01-01' as String?,
-                            endDate: now.toIso8601String().split('T')[0]
-                                as String?,
-                          )
-                        : (
-                            userId: uid,
-                            weeks: timeRange.weeks,
-                            startDate: null as String?,
-                            endDate: null as String?,
-                          );
-                    ref.invalidate(activityHeatmapProvider(params));
-                  }
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(
-                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                  ),
-                ),
-                child: Icon(Icons.refresh, size: 14, color: AppColors.textMuted),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        // Time range selector chips — wrap to avoid overflow
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
+        // Big bold workout count, e.g. "84 workouts".
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              ...HeatmapTimeRange.values.map((range) {
-                final isSelected = range == timeRange;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: _TimeRangeChip(
-                    label: range.label,
-                    isSelected: isSelected,
-                    accentColor: accentColor,
-                    onTap: () {
-                      ref.read(heatmapTimeRangeProvider.notifier).state = range;
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (_scrollController.hasClients) {
-                          _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
-                        }
-                      });
-                    },
-                  ),
-                );
-              }),
-              // Custom date range — simple from/to picker
-              GestureDetector(
-                onTap: () => _showSimpleDateRangePicker(context, ref, apiClient, isDark),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-                    ),
-                  ),
-                  child: Icon(Icons.date_range, size: 14, color: AppColors.textMuted),
+              if (totalCompleted != null)
+                StatNumber(
+                  value: totalCompleted.toString(),
+                  unit: totalCompleted == 1 ? 'workout' : 'workouts',
+                  size: StatType.primary,
+                  color: colors.textPrimary,
+                  unitColor: colors.textSecondary,
+                )
+              else
+                Text(
+                  AppLocalizations.of(context).activityHeatmapActivity,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
                 ),
-              ),
             ],
           ),
         ),
+        // Optional search affordance (exercise filtering) — small icon only.
+        if (widget.onSearchTapped != null) ...[
+          GestureDetector(
+            onTap: widget.onSearchTapped,
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: widget.isSearchActive
+                    ? accentColor.withValues(alpha: 0.18)
+                    : colors.elevated,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: widget.isSearchActive
+                      ? accentColor.withValues(alpha: 0.5)
+                      : colors.cardBorder,
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                Icons.search,
+                size: 16,
+                color: widget.isSearchActive ? accentColor : colors.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        // Range dropdown — replaces the old chip cluster. The preset ranges
+        // (Week/1M/3M/6M/YTD/1Y) live behind this menu.
+        _RangeDropdown(
+          current: timeRange,
+          accentColor: accentColor,
+          colors: colors,
+          onSelected: (range) {
+            ref.read(heatmapTimeRangeProvider.notifier).state = range;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_scrollController.hasClients) {
+                _scrollController
+                    .jumpTo(_scrollController.position.maxScrollExtent);
+              }
+            });
+          },
+        ),
       ],
     );
-  }
-
-  Future<void> _showSimpleDateRangePicker(
-    BuildContext context, WidgetRef ref, dynamic apiClient, bool isDark,
-  ) async {
-    final now = DateTime.now();
-
-    // Pick "From" date
-    final fromDate = await showDatePicker(
-      context: context,
-      initialDate: now.subtract(const Duration(days: 90)),
-      firstDate: DateTime(now.year - 2),
-      lastDate: now,
-      helpText: 'Select start date',
-    );
-    if (fromDate == null || !context.mounted) return;
-
-    // Pick "To" date
-    final toDate = await showDatePicker(
-      context: context,
-      initialDate: now,
-      firstDate: fromDate,
-      lastDate: now,
-      helpText: 'Select end date',
-    );
-    if (toDate == null) return;
-
-    final weeks = (toDate.difference(fromDate).inDays / 7).ceil();
-    if (weeks < 1) return;
-
-    final uid = await apiClient.getUserId();
-    if (uid != null) {
-      ref.invalidate(activityHeatmapProvider((userId: uid, weeks: weeks, startDate: null, endDate: null)));
-    }
   }
 
   Widget _buildHeatmapGrid(
@@ -283,25 +215,46 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
       dataByDate[day.date] = day;
     }
 
-    // Calculate weeks to display
     final endDate = DateTime.parse(data.endDate);
-    final startDate = DateTime.parse(data.startDate);
-    final totalDays = endDate.difference(startDate).inDays + 1;
+    final rawStart = DateTime.parse(data.startDate);
+
+    // Snap the grid origin to the Monday on/before the data start so every
+    // column is a real Mon→Sun week (DateTime.weekday: Mon=1..Sun=7). This lets
+    // the day-label column be a fixed Mon..Sun and makes the grid Monday-first
+    // like Gravl, regardless of which weekday the backend window began on.
+    final gridStart = rawStart.subtract(Duration(days: rawStart.weekday - 1));
+    final totalDays = endDate.difference(gridStart).inDays + 1;
     final totalWeeks = (totalDays / 7).ceil();
 
-    // Generate month labels
-    final monthLabels = _generateMonthLabels(startDate, totalWeeks);
+    // Build the 4-bucket volume ramp thresholds from the window's non-zero
+    // volumes (relative quartile bucketing — see _computeVolumeThresholds).
+    final thresholds = _computeVolumeThresholds(data.data);
 
-    const dayLabelWidth = 20.0;
+    // Month labels are derived from the snapped grid origin.
+    final monthLabels = _generateMonthLabels(gridStart, totalWeeks);
+
+    const dayLabelWidth = 34.0; // fits 3-letter day labels (Mon..Sun)
+    const cellGap = 3.0;
+
+    // Mon-first 3-letter labels, aligned row-for-row with the grid.
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final colors = ThemeColors.of(context);
         final availableWidth = constraints.maxWidth;
         final gridWidth = availableWidth - dayLabelWidth;
-        // Fill available width, but cap cell size between 10-20px
+        // Larger cells than before: fill available width, capped 14-22px.
         final fitCellSize = gridWidth / totalWeeks;
-        final cellSize = fitCellSize.clamp(10.0, 20.0);
-        final needsScroll = cellSize * totalWeeks > gridWidth;
+        final cellSize = fitCellSize.clamp(14.0, 22.0);
+        final colWidth = cellSize + cellGap;
+        final needsScroll = colWidth * totalWeeks > gridWidth;
+
+        final labelStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: colors.textMuted,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+            );
 
         Widget buildGrid() {
           return Column(
@@ -309,73 +262,76 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
             children: [
               // Month labels row
               Padding(
-                padding: EdgeInsets.only(left: dayLabelWidth),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+                padding: const EdgeInsets.only(left: dayLabelWidth),
+                child: Row(
                   children: monthLabels.map((label) {
-                    final width = label.weekSpan * cellSize;
+                    final width = label.weekSpan * colWidth;
                     return SizedBox(
                       width: width < 24.0 ? 24.0 : width,
                       child: Text(
                         label.month,
                         maxLines: 1,
                         overflow: TextOverflow.clip,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.textMuted,
-                              fontSize: 10,
-                            ),
+                        style: labelStyle,
                       ),
                     );
                   }).toList(),
                 ),
               ),
-              ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
 
               // Grid with day labels
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Day labels column
+                  // Day labels column (Mon..Sun), aligned to each cell row.
                   Column(
-                    children: ['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day) {
-                      return SizedBox(
+                    children: dayLabels.map((day) {
+                      return Container(
                         height: cellSize,
                         width: dayLabelWidth,
-                        child: Text(
-                          day,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.textMuted,
-                                    fontSize: 10,
-                                  ),
-                        ),
+                        margin: const EdgeInsets.only(bottom: cellGap),
+                        alignment: Alignment.centerLeft,
+                        child: Text(day, style: labelStyle),
                       );
                     }).toList(),
                   ),
 
-                  // Heatmap cells
+                  // Heatmap cells (column = week, row = Mon..Sun)
                   Row(
                     children: List.generate(totalWeeks, (weekIndex) {
-                      return Column(
-                        children: List.generate(7, (dayIndex) {
-                          final dayOffset = weekIndex * 7 + dayIndex;
-                          final date = startDate.add(Duration(days: dayOffset));
-                          final dateStr = DateFormat('yyyy-MM-dd').format(date);
-                          final dayData = dataByDate[dateStr];
+                      return Padding(
+                        padding: const EdgeInsets.only(right: cellGap),
+                        child: Column(
+                          children: List.generate(7, (dayIndex) {
+                            final dayOffset = weekIndex * 7 + dayIndex;
+                            final date =
+                                gridStart.add(Duration(days: dayOffset));
+                            final dateStr =
+                                DateFormat('yyyy-MM-dd').format(date);
+                            final dayData = dataByDate[dateStr];
+                            // Pre-window / post-window padding cells render as
+                            // empty (no data), keeping the grid rectangular.
+                            final inWindow = !date.isBefore(rawStart) &&
+                                !date.isAfter(endDate);
 
-                          return _HeatmapCell(
-                            date: dateStr,
-                            status: dayData?.statusEnum ?? CalendarStatus.rest,
-                            workoutName: dayData?.workoutName,
-                            isHighlighted:
-                                widget.highlightedDates?.contains(dateStr) ??
-                                    false,
-                            onTap: () => widget.onDayTapped?.call(dateStr),
-                            size: cellSize - 2, // margin of 1 on each side
-                          );
-                        }),
+                            return _HeatmapCell(
+                              date: dateStr,
+                              status: inWindow
+                                  ? (dayData?.statusEnum ?? CalendarStatus.rest)
+                                  : CalendarStatus.future,
+                              volume: inWindow ? (dayData?.volume ?? 0) : 0,
+                              thresholds: thresholds,
+                              workoutName: dayData?.workoutName,
+                              isHighlighted:
+                                  widget.highlightedDates?.contains(dateStr) ??
+                                      false,
+                              onTap: () => widget.onDayTapped?.call(dateStr),
+                              size: cellSize,
+                              gap: cellGap,
+                            );
+                          }),
+                        ),
                       );
                     }),
                   ),
@@ -399,28 +355,66 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
     );
   }
 
+  /// Compute the 3 ascending thresholds that split positive volumes into the
+  /// top 3 of the 4 blue buckets. Bucketing is RELATIVE per-window by quantile
+  /// (33rd/66th percentile of the sorted non-zero volumes) so the brightest
+  /// blues always represent this window's biggest sessions — a single PR day
+  /// can't wash everything else to the dimmest stop, and a low-volume window
+  /// still gets a full ramp. Returns [t1, t2, t3] where:
+  ///   0 < v <= t1            → bucket 1 (dimmest blue)
+  ///   t1 < v <= t2           → bucket 2
+  ///   t2 < v <= t3           → bucket 3
+  ///   v  > t3                → bucket 4 (brightest blue)
+  /// Returns null when there are no positive-volume days (ramp unused).
+  List<double>? _computeVolumeThresholds(List<CalendarHeatmapData> days) {
+    final volumes = days
+        .map((d) => d.volume)
+        .where((v) => v > 0)
+        .toList()
+      ..sort();
+    if (volumes.isEmpty) return null;
+    if (volumes.length < 4) {
+      // Too few points for stable quantiles — split the observed range into
+      // even thirds (max-relative) so the few days still spread across blues.
+      final maxV = volumes.last;
+      return [maxV * 0.25, maxV * 0.5, maxV * 0.75];
+    }
+    double quantile(double q) {
+      final pos = (volumes.length - 1) * q;
+      final lo = pos.floor();
+      final hi = pos.ceil();
+      if (lo == hi) return volumes[lo];
+      final frac = pos - lo;
+      return volumes[lo] * (1 - frac) + volumes[hi] * frac;
+    }
+
+    return [quantile(1 / 3), quantile(2 / 3), quantile(0.9)];
+  }
+
   Widget _buildLegend(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = ThemeColors.of(context);
     final mutedStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-      color: AppColors.textMuted, fontSize: 10,
-    );
+          color: colors.textMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.w500,
+        );
     return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        // Missed indicator
-        _LegendCell(color: AppColors.coral.withOpacity(0.6)),
+        Text('Volume', style: mutedStyle),
+        const Spacer(),
+        Text('Less', style: mutedStyle),
+        const SizedBox(width: 5),
+        // Empty cell + the 4 ascending blue stops, dim → bright.
+        _LegendCell(color: _VolumeRamp.emptyColor(colors.isDark)),
+        const SizedBox(width: 3),
+        ..._VolumeRamp.blueStops.map(
+          (c) => Padding(
+            padding: const EdgeInsets.only(right: 3),
+            child: _LegendCell(color: c),
+          ),
+        ),
         const SizedBox(width: 2),
-        Text(AppLocalizations.of(context).habitDetailScreenMissed, style: mutedStyle),
-        const SizedBox(width: 12),
-        // Completed indicator
-        const _LegendCell(color: AppColors.success),
-        const SizedBox(width: 2),
-        Text(AppLocalizations.of(context).commonDone, style: mutedStyle),
-        const SizedBox(width: 12),
-        // Rest indicator
-        _LegendCell(color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.1)),
-        const SizedBox(width: 2),
-        Text(AppLocalizations.of(context).workoutSummaryAdvancedRest, style: mutedStyle),
+        Text('More', style: mutedStyle),
       ],
     );
   }
@@ -453,110 +447,183 @@ class _ActivityHeatmapState extends ConsumerState<ActivityHeatmap> {
   }
 }
 
-/// Time range selector chip
-class _TimeRangeChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
+/// Year / range dropdown — replaces the old chip cluster. Renders the current
+/// range label with a chevron (e.g. "3M ⌄") and pops a menu of all preset
+/// ranges. Kept compact so it never overflows the header on iPhone SE.
+class _RangeDropdown extends StatelessWidget {
+  final HeatmapTimeRange current;
   final Color accentColor;
-  final VoidCallback onTap;
+  final ThemeColors colors;
+  final ValueChanged<HeatmapTimeRange> onSelected;
 
-  const _TimeRangeChip({
-    required this.label,
-    required this.isSelected,
+  const _RangeDropdown({
+    required this.current,
     required this.accentColor,
-    required this.onTap,
+    required this.colors,
+    required this.onSelected,
   });
+
+  /// Shows YTD as the literal year (Gravl "2026"), presets by their short label.
+  String _labelFor(HeatmapTimeRange range) {
+    if (range == HeatmapTimeRange.ytd) return DateTime.now().year.toString();
+    return range.label;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: 0.2)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: isSelected
-                ? accentColor.withValues(alpha: 0.5)
-                : AppColors.cardBorder,
-            width: 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: isSelected ? accentColor : AppColors.textSecondary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 11,
+    return PopupMenuButton<HeatmapTimeRange>(
+      onSelected: onSelected,
+      tooltip: 'Change range',
+      position: PopupMenuPosition.under,
+      color: colors.elevated,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colors.cardBorder),
+      ),
+      itemBuilder: (context) => HeatmapTimeRange.values.map((range) {
+        final selected = range == current;
+        return PopupMenuItem<HeatmapTimeRange>(
+          value: range,
+          height: 40,
+          child: Row(
+            children: [
+              Text(
+                _labelFor(range),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: selected ? accentColor : colors.textPrimary,
+                      fontWeight:
+                          selected ? FontWeight.w700 : FontWeight.w500,
+                    ),
               ),
+              if (selected) ...[
+                const Spacer(),
+                Icon(Icons.check, size: 16, color: accentColor),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: colors.elevated,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _labelFor(current),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down,
+                size: 18, color: colors.textSecondary),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Individual heatmap cell
+/// The semantic blue volume ramp — a fixed data-color scale (like the existing
+/// AppColors.waterBlue), intentionally non-accent. Dim → bright = more volume.
+/// Shared by [_HeatmapCell] and the legend so they never drift.
+class _VolumeRamp {
+  const _VolumeRamp._();
+
+  /// Bucket 1 (dimmest) → bucket 4 (brightest).
+  static const List<Color> blueStops = [
+    Color(0xFF1E3A8A),
+    Color(0xFF2563EB),
+    Color(0xFF3B82F6),
+    Color(0xFF60A5FA),
+  ];
+
+  /// Subtle dark fill for no-volume / rest / missed / future cells. No border.
+  static Color emptyColor(bool isDark) => isDark
+      ? AppColors.textSecondary.withValues(alpha: 0.08)
+      : Colors.grey.withValues(alpha: 0.10);
+
+  /// Resolve a cell's fill from its volume + status against the window
+  /// thresholds [t1,t2,t3]. Completed-but-zero-volume days (e.g. imported
+  /// cardio) get the lowest blue so a logged day never looks empty.
+  static Color colorFor({
+    required CalendarStatus status,
+    required double volume,
+    required List<double>? thresholds,
+    required bool isDark,
+  }) {
+    if (volume <= 0) {
+      if (status == CalendarStatus.completed) return blueStops[0];
+      return emptyColor(isDark);
+    }
+    // Positive volume → 1 of 4 ascending blues by quantile thresholds.
+    if (thresholds == null) return blueStops[0];
+    if (volume <= thresholds[0]) return blueStops[0];
+    if (volume <= thresholds[1]) return blueStops[1];
+    if (volume <= thresholds[2]) return blueStops[2];
+    return blueStops[3];
+  }
+}
+
+/// Individual heatmap cell — colored by training VOLUME (blue ramp), not status.
 class _HeatmapCell extends StatelessWidget {
   final String date;
   final CalendarStatus status;
+  final double volume;
+  final List<double>? thresholds;
   final String? workoutName;
   final bool isHighlighted;
   final VoidCallback? onTap;
   final double size;
+  final double gap;
 
   const _HeatmapCell({
     required this.date,
     required this.status,
+    required this.volume,
+    required this.thresholds,
     this.workoutName,
     this.isHighlighted = false,
     this.onTap,
-    this.size = 12,
+    this.size = 16,
+    this.gap = 3,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = AccentColorScope.of(context).getColor(isDark);
+    final fill = _VolumeRamp.colorFor(
+      status: status,
+      volume: volume,
+      thresholds: thresholds,
+      isDark: isDark,
+    );
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: size,
         height: size,
-        margin: const EdgeInsets.all(1),
+        margin: EdgeInsets.only(bottom: gap),
         decoration: BoxDecoration(
-          color: _getColor(Theme.of(context).brightness == Brightness.dark),
-          borderRadius: BorderRadius.circular(2),
+          color: fill,
+          borderRadius: BorderRadius.circular(5),
+          // Only the exercise-search highlight draws a ring — empty cells have
+          // NO border (the Gravl-clean look).
           border: isHighlighted
-              ? Border.all(color: AppColors.cyan, width: 1.5)
-              : (status == CalendarStatus.rest || status == CalendarStatus.future)
-                  ? Border.all(color: Colors.grey.withOpacity(0.15), width: 0.5)
-                  : null,
-          boxShadow: isHighlighted
-              ? [
-                  BoxShadow(
-                    color: AppColors.cyan.withOpacity(0.4),
-                    blurRadius: 4,
-                    spreadRadius: 1,
-                  ),
-                ]
+              ? Border.all(color: accentColor, width: 1.5)
               : null,
         ),
       ),
     );
-  }
-
-  Color _getColor(bool isDark) {
-    switch (status) {
-      case CalendarStatus.completed:
-        return AppColors.success;
-      case CalendarStatus.missed:
-        return AppColors.coral.withOpacity(0.6);
-      case CalendarStatus.future:
-        return isDark ? Colors.white.withOpacity(0.03) : Colors.grey.withOpacity(0.06);
-      case CalendarStatus.rest:
-        return isDark ? Colors.white.withOpacity(0.05) : Colors.grey.withOpacity(0.08);
-    }
   }
 }
 

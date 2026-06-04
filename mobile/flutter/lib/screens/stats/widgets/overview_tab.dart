@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/cache/cache_first_mixin.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/models/consistency.dart';
@@ -16,7 +18,6 @@ import '../../../data/providers/milestones_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/consistency_repository.dart';
 import '../../../data/repositories/milestones_repository.dart';
-import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/data_cache_service.dart';
 import '../../../data/services/haptic_service.dart';
@@ -25,6 +26,14 @@ import '../../../widgets/exercise_search_results.dart';
 import '../../../widgets/workout_day_detail_sheet.dart';
 import '../../workouts/widgets/workout_stats/workout_stats_section.dart'
     show WorkoutStatsDeepDive;
+// Gravl-parity scannable score/activity cards (Surface 5). These are
+// self-contained const ConsumerWidgets that own their own data fetching — they
+// are dropped into the 2-up rows below. (Created concurrently by a sibling
+// agent; imports may resolve late during a parallel build.)
+import 'overview/strength_score_card.dart';
+import 'overview/weekly_score_card.dart';
+import 'overview/activity_streak_card.dart';
+import 'overview/month_highlight_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Disk-cached snapshots for the Overview tab.
@@ -191,8 +200,6 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Stats from heatmap data (this endpoint always works)
-    final timeRange = ref.watch(heatmapTimeRangeProvider);
-    final apiClient = ref.read(apiClientProvider);
     int completedCount = 0;
     int thisWeekCompleted = 0;
     int thisWeekTotal = 0;
@@ -255,191 +262,236 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Activity Heatmap Card
-            Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-              ),
-            ),
-            child: Column(
+            // ── 1. TOP SCORE ROW (2-up) ──────────────────────────────────
+            // The two headline scores — Strength + Weekly — sit side-by-side
+            // at the very top so the eye lands on "how am I doing" first.
+            // Both cards self-fetch their data (sibling-owned widgets).
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ActivityHeatmap(
-                  highlightedDates: _highlightedDates,
-                  isSearchActive: _showSearch || (searchQuery != null && searchQuery.isNotEmpty),
-                  onSearchTapped: () {
-                    HapticService.light();
-                    setState(() {
-                      _showSearch = !_showSearch;
-                      if (!_showSearch) {
-                        // Clear search when closing
-                        ref.read(exerciseSearchQueryProvider.notifier).state = null;
-                        _highlightedDates = {};
-                      }
-                    });
-                  },
-                  onDayTapped: (date) {
-                    HapticService.light();
-                    WorkoutDayDetailSheet.show(context, date);
-                  },
+                Expanded(child: StrengthScoreCard()),
+                SizedBox(width: 12),
+                Expanded(child: WeeklyScoreCard()),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // ── 2. ACTIVITY ROW (2-up) ───────────────────────────────────
+            const _OverviewSectionLabel(label: 'Activity'),
+            const SizedBox(height: AppSpacing.sm),
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: ActivityStreakCard()),
+                SizedBox(width: 12),
+                Expanded(child: MonthHighlightCard()),
+              ],
+            ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // ── 3. HEATMAP ───────────────────────────────────────────────
+            // The blue volume heatmap, presented prominently in its own card.
+            // It renders its own header + legend, so this surface just frames
+            // it and hosts the expandable exercise search.
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.cardBorder
+                      : AppColorsLight.cardBorder,
                 ),
-                // Expandable Search Bar
-                if (_showSearch) ...[
-                  const SizedBox(height: 12),
-                  ExerciseSearchBar(
-                    onSearch: (exerciseName) {
-                      // Search results will automatically update via provider
-                    },
-                    onClear: () {
+              ),
+              child: Column(
+                children: [
+                  ActivityHeatmap(
+                    highlightedDates: _highlightedDates,
+                    isSearchActive: _showSearch ||
+                        (searchQuery != null && searchQuery.isNotEmpty),
+                    onSearchTapped: () {
+                      HapticService.light();
                       setState(() {
-                        _highlightedDates = {};
+                        _showSearch = !_showSearch;
+                        if (!_showSearch) {
+                          // Clear search when closing
+                          ref.read(exerciseSearchQueryProvider.notifier).state =
+                              null;
+                          _highlightedDates = {};
+                        }
                       });
                     },
+                    onDayTapped: (date) {
+                      HapticService.light();
+                      WorkoutDayDetailSheet.show(context, date);
+                    },
                   ),
+                  // Expandable Search Bar
+                  if (_showSearch) ...[
+                    const SizedBox(height: 12),
+                    ExerciseSearchBar(
+                      onSearch: (exerciseName) {
+                        // Search results will automatically update via provider
+                      },
+                      onClear: () {
+                        setState(() {
+                          _highlightedDates = {};
+                        });
+                      },
+                    ),
+                  ],
                 ],
-              ],
-            ),
-          ),
-
-          // Search Results (shown when search is active)
-          if (searchQuery != null && searchQuery.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            ExerciseSearchResults(
-              exerciseName: searchQuery,
-              onResultTapped: (date) {
-                // Optionally highlight the tapped date
-              },
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          // Compact Stats Row
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _CompactStat(
-                  icon: Icons.fitness_center,
-                  value: '$completedCount',
-                  label: AppLocalizations.of(context).statsStreakFireTotal,
-                  color: AppColors.cyan,
+
+            // Search Results (shown when search is active)
+            if (searchQuery != null && searchQuery.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ExerciseSearchResults(
+                exerciseName: searchQuery,
+                onResultTapped: (date) {
+                  // Optionally highlight the tapped date
+                },
+              ),
+            ],
+
+            const SizedBox(height: AppSpacing.md),
+
+            // Compact at-a-glance stats strip (total / week / streak / time).
+            // Kept under the heatmap as a quick numeric summary before Trends.
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: 12,
+              ),
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.cardBorder
+                      : AppColorsLight.cardBorder,
                 ),
-                _StatDivider(),
-                _CompactStat(
-                  icon: Icons.local_fire_department,
-                  value: '$thisWeekCompleted/$thisWeekTotal',
-                  label: AppLocalizations.of(context).overviewWeek,
-                  color: AppColors.orange,
-                ),
-                _StatDivider(),
-                _CompactStat(
-                  icon: Icons.trending_up,
-                  value: currentStreak > 0 ? '$currentStreak' : '0',
-                  label: AppLocalizations.of(context).xpProgressCardStreak,
-                  color: AppColors.success,
-                ),
-                _StatDivider(),
-                _CompactStat(
-                  icon: Icons.timer_outlined,
-                  value: totalDurationStr,
-                  label: AppLocalizations.of(context).workoutShowcaseTime,
-                  color: AppColors.purple,
-                ),
-              ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _CompactStat(
+                    icon: Icons.fitness_center,
+                    value: '$completedCount',
+                    label: AppLocalizations.of(context).statsStreakFireTotal,
+                    color: AppColors.cyan,
+                  ),
+                  _StatDivider(),
+                  _CompactStat(
+                    icon: Icons.local_fire_department,
+                    value: '$thisWeekCompleted/$thisWeekTotal',
+                    label: AppLocalizations.of(context).overviewWeek,
+                    color: AppColors.orange,
+                  ),
+                  _StatDivider(),
+                  _CompactStat(
+                    icon: Icons.trending_up,
+                    value: currentStreak > 0 ? '$currentStreak' : '0',
+                    label: AppLocalizations.of(context).xpProgressCardStreak,
+                    color: AppColors.success,
+                  ),
+                  _StatDivider(),
+                  _CompactStat(
+                    icon: Icons.timer_outlined,
+                    value: totalDurationStr,
+                    label: AppLocalizations.of(context).workoutShowcaseTime,
+                    color: AppColors.purple,
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Active weekly goals (read-only glance; hidden when none active)
-          const ActiveGoalsSection(),
+            // Active weekly goals (read-only glance; hidden when none active)
+            const ActiveGoalsSection(),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
 
-          // Achievements Preview
-          SectionHeader(
-            title: AppLocalizations.of(context).overviewRecentAchievements,
-            onViewAll: () => context.push('/achievements'),
-          ),
-          const SizedBox(height: 12),
-          _AchievementsPreview(diskFallback: _diskMilestones),
+            // ── 4. TRENDS ────────────────────────────────────────────────
+            // The deep-dive training-stats cards (volume trend chart, fueling
+            // split, detailed strength-by-muscle + e1RM, best training time,
+            // body-diagram heatmap) live inline here via WorkoutStatsDeepDive.
+            // Its lead card IS the self-fetching weekly-volume trend chart, so
+            // trends are surfaced INLINE (no nav push needed) under this header.
+            const _OverviewSectionLabel(label: 'Trends'),
+            const SizedBox(height: AppSpacing.sm),
+            WorkoutStatsDeepDive(
+              isDark: isDark,
+              accent: ref.watch(accentColorProvider).getColor(isDark),
+            ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
 
-          // Quick Actions
-          SectionHeader(title: AppLocalizations.of(context).overviewQuickAccess),
-          const SizedBox(height: 12),
-          QuickActionButton(
-            icon: Icons.monitor_weight_outlined,
-            label: AppLocalizations.of(context).reportsHubBodyMeasurements,
-            onTap: () => context.push('/measurements'),
-          ),
-          const SizedBox(height: 8),
-          QuickActionButton(
-            icon: Icons.calendar_month,
-            label: AppLocalizations.of(context).weeklyReportCardReportsInsights,
-            onTap: () => context.push('/reports'),
-          ),
-          const SizedBox(height: 8),
-          QuickActionButton(
-            icon: Icons.fitness_center,
-            label: AppLocalizations.of(context).workoutSettingsMy1rms,
-            onTap: () => context.push('/settings/my-1rms'),
-          ),
-          const SizedBox(height: 8),
-          QuickActionButton(
-            icon: Icons.emoji_events,
-            label: AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
-            onTap: () => context.push('/stats/personal-records'),
-          ),
-          const SizedBox(height: 8),
-          QuickActionButton(
-            icon: Icons.history,
-            label: AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
-            onTap: () => context.push('/stats/exercise-history'),
-          ),
-          const SizedBox(height: 8),
-          QuickActionButton(
-            icon: Icons.pie_chart_outline,
-            label: AppLocalizations.of(context).strengthMuscleAnalytics,
-            onTap: () => context.push('/stats/muscle-analytics'),
-          ),
+            // ── 5. ACHIEVEMENTS (compact) ────────────────────────────────
+            SectionHeader(
+              title: AppLocalizations.of(context).overviewRecentAchievements,
+              onViewAll: () => context.push('/achievements'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            _AchievementsPreview(diskFallback: _diskMilestones),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.lg),
 
-          // Deep-dive training-stats cards relocated from the Workout tab's
-          // inline section (trend chart, fueling split, detailed
-          // strength-by-muscle + e1RM, best training time, body-diagram
-          // heatmap). Reuses the exact same widgets via WorkoutStatsDeepDive so
-          // nothing is lost when they were removed from the inline Plan tab.
-          SectionHeader(
-            title: AppLocalizations.of(context).youHubStatsScores,
-          ),
-          const SizedBox(height: 12),
-          WorkoutStatsDeepDive(
-            isDark: isDark,
-            accent: ref.watch(accentColorProvider).getColor(isDark),
-          ),
+            // ── 5. QUICK ACCESS ──────────────────────────────────────────
+            SectionHeader(
+                title: AppLocalizations.of(context).overviewQuickAccess),
+            const SizedBox(height: AppSpacing.sm),
+            QuickActionButton(
+              icon: Icons.monitor_weight_outlined,
+              label: AppLocalizations.of(context).reportsHubBodyMeasurements,
+              onTap: () => context.push('/measurements'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            QuickActionButton(
+              icon: Icons.calendar_month,
+              label:
+                  AppLocalizations.of(context).weeklyReportCardReportsInsights,
+              onTap: () => context.push('/reports'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            QuickActionButton(
+              icon: Icons.fitness_center,
+              label: AppLocalizations.of(context).workoutSettingsMy1rms,
+              onTap: () => context.push('/settings/my-1rms'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            QuickActionButton(
+              icon: Icons.emoji_events,
+              label: AppLocalizations.of(context)
+                  .workoutSummaryGeneralPersonalRecords,
+              onTap: () => context.push('/stats/personal-records'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            QuickActionButton(
+              icon: Icons.history,
+              label:
+                  AppLocalizations.of(context).setTrackingSheetsExerciseHistory,
+              onTap: () => context.push('/stats/exercise-history'),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            QuickActionButton(
+              icon: Icons.pie_chart_outline,
+              label: AppLocalizations.of(context).strengthMuscleAnalytics,
+              onTap: () => context.push('/stats/muscle-analytics'),
+            ),
 
-          // Bottom padding for floating nav bar
-          const SizedBox(height: 80),
-        ],
+            // Bottom padding for floating nav bar
+            const SizedBox(height: 80),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -508,6 +560,32 @@ class SectionHeader extends StatelessWidget {
             child: Text(AppLocalizations.of(context).workoutHistoryImportViewAll),
           ),
       ],
+    );
+  }
+}
+
+/// Lightweight section label for the scannable Overview layout — a small
+/// upper-tracked heading (e.g. "Activity", "Trends") with no trailing action.
+/// Uses [ThemeColors] tokens so it tracks the active theme + accent.
+class _OverviewSectionLabel extends StatelessWidget {
+  final String label;
+
+  const _OverviewSectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSpacing.xs / 2),
+      child: Text(
+        label.toUpperCase(),
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          color: colors.textMuted,
+        ),
+      ),
     );
   }
 }
