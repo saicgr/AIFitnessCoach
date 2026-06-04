@@ -611,6 +611,85 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"[daily_insight] streak block skipped: {e}")
 
+    # --- Recent PRs (last 30 days) — lets the coach anchor a training nudge in
+    # real progress ("3 PRs this month, go for one more") instead of a generic
+    # line. Mirrors the workout_stats PR block; best-effort, omit on none. ------
+    try:
+        cutoff_30 = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        pr = sb.client.table("personal_records").select(
+            "id", count="exact"
+        ).eq("user_id", user_id).gte("achieved_at", cutoff_30).execute()
+        n_pr = int(pr.count or 0) if pr.count is not None else len(pr.data or [])
+        if n_pr > 0:
+            snapshot["pr_count_30d"] = n_pr
+    except Exception as e:
+        logger.debug(f"[daily_insight] PR-count block skipped: {e}")
+
+    # --- Readiness / recovery (today, else yesterday) — a SUBJECTIVE recovery
+    # signal beyond raw sleep duration, so the coach can say "you slept 7h but
+    # reported high soreness, keep today easy". readiness_score is 0-100 (higher
+    # = better, a safe groundable number); the raw 1-7 Hooper inputs are exposed
+    # as QUALITATIVE strings (low/moderate/high) so the number guardrail never
+    # rejects an "N/7" the body might print. (migration 057_scores_system) ------
+    try:
+        _yest_iso = (date.fromisoformat(local_date_iso) - timedelta(days=1)).isoformat()
+        rs = sb.client.table("readiness_scores").select(
+            "score_date, readiness_score, sleep_quality, muscle_soreness"
+        ).eq("user_id", user_id).in_(
+            "score_date", [local_date_iso, _yest_iso]
+        ).order("score_date", desc=True).limit(1).execute()
+        if rs.data:
+            r0 = rs.data[0]
+            rec: Dict[str, Any] = {}
+            if r0.get("readiness_score") is not None:
+                rec["readiness_score_0to100"] = int(r0["readiness_score"])
+
+            def _band(v, low_hi, mid_hi):  # 1-7 Hooper → qualitative
+                if v is None:
+                    return None
+                v = int(v)
+                return "low" if v <= low_hi else ("moderate" if v <= mid_hi else "high")
+
+            sleep_q = r0.get("sleep_quality")  # 1 poor .. 7 great
+            if sleep_q is not None:
+                rec["sleep_quality"] = (
+                    "poor" if int(sleep_q) <= 2 else ("fair" if int(sleep_q) <= 4 else "good")
+                )
+            soreness = _band(r0.get("muscle_soreness"), 2, 4)  # 1 none .. 7 very sore
+            if soreness is not None:
+                rec["muscle_soreness"] = soreness
+            if rec:
+                snapshot["readiness"] = rec
+    except Exception as e:
+        logger.debug(f"[daily_insight] readiness block skipped: {e}")
+
+    # --- Weight vs goal — grounds a nutrition / progress nudge in the user's
+    # own trajectory ("1.4 kg from your goal"). Body weight is tracked in kg
+    # (separate from workout lbs). Only emitted when BOTH a recent log and a
+    # target exist. (weight_logs migration 054; users.target_weight_kg) --------
+    try:
+        wl = sb.client.table("weight_logs").select(
+            "weight_kg, logged_at"
+        ).eq("user_id", user_id).order("logged_at", desc=True).limit(1).execute()
+        target_w = None
+        try:
+            uw = sb.client.table("users").select("target_weight_kg").eq(
+                "id", user_id
+            ).maybe_single().execute()
+            target_w = (uw.data or {}).get("target_weight_kg") if uw and uw.data else None
+        except Exception:
+            target_w = None
+        if wl.data and wl.data[0].get("weight_kg") is not None and target_w:
+            cur_w = round(float(wl.data[0]["weight_kg"]), 1)
+            tgt_w = round(float(target_w), 1)
+            snapshot["weight"] = {
+                "current_kg": cur_w,
+                "target_kg": tgt_w,
+                "to_goal_kg": round(abs(cur_w - tgt_w), 1),
+            }
+    except Exception as e:
+        logger.debug(f"[daily_insight] weight block skipped: {e}")
+
     return snapshot, next_workout
 
 
@@ -1183,7 +1262,12 @@ async def _call_gemini_for_insight(
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 response_mime_type="application/json",
-                max_output_tokens=320,
+                # 320 -> 420: room for the user's name + one richer data
+                # reference (coach-memory fact / PR / sleep-quality / weight)
+                # now that the home insight grounds in more signals, while
+                # keeping the body to 2-3 sentences. Cached 12h, so the marginal
+                # token cost is once/user/day.
+                max_output_tokens=420,
                 temperature=0.5,
             ),
             user_id=user_id,
@@ -1431,19 +1515,28 @@ async def daily_insight(
         if source == "pillar_stat":
             ctx["pillar_stat_context"] = stat_context
 
-        # Long-term coach memory (migration 2217) — only the rich daily
-        # briefings weave it in (durable facts + open loops -> tailored plan +
-        # check-in question). Best-effort: empty/absent on any failure.
+        # Long-term coach memory (migration 2217). The rich daily briefings
+        # weave it in (durable facts + open loops -> tailored plan + check-in
+        # question); the home card also taps it now so a durable fact the user
+        # told the coach (e.g. "vegetarian", "recovering back", "training for a
+        # 5K") personalizes the daily insight instead of a generic pillar line.
+        # Best-effort: empty/absent on any failure. (Home doesn't surface open
+        # loops as a check-in question — that stays a briefing behaviour — so it
+        # does not mark loops surfaced; see the _surfaced_loop_ids guard below.)
         _surfaced_loop_ids: list = []
-        if source in ("morning_brief", "evening_recap"):
+        if source in ("morning_brief", "evening_recap", "home"):
             try:
                 from services.coach.memory.injector import build_memory_block_for_briefing
                 ctx["coach_memory"] = build_memory_block_for_briefing(user_id)
-                _surfaced_loop_ids = [
-                    l.get("id")
-                    for l in (ctx["coach_memory"].get("open_loops") or [])
-                    if l.get("id")
-                ]
+                # Only the briefings ASK an open-loop check-in question, so only
+                # they spend the loop's nag budget. Home weaves a durable fact
+                # for personalization without surfacing/advancing open loops.
+                if source in ("morning_brief", "evening_recap"):
+                    _surfaced_loop_ids = [
+                        l.get("id")
+                        for l in (ctx["coach_memory"].get("open_loops") or [])
+                        if l.get("id")
+                    ]
             except Exception as e:
                 logger.warning(f"[daily_insight] memory block failed: {e}")
 

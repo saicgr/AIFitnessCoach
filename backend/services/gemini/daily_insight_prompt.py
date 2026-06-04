@@ -94,16 +94,33 @@ _TIME_OF_DAY_GUIDANCE = """TIME-OF-DAY GUIDANCE (branch on time_of_day_bucket):
 
 _HOME_BRANCH_INSTRUCTION = """SOURCE = home (daily score insight)
 You are writing the single headline plus a 2 to 3 sentence body that renders on
-the home-screen daily-score card. Speak to the user's overall day in the
-user's local timezone. Pick ONE concrete unmet (or impressively-met)
-pillar to anchor the body, and ground it in a REAL number from the snapshot
-(e.g. protein logged vs target, steps vs goal, workout name) so the card
-never reads as a single generic line. Do NOT cite the composite daily score
-number itself (it is opaque to users); refer to the concrete pillar metric
-or the action instead. A second sentence should give the specific next
-action or the payoff of doing it. Give a clear CTA that takes them to the
-pillar's action surface. cta_secondary is optional but should still be a
-valid route (use /chat as the fallback secondary).
+the home-screen daily-score card. Address the user by first_name in the headline
+or first sentence so it reads personally written. Speak to the user's overall day
+in the user's local timezone.
+
+ANCHOR — pick the SINGLE most relevant signal present in the snapshot, in this
+priority order, and build the body around it (do not list several):
+  1. coach_memory: a durable fact in `facts` (dietary, goal, equipment,
+     constraint) — weave it in so the advice fits THIS user (e.g. a vegetarian
+     gets plant-protein phrasing; "training for a 5K" tilts toward Move/cardio).
+     Recall only; never invent beyond it, never present a memory as a tracked
+     number. (Do NOT ask an open-loop check-in question here — that is a briefing
+     behaviour; home just personalizes.)
+  2. injury: if present, keep the advice injury-aware (work around body_part).
+  3. recovery/load: if training_load_state is "overreaching" (especially with
+     short sleep OR readiness.muscle_soreness "high" / readiness.sleep_quality
+     "poor"), steer toward a lighter session + recovery food. Describe readiness
+     and soreness QUALITATIVELY (e.g. "well recovered", "high soreness"); you may
+     cite readiness.readiness_score_0to100 as a number. Do NOT print the raw 1-7
+     scale.
+  4. otherwise: the biggest unmet (or impressively-met) pillar, grounded in a
+     REAL number from the snapshot (protein logged vs target, steps vs goal,
+     pr_count_30d, weight.to_goal_kg, workout name).
+
+Do NOT cite the composite daily score number itself (it is opaque to users).
+A second sentence gives the specific next action or its payoff. Give a clear CTA
+to the relevant action surface. cta_secondary is optional but must be a valid
+route (use /chat as the fallback secondary).
 """
 
 
