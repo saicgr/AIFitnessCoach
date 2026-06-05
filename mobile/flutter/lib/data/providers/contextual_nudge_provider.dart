@@ -52,7 +52,6 @@ import '../../screens/nutrition/widgets/optional_trackers_strip.dart'
 import '../services/notification_service.dart';
 import 'ai_settings_provider.dart';
 import 'breakfast_suggestion_provider.dart';
-import 'daily_coach_insight_provider.dart';
 import 'nudge_snooze_provider.dart';
 import 'today_workout_provider.dart';
 import 'training_load_provider.dart';
@@ -92,8 +91,6 @@ final contextualNudgeProvider =
   final nutrition = ref.watch(nutritionProvider);
   final hydration = ref.watch(hydrationProvider);
   final todayWorkout = ref.watch(todayWorkoutProvider).valueOrNull;
-  final coachInsight = ref.watch(dailyCoachInsightProvider).valueOrNull;
-  final coachHaystack = (coachInsight?.body ?? '').toLowerCase();
 
   // ── Derived state ─────────────────────────────────────────────────────
   final cups =
@@ -112,11 +109,13 @@ final contextualNudgeProvider =
     });
   }
 
-  // Topic dedupe — best-effort substring scan.
-  final coachMentionsHydration =
-      coachHaystack.contains('water') || coachHaystack.contains('hydrat');
-  bool coachMentionsMeal(String slot) =>
-      coachHaystack.contains(slot.toLowerCase());
+  // Topic dedupe DISABLED (user feedback): the coach message and an action chip
+  // are allowed to coexist — the message is advice, the chip is the do-it button.
+  // Suppressing the chip when the (now richer) message mentioned the topic made
+  // the coach's tasks vanish. Kept as always-false so the existing guards below
+  // stay valid without touching each call site.
+  const coachMentionsHydration = false;
+  bool coachMentionsMeal(String slot) => false;
 
   // Workout state. `hasWorkoutToday` was used by the workout-start nudge
   // which the 2026-05 minimalist redesign removed; `workoutCompleted` is
@@ -518,6 +517,14 @@ final contextualNudgeProvider =
     out.removeWhere((n) => n.id == NudgeId.postWorkoutProtein);
   }
 
+  // Never-empty FLOOR: always append a few time-aware evergreen tasks (health-
+  // data-free) so the coach card ALWAYS has action items even in quiet windows
+  // (late night, rest day, health disconnected). They're low priority + carry
+  // their own dedupKeys, so the ranker puts real nudges first and only surfaces
+  // the floor when slots remain (or everything else is filtered out). This is
+  // what stops the task stack from collapsing to empty.
+  out.addAll(_evergreenFloor(now, hourFraction));
+
   // Filter snoozed entries last so an upstream state change (e.g. user
   // logs the meal that was snoozed) is still reflected the moment it
   // happens — we want the nudge to re-evaluate against fresh data, not
@@ -535,6 +542,84 @@ final contextualNudgeProvider =
     return until.isBefore(now2);
   }).toList(growable: false);
 });
+
+// ─────────────────────────────────────────────────────────────────────────
+// Evergreen floor — always-available, time-aware, health-data-free tasks so the
+// coach card never shows an empty action list. Each carries a stable evergreen
+// dedupKey (distinct from the real nudges), so dismissing one hides it for the
+// day and it returns tomorrow; ≥2-3 per bucket so muting/dismissing one still
+// leaves tasks. Low (habit/educational) priority → the ranker keeps real,
+// time-sensitive nudges on top and only surfaces these to fill empty slots.
+// ─────────────────────────────────────────────────────────────────────────
+List<ContextualNudge> _evergreenFloor(DateTime now, double hourFraction) {
+  final endOfDay = DateTime(now.year, now.month, now.day, 23, 59);
+
+  ContextualNudge water(String title, String body) => ContextualNudge(
+        id: NudgeId.hydration,
+        icon: '💧',
+        title: title,
+        body: body,
+        ctaLabel: 'Log 16oz',
+        action: ContextualNudgeAction.logHydration16oz,
+        priorityTier: NudgePriorityTier.habit,
+        category: NudgeCategory.habit,
+        perishesAt: endOfDay,
+        dedupKey: 'evergreen_water',
+      );
+
+  ContextualNudge tipCard(NudgeId id, String icon, String title, String body) =>
+      ContextualNudge(
+        id: id,
+        icon: icon,
+        title: title,
+        body: body,
+        ctaLabel: 'OK',
+        action: const ContextualNudgeAction(
+          kind: ContextualNudgeActionKind.acknowledge,
+        ),
+        priorityTier: NudgePriorityTier.habit,
+        category: NudgeCategory.educational,
+        perishesAt: endOfDay,
+        dedupKey: 'evergreen_${id.name}',
+      );
+
+  if (hourFraction >= 21 || hourFraction < 5) {
+    // Night / late — sleep focus + hydrate.
+    return [
+      tipCard(NudgeId.bedtimeWindow, '🛌', 'Wind down for better sleep',
+          'Dim the lights and step away from screens to fall asleep faster.'),
+      water('Water before bed', 'A small glass now keeps you hydrated overnight.'),
+      tipCard(NudgeId.dailyLesson, '🌙', "Tonight's sleep tip",
+          'A consistent bedtime is the biggest lever for better sleep.'),
+    ];
+  }
+  if (hourFraction >= 17) {
+    // Evening.
+    return [
+      water('Hydrate this evening', 'Top up your water before the day winds down.'),
+      tipCard(NudgeId.windDown, '🌇', 'Plan a calm evening',
+          'A few quiet minutes tonight set up tomorrow.'),
+      tipCard(NudgeId.dailyLesson, '📖', 'Quick tip',
+          'Protein with dinner helps overnight recovery.'),
+    ];
+  }
+  if (hourFraction >= 11) {
+    // Midday / afternoon.
+    return [
+      water('Midday water check', 'Keep your energy up with a glass now.'),
+      tipCard(NudgeId.dailyLesson, '📖', 'Quick tip',
+          'Protein at lunch keeps you fuller for longer.'),
+    ];
+  }
+  // Morning.
+  return [
+    water('Start with water', 'A glass first thing kickstarts your day.'),
+    tipCard(NudgeId.moodCheckin, '🙂', 'How are you today?',
+        'A quick check-in helps me coach you better.'),
+    tipCard(NudgeId.dailyLesson, '📖', 'Quick tip',
+        'A protein-forward breakfast steadies your energy.'),
+  ];
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 // Helpers
