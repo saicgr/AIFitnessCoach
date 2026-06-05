@@ -31,6 +31,7 @@ Fasting Scores:
 """
 from typing import Optional
 from datetime import datetime, timedelta, date
+import asyncio
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
@@ -73,9 +74,16 @@ async def get_streak(user_id: str, current_user: dict = Depends(get_current_user
     try:
         db = get_supabase_db()
 
-        result = db.client.table("fasting_streaks").select("*").eq(
-            "user_id", user_id
-        ).execute()
+        # Offload the sync supabase call off the event loop — this is a Home
+        # fan-out endpoint, and blocking the loop here head-of-line-blocks every
+        # other concurrent Home request on the worker.
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: db.client.table("fasting_streaks").select("*").eq(
+                "user_id", user_id
+            ).execute(),
+        )
 
         if not result.data:
             # Return default streak
@@ -561,7 +569,14 @@ async def get_fasting_score_trend(user_id: str, current_user: dict = Depends(get
     try:
         db = get_supabase_db()
 
-        result = db.client.rpc("get_fasting_score_trend", {"p_user_id": user_id}).execute()
+        # Offload the sync RPC off the event loop — Home fan-out endpoint.
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            lambda: db.client.rpc(
+                "get_fasting_score_trend", {"p_user_id": user_id}
+            ).execute(),
+        )
 
         if result.data:
             row = result.data[0]

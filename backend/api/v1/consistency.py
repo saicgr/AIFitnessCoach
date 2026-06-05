@@ -17,6 +17,7 @@ from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from collections import defaultdict
+import asyncio
 import logging
 
 from core.db import get_supabase_db
@@ -195,6 +196,12 @@ async def get_consistency_insights(
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
+    # Home fan-out endpoint (watched by 4 home cards). The supabase client is
+    # synchronous, so every .execute() below would block the event loop and
+    # head-of-line-block other concurrent Home requests on the worker. Offload
+    # each query to the executor; the CPU processing between them is trivial
+    # (loops over a few hundred rows), so it's fine to leave on the loop.
+    loop = asyncio.get_event_loop()
     user_tz = resolve_timezone(request, db, user_id)
     today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
     starts_sunday = get_week_starts_sunday(db, user_id)
@@ -209,15 +216,18 @@ async def get_consistency_insights(
         # completed workouts on demand. Pull the last 90 days of completed
         # workouts ordered by scheduled_date DESC, then walk backwards from
         # `today` counting consecutive completed days.
-        recent_completed = db.client.table("workouts").select(
-            "scheduled_date"
-        ).eq(
-            "user_id", user_id
-        ).eq(
-            "is_completed", True
-        ).gte(
-            "scheduled_date", (today - timedelta(days=90)).isoformat()
-        ).order("scheduled_date", desc=True).limit(120).execute()
+        recent_completed = await loop.run_in_executor(
+            None,
+            lambda: db.client.table("workouts").select(
+                "scheduled_date"
+            ).eq(
+                "user_id", user_id
+            ).eq(
+                "is_completed", True
+            ).gte(
+                "scheduled_date", (today - timedelta(days=90)).isoformat()
+            ).order("scheduled_date", desc=True).limit(120).execute(),
+        )
 
         completed_dates: set = set()
         for row in (recent_completed.data or []):
@@ -250,16 +260,22 @@ async def get_consistency_insights(
         # than 500-ing the whole endpoint.
         longest_streak = current_streak
         try:
-            longest_response = db.client.rpc(
-                "get_longest_streak",
-                {"p_user_id": user_id}
-            ).execute()
+            longest_response = await loop.run_in_executor(
+                None,
+                lambda: db.client.rpc(
+                    "get_longest_streak",
+                    {"p_user_id": user_id}
+                ).execute(),
+            )
             longest_streak = longest_response.data or current_streak
         except Exception:
             try:
-                history_response = db.client.table("streak_history").select(
-                    "streak_length"
-                ).eq("user_id", user_id).order("streak_length", desc=True).limit(1).execute()
+                history_response = await loop.run_in_executor(
+                    None,
+                    lambda: db.client.table("streak_history").select(
+                        "streak_length"
+                    ).eq("user_id", user_id).order("streak_length", desc=True).limit(1).execute(),
+                )
                 historical_max = (
                     history_response.data[0]["streak_length"]
                     if history_response.data else 0
@@ -279,9 +295,12 @@ async def get_consistency_insights(
         # is an analytics aggregation table that may not exist on all
         # environments; missing table degrades to empty patterns rather than 500.
         try:
-            patterns_response = db.client.table("workout_time_patterns").select(
-                "day_of_week, hour_of_day, completion_count, skip_count"
-            ).eq("user_id", user_id).execute()
+            patterns_response = await loop.run_in_executor(
+                None,
+                lambda: db.client.table("workout_time_patterns").select(
+                    "day_of_week, hour_of_day, completion_count, skip_count"
+                ).eq("user_id", user_id).execute(),
+            )
         except Exception as _e:
             logger.debug(f"workout_time_patterns missing or failed: {_e}")
             patterns_response = type("R", (), {"data": []})()
@@ -383,13 +402,16 @@ async def get_consistency_insights(
         oldest_week_start = current_week_start - timedelta(days=3 * 7)  # 4 weeks back
         range_start = min(month_start, oldest_week_start)
 
-        all_workouts_resp = db.client.table("workouts").select(
-            "scheduled_date, is_completed"
-        ).eq("user_id", user_id).gte(
-            "scheduled_date", range_start.isoformat()
-        ).lte(
-            "scheduled_date", today.isoformat()
-        ).execute()
+        all_workouts_resp = await loop.run_in_executor(
+            None,
+            lambda: db.client.table("workouts").select(
+                "scheduled_date, is_completed"
+            ).eq("user_id", user_id).gte(
+                "scheduled_date", range_start.isoformat()
+            ).lte(
+                "scheduled_date", today.isoformat()
+            ).execute(),
+        )
 
         all_workouts = all_workouts_resp.data or []
 
@@ -660,6 +682,9 @@ async def get_calendar_heatmap(
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
+    # Home fan-out endpoint — offload the sync supabase reads so they don't
+    # block the event loop / head-of-line-block other concurrent Home requests.
+    loop = asyncio.get_event_loop()
 
     try:
         # Calculate date range based on parameters
@@ -720,13 +745,16 @@ async def get_calendar_heatmap(
         # tz-aware end-of-day upper bound so a row logged later on the end date
         # is still inclusive (a bare-date upper coerces to midnight and would
         # silently drop same-day rows that have a real timestamp).
-        workouts_response = db.client.table("workouts").select(
-            "id, name, scheduled_date, is_completed, generation_method"
-        ).eq("user_id", user_id).gte(
-            "scheduled_date", start_date.isoformat()
-        ).lte(
-            "scheduled_date", end_date.isoformat() + "T23:59:59+00:00"
-        ).execute()
+        workouts_response = await loop.run_in_executor(
+            None,
+            lambda: db.client.table("workouts").select(
+                "id, name, scheduled_date, is_completed, generation_method"
+            ).eq("user_id", user_id).gte(
+                "scheduled_date", start_date.isoformat()
+            ).lte(
+                "scheduled_date", end_date.isoformat() + "T23:59:59+00:00"
+            ).execute(),
+        )
 
         # Build a map of date -> workout info
         workout_map = {}
@@ -758,13 +786,16 @@ async def get_calendar_heatmap(
         # here must NOT 500 the whole heatmap, so it degrades to volume=0.
         volume_by_date: dict = {}
         try:
-            perf_logs = db.client.table("performance_logs").select(
-                "weight_kg, reps_completed, recorded_at"
-            ).eq("user_id", user_id).gte(
-                "recorded_at", start_date.isoformat()
-            ).lte(
-                "recorded_at", end_date.isoformat() + "T23:59:59+00:00"
-            ).execute()
+            perf_logs = await loop.run_in_executor(
+                None,
+                lambda: db.client.table("performance_logs").select(
+                    "weight_kg, reps_completed, recorded_at"
+                ).eq("user_id", user_id).gte(
+                    "recorded_at", start_date.isoformat()
+                ).lte(
+                    "recorded_at", end_date.isoformat() + "T23:59:59+00:00"
+                ).execute(),
+            )
             for r in (perf_logs.data or []):
                 recorded = str(r.get("recorded_at") or "")
                 if not recorded:

@@ -4,6 +4,7 @@ Daily Activity API Router.
 Provides endpoints for storing and retrieving daily activity data
 from Health Connect (Android) / Apple Health (iOS).
 """
+import asyncio
 from core.db import get_supabase_db
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -526,11 +527,16 @@ async def get_activity_history(
     logger.info(f"Fetching activity history for user {user_id}")
 
     db = get_supabase_db()
-    rows = db.list_daily_activity(
-        user_id=user_id,
-        from_date=from_date.isoformat() if from_date else None,
-        to_date=to_date.isoformat() if to_date else None,
-        limit=limit
+    # Offload the sync supabase read off the event loop — Home fan-out endpoint.
+    loop = asyncio.get_event_loop()
+    rows = await loop.run_in_executor(
+        None,
+        lambda: db.list_daily_activity(
+            user_id=user_id,
+            from_date=from_date.isoformat() if from_date else None,
+            to_date=to_date.isoformat() if to_date else None,
+            limit=limit,
+        ),
     )
 
     return [row_to_activity_response(row) for row in rows]

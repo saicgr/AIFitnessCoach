@@ -16,6 +16,7 @@ CUSTOM EXERCISE ENDPOINTS:
 - DELETE /api/v1/exercises/custom/{user_id}/{exercise_id} - Delete user's custom exercise
 """
 from typing import List, Optional
+import asyncio
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -364,36 +365,71 @@ async def get_all_user_exercises(user_id: str, current_user: dict = Depends(get_
     logger.info(f"🏋️ [Custom Exercises] GET ALL - Fetching all custom exercises for user: {user_id}")
     try:
         db = get_supabase_db()
+        loop = asyncio.get_event_loop()
 
-        # Query all custom exercises
-        result = db.client.table("exercises").select("*").eq(
-            "is_custom", True
-        ).eq(
-            "created_by_user_id", user_id
-        ).order("created_at", desc=True).execute()
+        # The supabase-py client is SYNCHRONOUS — calling .execute() directly in
+        # this async handler blocks the event loop for the whole DB round trip,
+        # which (under the Home fan-out) serializes every request on the worker
+        # and produces the edge-level 520 ("origin returned nothing in time")
+        # this endpoint was throwing. Offload each query to the default executor
+        # (40-thread pool, see main.py) and run the three INDEPENDENT queries
+        # concurrently — matching the timeline.py / nutrition fan-out pattern.
+        def _q_exercises():
+            return db.client.table("exercises").select("*").eq(
+                "is_custom", True
+            ).eq(
+                "created_by_user_id", user_id
+            ).order("created_at", desc=True).execute()
 
-        # Get usage counts for all exercises
-        usage_result = db.client.table("custom_exercise_usage").select(
-            "exercise_id, id"
-        ).eq("user_id", user_id).execute()
+        def _q_usage():
+            return db.client.table("custom_exercise_usage").select(
+                "exercise_id, id"
+            ).eq("user_id", user_id).execute()
 
-        # Build usage count map
+        def _q_stats():
+            # Unbounded custom SQL function — the riskiest sub-query (no LIMIT,
+            # aggregates across all logs). It is OPTIONAL enrichment (last-used
+            # dates), so a slow/failing RPC must degrade to "no last_used"
+            # rather than slowing or 520ing the whole list.
+            return db.client.rpc(
+                "get_custom_exercise_stats", {"p_user_id": user_id}
+            ).execute()
+
+        # The exercise list is REQUIRED (its failure is a real 500); the usage
+        # count + last-used RPC are OPTIONAL — return_exceptions so one slow/
+        # broken enrichment query degrades gracefully instead of failing the call.
+        result, usage_result, last_used_result = await asyncio.gather(
+            loop.run_in_executor(None, _q_exercises),
+            loop.run_in_executor(None, _q_usage),
+            loop.run_in_executor(None, _q_stats),
+            return_exceptions=True,
+        )
+
+        # REQUIRED query — surface a real failure (caught + 500'd below).
+        if isinstance(result, Exception):
+            raise result
+
+        # Build usage count map (best-effort — empty on failure).
         usage_counts = {}
-        for usage in usage_result.data:
-            ex_id = usage["exercise_id"]
-            usage_counts[ex_id] = usage_counts.get(ex_id, 0) + 1
+        if isinstance(usage_result, Exception):
+            logger.warning(f"⚠️ [Custom Exercises] usage-count query failed (degrading): {usage_result}")
+        else:
+            for usage in (usage_result.data or []):
+                ex_id = usage["exercise_id"]
+                usage_counts[ex_id] = usage_counts.get(ex_id, 0) + 1
 
-        # Get last used dates
-        last_used_result = db.client.rpc(
-            "get_custom_exercise_stats", {"p_user_id": user_id}
-        ).execute()
-        last_used_map = {
-            row["exercise_id"]: row.get("last_used")
-            for row in (last_used_result.data or [])
-        }
+        # Build last-used map (best-effort — empty on failure).
+        last_used_map = {}
+        if isinstance(last_used_result, Exception):
+            logger.warning(f"⚠️ [Custom Exercises] last-used RPC failed (degrading): {last_used_result}")
+        else:
+            last_used_map = {
+                row["exercise_id"]: row.get("last_used")
+                for row in (last_used_result.data or [])
+            }
 
         exercises = []
-        for row in result.data:
+        for row in (result.data or []):
             # Parse component_exercises if it's a string
             component_exercises = row.get("component_exercises", [])
             if isinstance(component_exercises, str):
