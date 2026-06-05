@@ -1415,7 +1415,11 @@ async def daily_insight(
                     q = q.eq("stat_context", stat_context)
                 else:
                     q = q.is_("stat_context", "null")
-                existing = q.limit(1).execute()
+                # ORDER BY generated_at DESC: a NULL stat_context (home / briefings)
+                # can have multiple rows for the same day (see persist note below),
+                # so without an order the limit(1) returned the OLDEST row — i.e. a
+                # stale "this morning" tip shown all day. Always serve the newest.
+                existing = q.order("generated_at", desc=True).limit(1).execute()
                 if existing and existing.data:
                     row = existing.data[0]
                     # Time-of-day staleness: a greeting/briefing generated this
@@ -1628,9 +1632,23 @@ async def daily_insight(
                     "stat_context": stat_context,
                     "generated_at": generated_at_iso,
                 }
-                ins = sb.client.table("coach_daily_insights").upsert(
+                # Delete-then-insert (not upsert): the on_conflict target
+                # `user_id,local_date,source,stat_context` does NOT dedupe when
+                # stat_context is NULL (home / briefings) because Postgres treats
+                # NULLs as DISTINCT in a unique index — so the old upsert inserted
+                # a brand-new row on every regeneration, piling up same-day
+                # duplicates. Clearing the matching key first guarantees exactly
+                # one current row per (user, date, source, stat_context).
+                delq = sb.client.table("coach_daily_insights").delete().eq(
+                    "user_id", user_id
+                ).eq("local_date", local_date_iso).eq("source", source)
+                if stat_context is not None:
+                    delq = delq.eq("stat_context", stat_context)
+                else:
+                    delq = delq.is_("stat_context", "null")
+                delq.execute()
+                ins = sb.client.table("coach_daily_insights").insert(
                     insert_payload,
-                    on_conflict="user_id,local_date,source,stat_context",
                 ).execute()
                 if ins and ins.data:
                     insight_id = ins.data[0].get("id")
