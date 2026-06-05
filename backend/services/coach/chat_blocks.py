@@ -37,6 +37,7 @@ THE BLOCK SCHEMA (verbatim contract the frontend depends on):
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
@@ -716,7 +717,37 @@ _PILLAR_TO_TOPIC_KEY: Dict[str, str] = {
 _BRIEFING_TOPIC_PRIORITY = ["nourish", "sleep", "move", "recovery"]
 
 
+# Short-TTL memo for the briefing/home blocks. Building them runs four topic
+# builders (nutrition + sleep + steps + recovery), each with its own DB
+# queries — ~780ms — and it was recomputed on EVERY coach call, including
+# cache hits, making a "cache hit" cost ~0.8s. The blocks are a glance graph
+# (protein bar, sleep ring, steps trend), so a couple minutes of staleness is
+# fine; this collapses repeat calls to a dict lookup. Per-worker, expiry-on-read,
+# with a hard size cap so it can't grow unbounded.
+_BRIEFING_BLOCK_TTL_S = 120
+_briefing_block_cache: Dict[tuple, tuple] = {}  # key -> (expiry_monotonic, blocks)
+_BRIEFING_BLOCK_CACHE_MAX = 5000
+
+
 def build_briefing_blocks(
+    user_id: str,
+    leading_pillar: Optional[str] = None,
+    max_blocks: int = 3,
+) -> List[Dict[str, Any]]:
+    """Cached wrapper over [_compute_briefing_blocks] (see TTL note above)."""
+    key = (user_id, (leading_pillar or "").lower(), max_blocks)
+    now = time.monotonic()
+    hit = _briefing_block_cache.get(key)
+    if hit is not None and hit[0] > now:
+        return hit[1]
+    blocks = _compute_briefing_blocks(user_id, leading_pillar, max_blocks)
+    if len(_briefing_block_cache) >= _BRIEFING_BLOCK_CACHE_MAX:
+        _briefing_block_cache.clear()
+    _briefing_block_cache[key] = (now + _BRIEFING_BLOCK_TTL_S, blocks)
+    return blocks
+
+
+def _compute_briefing_blocks(
     user_id: str,
     leading_pillar: Optional[str] = None,
     max_blocks: int = 3,
