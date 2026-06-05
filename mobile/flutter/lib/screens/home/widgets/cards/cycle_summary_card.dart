@@ -26,11 +26,22 @@ import '../../../../data/models/hormonal_health.dart';
 import '../../../../data/providers/hormonal_health_provider.dart';
 import '../../../../data/services/haptic_service.dart';
 
-class CycleSummaryCard extends ConsumerWidget {
+class CycleSummaryCard extends ConsumerStatefulWidget {
   const CycleSummaryCard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CycleSummaryCard> createState() => _CycleSummaryCardState();
+}
+
+class _CycleSummaryCardState extends ConsumerState<CycleSummaryCard> {
+  // Minimized by default — the card opens to just the phase header + next-period
+  // line (the glanceable essentials). PMS-prep tips, the in-period symptom log
+  // and the Log period / View cycle actions tuck behind the chevron so the card
+  // stays compact on Home until the user taps to expand.
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
 
     // Gate 1 — user must track menstrual cycles. Same defensive read the
@@ -72,21 +83,58 @@ class CycleSummaryCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ── Header: phase emoji + phase label + day-of-cycle ──
-            _PhaseHeader(phase: phase, day: day),
+            // ── Header: phase emoji + phase label + day-of-cycle + chevron ──
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticService.light();
+                setState(() => _expanded = !_expanded);
+              },
+              child: Row(
+                children: [
+                  Expanded(child: _PhaseHeader(phase: phase, day: day)),
+                  const SizedBox(width: 8),
+                  AnimatedRotation(
+                    duration: const Duration(milliseconds: 200),
+                    turns: _expanded ? 0.5 : 0.0,
+                    child: Icon(Icons.expand_more,
+                        size: 22, color: c.textMuted),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 12),
             // ── Next-period countdown / late-by, with confidence pill ──
+            // (always visible — the key glanceable line) ──
             _PredictionRow(pred: pred),
-            // ── PMS-prep guidance — only inside the 1-5 day luteal window ──
-            ..._buildPmsPrep(context, pred),
-            // ── In-period symptom-log affordance ──
-            if (inPeriod) ...[
-              const SizedBox(height: 12),
-              _SymptomLogRow(),
-            ],
-            const SizedBox(height: 14),
-            // ── Action row: Log period / View cycle ──
-            _ActionRow(),
+            // ── Everything else collapses behind the chevron ──
+            ClipRect(
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topCenter,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  heightFactor: _expanded ? 1.0 : 0.0,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ── PMS-prep guidance — only in the 1-5 day luteal window ──
+                      ..._buildPmsPrep(context, pred),
+                      // ── In-period symptom-log affordance ──
+                      if (inPeriod) ...[
+                        const SizedBox(height: 12),
+                        _SymptomLogRow(),
+                      ],
+                      const SizedBox(height: 14),
+                      // ── Action row: Log period / View cycle ──
+                      _ActionRow(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
