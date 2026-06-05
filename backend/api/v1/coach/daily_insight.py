@@ -477,12 +477,24 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     # (10k steps / 480 min sleep) so we hard-code matching defaults here.
     try:
         u = sb.client.table("users").select(
-            "primary_goal, daily_protein_target_g, daily_calorie_target"
+            "primary_goal, daily_protein_target_g, daily_calorie_target, "
+            "created_at, onboarding_completed"
         ).eq("id", user_id).maybe_single().execute()
         if u and u.data:
             snapshot["goal"] = u.data.get("primary_goal")
             snapshot["nourish"]["calorie_target"] = u.data.get("daily_calorie_target")
             snapshot["nourish"]["protein_target_g"] = u.data.get("daily_protein_target_g")
+            # Lifecycle signals (home welcome / welcome-back states).
+            snapshot["onboarding_completed"] = u.data.get("onboarding_completed")
+            created = u.data.get("created_at")
+            if created:
+                try:
+                    cdt = datetime.fromisoformat(str(created).replace("Z", "+00:00"))
+                    snapshot["account_age_days"] = max(
+                        0, (datetime.now(timezone.utc) - cdt).days
+                    )
+                except Exception:
+                    pass
         # Defaults matched to the client (lib/data/services/health_goals_service.dart).
         snapshot["move"]["step_target"] = 10000
         snapshot["sleep"]["target_hours"] = 8.0
@@ -694,6 +706,37 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"[daily_insight] weight block skipped: {e}")
 
+    # --- Lifecycle (new / returning / active) — drives the home welcome states.
+    # Cheap: reuses the already-collected onboarding flag, account age, this
+    # week's aggregates, and today's pillar data. No extra queries.
+    try:
+        onboarded = snapshot.get("onboarding_completed")
+        age = snapshot.get("account_age_days")  # may be None
+        weekly = snapshot.get("weekly") or {}
+        recently_active = bool(
+            (weekly.get("workouts_completed") or 0) > 0
+            or (weekly.get("nutrition_days_logged") or 0) > 0
+            or weekly.get("avg_steps")
+            or weekly.get("avg_sleep_minutes")
+        )
+        today_active = bool(
+            (snapshot["nourish"].get("calories_logged") or 0) > 0
+            or (snapshot["move"].get("steps") or 0) > 0
+            or snapshot["train"].get("reach_met")
+        )
+        if onboarded is False:
+            lifecycle = "new"
+        elif not recently_active and not today_active:
+            # Onboarded but silent across the whole 7-day window. A young account
+            # is still "new" (never really started); an older one is "returning".
+            lifecycle = "new" if (age is not None and age < 3) else "returning"
+        else:
+            lifecycle = "active"
+        snapshot["lifecycle"] = lifecycle
+    except Exception as e:
+        logger.debug(f"[daily_insight] lifecycle calc skipped: {e}")
+        snapshot["lifecycle"] = "active"
+
     return snapshot, next_workout
 
 
@@ -870,7 +913,17 @@ def _pick_fallback_pillar(snapshot: Dict[str, Any]) -> str:
         return "move"
     if sleep_open:
         return "sleep"
-    return "all_done"
+    # Never celebrate "all done" for a user who has nothing set up — that reads
+    # as "Every ring closed today" to someone who has done nothing (the home
+    # new-user case is short-circuited to a welcome upstream; this guards the
+    # other sources). Only claim all-done when a pillar was actually configured.
+    configured = bool(
+        train.get("applicable")
+        or (nourish.get("calorie_target") or 0) > 0
+        or move.get("steps") is not None
+        or sleep.get("total_minutes") is not None
+    )
+    return "all_done" if configured else "nourish"
 
 
 def _deterministic_fallback(
@@ -901,6 +954,52 @@ def _deterministic_fallback(
         "cta_primary": cta_primary,
         "cta_secondary": cta_secondary,
         "leading_pillar": pillar,
+    }
+
+
+def _welcome_payload(
+    first_name: str, lifecycle: str, local_date_iso: str,
+) -> Dict[str, Any]:
+    """Warm, deterministic home coach copy for a new (welcome) or returning
+    (welcome-back) user. Time-agnostic; tolerates a missing name (drops the
+    vocative). ≥4 variants per pool; stable per day. No em/en dashes."""
+    name = first_name if (first_name and first_name != "there") else None
+    vocative = f", {name}" if name else ""
+    seed = abs(hash((first_name, local_date_iso, lifecycle))) % 4
+    if lifecycle == "returning":
+        headlines = [
+            f"Welcome back{vocative}!",
+            f"Good to see you{vocative}.",
+            f"You're back{vocative}!",
+            f"Let's pick it up{vocative}.",
+        ]
+        bodies = [
+            "It's been a minute. Pick one thing today, a workout or a logged meal, and we're rolling again.",
+            "No pressure on the gap. Log a meal or start a workout and your plan springs back to life.",
+            "Ease back in with one session or one logged meal, and I'll re-tune everything to you.",
+            "Glad you're here again. One small action today restarts the momentum, your call which.",
+        ]
+        primary = {"label": "Pick today's workout", "route": "/workouts"}
+    else:  # new
+        headlines = [
+            f"Welcome to Zealova{vocative}!",
+            f"Let's get you started{vocative}.",
+            f"Glad you're here{vocative}.",
+            f"Your coaching starts now{vocative}.",
+        ]
+        bodies = [
+            "I'm your AI coach. Generate today's workout or log a meal, and I'll start tailoring everything to you.",
+            "Start with one thing, a workout or a logged meal, and your daily plan comes to life.",
+            "Build your first workout or snap a meal to log it, and real, personalized coaching kicks in.",
+            "Lay the first brick today: a workout or a logged meal. The rest of your plan follows.",
+        ]
+        primary = {"label": "Start a workout", "route": "/workouts"}
+    return {
+        "headline": headlines[seed % len(headlines)],
+        "body": bodies[seed % len(bodies)],
+        "cta_primary": primary,
+        "cta_secondary": {"label": "Chat with coach", "route": "/chat"},
+        "leading_pillar": None,
     }
 
 
@@ -1581,6 +1680,32 @@ async def daily_insight(
                 generated_at=datetime.now(timezone.utc).isoformat(),
                 delivery="deterministic",
                 blocks=briefing_blocks,
+            )
+
+        # ---- Home welcome / welcome-back (deterministic, no LLM) -----------
+        # A brand-new user has no data to ground a Gemini tip, and the old
+        # fallback misfired to "Every ring closed today" (all pillars read
+        # "not open" when nothing is set up). A returning-after-a-gap user
+        # should be greeted, not handed a cold leverage line. Short-circuit
+        # both to a warm deterministic welcome. ("active" falls through to the
+        # normal Gemini path below, unchanged.)
+        if source == "home" and snapshot.get("lifecycle") in ("new", "returning"):
+            w = _welcome_payload(
+                first_name, snapshot.get("lifecycle"), local_date_iso,
+            )
+            return DailyInsightResponse(
+                insight_id=None,
+                local_date=local_date_iso,
+                source=source,
+                headline=w["headline"],
+                body=w["body"],
+                cta_primary=w.get("cta_primary"),
+                cta_secondary=w.get("cta_secondary"),
+                chips=None,
+                leading_pillar=None,
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                delivery="deterministic",
+                blocks=_home_blocks(None),  # empty for a no-data user → text-only
             )
 
         # ---- Cost cap check -----------------------------------------------

@@ -76,6 +76,13 @@ String? coachHeadline(
   CoachHeroSurface surface = CoachHeroSurface.home,
 }) {
   if (score.isSetupState && surface != CoachHeroSurface.morningBriefOnboarding) {
+    // Brand-new / setup-state user on the home card: a warm welcome instead of
+    // null (which degraded to "Your coach is gathering thoughts."). Mirrors the
+    // backend's deterministic `new`-lifecycle welcome so the offline fallback
+    // reads the same. Other surfaces keep returning null.
+    if (surface == CoachHeroSurface.home) {
+      return _welcomeHeadline(firstName, now ?? DateTime.now());
+    }
     return null;
   }
   final t = now ?? DateTime.now();
@@ -157,6 +164,10 @@ String? coachBody(
   CoachHeroSurface surface = CoachHeroSurface.home,
 }) {
   if (score.isSetupState && surface != CoachHeroSurface.morningBriefOnboarding) {
+    // Setup-state welcome body on home (pairs with _welcomeHeadline above).
+    if (surface == CoachHeroSurface.home) {
+      return _welcomeBody(now ?? DateTime.now());
+    }
     return null;
   }
   final t = now ?? DateTime.now();
@@ -285,6 +296,35 @@ int _dailyIndex(int n, DateTime? now) {
 String _safeName(String? name) {
   final trimmed = name?.trim();
   return (trimmed == null || trimmed.isEmpty) ? 'You' : trimmed;
+}
+
+/// Warm welcome headline for a brand-new / setup-state user on the home coach
+/// card (the offline mirror of the backend's `new`-lifecycle welcome). Drops
+/// the vocative when there's no real name, so it never reads "…, You!".
+String _welcomeHeadline(String? firstName, DateTime t) {
+  final name = (firstName != null && firstName.trim().isNotEmpty)
+      ? firstName.trim()
+      : null;
+  final v = name != null ? ', $name' : '';
+  final pool = [
+    'Welcome to Zealova$v!',
+    'Let\'s get you started$v.',
+    'Glad you\'re here$v.',
+    'Your coaching starts now$v.',
+  ];
+  return pool[_dailyIndex(pool.length, t)];
+}
+
+/// Welcome body (pairs with [_welcomeHeadline]) — no numbers, time-agnostic,
+/// points at the two first actions. ≥4 variants, no em/en dashes.
+String _welcomeBody(DateTime t) {
+  const pool = [
+    'I\'m your AI coach. Generate today\'s workout or log a meal, and I\'ll start tailoring everything to you.',
+    'Start with one thing, a workout or a logged meal, and your daily plan comes to life.',
+    'Build your first workout or snap a meal to log it, and real, personalized coaching kicks in.',
+    'Lay the first brick today: a workout or a logged meal. The rest of your plan follows.',
+  ];
+  return pool[_dailyIndex(pool.length, t)];
 }
 
 String _safeWorkout(String? workout) {
