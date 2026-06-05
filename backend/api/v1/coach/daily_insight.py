@@ -349,6 +349,10 @@ _TIME_SENSITIVE_SOURCES = frozenset({
     "evening_recap",
 })
 
+# How many glance graphs the home coach card shows (lead pillar first, then
+# priority). The client renders them stacked + compact.
+_HOME_BLOCK_COUNT = 3
+
 
 def _coarse_phase(bucket: str) -> str:
     """Collapse the fine time buckets into the 3 phases that change the copy's
@@ -1391,16 +1395,21 @@ async def daily_insight(
             except Exception as e:
                 logger.warning(f"[daily_insight] briefing blocks build failed: {e}")
                 briefing_blocks = None
-        elif source == "home":
-            # One compact contextual graph beside the home coach copy. Capped
-            # at a single block so the card stays tight and does not duplicate
-            # the full TodayScoreCard / health snapshot rendered below it.
+        # NOTE: home blocks are built LATER (in each return path) via
+        # `_home_blocks(pillar)` — they lead with the tip's leading_pillar, which
+        # isn't known until the cached row is read / the insight is generated.
+
+        def _home_blocks(pillar: Optional[str]) -> Optional[List[Dict[str, Any]]]:
+            """Up to _HOME_BLOCK_COUNT glance graphs for the home card, led by the
+            tip's pillar. Best-effort — never fatal."""
             try:
                 from services.coach.chat_blocks import build_briefing_blocks
-                briefing_blocks = build_briefing_blocks(user_id, max_blocks=1) or None
+                return build_briefing_blocks(
+                    user_id, leading_pillar=pillar, max_blocks=_HOME_BLOCK_COUNT
+                ) or None
             except Exception as e:
                 logger.warning(f"[daily_insight] home block build failed: {e}")
-                briefing_blocks = None
+                return None
 
         if source == "pillar_stat" and not stat_context:
             raise HTTPException(400, "context query param required for source=pillar_stat")
@@ -1457,7 +1466,10 @@ async def daily_insight(
                             leading_pillar=row.get("leading_pillar"),
                             generated_at=row.get("generated_at"),
                             delivery="gemini",  # cached rows stored only on success
-                            blocks=briefing_blocks,
+                            blocks=(
+                                _home_blocks(row.get("leading_pillar"))
+                                if source == "home" else briefing_blocks
+                            ),
                         )
             except HTTPException:
                 raise
@@ -1681,7 +1693,10 @@ async def daily_insight(
             leading_pillar=payload.get("leading_pillar"),
             generated_at=generated_at_iso,
             delivery=delivery,
-            blocks=briefing_blocks,
+            blocks=(
+                _home_blocks(payload.get("leading_pillar"))
+                if source == "home" else briefing_blocks
+            ),
         )
     except HTTPException:
         raise

@@ -199,13 +199,16 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             ),
           ),
         ],
-        // One compact grounded block tied to the leading pillar (e.g. a
-        // protein progress bar / steps sparkline). Capped at a single block
-        // so the card stays tight and does not duplicate the full
-        // TodayScoreCard / health snapshot rendered below it on Home.
+        // Up to 3 compact grounded graphs, the first tied to the tip's leading
+        // pillar (server orders them that way), each rendered shorter via
+        // `compact` so several stack without dominating the card. Only topics
+        // the user has data for appear (the server never fabricates).
         if (insight.blocks.isNotEmpty) ...[
           const SizedBox(height: 10),
-          GenericBlocksRenderer(blocks: insight.blocks.take(1).toList()),
+          GenericBlocksRenderer(
+            blocks: insight.blocks.take(3).toList(),
+            compact: true,
+          ),
         ],
         if (insight.ctaPrimary != null || insight.ctaSecondary != null) ...[
           const SizedBox(height: 12),

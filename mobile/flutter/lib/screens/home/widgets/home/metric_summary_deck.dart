@@ -110,9 +110,12 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         // ALL pages share this one height so the deck reads at a constant size
         // as you swipe. Page 1 is a big ring-LEFT + a single vertical column of
         // 3 tiles on the RIGHT (Google-Health style); page 2 is a 3×2 grid.
-        // Inner height = 240 − 12 top − 38 bottom (footer) = 190, which fits the
-        // page-1 tile column (3×56 + 2×9 = 186) and the page-2 grid alike.
-        height: 240,
+        // Tightened 240→216 (user feedback: shorter without losing content).
+        // The 3-tile column is the height floor: a compact MetricTile needs
+        // ~52px of content, so tiles can't go below ~54 without clipping.
+        // Inner height = 216 − 8 top − 30 bottom (footer) = 178, which fits the
+        // page-1 tile column (3×54 + 2×7 = 176) and the page-2 grid alike.
+        height: 216,
         child: Stack(
           children: [
             // The cards fill the full height; their content centers, leaving a
@@ -260,11 +263,11 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     // at the exact same height. The ring already encodes all four pillars, so a
     // tighter 3-up stack reads cleaner than the old 2×2 grid; overflow metrics
     // (incl. Sleep when it's the 4th) live on the next swipe page.
-    const double tileHeight = 56;
-    const double tileGap = 9; // 3×56 + 2×9 = 186 ≤ 190 inner height
+    const double tileHeight = 54;
+    const double tileGap = 7; // 3×54 + 2×7 = 176 ≤ 178 inner height
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 38),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
       child: Center(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -274,8 +277,8 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
               behavior: HitTestBehavior.opaque,
               onTap: () => context.push('/stats'),
               child: SegmentedScoreRing(
-                size: 116,
-                strokeWidth: 11,
+                size: 100,
+                strokeWidth: 9,
                 segments: segments,
                 center: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -283,7 +286,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
                     Text(
                       '${score.score}',
                       style: TextStyle(
-                        fontSize: 36,
+                        fontSize: 32,
                         height: 1,
                         fontWeight: FontWeight.w800,
                         letterSpacing: -1.2,
@@ -303,7 +306,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
                 ),
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 12),
             // Tiles stacked vertically (1 column) on the right — same compact
             // tile as page 2 so the shapes stay consistent across the deck.
             Expanded(

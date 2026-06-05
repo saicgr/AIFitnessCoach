@@ -717,16 +717,17 @@ _PILLAR_TO_TOPIC_KEY: Dict[str, str] = {
 _BRIEFING_TOPIC_PRIORITY = ["nourish", "sleep", "move", "recovery"]
 
 
-# Short-TTL memo for the briefing/home blocks. Building them runs four topic
-# builders (nutrition + sleep + steps + recovery), each with its own DB
-# queries — ~780ms — and it was recomputed on EVERY coach call, including
-# cache hits, making a "cache hit" cost ~0.8s. The blocks are a glance graph
-# (protein bar, sleep ring, steps trend), so a couple minutes of staleness is
-# fine; this collapses repeat calls to a dict lookup. Per-worker, expiry-on-read,
-# with a hard size cap so it can't grow unbounded.
+# Short-TTL memo for the EXPENSIVE part of block building: the four topic
+# builders (nutrition + sleep + steps + recovery), each with its own DB queries
+# (~780ms). It was recomputed on EVERY coach call, including cache hits, making a
+# "cache hit" cost ~0.8s. We now memo the per-topic map by USER ONLY (not by
+# leading_pillar / max_blocks), so the per-tip ordering can vary for free while
+# the expensive build runs at most once per user / TTL. The blocks are a glance
+# graph, so a couple minutes of staleness is fine. Per-worker, expiry-on-read,
+# hard size cap so it can't grow unbounded.
 _BRIEFING_BLOCK_TTL_S = 120
-_briefing_block_cache: Dict[tuple, tuple] = {}  # key -> (expiry_monotonic, blocks)
-_BRIEFING_BLOCK_CACHE_MAX = 5000
+_by_topic_cache: Dict[str, tuple] = {}  # user_id -> (expiry_monotonic, by_topic)
+_BY_TOPIC_CACHE_MAX = 5000
 
 
 def build_briefing_blocks(
@@ -734,35 +735,42 @@ def build_briefing_blocks(
     leading_pillar: Optional[str] = None,
     max_blocks: int = 3,
 ) -> List[Dict[str, Any]]:
-    """Cached wrapper over [_compute_briefing_blocks] (see TTL note above)."""
-    key = (user_id, (leading_pillar or "").lower(), max_blocks)
+    """Grounded glance graphs for a daily briefing (morning/evening) or the home
+    coach card. Leads with the [leading_pillar]'s topic when that topic has data,
+    then follows [_BRIEFING_TOPIC_PRIORITY]; capped at [max_blocks]. The cheap
+    ordering runs every call; the expensive per-topic build is memoized per user
+    (see note above). NEVER raises; returns [] when no topic has data.
+    """
     now = time.monotonic()
-    hit = _briefing_block_cache.get(key)
+    hit = _by_topic_cache.get(user_id)
     if hit is not None and hit[0] > now:
-        return hit[1]
-    blocks = _compute_briefing_blocks(user_id, leading_pillar, max_blocks)
-    if len(_briefing_block_cache) >= _BRIEFING_BLOCK_CACHE_MAX:
-        _briefing_block_cache.clear()
-    _briefing_block_cache[key] = (now + _BRIEFING_BLOCK_TTL_S, blocks)
-    return blocks
+        by_topic = hit[1]
+    else:
+        by_topic = _compute_by_topic(user_id)
+        if len(_by_topic_cache) >= _BY_TOPIC_CACHE_MAX:
+            _by_topic_cache.clear()
+        _by_topic_cache[user_id] = (now + _BRIEFING_BLOCK_TTL_S, by_topic)
+
+    # Cheap reorder: leading-pillar topic first (when it has data), then the
+    # default priority. De-duped, never the same topic twice.
+    order: List[str] = []
+    lead_key = _PILLAR_TO_TOPIC_KEY.get((leading_pillar or "").lower())
+    if lead_key and lead_key in by_topic:
+        order.append(lead_key)
+    for k in _BRIEFING_TOPIC_PRIORITY:
+        if k in by_topic and k not in order:
+            order.append(k)
+    out: List[Dict[str, Any]] = []
+    for k in order:
+        out += by_topic[k]
+    return [b for b in out if isinstance(b, dict)][:max_blocks]
 
 
-def _compute_briefing_blocks(
-    user_id: str,
-    leading_pillar: Optional[str] = None,
-    max_blocks: int = 3,
-) -> List[Dict[str, Any]]:
-    """Grounded blocks for a PROACTIVE daily briefing (morning/evening) or the
-    home coach card.
-
-    A briefing has no user question to topic-detect from, so we assemble one
-    compact graph per topic from the user's own data: a nutrition graph
-    (protein bar), a sleep-duration ring, a steps trend, and recovery signals.
-    The block matching [leading_pillar] is moved to the front so the visual
-    leads with the brief's topic; the rest follow [_BRIEFING_TOPIC_PRIORITY].
-    Curated to one block per topic and capped at [max_blocks] so the card stays
-    compact. Reuses the never-fabricate per-topic builders. NEVER raises;
-    returns [] when the user has no data in any topic (text-only is honest).
+def _compute_by_topic(user_id: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Build one curated glance block per topic (nutrition protein bar, sleep
+    ring, steps trend, recovery signals) from the user's own data. Returns a
+    {topic: [block]} map (UNordered, uncapped) — the caller orders + caps. Reuses
+    the never-fabricate per-topic builders. NEVER raises; returns {} on no data.
     """
     try:
         try:
@@ -799,20 +807,7 @@ def _compute_briefing_blocks(
         if rec_bl:
             by_topic["recovery"] = _attach_route(rec_bl, "recovery")
 
-        # Order: leading-pillar topic first (when it has data), then the rest
-        # in the default priority. De-duped, never the same topic twice.
-        order: List[str] = []
-        lead_key = _PILLAR_TO_TOPIC_KEY.get((leading_pillar or "").lower())
-        if lead_key and lead_key in by_topic:
-            order.append(lead_key)
-        for k in _BRIEFING_TOPIC_PRIORITY:
-            if k in by_topic and k not in order:
-                order.append(k)
-
-        out: List[Dict[str, Any]] = []
-        for k in order:
-            out += by_topic[k]
-        return [b for b in out if isinstance(b, dict)][:max_blocks]
+        return by_topic
     except Exception as e:
         logger.warning(f"chat_blocks: briefing block build failed (no blocks): {e}")
-        return []
+        return {}

@@ -23,7 +23,16 @@ import 'package:go_router/go_router.dart';
 class GenericBlocksRenderer extends StatelessWidget {
   final List<Map<String, dynamic>> blocks;
 
-  const GenericBlocksRenderer({super.key, required this.blocks});
+  /// Tighter layout for dense surfaces (e.g. the home coach card, which can
+  /// stack several blocks): shorter charts + trimmed internal gaps. Chat
+  /// bubbles leave this false so their charts keep the roomier default.
+  final bool compact;
+
+  const GenericBlocksRenderer({
+    super.key,
+    required this.blocks,
+    this.compact = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +74,7 @@ class GenericBlocksRenderer extends StatelessWidget {
         built = _MetricBlock(title: title, spec: spec);
         break;
       case 'chart':
-        built = _ChartBlock(title: title, spec: spec);
+        built = _ChartBlock(title: title, spec: spec, compact: compact);
         break;
       case 'stat_grid':
         built = _StatGridBlock(title: title, spec: spec);
@@ -304,8 +313,9 @@ class _DeltaPill extends StatelessWidget {
 class _ChartBlock extends StatelessWidget {
   final String? title;
   final Map<String, dynamic> spec;
+  final bool compact;
 
-  const _ChartBlock({this.title, required this.spec});
+  const _ChartBlock({this.title, required this.spec, this.compact = false});
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +399,7 @@ class _ChartBlock extends StatelessWidget {
           );
 
     final chartBox = SizedBox(
-      height: isSparkline ? 44 : 140,
+      height: isSparkline ? 44 : (compact ? 96 : 140),
       child: chart,
     );
 
@@ -398,7 +408,9 @@ class _ChartBlock extends StatelessWidget {
     }
 
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 10, 12, isSparkline ? 8 : 6),
+      padding: compact
+          ? const EdgeInsets.fromLTRB(12, 8, 12, 6)
+          : EdgeInsets.fromLTRB(12, 10, 12, isSparkline ? 8 : 6),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(12),
@@ -416,7 +428,7 @@ class _ChartBlock extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: compact ? 4 : 8),
           ],
           chartBox,
         ],
