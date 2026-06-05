@@ -76,8 +76,10 @@ LEADING_PILLAR RULES:
 - "train"     when today's workout is incomplete and it is past morning.
 - "nourish"   when calorie/protein gap is the largest unmet reach.
 - "move"      when steps/active-minutes are the weakest pillar today.
-- "sleep"     when last night's sleep is the weakest signal AND it is
-              still morning (sleep advice past noon is stale).
+- "sleep"     in the EVENING/LATE buckets (wind-down + sleep-prep is exactly
+              what's useful at night), OR any time last night's sleep was the
+              weakest signal. (Sleep is NOT off-limits at night — at 10 PM the
+              most useful coaching IS about sleep.)
 - "all_done"  when every applicable pillar's reach is met for today.
 """
 

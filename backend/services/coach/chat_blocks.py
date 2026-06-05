@@ -284,18 +284,42 @@ def _build_sleep_blocks(db: Any, user_id: str) -> List[Dict[str, Any]]:
         return []
     hours = round(total_min / 60.0, 1)
 
-    blocks: List[Dict[str, Any]] = [
-        {
-            "type": "metric",
-            "title": "Last night's sleep",
+    blocks: List[Dict[str, Any]] = []
+
+    # 7-day sleep TREND (oldest -> newest) — the "last week's sleep" graph for the
+    # night coach card. `rows` already holds 7 days (newest-first); reverse it.
+    series: List[float] = []
+    labels: List[str] = []
+    for row in reversed(rows):
+        m = _safe_num(row.get("sleep_minutes"))
+        if m is not None and m > 0:
+            series.append(round(m / 60.0, 1))
+            d = str(row.get("activity_date") or "")[:10]
+            labels.append(d[5:].replace("-", "/") if len(d) >= 10 else "")
+    if len(series) >= 2:
+        blocks.append({
+            "type": "chart",
+            "title": "Sleep · last 7 days",
             "spec": {
-                "value": hours,
+                "points": series,
+                "x_labels": labels,
+                "chart_type": "bar",
                 "unit": "h",
                 "color": _COLOR_SLEEP,
-                "subtext": f"{int(total_min)} min asleep",
+                "highlight_last": True,
             },
-        }
-    ]
+        })
+
+    blocks.append({
+        "type": "metric",
+        "title": "Last night's sleep",
+        "spec": {
+            "value": hours,
+            "unit": "h",
+            "color": _COLOR_SLEEP,
+            "subtext": f"{int(total_min)} min asleep",
+        },
+    })
 
     # Stage breakdown — only the stages that are actually present.
     stage_items: List[Dict[str, Any]] = []
@@ -790,9 +814,13 @@ def _compute_by_topic(user_id: str) -> Dict[str, List[Dict[str, Any]]]:
         if nutr_pick:
             by_topic["nourish"] = _attach_route(nutr_pick, "nutrition")
 
-        # Sleep ring (metric only — drop the stage grid to keep the card tight).
-        sleep_bl = [b for b in (_build_sleep_blocks(db, user_id) or [])
-                    if isinstance(b, dict) and b.get("type") == "metric"][:1]
+        # Sleep — prefer the 7-day TREND chart ("last week's sleep") so a night
+        # card shows the trend; fall back to the last-night metric.
+        sleep_all = _build_sleep_blocks(db, user_id) or []
+        sleep_bl = [b for b in sleep_all
+                    if isinstance(b, dict) and b.get("type") == "chart"][:1] \
+            or [b for b in sleep_all
+                if isinstance(b, dict) and b.get("type") == "metric"][:1]
         if sleep_bl:
             by_topic["sleep"] = _attach_route(sleep_bl, "sleep")
 
