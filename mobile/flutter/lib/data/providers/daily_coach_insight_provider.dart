@@ -234,9 +234,16 @@ final dailyCoachInsightProvider =
   // keepAlive is deliberately DEFERRED to a successful fetch (cache hit below /
   // `_fetchInsight` on a real response). A gate-not-ready or network-error
   // fallback is never pinned — it stays autoDispose so the next watch retries.
-  final authStatus = ref.watch(authStateProvider.select((s) => s.status));
+  //
+  // Gate on the presence of a USER (user?.id), NOT on status == authenticated.
+  // AuthNotifier flips status to `loading` on every background refresh while
+  // KEEPING the user (copyWith preserves it), so a status-based gate returns
+  // the fallback during those windows even though the session + token are valid
+  // (every other authed data provider — consistency, contextual_nudge — gates
+  // on user?.id and works on-device, which is why ONLY the coach card fell back).
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading || authStatus != AuthStatus.authenticated) {
+  if (tzState.isLoading || userId == null || userId.isEmpty) {
     return _buildClientFallback(ref);
   }
   final localDate = DateTime.now();
@@ -330,9 +337,9 @@ final chatOpenInsightProvider =
   // RICH briefings (morning_brief / evening_recap) are instead served
   // cache-first below so the chat open paints them instantly on a warm second
   // open instead of blocking on the Gemini round-trip.
-  final authStatus = ref.watch(authStateProvider.select((s) => s.status));
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading || authStatus != AuthStatus.authenticated) {
+  if (tzState.isLoading || userId == null || userId.isEmpty) {
     return _buildClientFallback(ref);
   }
   final now = DateTime.now();
@@ -373,9 +380,9 @@ final dailyCoachInsightRefreshProvider =
         .family<DailyCoachInsight, DateTime>((ref, date) async {
   // NOTE: intentionally NOT keepAlive — this is the manual `refresh=true`
   // cache-buster; pinning it would defeat its purpose.
-  final authStatus = ref.watch(authStateProvider.select((s) => s.status));
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   final tzState = ref.watch(timezoneProvider);
-  if (tzState.isLoading || authStatus != AuthStatus.authenticated) {
+  if (tzState.isLoading || userId == null || userId.isEmpty) {
     return _buildClientFallback(ref);
   }
   return _fetchInsight(
