@@ -49,7 +49,7 @@ class CardioAudioCuesService {
     FlutterTts? tts,
     AudioSession? session,
     SharedPreferences? prefs,
-  })  : _tts = tts ?? FlutterTts(),
+  })  : _ttsInstance = tts,
         _injectedSession = session,
         _prefs = prefs;
 
@@ -61,7 +61,15 @@ class CardioAudioCuesService {
   /// when the user has not made an explicit choice.
   static const String defaultVoiceId = 'default';
 
-  FlutterTts _tts = FlutterTts();
+  // Lazily constructed (or injected via forTesting). Constructing a
+  // `FlutterTts` registers a native onInit listener that immediately calls
+  // `isLanguageAvailable`; if the platform TTS engine's binder isn't bound yet
+  // (cold start / backgrounded / background isolate) that throws a noisy
+  // `DeadObjectException`. Deferring to first real use (inside `init()`, which
+  // is user-driven from a foreground screen) means the engine is bound by the
+  // time onInit fires. Always access via the `_tts` getter, never the field.
+  FlutterTts? _ttsInstance;
+  FlutterTts get _tts => _ttsInstance ??= FlutterTts();
   AudioSession? _injectedSession;
   AudioSession? _session;
   SharedPreferences? _prefs;
@@ -231,11 +239,15 @@ class CardioAudioCuesService {
   /// Halt a mid-utterance speech. Idempotent: safe to call when nothing is
   /// playing.
   Future<void> stop() async {
-    try {
-      await _tts.stop();
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('   [CardioAudioCues] stop error: $e');
+    // Don't lazily CONSTRUCT the engine just to stop it — nothing to stop if it
+    // was never built, and constructing here would re-trigger the onInit race.
+    if (_ttsInstance != null) {
+      try {
+        await _ttsInstance!.stop();
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('   [CardioAudioCues] stop error: $e');
+        }
       }
     }
     _isSpeaking = false;

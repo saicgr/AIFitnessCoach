@@ -17,7 +17,16 @@ class TTSService {
   factory TTSService() => _instance;
   TTSService._internal();
 
-  final FlutterTts _flutterTts = FlutterTts();
+  // Lazily constructed. Constructing a `FlutterTts` registers a native onInit
+  // listener that immediately calls `isLanguageAvailable` on the platform TTS
+  // engine — if that engine's binder is not yet bound (cold start, app
+  // backgrounded, or a background isolate), it throws a `DeadObjectException`
+  // (logged natively, non-fatal, noisy). Deferring construction to the first
+  // REAL use (always foreground + user-driven, inside `init()`) means the
+  // engine is reliably bound by the time onInit fires, eliminating the
+  // dead-binder race. Never touch `_flutterTts` outside an init()-gated path.
+  FlutterTts? _flutterTtsInstance;
+  FlutterTts get _flutterTts => _flutterTtsInstance ??= FlutterTts();
   final AudioSessionService _audioSession = AudioSessionService();
   bool _isInitialized = false;
   bool _isSpeaking = false;
@@ -240,8 +249,15 @@ class TTSService {
 
   /// Stop any ongoing speech.
   Future<void> stop() async {
+    // Don't lazily CONSTRUCT the engine just to stop it — if it was never
+    // built there's nothing to stop, and constructing here would re-trigger
+    // the onInit/dead-binder race we're avoiding.
+    if (_flutterTtsInstance == null) {
+      _isSpeaking = false;
+      return;
+    }
     try {
-      await _flutterTts.stop();
+      await _flutterTtsInstance!.stop();
       _isSpeaking = false;
       // Restore other apps' audio when stopping
       await _audioSession.abandonFocus();
