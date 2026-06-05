@@ -289,6 +289,30 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   static const String premiumEntitlement = 'premium';
   static const String premiumPlusEntitlement = 'premium_plus'; // Formerly ultra
 
+  /// RevenueCat error codes that are EXPECTED / environmental rather than bugs:
+  /// the device has no working Play Billing (emulator with no Play account,
+  /// Play Store mid-update, signed-out Play account → BILLING_UNAVAILABLE /
+  /// DeadObjectException), or a transient network/offline blip. RevenueCat
+  /// retries all of these with its own backoff, so shipping them to Sentry as
+  /// errors is pure noise — we breadcrumb them instead and let the app degrade
+  /// to the free tier until billing becomes available. Matched by enum-name
+  /// string so this stays compile-safe across purchases_flutter versions.
+  static const Set<String> _expectedStoreErrorNames = {
+    'storeProblemError',        // BILLING_UNAVAILABLE / API < 3 / dead binder
+    'offlineConnectionError',
+    'networkError',
+    'purchaseNotAllowedError',  // device/account not allowed to purchase
+  };
+
+  /// Returns the error-code name when [e] is an expected/environmental store
+  /// error (see [_expectedStoreErrorNames]), else null (→ a real error to
+  /// capture). Only [PlatformException]s carry a RevenueCat error code.
+  static String? _expectedStoreErrorName(Object e) {
+    if (e is! PlatformException) return null;
+    final name = PurchasesErrorHelper.getErrorCode(e).name;
+    return _expectedStoreErrorNames.contains(name) ? name : null;
+  }
+
   /// Configure RevenueCat SDK (call once at app startup)
   static Future<void> configureRevenueCat() async {
     if (_revenueCatInitialized) return;
@@ -323,6 +347,18 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         category: 'billing',
       );
     } catch (e, stack) {
+      final expected = _expectedStoreErrorName(e);
+      if (expected != null) {
+        // Emulator / no Play account / store unavailable — RevenueCat will
+        // retry. Breadcrumb, don't alert.
+        debugPrint('ℹ️ RevenueCat configure deferred (store unavailable: $expected)');
+        SentryService.addBreadcrumb(
+          message: 'RevenueCat configure skipped (store unavailable)',
+          category: 'billing',
+          data: {'error_code': expected},
+        );
+        return;
+      }
       debugPrint('❌ Failed to configure RevenueCat: $e');
       unawaited(SentryService.captureError(
         e,
@@ -382,24 +418,50 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
               },
             );
           } catch (e, stack) {
-            debugPrint('⚠️ Failed to fetch offerings: $e');
-            unawaited(SentryService.captureError(
-              e,
-              stack,
-              hint: 'RevenueCat getOfferings failed',
-              tags: {'subsystem': 'billing', 'stage': 'offerings'},
-            ));
+            final expected = _expectedStoreErrorName(e);
+            if (expected != null) {
+              // Store unavailable (emulator / no Play account / offline) — the
+              // paywall falls back to hardcoded prices and RevenueCat retries.
+              // Breadcrumb only.
+              debugPrint('ℹ️ Offerings unavailable (store: $expected)');
+              SentryService.addBreadcrumb(
+                message: 'Offerings unavailable (store unavailable)',
+                category: 'billing',
+                data: {'error_code': expected},
+              );
+            } else {
+              debugPrint('⚠️ Failed to fetch offerings: $e');
+              unawaited(SentryService.captureError(
+                e,
+                stack,
+                hint: 'RevenueCat getOfferings failed',
+                tags: {'subsystem': 'billing', 'stage': 'offerings'},
+              ));
+            }
           }
 
           state = state.copyWith(isRevenueCatConfigured: true);
         } catch (e, stack) {
-          debugPrint('⚠️ RevenueCat login failed: $e');
-          unawaited(SentryService.captureError(
-            e,
-            stack,
-            hint: 'RevenueCat Purchases.logIn failed — user purchases will not link to Supabase ID',
-            tags: {'subsystem': 'billing', 'stage': 'login', 'user_id': userId},
-          ));
+          final expected = _expectedStoreErrorName(e);
+          if (expected != null) {
+            // Store unavailable (emulator / no Play account / offline). Login
+            // + customer-info will reconcile once billing is back; the backend
+            // sync below still establishes tier. Breadcrumb only.
+            debugPrint('ℹ️ RevenueCat login deferred (store: $expected)');
+            SentryService.addBreadcrumb(
+              message: 'RevenueCat login deferred (store unavailable)',
+              category: 'billing',
+              data: {'error_code': expected, 'user_id': userId},
+            );
+          } else {
+            debugPrint('⚠️ RevenueCat login failed: $e');
+            unawaited(SentryService.captureError(
+              e,
+              stack,
+              hint: 'RevenueCat Purchases.logIn failed — user purchases will not link to Supabase ID',
+              tags: {'subsystem': 'billing', 'stage': 'login', 'user_id': userId},
+            ));
+          }
           // Fall back to backend/local
         }
       }
