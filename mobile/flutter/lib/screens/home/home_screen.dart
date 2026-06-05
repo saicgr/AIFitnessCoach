@@ -1207,7 +1207,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         visible.length < _eagerSectionCount ? visible.length : _eagerSectionCount;
     for (var i = 0; i < eagerCount; i++) {
       slivers.add(SliverToBoxAdapter(child: _widgetForSection(visible[i])));
-      slivers.add(const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)));
+      // Quick actions hugs the card below it (the coach card) — a tighter gap
+      // so the coach action items sit closer to first glance.
+      final gap = visible[i] == HomeSection.quickActions ? 6.0 : kHomeGap;
+      slivers.add(SliverToBoxAdapter(child: SizedBox(height: gap)));
     }
 
     // Below-the-fold: a single lazily-building SliverList. Each visible
@@ -1220,11 +1223,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final section = visible[eagerCount + index];
+              final gap =
+                  section == HomeSection.quickActions ? 6.0 : kHomeGap;
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   _widgetForSection(section),
-                  const SizedBox(height: kHomeGap),
+                  SizedBox(height: gap),
                 ],
               );
             },
@@ -1253,10 +1258,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget _widgetForSection(HomeSection section) {
     switch (section) {
       case HomeSection.quickActions:
-        return const Padding(
-          padding: EdgeInsets.only(bottom: 4),
-          child: QuickActionsRow(),
-        );
+        return const QuickActionsRow();
       case HomeSection.weekStrip:
         return const HomeWeekStrip();
       case HomeSection.coachHero:

@@ -110,12 +110,12 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         // ALL pages share this one height so the deck reads at a constant size
         // as you swipe. Page 1 is a big ring-LEFT + a single vertical column of
         // 3 tiles on the RIGHT (Google-Health style); page 2 is a 3×2 grid.
-        // Tightened 240→216 (user feedback: shorter without losing content).
-        // The 3-tile column is the height floor: a compact MetricTile needs
-        // ~52px of content, so tiles can't go below ~54 without clipping.
-        // Inner height = 216 − 8 top − 30 bottom (footer) = 178, which fits the
-        // page-1 tile column (3×54 + 2×7 = 176) and the page-2 grid alike.
-        height: 216,
+        // Tightened 240→200 (user feedback: noticeably shorter, KEEP 3 metrics).
+        // The 3-tile column is the height floor; trimming MetricTile's compact
+        // inner padding (8→6) drops its content to ~46px so a 50px tile fits.
+        // Inner height = 200 − 6 top − 30 bottom (footer) = 164, which fits the
+        // page-1 tile column (3×50 + 2×6 = 162) and the page-2 grid alike.
+        height: 200,
         child: Stack(
           children: [
             // The cards fill the full height; their content centers, leaving a
@@ -263,11 +263,11 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     // at the exact same height. The ring already encodes all four pillars, so a
     // tighter 3-up stack reads cleaner than the old 2×2 grid; overflow metrics
     // (incl. Sleep when it's the 4th) live on the next swipe page.
-    const double tileHeight = 54;
-    const double tileGap = 7; // 3×54 + 2×7 = 176 ≤ 178 inner height
+    const double tileHeight = 50;
+    const double tileGap = 6; // 3×50 + 2×6 = 162 ≤ 164 inner height
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 30),
       child: Center(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -356,7 +356,7 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
     // without a box). Bottom pad clears the overlaid dots + gear footer.
     return Container(
       decoration: _cardDecoration(c),
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 38),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 30),
       child: Align(
         alignment: Alignment.topCenter,
         child: GridView(
@@ -364,10 +364,10 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            mainAxisSpacing: 9,
-            crossAxisSpacing: 9,
-            // 56 so 3 rows (3×56 + 2×9 = 186) fit above the footer strip.
-            mainAxisExtent: 56,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            // 50 matches the summary tiles; ≤2 rows fit the shorter deck.
+            mainAxisExtent: 50,
           ),
           children: [
             for (final kind in tiles)
@@ -779,7 +779,7 @@ class MetricTile extends ConsumerWidget {
               ),
             ),
             Padding(
-              padding: EdgeInsets.all(compact ? 8 : 11),
+              padding: EdgeInsets.all(compact ? 6 : 11),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
