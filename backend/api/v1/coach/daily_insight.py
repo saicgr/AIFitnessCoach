@@ -28,6 +28,7 @@ fallback path is deterministic + flagged.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -1003,6 +1004,40 @@ def _welcome_payload(
     }
 
 
+def _night_sleep_payload(first_name: str, local_date_iso: str) -> Dict[str, Any]:
+    """Deterministic NIGHT coach message when there's no sleep data to ground a
+    personalized tip (health not connected / nothing synced). Generic sleep-
+    hygiene + hydrate guidance — NOT "last night ran short" (we don't know). The
+    /health/sleep CTA shows the connect state for disconnected users. ≥4 variants,
+    no em/en dashes."""
+    name = first_name if (first_name and first_name != "there") else None
+    vocative = f", {name}" if name else ""
+    seed = abs(hash((first_name, local_date_iso, "night_sleep"))) % 4
+    headlines = [
+        f"Set up a good night{vocative}",
+        f"Sleep sets up tomorrow{vocative}",
+        f"Wind down{vocative}",
+        f"Tonight's the recovery rep{vocative}",
+    ]
+    bodies = [
+        "Aim for a consistent bedtime, dim the lights, and step away from screens "
+        "about 30 minutes before bed. A glass of water now helps too.",
+        "Keep the room cool and dark, skip late caffeine, and hold a steady "
+        "bedtime. Hydrate a little now and let recovery do the work.",
+        "The biggest lever tonight is a consistent bedtime. Lower the lights, put "
+        "the phone down soon, and drink some water before you turn in.",
+        "Good sleep is the foundation. Wind down now, keep screens off near bed, "
+        "and aim for your usual lights-out time.",
+    ]
+    return {
+        "headline": headlines[seed % len(headlines)],
+        "body": bodies[seed % len(bodies)],
+        "cta_primary": {"label": "Sleep tips", "route": "/health/sleep"},
+        "cta_secondary": {"label": "Chat with coach", "route": "/chat"},
+        "leading_pillar": "sleep",
+    }
+
+
 # ---------------------------------------------------------------------------
 # Workout-stats snapshot (source=workout_stats) — training-trend ground truth
 # ---------------------------------------------------------------------------
@@ -1580,17 +1615,30 @@ async def daily_insight(
         # generation runs against the user's *current* snapshot, which would
         # fabricate a "that day's tip" from today's data — a lie when replayed
         # in the timeline. Only today (and future, for previews) may compute on
-        # a cache miss. Past days simply have no recorded tip → 404, which the
-        # client renders as "no tip for that day" (graphs still show).
+        # a cache miss.
+        #
+        # Past days simply have no recorded tip. We return a 200 with an EMPTY
+        # insight (delivery="none", blank headline/body, no blocks) rather than
+        # a 404. Rationale: the Home timeline fans out one request per visible
+        # day (~7/open), so a 404 per tip-less day flooded the backend logs with
+        # WARNINGs and raised a DioException on-device for every empty day. The
+        # client renders an empty headline+body as "no tip for that day" exactly
+        # the same way it rendered the caught 404 (home_timeline.dart self-hides
+        # when both are blank), so this is behaviour-identical for the shipped
+        # app while removing the log/error noise — and it deploys server-side
+        # with no app update needed.
         if not refresh:
             try:
                 today_local = user_today_date(request, sb, user_id)
             except Exception:
                 today_local = local_date
             if local_date < today_local:
-                raise HTTPException(
-                    status_code=404,
-                    detail="No coach insight was recorded for this date.",
+                return DailyInsightResponse(
+                    local_date=local_date_iso,
+                    source=source,
+                    headline="",
+                    body="",
+                    delivery="none",
                 )
 
         # ---- Assemble snapshot + context ----------------------------------
@@ -1609,11 +1657,25 @@ async def daily_insight(
         # source=workout_stats uses a dedicated TRAINING-TREND snapshot instead
         # of the daily-pillar snapshot. It carries no next_workout / cycle /
         # goal blocks — the prompt branch + fallback read its own field set.
+        #
+        # Both snapshot collectors fire ~12 SEQUENTIAL synchronous supabase
+        # queries. Run directly, they block the asyncio event loop for the whole
+        # chain — under the Home fan-out that serializes the worker's requests
+        # and is a prime contributor to the whole-backend stalls that surface as
+        # 30s receive-timeouts on this very endpoint. Offload the collector to
+        # the default executor (40-thread pool, main.py) so the loop stays free
+        # to service other requests while these queries run. Matches the
+        # timeline.py / nutrition executor-offload pattern.
+        loop = asyncio.get_event_loop()
         if source == "workout_stats":
-            snapshot = _collect_workout_stats_snapshot(sb, user_id, local_date)
+            snapshot = await loop.run_in_executor(
+                None, _collect_workout_stats_snapshot, sb, user_id, local_date
+            )
             next_workout = None
         else:
-            snapshot, next_workout = _collect_snapshot(sb, user_id, local_date_iso)
+            snapshot, next_workout = await loop.run_in_executor(
+                None, _collect_snapshot, sb, user_id, local_date_iso
+            )
 
         from zoneinfo import ZoneInfo
         now_local = datetime.now(ZoneInfo(tz_resolved if tz_resolved else "UTC"))
@@ -1642,7 +1704,10 @@ async def daily_insight(
         if source in ("morning_brief", "evening_recap", "home"):
             try:
                 from services.coach.memory.injector import build_memory_block_for_briefing
-                ctx["coach_memory"] = build_memory_block_for_briefing(user_id)
+                # Blocking (Supabase queries) — offload so it doesn't stall the loop.
+                ctx["coach_memory"] = await loop.run_in_executor(
+                    None, build_memory_block_for_briefing, user_id
+                )
                 # Only the briefings ASK an open-loop check-in question, so only
                 # they spend the loop's nag budget. Home weaves a durable fact
                 # for personalization without surfacing/advancing open loops.
@@ -1708,6 +1773,36 @@ async def daily_insight(
                 blocks=_home_blocks(None),  # empty for a no-data user → text-only
             )
 
+        # ---- Night sleep focus when there's no sleep data -----------------
+        # In the evening/late buckets, an active user with NO tracked sleep
+        # (health disconnected / nothing synced) gets deterministic sleep-hygiene
+        # guidance instead of a daytime leverage tip. (With sleep data, the
+        # updated LEADING_PILLAR rule lets Gemini lead with a personalized sleep
+        # insight below.)
+        # Gate on ACTUAL sleep minutes (not snapshot.sleep.applicable, which
+        # defaults True when there's no daily_activity row at all). No minutes =
+        # no data to ground a personalized sleep tip → deterministic hygiene.
+        if (
+            source == "home"
+            and _time_of_day_bucket(now_local) in ("evening", "late")
+            and not (snapshot.get("sleep") or {}).get("total_minutes")
+        ):
+            ns = _night_sleep_payload(first_name, local_date_iso)
+            return DailyInsightResponse(
+                insight_id=None,
+                local_date=local_date_iso,
+                source=source,
+                headline=ns["headline"],
+                body=ns["body"],
+                cta_primary=ns.get("cta_primary"),
+                cta_secondary=ns.get("cta_secondary"),
+                chips=None,
+                leading_pillar=ns.get("leading_pillar"),
+                generated_at=datetime.now(timezone.utc).isoformat(),
+                delivery="deterministic",
+                blocks=_home_blocks(ns.get("leading_pillar")),
+            )
+
         # ---- Cost cap check -----------------------------------------------
         delivery = "gemini"
         gemini_payload: Optional[Dict[str, Any]] = None
@@ -1715,9 +1810,30 @@ async def daily_insight(
             logger.info(f"[daily_insight] user={user_id} cost cap hit, using fallback")
             delivery = "deterministic_fallback"
         else:
-            gemini_payload = await _call_gemini_for_insight(
-                context=ctx, source=source, user_id=user_id,
-            )
+            # Overall generation budget. _call_gemini_for_insight uses
+            # timeout=20s PER attempt x max_retries=4, so a degraded Gemini could
+            # hold this request ~80s — well past the client's 30s receiveTimeout
+            # (see api_constants.dart), which is exactly the on-device
+            # "/coach/daily-insight receive timeout" Sentry error. When the
+            # client times out it shows ITS OWN deterministic fallback and the
+            # server's work is wasted. Cap the wall-clock here at 22s (< the 30s
+            # client budget, leaving headroom for the snapshot already collected)
+            # so a slow Gemini returns the SERVER's deterministic fallback fast
+            # instead of timing out. The fallback is never persisted, so the next
+            # open re-attempts a real generation.
+            try:
+                gemini_payload = await asyncio.wait_for(
+                    _call_gemini_for_insight(
+                        context=ctx, source=source, user_id=user_id,
+                    ),
+                    timeout=22.0,
+                )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f"[daily_insight] user={user_id} generation exceeded 22s budget, "
+                    f"returning deterministic fallback"
+                )
+                gemini_payload = None
             if gemini_payload is None:
                 delivery = "deterministic_fallback"
             else:
@@ -1776,17 +1892,21 @@ async def daily_insight(
                 # a brand-new row on every regeneration, piling up same-day
                 # duplicates. Clearing the matching key first guarantees exactly
                 # one current row per (user, date, source, stat_context).
-                delq = sb.client.table("coach_daily_insights").delete().eq(
-                    "user_id", user_id
-                ).eq("local_date", local_date_iso).eq("source", source)
-                if stat_context is not None:
-                    delq = delq.eq("stat_context", stat_context)
-                else:
-                    delq = delq.is_("stat_context", "null")
-                delq.execute()
-                ins = sb.client.table("coach_daily_insights").insert(
-                    insert_payload,
-                ).execute()
+                def _persist():
+                    delq = sb.client.table("coach_daily_insights").delete().eq(
+                        "user_id", user_id
+                    ).eq("local_date", local_date_iso).eq("source", source)
+                    if stat_context is not None:
+                        delq = delq.eq("stat_context", stat_context)
+                    else:
+                        delq = delq.is_("stat_context", "null")
+                    delq.execute()
+                    return sb.client.table("coach_daily_insights").insert(
+                        insert_payload,
+                    ).execute()
+
+                # Blocking delete+insert — offload off the event loop.
+                ins = await loop.run_in_executor(None, _persist)
                 if ins and ins.data:
                     insight_id = ins.data[0].get("id")
                     generated_at_iso = ins.data[0].get("generated_at", generated_at_iso)

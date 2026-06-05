@@ -301,10 +301,20 @@ final coachInsightForDateProvider = FutureProvider.autoDispose
       },
     );
     final data = res.data;
-    if (data is Map<String, dynamic>) return DailyCoachInsight.fromJson(data);
+    if (data is Map<String, dynamic>) {
+      // Past days with no recorded tip return a 200 with delivery="none" and a
+      // blank headline/body (the backend stopped 404ing these — see the
+      // historical-date guard in daily_insight.py). Treat that as "no tip".
+      if ((data['delivery'] as String?) == 'none') return null;
+      final insight = DailyCoachInsight.fromJson(data);
+      if (insight.headline.trim().isEmpty && insight.body.trim().isEmpty) {
+        return null;
+      }
+      return insight;
+    }
     return null;
   } catch (_) {
-    // 404 (no recorded tip) or any transient error → no historical tip.
+    // 404 (legacy clients / transient error) → no historical tip.
     return null;
   }
 });
