@@ -133,25 +133,51 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
 
   TimezoneNotifier(this._ref) : super(const TimezoneState()) {
     _init();
+    // Re-resolve from the user profile once auth hydrates. `_init()` runs at
+    // app start and can complete BEFORE the Supabase session/profile is
+    // available — falling back to a device/local value (or, on an emulator
+    // whose clock is UTC, to UTC). Without this listener that early value would
+    // stick for the whole session (the notifier only inits once), so every
+    // request keyed off `timezoneProvider` (e.g. /coach/daily-insight) would
+    // keep sending the wrong tz. When the profile's real IANA zone arrives,
+    // adopt it.
+    _ref.listen<AuthState>(authStateProvider, (prev, next) {
+      final profileTz = next.user?.timezone;
+      if (_isValidIana(profileTz) && profileTz != state.timezone) {
+        state = TimezoneState(timezone: profileTz!, isLoading: false);
+        debugPrint('🕐 [Timezone] Updated from profile after auth: $profileTz');
+      }
+    });
   }
+
+  /// A usable timezone is a real IANA zone (e.g. "America/Chicago") — it must
+  /// contain a "/". A bare "UTC" / "Etc/UTC" or an abbreviation ("CDT") is NOT
+  /// trusted as the user's real zone: an older build (or an emulator default)
+  /// may have persisted "UTC", and trusting it would mask the device's actual
+  /// zone. Mirrors the api_client header logic (`_getCachedTimezone`).
+  static bool _isValidIana(String? tz) =>
+      tz != null && tz.contains('/') && tz != 'Etc/UTC';
 
   /// Initialize timezone from user profile or device
   Future<void> _init() async {
     state = state.copyWith(isLoading: true);
     try {
-      // First try to get from user profile
+      // First try to get from user profile (only if it's a real IANA zone).
       final authState = _ref.read(authStateProvider);
-      if (authState.user?.timezone != null && authState.user!.timezone!.isNotEmpty) {
-        state = TimezoneState(timezone: authState.user!.timezone!, isLoading: false);
+      final profileTz = authState.user?.timezone;
+      if (_isValidIana(profileTz)) {
+        state = TimezoneState(timezone: profileTz!, isLoading: false);
         debugPrint('🕐 [Timezone] Loaded from user profile: ${state.timezone}');
         return;
       }
 
-      // Then try local storage
+      // Then try local storage — but ONLY a real IANA zone. A persisted bare
+      // "UTC" from an older build must not lock us onto UTC when the device
+      // actually knows its zone.
       final prefs = await SharedPreferences.getInstance();
       final savedTimezone = prefs.getString(_timezoneKey);
-      if (savedTimezone != null && savedTimezone.isNotEmpty) {
-        state = TimezoneState(timezone: savedTimezone, isLoading: false);
+      if (_isValidIana(savedTimezone)) {
+        state = TimezoneState(timezone: savedTimezone!, isLoading: false);
         debugPrint('🕐 [Timezone] Loaded from local storage: ${state.timezone}');
         // Sync to backend if user is logged in but doesn't have timezone set
         if (authState.user != null) {
@@ -169,6 +195,12 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
       await _autoSyncTimezone(deviceTimezone);
     } catch (e) {
       debugPrint('❌ [Timezone] Init error: $e');
+      // Even on error, the device's own zone beats a blind UTC fallback.
+      try {
+        final deviceTimezone = await _detectDeviceTimezone();
+        state = TimezoneState(timezone: deviceTimezone, isLoading: false);
+        return;
+      } catch (_) {}
       state = TimezoneState(timezone: 'UTC', isLoading: false, error: e.toString());
     }
   }
