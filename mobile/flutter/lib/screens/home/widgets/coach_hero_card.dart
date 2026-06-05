@@ -23,9 +23,11 @@ import '../../../data/providers/coach_card_visibility_provider.dart';
 import '../../../data/providers/contextual_nudge_provider.dart';
 import '../../../data/providers/daily_coach_insight_provider.dart';
 import '../../../data/providers/sub_card_shown_today_provider.dart';
+import '../../../data/services/health_service.dart' show healthSyncProvider;
 import '../../../widgets/coach/coach_contextual_nudge_row.dart';
 import '../../../widgets/coach/sub_card_ranker.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/health_connect_sheet.dart';
 import '../../chat/widgets/generic_blocks_renderer.dart';
 import 'home/unified_home_widgets.dart' show kHomeHPad;
 
@@ -41,6 +43,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   // Client-side rate-limit on long-press regenerate (≤ once per 30 min).
   DateTime? _lastRegenAt;
   bool _regenerating = false;
+
+  // Inline "Show more / Show less" state for the message body. Collapsed by
+  // default so the action items below sit at first glance.
+  bool _bodyExpanded = false;
 
   // Visibility (expanded / minimized / dismissedToday) lives in
   // `coachCardVisibilityProvider` (Riverpod + SharedPreferences keyed by
@@ -88,7 +94,7 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               ],
             ),
           ),
-          padding: EdgeInsetsDirectional.fromSTEB(16, 14, 10, isMinimized ? 12 : 14),
+          padding: EdgeInsetsDirectional.fromSTEB(16, 10, 10, isMinimized ? 12 : 14),
           child: insightAsync.when(
             data: (insight) =>
                 _content(c, insight, isMinimized: isMinimized),
@@ -97,6 +103,62 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           ),
         ),
       ),
+    );
+  }
+
+  /// The single-paragraph message body, collapsed to 3 lines with an inline
+  /// "Show more" / "Show less" toggle. The toggle only appears when the text
+  /// actually exceeds 3 lines (measured), so short tips show no link. The full
+  /// tip is always reachable inline — nothing is truncated away.
+  Widget _expandableBody(ThemeColors c, String text) {
+    final style = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w500,
+      height: 1.35,
+      color: c.textSecondary,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tp = TextPainter(
+          text: TextSpan(text: text, style: style),
+          maxLines: 3,
+          textDirection: Directionality.of(context),
+        )..layout(maxWidth: constraints.maxWidth);
+        final overflows = tp.didExceedMaxLines;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              style: style,
+              maxLines: _bodyExpanded ? null : 3,
+              overflow:
+                  _bodyExpanded ? TextOverflow.clip : TextOverflow.ellipsis,
+            ),
+            if (overflows) ...[
+              const SizedBox(height: 2),
+              // Inner tap target wins the gesture arena, so toggling does not
+              // also fire the whole-card open-chat tap.
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => setState(() => _bodyExpanded = !_bodyExpanded),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Text(
+                    _bodyExpanded ? 'Show less' : 'Show more',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: c.accent,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -184,31 +246,21 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             ),
         ] else if (insight.body.isNotEmpty) ...[
           const SizedBox(height: 4),
-          // No maxLines / ellipsis — the Coach card is the headline surface
-          // on Home; truncating the insight body to 2 lines made the daily
-          // recommendation read as "Focus on hitting your 93.0g protein…"
-          // which lost the actual recommendation. Server prompt already
-          // bounds the body to ~3-5 sentences; let it wrap.
-          Text(
-            insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              height: 1.35,
-              color: c.textSecondary,
-            ),
+          // Collapsed to 3 lines by default with an inline Show more / Show less
+          // so the CTAs + nudge chips below sit at first glance, while the FULL
+          // tip is one tap away inline (no truncation/loss). The toggle only
+          // appears when the body actually exceeds 3 lines.
+          _expandableBody(
+            c, insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
           ),
         ],
         // Up to 3 compact grounded graphs, the first tied to the tip's leading
-        // pillar (server orders them that way), each rendered shorter via
-        // `compact` so several stack without dominating the card. Only topics
-        // the user has data for appear (the server never fabricates).
+        // pillar (server orders them that way). Rendered as a swipeable carousel
+        // (one visible + dots) so multiple graphs don't grow the card. Only
+        // topics the user has data for appear (the server never fabricates).
         if (insight.blocks.isNotEmpty) ...[
           const SizedBox(height: 10),
-          GenericBlocksRenderer(
-            blocks: insight.blocks.take(3).toList(),
-            compact: true,
-          ),
+          _BlocksCarousel(blocks: insight.blocks.take(3).toList()),
         ],
         if (insight.ctaPrimary != null || insight.ctaSecondary != null) ...[
           const SizedBox(height: 12),
@@ -865,6 +917,152 @@ class _CoachChromeIconButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
           child: Icon(icon, size: 14, color: c.textMuted),
+        ),
+      ),
+    );
+  }
+}
+
+/// Swipeable carousel of the coach card's grounded graphs — one visible at a
+/// time with page dots. When health is NOT connected the user only has one real
+/// graph (nutrition), so we append "connect" prompt pages for the health topics
+/// they're missing (Sleep / Steps / Recovery) — the carousel is then always
+/// multi-page, shows what connecting unlocks, and drives the connection. Once
+/// data exists the backend sends real graphs and the prompts drop off.
+class _BlocksCarousel extends ConsumerStatefulWidget {
+  final List<Map<String, dynamic>> blocks;
+  const _BlocksCarousel({required this.blocks});
+
+  @override
+  ConsumerState<_BlocksCarousel> createState() => _BlocksCarouselState();
+}
+
+class _BlocksCarouselState extends ConsumerState<_BlocksCarousel> {
+  // Tall enough for the tallest compact block (a chart: ~96 chart + title +
+  // container padding). Shorter blocks (metric) top-align in the page.
+  static const double _kHeight = 134;
+  // Hard cap so the carousel can't sprawl (real graphs + prompts).
+  static const int _kMaxPages = 4;
+  final PageController _controller = PageController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    final connected = ref.watch(healthSyncProvider).isConnected;
+
+    // Real graph pages (one per backend block).
+    final pages = <Widget>[
+      for (final b in widget.blocks)
+        Align(
+          alignment: Alignment.topCenter,
+          child: GenericBlocksRenderer(blocks: [b], compact: true),
+        ),
+    ];
+
+    // When health isn't connected there are no sleep/steps/recovery graphs to
+    // show — append a prompt page per missing topic so the carousel is useful.
+    if (!connected) {
+      for (final t in const [
+        ('🌙', 'Sleep trend'),
+        ('👟', 'Steps trend'),
+        ('❤️', 'Recovery'),
+      ]) {
+        if (pages.length >= _kMaxPages) break;
+        pages.add(_connectPromptPage(c, t.$1, t.$2));
+      }
+    }
+
+    if (pages.length <= 1) {
+      // Single real graph, nothing to swipe — render it inline (no dots).
+      return widget.blocks.isEmpty
+          ? const SizedBox.shrink()
+          : GenericBlocksRenderer(blocks: widget.blocks, compact: true);
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: _kHeight,
+          child: PageView.builder(
+            controller: _controller,
+            onPageChanged: (i) => setState(() => _page = i),
+            itemCount: pages.length,
+            itemBuilder: (_, i) => pages[i],
+          ),
+        ),
+        const SizedBox(height: 8),
+        _PageDots(
+          pageCount: pages.length,
+          activeIndex: _page,
+          color: c.textMuted,
+          activeColor: c.accent,
+        ),
+      ],
+    );
+  }
+
+  Widget _connectPromptPage(ThemeColors c, String icon, String topic) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: c.surface.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$icon  $topic',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: c.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Connect Apple Health or Google Fit to see your $topic here.',
+              style: TextStyle(
+                fontSize: 12.5,
+                height: 1.3,
+                color: c.textMuted,
+              ),
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => showHealthConnectSheet(context, ref),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: c.accent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: const Text(
+                  'Connect health',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
