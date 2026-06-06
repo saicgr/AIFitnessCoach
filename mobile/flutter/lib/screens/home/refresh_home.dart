@@ -45,7 +45,8 @@ Future<void> refreshAllHome(WidgetRef ref) async {
   ref.invalidate(gymProfilesProvider);
   ref.invalidate(workoutsProvider);
   ref.invalidate(discoverSnapshotProvider);
-  ref.invalidate(nutritionProvider);
+  ref.invalidate(dailyNutritionProvider);
+  ref.invalidate(nutritionMetaProvider);
   ref.invalidate(hydrationProvider);
   ref.invalidate(upcomingRenewalProvider);
   ref.invalidate(pendingCelebrationsProvider);

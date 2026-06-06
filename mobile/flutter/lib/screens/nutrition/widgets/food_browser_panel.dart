@@ -71,6 +71,31 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     return '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
+  /// Family key for the date being logged to. Optimistic splices must target
+  /// THIS key (not today) so a past-date log lands on the day the user is
+  /// viewing — matching the `date`/`loggedAt` the network write already sends.
+  /// Today when selectedDate is null or today.
+  String get _logDateKey => widget.selectedDate != null
+      ? nutritionKeyFor(widget.selectedDate!)
+      : todayNutritionKey();
+
+  /// Wall-clock-stamped DateTime on the viewed date, for an optimistic row's
+  /// `loggedAt` so it sorts on the correct day. Today when null/today.
+  DateTime get _logDateTime {
+    final d = widget.selectedDate;
+    final now = DateTime.now();
+    if (d == null ||
+        (d.year == now.year && d.month == now.month && d.day == now.day)) {
+      return now;
+    }
+    return DateTime(d.year, d.month, d.day, now.hour, now.minute, now.second);
+  }
+
+  /// ISO-8601 `loggedAt` for a past viewed date; null = today (server-now). For
+  /// network writes that accept `loggedAt` (e.g. logAdjustedFood).
+  String? get _loggedAtIso =>
+      _targetDateString == null ? null : _logDateTime.toIso8601String();
+
   // Saved foods data
   List<SavedFood> _savedFoods = [];
   bool _savedFoodsLoading = true;
@@ -193,7 +218,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
             .loadTodaySummary(widget.userId, showLoading: false),
       );
       ref.read(xpProvider.notifier).markMealLogged();
-      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
+      ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[itemKey] = _LogState.done);
       widget.onFoodLogged();
@@ -222,7 +247,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         date: _targetDateString,
       );
       ref.read(xpProvider.notifier).markMealLogged();
-      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
+      ref.read(dailyNutritionProvider(_logDateKey).notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
       widget.onFoodLogged();
@@ -356,12 +381,12 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       ref.read(xpProvider.notifier).markMealLogged();
       // Source log has all nutrition data already — splice a copy immediately
       final now = DateTime.now();
-      ref.read(nutritionProvider.notifier).spliceRawLog(
+      ref.read(dailyNutritionProvider(_logDateKey).notifier).spliceRawLog(
         FoodLog(
           id: 'optimistic_${now.millisecondsSinceEpoch}',
           userId: widget.userId,
           mealType: widget.mealType.value,
-          loggedAt: now,
+          loggedAt: _logDateTime,
           foodItems: log.foodItems,
           totalCalories: log.totalCalories,
           proteinG: log.proteinG,
@@ -446,10 +471,11 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         totalFat: totalF.round(),
         sourceType: 'recent',
         imageUrl: source.imageUrl,
+        loggedAt: _loggedAtIso,
       );
 
       ref.read(xpProvider.notifier).markMealLogged();
-      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
+      ref.read(dailyNutritionProvider(_logDateKey).notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[stateKey] = _LogState.done);
       widget.onFoodLogged();
@@ -553,7 +579,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                 final service = ref.read(search.foodSearchServiceProvider);
                 service.setSource(source);
                 if (widget.searchQuery.trim().isNotEmpty) {
-                  final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                  final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
                   service.search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
                 }
               },
@@ -567,7 +593,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                 final service = ref.read(search.foodSearchServiceProvider);
                 service.setCountry(code);
                 if (widget.searchQuery.trim().isNotEmpty) {
-                  final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                  final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
                   service.search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
                 }
               },
@@ -637,7 +663,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () {
-                    final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                    final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
                     ref.read(search.foodSearchServiceProvider).search(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
                   },
                   child: Text(AppLocalizations.of(context).buttonRetry, style: TextStyle(color: teal)),
@@ -1044,7 +1070,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     child: GestureDetector(
                       onTap: () {
                         final service = ref.read(search.foodSearchServiceProvider);
-                        final cachedLogs = ref.read(nutritionProvider).recentLogs;
+                        final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
                         service.searchImmediate(widget.searchQuery, widget.userId, cachedLogs: cachedLogs);
                       },
                       child: Text(
@@ -1119,7 +1145,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
             .loadTodaySummary(widget.userId, showLoading: false),
       );
       ref.read(xpProvider.notifier).markMealLogged();
-      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
+      ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
       widget.onFoodLogged();
@@ -1163,7 +1189,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
             .loadTodaySummary(widget.userId, showLoading: false),
       );
       ref.read(xpProvider.notifier).markMealLogged();
-      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
+      ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
       widget.onFoodLogged();

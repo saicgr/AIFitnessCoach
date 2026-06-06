@@ -82,7 +82,7 @@ class _FoodSearchBarState extends ConsumerState<FoodSearchBar> {
 
   void _onSearchChanged(String query) {
     final searchService = ref.read(foodSearchServiceProvider);
-    final cachedLogs = ref.read(nutritionProvider).recentLogs;
+    final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
     searchService.search(query, widget.userId, cachedLogs: cachedLogs);
     if (query.trim().isNotEmpty) {
       ref.read(posthogServiceProvider).capture(
@@ -365,7 +365,7 @@ class _FoodSearchBarCompactState extends ConsumerState<FoodSearchBarCompact> {
 
   void _onSearchChanged(String query) {
     final searchService = ref.read(foodSearchServiceProvider);
-    final cachedLogs = ref.read(nutritionProvider).recentLogs;
+    final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
     searchService.search(query, widget.userId, cachedLogs: cachedLogs);
     widget.onSearch?.call(query);
   }

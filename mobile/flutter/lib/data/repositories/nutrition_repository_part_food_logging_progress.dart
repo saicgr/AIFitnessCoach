@@ -366,22 +366,55 @@ class MultiImageAnalysisProgress {
       'MultiImageAnalysisProgress(step: $step/$totalSteps, type: $analysisType, message: $message)';
 }
 
-/// Nutrition state
+/// Local-tz date key (yyyy-MM-dd) for "today". The [dailyNutritionProvider]
+/// family is keyed by this string, so a date IS the provider identity — there
+/// is no shared single slot another date could clobber.
+String todayNutritionKey() => Tz.localDate();
+
+/// Local-tz date key (yyyy-MM-dd) for an arbitrary [date].
+String nutritionKeyFor(DateTime date) =>
+    '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+
+/// Per-date nutrition state — ONE calendar date's summary + logs.
 ///
-/// `loadedSummaryDate` / `loadedLogsDate` (yyyy-MM-dd in the user's local
-/// timezone) record which date the currently cached `todaySummary` /
-/// `recentLogs` actually belong to. They exist so that switching dates
-/// (Today → Yesterday → back to Today) doesn't serve the wrong day from the
-/// in-memory cache — the short-circuit in `_shouldSkipLoad` must verify both
-/// user AND date.
-class NutritionState {
+/// One instance lives behind `dailyNutritionProvider(dateKey)`. Because the
+/// date is the provider key, cross-date leakage (yesterday's meals rendering as
+/// today's) is structurally impossible — there is no shared slot to clobber.
+class DailyNutritionState {
   final bool isLoading;
   final String? error;
-  final DailyNutritionSummary? todaySummary;
+  final DailyNutritionSummary? summary;
+  final List<FoodLog> logs;
+
+  const DailyNutritionState({
+    this.isLoading = false,
+    this.error,
+    this.summary,
+    this.logs = const [],
+  });
+
+  DailyNutritionState copyWith({
+    bool? isLoading,
+    String? error,
+    DailyNutritionSummary? summary,
+    List<FoodLog>? logs,
+  }) {
+    return DailyNutritionState(
+      isLoading: isLoading ?? this.isLoading,
+      error: error,
+      summary: summary ?? this.summary,
+      logs: logs ?? this.logs,
+    );
+  }
+}
+
+/// User-level (NOT date-scoped) nutrition state: the calorie/macro targets and
+/// the offline meal-write-queue depth. Lives behind the singleton
+/// [nutritionMetaProvider] so browsing a past date never touches it (the bug
+/// the old single-slot `NutritionState` caused, where date-nav corrupted Home's
+/// calorie card / today-score / metrics).
+class NutritionMetaState {
   final NutritionTargets? targets;
-  final List<FoodLog> recentLogs;
-  final String? loadedSummaryDate;
-  final String? loadedLogsDate;
 
   /// Number of meal-log writes still waiting to sync to the server (offline
   /// queue depth). > 0 means at least one logged meal is NOT yet on the server,
@@ -389,69 +422,40 @@ class NutritionState {
   /// stranded write visible instead of silently lost.
   final int pendingMealSyncCount;
 
-  const NutritionState({
-    this.isLoading = false,
-    this.error,
-    this.todaySummary,
+  const NutritionMetaState({
     this.targets,
-    this.recentLogs = const [],
-    this.loadedSummaryDate,
-    this.loadedLogsDate,
     this.pendingMealSyncCount = 0,
   });
 
-  NutritionState copyWith({
-    bool? isLoading,
-    String? error,
-    DailyNutritionSummary? todaySummary,
+  NutritionMetaState copyWith({
     NutritionTargets? targets,
-    List<FoodLog>? recentLogs,
-    String? loadedSummaryDate,
-    String? loadedLogsDate,
     int? pendingMealSyncCount,
   }) {
-    return NutritionState(
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-      todaySummary: todaySummary ?? this.todaySummary,
+    return NutritionMetaState(
       targets: targets ?? this.targets,
-      recentLogs: recentLogs ?? this.recentLogs,
-      loadedSummaryDate: loadedSummaryDate ?? this.loadedSummaryDate,
-      loadedLogsDate: loadedLogsDate ?? this.loadedLogsDate,
-      pendingMealSyncCount:
-          pendingMealSyncCount ?? this.pendingMealSyncCount,
+      pendingMealSyncCount: pendingMealSyncCount ?? this.pendingMealSyncCount,
     );
   }
 }
 
 
-/// Nutrition state notifier
-class NutritionNotifier extends StateNotifier<NutritionState> {
+/// Owns the genuinely USER-LEVEL nutrition concerns: the calorie/macro targets
+/// and the offline meal-write queue (plus the connectivity listener that drains
+/// it). Split out of the old monolithic notifier so the per-date family can be
+/// purely date-scoped. Singleton — exactly one per session.
+class NutritionMetaNotifier extends StateNotifier<NutritionMetaState> {
   final NutritionRepository _repository;
   final Ref _ref;
-  String? _lastLoadedUserId;  // Track which user data is loaded for
-  DateTime? _lastLoadTime;     // Track when data was last loaded
+  String? _lastLoadedUserId;
+  DateTime? _targetsLoadTime;
 
-  /// Connectivity subscription that flushes the offline meal write queue
-  /// when the network is restored (A11).
+  /// Connectivity subscription that flushes the offline meal write queue when
+  /// the network is restored (A11).
   StreamSubscription<List<ConnectivityResult>>? _connSub;
   bool _isFlushingMealQueue = false;
 
-  /// Tombstones for meals deleted optimistically (A12c). A background
-  /// `loadTodaySummary` whose request was in flight BEFORE the delete landed
-  /// could otherwise resolve afterwards and resurrect the deleted meal. Any
-  /// id in this set is filtered out of an incoming server summary. An entry
-  /// is cleared once `commitDeleteLog`'s network delete confirms the server
-  /// also dropped it (so a later genuine re-log of the same id isn't hidden).
-  final Set<String> _deletedTombstones = {};
-
-  /// Monotonic counter — each summary load increments it. A response whose
-  /// epoch no longer matches has been superseded by a newer load and is
-  /// dropped, so an out-of-order (stale) response never clobbers fresher
-  /// state.
-  int _summaryLoadEpoch = 0;
-
-  NutritionNotifier(this._repository, this._ref) : super(const NutritionState()) {
+  NutritionMetaNotifier(this._repository, this._ref)
+      : super(const NutritionMetaState()) {
     _connSub = Connectivity().onConnectivityChanged.listen((results) {
       final online = results.any((r) =>
           r == ConnectivityResult.wifi ||
@@ -460,7 +464,10 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
           r == ConnectivityResult.vpn);
       if (online) {
         // Defer slightly so the radio + DNS settle before hitting the API.
-        Future.delayed(const Duration(milliseconds: 800), _flushMealQueue);
+        Future.delayed(const Duration(milliseconds: 800), () {
+          final uid = _lastLoadedUserId;
+          if (uid != null) flushMealQueue(uid);
+        });
       }
     });
   }
@@ -471,13 +478,87 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     super.dispose();
   }
 
-  /// Flush the offline meal write queue. Each queued body is replayed verbatim
-  /// (via [NutritionRepository.replayQueuedMealLog]) so its stable
-  /// `idempotency_key` lets the server de-dupe any write that already landed.
-  /// On success the in-memory + disk caches are reconciled with the server.
-  Future<void> _flushMealQueue() async {
-    final userId = _lastLoadedUserId;
-    if (userId == null || _isFlushingMealQueue) return;
+  /// Pre-seed targets from bootstrap so Home renders the calorie ring instantly.
+  void preSeedTargets({
+    int? targetCalories,
+    double? targetProtein,
+    double? targetCarbs,
+    double? targetFat,
+  }) {
+    if (state.targets != null || targetCalories == null) return; // keep real data
+    state = state.copyWith(
+      targets: NutritionTargets(
+        userId: '',
+        dailyCalorieTarget: targetCalories,
+        dailyProteinTargetG: targetProtein ?? 0,
+        dailyCarbsTargetG: targetCarbs ?? 0,
+        dailyFatTargetG: targetFat ?? 0,
+      ),
+    );
+    debugPrint('⚡ [Nutrition] Pre-seeded targets from bootstrap');
+  }
+
+  /// Load nutrition targets (5-minute freshness cache).
+  Future<void> loadTargets(String userId, {bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        _lastLoadedUserId == userId &&
+        _targetsLoadTime != null &&
+        DateTime.now().difference(_targetsLoadTime!).inMinutes < 5 &&
+        state.targets != null) {
+      return;
+    }
+    try {
+      final targets = await _repository.getTargets(userId);
+      state = state.copyWith(targets: targets);
+      _lastLoadedUserId = userId;
+      _targetsLoadTime = DateTime.now();
+    } catch (e) {
+      debugPrint('Error loading nutrition targets: $e');
+    }
+  }
+
+  /// Update nutrition targets, then refresh them.
+  Future<void> updateTargets(
+    String userId, {
+    int? calorieTarget,
+    double? proteinTarget,
+    double? carbsTarget,
+    double? fatTarget,
+  }) async {
+    try {
+      await _repository.updateTargets(
+        userId,
+        calorieTarget: calorieTarget,
+        proteinTarget: proteinTarget,
+        carbsTarget: carbsTarget,
+        fatTarget: fatTarget,
+      );
+      await loadTargets(userId, forceRefresh: true);
+    } catch (e) {
+      debugPrint('Error updating nutrition targets: $e');
+    }
+  }
+
+  /// Public retry hook for the "N meals waiting to sync" affordance.
+  Future<void> retryPendingMealWrites(String userId) async {
+    await flushMealQueue(userId);
+  }
+
+  /// Recompute the offline-queue depth into state so the "waiting to sync"
+  /// surface reflects reality.
+  Future<void> refreshPendingMealCount(String userId) async {
+    final depth = await _MealWriteQueue.depth(userId);
+    if (state.pendingMealSyncCount != depth) {
+      state = state.copyWith(pendingMealSyncCount: depth);
+    }
+  }
+
+  /// Flush the offline meal write queue, then reconcile TODAY's family. Each
+  /// queued body is replayed verbatim so its stable `idempotency_key` lets the
+  /// server de-dupe any write that already landed.
+  Future<void> flushMealQueue(String userId) async {
+    _lastLoadedUserId = userId;
+    if (_isFlushingMealQueue) return;
     if (await _MealWriteQueue.isEmpty(userId)) {
       // Nothing queued — make sure any stale "waiting to sync" badge clears.
       if (state.pendingMealSyncCount != 0) {
@@ -499,201 +580,158 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       if (flushed > 0) {
         // Reconcile: server now holds the real rows. forceRefresh so the
         // optimistic splices are replaced by authoritative data in place.
-        await loadTodaySummary(userId, forceRefresh: true);
-        await loadRecentLogs(userId, forceRefresh: true);
+        final today = todayNutritionKey();
+        final n = _ref.read(dailyNutritionProvider(today).notifier);
+        await n.load(userId, forceRefresh: true);
+        await n.loadLogs(userId, forceRefresh: true);
       }
     } finally {
       _isFlushingMealQueue = false;
-      // Whatever remains queued (a write that keeps failing to land) stays
-      // visible via the pending badge instead of silently lingering.
-      await _refreshPendingMealCount(userId);
+      // Whatever remains queued stays visible via the pending badge.
+      await refreshPendingMealCount(userId);
     }
   }
+}
 
-  /// Recompute the offline-queue depth into state so the "waiting to sync"
-  /// surface reflects reality. Cheap (one SharedPreferences read); safe to
-  /// call after any load or log.
-  Future<void> _refreshPendingMealCount(String userId) async {
-    final depth = await _MealWriteQueue.depth(userId);
-    if (state.pendingMealSyncCount != depth) {
-      state = state.copyWith(pendingMealSyncCount: depth);
-    }
+
+/// Per-date nutrition notifier — the single source of truth for ONE date's
+/// summary + logs. Created via `dailyNutritionProvider(dateKey)`; today's
+/// instance is kept alive (read app-wide + prewarmed), past dates auto-dispose.
+///
+/// Because the date is the provider key, the cross-date leak the old single-slot
+/// `NutritionState` allowed (yesterday's meals rendering as today's, and
+/// browsing a past day corrupting Home/score/metrics) is structurally
+/// impossible: a refresh only ever merges THIS date against THIS date.
+class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
+  final NutritionRepository _repository;
+  final Ref _ref;
+
+  /// yyyy-MM-dd (user local tz) this notifier owns — the provider key.
+  final String _dateKey;
+
+  String? _lastLoadedUserId;
+  DateTime? _lastLoadTime;
+
+  /// Tombstones for meals deleted optimistically (A12c) — filtered out of an
+  /// incoming server summary so an in-flight refresh can't resurrect them.
+  /// Per-date (this instance only).
+  final Set<String> _deletedTombstones = {};
+
+  /// Monotonic counter — each load increments it. A response whose epoch no
+  /// longer matches has been superseded by a newer load and is dropped.
+  int _summaryLoadEpoch = 0;
+
+  DailyNutritionNotifier(this._repository, this._ref, this._dateKey)
+      : super(const DailyNutritionState());
+
+  bool get _isToday => _dateKey == todayNutritionKey();
+
+  /// Parse [_dateKey] into a DateTime stamped with the current wall-clock time —
+  /// used to place an optimistic backfill row on the correct (past) date.
+  DateTime _dateAtNow() {
+    final p = _dateKey.split('-');
+    final now = DateTime.now();
+    return DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]),
+        now.hour, now.minute, now.second);
   }
 
-  /// Public retry hook for the "N meals waiting to sync" affordance. Forces a
-  /// flush attempt regardless of connectivity-change events (the queue is
-  /// otherwise only drained on a reconnect event, which never fires when the
-  /// app launches already-online with a stranded queue from a prior session).
-  Future<void> retryPendingMealWrites() async {
-    await _flushMealQueue();
-  }
+  /// 5-minute in-memory freshness for the same user.
+  bool _fresh(String userId) =>
+      _lastLoadedUserId == userId &&
+      _lastLoadTime != null &&
+      DateTime.now().difference(_lastLoadTime!).inMinutes < 5;
 
-  /// Pre-seed state from bootstrap data so the home screen shows nutrition instantly.
-  void preSeedFromBootstrap({
+  /// Pre-seed THIS date's summary from bootstrap (today only) so Home renders
+  /// instantly. No-op if data is already present or this isn't today.
+  void preSeedSummary({
     required int calories,
-    int? targetCalories,
     required double protein,
     required double carbs,
     required double fat,
-    double? targetProtein,
-    double? targetCarbs,
-    double? targetFat,
   }) {
-    if (state.todaySummary != null) return; // Don't overwrite real data
-    final now = DateTime.now();
-    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    if (!_isToday || state.summary != null) return;
     state = state.copyWith(
-      todaySummary: DailyNutritionSummary(
-        date: todayStr,
+      summary: DailyNutritionSummary(
+        date: _dateKey,
         totalCalories: calories,
         totalProteinG: protein,
         totalCarbsG: carbs,
         totalFatG: fat,
       ),
-      targets: targetCalories != null ? NutritionTargets(
-        userId: '',
-        dailyCalorieTarget: targetCalories,
-        dailyProteinTargetG: targetProtein ?? 0,
-        dailyCarbsTargetG: targetCarbs ?? 0,
-        dailyFatTargetG: targetFat ?? 0,
-      ) : null,
     );
-    debugPrint('⚡ [Nutrition] Pre-seeded from bootstrap');
+    debugPrint('⚡ [Nutrition] Pre-seeded today summary from bootstrap');
   }
 
-  /// Check if we should skip loading (data is fresh - less than 5 minutes old).
+  /// Load this date's summary (stale-while-revalidate).
   ///
-  /// [forDate] — the date the caller is asking about (yyyy-MM-dd, local tz).
-  /// The cache is only usable when the requested date matches the last-loaded
-  /// date; cross-date calls (e.g. toggling from Yesterday back to Today) must
-  /// fall through to the network even when the TTL hasn't elapsed.
-  bool _shouldSkipLoad(String userId, {String? forDate, String? forLoadedDate}) {
-    if (_lastLoadedUserId != userId) return false;
-    if (_lastLoadTime == null) return false;
-    if (forDate != null && forLoadedDate != null && forDate != forLoadedDate) {
-      return false;
-    }
-    final elapsed = DateTime.now().difference(_lastLoadTime!);
-    return elapsed.inMinutes < 5;  // Cache for 5 minutes to improve navigation speed
-  }
-
-  /// Load today's nutrition summary.
-  ///
-  /// Stale-while-revalidate flow:
-  ///   1. In-memory cache hit (<5 min, same user) → return immediately,
-  ///      clearing any leftover error so retry works.
-  ///   2. Otherwise, if the in-memory state is empty, try the disk cache
-  ///      (SharedPreferences, scoped to today's local date). On hit, render
-  ///      that data instantly (no skeleton) and continue to the network
-  ///      refresh in the background.
-  ///   3. Otherwise, show the skeleton and wait for the network.
-  ///   4. On network success, update state + write to disk for the next
-  ///      cold start.
-  ///   5. On network failure: if we're displaying any data (in-memory or
-  ///      from disk), keep it and silently swallow the error. Only surface
-  ///      the error banner when we have nothing else to show.
-  Future<void> loadTodaySummary(String userId, {bool forceRefresh = false}) async {
-    final localDate = Tz.localDate();
-
-    // (1) In-memory freshness short-circuit. Require BOTH user AND date
-    // match — otherwise we'd serve yesterday's summary (left in state by a
-    // prior loadSummaryForDate call) as today's.
-    if (!forceRefresh &&
-        _shouldSkipLoad(userId,
-            forDate: localDate, forLoadedDate: state.loadedSummaryDate) &&
-        state.todaySummary != null &&
-        state.loadedSummaryDate == localDate) {
-      debugPrint('🥗 [NutritionProvider] Skipping loadTodaySummary - data is fresh');
-      if (state.error != null) {
-        state = state.copyWith(error: null);
-      }
+  /// Unifies the old `loadTodaySummary` + `loadSummaryForDate`: the date is
+  /// [_dateKey], so the merge can never pull another day's meals in.
+  ///   1. In-memory cache hit (<5 min, same user) → return, clearing any error.
+  ///   2. Else, if in-memory is empty, seed from the per-date disk cache.
+  ///   3. Network fetch → merge → persist to disk for the next cold start.
+  ///   4. On failure: keep any data on screen, only surface error if empty.
+  Future<void> load(String userId, {bool forceRefresh = false}) async {
+    // (1) In-memory freshness short-circuit.
+    if (!forceRefresh && _fresh(userId) && state.summary != null) {
+      if (state.error != null) state = state.copyWith(error: null);
       return;
     }
 
-    // (2) Disk seed. Only when in-memory is empty AND we're not force-
-    // refreshing (force = user explicitly asked for fresh data).
-    if (!forceRefresh && state.todaySummary == null) {
-      // Set isLoading=true synchronously *before* yielding to the disk read,
-      // so the first build frame shows the skeleton instead of an empty
-      // TabBarView. The disk read is fast (~10ms) — either resolves to
-      // cached data (skeleton replaced immediately) or stays as skeleton
-      // until the network call below returns.
+    // (2) Disk seed when in-memory is empty.
+    if (!forceRefresh && state.summary == null) {
       state = state.copyWith(isLoading: true, error: null);
-      final cached = await _NutritionDiskCache.read(userId, localDate);
+      final cached = await _NutritionDiskCache.read(userId, _dateKey);
       if (cached != null) {
-        debugPrint('🥗 [NutritionProvider] Seeded from disk cache for $localDate');
-        state = state.copyWith(
-          isLoading: false,
-          todaySummary: cached,
-          loadedSummaryDate: localDate,
-        );
+        debugPrint('🥗 [Nutrition] Seeded $_dateKey from disk cache');
+        state = state.copyWith(isLoading: false, summary: cached);
       }
-      // else: keep isLoading=true, the network call below will resolve it
+      // else: keep isLoading=true, the network call below resolves it
     } else {
-      // We already have data on screen; just clear any error so the network
-      // call below can refresh silently without flashing the error banner.
       state = state.copyWith(error: null);
     }
 
     final stopwatch = Stopwatch()..start();
     final epoch = ++_summaryLoadEpoch;
-    // Snapshot what's on screen NOW so the merge below can protect a
-    // just-logged meal from a stale/cached server payload.
-    final localBefore = state.todaySummary;
+    // Snapshot what's on screen NOW so the merge can protect a just-logged meal.
+    final localBefore = state.summary;
     try {
-      // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
-      final raw = await _repository.getDailySummary(userId, date: localDate);
+      final raw = await _repository.getDailySummary(userId, date: _dateKey);
       debugPrint(
-        '🥗 [NutritionProvider] loadTodaySummary network: ${stopwatch.elapsedMilliseconds}ms '
+        '🥗 [Nutrition] load($_dateKey) network: ${stopwatch.elapsedMilliseconds}ms '
         '(meals=${raw.meals.length}, kcal=${raw.totalCalories})',
       );
-      // A newer load superseded this request — drop this (now stale) response
-      // instead of letting it overwrite fresher state.
       if (epoch != _summaryLoadEpoch) return;
-      // Reconcile against what's on screen: drop optimistically-deleted meals
-      // a (possibly cached) server payload still carries (A12c), and re-add a
-      // just-logged local meal the payload omitted. Never blind-overwrite.
+      // A raced response for a DIFFERENT date must never render here.
+      if (raw.date.isNotEmpty && raw.date != _dateKey) return;
       final summary = _mergeServerSummary(raw, localBefore);
-      state = state.copyWith(
-        isLoading: false,
-        todaySummary: summary,
-        loadedSummaryDate: localDate,
-      );
+      state = state.copyWith(isLoading: false, summary: summary);
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
 
-      // (Sync-recovery) This network call just succeeded, so we are demonstrably
-      // online. Opportunistically drain any stranded offline meal-write queue.
-      // The connectivity listener only fires on a CHANGE event, so a queue left
-      // from a prior session never flushes when the app launches already-online
-      // — the meal sits unsynced forever while the user believes it saved. A
-      // tab-open flush closes that hole. Cheap + idempotent (isEmpty short-
-      // circuits; idempotency keys de-dupe), so fire-and-forget is safe.
-      unawaited(_flushMealQueue());
+      // Persist per-date for instant revisit / cold start.
+      unawaited(_NutritionDiskCache.write(userId, _dateKey, summary));
 
-      // (4) Persist the RECONCILED result to disk for next cold start.
-      // Fire-and-forget — never block the UI on disk I/O.
-      unawaited(_NutritionDiskCache.write(userId, localDate, summary));
-
-      // Home-screen food widget — push fresh calories + macros vs goal.
-      final t = state.targets;
-      unawaited(WidgetService.updateFoodWidget(
-        caloriesConsumed: summary.totalCalories,
-        calorieGoal: t?.dailyCalorieTarget ?? 2000,
-        proteinGrams: summary.totalProteinG.round(),
-        carbsGrams: summary.totalCarbsG.round(),
-        fatGrams: summary.totalFatG.round(),
-      ));
-
-      // Check if protein goal was hit and award XP
-      _checkProteinGoal(summary);
+      if (_isToday) {
+        // A successful read proves we're online — drain any stranded queue.
+        unawaited(
+            _ref.read(nutritionMetaProvider.notifier).flushMealQueue(userId));
+        // Home food widget + XP only ever track TODAY.
+        final t = _ref.read(nutritionMetaProvider).targets;
+        unawaited(WidgetService.updateFoodWidget(
+          caloriesConsumed: summary.totalCalories,
+          calorieGoal: t?.dailyCalorieTarget ?? 2000,
+          proteinGrams: summary.totalProteinG.round(),
+          carbsGrams: summary.totalCarbsG.round(),
+          fatGrams: summary.totalFatG.round(),
+        ));
+        _checkProteinGoal(summary);
+      }
     } catch (e) {
       debugPrint(
-        '🥗 [NutritionProvider] loadTodaySummary FAILED after ${stopwatch.elapsedMilliseconds}ms: $e',
+        '🥗 [Nutrition] load($_dateKey) FAILED after ${stopwatch.elapsedMilliseconds}ms: $e',
       );
       if (epoch != _summaryLoadEpoch) return;
-      // (5) Only surface the error if we have nothing on screen.
-      if (state.todaySummary == null) {
+      if (state.summary == null) {
         state = state.copyWith(isLoading: false, error: e.toString());
       } else {
         state = state.copyWith(isLoading: false);
@@ -701,16 +739,16 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
   }
 
-  /// Check if user hit their daily protein goal and award XP
+  /// Check if user hit their daily protein goal and award XP (today only).
   void _checkProteinGoal(DailyNutritionSummary summary) {
-    final targets = state.targets;
+    final targets = _ref.read(nutritionMetaProvider).targets;
     if (targets == null) return;
 
     final proteinConsumed = summary.totalProteinG ?? 0;
     final proteinTarget = targets.dailyProteinTargetG ?? 150;
 
     if (proteinConsumed >= proteinTarget) {
-      debugPrint('🎯 [NutritionProvider] Protein goal hit! ${proteinConsumed.toInt()}g / ${proteinTarget.toInt()}g');
+      debugPrint('🎯 [Nutrition] Protein goal hit! ${proteinConsumed.toInt()}g / ${proteinTarget.toInt()}g');
       // Award XP - the provider handles duplicate prevention
       _ref.read(xpProvider.notifier).markProteinGoalHit();
     }
@@ -724,7 +762,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// snack; the upper bound is the target itself since "less than target"
   /// defines the deficit. Idempotent per day via the provider.
   void _checkCalorieGoal(DailyNutritionSummary summary) {
-    final targets = state.targets;
+    final targets = _ref.read(nutritionMetaProvider).targets;
     if (targets == null) return;
 
     final caloriesConsumed = summary.totalCalories;
@@ -733,185 +771,97 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
     final floor = (calorieTarget * 0.8).round();
     if (caloriesConsumed >= floor && caloriesConsumed < calorieTarget) {
-      debugPrint('🎯 [NutritionProvider] Calorie deficit hit! $caloriesConsumed / $calorieTarget kcal');
+      debugPrint('🎯 [Nutrition] Calorie deficit hit! $caloriesConsumed / $calorieTarget kcal');
       _ref.read(xpProvider.notifier).markCalorieGoalHit();
     }
   }
 
-  /// Load nutrition summary for a specific date (used when navigating dates)
-  Future<void> loadSummaryForDate(String userId, DateTime date) async {
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-
-    // Cache match: same user, same date, fresh → skip.
-    if (_shouldSkipLoad(userId,
-            forDate: dateStr, forLoadedDate: state.loadedSummaryDate) &&
-        state.todaySummary != null &&
-        state.loadedSummaryDate == dateStr) {
+  /// Load this date's food logs. For today this uses the recent-logs path with
+  /// unsynced-row protection; for past dates it fetches the [date, date+1] range
+  /// and filters to this local date (so a log that lands on the next UTC day due
+  /// to timezone offset is still included).
+  Future<void> loadLogs(String userId,
+      {int limit = 50, bool forceRefresh = false}) async {
+    if (_isToday) {
+      if (!forceRefresh && _fresh(userId) && state.logs.isNotEmpty) {
+        debugPrint('🥗 [Nutrition] Skipping loadLogs(today) - data is fresh');
+        return;
+      }
+      try {
+        final logs = await _repository.getFoodLogs(userId, limit: limit);
+        // Don't let an empty (stale/cached/flaky) response wipe logs still on
+        // screen when an unsynced or just-written local row is present.
+        if (logs.isEmpty && _hasUnconfirmedOrRecentLocalLog()) {
+          debugPrint(
+              '🥗 [Nutrition] loadLogs: ignored empty response — unsynced/recent local log present');
+        } else {
+          final unsynced = [
+            for (final l in state.logs)
+              if (l.id.startsWith('optimistic_') &&
+                  !logs.any((s) =>
+                      s.id == l.id ||
+                      (l.idempotencyKey != null &&
+                          l.idempotencyKey!.isNotEmpty &&
+                          s.idempotencyKey == l.idempotencyKey)))
+                l,
+          ];
+          final merged = unsynced.isEmpty ? logs : [...unsynced, ...logs];
+          state = state.copyWith(logs: merged);
+        }
+        _lastLoadedUserId = userId;
+        unawaited(
+            _ref.read(nutritionMetaProvider.notifier).flushMealQueue(userId));
+      } catch (e) {
+        debugPrint('Error loading recent food logs: $e');
+      }
       return;
     }
 
-    // Clear stale data from a different date BEFORE the fetch so the UI
-    // doesn't render the wrong day while the network call is in flight.
-    state = state.copyWith(
-      isLoading: true,
-      error: null,
-      todaySummary: state.loadedSummaryDate == dateStr ? state.todaySummary : null,
-    );
-    final epoch = ++_summaryLoadEpoch;
-    final localBefore = state.todaySummary;
+    // Past / other date — fetch [date, date+1] and filter to this local date.
     try {
-      final raw = await _repository.getDailySummary(userId, date: dateStr);
-      // Superseded by a newer load — drop this response.
-      if (epoch != _summaryLoadEpoch) return;
-      // A raced response for a DIFFERENT date must never render as this date.
-      if (raw.date.isNotEmpty && raw.date != dateStr) return;
-      // Merge only against a local summary that is for the SAME date, so the
-      // recency re-add can't pull another day's meals in.
-      final summary = _mergeServerSummary(
-        raw,
-        localBefore?.date == dateStr ? localBefore : null,
-      );
-      state = state.copyWith(
-        isLoading: false,
-        todaySummary: summary,
-        loadedSummaryDate: dateStr,
-      );
-      _lastLoadedUserId = userId;
-      _lastLoadTime = DateTime.now();
-      // Disk cache holds a single summary per user and is keyed to today's
-      // local date (see `_NutritionDiskCache.read`). We deliberately DON'T
-      // write non-today summaries here — doing so would overwrite the
-      // today-cold-start payload with stale data. Historical dates simply
-      // re-fetch on revisit (typical usage is infrequent).
-    } catch (e) {
-      if (epoch != _summaryLoadEpoch) return;
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
-  }
-
-  /// Load food logs for a specific date
-  Future<void> loadLogsForDate(String userId, DateTime date) async {
-    final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    // Clear logs from a different date so we don't render stale rows while
-    // fetching.
-    if (state.loadedLogsDate != dateStr) {
-      state = state.copyWith(recentLogs: const [], loadedLogsDate: dateStr);
-    }
-    try {
-      // Request [date, date+1] so logs that land on the next UTC day due to
-      // timezone offset (e.g. 7 PM CT = 00:49 UTC next day) are included.
-      // Filter client-side to keep only logs whose local date matches `date`.
-      final nextDay = date.add(const Duration(days: 1));
-      final nextDayStr = '${nextDay.year}-${nextDay.month.toString().padLeft(2, '0')}-${nextDay.day.toString().padLeft(2, '0')}';
-      final rawLogs = await _repository.getFoodLogs(userId, fromDate: dateStr, toDate: nextDayStr);
+      final date = DateTime.parse(_dateKey);
+      final nextDayStr = nutritionKeyFor(date.add(const Duration(days: 1)));
+      final rawLogs = await _repository.getFoodLogs(userId,
+          fromDate: _dateKey, toDate: nextDayStr);
       final logs = rawLogs.where((log) {
         final local = log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
-        return local.year == date.year && local.month == date.month && local.day == date.day;
+        return nutritionKeyFor(local) == _dateKey;
       }).toList();
-      state = state.copyWith(recentLogs: logs, loadedLogsDate: dateStr);
-    } catch (e) {
-      debugPrint('Error loading food logs for date: $e');
-    }
-  }
-
-  /// Load nutrition targets
-  Future<void> loadTargets(String userId, {bool forceRefresh = false}) async {
-    // Skip if data is fresh
-    if (!forceRefresh && _shouldSkipLoad(userId) && state.targets != null) {
-      return;
-    }
-
-    try {
-      final targets = await _repository.getTargets(userId);
-      state = state.copyWith(targets: targets);
-    } catch (e) {
-      debugPrint('Error loading nutrition targets: $e');
-    }
-  }
-
-  /// Load recent food logs (for Today).
-  ///
-  /// `recentLogs` is shared with `loadLogsForDate` — so if a prior call loaded
-  /// yesterday's logs, skipping here would show yesterday's rows as "today's."
-  /// Gate on the loaded date matching today's local date.
-  Future<void> loadRecentLogs(String userId, {int limit = 50, bool forceRefresh = false}) async {
-    final todayStr = Tz.localDate();
-    if (!forceRefresh &&
-        _shouldSkipLoad(userId,
-            forDate: todayStr, forLoadedDate: state.loadedLogsDate) &&
-        state.recentLogs.isNotEmpty &&
-        state.loadedLogsDate == todayStr) {
-      debugPrint('🥗 [NutritionProvider] Skipping loadRecentLogs - data is fresh');
-      return;
-    }
-
-    try {
-      final logs = await _repository.getFoodLogs(userId, limit: limit);
-      // Don't let an empty (stale/cached/flaky) response wipe logs still on
-      // screen when an unsynced or just-written local row is present — keep
-      // last-good. Carry forward any UNSYNCED local rows (optimistic id, write
-      // not yet confirmed) the server payload omits so a slow/queued save can't
-      // be dropped from the history list either.
-      if (logs.isEmpty && _hasUnconfirmedOrRecentLocalLog()) {
-        debugPrint(
-            '🥗 [NutritionProvider] loadRecentLogs: ignored empty response — unsynced/recent local log present');
-      } else {
-        final unsynced = [
-          for (final l in state.recentLogs)
-            if (l.id.startsWith('optimistic_') &&
-                !logs.any((s) =>
-                    s.id == l.id ||
-                    (l.idempotencyKey != null &&
-                        l.idempotencyKey!.isNotEmpty &&
-                        s.idempotencyKey == l.idempotencyKey)))
-              l,
-        ];
-        final merged = unsynced.isEmpty ? logs : [...unsynced, ...logs];
-        state = state.copyWith(recentLogs: merged, loadedLogsDate: todayStr);
-      }
+      state = state.copyWith(logs: logs);
       _lastLoadedUserId = userId;
-      // Any successful nutrition read proves we're online — opportunistically
-      // drain a stranded offline meal-write queue (the connectivity listener
-      // only fires on a CHANGE, so a queue from a prior already-online launch
-      // never flushes otherwise). Cheap + idempotent; safe fire-and-forget.
-      unawaited(_flushMealQueue());
     } catch (e) {
-      debugPrint('Error loading recent food logs: $e');
+      debugPrint('Error loading food logs for $_dateKey: $e');
     }
   }
 
-  /// True when `recentLogs` holds an UNSYNCED row (optimistic id — its write
-  /// hasn't confirmed, so it must never be dropped regardless of age) or a row
-  /// written within the last 120 s (server cache may predate it). An all-old,
-  /// all-synced `recentLogs` returns false, so a genuine "everything deleted"
-  /// empty response is still accepted.
+  /// True when `logs` holds an UNSYNCED row (optimistic id) or a row written
+  /// within the last 120 s. An all-old, all-synced list returns false, so a
+  /// genuine "everything deleted" empty response is still accepted.
   bool _hasUnconfirmedOrRecentLocalLog() {
-    if (state.recentLogs.isEmpty) return false;
+    if (state.logs.isEmpty) return false;
     final cutoff = DateTime.now().subtract(const Duration(seconds: 120));
-    return state.recentLogs.any(
+    return state.logs.any(
         (l) => l.id.startsWith('optimistic_') || l.createdAt.isAfter(cutoff));
   }
 
-  /// Force refresh all data (use after logging a meal, etc.)
+  /// Force refresh this date's summary + logs (and the user-level targets).
   Future<void> refreshAll(String userId) async {
-    _lastLoadTime = null;  // Clear cache
+    _lastLoadTime = null; // clear cache
     await Future.wait([
-      loadTodaySummary(userId, forceRefresh: true),
-      loadTargets(userId, forceRefresh: true),
-      loadRecentLogs(userId, forceRefresh: true),
+      load(userId, forceRefresh: true),
+      loadLogs(userId, forceRefresh: true),
+      _ref
+          .read(nutritionMetaProvider.notifier)
+          .loadTargets(userId, forceRefresh: true),
     ]);
   }
 
-  /// Delete a food log
+  /// Delete a food log (synchronous flow — force-refresh after).
   Future<void> deleteLog(String userId, String logId) async {
     try {
       await _repository.deleteFoodLog(logId);
-      // Force-refresh: without this, the cache-skip in loadTodaySummary
-      // returns immediately and the deleted meal stays visible in the UI.
-      // The disk cache is overwritten by loadTodaySummary's success path,
-      // so the next cold start won't re-render the deleted meal either.
-      await loadTodaySummary(userId, forceRefresh: true);
-      await loadRecentLogs(userId, forceRefresh: true);
+      await load(userId, forceRefresh: true);
+      await loadLogs(userId, forceRefresh: true);
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
@@ -924,7 +874,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// taps Undo. Returns null if the log isn't in `todaySummary` (e.g. it
   /// was logged on another date and we're looking at a backfilled view).
   FoodLog? optimisticRemoveLog(String logId) {
-    final summary = state.todaySummary;
+    final summary = state.summary;
     if (summary == null) return null;
     final idx = summary.meals.indexWhere((m) => m.id == logId);
     if (idx < 0) return null;
@@ -932,14 +882,14 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     final remaining = [...summary.meals]..removeAt(idx);
     // Tombstone the id so an in-flight background refresh can't resurrect it.
     _deletedTombstones.add(logId);
-    // Keep `recentLogs` consistent so the history list never shows a meal the
-    // summary just dropped (#12 divergence — the two lists are independent).
-    final nextLogs = state.recentLogs.any((m) => m.id == logId)
-        ? state.recentLogs.where((m) => m.id != logId).toList()
-        : state.recentLogs;
+    // Keep `logs` consistent so the history list never shows a meal the summary
+    // just dropped (#12 divergence — the two lists are independent).
+    final nextLogs = state.logs.any((m) => m.id == logId)
+        ? state.logs.where((m) => m.id != logId).toList()
+        : state.logs;
     state = state.copyWith(
-      todaySummary: _recomputeTotals(summary, remaining),
-      recentLogs: nextLogs,
+      summary: _recomputeTotals(summary, remaining),
+      logs: nextLogs,
     );
     return removed;
   }
@@ -949,16 +899,14 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// No-op + null return when the id isn't in `todaySummary` (e.g. viewing
   /// a different date than the meal lives on).
   FoodLog? optimisticUpdateLog(String logId, FoodLog Function(FoodLog) transform) {
-    final summary = state.todaySummary;
+    final summary = state.summary;
     if (summary == null) return null;
     final idx = summary.meals.indexWhere((m) => m.id == logId);
     if (idx < 0) return null;
     final original = summary.meals[idx];
     final updated = transform(original);
     final next = [...summary.meals]..[idx] = updated;
-    state = state.copyWith(
-      todaySummary: _recomputeTotals(summary, next),
-    );
+    state = state.copyWith(summary: _recomputeTotals(summary, next));
     return original;
   }
 
@@ -1000,8 +948,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       return next;
     }
 
-    final summary = state.todaySummary;
-    final logs = state.recentLogs;
+    final summary = state.summary;
+    final logs = state.logs;
     final nextLogs = reconcileList(logs);
 
     DailyNutritionSummary? nextSummary = summary;
@@ -1015,10 +963,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     final summaryChanged = !identical(nextSummary, summary);
     final logsChanged = !identical(nextLogs, logs);
     if (summaryChanged || logsChanged) {
-      state = state.copyWith(
-        todaySummary: nextSummary,
-        recentLogs: nextLogs,
-      );
+      state = state.copyWith(summary: nextSummary, logs: nextLogs);
     }
   }
 
@@ -1026,7 +971,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// the Undo action on swipe-delete. Inserts at the position that keeps
   /// the list sorted by `loggedAt` ascending.
   void restoreLog(FoodLog meal) {
-    final summary = state.todaySummary;
+    final summary = state.summary;
     if (summary == null) return;
     // Undo — lift the tombstone so the meal can re-appear from the server.
     _deletedTombstones.remove(meal.id);
@@ -1039,14 +984,14 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       }
     }
     list.insert(insertAt, meal);
-    // Restore into `recentLogs` too (optimisticRemoveLog dropped it from both),
-    // so Undo brings the meal back to the history list as well as the summary.
-    final logs = state.recentLogs.any((m) => m.id == meal.id)
-        ? state.recentLogs
-        : [meal, ...state.recentLogs];
+    // Restore into `logs` too (optimisticRemoveLog dropped it from both), so
+    // Undo brings the meal back to the history list as well as the summary.
+    final logs = state.logs.any((m) => m.id == meal.id)
+        ? state.logs
+        : [meal, ...state.logs];
     state = state.copyWith(
-      todaySummary: _recomputeTotals(summary, list),
-      recentLogs: logs,
+      summary: _recomputeTotals(summary, list),
+      logs: logs,
     );
   }
 
@@ -1054,14 +999,13 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// Use this when callers have already converted the API response to a
   /// [FoodLog] (e.g. recipe logging, browser-panel relog).
   void spliceRawLog(FoodLog newLog, String userId) {
-    final updatedLogs = [newLog, ...state.recentLogs];
-    final currentSummary = state.todaySummary;
-    final todayStr = Tz.localDate();
+    final updatedLogs = [newLog, ...state.logs];
+    final currentSummary = state.summary;
     final updatedMeals = <FoodLog>[...(currentSummary?.meals ?? []), newLog];
     final newSummary = _recomputeTotals(
       currentSummary ??
           DailyNutritionSummary(
-            date: todayStr,
+            date: _dateKey,
             totalCalories: 0,
             totalProteinG: 0,
             totalCarbsG: 0,
@@ -1071,13 +1015,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
           ),
       updatedMeals,
     );
-    state = state.copyWith(
-      recentLogs: updatedLogs,
-      todaySummary: newSummary,
-      loadedSummaryDate: todayStr,
-      loadedLogsDate: todayStr,
-    );
-    unawaited(_NutritionDiskCache.write(userId, todayStr, newSummary));
+    state = state.copyWith(logs: updatedLogs, summary: newSummary);
+    unawaited(_NutritionDiskCache.write(userId, _dateKey, newSummary));
   }
 
   /// Instantly add a newly logged meal to local state so the UI updates
@@ -1091,6 +1030,9 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   FoodLog spliceLog(LogFoodResponse response, String mealType, String userId,
       {String? idempotencyKey}) {
     final now = DateTime.now();
+    // Today → now; a past-date backfill → that date with the current time, so
+    // the optimistic row sorts on the right day until the server row replaces it.
+    final loggedAt = _isToday ? now : _dateAtNow();
     final foodItems = response.foodItems
         .map((r) => FoodItem(
               name: r.name,
@@ -1115,7 +1057,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       idempotencyKey: idempotencyKey,
       userId: userId,
       mealType: mealType,
-      loggedAt: now,
+      loggedAt: loggedAt,
       foodItems: foodItems,
       totalCalories: response.totalCalories,
       proteinG: response.proteinG,
@@ -1140,12 +1082,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       createdAt: now,
     );
 
-    // Update recentLogs
-    final updatedLogs = [newLog, ...state.recentLogs];
-
-    // Update todaySummary by appending to meals and recomputing totals
-    final currentSummary = state.todaySummary;
-    final todayStr = Tz.localDate();
+    final updatedLogs = [newLog, ...state.logs];
+    final currentSummary = state.summary;
     final updatedMeals = <FoodLog>[
       ...(currentSummary?.meals ?? []),
       newLog,
@@ -1153,7 +1091,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     final newSummary = _recomputeTotals(
       currentSummary ??
           DailyNutritionSummary(
-            date: todayStr,
+            date: _dateKey,
             totalCalories: 0,
             totalProteinG: 0,
             totalCarbsG: 0,
@@ -1164,19 +1102,16 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       updatedMeals,
     );
 
-    state = state.copyWith(
-      recentLogs: updatedLogs,
-      todaySummary: newSummary,
-      loadedSummaryDate: todayStr,
-      loadedLogsDate: todayStr,
-    );
+    state = state.copyWith(logs: updatedLogs, summary: newSummary);
 
-    // Persist the updated totals so the next cold-start shows the new log
-    unawaited(_NutritionDiskCache.write(userId, todayStr, newSummary));
+    // Persist the updated totals so the next cold-start shows the new log.
+    unawaited(_NutritionDiskCache.write(userId, _dateKey, newSummary));
 
     // If this splice corresponds to an offline-queued write, reflect the
     // pending-sync badge immediately rather than waiting for the next load.
-    unawaited(_refreshPendingMealCount(userId));
+    unawaited(_ref
+        .read(nutritionMetaProvider.notifier)
+        .refreshPendingMealCount(userId));
 
     // (WR1) Hand the optimistic row back so callers can roll it back by id.
     return newLog;
@@ -1208,6 +1143,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     String? imageUrl,
   }) {
     final now = DateTime.now();
+    final loggedAt = _isToday ? now : _dateAtNow();
     final calories = ((item['calories'] as num?) ?? 0).round();
     final proteinG = ((item['protein_g'] as num?) ?? 0).toDouble();
     final carbsG = ((item['carbs_g'] as num?) ?? 0).toDouble();
@@ -1228,10 +1164,10 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       // A real id when the POST already returned; otherwise a synthetic id
       // unique enough that a rapid multi-item splice can't collide.
       id: logId ??
-          'optimistic_${now.microsecondsSinceEpoch}_${state.recentLogs.length}',
+          'optimistic_${now.microsecondsSinceEpoch}_${state.logs.length}',
       userId: userId,
       mealType: mealType,
-      loggedAt: now,
+      loggedAt: loggedAt,
       foodItems: [foodItem],
       totalCalories: calories,
       proteinG: proteinG,
@@ -1381,7 +1317,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       _deletedTombstones.remove(logId);
       // Refresh in the background — UI is already correct, this just keeps
       // server-derived metadata (recent logs, weekly aggregates) in sync.
-      unawaited(loadRecentLogs(userId, forceRefresh: true));
+      unawaited(loadLogs(userId, forceRefresh: true));
     } catch (e) {
       // Roll back the optimistic removal if the network call fails so the
       // user doesn't end up with a deleted-locally-but-still-on-server row.
@@ -1495,28 +1431,6 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
 
     return changed ? _recomputeTotals(server, meals) : server;
-  }
-
-  /// Update nutrition targets
-  Future<void> updateTargets(
-    String userId, {
-    int? calorieTarget,
-    double? proteinTarget,
-    double? carbsTarget,
-    double? fatTarget,
-  }) async {
-    try {
-      await _repository.updateTargets(
-        userId,
-        calorieTarget: calorieTarget,
-        proteinTarget: proteinTarget,
-        carbsTarget: carbsTarget,
-        fatTarget: fatTarget,
-      );
-      await loadTargets(userId);
-    } catch (e) {
-      state = state.copyWith(error: e.toString());
-    }
   }
 }
 

@@ -213,8 +213,8 @@ extension __ChatScreenStateExt on _ChatScreenState {
 
       // Refresh nutrition tab
       if (userId.isNotEmpty) {
-        ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: true);
-        ref.read(nutritionProvider.notifier).loadRecentLogs(userId, forceRefresh: true);
+        ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId, forceRefresh: true);
+        ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).loadLogs(userId, forceRefresh: true);
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

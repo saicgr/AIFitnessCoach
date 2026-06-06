@@ -42,8 +42,8 @@ extension _FoodBrowserPanelStateUI on _FoodBrowserPanelState {
 
 
   Widget _buildRecentAndSavedView() {
-    final state = ref.watch(nutritionProvider);
-    final recentLogs = state.recentLogs;
+    final state = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final recentLogs = state.logs;
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Deduplicate recent items by food name

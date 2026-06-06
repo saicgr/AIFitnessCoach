@@ -45,9 +45,30 @@ class HeroNutritionCard extends ConsumerStatefulWidget {
   /// it aligns with the meal cards, gives the carousel a fixed height instead
   /// of Expanded (so short pages don't stretch into uneven empty space), and
   /// hides the redundant "View Details" link (you're already on /nutrition).
-  const HeroNutritionCard({super.key, this.embedded = false});
+  const HeroNutritionCard({
+    super.key,
+    this.embedded = false,
+    this.logMealAnchorKey,
+    this.isToday = true,
+    this.selectedDate,
+  });
 
   final bool embedded;
+
+  /// Whether this card is rendering TODAY. False when the Nutrition screen shows
+  /// a past date — drives the Log Meal target date + the loggable-window guard.
+  final bool isToday;
+
+  /// The date this card renders (Nutrition screen, date-nav). Null = today. When
+  /// non-null the card reads `dailyNutritionProvider(nutritionKeyFor(selectedDate))`
+  /// and a Log Meal lands on that date.
+  final DateTime? selectedDate;
+
+  /// First-run tour anchor. When non-null (tour pending), the primary
+  /// "Log Meal" button is wrapped in this key so the coach-mark can spotlight
+  /// just the button instead of the whole tab. Null outside the tour so two
+  /// card instances can never both hold the same GlobalKey.
+  final GlobalKey? logMealAnchorKey;
 
   @override
   ConsumerState<HeroNutritionCard> createState() => _HeroNutritionCardState();
@@ -83,6 +104,25 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     super.dispose();
   }
 
+  /// The date-key this card reads/writes. Null selectedDate = today.
+  String get _dateKey => widget.selectedDate != null
+      ? nutritionKeyFor(widget.selectedDate!)
+      : todayNutritionKey();
+
+  /// Whether the Log Meal button should show. Always for today; for a past date
+  /// only within the backend's loggable window (today..−30 days) — beyond that
+  /// the backend would silently stamp the log as "now", so we hide it instead
+  /// (the past view becomes read-only).
+  bool get _canLogMeal {
+    if (widget.isToday || widget.selectedDate == null) return true;
+    final d = widget.selectedDate!;
+    final dayOnly = DateTime(d.year, d.month, d.day);
+    final earliest = DateTime.now().subtract(const Duration(days: 30));
+    final earliestDay =
+        DateTime(earliest.year, earliest.month, earliest.day);
+    return !dayOnly.isBefore(earliestDay);
+  }
+
   Future<void> _loadData() async {
     // INSTANT-FIRST (feedback_instant_data): render the card immediately from
     // whatever the providers already hold (disk cache / a prior load) instead
@@ -111,7 +151,8 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     if (widget.embedded) return;
     // Home: fire the refreshes without awaiting them together — each provider
     // update repaints the card on its own; the slowest never blocks the others.
-    unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
+    unawaited(
+        ref.read(dailyNutritionProvider(_dateKey).notifier).load(userId));
     unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
     unawaited(
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
@@ -207,8 +248,8 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final accent = AccentColorScope.of(context).getColor(isDark);
     final l10n = AppLocalizations.of(context);
 
-    final nutritionState = ref.watch(nutritionProvider);
-    final summary = nutritionState.todaySummary;
+    final nutritionState = ref.watch(dailyNutritionProvider(_dateKey));
+    final summary = nutritionState.summary;
     final prefsState = ref.watch(nutritionPreferencesProvider);
 
     final caloriesConsumed = summary?.totalCalories ?? 0;
@@ -512,37 +553,48 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                     ),
                     const SizedBox(height: 8),
 
-                    // LOG MEAL button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          HapticService.medium();
-                          showLogMealSheet(context, ref);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: buttonBg,
-                          foregroundColor: buttonFg,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.restaurant_outlined, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.heroNutritionCardLogMeal,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    // LOG MEAL button. Wrapped in the first-run tour anchor
+                    // (when provided) so the nutrition coach-mark spotlights
+                    // just this button rather than the whole tab. Hidden on a
+                    // past date beyond the backend's 30-day loggable window so we
+                    // never silently mislog to "now" (the view is read-only then).
+                    if (_canLogMeal)
+                    KeyedSubtree(
+                      key: widget.logMealAnchorKey,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            HapticService.medium();
+                            // Past date → the log lands on that date; today →
+                            // null selectedDate → server-now.
+                            showLogMealSheet(context, ref,
+                                selectedDate: widget.selectedDate);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: buttonBg,
+                            foregroundColor: buttonFg,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                          ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.restaurant_outlined, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                l10n.heroNutritionCardLogMeal,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),

@@ -86,7 +86,7 @@ class NutritionStatsSection extends ConsumerWidget {
     final FoodLog? lastLog = isEmptyWeek
         ? () {
             final logs = ref.watch(
-                nutritionProvider.select((s) => s.recentLogs));
+                dailyNutritionProvider(todayNutritionKey()).select((s) => s.logs));
             FoodLog? newest;
             for (final l in logs) {
               if (newest == null || l.loggedAt.isAfter(newest.loggedAt)) {

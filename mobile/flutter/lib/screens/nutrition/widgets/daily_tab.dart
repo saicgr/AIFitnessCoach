@@ -23,6 +23,7 @@ import 'coach_recommends_card.dart';
 import 'micros_entry_card.dart';
 import 'logged_meals_section.dart';
 import '../../home/widgets/hero_nutrition_card.dart';
+import '../../../widgets/tooltips/tooltip_anchors.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
 import 'goal_row.dart';
 import 'nutrition_stats_section.dart';
@@ -66,6 +67,11 @@ class DailyTab extends ConsumerStatefulWidget {
   /// is nonsensical.
   final bool isViewingToday;
 
+  /// The date the tab is currently showing. Forwarded to [HeroNutritionCard]
+  /// so the swipeable carousel reads/writes the date-scoped nutrition family
+  /// on past dates too (Bug 1 — carousel on every date, not today-only).
+  final DateTime selectedDate;
+
   /// Forwarded to [FastingSavedRow] so its cards carry the `nutrition_v1`
   /// tour anchor keys only while the first-run tour is active.
   final bool tourActive;
@@ -83,6 +89,7 @@ class DailyTab extends ConsumerStatefulWidget {
     this.targets,
     this.micronutrients,
     this.isViewingToday = true,
+    required this.selectedDate,
     required this.onRefresh,
     required this.onLogMeal,
     required this.onDeleteMeal,
@@ -480,7 +487,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 //    yet (offline queue). Surfaced so a stranded write is never
                 //    silently lost; tap retries the flush.
                 if (widget.userId.isNotEmpty)
-                  _PendingSyncBar(isDark: widget.isDark),
+                  _PendingSyncBar(isDark: widget.isDark, userId: widget.userId),
 
                 // (Removed the "Focus this phase" / pinned-nutrients card —
                 // user feedback. The cycle-phase nutrient strip and the pinned
@@ -493,34 +500,44 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 _LeftoversCarousel(userId: widget.userId, isDark: widget.isDark),
 
                 // 2. HERO — swipeable Google-Fit-style nutrition card (macros +
-                //    micronutrient pages + living mascot). Today-only: it reads
-                //    today's logged totals via its own providers, so for past
-                //    dates we fall back to the date-scoped calorie-ring hero
-                //    inside LoggedMealsSection (showHero below mirrors this).
-                if (widget.isViewingToday) ...[
-                  // Embedded mode self-sizes (fixed-height carousel + intrinsic
-                  // footer) and drops its own horizontal padding so it aligns
-                  // with the meal cards below. No external height bound needed.
-                  const HeroNutritionCard(embedded: true),
+                //    micronutrient pages + living mascot). Renders on EVERY date
+                //    (Bug 1): it reads the date-scoped nutrition family via
+                //    `selectedDate`, so past days get the same swipeable carousel
+                //    instead of the old static calorie-ring fallback.
+                // Embedded mode self-sizes (fixed-height carousel + intrinsic
+                // footer) and drops its own horizontal padding so it aligns
+                // with the meal cards below. No external height bound needed.
+                HeroNutritionCard(
+                  embedded: true,
+                  isToday: widget.isViewingToday,
+                  selectedDate: widget.selectedDate,
+                  // First-run tour: spotlight the card's "Log Meal" button.
+                  // Key only attaches while the tour is pending so two card
+                  // instances never both hold the same GlobalKey.
+                  logMealAnchorKey: widget.tourActive
+                      ? TooltipAnchors.nutritionLogMeal
+                      : null,
+                ),
+                // F3 — "Coach recommends" card backed by /quick-suggestion.
+                // Self-hides until a suggestion is available (no empty shell).
+                // Today-only: recommending meals for a past day is nonsensical.
+                if (widget.isViewingToday && widget.userId.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  // F3 — "Coach recommends" card backed by /quick-suggestion.
-                  // Self-hides until a suggestion is available (no empty shell).
-                  if (widget.userId.isNotEmpty)
-                    CoachRecommendsCard(
-                      userId: widget.userId,
-                      isDark: widget.isDark,
-                    ),
+                  CoachRecommendsCard(
+                    userId: widget.userId,
+                    isDark: widget.isDark,
+                  ),
                 ],
 
                 // 3. MEAL SECTIONS with (date-scoped) hero-row summary at top.
                 //    Daily Goals card removed — the 4 macro rings + goal-config strip
                 //    now live on the Profile screen (Nutrition & Fasting card).
-                //    On today, the hero row is suppressed (the HeroNutritionCard
-                //    above replaces it); on other dates it shows the date's totals.
+                //    The HeroNutritionCard carousel above now replaces the old
+                //    in-section calorie-ring hero on EVERY date, so the section
+                //    renders only the meal list (no embedded hero).
                 Builder(builder: (ctx) {
                   final prefs = ref.watch(nutritionPreferencesProvider);
                   return LoggedMealsSection(
-                    showHero: !widget.isViewingToday,
                     meals: widget.summary?.meals ?? [],
                     onDeleteMeal: widget.onDeleteMeal,
                     onCopyMeal: widget.onCopyMeal,
@@ -1065,12 +1082,13 @@ class _FastingProgressDots extends StatelessWidget {
 /// instead of silently lost.
 class _PendingSyncBar extends ConsumerWidget {
   final bool isDark;
-  const _PendingSyncBar({required this.isDark});
+  final String userId;
+  const _PendingSyncBar({required this.isDark, required this.userId});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pending = ref.watch(
-        nutritionProvider.select((s) => s.pendingMealSyncCount));
+        nutritionMetaProvider.select((s) => s.pendingMealSyncCount));
     if (pending <= 0) return const SizedBox.shrink();
 
     final colors = ref.colors(context);
@@ -1122,7 +1140,7 @@ class _PendingSyncBar extends ConsumerWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap: () {
-                  ref.read(nutritionProvider.notifier).retryPendingMealWrites();
+                  ref.read(nutritionMetaProvider.notifier).retryPendingMealWrites(userId);
                 },
                 child: Padding(
                   padding: const EdgeInsets.symmetric(

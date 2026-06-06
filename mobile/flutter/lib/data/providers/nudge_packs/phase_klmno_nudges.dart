@@ -10,7 +10,7 @@
 /// Conventions (mirrors `contextual_nudge_provider.dart`):
 ///   * All time reasoning in user-local time.
 ///   * Wrap every fragile provider read in try/catch — a schema drift in
-///     `nutritionProvider` must not poison the whole stack.
+///     `dailyNutritionProvider` must not poison the whole stack.
 ///   * Set `perishesAt` to end-of-day; the catch-up window stays open until
 ///     the user logs anything for that slot or the day rolls over.
 library;
@@ -38,11 +38,11 @@ List<ContextualNudge> phaseKlmnoNudges(Ref ref, DateTime now) {
   //   lunch     missed  : 14:30 ≤ now < 17:00
   //   dinner    missed  : 20:30 ≤ now < 23:00
   try {
-    final nutrition = ref.watch(nutritionProvider);
+    final nutrition = ref.watch(dailyNutritionProvider(todayNutritionKey()));
     final today = DateTime(now.year, now.month, now.day);
 
     bool loggedForSlot(String slot) {
-      return nutrition.recentLogs.any((log) {
+      return nutrition.logs.any((log) {
         final logLocal =
             log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
         final logDay =
@@ -107,7 +107,7 @@ List<ContextualNudge> phaseKlmnoNudges(Ref ref, DateTime now) {
       );
     }
   } catch (_) {
-    // nutritionProvider schema drift — skip this pack rather than crashing.
+    // dailyNutritionProvider schema drift — skip this pack rather than crashing.
   }
 
   return out;

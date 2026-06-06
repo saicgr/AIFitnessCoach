@@ -40,7 +40,7 @@ final todayScoreProvider = Provider<TodayScore>((ref) {
   final workoutLabel = workout?.todayWorkout?.name;
 
   // ---- Nutrition (Fuel) --------------------------------------------------
-  final summary = ref.watch(nutritionProvider).todaySummary;
+  final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
   final prefs = ref.watch(nutritionPreferencesProvider);
   final calorieTarget = prefs.currentCalorieTarget;
   final proteinTargetG = prefs.currentProteinTarget.round();

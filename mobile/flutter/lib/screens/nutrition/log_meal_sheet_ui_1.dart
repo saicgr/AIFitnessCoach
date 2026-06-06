@@ -1,5 +1,10 @@
 part of 'log_meal_sheet.dart';
 
+/// Date-key (yyyy-MM-dd) a log from this sheet should target. Null = today.
+/// Splices + refreshes route to `dailyNutritionProvider(this key)`.
+String _logSheetDateKey(DateTime? selectedDate) =>
+    selectedDate != null ? nutritionKeyFor(selectedDate) : todayNutritionKey();
+
 /// Methods extracted from _LogMealSheetState
 extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
@@ -110,7 +115,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // NL input is only triggered on explicit submit (search button / enter),
         // not on every keystroke — regular search continues as-is during typing.
         final service = ref.read(search.foodSearchServiceProvider);
-        final cachedLogs = ref.read(nutritionProvider).recentLogs;
+        final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
         service.search(query, widget.userId, cachedLogs: cachedLogs);
       }
     }
@@ -121,7 +126,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     final query = _descriptionController.text.trim();
     if (query.length >= 3) {
       final service = ref.read(search.foodSearchServiceProvider);
-      final cachedLogs = ref.read(nutritionProvider).recentLogs;
+      final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
       service.searchImmediate(query, widget.userId, cachedLogs: cachedLogs);
     }
   }
@@ -606,12 +611,22 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   }
 
 
-  /// Always returns null so the backend stamps `logged_at` at server-now.
-  /// The Nutrition tab auto-snaps to today after a successful log (see
-  /// `_refreshAfterLog` in `nutrition_screen.dart`), so the meal lands where
-  /// it actually exists in the DB rather than where the user happened to be
-  /// browsing when they tapped Log Meal.
-  String? _buildLoggedAtForSelectedDate() => null;
+  /// ISO-8601 `logged_at` for this log. Null when the sheet is logging TODAY
+  /// (the backend stamps server-now, preserving the exact time). When the user
+  /// is viewing a PAST date in the Nutrition tab, returns that date stamped with
+  /// the current wall-clock time so the meal lands on THAT day. The backend
+  /// validates the window (today..−30 days); the carousel hides Log Meal beyond
+  /// it, so anything reaching here is in range.
+  String? _buildLoggedAtForSelectedDate() {
+    final d = widget.selectedDate;
+    if (d == null) return null;
+    final now = DateTime.now();
+    if (d.year == now.year && d.month == now.month && d.day == now.day) {
+      return null; // selected date IS today → server-now (keep exact time)
+    }
+    return DateTime(d.year, d.month, d.day, now.hour, now.minute, now.second)
+        .toIso8601String();
+  }
 
   Future<void> _handleLog() async {
     if (_analyzedResponse == null || _hasLoggedThisSession) return;
@@ -648,7 +663,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // the network POST — so it appears in the Nutrition Daily meal list and
     // the rings/pinned nutrients update within one frame. `spliceLog` returns
     // the optimistic FoodLog so we can roll it back by id on failure (WR4).
-    final nutritionNotifier = ref.read(nutritionProvider.notifier);
+    final nutritionNotifier = ref
+        .read(dailyNutritionProvider(_logSheetDateKey(widget.selectedDate)).notifier);
     final optimisticLog = nutritionNotifier.spliceLog(response, mealType, userId,
         idempotencyKey: idempotencyKey);
     final optimisticLogId = optimisticLog.id;
@@ -2307,7 +2323,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         }
 
         // Legacy / fallback path: backend auto-logged. Refresh and close.
-        ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+        ref
+            .read(dailyNutritionProvider(_logSheetDateKey(widget.selectedDate))
+                .notifier)
+            .load(widget.userId);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -2412,7 +2431,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   }) async {
     if (selected.isEmpty) return false;
     final repository = ref.read(nutritionRepositoryProvider);
-    final nutritionNotifier = ref.read(nutritionProvider.notifier);
+    final nutritionNotifier = ref
+        .read(dailyNutritionProvider(_logSheetDateKey(widget.selectedDate)).notifier);
     final mealType = _selectedMealType.value;
     // menu → 'menu', buffet → 'buffet' (mirrors the backend source_type map).
     final sourceType = analysisType == 'buffet' ? 'buffet' : 'menu';
@@ -2448,7 +2468,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         );
         // Reconcile: the server now holds the real rows. forceRefresh swaps
         // the optimistic rows for authoritative data in place.
-        nutritionNotifier.loadTodaySummary(widget.userId, forceRefresh: true);
+        nutritionNotifier.load(widget.userId, forceRefresh: true);
       } catch (e) {
         debugPrint('❌ [LogMeal] menu log-selected-items failed: $e');
         // (WR4) Roll back every optimistic row so the meal list doesn't show
@@ -2811,7 +2831,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
 
     // Capture refs before popping (widget unmounts after pop)
-    final nutritionNotifier = ref.read(nutritionProvider.notifier);
+    final nutritionNotifier = ref
+        .read(dailyNutritionProvider(_logSheetDateKey(widget.selectedDate)).notifier);
     final userId = widget.userId;
     final isDark = widget.isDark;
     final foodNames = response.foodItems.map((f) => f.name).toList();
@@ -2839,7 +2860,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       unawaited(saveFuture.then((_) {
         // forceRefresh replaces the optimistic row with the authoritative
         // server row in place (server-derived fields: streak, adherence).
-        nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
+        nutritionNotifier.load(userId, forceRefresh: true);
         // Schedule the 45-min reminder after save completes (needs foodLogId)
         final logId = getSavedLogId?.call();
         if (logId != null && logId.isNotEmpty) {
@@ -2853,7 +2874,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // Swallowed — `_handleLog` already rolled back / queued. No reconcile.
       }));
     } else {
-      nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
+      nutritionNotifier.load(userId, forceRefresh: true);
     }
 
     // Show success sheet immediately — don't block on backend save
@@ -2967,7 +2988,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             // logFoodFromBarcode already returns the real food_log_id, so the
             // spliced row carries it and the forceRefresh below is an in-place
             // reconcile, not a new insert.
-            final nutritionNotifier = ref.read(nutritionProvider.notifier);
+            final nutritionNotifier = ref
+        .read(dailyNutritionProvider(_logSheetDateKey(widget.selectedDate)).notifier);
             nutritionNotifier.spliceMenuItem(
               item: {
                 'name': product.productName,
@@ -2986,7 +3008,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             // (WR6) Reflect the new meal on Home's timeline.
             nutritionNotifier.refreshTimeline();
             // Reconcile server-derived fields in the background.
-            nutritionNotifier.loadTodaySummary(widget.userId,
+            nutritionNotifier.load(widget.userId,
                 forceRefresh: true);
           }
         } else {

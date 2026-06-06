@@ -107,9 +107,11 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
       HapticService.success();
       setState(() => _logState = _LogState.logged);
       ref
-          .read(nutritionProvider.notifier)
-          .loadTodaySummary(widget.userId, forceRefresh: true);
-      ref.read(nutritionProvider.notifier).refreshTimeline();
+          .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+          .load(widget.userId, forceRefresh: true);
+      ref
+          .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+          .refreshTimeline();
     } catch (_) {
       if (!mounted) return;
       HapticService.error();

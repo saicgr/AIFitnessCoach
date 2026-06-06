@@ -334,12 +334,13 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   /// the 5-min TTL on the in-memory micronutrient cache kept showing the
   /// pre-log values until the user navigated away and back.
   void _setupMicronutrientInvalidationListener() {
-    ref.listenManual<NutritionState>(nutritionProvider, (prev, next) {
+    ref.listenManual<DailyNutritionState>(
+        dailyNutritionProvider(nutritionKeyFor(_selectedDate)), (prev, next) {
       if (_userId == null) return;
-      final prevCount = prev?.todaySummary?.meals.length ?? 0;
-      final nextCount = next.todaySummary?.meals.length ?? 0;
-      final prevKcal = prev?.todaySummary?.totalCalories ?? 0;
-      final nextKcal = next.todaySummary?.totalCalories ?? 0;
+      final prevCount = prev?.summary?.meals.length ?? 0;
+      final nextCount = next.summary?.meals.length ?? 0;
+      final prevKcal = prev?.summary?.totalCalories ?? 0;
+      final nextKcal = next.summary?.totalCalories ?? 0;
       // Trigger on either a new meal row OR a macro delta on an existing
       // meal (edits from the history sheet land on the same date). Bail
       // if we're not viewing today — the cache only covers today anyway.
@@ -473,13 +474,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       // to-refresh while on a past date would clobber `state.recentLogs`
       // with today's data and the past-date view would briefly show today's
       // meals under a past-date header.
-      if (_isToday) {
-        ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: forceRefresh);
-        ref.read(nutritionProvider.notifier).loadRecentLogs(userId, forceRefresh: forceRefresh);
-      } else {
-        ref.read(nutritionProvider.notifier).loadSummaryForDate(userId, _selectedDate);
-        ref.read(nutritionProvider.notifier).loadLogsForDate(userId, _selectedDate);
-      }
+      final dayNotifier =
+          ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier);
+      dayNotifier.load(userId, forceRefresh: forceRefresh);
+      dayNotifier.loadLogs(userId, forceRefresh: forceRefresh);
       _loadMicronutrients(userId, dateStr);
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
       ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
@@ -508,7 +506,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   void _refreshAfterLog() {
     _cachedMicronutrientsTime = null;
     if (!_isToday) {
-      _jumpToDate(DateTime.now()); // jumps + loads selected date
+      _loadDataForSelectedDate(); // reload the viewed date in place
     } else {
       _loadData();
     }
@@ -750,19 +748,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   void _loadDataForSelectedDate() {
     if (_userId == null) return;
     final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    final notifier = ref.read(nutritionProvider.notifier);
-    // Always route through the date-specific variants. loadTodaySummary /
-    // loadRecentLogs have their own fast-path when the target IS today, so
-    // branching here only risks the stale-cache bug (loadSummaryForDate
-    // leaves yesterday in state.todaySummary; loadTodaySummary then
-    // short-circuits and never refetches).
-    if (_isToday) {
-      notifier.loadTodaySummary(_userId!);
-      notifier.loadRecentLogs(_userId!);
-    } else {
-      notifier.loadSummaryForDate(_userId!, _selectedDate);
-      notifier.loadLogsForDate(_userId!, _selectedDate);
-    }
+    // The provider family is keyed by date, so the viewed date IS the
+    // provider identity — a single path covers today and any past date.
+    final n = ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier);
+    n.load(_userId!);
+    n.loadLogs(_userId!);
     _loadMicronutrients(_userId!, dateStr);
   }
 
@@ -786,7 +776,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(nutritionProvider);
+    final state = ref.watch(dailyNutritionProvider(nutritionKeyFor(_selectedDate)));
+    final meta = ref.watch(nutritionMetaProvider);
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final calmMode = prefsState.preferences?.calmModeEnabled ?? false;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -838,7 +829,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           // to fall back on); transient refresh failures on top of stale
           // data are silently swallowed by the notifier.
           Expanded(
-            child: (state.error != null && state.todaySummary == null)
+            child: (state.error != null && state.summary == null)
                 ? NutritionErrorState(
                         error: state.error!,
                         // Always force a refresh when the user explicitly
@@ -851,18 +842,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                     : TabBarView(
                         controller: _tabController,
                         children: [
-                          // Daily Tab — anchor for step 1 of `nutrition_v1`
-                          // (Log a meal). The whole tab is the anchor; the
-                          // tour treats an anchor this large as targetless
-                          // (no spotlight cutout) and renders the step as a
-                          // clean bottom-anchored card above the tab pill.
-                          _tourAnchor(
-                            TooltipAnchors.nutritionLogMeal,
-                            DailyTab(
+                          // Daily Tab — step 1 of `nutrition_v1` (Log a meal).
+                          // The tour anchor is attached deeper, to the
+                          // HeroNutritionCard's "Log Meal" button (via
+                          // DailyTab → logMealAnchorKey), so the coach-mark
+                          // spotlights just that button instead of the whole
+                          // tab.
+                          DailyTab(
                             userId: _userId ?? '',
                             tourActive: _nutritionTourActive,
-                            summary: state.todaySummary,
-                            targets: state.targets,
+                            summary: state.summary,
+                            targets: meta.targets,
+                            selectedDate: _selectedDate,
                             micronutrients: _micronutrientSummary,
                             isViewingToday: _isToday,
                             onRefresh: _loadData,
@@ -903,7 +894,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             // reminder deep links) → auto-scroll to the inline
                             // hydration card on Daily.
                             initialFuelSection: widget.initialFuelSection,
-                            ),
                           ),
 
                           // Recipes Tab — full feature (search, build, import, fridge,
@@ -1130,7 +1120,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _deleteMeal(String mealId) async {
     if (_userId == null) return;
-    final notifier = ref.read(nutritionProvider.notifier);
+    final notifier =
+        ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier);
 
     // Optimistically remove from state so the UI updates instantly.
     final removed = notifier.optimisticRemoveLog(mealId);
@@ -1189,7 +1180,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         eventName: 'food_log_copied',
         properties: <String, Object>{'food_log_id': mealId, 'target_meal_type': targetMealType},
       );
-      final notifier = ref.read(nutritionProvider.notifier);
+      final notifier =
+          ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier);
       final repository = ref.read(nutritionRepositoryProvider);
       final response = await repository.copyFoodLog(logId: mealId, mealType: targetMealType);
       _cachedMicronutrientsTime = null;
@@ -1197,7 +1189,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       // round-trip. Backend response carries new_id + meal_type only; we
       // clone the source FoodLog with those overrides + a fresh logged_at
       // (server uses now() per copy_food_log endpoint).
-      final meals = ref.read(nutritionProvider).todaySummary?.meals ?? const <FoodLog>[];
+      final meals = ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate))).summary?.meals ?? const <FoodLog>[];
       final srcIdx = meals.indexWhere((m) => m.id == mealId);
       final newId = response['new_id'] as String?;
       if (srcIdx >= 0 && newId != null) {
@@ -1242,8 +1234,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _copyItemAsStandalone(String sourceLogId, int itemIdx, String targetMealType) async {
     if (_userId == null) return;
     try {
-      final state = ref.read(nutritionProvider);
-      final source = state.todaySummary?.meals.firstWhere(
+      final state = ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)));
+      final source = state.summary?.meals.firstWhere(
         (m) => m.id == sourceLogId,
         orElse: () => throw Exception('Source meal not found'),
       );
@@ -1267,7 +1259,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         userQuery: item.name,
       );
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).refreshAll(_userId!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1296,8 +1288,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _moveItemAsStandalone(String sourceLogId, int itemIdx, String targetMealType) async {
     if (_userId == null) return;
     try {
-      final state = ref.read(nutritionProvider);
-      final source = state.todaySummary?.meals.firstWhere(
+      final state = ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)));
+      final source = state.summary?.meals.firstWhere(
         (m) => m.id == sourceLogId,
         orElse: () => throw Exception('Source meal not found'),
       );
@@ -1321,7 +1313,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
       // 2. Remove from source.
       if (source.foodItems.length <= 1) {
-        await ref.read(nutritionProvider.notifier).deleteLog(_userId!, source.id);
+        await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).deleteLog(_userId!, source.id);
       } else {
         final remaining = [
           for (int i = 0; i < source.foodItems.length; i++)
@@ -1338,7 +1330,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       }
 
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).refreshAll(_userId!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1438,8 +1430,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       await ShareableSheet.show(context, data: shareable);
       if (_userId != null && mounted) {
         ref
-            .read(nutritionProvider.notifier)
-            .loadSummaryForDate(_userId!, _selectedDate);
+            .read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier)
+            .load(_userId!);
       }
     } catch (e) {
       if (mounted) {
@@ -1482,8 +1474,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // sheet was open.
     if (_userId != null && mounted) {
       ref
-          .read(nutritionProvider.notifier)
-          .loadSummaryForDate(_userId!, _selectedDate);
+          .read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier)
+          .load(_userId!);
     }
   }
 
@@ -1491,7 +1483,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   /// the per-meal-section share affordance. Pulls the day's logs for that
   /// meal type from `nutritionProvider` and routes through `ShareableSheet`.
   Future<void> _shareMealGroup(String mealType) async {
-    final meals = (ref.read(nutritionProvider).todaySummary?.meals ??
+    final meals = (ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate))).summary?.meals ??
             const <FoodLog>[])
         .where((m) => m.mealType == mealType)
         .toList();
@@ -1520,8 +1512,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     await ShareableSheet.show(context, data: shareable);
     if (_userId != null && mounted) {
       ref
-          .read(nutritionProvider.notifier)
-          .loadSummaryForDate(_userId!, _selectedDate);
+          .read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier)
+          .load(_userId!);
     }
   }
 
@@ -1634,7 +1626,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _moveMeal(String mealId, String targetMealType) async {
     if (_userId == null) return;
-    final notifier = ref.read(nutritionProvider.notifier);
+    final notifier =
+        ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier);
     // Optimistically flip the meal_type locally so the UI updates instantly.
     // Restored to its original meal_type if the network call fails.
     final original = notifier.optimisticUpdateLog(mealId, (meal) {
@@ -1722,7 +1715,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // calories/macros instantly (meal row + macro rings update within one
     // frame), runs the network PUT in the background, and rolls the row back
     // (with a calm `state.error`) if the server rejects the edit.
-    await ref.read(nutritionProvider.notifier).commitUpdateLog(
+    await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).commitUpdateLog(
       logId,
       // Transform: FoodLog has no copyWith (generated model) — rebuild the row
       // with every field preserved and only the edited macros/calories
@@ -1792,7 +1785,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.updateFoodLogTime(logId: logId, loggedAt: newTime.toIso8601String());
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).refreshAll(_userId!);
     } catch (e) {
       debugPrint('Error updating meal time: $e');
       if (mounted) {
@@ -1813,7 +1806,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.updateFoodLogNotes(logId: logId, notes: notes);
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).refreshAll(_userId!);
     } catch (e) {
       debugPrint('Error updating notes: $e');
       if (mounted) {
@@ -1834,7 +1827,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.updateFoodLogMood(logId: logId, moodBefore: moodBefore, moodAfter: moodAfter, energyLevel: energyLevel);
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      await ref.read(dailyNutritionProvider(nutritionKeyFor(_selectedDate)).notifier).refreshAll(_userId!);
     } catch (e) {
       debugPrint('Error updating mood: $e');
       if (mounted) {

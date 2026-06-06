@@ -88,7 +88,7 @@ final contextualNudgeProvider =
   if (_inVacation(ref, now)) return const [];
 
   // ── Inputs ────────────────────────────────────────────────────────────
-  final nutrition = ref.watch(nutritionProvider);
+  final nutrition = ref.watch(dailyNutritionProvider(todayNutritionKey()));
   final hydration = ref.watch(hydrationProvider);
   final todayWorkout = ref.watch(todayWorkoutProvider).valueOrNull;
 
@@ -102,7 +102,7 @@ final contextualNudgeProvider =
   final today = DateTime(now.year, now.month, now.day);
   final mealLoggedToday = <String, bool>{};
   for (final slot in const ['breakfast', 'lunch', 'dinner']) {
-    mealLoggedToday[slot] = nutrition.recentLogs.any((log) {
+    mealLoggedToday[slot] = nutrition.logs.any((log) {
       final logLocal = log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
       final logDay = DateTime(logLocal.year, logLocal.month, logLocal.day);
       return logDay == today && log.mealType.toLowerCase() == slot;

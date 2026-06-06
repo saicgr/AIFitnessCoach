@@ -307,16 +307,21 @@ class BootstrapPrefetchService {
     if (nutritionData == null) return;
     try {
       final m = nutritionData as Map<String, dynamic>;
-      ref.read(nutritionProvider.notifier).preSeedFromBootstrap(
-        calories: (m['calories'] as num?)?.toInt() ?? 0,
-        targetCalories: (m['target_calories'] as num?)?.toInt(),
-        protein: (m['protein'] as num?)?.toDouble() ?? 0.0,
-        carbs: (m['carbs'] as num?)?.toDouble() ?? 0.0,
-        fat: (m['fat'] as num?)?.toDouble() ?? 0.0,
-        targetProtein: (m['target_protein'] as num?)?.toDouble(),
-        targetCarbs: (m['target_carbs'] as num?)?.toDouble(),
-        targetFat: (m['target_fat'] as num?)?.toDouble(),
-      );
+      // Per-date family now owns the summary; the meta singleton owns targets.
+      ref
+          .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+          .preSeedSummary(
+            calories: (m['calories'] as num?)?.toInt() ?? 0,
+            protein: (m['protein'] as num?)?.toDouble() ?? 0.0,
+            carbs: (m['carbs'] as num?)?.toDouble() ?? 0.0,
+            fat: (m['fat'] as num?)?.toDouble() ?? 0.0,
+          );
+      ref.read(nutritionMetaProvider.notifier).preSeedTargets(
+            targetCalories: (m['target_calories'] as num?)?.toInt(),
+            targetProtein: (m['target_protein'] as num?)?.toDouble(),
+            targetCarbs: (m['target_carbs'] as num?)?.toDouble(),
+            targetFat: (m['target_fat'] as num?)?.toDouble(),
+          );
       // Also seed the PREFERENCES provider's targets — that's what the hero
       // calorie ring (Home + Nutrition) reads via `currentCalorieTarget` /
       // `hasConfiguredTargets`. Without this the ring shows "Set a calorie

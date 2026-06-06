@@ -35,7 +35,7 @@ class CaloriesSummaryCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accent = ref.colors(context).accent;
 
-    final summary = ref.watch(nutritionProvider).todaySummary;
+    final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
     final calorieTarget = ref.watch(nutritionPreferencesProvider).currentCalorieTarget;
 
     // Phase D — surface the cycle-phase calorie delta (e.g. +200 luteal) as

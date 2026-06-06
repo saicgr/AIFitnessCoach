@@ -1392,8 +1392,8 @@ class _HomeNutritionCardState extends ConsumerState<HomeNutritionCard> {
   Widget build(BuildContext context) {
     final ref = this.ref;
     final c = ref.colors(context);
-    final nutrition = ref.watch(nutritionProvider);
-    final summary = nutrition.todaySummary;
+    final nutrition = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final summary = nutrition.summary;
 
     // Cold load (no cached summary yet) → a card-shaped shimmer skeleton, so
     // an in-flight fetch is never indistinguishable from "ate nothing today".
@@ -1673,8 +1673,8 @@ class _NutritionErrorCard extends ConsumerWidget {
               final userId = ref.read(currentUserProvider).valueOrNull?.id;
               if (userId != null) {
                 ref
-                    .read(nutritionProvider.notifier)
-                    .loadTodaySummary(userId, forceRefresh: true);
+                    .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+                    .load(userId, forceRefresh: true);
               }
             },
             child: Container(

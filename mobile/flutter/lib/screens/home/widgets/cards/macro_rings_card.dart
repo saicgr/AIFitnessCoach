@@ -39,7 +39,7 @@ class MacroRingsCard extends ConsumerWidget {
     final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
     final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
 
-    final summary = ref.watch(nutritionProvider).todaySummary;
+    final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
     final prefs = ref.watch(nutritionPreferencesProvider);
 
     final proteinConsumed = (summary?.totalProteinG ?? 0).round();

@@ -184,8 +184,8 @@ class _NutritionPill extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final nutritionState = ref.watch(nutritionProvider);
-    final summary = nutritionState.todaySummary;
+    final nutritionState = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final summary = nutritionState.summary;
     final hydrationState = ref.watch(hydrationProvider);
     final waterSummary = hydrationState.todaySummary;
     final goalMl = hydrationState.dailyGoalMl;

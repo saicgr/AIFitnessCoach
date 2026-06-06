@@ -78,7 +78,7 @@ final optionalTrackersProvider =
   // Re-fetch whenever the day's logged-meal count changes (a new food log may
   // add sugar/caffeine/alcohol), so the counters stay live without manual
   // invalidation from the log paths.
-  ref.watch(nutritionProvider.select((s) => s.todaySummary?.meals.length ?? 0));
+  ref.watch(dailyNutritionProvider(todayNutritionKey()).select((s) => s.summary?.meals.length ?? 0));
   final client = ref.watch(apiClientProvider);
   final resp = await client.get(
     '/nutrition/optional-trackers/$userId',
@@ -92,7 +92,7 @@ final optionalTrackersProvider =
 final trackerHistoryProvider =
     FutureProvider.autoDispose.family<OptionalTrackers, String>((ref, userId) async {
   if (userId.isEmpty) return const OptionalTrackers();
-  ref.watch(nutritionProvider.select((s) => s.todaySummary?.meals.length ?? 0));
+  ref.watch(dailyNutritionProvider(todayNutritionKey()).select((s) => s.summary?.meals.length ?? 0));
   final client = ref.watch(apiClientProvider);
   final resp = await client.get(
     '/nutrition/optional-trackers/$userId',

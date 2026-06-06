@@ -64,7 +64,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   final ThemeModeNotifier _themeNotifier;
   final GoRouter _router;
   final HydrationNotifier _hydrationNotifier;
-  final NutritionNotifier _nutritionNotifier;
+  final DailyNutritionNotifier _nutritionNotifier;
   final AISettings Function() _getAISettings; // Callback to get fresh settings
   final void Function(bool) _setAIGenerating; // Callback to set AI generating state
   final String Function() _getUnifiedContext; // Callback to get unified fasting/nutrition/workout context

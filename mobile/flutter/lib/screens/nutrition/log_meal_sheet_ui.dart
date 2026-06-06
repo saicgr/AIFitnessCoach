@@ -411,9 +411,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
 
 
   Widget _buildDailyMacroBar(bool isDark) {
-    final state = ref.watch(nutritionProvider);
-    final summary = state.todaySummary;
-    final targets = state.targets;
+    final state = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final summary = state.summary;
+    final targets = ref.watch(nutritionMetaProvider).targets;
     final prefsState = ref.watch(nutritionPreferencesProvider);
     final dynamicTargets = prefsState.dynamicTargets;
 

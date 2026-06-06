@@ -77,8 +77,8 @@ class CoachRefreshCoordinator {
     // Nutrition — any change to today's calories refreshes the numbers; the
     // FIRST meal of the day (0 → >0) is a completion-class event → regenerate
     // text so the body can acknowledge the day has started.
-    _ref.listen(nutritionProvider, (prev, next) {
-      final cal = next.todaySummary?.totalCalories ?? 0;
+    _ref.listen(dailyNutritionProvider(todayNutritionKey()), (prev, next) {
+      final cal = next.summary?.totalCalories ?? 0;
       final prevCal = _lastCalories;
       _lastCalories = cal;
       if (prevCal == null || cal == prevCal) return;

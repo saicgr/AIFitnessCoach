@@ -10,7 +10,7 @@ import '../../screens/home/widgets/habit_card.dart';
 /// Returns a list of HabitData for the last 30 days
 final habitsProvider = Provider<List<HabitData>>((ref) {
   final workoutsAsync = ref.watch(workoutsProvider);
-  final nutritionState = ref.watch(nutritionProvider);
+  final nutritionState = ref.watch(dailyNutritionProvider(todayNutritionKey()));
   final hydrationState = ref.watch(hydrationProvider);
 
   final now = DateTime.now();
@@ -88,21 +88,21 @@ List<bool> _getWorkoutDays(AsyncValue<List<Workout>> workoutsAsync, DateTime tod
 
 /// Get food logging status for last 30 days
 /// Currently checks if today has any logs, historical data would need API support
-List<bool> _getFoodLogDays(NutritionState nutritionState, DateTime today) {
+List<bool> _getFoodLogDays(DailyNutritionState nutritionState, DateTime today) {
   final List<bool> days = List.filled(30, false);
 
   // Debug: Log nutrition state
-  debugPrint('🍎 _getFoodLogDays: todaySummary=${nutritionState.todaySummary != null}, recentLogs=${nutritionState.recentLogs.length}');
+  debugPrint('🍎 _getFoodLogDays: summary=${nutritionState.summary != null}, logs=${nutritionState.logs.length}');
 
   // Check if today has any food logged (calories > 0)
-  if (nutritionState.todaySummary != null) {
-    final hasFood = nutritionState.todaySummary!.totalCalories > 0;
+  if (nutritionState.summary != null) {
+    final hasFood = nutritionState.summary!.totalCalories > 0;
     days[29] = hasFood; // Today is the last index
-    debugPrint('🍎 Today food: $hasFood (calories: ${nutritionState.todaySummary!.totalCalories})');
+    debugPrint('🍎 Today food: $hasFood (calories: ${nutritionState.summary!.totalCalories})');
   }
 
   // Check recent logs for historical data
-  for (final log in nutritionState.recentLogs) {
+  for (final log in nutritionState.logs) {
     try {
       final logDate = log.loggedAt;
       final daysDiff = today.difference(DateTime(logDate.year, logDate.month, logDate.day)).inDays;

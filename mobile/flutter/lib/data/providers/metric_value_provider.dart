@@ -180,7 +180,7 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
       }
     case RingKind.nourish:
       {
-        final summary = ref.watch(nutritionProvider).todaySummary;
+        final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
         final goal = ref
             .watch(nutritionPreferencesProvider)
             .currentCalorieTarget;
@@ -322,7 +322,7 @@ final metricValueProvider = Provider.family<MetricValue, RingKind>((ref, kind) {
       }
     case RingKind.protein:
       {
-        final eaten = ref.watch(nutritionProvider).todaySummary?.totalProteinG;
+        final eaten = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary?.totalProteinG;
         final goal =
             ref.watch(nutritionPreferencesProvider).currentProteinTarget;
         if (eaten == null) return base(empty: true, unit: 'g');

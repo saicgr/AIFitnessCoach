@@ -25,9 +25,9 @@ class DailyQuestDeck extends ConsumerWidget {
     bool hydrationHit = false;
     bool workoutDone = false;
     try {
-      final n = ref.watch(nutritionProvider);
+      final n = ref.watch(dailyNutritionProvider(todayNutritionKey()));
       final today = DateTime.now();
-      mealLogged = n.recentLogs.any((l) {
+      mealLogged = n.logs.any((l) {
         final d = l.loggedAt.isUtc ? l.loggedAt.toLocal() : l.loggedAt;
         return d.year == today.year && d.month == today.month && d.day == today.day;
       });

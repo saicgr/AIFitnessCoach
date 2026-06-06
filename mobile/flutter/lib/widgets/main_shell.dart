@@ -55,7 +55,8 @@ import '../l10n/generated/app_localizations.dart';
 import '../data/providers/today_workout_provider.dart' show todayWorkoutProvider;
 import '../data/repositories/workout_repository.dart'
     show workoutsProvider, workoutScreenSummaryProvider;
-import '../data/repositories/nutrition_repository.dart' show nutritionProvider;
+import '../data/repositories/nutrition_repository.dart'
+    show dailyNutritionProvider, nutritionMetaProvider, todayNutritionKey;
 import '../data/services/health_service.dart' show dailyActivityProvider;
 import '../data/repositories/hydration_repository.dart' show hydrationProvider;
 import '../data/providers/timeline_provider.dart' show timelineProvider;
@@ -627,7 +628,8 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
       // often the first card so warmed in wave 0 not wave 2).
       ref.read(todayWorkoutProvider);
       ref.read(workoutsProvider);
-      ref.read(nutritionProvider);
+      ref.read(dailyNutritionProvider(todayNutritionKey()));
+      ref.read(nutritionMetaProvider);
       ref.read(dailyActivityProvider);
       ref.read(hydrationProvider);
       ref.read(timelineProvider);
@@ -644,7 +646,8 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
       break;
     case 2: // Nutrition — daily summary + preferences gate the first paint;
       // batch-cook events + upcoming schedules feed the Daily tab.
-      ref.read(nutritionProvider);
+      ref.read(dailyNutritionProvider(todayNutritionKey()));
+      ref.read(nutritionMetaProvider);
       ref.read(nutritionPreferencesProvider);
       if (hasUser) {
         ref.read(activeCookEventsProvider(userId));
@@ -664,7 +667,8 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
 void _warmOtherTabs(WidgetRef ref, String? userId) {
   ref.read(todayWorkoutProvider);
   ref.read(workoutsProvider);
-  ref.read(nutritionProvider);
+  ref.read(dailyNutritionProvider(todayNutritionKey()));
+  ref.read(nutritionMetaProvider);
   ref.read(dailyActivityProvider);
   ref.read(hydrationProvider);
   ref.read(timelineProvider);

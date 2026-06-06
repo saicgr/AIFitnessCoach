@@ -45,10 +45,24 @@ final nutritionRepositoryProvider = Provider<NutritionRepository>((ref) {
   return NutritionRepository(ref.watch(apiClientProvider));
 });
 
-/// Nutrition state provider
-final nutritionProvider =
-    StateNotifierProvider<NutritionNotifier, NutritionState>((ref) {
-  return NutritionNotifier(ref.watch(nutritionRepositoryProvider), ref);
+/// Per-date nutrition state — the single source of truth for ONE date's
+/// summary + logs, keyed by a `yyyy-MM-dd` (user-local) date string. Today's
+/// instance is kept alive (read app-wide + prewarmed); past dates auto-dispose
+/// when no widget watches them. Because the date IS the provider identity, the
+/// cross-date leak the old single-slot `nutritionProvider` allowed is
+/// structurally impossible.
+final dailyNutritionProvider = StateNotifierProvider.autoDispose
+    .family<DailyNutritionNotifier, DailyNutritionState, String>((ref, dateKey) {
+  if (dateKey == todayNutritionKey()) ref.keepAlive();
+  return DailyNutritionNotifier(
+      ref.watch(nutritionRepositoryProvider), ref, dateKey);
+});
+
+/// User-level nutrition state (NOT date-scoped): calorie/macro targets + the
+/// offline meal-write-queue depth. Singleton.
+final nutritionMetaProvider =
+    StateNotifierProvider<NutritionMetaNotifier, NutritionMetaState>((ref) {
+  return NutritionMetaNotifier(ref.watch(nutritionRepositoryProvider), ref);
 });
 
 /// Nutrition repository

@@ -66,14 +66,21 @@ class NutritionPrewarmer {
 
       debugPrint('🍎 [NutritionPrewarmer] warming for $userId');
 
-      final notifier = ref.read(nutritionProvider.notifier);
+      final notifier =
+          ref.read(dailyNutritionProvider(todayNutritionKey()).notifier);
 
       final futures = <Future<void>>[
-        notifier.loadTodaySummary(userId, forceRefresh: force).catchError((e) {
-          debugPrint('⚠️ [NutritionPrewarmer] loadTodaySummary failed: $e');
+        notifier.load(userId, forceRefresh: force).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] load(today) failed: $e');
         }),
-        notifier.loadRecentLogs(userId, forceRefresh: force).catchError((e) {
-          debugPrint('⚠️ [NutritionPrewarmer] loadRecentLogs failed: $e');
+        notifier.loadLogs(userId, forceRefresh: force).catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] loadLogs(today) failed: $e');
+        }),
+        ref
+            .read(nutritionMetaProvider.notifier)
+            .loadTargets(userId, forceRefresh: force)
+            .catchError((e) {
+          debugPrint('⚠️ [NutritionPrewarmer] loadTargets failed: $e');
         }),
         // Below-the-fold Stats strip — warm the cached aggregate providers so
         // the first Stats render paints last-known REAL numbers instead of a

@@ -48,9 +48,9 @@ class _DailyStatsCardState extends ConsumerState<DailyStatsCard> {
     final caloriesBurned = activityState.today?.caloriesBurned ?? 0;
 
     // Get nutrition data (for deficit calculation)
-    final nutritionState = ref.watch(nutritionProvider);
+    final nutritionState = ref.watch(dailyNutritionProvider(todayNutritionKey()));
     final prefsState = ref.watch(nutritionPreferencesProvider);
-    final caloriesConsumed = nutritionState.todaySummary?.totalCalories ?? 0;
+    final caloriesConsumed = nutritionState.summary?.totalCalories ?? 0;
     final calorieTarget = prefsState.currentCalorieTarget;
 
     // Calculate deficit: target - consumed + exercise burned

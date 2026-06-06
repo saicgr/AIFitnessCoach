@@ -745,8 +745,8 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 },
                 onFoodLogged: () {
                   ref
-                      .read(nutritionProvider.notifier)
-                      .loadTodaySummary(widget.userId);
+                      .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+                      .load(widget.userId);
                 },
                 selectedDate: widget.selectedDate,
               ),
@@ -915,20 +915,17 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
         prefsState.preferences?.targetCalories != null;
     if (!hasRealCalorieTarget) return null;
 
-    final state = ref.watch(nutritionProvider);
-    final summary = state.todaySummary;
-
-    // C7 — scope "remaining" to the date being logged. The cached summary is
-    // tagged with loadedSummaryDate; only trust it when it matches the date
-    // the sheet targets. selectedDate == null means "today".
+    // C7 — scope "remaining" to the date being logged. The daily provider is
+    // now per-date, so watching the provider keyed by the target date inherently
+    // gives us the summary for that day (no cross-date staleness). selectedDate
+    // == null means "today".
     final target = widget.selectedDate ?? DateTime.now();
-    final targetKey = _dateKey(target);
-    final summaryMatchesDate =
-        summary != null && state.loadedSummaryDate == targetKey;
+    final state = ref.watch(dailyNutritionProvider(nutritionKeyFor(target)));
+    final summary = state.summary;
 
-    final consumedCal = summaryMatchesDate ? summary.totalCalories : 0;
+    final consumedCal = summary != null ? summary.totalCalories : 0;
     final consumedProtein =
-        summaryMatchesDate ? summary.totalProteinG.round() : 0;
+        summary != null ? summary.totalProteinG.round() : 0;
 
     final calTarget = prefsState.currentCalorieTarget;
     final proteinTarget = prefsState.currentProteinTarget;
@@ -949,11 +946,6 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           prefsState.dynamicTargets!.calorieAdjustment > 0,
     );
   }
-
-  String _dateKey(DateTime d) =>
-      '${d.year.toString().padLeft(4, '0')}-'
-      '${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
 
   /// Human label for the fits-your-day line: "Today" / "Yesterday" / a short
   /// date for older logs (C7 — past-date logs read that date, not "today").

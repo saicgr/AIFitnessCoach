@@ -354,7 +354,7 @@ class _ComponentBreakdownCard extends ConsumerWidget {
           ),
         ];
       case PillarKind.nourish:
-        final summary = ref.watch(nutritionProvider).todaySummary;
+        final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
         final prefs = ref.watch(nutritionPreferencesProvider);
         final cal = (summary?.totalCalories ?? 0).toDouble();
         final prot = (summary?.totalProteinG ?? 0).toDouble();

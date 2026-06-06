@@ -120,11 +120,11 @@ class _RecommendedMealCardState extends ConsumerState<RecommendedMealCard> {
       HapticService.success();
       setState(() => _state = _LogState.logged);
       // Refresh today's summary so the meal appears on the Nutrition tab.
-      ref.read(nutritionProvider.notifier).loadTodaySummary(
+      ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(
             userId,
             forceRefresh: true,
           );
-      ref.read(nutritionProvider.notifier).refreshTimeline();
+      ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).refreshTimeline();
     } catch (e) {
       if (!mounted) return;
       HapticService.error();

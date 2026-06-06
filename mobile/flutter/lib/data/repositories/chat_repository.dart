@@ -105,7 +105,7 @@ final chatMessagesProvider =
   final themeNotifier = ref.watch(themeModeProvider.notifier);
   final router = ref.watch(routerProvider);
   final hydrationNotifier = ref.watch(hydrationProvider.notifier);
-  final nutritionNotifier = ref.watch(nutritionProvider.notifier);
+  final nutritionNotifier = ref.watch(dailyNutritionProvider(todayNutritionKey()).notifier);
   // Pass a callback to get fresh AI settings on each message instead of caching stale settings
   AISettings getAISettings() => ref.read(aiSettingsProvider);
   // Pass a callback to set AI generating state (triggers home screen rebuild)

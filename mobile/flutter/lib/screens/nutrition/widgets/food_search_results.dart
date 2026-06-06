@@ -51,7 +51,7 @@ class FoodSearchResults extends ConsumerWidget {
           userId: userId,
           onSearchTapped: (query) {
             final service = ref.read(search.foodSearchServiceProvider);
-            final cachedLogs = ref.read(nutritionProvider).recentLogs;
+            final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
             service.search(query, userId, cachedLogs: cachedLogs);
           },
         );
@@ -109,7 +109,7 @@ class FoodSearchResults extends ConsumerWidget {
           message: message,
           onRetry: () {
             final service = ref.read(search.foodSearchServiceProvider);
-            final cachedLogs = ref.read(nutritionProvider).recentLogs;
+            final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
             service.search(query, userId, cachedLogs: cachedLogs);
           },
         );
@@ -126,7 +126,7 @@ class FoodSearchResults extends ConsumerWidget {
           message: message,
           onRetry: () {
             final service = ref.read(search.foodSearchServiceProvider);
-            final cachedLogs = ref.read(nutritionProvider).recentLogs;
+            final cachedLogs = ref.read(dailyNutritionProvider(todayNutritionKey())).logs;
             service.search(query, userId, cachedLogs: cachedLogs);
           },
         );

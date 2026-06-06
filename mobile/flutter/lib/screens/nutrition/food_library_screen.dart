@@ -563,7 +563,7 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
       // Refresh the list
       ref.read(foodLibraryProvider(_userId!).notifier).loadData();
-      ref.read(nutritionProvider.notifier).loadTodaySummary(_userId!);
+      ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(_userId!);
     } catch (e) {
       if (!mounted) return;
 

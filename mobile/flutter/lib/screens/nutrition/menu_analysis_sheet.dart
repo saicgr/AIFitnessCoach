@@ -475,7 +475,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     if (!mounted) return;
     final state = ref.read(nutritionPreferencesProvider);
     final prefs = state.preferences;
-    final summary = ref.read(nutritionProvider).todaySummary;
+    final summary = ref.read(dailyNutritionProvider(todayNutritionKey())).summary;
 
     final ctx = RecommendationContext(
       calorieTarget: state.currentCalorieTarget.toDouble(),
@@ -1571,7 +1571,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget _budgetRings(ThemeColors colors) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(nutritionPreferencesProvider);
-    final summary = ref.watch(nutritionProvider).todaySummary;
+    final summary = ref.watch(dailyNutritionProvider(todayNutritionKey())).summary;
     final totals = _selectedTotals;
     final consumedCal = (summary?.totalCalories ?? 0) + totals.cal;
     final consumedP = (summary?.totalProteinG ?? 0) + totals.protein;

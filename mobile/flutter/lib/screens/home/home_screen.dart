@@ -815,7 +815,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _refreshNutritionSilent() async {
     final userId = ref.read(authStateProvider).user?.id;
     if (userId == null) return;
-    ref.read(nutritionProvider.notifier).loadTodaySummary(userId);
+    ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId);
     ref.read(hydrationProvider.notifier).loadTodaySummary(userId, showLoading: false);
   }
 
@@ -847,7 +847,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Fire-and-forget — providers are cache-first so the UI shows data
     // immediately and the network refresh resolves silently. Not awaited so
     // the postFrame init chain stays unblocked.
-    unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
+    unawaited(ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId));
     unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
     unawaited(
         ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
@@ -902,7 +902,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // _initializeNutritionAndHydration already populated them.
     final userId = ref.read(authStateProvider).user?.id;
     if (userId != null) {
-      unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
+      unawaited(ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId));
       unawaited(ref
           .read(hydrationProvider.notifier)
           .loadTodaySummary(userId, showLoading: false));
