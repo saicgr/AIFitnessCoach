@@ -415,21 +415,58 @@ class _TrendChartState extends State<TrendChart> {
       // a 1-spot curved bar. Force a visible dot so the lone logged value is
       // never silently dropped. A ≥2-point series always draws its line.
       final isSinglePoint = smooth.length == 1;
+      final spots = [for (final p in smooth) FlSpot(xOf(p.date), p.value)];
+      // Premium stroke: a subtle light→base gradient along the primary line
+      // (reads richer than a flat single colour); overlays keep a flat colour
+      // so the eye can still separate them.
+      final strokeGradient = isPrimary
+          ? LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Color.lerp(col, Colors.white, 0.28)!, col],
+            )
+          : null;
       bars.add(LineChartBarData(
-        spots: [for (final p in smooth) FlSpot(xOf(p.date), p.value)],
+        spots: spots,
         isCurved: true,
-        curveSmoothness: 0.28,
-        barWidth: isPrimary ? 3 : 2.4,
-        color: col,
+        curveSmoothness: 0.3,
+        preventCurveOverShooting: true,
+        barWidth: isPrimary ? 3.4 : 2.4,
+        color: isPrimary ? null : col,
+        gradient: strokeGradient,
+        // Soft glow halo behind the primary stroke — the single biggest
+        // "premium, not flat" lever (fl_chart 0.69 Shadow on the line).
+        shadow: isPrimary
+            ? Shadow(
+                color: col.withValues(alpha: 0.45),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            : const Shadow(color: Colors.transparent),
         // Primary solid, overlays dashed — distinguishable beyond colour.
         dashArray: isPrimary ? null : const [6, 4],
         dotData: FlDotData(
-          show: isSinglePoint,
-          getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
-            radius: isPrimary ? 4 : 3.4,
-            color: col,
-            strokeWidth: 0,
-          ),
+          // Show the single lone point, AND an emphasised end-point dot on the
+          // primary line so the latest value reads as "you are here".
+          checkToShowDot: (spot, bar) =>
+              isSinglePoint ||
+              (isPrimary && bar.spots.isNotEmpty && spot.x == bar.spots.last.x),
+          getDotPainter: (spot, _, bar, __) {
+            final isEnd = bar.spots.isNotEmpty && spot.x == bar.spots.last.x;
+            if (isPrimary && isEnd && !isSinglePoint) {
+              return FlDotCirclePainter(
+                radius: 5,
+                color: col,
+                strokeWidth: 2.5,
+                strokeColor: colors.background,
+              );
+            }
+            return FlDotCirclePainter(
+              radius: isPrimary ? 4 : 3.4,
+              color: col,
+              strokeWidth: 0,
+            );
+          },
         ),
         belowBarData: isPrimary
             ? BarAreaData(
@@ -438,9 +475,11 @@ class _TrendChartState extends State<TrendChart> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    col.withValues(alpha: 0.20),
+                    col.withValues(alpha: 0.30),
+                    col.withValues(alpha: 0.06),
                     col.withValues(alpha: 0.0),
                   ],
+                  stops: const [0.0, 0.55, 1.0],
                 ),
               )
             : BarAreaData(show: false),
@@ -490,6 +529,8 @@ class _TrendChartState extends State<TrendChart> {
     final gridColor = colors.cardBorder.withValues(alpha: 0.5);
 
     return LineChart(
+      duration: const Duration(milliseconds: 650),
+      curve: Curves.easeOutCubic,
       LineChartData(
         minX: minX,
         maxX: maxX,

@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Zealova — Nutrition Mascot concepts (v2)</title>
+<style>
+  :root{
+    --ink:#1c1d22; --mut:#8b91a0; --line:#e7e9ef;
+    --bg:#ffffff; --card:#f5f6f9;
+    --good:#23c483; --good-deep:#0f9c66;
+    --warn:#f5a623; --over:#ec6a5e;
+    --volt:#c8f135; --volt-deep:#8fb800;
+    --ink2:#2a2b30;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#e9ebf0;color:var(--ink);
+    font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    padding:28px 22px 80px;-webkit-font-smoothing:antialiased}
+  h1{font-size:25px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:#5b6170;margin:0 0 4px;max-width:920px}
+  .sub b{color:var(--ink)}
+  .legend{color:#6b7280;font-size:13px;margin:0 0 22px}
+  .wrap{display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap}
+
+  /* ---------- phone ---------- */
+  .phone{width:330px;border-radius:46px;background:#0c0c0e;padding:10px;
+    box-shadow:0 30px 60px -20px rgba(20,22,40,.5)}
+  .screen{position:relative;border-radius:38px;overflow:hidden;background:var(--bg);height:660px}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:118px;height:26px;
+    background:#0c0c0e;border-radius:0 0 16px 16px;z-index:30}
+  .stat{display:flex;justify-content:space-between;padding:13px 24px 2px;font-size:12px;font-weight:700}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 6px}
+  .top h2{font-size:21px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .datepill{width:34px;height:34px;border-radius:11px;background:var(--good);color:#fff;
+    display:grid;place-items:center;font-weight:800;font-size:14px}
+
+  /* ---------- nutrition card ---------- */
+  .ncard{background:#fff;border:1px solid var(--line);border-radius:28px;margin:6px 12px;
+    padding:18px 16px 20px;box-shadow:0 8px 24px -16px rgba(20,22,40,.35);position:relative;overflow:hidden}
+  .ncard::before{content:"";position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 50% -10%, #f3fff6 0%, #ffffff 56%);pointer-events:none}
+  .nhead{display:flex;align-items:center;justify-content:space-between;position:relative}
+  .nhead .lbl{font-size:12.5px;font-weight:800;letter-spacing:.04em;color:#7a8090;text-transform:uppercase}
+  .mood{font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px;
+    background:#e7f9ef;color:var(--good-deep);transition:.45s ease}
+
+  .stage{position:relative;height:262px;display:grid;place-items:center;margin-top:4px}
+  .ring{position:absolute;width:226px;height:226px;border-radius:50%;
+    background:conic-gradient(var(--ringcol) calc(var(--pct)*1%), #eef0f4 0);
+    -webkit-mask:radial-gradient(closest-side, transparent 70%, #000 71%);
+            mask:radial-gradient(closest-side, transparent 70%, #000 71%);
+    transition:--pct .5s ease, --ringcol .5s ease;filter:drop-shadow(0 3px 8px rgba(35,196,131,.18))}
+  @property --pct{syntax:'<number>';inherits:true;initial-value:0}
+  @property --ringcol{syntax:'<color>';inherits:false;initial-value:#23c483}
+  .creature{position:relative;z-index:2;width:200px;height:210px;display:grid;place-items:center}
+  .calread{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);text-align:center;z-index:3}
+  .calread .big{font-size:30px;font-weight:850;letter-spacing:-.02em;line-height:1}
+  .calread .small{font-size:11.5px;font-weight:700;color:var(--mut);margin-top:2px}
+
+  .caption{position:relative;text-align:center;font-size:15px;font-weight:800;margin-top:10px;
+    letter-spacing:-.01em;min-height:20px;transition:.4s}
+  .macros{display:flex;gap:8px;margin-top:14px;position:relative}
+  .mpill{flex:1;background:var(--card);border-radius:14px;padding:9px 8px;text-align:center}
+  .mpill .v{font-weight:800;font-size:14px}
+  .mpill .k{font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.03em}
+  .mpill.p .v{color:#8b6fc9} .mpill.c .v{color:#5b9cbd} .mpill.f .v{color:#d98a5a}
+
+  /* ---------- control panel ---------- */
+  .panel{background:#fff;border:1px solid var(--line);border-radius:22px;padding:20px 22px;max-width:430px;
+    box-shadow:0 10px 30px -22px rgba(20,22,40,.5)}
+  .panel h3{margin:0 0 6px;font-size:16px}
+  .panel p{margin:0 0 14px;color:#5b6170;font-size:13.5px}
+  .seg{display:flex;gap:7px;flex-wrap:wrap;background:#f0f1f5;padding:6px;border-radius:14px}
+  .seg button{flex:1 1 calc(50% - 7px);border:0;background:transparent;padding:9px 8px;border-radius:10px;
+    font-weight:750;font-size:13px;cursor:pointer;color:#6b7280;transition:.2s;white-space:nowrap}
+  .seg button.on{background:#fff;color:var(--ink);box-shadow:0 2px 8px -3px rgba(20,22,40,.3)}
+  .ctrlrow{display:flex;align-items:center;gap:12px;margin-top:18px}
+  .ctrlrow label{font-size:12px;font-weight:800;color:#7a8090;text-transform:uppercase;letter-spacing:.04em}
+  input[type=range]{flex:1;accent-color:var(--good)}
+  .chip{display:inline-block;background:#f0f1f5;border:0;border-radius:999px;padding:7px 12px;
+    font-size:12px;font-weight:750;color:#4b5160;cursor:pointer;margin:6px 6px 0 0;transition:.15s}
+  .chip:hover{background:#e4e6ec}
+  .chips{margin-top:12px}
+  .note{font-size:12.5px;color:#6b7280;line-height:1.65}
+  .note b{color:var(--ink)}
+  code{background:#f0f1f5;padding:1px 6px;border-radius:6px;font-size:12px}
+  .desc{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .desc h4{margin:0 0 4px;font-size:13.5px;display:flex;align-items:center;gap:7px}
+  .dot{width:9px;height:9px;border-radius:50%}
+
+  /* ============ shared creature motion ============ */
+  .creature svg{overflow:visible}
+  .breathe{animation:breathe 3.4s ease-in-out infinite;transform-origin:50% 92%}
+  @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.035,.97)}}
+  .bob{animation:bob 3.4s ease-in-out infinite}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+  .lid{animation:blink 4.6s infinite}
+  @keyframes blink{0%,5%,100%{transform:scaleY(0)}2.5%{transform:scaleY(1)}}
+  .hop{animation:hop .5s cubic-bezier(.3,1.5,.5,1)}
+  @keyframes hop{0%{transform:translateY(0)}35%{transform:translateY(-16px)}70%{transform:translateY(0)}100%{transform:translateY(0)}}
+  .spark{opacity:0}
+  .creature[data-mood=goal] .spark{animation:spark 1.5s ease-out infinite}
+  @keyframes spark{0%{opacity:0;transform:translateY(0) scale(.4)}30%{opacity:1}100%{opacity:0;transform:translateY(-26px) scale(1)}}
+  .sweat{opacity:0}
+  .creature[data-mood=over] .sweat{animation:sweat 1.8s ease-in infinite}
+  @keyframes sweat{0%{opacity:0;transform:translateY(0)}20%{opacity:.9}100%{opacity:0;transform:translateY(20px)}}
+  .wobble{animation:none}
+  .creature[data-mood=over] .wobble{animation:wob .5s ease-in-out infinite}
+  @keyframes wob{0%,100%{transform:rotate(-2.5deg)}50%{transform:rotate(2.5deg)}}
+</style>
+</head>
+<body>
+  <h1>Zealova — Nutrition mascot, take 2 🌱🔥🔋🦊</h1>
+  <p class="sub">Four <b>fresh</b> directions (the old Blob/Bowl is parked). Each one is a living character that reads the day's fueling state from the calorie ring — <b>hungry → fueling → nailed it → over budget</b>. Pick one and I'll author it as the shipping Lottie.</p>
+  <p class="legend">It auto-plays the full day on a loop. Drag the slider to scrub any moment, or tap a milestone chip. Each log fires a little hop.</p>
+
+  <div class="wrap">
+    <!-- PHONE -->
+    <div class="phone">
+      <div class="screen">
+        <div class="notch"></div>
+        <div class="stat"><span>9:41</span><span>􀛨 􀙇 􀛤</span></div>
+        <div class="top">
+          <h2>Today</h2>
+          <div class="datepill">6</div>
+        </div>
+
+        <div class="ncard">
+          <div class="nhead">
+            <span class="lbl">Calories left</span>
+            <span class="mood" id="moodPill">On track</span>
+          </div>
+
+          <div class="stage">
+            <div class="ring" id="ring"></div>
+            <div class="creature breathe" id="creature" data-mood="track"></div>
+            <div class="calread">
+              <div class="big" id="calBig">735</div>
+              <div class="small" id="calSmall">of 1,500 kcal</div>
+            </div>
+          </div>
+
+          <div class="caption" id="caption">Fueling up nicely.</div>
+
+          <div class="macros">
+            <div class="mpill p"><div class="v" id="mp">46g</div><div class="k">Protein</div></div>
+            <div class="mpill c"><div class="v" id="mc">82g</div><div class="k">Carbs</div></div>
+            <div class="mpill f"><div class="v" id="mf">25g</div><div class="k">Fat</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div>
+      <div class="panel">
+        <h3>Pick a creature</h3>
+        <p>Same day-arc on all four — judge the personality, the art, and how it reads at a glance.</p>
+        <div class="seg" id="charSeg">
+          <button class="on" data-char="sprout">🌱 Sprig (sprout)</button>
+          <button data-char="ember">🔥 Ember (flame)</button>
+          <button data-char="volt">🔋 Volt (battery)</button>
+          <button data-char="fox">🦊 Nibbles (fox)</button>
+        </div>
+
+        <div class="ctrlrow">
+          <label>Eaten</label>
+          <input type="range" id="slider" min="0" max="128" value="51"/>
+          <button class="chip" id="playBtn">⏸ Auto</button>
+        </div>
+        <div class="chips">
+          <span class="chip" data-r="4">Just woke up</span>
+          <span class="chip" data-r="40">Mid-day</span>
+          <span class="chip" data-r="80">Almost there</span>
+          <span class="chip" data-r="100">Hit goal 🎉</span>
+          <span class="chip" data-r="118">Over by 270</span>
+        </div>
+
+        <div class="desc" id="charDesc"></div>
+      </div>
+
+      <div class="panel" style="margin-top:20px">
+        <h3>How it ships</h3>
+        <p class="note">These are hand-built SVG + CSS so you can judge the art and motion <b>now</b>. The approved one ships as a <b>Lottie</b> (<code>lottie: ^3.1.0</code> is already in pubspec) embedded in <code>hero_nutrition_card.dart</code>, near the calorie-ring center. One driver value <code>fullness = eaten/goal</code> (0–1.3) cross-fades the mood states; a <code>justAte</code> trigger fires the hop on each log. Mood caption uses a variant pool (≥4 lines per state) so it never reads robotic.</p>
+        <p class="note" style="margin-top:8px"><b>Mood states:</b> <span style="color:var(--over)">Hungry</span> (0–15%) · <span style="color:var(--good-deep)">Fueling</span> (15–85%) · <span style="color:var(--good)">Nailed it</span> (85–100%) · <span style="color:var(--over)">Over budget</span> (&gt;100%).</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const GOAL = 1500;
+const $ = id => document.getElementById(id);
+const creature = $('creature'), ring = $('ring');
+
+/* ---------- mood + caption pools ---------- */
+const CAP = {
+  hungry: ["Need energy.","Tank's low — let's eat.","Running on fumes.","Feed me?"],
+  track:  ["Fueling up nicely.","Right on pace.","Looking good.","Steady and strong."],
+  goal:   ["Nailed it 🎉","Bang on target!","Perfect day.","Goal hit — nice."],
+  over:   ["A little over.","Over by {x}.","Bit much — all good.","Past the line by {x}."]
+};
+const MOODMETA = {
+  hungry:{txt:'Hungry',   col:'#ec6a5e', bg:'#fdeceb', ring:'#ec6a5e'},
+  track: {txt:'On track', col:'#0f9c66', bg:'#e7f9ef', ring:'#23c483'},
+  goal:  {txt:'Goal hit', col:'#8fb800', bg:'#f3fbdc', ring:'#a9d40a'},
+  over:  {txt:'Over',     col:'#d98a5a', bg:'#fbeede', ring:'#ef9a44'}
+};
+let capIdx = 0;
+function moodOf(pct){ return pct<15?'hungry':pct<85?'track':pct<=100?'goal':'over'; }
+
+/* ============================================================
+   CHARACTER ART  — each returns SVG; CSS reads --f (0..1.3) + data-mood
+   ============================================================ */
+function eyes(cx, gap, y, r){ // simple cute eyes w/ blink lids
+  return `
+    <g class="eyes">
+      <circle cx="${cx-gap}" cy="${y}" r="${r}" fill="#2a2b30"/>
+      <circle cx="${cx+gap}" cy="${y}" r="${r}" fill="#2a2b30"/>
+      <circle cx="${cx-gap+r*.4}" cy="${y-r*.4}" r="${r*.32}" fill="#fff"/>
+      <circle cx="${cx+gap+r*.4}" cy="${y-r*.4}" r="${r*.32}" fill="#fff"/>
+      <rect class="lid" x="${cx-gap-r}" y="${y-r}" width="${r*2}" height="${r*2}" rx="${r}" fill="#fff" style="transform-box:fill-box;transform-origin:center"/>
+      <rect class="lid" x="${cx+gap-r}" y="${y-r}" width="${r*2}" height="${r*2}" rx="${r}" fill="#fff" style="transform-box:fill-box;transform-origin:center"/>
+    </g>`;
+}
+function starEyes(cx,gap,y){
+  const s=(x)=>`<path d="M${x},${y-9} l2.6,5.6 6.1,.7 -4.6,4.1 1.3,6 -5.4,-3 -5.4,3 1.3,-6 -4.6,-4.1 6.1,-.7 z" fill="#2a2b30"/>`;
+  return `<g class="eyes">${s(cx-gap)}${s(cx+gap)}</g>`;
+}
+
+const ART = {
+  /* 🌱 SPRIG — a sprout in a pot; leaves open + perk with fullness, wilt when hungry, bloom at goal */
+  sprout(){return `
+  <svg viewBox="0 0 200 210" width="190" height="200">
+    <defs>
+      <linearGradient id="leafG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#6fe39b"/><stop offset="1" stop-color="#23c483"/></linearGradient>
+      <linearGradient id="potG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f6a86a"/><stop offset="1" stop-color="#e0824a"/></linearGradient>
+    </defs>
+    <g class="spark"><circle cx="58" cy="56" r="3" fill="#a9d40a"/><circle cx="150" cy="48" r="2.4" fill="#c8f135"/><circle cx="120" cy="34" r="2.6" fill="#a9d40a"/></g>
+    <!-- stem + leaves: rotate/scale via --f -->
+    <g class="wobble" style="transform-origin:100px 150px">
+      <g class="sproutGrow" style="transform-origin:100px 150px;transform:scale(calc(.62 + var(--f)*.34));transition:transform .5s ease">
+        <path d="M100,150 C99,120 99,96 100,78" stroke="#1f9e63" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <!-- left leaf -->
+        <g class="leafL" style="transform-origin:100px 120px;transform:rotate(calc(8deg - var(--f)*30deg));transition:.5s">
+          <path d="M99,122 C70,118 50,128 44,112 C58,98 86,104 99,116 Z" fill="url(#leafG)"/>
+        </g>
+        <!-- right leaf -->
+        <g class="leafR" style="transform-origin:100px 108px;transform:rotate(calc(-8deg + var(--f)*30deg));transition:.5s">
+          <path d="M101,110 C130,104 152,112 158,96 C144,82 114,90 101,104 Z" fill="url(#leafG)"/>
+        </g>
+        <!-- bloom (only at goal) -->
+        <g class="bloom" style="transform-origin:100px 70px;transition:.5s">
+          <g class="petals">
+            <circle cx="100" cy="62" r="8" fill="#ffd54a"/>
+            <circle cx="89" cy="70" r="8" fill="#ffd54a"/><circle cx="111" cy="70" r="8" fill="#ffd54a"/>
+            <circle cx="93" cy="56" r="8" fill="#ffd54a"/><circle cx="107" cy="56" r="8" fill="#ffd54a"/>
+          </g>
+          <circle cx="100" cy="64" r="6.5" fill="#f08a3c"/>
+        </g>
+      </g>
+    </g>
+    <!-- face on the pot -->
+    <g class="bob">
+      <path d="M70,150 h60 l-8,42 a8,8 0 0 1 -8,7 h-28 a8,8 0 0 1 -8,-7 z" fill="url(#potG)"/>
+      <rect x="66" y="142" width="68" height="14" rx="6" fill="#f2b483"/>
+      ${eyes(100,12,172,5)}
+      <path class="mouthHappy" d="M92,184 q8,7 16,0" stroke="#2a2b30" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <path class="mouthSad"   d="M92,188 q8,-6 16,0" stroke="#2a2b30" stroke-width="3" fill="none" stroke-linecap="round" style="display:none"/>
+      <circle class="cheekL" cx="80" cy="178" r="5" fill="#f6b8a0" opacity=".7"/>
+      <circle class="cheekR" cx="120" cy="178" r="5" fill="#f6b8a0" opacity=".7"/>
+      <g class="sweat"><path d="M138,160 q4,8 0,12 q-4,-4 0,-12 z" fill="#7cc6ff"/></g>
+    </g>
+  </svg>`;},
+
+  /* 🔥 EMBER — a pilot flame; height + colour scale with fullness, blue & low when hungry, smoke when over */
+  ember(){return `
+  <svg viewBox="0 0 200 210" width="190" height="200">
+    <defs>
+      <radialGradient id="flameG" cx="50%" cy="78%" r="70%">
+        <stop offset="0" stop-color="#fff2a8"/><stop offset="45%" stop-color="var(--flameMid,#ffb13d)"/>
+        <stop offset="100%" stop-color="var(--flameEdge,#ff7a2d)"/></radialGradient>
+    </defs>
+    <g class="spark"><circle cx="64" cy="70" r="3" fill="#ffd54a"/><circle cx="140" cy="60" r="2.6" fill="#ffb13d"/><circle cx="112" cy="44" r="2.6" fill="#ffd54a"/></g>
+    <!-- smoke when over -->
+    <g class="sweat"><path d="M118,58 q10,-12 0,-22" stroke="#b9bec9" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/></g>
+    <!-- base log -->
+    <ellipse cx="100" cy="186" rx="46" ry="12" fill="#6b4a33"/>
+    <ellipse cx="100" cy="182" rx="46" ry="12" fill="#825a3e"/>
+    <!-- flame body grows upward via scaleY on --f -->
+    <g class="flameGrow wobble" style="transform-origin:100px 184px;transform:scaleY(calc(.5 + var(--f)*.62)) scaleX(calc(.78 + var(--f)*.18));transition:.5s">
+      <path class="flameBody breathe" style="transform-origin:100px 184px"
+        d="M100,40 C140,86 134,140 124,160 C150,150 150,120 150,120
+           C158,150 142,184 100,184 C58,184 42,150 50,120 C50,120 50,150 76,160
+           C66,140 60,86 100,40 Z" fill="url(#flameG)"/>
+      <path d="M100,96 C116,120 112,150 100,168 C88,150 84,120 100,96 Z" fill="#ffe9a3" opacity=".85"/>
+    </g>
+    <!-- face floats on the flame -->
+    <g class="bob">
+      ${eyes(100,13,150,5.4)}
+      <path class="mouthHappy" d="M91,164 q9,8 18,0" stroke="#7a3a12" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+      <path class="mouthSad"   d="M91,168 q9,-6 18,0" stroke="#7a3a12" stroke-width="3.2" fill="none" stroke-linecap="round" style="display:none"/>
+      <circle class="cheekL" cx="80" cy="158" r="5" fill="#ff8a5c" opacity=".55"/>
+      <circle class="cheekR" cx="120" cy="158" r="5" fill="#ff8a5c" opacity=".55"/>
+    </g>
+  </svg>`;},
+
+  /* 🔋 VOLT — a battery buddy; charge bar fills with fullness, red & droopy when low, lightning at goal */
+  volt(){return `
+  <svg viewBox="0 0 200 210" width="190" height="200">
+    <defs>
+      <linearGradient id="chargeG" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0" stop-color="#23c483"/><stop offset="1" stop-color="#c8f135"/></linearGradient>
+      <clipPath id="cellClip"><rect x="64" y="58" width="72" height="118" rx="16"/></clipPath>
+    </defs>
+    <g class="spark"><path d="M150,60 l-8,14 6,0 -7,13" stroke="#c8f135" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="58" cy="64" r="3" fill="#a9d40a"/></g>
+    <!-- terminal -->
+    <rect x="86" y="40" width="28" height="14" rx="5" fill="#9aa0ab"/>
+    <!-- shell -->
+    <g class="wobble" style="transform-origin:100px 176px">
+      <rect x="58" y="52" width="84" height="130" rx="22" fill="#eef1f5" stroke="#d3d8e0" stroke-width="3"/>
+      <!-- charge fill -->
+      <g clip-path="url(#cellClip)">
+        <rect class="charge" x="64" y="58" width="72" height="118" fill="url(#chargeG)"
+          style="transform-box:view-box;transform-origin:100px 176px;transform:scaleY(calc(var(--f)*.83));transition:.5s"/>
+      </g>
+      <!-- lightning emblem at goal -->
+      <path class="boltGlyph" d="M104,96 l-12,26 9,0 -10,28 22,-34 -10,0 11,-20 z" fill="#fff" opacity="0" style="transition:.4s"/>
+      <!-- face -->
+      <g class="bob">
+        ${eyes(100,13,118,5.4)}
+        <path class="mouthHappy" d="M90,134 q10,8 20,0" stroke="#2a2b30" stroke-width="3.2" fill="none" stroke-linecap="round"/>
+        <path class="mouthSad"   d="M90,138 q10,-6 20,0" stroke="#2a2b30" stroke-width="3.2" fill="none" stroke-linecap="round" style="display:none"/>
+        <circle class="cheekL" cx="79" cy="128" r="5" fill="#f6b8a0" opacity=".6"/>
+        <circle class="cheekR" cx="121" cy="128" r="5" fill="#f6b8a0" opacity=".6"/>
+        <g class="sweat"><path d="M140,108 q4,8 0,12 q-4,-4 0,-12 z" fill="#7cc6ff"/></g>
+      </g>
+    </g>
+  </svg>`;},
+
+  /* 🦊 NIBBLES — a little fox; belly rounds with fullness, ribs/sad when hungry, content/stuffed when over */
+  fox(){return `
+  <svg viewBox="0 0 200 210" width="190" height="200">
+    <defs>
+      <linearGradient id="furG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ff9a52"/><stop offset="1" stop-color="#f2792f"/></linearGradient>
+    </defs>
+    <g class="spark"><circle cx="60" cy="56" r="3" fill="#ffd54a"/><circle cx="146" cy="50" r="2.6" fill="#ffb13d"/><circle cx="116" cy="36" r="2.6" fill="#ffd54a"/></g>
+    <g class="bob">
+      <!-- tail -->
+      <path class="tail" d="M150,150 q40,-6 30,30 q-22,8 -36,-14 z" fill="url(#furG)" style="transform-origin:150px 150px"/>
+      <path d="M168,168 q12,4 12,12 q-12,2 -16,-8 z" fill="#fff"/>
+      <!-- body: belly width scales with --f -->
+      <g class="bellyGrow" style="transform-origin:100px 158px;transform:scaleX(calc(.84 + var(--f)*.26));transition:.5s">
+        <ellipse cx="100" cy="150" rx="46" ry="42" fill="url(#furG)"/>
+        <ellipse cx="100" cy="158" rx="30" ry="30" fill="#fff3e8"/>
+      </g>
+      <!-- ribs hint when hungry -->
+      <g class="ribs" style="transition:.4s">
+        <path d="M86,150 q14,4 28,0" stroke="#e6c4a6" stroke-width="2" fill="none"/>
+        <path d="M86,160 q14,4 28,0" stroke="#e6c4a6" stroke-width="2" fill="none"/>
+      </g>
+      <!-- head -->
+      <g class="wobble" style="transform-origin:100px 96px">
+        <path d="M64,70 l8,-30 22,18 z" fill="url(#furG)"/>
+        <path d="M136,70 l-8,-30 -22,18 z" fill="url(#furG)"/>
+        <path d="M70,44 l4,-12 9,8 z" fill="#2a2b30"/><path d="M130,44 l-4,-12 -9,8 z" fill="#2a2b30"/>
+        <ellipse cx="100" cy="84" rx="42" ry="36" fill="url(#furG)"/>
+        <path d="M100,72 a40,34 0 0 1 38,18 a44,44 0 0 1 -38,16 z" fill="#fff3e8" opacity=".0"/>
+        <ellipse cx="100" cy="92" rx="26" ry="22" fill="#fff3e8"/>
+        ${eyes(100,15,82,5.4)}
+        <ellipse cx="100" cy="98" rx="6" ry="4.4" fill="#2a2b30"/>
+        <path class="mouthHappy" d="M100,102 q-8,9 -16,4 M100,102 q8,9 16,4" stroke="#2a2b30" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+        <path class="mouthSad"   d="M88,112 q12,-7 24,0" stroke="#2a2b30" stroke-width="2.6" fill="none" stroke-linecap="round" style="display:none"/>
+        <circle class="cheekL" cx="74" cy="96" r="5.5" fill="#ff8a5c" opacity=".5"/>
+        <circle class="cheekR" cx="126" cy="96" r="5.5" fill="#ff8a5c" opacity=".5"/>
+      </g>
+      <g class="sweat"><path d="M138,86 q4,8 0,12 q-4,-4 0,-12 z" fill="#7cc6ff"/></g>
+    </g>
+  </svg>`;}
+};
+
+const DESC = {
+  sprout:{c:'#23c483',t:'🌱 Sprig — the sprout',d:'A potted sprout. <b>Wilts</b> and droops when you\'re running on empty; the <b>stem grows and leaves perk up</b> as you fuel; a <b>flower blooms</b> at goal; gets comically <b>overgrown + sweaty</b> when over. Nutrition-native, calm, very "healthy".'},
+  ember:{c:'#ff8a3d',t:'🔥 Ember — the flame',d:'A pilot-light buddy. A <b>tiny low flame</b> when hungry, <b>grows warm and tall</b> as you eat, <b>roars gold with star-eyes</b> at goal, puffs <b>smoke + sweat</b> when over. Reads "energy" literally — pairs great with the burn/activity ring.'},
+  volt:{c:'#8fb800',t:'🔋 Volt — the battery',d:'A battery character that <b>charges up</b> with your intake. <b>Red and droopy at low %</b>, fills green→volt as you go, <b>lightning bolt + 100%</b> at goal, <b>overheats</b> when over. Crisp, techy, on-brand with the volt accent.'},
+  fox:{c:'#f2792f',t:'🦊 Nibbles — the fox',d:'A pet fox. <b>Skinny + sad (ribs showing)</b> when hungry, <b>alert with a wagging tail</b> while fueling, <b>content with a round belly</b> at goal, <b>stuffed</b> when over. Most "pet-like" — highest cuteness, strongest attachment/retention pull.'}
+};
+
+/* ---------- state application ---------- */
+let cur = 'sprout';
+function setChar(name){
+  cur = name;
+  creature.innerHTML = ART[name]();
+  const d = DESC[name];
+  $('charDesc').innerHTML = `<h4><span class="dot" style="background:${d.c}"></span>${d.t}</h4><p class="note">${d.d}</p>`;
+  apply(+$('slider').value, true);
+}
+
+let lastMood='track';
+function apply(pct, force){
+  const f = Math.min(pct/100, 1.3);
+  const mood = moodOf(pct);
+  creature.style.setProperty('--f', f.toFixed(3));
+  creature.dataset.mood = mood;
+  ring.style.setProperty('--pct', Math.min(pct,100));
+  // ring + flame colour per mood
+  const m = MOODMETA[mood];
+  ring.style.setProperty('--ringcol', m.ring);
+  creature.style.setProperty('--flameMid', mood==='hungry'?'#7fb3ff':mood==='over'?'#ff7a2d':'#ffb13d');
+  creature.style.setProperty('--flameEdge', mood==='hungry'?'#4f86d6':mood==='over'?'#ef5a2d':'#ff7a2d');
+
+  // mood pill
+  const pill = $('moodPill');
+  pill.textContent = m.txt; pill.style.color=m.col; pill.style.background=m.bg;
+
+  // happy vs sad mouth + cheeks + ribs + bloom + bolt
+  const happy = (mood==='track'||mood==='goal');
+  creature.querySelectorAll('.mouthHappy').forEach(e=>e.style.display = happy?'':'none');
+  creature.querySelectorAll('.mouthSad').forEach(e=>e.style.display = happy?'none':'');
+  const bloom = creature.querySelector('.bloom'); if(bloom) bloom.style.opacity = mood==='goal'?1:0, bloom.style.transform=`scale(${mood==='goal'?1:0})`;
+  const bolt = creature.querySelector('.boltGlyph'); if(bolt) bolt.style.opacity = mood==='goal'?1:0;
+  const ribs = creature.querySelector('.ribs'); if(ribs) ribs.style.opacity = mood==='hungry'?.9:0;
+  const tail = creature.querySelector('.tail'); if(tail) tail.style.animation = (mood==='track')?'wob .5s ease-in-out infinite':'none';
+
+  // caption
+  if(mood!==lastMood || force){ capIdx=(capIdx+1)%4; lastMood=mood; }
+  let cap = CAP[mood][capIdx % CAP[mood].length];
+  const over = Math.max(0, Math.round((pct-100)/100*GOAL));
+  cap = cap.replace('{x}', over+' kcal');
+  $('caption').textContent = cap;
+
+  // numbers
+  const left = Math.round(GOAL*(1-pct/100));
+  $('calBig').textContent = (left<0?'+'+Math.abs(left):left).toLocaleString();
+  $('calSmall').textContent = left<0?'over your goal':'of 1,500 kcal';
+  $('mp').textContent = Math.round(93*pct/100)+'g';
+  $('mc').textContent = Math.round(168*pct/100)+'g';
+  $('mf').textContent = Math.round(50*pct/100)+'g';
+
+  // hop on user log
+  if(force!=='noHop'){ const inner = creature.firstElementChild; }
+}
+
+function hop(){
+  creature.classList.remove('hop'); void creature.offsetWidth; creature.classList.add('hop');
+}
+
+/* ---------- controls ---------- */
+$('charSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b)return;
+  [...$('charSeg').children].forEach(x=>x.classList.toggle('on',x===b));
+  setChar(b.dataset.char); hop();
+});
+$('slider').addEventListener('input',e=>{ stop(); apply(+e.target.value); hop(); });
+document.querySelectorAll('.chip[data-r]').forEach(c=>c.addEventListener('click',()=>{
+  stop(); $('slider').value=c.dataset.r; apply(+c.dataset.r); hop();
+}));
+
+/* ---------- autoplay ---------- */
+let playing=true, dir=1, t;
+function tick(){
+  if(!playing) return;
+  let v=+$('slider').value + dir*1;
+  if(v>=128){v=128;dir=-1;} if(v<=0){v=0;dir=1;}
+  const prevMood=lastMood;
+  $('slider').value=v; apply(v,'noHop');
+  if(lastMood!==prevMood) hop();
+  t=setTimeout(tick,90);
+}
+function stop(){ playing=false; clearTimeout(t); $('playBtn').textContent='▶ Play'; }
+$('playBtn').addEventListener('click',()=>{
+  playing=!playing; $('playBtn').textContent=playing?'⏸ Auto':'▶ Play'; if(playing) tick();
+});
+
+setChar('sprout'); tick();
+</script>
+</body>
+</html>

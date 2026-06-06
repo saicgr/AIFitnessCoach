@@ -15,6 +15,7 @@ import '../../widgets/glass_back_button.dart';
 import '../../widgets/trends/metric_picker_sheet.dart';
 import '../../widgets/trends/mini_trend_sparkline.dart';
 import '../../widgets/trends/trend_ai_insight_card.dart';
+import '../../widgets/trends/premium_metric_chart.dart';
 import '../../widgets/trends/trend_chart.dart';
 import '../../widgets/trends/trend_correlation.dart';
 
@@ -111,6 +112,11 @@ class _SavedTrend {
 class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   late TrendMetric _primary;
   final List<TrendMetric> _overlays = [];
+
+  /// User-selected chart style for the single-primary view (Line / Area / Bar).
+  /// Only meaningful when there are no overlays; overlays always render as the
+  /// normalised multi-line chart.
+  PremiumChartType _ctType = PremiumChartType.line;
   TrendRange _range = TrendRange.d90;
 
   /// Which event overlays are currently toggled on.
@@ -423,6 +429,53 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     return _cyclePhasesOn ?? true;
   }
 
+  Widget _chartTypeSelector(ThemeColors colors) {
+    Widget seg(String label, IconData icon, PremiumChartType t) {
+      final on = _ctType == t;
+      return GestureDetector(
+        onTap: () {
+          HapticService.light();
+          setState(() => _ctType = t);
+        },
+        child: Container(
+          margin: const EdgeInsets.only(right: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: on
+                ? colors.textPrimary.withValues(alpha: 0.12)
+                : colors.surface,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(
+                color: on
+                    ? colors.textPrimary.withValues(alpha: 0.25)
+                    : colors.cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 13, color: on ? colors.textPrimary : colors.textMuted),
+              const SizedBox(width: 4),
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: on ? colors.textPrimary : colors.textMuted)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        seg('Line', Icons.show_chart_rounded, PremiumChartType.line),
+        seg('Area', Icons.area_chart_rounded, PremiumChartType.area),
+        seg('Bars', Icons.bar_chart_rounded, PremiumChartType.bar),
+      ],
+    );
+  }
+
   Widget _chartCard(ThemeColors colors) {
     final primaryAsync =
         ref.watch(trendSeriesProvider(TrendSeriesKey(_primary, _range)));
@@ -444,6 +497,12 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         children: [
           // Clear, data-driven title — "<Primary> [vs <Overlay>] over time".
           _cardTitle(colors, _chartTitle()),
+          // Chart-type selector — single-primary only (bars/area can't carry
+          // multiple normalised series).
+          if (_overlays.isEmpty) ...[
+            const SizedBox(height: 12),
+            _chartTypeSelector(colors),
+          ],
           const SizedBox(height: 16),
           // CacheFirstView swaps a layout-matched SKELETON chart (true
           // first-ever open only) for the real chart — never a blocking
@@ -574,6 +633,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     final key = StringBuffer()
       ..write('${_primary.name}:${primary.points.length}:${primary.unit}')
       ..write('|brightness=${colors.isDark}')
+      ..write('|ct=${_overlays.isEmpty ? _ctType.name : 'multi'}')
       ..write('|cyclePhases=$cyclePhasesOn')
       ..write('|compareLast=$_compareLastCycleOn')
       // Stable fingerprint for the cycle prediction — `nextPeriodDate` flips
@@ -650,20 +710,37 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       }
     }
 
-    final chart = TrendChart(
-      showBuiltInChrome: false,
-      accent: colors.accent,
-      primary: TrendChartSeries(
-        id: _primary.name,
-        label: primary.metric.displayName,
-        unit: primary.unit,
-        points: primary.points,
-        color: colors.accent,
-      ),
-      overlays: chartOverlays,
-      events: events,
-      behindLayer: behindLayer,
-    );
+    final Widget chart;
+    if (_overlays.isEmpty && _ctType != PremiumChartType.line) {
+      // Single-primary Area / Bar — render through the premium custom painter
+      // (gradient fill + glow + animated draw-on + scrub). Bars get a trend
+      // overlay automatically.
+      chart = SizedBox(
+        height: 260,
+        child: PremiumMetricChart(
+          points: primary.points,
+          type: _ctType,
+          color: colors.accent,
+          unit: primary.unit,
+          height: 260,
+        ),
+      );
+    } else {
+      chart = TrendChart(
+        showBuiltInChrome: false,
+        accent: colors.accent,
+        primary: TrendChartSeries(
+          id: _primary.name,
+          label: primary.metric.displayName,
+          unit: primary.unit,
+          points: primary.points,
+          color: colors.accent,
+        ),
+        overlays: chartOverlays,
+        events: events,
+        behindLayer: behindLayer,
+      );
+    }
     _cachedChart = chart;
     _cachedChartKey = keyStr;
     return chart;

@@ -120,6 +120,17 @@ List<RouteBase> _utilityRoutes() => [
         },
       ),
 
+      // Universal metric detail — the canonical "metric over time" page for
+      // every home-carousel tile, the TODAY ring, and (Phase C) Stats & Scores
+      // rows. Resolves :id against the metric registry.
+      GoRoute(
+        path: '/metric/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? '';
+          return MetricDetailScreen(metricId: id);
+        },
+      ),
+
       // Custom Trends builder — pick any two metrics, see overlay + correlation.
       // `extra` accepts either a bare TrendMetric (open on that primary) or a
       // SavedTrendView (restore the full saved set: primary + overlays + range).

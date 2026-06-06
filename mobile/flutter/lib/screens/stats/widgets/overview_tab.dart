@@ -270,13 +270,20 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             // The two headline scores — Strength + Weekly — sit side-by-side
             // at the very top so the eye lands on "how am I doing" first.
             // Both cards self-fetch their data (sibling-owned widgets).
-            const Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: StrengthScoreCard()),
-                SizedBox(width: 12),
-                Expanded(child: WeeklyScoreCard()),
-              ],
+            // IntrinsicHeight bounds the Row's height to the taller card so
+            // `stretch` can equalize both. Without it, the parent vertical
+            // SingleChildScrollView passes an unbounded height into the Row and
+            // `stretch` forces an infinite-height constraint on the Expanded
+            // children → "BoxConstraints forces an infinite height" crash.
+            const IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: StrengthScoreCard()),
+                  SizedBox(width: 12),
+                  Expanded(child: WeeklyScoreCard()),
+                ],
+              ),
             ),
 
             const SizedBox(height: AppSpacing.lg),
@@ -284,13 +291,15 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             // ── 2. ACTIVITY ROW (2-up) ───────────────────────────────────
             const _OverviewSectionLabel(label: 'Activity'),
             const SizedBox(height: AppSpacing.sm),
-            const Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: ActivityStreakCard()),
-                SizedBox(width: 12),
-                Expanded(child: MonthHighlightCard()),
-              ],
+            const IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: ActivityStreakCard()),
+                  SizedBox(width: 12),
+                  Expanded(child: MonthHighlightCard()),
+                ],
+              ),
             ),
 
             const SizedBox(height: AppSpacing.lg),

@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Zealova — Nutrition Mascot, the artful cut (v3)</title>
+<style>
+  :root{
+    --bg0:#0b0d16; --bg1:#11142180; --ink:#f3f5fb; --mut:#8a92a8; --line:#222743;
+    --good:#34e39b; --warn:#ffce5a; --over:#ff7a6b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:
+      radial-gradient(120% 90% at 18% -10%, #1a2140 0%, transparent 55%),
+      radial-gradient(120% 90% at 100% 0%, #241a3a 0%, transparent 50%),
+      #0b0d16;
+    color:var(--ink);min-height:100vh;
+    font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    padding:34px 26px 90px;-webkit-font-smoothing:antialiased}
+  .kicker{font:800 11.5px/1 ui-sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#6f78ff;margin:0 0 10px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:-.025em;font-weight:850;
+    background:linear-gradient(92deg,#fff 10%,#c9d0ff 60%,#8ad6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#aeb5cc;margin:0 0 4px;max-width:980px;font-size:15.5px}
+  .sub b{color:#fff}
+  .hint{color:#6f7795;font-size:13px;margin:2px 0 26px}
+
+  /* ---- shared control bar ---- */
+  .bar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:#0f1326;border:1px solid var(--line);
+    border-radius:18px;padding:14px 18px;margin:0 0 26px;max-width:1180px;
+    box-shadow:0 24px 50px -30px rgba(0,0,0,.8),inset 0 1px 0 #ffffff0a}
+  .bar label{font:800 11px ui-sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7c84a0}
+  .bar input[type=range]{flex:1;min-width:220px;accent-color:var(--good);height:4px}
+  .btn{border:0;border-radius:12px;padding:10px 16px;font-weight:800;font-size:13.5px;cursor:pointer;letter-spacing:.01em;
+    background:linear-gradient(180deg,#7c83ff,#5b62e8);color:#fff;box-shadow:0 8px 20px -8px #5b62e8aa,inset 0 1px 0 #ffffff55}
+  .btn.ghost{background:#1a2038;color:#cfd5ee;box-shadow:none;border:1px solid var(--line)}
+  .chip{display:inline-block;background:#161b30;border:1px solid var(--line);border-radius:999px;padding:7px 13px;
+    font:750 12px ui-sans-serif;color:#aab2cf;cursor:pointer;transition:.15s}
+  .chip:hover{background:#1d2440;color:#fff;border-color:#3a4068}
+  .chips{margin-left:auto;display:flex;gap:7px;flex-wrap:wrap}
+
+  /* ---- gallery ---- */
+  .gal{display:flex;gap:26px;flex-wrap:wrap;align-items:stretch;max-width:1180px}
+  .stage{flex:1 1 340px;min-width:330px;background:linear-gradient(180deg,#10142690,#0c0f1f90);
+    border:1px solid var(--line);border-radius:28px;padding:22px 20px 20px;position:relative;overflow:hidden;
+    box-shadow:0 40px 80px -40px #000,inset 0 1px 0 #ffffff10;backdrop-filter:blur(6px)}
+  .stage::after{content:"";position:absolute;inset:0;background:radial-gradient(90% 60% at 50% -8%, var(--aura,#34e39b22) 0%, transparent 60%);pointer-events:none;transition:.6s}
+  .sname{display:flex;align-items:baseline;gap:9px;position:relative;z-index:2}
+  .sname h3{margin:0;font-size:20px;font-weight:850;letter-spacing:-.01em}
+  .sname .tag{font:750 11px ui-sans-serif;color:#7c84a0;letter-spacing:.04em}
+  .sblurb{position:relative;z-index:2;color:#9aa2be;font-size:12.7px;margin:5px 0 4px;min-height:34px}
+
+  .scene{position:relative;height:300px;display:grid;place-items:center;margin-top:6px}
+  .ring{position:absolute;width:248px;height:248px;border-radius:50%;
+    background:conic-gradient(from -90deg, var(--ringcol,#34e39b) calc(var(--pct,0)*1%), #ffffff12 0);
+    -webkit-mask:radial-gradient(closest-side,transparent 71%,#000 72%);
+            mask:radial-gradient(closest-side,transparent 71%,#000 72%);
+    transition:--pct .55s cubic-bezier(.4,.1,.2,1), --ringcol .6s;filter:drop-shadow(0 0 12px var(--ringglow,#34e39b55))}
+  .creature{position:relative;z-index:3;width:230px;height:240px;display:grid;place-items:center}
+  .read{position:absolute;left:0;right:0;bottom:6px;text-align:center;z-index:4;pointer-events:none}
+  .read .big{font:850 30px/1 ui-sans-serif;letter-spacing:-.02em}
+  .read .sm{font:750 11px ui-sans-serif;color:#7c84a0;margin-top:3px;letter-spacing:.02em}
+  .mood{position:absolute;top:0;right:0;z-index:4;font:800 11.5px ui-sans-serif;padding:5px 11px;border-radius:999px;
+    background:#34e39b22;color:#34e39b;transition:.5s}
+  .cap{position:relative;z-index:2;text-align:center;font:800 15.5px ui-sans-serif;letter-spacing:-.01em;margin-top:8px;min-height:20px;transition:.4s;color:#eef1fb}
+  .micro{position:relative;z-index:2;margin-top:14px;border-top:1px solid var(--line);padding-top:12px;
+    font-size:11.8px;line-height:1.6;color:#8b93b1}
+  .micro b{color:#cfd5ee;font-weight:750}
+
+  @property --pct{syntax:'<number>';inherits:true;initial-value:0}
+  @property --ringcol{syntax:'<color>';inherits:false;initial-value:#34e39b}
+
+  /* ============ universal motion language ============ */
+  .breathe{animation:breathe 3.6s cubic-bezier(.45,0,.55,1) infinite;transform-origin:50% 88%}
+  @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.04,.965)}}
+  .float{animation:float 4.4s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(2px)}50%{transform:translateY(-8px)}}
+  .lid{transform-box:fill-box;transform-origin:center;animation:blink 5.2s infinite}
+  @keyframes blink{0%,4%,100%{transform:scaleY(0)}1.6%,2.6%{transform:scaleY(1.05)}}
+  .lid.b{animation-delay:.08s}
+  .dart{animation:dart 6.5s ease-in-out infinite}
+  @keyframes dart{0%,38%,100%{transform:translateX(0)}44%,60%{transform:translateX(2px)}68%,84%{transform:translateX(-2.4px)}}
+  .hop{animation:hopA .62s cubic-bezier(.28,1.4,.5,1)}
+  @keyframes hopA{0%{transform:translateY(0) scaleY(1)}18%{transform:translateY(3px) scaleY(.86)}48%{transform:translateY(-20px) scaleY(1.08)}74%{transform:translateY(0) scaleY(.95)}100%{transform:translateY(0) scaleY(1)}}
+  .spin1{animation:spin1 26s linear infinite;transform-origin:center}
+  @keyframes spin1{to{transform:rotate(360deg)}}
+  .twk{animation:twk 2.4s ease-in-out infinite}
+  @keyframes twk{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
+  .creature .goalOnly{opacity:0;transition:.45s}
+  .creature[data-mood=goal] .goalOnly{opacity:1}
+  .creature .overOnly{opacity:0;transition:.4s}
+  .creature[data-mood=over] .overOnly{opacity:1}
+  .creature[data-mood=over] .heat{animation:heat 1.4s ease-in-out infinite}
+  @keyframes heat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px) scaleX(1.04)}}
+  .sweat{opacity:0}
+  .creature[data-mood=over] .sweat{animation:sweatA 1.9s ease-in infinite}
+  @keyframes sweatA{0%{opacity:0;transform:translate(0,0)}18%{opacity:.95}100%{opacity:0;transform:translate(2px,22px)}}
+  .creature[data-mood=hungry] .yawn{animation:yawn 4s ease-in-out infinite}
+  @keyframes yawn{0%,70%,100%{opacity:0;transform:translateY(0) scale(.6)}82%{opacity:.8;transform:translateY(-8px) scale(1)}}
+  .ember{opacity:0}
+  .creature[data-mood=track] .ember,.creature[data-mood=goal] .ember{animation:emberA 2.8s ease-out infinite}
+  @keyframes emberA{0%{opacity:0;transform:translateY(8px) scale(.5)}25%{opacity:.9}100%{opacity:0;transform:translateY(-30px) scale(1.1)}}
+</style>
+</head>
+<body>
+  <p class="kicker">Zealova · nutrition companion</p>
+  <h1>Three characters with a pulse 🌞 🫧 🎟️</h1>
+  <p class="sub">No more flat stickers. Each one is <b>art-directed</b> — layered gradients, glow, rim-light — and <b>alive</b>: it breathes, blinks, its eyes drift, and it has a <b>signature reaction the moment you log a meal</b>. The day's fuel drives its whole mood arc: <b>running on empty → fueling → nailed it → over the line.</b></p>
+  <p class="hint">▸ Drag <b>Eaten</b> to scrub all three through the same moment. ▸ Hit <b>🍽 Log a meal</b> to fire the just-ate microinteraction. ▸ Auto-play loops the full day.</p>
+
+  <div class="bar">
+    <label>Eaten</label>
+    <input type="range" id="slider" min="0" max="128" value="48"/>
+    <button class="btn" id="logBtn">🍽 Log a meal</button>
+    <button class="btn ghost" id="playBtn">⏸ Auto</button>
+    <span class="chips">
+      <span class="chip" data-r="5">Empty</span>
+      <span class="chip" data-r="48">Mid-day</span>
+      <span class="chip" data-r="86">Almost</span>
+      <span class="chip" data-r="100">Goal 🎉</span>
+      <span class="chip" data-r="120">Over</span>
+    </span>
+  </div>
+
+  <div class="gal" id="gal"></div>
+
+<script>
+const GOAL=1500, $=id=>document.getElementById(id);
+const moodOf=p=>p<14?'hungry':p<86?'track':p<=101?'goal':'over';
+const MM={
+  hungry:{txt:'Running low',col:'#ff7a6b',ring:'#ff7a6b',glow:'#ff7a6b55',aura:'#ff7a6b22'},
+  track :{txt:'Fueling',     col:'#34e39b',ring:'#34e39b',glow:'#34e39b66',aura:'#34e39b22'},
+  goal  :{txt:'Nailed it',   col:'#9be85a',ring:'#9be85a',glow:'#9be85a77',aura:'#9be85a26'},
+  over  :{txt:'Over budget', col:'#ffb14a',ring:'#ffb14a',glow:'#ffb14a66',aura:'#ffb14a22'}
+};
+const CAP={
+  hungry:["Running on empty.","Tank's low — feed me?","Out of fuel.","Low battery, friend."],
+  track :["Fueling up nicely.","Right on pace.","Feeling good.","Steady and strong."],
+  goal  :["Nailed it 🎉","Perfect day.","Bang on target.","Couldn't be better."],
+  over  :["A touch over.","Over by {x}.","Bit much — we're okay.","Past the line by {x}."]
+};
+
+/* ================= shared eye (glossy, catchlight, blink, drift) ================= */
+function eye(cx,cy,r,lookGap){
+  lookGap=lookGap||0;
+  return `<g class="eyeG">
+    <ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*1.06}" fill="#10131f"/>
+    <g class="dart">
+      <circle cx="${cx}" cy="${cy+ r*.05}" r="${r*.62}" fill="#272b3d"/>
+      <circle cx="${cx+r*.34}" cy="${cy-r*.42}" r="${r*.30}" fill="#fff"/>
+      <circle cx="${cx-r*.30}" cy="${cy+r*.34}" r="${r*.13}" fill="#ffffffcc"/>
+    </g>
+    <rect class="lid" x="${cx-r-1}" y="${cy-r-1}" width="${r*2+2}" height="${r*2+2}" rx="${r}" fill="var(--lidfill,#fff)"/>
+  </g>`;
+}
+
+/* ================= 1. SOL — the sun-spirit ================= */
+function solSVG(){
+  let rays='';
+  for(let i=0;i<12;i++){const a=i*30;rays+=`<g transform="rotate(${a} 115 118)"><path d="M115,26 q5,16 0,30 q-5,-14 0,-30 z" fill="url(#rayG)"/></g>`;}
+  return `
+  <svg viewBox="0 0 230 240" width="222" height="232">
+    <defs>
+      <radialGradient id="sunG" cx="42%" cy="36%" r="72%">
+        <stop offset="0" stop-color="#fffef2"/><stop offset="42%" stop-color="var(--sunMid,#ffd86a)"/>
+        <stop offset="100%" stop-color="var(--sunEdge,#ff9f3c)"/></radialGradient>
+      <linearGradient id="rayG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--rayTip,#ffe89a)" stop-opacity="0"/>
+        <stop offset="40%" stop-color="var(--rayTip,#ffe89a)"/><stop offset="100%" stop-color="var(--sunMid,#ffce5a)"/></linearGradient>
+      <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      <radialGradient id="haloG" cx="50%" cy="50%" r="50%">
+        <stop offset="60%" stop-color="#fff3c8" stop-opacity="0"/><stop offset="86%" stop-color="#ffe79a" stop-opacity=".55"/><stop offset="100%" stop-color="#ffe79a" stop-opacity="0"/></radialGradient>
+    </defs>
+    <!-- halo (goal) -->
+    <circle class="goalOnly" cx="115" cy="118" r="100" fill="url(#haloG)"/>
+    <!-- rising embers (fueling/goal) -->
+    <g><circle class="ember" cx="78" cy="150" r="3" fill="#ffd86a"/><circle class="ember" cx="150" cy="158" r="2.4" fill="#ffe89a" style="animation-delay:1.1s"/><circle class="ember" cx="116" cy="150" r="2.6" fill="#ffce5a" style="animation-delay:.6s"/></g>
+    <!-- sparkles (goal) -->
+    <g class="goalOnly"><path class="twk" d="M58,58 l2,7 7,2 -7,2 -2,7 -2,-7 -7,-2 7,-2 z" fill="#fff7d6"/>
+      <path class="twk" style="animation-delay:.8s" d="M176,70 l1.6,5 5,1.6 -5,1.6 -1.6,5 -1.6,-5 -5,-1.6 5,-1.6 z" fill="#fff7d6"/></g>
+    <g class="float">
+      <g class="breathe">
+        <g class="spin1" style="transform-origin:115px 118px"><g class="raysScale" style="transform-box:fill-box;transform-origin:115px 118px;transform:scale(calc(.62 + var(--f)*.52));transition:transform .55s ease">${rays}</g></g>
+        <circle cx="115" cy="118" r="62" fill="url(#sunG)" filter="url(#softGlow)"/>
+        <!-- waning shadow when hungry -->
+        <path class="hungryShade" d="M115,56 a62,62 0 0 0 0,124 a40,62 0 0 1 0,-124 z" fill="#5b6b8e" opacity="0" style="transition:.5s;mix-blend-mode:multiply"/>
+      </g>
+      <!-- face -->
+      <g class="faceG">
+        ${eye(96,116,8)}
+        ${eye(134,116,8)}
+        <path class="mHappy" d="M100,138 q15,16 30,0" stroke="#b5641e" stroke-width="4.4" fill="none" stroke-linecap="round"/>
+        <path class="mGoal goalOnly" d="M99,136 q16,20 32,0" stroke="#7a4a14" stroke-width="4.6" fill="none" stroke-linecap="round" style="display:none"/>
+        <path class="mSad" d="M101,144 q14,-11 28,0" stroke="#b5641e" stroke-width="4.2" fill="none" stroke-linecap="round" style="display:none"/>
+        <circle cx="84" cy="132" r="6.5" fill="#ff9a6a" opacity=".5"/><circle cx="146" cy="132" r="6.5" fill="#ff9a6a" opacity=".5"/>
+        <!-- yawn z (hungry) -->
+        <text class="yawn" x="150" y="86" font-size="16" fill="#cfd6ee" font-weight="800">z</text>
+        <!-- sweat (over) -->
+        <g class="sweat heat"><path d="M150,128 q5,9 0,15 q-5,-5 0,-15 z" fill="#7cc6ff"/></g>
+      </g>
+    </g>
+  </svg>`;
+}
+
+/* ================= 2. MELLA — gummy water-spirit (fills with fuel) ================= */
+function mellaSVG(){
+  return `
+  <svg viewBox="0 0 230 240" width="222" height="232">
+    <defs>
+      <linearGradient id="glassG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffffff" stop-opacity=".9"/><stop offset="55%" stop-color="#dfeafe" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="#bcd0ff" stop-opacity=".42"/></linearGradient>
+      <linearGradient id="fuelG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--fuelTop,#7dffc4)"/><stop offset="100%" stop-color="var(--fuelBot,#19c98a)"/></linearGradient>
+      <radialGradient id="mGlow" cx="50%" cy="48%" r="55%">
+        <stop offset="55%" stop-color="var(--fuelTop,#34e39b)" stop-opacity="0"/><stop offset="100%" stop-color="var(--fuelTop,#34e39b)" stop-opacity=".5"/></radialGradient>
+      <clipPath id="bodyClip"><path d="M115,36 C150,40 176,78 176,128 C176,182 150,206 115,206 C80,206 54,182 54,128 C54,78 80,32 115,36 Z"/></clipPath>
+      <filter id="mBlur"><feGaussianBlur stdDeviation="5"/></filter>
+    </defs>
+    <!-- aura -->
+    <ellipse class="goalOnly" cx="115" cy="124" rx="92" ry="98" fill="url(#mGlow)"/>
+    <g class="ember" style="left:0"><circle cx="150" cy="150" r="2.6" fill="#7dffc4"/></g>
+    <g class="float"><g class="jelly" style="transform-box:fill-box;transform-origin:115px 200px;transform:scaleX(calc(1.02 - var(--f)*.04)) scaleY(calc(.99 + var(--f)*.03));transition:.5s">
+      <!-- body glass -->
+      <path d="M115,36 C150,40 176,78 176,128 C176,182 150,206 115,206 C80,206 54,182 54,128 C54,78 80,32 115,36 Z" fill="url(#glassG)" stroke="#ffffff55" stroke-width="2"/>
+      <!-- fuel fill (rises with --f); top is a wavy sloshing path -->
+      <g clip-path="url(#bodyClip)">
+        <g class="fuelWrap" style="transform-box:view-box;transform-origin:115px 206px;transform:translateY(calc((1 - min(var(--f),1.18)) * 150px));transition:transform .55s cubic-bezier(.3,.9,.3,1)">
+          <path class="slosh" d="M40,40 q19,-12 38,0 t38,0 t38,0 t38,0 v200 H40 Z" fill="url(#fuelG)"/>
+          <ellipse cx="92" cy="58" rx="20" ry="7" fill="#ffffff44"/>
+        </g>
+      </g>
+      <!-- gold goal line -->
+      <line x1="60" y1="66" x2="170" y2="66" stroke="#ffe07a" stroke-width="2" stroke-dasharray="4 5" opacity=".7"/>
+      <!-- specular highlight -->
+      <path d="M86,58 q-14,30 -6,64" stroke="#ffffffcc" stroke-width="7" fill="none" stroke-linecap="round" opacity=".7"/>
+      <circle cx="150" cy="78" r="6" fill="#ffffff88"/>
+    </g></g>
+    <!-- face floats on body -->
+    <g class="float"><g class="breathe">
+      ${eye(98,124,9)}
+      ${eye(132,124,9)}
+      <path class="mHappy" d="M101,148 q14,15 28,0" stroke="#0c6f4a" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+      <path class="mSad" d="M102,154 q13,-10 26,0" stroke="#0c6f4a" stroke-width="4" fill="none" stroke-linecap="round" style="display:none"/>
+      <g class="goalOnly"><path d="M93,118 l2.4,5 5,.6 -3.8,3.4 1,5.2 -4.6,-2.6 -4.6,2.6 1,-5.2 -3.8,-3.4 5,-.6 z" fill="#0c6f4a" style="display:none"/></g>
+      <circle cx="85" cy="140" r="6" fill="#5be0b0" opacity=".55"/><circle cx="145" cy="140" r="6" fill="#5be0b0" opacity=".55"/>
+      <g class="sweat heat"><path d="M150,134 q5,9 0,15 q-5,-5 0,-15 z" fill="#7cc6ff"/></g>
+      <!-- overflow drip (over) -->
+      <path class="overOnly" d="M70,196 q-3,14 2,22 q5,-8 -2,-22 z" fill="url(#fuelG)"/>
+    </g></g>
+  </svg>`;
+}
+
+/* ================= 3. TIK — the ring-runner (lives ON the calorie ring) ================= */
+function tikSVG(){
+  return `
+  <svg viewBox="0 0 230 240" width="222" height="232" style="overflow:visible">
+    <defs>
+      <radialGradient id="tikG" cx="40%" cy="32%" r="74%">
+        <stop offset="0" stop-color="#fff"/><stop offset="48%" stop-color="var(--tikMid,#8ad6ff)"/>
+        <stop offset="100%" stop-color="var(--tikEdge,#4f8bff)"/></radialGradient>
+      <filter id="tikGlow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="4"/>
+        <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <!-- the runner orbits: wrapper rotates by --ang around the ring centre, sprite counter-rotates upright -->
+    <g style="transform-box:view-box;transform-origin:115px 120px;transform:rotate(calc(var(--ang,0)*1deg));transition:transform .55s cubic-bezier(.3,.8,.3,1)">
+      <g style="transform-box:view-box;transform-origin:115px 120px;transform:translateY(-104px)">
+        <g style="transform-box:fill-box;transform-origin:center;transform:rotate(calc(var(--ang,0)*-1deg));transition:transform .55s">
+          <!-- paint splash drips at the tip -->
+          <g class="ember"><circle cx="0" cy="14" r="2.4" fill="var(--ringcol,#34e39b)"/></g>
+          <g class="tikHop">
+            <!-- legs (run cycle when fueling) -->
+            <g class="legs">
+              <rect class="legL" x="-9" y="14" width="6" height="15" rx="3" fill="var(--tikEdge,#3f72e0)" style="transform-box:fill-box;transform-origin:top center"/>
+              <rect class="legR" x="3" y="14" width="6" height="15" rx="3" fill="var(--tikEdge,#3f72e0)" style="transform-box:fill-box;transform-origin:top center"/>
+            </g>
+            <!-- arms (up at goal) -->
+            <g class="arms">
+              <rect class="armL" x="-22" y="-2" width="6" height="16" rx="3" fill="var(--tikMid,#7cc4ff)" style="transform-box:fill-box;transform-origin:top center;transform:rotate(28deg)"/>
+              <rect class="armR" x="16" y="-2" width="6" height="16" rx="3" fill="var(--tikMid,#7cc4ff)" style="transform-box:fill-box;transform-origin:top center;transform:rotate(-28deg)"/>
+            </g>
+            <!-- body -->
+            <g class="breathe">
+              <circle cx="0" cy="0" r="20" fill="url(#tikG)" filter="url(#tikGlow)"/>
+              ${eye(-7,-2,5.4).replace(/var\(--lidfill,#fff\)/g,'#eaf4ff')}
+              ${eye(7,-2,5.4).replace(/var\(--lidfill,#fff\)/g,'#eaf4ff')}
+              <path class="mHappy" d="M-7,8 q7,8 14,0" stroke="#1c4a9e" stroke-width="3" fill="none" stroke-linecap="round"/>
+              <path class="mSad" d="M-7,11 q7,-6 14,0" stroke="#1c4a9e" stroke-width="2.8" fill="none" stroke-linecap="round" style="display:none"/>
+              <circle cx="-12" cy="4" r="3.6" fill="#ff9a6a" opacity=".55"/><circle cx="12" cy="4" r="3.6" fill="#ff9a6a" opacity=".55"/>
+              <!-- brow-wipe sweat while climbing -->
+              <g class="sweat"><path d="M14,-8 q3,6 0,10 q-3,-3 0,-10 z" fill="#7cc6ff"/></g>
+            </g>
+            <!-- victory confetti (goal) -->
+            <g class="goalOnly"><rect class="twk" x="-26" y="-30" width="5" height="5" rx="1" fill="#ff7a6b"/>
+              <rect class="twk" style="animation-delay:.5s" x="22" y="-26" width="5" height="5" rx="1" fill="#ffce5a"/>
+              <rect class="twk" style="animation-delay:.9s" x="-4" y="-36" width="5" height="5" rx="1" fill="#9be85a"/></g>
+          </g>
+        </g>
+      </g>
+    </g>
+  </svg>`;
+}
+
+const CHARS=[
+  {id:'sol',  name:'Sol',  tag:'the sun-spirit',  art:solSVG,
+   blurb:'A little sun that <b>wanes to a sleepy crescent</b> on empty and <b>blooms into a radiant, haloed sun</b> at goal. Your fuel = your light for the day.',
+   micro:'<b>Micro:</b> corona slowly rotates · rays breathe + grow with intake · eyes blink &amp; drift · yawns with a floating “z” when low · <b>log → bright ray-burst + happy squint</b> · sparkle halo at goal · heat-shimmer + sweat when over.'},
+  {id:'mella',name:'Mella',tag:'the fuel-spirit',  art:mellaSVG,
+   blurb:'A glassy water-spirit whose translucent body <b>fills with a glowing fuel gradient</b> as you eat — sloshing, specular, premium. Empties and droops when you’re low.',
+   micro:'<b>Micro:</b> jelly jiggle physics · fuel surface sloshes · sliding specular highlight · blink · <b>log → big wobble, level rises, sparkle</b> · reaches the gold line at goal · overflows + drips + sweats when over.'},
+  {id:'tik',  name:'Tik',  tag:'the ring-runner',  art:tikSVG, runner:true,
+   blurb:'The boldest idea: a sprite that <b>lives on the calorie ring</b> and <b>runs along it, painting the arc</b> — its position IS your progress. Sits exhausted at the start, sprints up, throws its arms up at the top.',
+   micro:'<b>Micro:</b> position = your % around the ring · running leg cycle while fueling · brow-wipe climbing · eyes track you · <b>log → paint-splash + jump forward</b> · arms-up + confetti at the top · overshoots &amp; dangles when over.'}
+];
+
+/* ---------- build gallery ---------- */
+const gal=$('gal'); const stages={};
+CHARS.forEach(c=>{
+  const el=document.createElement('div'); el.className='stage';
+  el.innerHTML=`
+    <div class="sname"><h3>${c.name}</h3><span class="tag">${c.tag}</span></div>
+    <div class="sblurb">${c.blurb}</div>
+    <div class="scene">
+      <div class="ring" data-ring></div>
+      <div class="creature breathe" data-creature data-mood="track">${c.art()}</div>
+      <div class="mood" data-mood-pill>Fueling</div>
+      <div class="read"><div class="big" data-big>780</div><div class="sm" data-sm>of 1,500 kcal</div></div>
+    </div>
+    <div class="cap" data-cap>Fueling up nicely.</div>
+    <div class="micro">${c.micro}</div>`;
+  gal.appendChild(el);
+  stages[c.id]={root:el,ring:el.querySelector('[data-ring]'),cr:el.querySelector('[data-creature]'),
+    pill:el.querySelector('[data-mood-pill]'),big:el.querySelector('[data-big]'),sm:el.querySelector('[data-sm]'),cap:el.querySelector('[data-cap]'),runner:c.runner};
+});
+
+let capIdx=0,lastMood='track';
+function paint(pct){
+  const f=Math.min(pct/100,1.3), mood=moodOf(pct), m=MM[mood];
+  if(mood!==lastMood){capIdx=(capIdx+1)%4;lastMood=mood;}
+  const over=Math.max(0,Math.round((pct-100)/100*GOAL));
+  let cap=CAP[mood][capIdx%4].replace('{x}',over+' kcal');
+  const left=Math.round(GOAL*(1-pct/100));
+  CHARS.forEach(c=>{
+    const s=stages[c.id], cr=s.cr;
+    cr.style.setProperty('--f',f.toFixed(3));
+    cr.dataset.mood=mood;
+    s.root.style.setProperty('--aura',m.aura);
+    s.ring.style.setProperty('--pct',Math.min(pct,100));
+    s.ring.style.setProperty('--ringcol',m.ring);
+    s.ring.style.setProperty('--ringglow',m.glow);
+    cr.style.setProperty('--ringcol',m.ring);
+    // per-char palette shifts
+    cr.style.setProperty('--sunMid',mood==='hungry'?'#9fb6e0':mood==='over'?'#ff9a4a':'#ffd86a');
+    cr.style.setProperty('--sunEdge',mood==='hungry'?'#6f86b8':mood==='over'?'#ff6f3c':'#ff9f3c');
+    cr.style.setProperty('--rayTip',mood==='hungry'?'#cdd8f0':'#ffe89a');
+    cr.style.setProperty('--fuelTop',mood==='over'?'#ffd27a':'#7dffc4');
+    cr.style.setProperty('--fuelBot',mood==='over'?'#ff9f3c':'#19c98a');
+    cr.style.setProperty('--tikMid',mood==='hungry'?'#9fb6e0':'#8ad6ff');
+    cr.style.setProperty('--tikEdge',mood==='hungry'?'#6f86b8':mood==='over'?'#ff9a4a':'#4f8bff');
+    // discrete face toggles
+    const happy=(mood==='track'||mood==='goal');
+    cr.querySelectorAll('.mHappy').forEach(e=>e.style.display=happy?'':'none');
+    cr.querySelectorAll('.mSad').forEach(e=>e.style.display=happy?'none':'');
+    cr.querySelectorAll('.mGoal').forEach(e=>e.style.display=mood==='goal'?'':'none');
+    const shade=cr.querySelector('.hungryShade'); if(shade) shade.style.opacity=mood==='hungry'?.4:0;
+    // runner angle
+    if(s.runner){ const ang=Math.min(pct,107)*3.6; cr.querySelector('svg').style.setProperty('--ang',ang); cr.style.setProperty('--ang',ang);
+      const legs=cr.querySelector('.legs'); if(legs) legs.style.animation=(mood==='track')?'run .32s linear infinite':'none';
+      const arms=cr.querySelector('.arms'); if(arms) arms.classList.toggle('cheer',mood==='goal'); }
+    // numbers
+    s.big.textContent=(left<0?'+'+Math.abs(left):left).toLocaleString();
+    s.sm.textContent=left<0?'over goal':'of 1,500 kcal';
+    s.pill.textContent=m.txt; s.pill.style.color=m.col; s.pill.style.background=m.col+'22';
+    s.cap.textContent=cap;
+  });
+}
+function logMeal(){
+  CHARS.forEach(c=>{const cr=stages[c.id].cr; const h=cr.querySelector(c.runner?'.tikHop':'svg .float, svg')||cr;
+    const t=cr.querySelector('.tikHop')||cr; t.classList.remove('hop');void t.offsetWidth;t.classList.add('hop');});
+}
+
+/* leg run + cheer arms injected */
+const st=document.createElement('style');
+st.textContent=`@keyframes run{0%,100%{transform:rotate(24deg)}50%{transform:rotate(-24deg)}}
+  .legs .legR{animation-delay:.16s}
+  .arms.cheer .armL{transform:rotate(150deg)!important}.arms.cheer .armR{transform:rotate(-150deg)!important}
+  .tikHop{transition:transform .3s}`;
+document.head.appendChild(st);
+
+/* controls */
+$('slider').addEventListener('input',e=>{stop();paint(+e.target.value);});
+$('logBtn').addEventListener('click',()=>{logMeal();});
+document.querySelectorAll('.chip[data-r]').forEach(c=>c.addEventListener('click',()=>{stop();$('slider').value=c.dataset.r;paint(+c.dataset.r);logMeal();}));
+let playing=true,dir=1,t;
+function tick(){if(!playing)return;let v=+$('slider').value+dir;if(v>=128){v=128;dir=-1;}if(v<=0){v=0;dir=1;}
+  const pm=lastMood;$('slider').value=v;paint(v);if(lastMood!==pm)logMeal();t=setTimeout(tick,95);}
+function stop(){playing=false;clearTimeout(t);$('playBtn').textContent='▶ Play';}
+$('playBtn').addEventListener('click',()=>{playing=!playing;$('playBtn').textContent=playing?'⏸ Auto':'▶ Play';if(playing)tick();});
+paint(48);tick();
+</script>
+</body>
+</html>

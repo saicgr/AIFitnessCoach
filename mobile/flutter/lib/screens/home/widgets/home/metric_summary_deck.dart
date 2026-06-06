@@ -272,10 +272,11 @@ class _MetricSummaryDeckState extends ConsumerState<MetricSummaryDeck> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Score ring (left). Tapping opens the stats breakdown (#15).
+            // Score ring (left). Tapping opens the composite TODAY metric page
+            // (score-over-time graph + momentum + AI actions).
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: () => context.push('/stats'),
+              onTap: () => context.push('/metric/today'),
               child: SegmentedScoreRing(
                 size: 100,
                 strokeWidth: 9,
@@ -890,52 +891,13 @@ class MetricTile extends ConsumerWidget {
   }
 
   void _openDetail(BuildContext context) {
-    // Open the metric's OWN detail page (instant graph + history), NOT the
-    // custom-trend builder (which made every tile feel slow + generic). Each
-    // metric routes to its dedicated screen; nutrition metrics switch to the
-    // Nutrition tab (a shell branch — use `go`, not `push`, so we don't stack
-    // a second NutritionScreen and collide its static GlobalKeys).
-    switch (kind) {
-      case RingKind.nourish:
-        context.go('/nutrition');
-      case RingKind.hydration:
-        context.go('/nutrition?tab=2');
-      case RingKind.sleep:
-        context.push('/health/sleep');
-      case RingKind.move:
-      case RingKind.activeEnergy:
-      case RingKind.zoneMinutes:
-        context.push('/neat');
-      case RingKind.protein:
-        context.go('/nutrition');
-      case RingKind.recovery:
-      case RingKind.heartRate:
-      case RingKind.hrv:
-      case RingKind.stress:
-      case RingKind.vo2max:
-      case RingKind.mindfulMinutes:
-        // The Combined Health hub has per-metric history sections + graphs.
-        context.push('/health/combined');
-      case RingKind.sleepLatency:
-      case RingKind.wakeConsistency:
-      case RingKind.bedtimeWindow:
-        // Sleep-derived metrics live on the Sleep detail screen.
-        context.push('/health/sleep');
-      case RingKind.weight:
-        // Open the weight metric's OWN detail (graph + history) directly, not
-        // the measurements LIST (issue #8 — tapping weight dumped you on the list).
-        context.push('/measurements/weight');
-      case RingKind.bodyFat:
-        context.push('/measurements/bodyFat');
-      case RingKind.stepStreak:
-        context.push('/neat');
-      case RingKind.cardioDistance:
-        context.push('/stats');
-      case RingKind.cycle:
-        context.push('/cycle');
-      case RingKind.train:
-        context.push('/stats');
-    }
+    // Every tile opens the universal metric detail page (premium graph + goal
+    // band + daily breakdown + AI actions). The richer specialised screens
+    // (Sleep hypnogram, NEAT, Combined Health, measurements) remain reachable
+    // from that page's "View full" action via each descriptor's fullScreenRoute.
+    // `/metric/:id` is a leaf route, so `push` is safe (no shell-branch
+    // GlobalKey collisions).
+    context.push('/metric/${kind.id}');
   }
 
   /// Whether an empty metric's CTA should read "Connect" (needs a wearable /

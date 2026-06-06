@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova · Universal Metric Detail — Mockups</title>
+<style>
+  :root{
+    --bg:#0b0c10; --ink:#0f1115;
+    --volt:#c8ff2e;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1200px 700px at 50% -10%,#15171d,#080910 60%);color:#e8ebf0;padding:40px 20px 80px;-webkit-font-smoothing:antialiased}
+  h1{font-size:26px;font-weight:800;letter-spacing:-.5px;text-align:center}
+  .sub{color:#8b93a3;text-align:center;margin:8px auto 6px;max-width:780px;font-size:14px;line-height:1.5}
+  .legend{max-width:880px;margin:18px auto 34px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+  .chip{font-size:12px;font-weight:600;color:#cdd4e0;background:#171a21;border:1px solid #262b36;padding:6px 11px;border-radius:999px}
+  .chip b{color:var(--volt)}
+  .gallery{display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start}
+  .cap{width:390px;text-align:center;margin:14px auto 0;color:#9aa3b2;font-size:13px;line-height:1.5}
+  .cap b{color:#e8ebf0}
+
+  /* phone frame */
+  .phone{width:390px;border-radius:42px;padding:12px;background:linear-gradient(160deg,#23262e,#0d0f14);box-shadow:0 30px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);flex:0 0 auto}
+  .screen{border-radius:32px;overflow:hidden;position:relative;height:820px}
+  .dark .screen{background:#0a0b0f;color:#eef1f6}
+  .light .screen{background:#f4f5f7;color:#14161c}
+  .statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:13px;font-weight:700;opacity:.85}
+  .scroll{height:776px;overflow:hidden}
+
+  /* app bar */
+  .appbar{display:flex;align-items:center;gap:10px;padding:8px 16px 8px}
+  .ab-spacer{flex:1}
+  .abtitle{font-size:20px;font-weight:850;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;margin-left:2px}
+  .abtitle .drop{font-size:13px;color:#8a8f99;font-weight:700}
+  .icobtn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:17px}
+  .dark .icobtn{background:#15171d;border:1px solid #23262f;color:#cfd6e2}
+  .light .icobtn{background:#fff;border:1px solid #e6e8ec;color:#444;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+  .ai{background:linear-gradient(135deg,#ffd86b,#ff9f1c)!important;color:#3a2400!important;border:none!important;box-shadow:0 4px 14px rgba(255,159,28,.45)!important}
+
+  .pad{padding:4px 20px 0}
+  .title{font-size:22px;font-weight:800;letter-spacing:-.4px;margin:2px 0 14px;display:flex;align-items:center;gap:8px}
+
+  /* range tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:14px}
+  .tab{flex:1;text-align:center;font-size:13px;font-weight:700;padding:9px 0;border-radius:12px}
+  .dark .tab{background:#13151b;color:#7c8595;border:1px solid #20232c}
+  .light .tab{background:#ececef;color:#7a8090}
+  .tab.on{color:#06240a}
+  .dark .tab.on{background:linear-gradient(135deg,#9af23a,#5fd11e);color:#08210a;border:none;box-shadow:0 4px 14px rgba(122,210,40,.35)}
+  .light .tab.on{background:#1e2128;color:#fff}
+
+  /* period nav */
+  .pnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .pnav .lbl{font-size:16px;font-weight:800}
+  .pnav .navs{display:flex;gap:8px}
+  .navc{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:15px}
+  .dark .navc{background:#14161c;border:1px solid #22252e;color:#aeb6c4}
+  .light .navc{background:#fff;border:1px solid #e6e8ec;color:#555}
+
+  /* big number */
+  .hero{display:flex;align-items:flex-end;gap:8px;margin:2px 0 2px}
+  .hero .big{font-size:54px;font-weight:850;letter-spacing:-2px;line-height:.9;font-variant-numeric:tabular-nums}
+  .hero .unit{font-size:16px;font-weight:700;color:#8b93a3;padding-bottom:8px}
+  .goalline{font-size:13.5px;font-weight:600;margin:4px 0 16px}
+  .miss{color:#ff9f43}.met{color:#37d67a}
+
+  /* card / chart */
+  .card{border-radius:22px;padding:16px 14px 10px;margin-bottom:16px;position:relative;overflow:hidden}
+  .dark .card{background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.08);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+  .light .card{background:#fff;border:1px solid #ebedf0;box-shadow:0 12px 30px rgba(20,30,60,.07)}
+  .ctitle{font-size:14px;font-weight:800;margin:0 4px 6px;opacity:.92}
+
+  /* chart-type selector */
+  .ctype{display:flex;gap:6px;margin:0 0 14px}
+  .ctype .seg{font-size:12px;font-weight:700;padding:7px 13px;border-radius:10px;display:flex;align-items:center;gap:5px}
+  .dark .ctype .seg{background:#13151b;color:#7c8595;border:1px solid #20232c}
+  .light .ctype .seg{background:#ececef;color:#80868f}
+  .ctype .seg.on{color:#fff}
+  .dark .ctype .seg.on{background:#272b34;color:#eaf0fb;border-color:#39404c}
+  .light .ctype .seg.on{background:#1e2128;color:#fff}
+
+  /* legend */
+  .leg{display:flex;gap:16px;justify-content:center;margin:8px 0 4px;font-size:11.5px;font-weight:600;color:#8b93a3}
+  .leg span{display:flex;align-items:center;gap:6px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dline{width:14px;height:0;border-top:2px dashed #5b6472}
+
+  /* sub-metric chips */
+  .subchips{display:flex;gap:8px;margin:2px 0 16px;overflow:hidden}
+  .subchips .sc{font-size:12.5px;font-weight:700;padding:8px 14px;border-radius:999px;white-space:nowrap}
+  .dark .subchips .sc{background:#13151b;color:#8b93a3;border:1px solid #20232c}
+  .light .subchips .sc{background:#ececef;color:#80868f}
+  .subchips .sc.on{color:#06240a}
+  .dark .subchips .sc.on{background:linear-gradient(135deg,#7fd8ff,#3aa6e8);color:#022; border:none;box-shadow:0 4px 12px rgba(58,166,232,.3)}
+
+  /* stat row */
+  .stats{display:flex;border-radius:18px;overflow:hidden;margin-bottom:16px}
+  .dark .stats{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
+  .light .stats{background:#fff;border:1px solid #ebedf0}
+  .stats .s{flex:1;text-align:center;padding:13px 0}
+  .stats .s+.s{border-left:1px solid rgba(140,150,170,.18)}
+  .stats .k{font-size:10.5px;font-weight:800;letter-spacing:.5px;color:#8b93a3}
+  .stats .v{font-size:18px;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+
+  /* daily list */
+  .lh{font-size:14px;font-weight:800;margin:6px 4px 8px}
+  .row{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:14px;margin-bottom:8px}
+  .dark .row{background:rgba(255,255,255,.035)}
+  .light .row{background:#fff;border:1px solid #eef0f3}
+  .row .d{font-size:14px;font-weight:600;color:#aeb6c4}
+  .light .row .d{color:#5b6270}
+  .row .val{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+  .row .val.nd{color:#6b7280;font-weight:700;font-size:15px}
+  .gdot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:9px;vertical-align:middle}
+
+  /* actions row */
+  .actions{display:flex;gap:10px;margin:2px 0 18px}
+  .act{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:13px 6px;border-radius:16px;font-size:11.5px;font-weight:700}
+  .dark .act{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#cdd4e0}
+  .light .act{background:#fff;border:1px solid #ebedf0;color:#444}
+  .act .ic{font-size:18px}
+
+  /* ring */
+  .ringwrap{display:flex;justify-content:center;margin:6px 0 6px}
+  .feat{position:absolute;top:8px;right:10px;font-size:10px;font-weight:800;letter-spacing:.4px;color:#06240a;background:var(--volt);padding:3px 8px;border-radius:7px;opacity:.0}
+  .note{font-size:12.5px;color:#8b93a3;background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.12);border-radius:14px;padding:14px;text-align:center;margin-bottom:14px}
+</style>
+</head>
+<body>
+  <h1>Universal Metric Detail — visual proof</h1>
+  <p class="sub">One full-screen page for <b>every</b> metric (home carousel + all Stats &amp; Scores). Premium charts via a styled fl_chart layer (gradient fill + stroke, glow halo, smooth curve, animated draw-on, layered dots, rounded gradient bars), with a Cristalyse spike on the Weight/Sleep heroes. These are static SVG mockups of the intended look — final is live + animated.</p>
+  <div class="legend">
+    <span class="chip"><b>D/W/M/3M/Y</b> range tabs</span>
+    <span class="chip"><b>&lt; &gt;</b> period nav + calendar</span>
+    <span class="chip">avg-per-day + <b>goal status</b></span>
+    <span class="chip"><b>goal band + green/orange dots + legend</b></span>
+    <span class="chip"><b>bars</b> for counts</span>
+    <span class="chip"><b>sub-metric chips</b></span>
+    <span class="chip"><b>daily breakdown list</b></span>
+    <span class="chip">Min/Avg/Max</span>
+    <span class="chip"><b>✨ AI insight · coach review · custom trend</b></span>
+    <span class="chip"><b>user-pick chart type</b></span>
+  </div>
+
+  <div class="gallery">
+
+  <!-- ============== SCREEN 1: STEPS (bars) ============== -->
+  <div>
+  <div class="phone dark"><div class="screen">
+    <div class="statusbar"><span>12:46</span><span>▮▮▮ 􀙇 100%</span></div>
+    <div class="scroll">
+      <div class="appbar">
+        <div class="icobtn">‹</div>
+        <div class="abtitle"><span class="gdot" style="width:11px;height:11px;background:#3e8fd0"></span>Steps</div>
+        <div class="ab-spacer"></div>
+        <div class="icobtn ai">✨</div>
+        <div class="icobtn">􀉿</div>
+        <div class="icobtn">⤴</div>
+      </div>
+      <div class="pad">
+        <div class="tabs" style="margin-top:6px"><div class="tab">D</div><div class="tab on">W</div><div class="tab">M</div><div class="tab">3M</div><div class="tab">Y</div></div>
+        <div class="pnav"><div class="lbl">This week</div><div class="navs"><div class="navc">‹</div><div class="navc">›</div><div class="navc">􀉪</div></div></div>
+        <div class="hero"><div class="big">1,630</div><div class="unit">steps / day avg</div></div>
+        <div class="goalline miss">You haven’t hit your 10,000 goal — 8,370 to go.</div>
+
+        <div class="card">
+          <div class="ctitle">Steps over time</div>
+          <!-- premium bar chart: rounded gradient bars + goal line + today highlight -->
+          <svg width="100%" viewBox="0 0 340 180">
+            <defs>
+              <linearGradient id="barg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#5fb6ff"/><stop offset="1" stop-color="#2c6fd0"/>
+              </linearGradient>
+              <linearGradient id="barToday" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#a8ff5e"/><stop offset="1" stop-color="#5fd11e"/>
+              </linearGradient>
+              <filter id="barGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <linearGradient id="trendStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#ffb43a"/>
+              </linearGradient>
+              <filter id="trendGlow" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- goal line -->
+            <line x1="0" y1="34" x2="300" y2="34" stroke="#5b6472" stroke-width="1.4" stroke-dasharray="5 5"/>
+            <text x="305" y="38" fill="#8b93a3" font-size="11" font-weight="700">10k</text>
+            <text x="305" y="92" fill="#3a4150" font-size="10">6,667</text>
+            <text x="305" y="150" fill="#3a4150" font-size="10">3,333</text>
+            <!-- bars (values scaled, goal at y=34) -->
+            <g filter="url(#barGlow)">
+              <rect x="6"   y="92"  width="30" height="68"  rx="9" fill="url(#barg)"/>
+              <rect x="48"  y="132" width="30" height="28"  rx="9" fill="url(#barg)"/>
+              <rect x="90"  y="120" width="30" height="40"  rx="9" fill="url(#barg)"/>
+              <rect x="132" y="138" width="30" height="22"  rx="9" fill="url(#barg)"/>
+              <rect x="174" y="96"  width="30" height="64"  rx="9" fill="url(#barg)"/>
+              <rect x="216" y="118" width="30" height="42"  rx="9" fill="url(#barToday)"/>
+              <rect x="258" y="160" width="30" height="0.5" rx="9" fill="#2a2f3a"/>
+            </g>
+            <!-- 7-day trend overlay on the bars -->
+            <path d="M21,96 C42,108 52,124 63,126 C84,130 94,118 105,118 C126,118 136,128 147,128 C168,128 178,108 189,104 C210,100 220,112 231,116"
+                  fill="none" stroke="url(#trendStroke)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#trendGlow)"/>
+            <g fill="#ffb43a" stroke="#0a0b0f" stroke-width="1.6">
+              <circle cx="21" cy="96" r="3.2"/><circle cx="63" cy="126" r="3.2"/><circle cx="105" cy="118" r="3.2"/>
+              <circle cx="147" cy="128" r="3.2"/><circle cx="189" cy="104" r="3.2"/><circle cx="231" cy="116" r="3.2"/>
+            </g>
+            <g fill="#7c8595" font-size="11" font-weight="700" text-anchor="middle">
+              <text x="21" y="176">S</text><text x="63" y="176">M</text><text x="105" y="176">T</text>
+              <text x="147" y="176">W</text><text x="189" y="176">T</text><text x="231" y="176">F</text><text x="273" y="176">S</text>
+            </g>
+          </svg>
+          <div class="leg"><span><span class="dline"></span>goal</span><span><span class="dot" style="background:#5fd11e"></span>today</span><span><span class="dline" style="border-top:2px solid #ffb43a;border-color:#ffb43a"></span>trend</span></div>
+        </div>
+
+        <div class="ctype">
+          <div class="seg on">▮ Bars</div><div class="seg">∿ Line</div><div class="seg">◣ Area</div>
+        </div>
+
+        <div class="actions">
+          <div class="act"><span class="ic">✨</span>AI insight</div>
+          <div class="act"><span class="ic">􀌤</span>Coach review</div>
+          <div class="act"><span class="ic">􀐾</span>Custom trend</div>
+        </div>
+
+        <div class="lh">This week</div>
+        <div class="row"><div class="d"><span class="gdot" style="background:#ff9f43"></span>Yesterday</div><div class="val">1,520</div></div>
+        <div class="row"><div class="d"><span class="gdot" style="background:#ff9f43"></span>Thu, Jun 4</div><div class="val">1,987</div></div>
+        <div class="row"><div class="d"><span class="gdot" style="background:#ff9f43"></span>Wed, Jun 3</div><div class="val">1,050</div></div>
+        <div class="row"><div class="d"><span class="gdot" style="background:#37d67a"></span>Sun, May 31</div><div class="val">10,910</div></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="cap"><b>Steps — bars.</b> Rounded gradient bars + glow, dashed goal line, today highlighted volt, avg-per-day + goal status, daily list with goal-colored dots, chart-type switch, 3 AI actions.</p>
+  </div>
+
+  <!-- ============== SCREEN 2: SLEEP (line + band + dots + sub-chips) ============== -->
+  <div>
+  <div class="phone dark"><div class="screen">
+    <div class="statusbar"><span>12:46</span><span>▮▮▮ 􀙇 100%</span></div>
+    <div class="scroll">
+      <div class="appbar">
+        <div class="icobtn">‹</div>
+        <div class="abtitle"><span class="gdot" style="width:11px;height:11px;background:#8b5cf6"></span>Sleep</div>
+        <div class="ab-spacer"></div>
+        <div class="icobtn ai">✨</div><div class="icobtn">+</div><div class="icobtn">⤴</div>
+      </div>
+      <div class="pad">
+        <div class="tabs" style="margin-top:6px"><div class="tab">D</div><div class="tab on">W</div><div class="tab">M</div><div class="tab">3M</div><div class="tab">Y</div></div>
+        <div class="pnav"><div class="lbl">This week</div><div class="navs"><div class="navc">‹</div><div class="navc">›</div><div class="navc">􀉪</div></div></div>
+        <div class="hero"><div class="big">6h 37m</div><div class="unit">/ day avg</div></div>
+        <div class="goalline miss">You didn’t meet your 8h sleep goal — short 4 of 6 nights.</div>
+
+        <div class="subchips">
+          <div class="sc on">Duration</div><div class="sc">Score</div><div class="sc">Schedule</div><div class="sc">Efficiency</div>
+        </div>
+
+        <div class="card">
+          <div class="ctitle">Sleep duration</div>
+          <svg width="100%" viewBox="0 0 340 188">
+            <defs>
+              <linearGradient id="slArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#a78bfa" stop-opacity="0.42"/>
+                <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
+              </linearGradient>
+              <linearGradient id="slStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#8b5cf6"/>
+              </linearGradient>
+              <filter id="slGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="4.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- goal band 8h -->
+            <rect x="0" y="20" width="300" height="14" fill="#3ddc84" opacity="0.10"/>
+            <line x1="0" y1="27" x2="300" y2="27" stroke="#3ddc84" stroke-width="1.3" stroke-dasharray="5 5" opacity="0.55"/>
+            <text x="305" y="31" fill="#8b93a3" font-size="10" font-weight="700">8h</text>
+            <text x="305" y="86" fill="#3a4150" font-size="10">7h</text>
+            <text x="305" y="146" fill="#3a4150" font-size="10">6h</text>
+            <!-- area + line -->
+            <path d="M14,92 L62,108 L110,80 L158,58 L206,96 L254,140 L254,176 L14,176 Z" fill="url(#slArea)"/>
+            <path d="M14,92 L62,108 L110,80 L158,58 L206,96 L254,140" fill="none" stroke="url(#slStroke)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" filter="url(#slGlow)"/>
+            <!-- dots colored by goal-met -->
+            <g stroke="#0a0b0f" stroke-width="2.5">
+              <circle cx="14" cy="92" r="5.5" fill="#ff9f43"/>
+              <circle cx="62" cy="108" r="5.5" fill="#ff9f43"/>
+              <circle cx="110" cy="80" r="5.5" fill="#ff9f43"/>
+              <circle cx="158" cy="58" r="5.5" fill="#37d67a"/>
+              <circle cx="206" cy="96" r="5.5" fill="#ff9f43"/>
+              <circle cx="254" cy="140" r="5.5" fill="#ff9f43"/>
+            </g>
+            <g fill="#7c8595" font-size="11" font-weight="700" text-anchor="middle">
+              <text x="14" y="186">S</text><text x="62" y="186">M</text><text x="110" y="186">T</text>
+              <text x="158" y="186">W</text><text x="206" y="186">T</text><text x="254" y="186">F</text>
+            </g>
+          </svg>
+          <div class="leg">
+            <span><span class="dline" style="border-color:#3ddc84"></span>goal</span>
+            <span><span class="dot" style="background:#37d67a"></span>met</span>
+            <span><span class="dot" style="background:#ff9f43"></span>missed</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <div class="act"><span class="ic">✨</span>AI insight</div>
+          <div class="act"><span class="ic">􀌤</span>Coach review</div>
+          <div class="act"><span class="ic">􀐾</span>Custom trend</div>
+        </div>
+
+        <div class="lh">This week</div>
+        <div class="row"><div class="d">Today</div><div class="val nd">No data</div></div>
+        <div class="row"><div class="d"><span class="gdot" style="background:#ff9f43"></span>Yesterday</div><div class="val">5h 37m</div></div>
+        <div class="row"><div class="d"><span class="gdot" style="background:#37d67a"></span>Wed, Jun 3</div><div class="val">7h 35m</div></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="cap"><b>Sleep — line + goal band.</b> Gradient area + glow stroke, green goal band, green/orange goal-met dots, legend, <b>sub-metric chips</b> (Duration/Score/Schedule/Efficiency), honest “No data” row.</p>
+  </div>
+
+  <!-- ============== SCREEN 3: WEIGHT (light, premium area) ============== -->
+  <div>
+  <div class="phone light"><div class="screen">
+    <div class="statusbar"><span>12:46</span><span>▮▮▮ 􀙇 100%</span></div>
+    <div class="scroll">
+      <div class="appbar">
+        <div class="icobtn">‹</div>
+        <div class="abtitle">Weight <span class="drop">▾</span></div>
+        <div class="ab-spacer"></div>
+        <div class="icobtn ai">✨</div><div class="icobtn">􀐾</div><div class="icobtn">⤴</div>
+      </div>
+      <div class="pad">
+        <div class="tabs" style="margin-top:6px">
+          <div class="tab">1D</div><div class="tab">7D</div><div class="tab on">30D</div><div class="tab">90D</div><div class="tab">1Y</div>
+        </div>
+        <div class="hero"><div class="big" style="color:#f59e0b">97.9</div><div class="unit">kg</div>
+          <div style="margin-left:auto;background:#e7f8ee;color:#1f9d57;font-weight:800;font-size:13px;padding:7px 11px;border-radius:999px;align-self:center">↓ 1.1 kg · 30d</div>
+        </div>
+        <div class="goalline" style="color:#1f9d57">On track — trending toward your 95 kg goal.</div>
+
+        <div class="card" style="background:linear-gradient(180deg,#fff,#fffdf7)">
+          <div class="ctitle">Weight over time</div>
+          <svg width="100%" viewBox="0 0 340 190">
+            <defs>
+              <linearGradient id="wArea" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#f59e0b" stop-opacity="0.30"/>
+                <stop offset="1" stop-color="#f59e0b" stop-opacity="0.02"/>
+              </linearGradient>
+              <linearGradient id="wStroke" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#f97316"/>
+              </linearGradient>
+              <filter id="wGlow" x="-30%" y="-30%" width="160%" height="160%">
+                <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#f59e0b" flood-opacity="0.35"/>
+              </filter>
+            </defs>
+            <g stroke="#eceef1" stroke-width="1">
+              <line x1="0" y1="40" x2="340" y2="40"/><line x1="0" y1="90" x2="340" y2="90"/><line x1="0" y1="140" x2="340" y2="140"/>
+            </g>
+            <text x="4" y="36" fill="#9aa0aa" font-size="10">100</text>
+            <text x="4" y="86" fill="#9aa0aa" font-size="10">99</text>
+            <text x="4" y="136" fill="#9aa0aa" font-size="10">98</text>
+            <path d="M30,86 C70,80 95,70 120,74 C160,80 190,96 230,104 C270,112 300,120 320,128 L320,178 L30,178 Z" fill="url(#wArea)"/>
+            <path d="M30,86 C70,80 95,70 120,74 C160,80 190,96 230,104 C270,112 300,120 320,128" fill="none" stroke="url(#wStroke)" stroke-width="3.6" stroke-linecap="round" filter="url(#wGlow)"/>
+            <!-- faint raw dots -->
+            <g fill="#c9803a" opacity="0.5">
+              <circle cx="70" cy="84" r="2.4"/><circle cx="120" cy="60" r="2.4"/><circle cx="190" cy="100" r="2.4"/><circle cx="260" cy="110" r="2.4"/><circle cx="300" cy="132" r="2.4"/>
+            </g>
+            <!-- emphasized endpoint -->
+            <circle cx="320" cy="128" r="6" fill="#f97316" stroke="#fff" stroke-width="2.5"/>
+            <g fill="#9aa0aa" font-size="10" text-anchor="middle"><text x="40" y="190">May 11</text><text x="180" y="190">May 22</text><text x="318" y="190">Jun 3</text></g>
+          </svg>
+        </div>
+
+        <div class="ctype">
+          <div class="seg">▮ Bars</div><div class="seg">∿ Line</div><div class="seg on">◣ Area</div>
+        </div>
+
+        <div class="stats">
+          <div class="s"><div class="k">MIN</div><div class="v" style="color:#1f9d57">97.9</div></div>
+          <div class="s"><div class="k">AVG</div><div class="v" style="color:#f59e0b">98.8</div></div>
+          <div class="s"><div class="k">MAX</div><div class="v" style="color:#e5544d">100.0</div></div>
+        </div>
+
+        <div class="actions">
+          <div class="act"><span class="ic">✨</span>AI insight</div>
+          <div class="act"><span class="ic">􀌤</span>Coach review</div>
+          <div class="act"><span class="ic">􀐾</span>Custom trend</div>
+        </div>
+
+        <div class="lh">Weekly breakdown</div>
+        <div class="row"><div class="d">Jun 1 – 7</div><div class="val">98.3 <span style="font-size:12px;color:#9aa0aa">kg</span></div></div>
+        <div class="row"><div class="d">May 25 – 31</div><div class="val">99.1 <span style="font-size:12px;color:#9aa0aa">kg</span></div></div>
+      </div>
+    </div>
+  </div></div>
+  <p class="cap"><b>Weight — premium area (light).</b> Your current screen, elevated: gradient area + glow stroke, faint raw dots + emphasized endpoint, Min/Avg/Max, weekly breakdown, chart-type switch. Cristalyse hero spike compared here.</p>
+  </div>
+
+  <!-- ============== SCREEN 4: TODAY composite ============== -->
+  <div>
+  <div class="phone dark"><div class="screen">
+    <div class="statusbar"><span>12:46</span><span>▮▮▮ 􀙇 100%</span></div>
+    <div class="scroll">
+      <div class="appbar">
+        <div class="icobtn">‹</div>
+        <div class="abtitle"><span class="gdot" style="width:11px;height:11px;background:#9af23a"></span>Today Score</div>
+        <div class="ab-spacer"></div>
+        <div class="icobtn ai">✨</div><div class="icobtn">⤴</div>
+      </div>
+      <div class="pad">
+        <div class="ringwrap" style="margin-top:6px">
+          <svg width="170" height="170" viewBox="0 0 170 170">
+            <defs>
+              <linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9af23a"/><stop offset="1" stop-color="#5fd11e"/></linearGradient>
+              <filter id="rGlow"><feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <circle cx="85" cy="85" r="68" fill="none" stroke="#1a1d24" stroke-width="14"/>
+            <circle cx="85" cy="85" r="68" fill="none" stroke="url(#rg)" stroke-width="14" stroke-linecap="round"
+              stroke-dasharray="300 427" transform="rotate(-90 85 85)" filter="url(#rGlow)"/>
+            <text x="85" y="88" text-anchor="middle" font-size="46" font-weight="850" fill="#eef1f6">70</text>
+            <text x="85" y="108" text-anchor="middle" font-size="9" font-weight="800" letter-spacing="1" fill="#9af23a">TODAY</text>
+          </svg>
+        </div>
+        <div class="goalline met" style="text-align:center">▲ 12 today · above your 7-day avg of 64</div>
+
+        <div class="card">
+          <div class="ctitle">Score over time</div>
+          <svg width="100%" viewBox="0 0 340 150">
+            <defs>
+              <linearGradient id="tArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9af23a" stop-opacity="0.34"/><stop offset="1" stop-color="#9af23a" stop-opacity="0"/></linearGradient>
+              <linearGradient id="tStroke" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#c4ff6e"/><stop offset="1" stop-color="#5fd11e"/></linearGradient>
+              <filter id="tGlow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <path d="M12,110 C50,100 70,118 100,96 C140,68 170,84 210,70 C250,58 290,50 326,40 L326,140 L12,140 Z" fill="url(#tArea)"/>
+            <path d="M12,110 C50,100 70,118 100,96 C140,68 170,84 210,70 C250,58 290,50 326,40" fill="none" stroke="url(#tStroke)" stroke-width="3.4" stroke-linecap="round" filter="url(#tGlow)"/>
+            <circle cx="326" cy="40" r="6" fill="#9af23a" stroke="#0a0b0f" stroke-width="2.5"/>
+          </svg>
+        </div>
+
+        <div class="note">Train 32 · Nourish 18 · Move 11 · Sleep 9 — tap each pillar to open its own detail.</div>
+        <div class="actions">
+          <div class="act"><span class="ic">✨</span>AI insight</div>
+          <div class="act"><span class="ic">􀌤</span>Coach review</div>
+          <div class="act"><span class="ic">􀐾</span>View full stats</div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <p class="cap"><b>TODAY — composite.</b> The deck’s central ring opens this: gradient glow ring, composite score-over-time with momentum line, pillar breakdown, AI actions.</p>
+  </div>
+
+  </div>
+</body>
+</html>

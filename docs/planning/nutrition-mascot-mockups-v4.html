@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Zealova — Pip, the living mascot (v4)</title>
+<style>
+  :root{--ink:#f3f5fb;--mut:#8a92a8;--line:#222743;--good:#34e39b;--volt:#c2f04a}
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{background:radial-gradient(120% 90% at 16% -10%,#172040 0,transparent 55%),radial-gradient(120% 90% at 100% 0,#241a3a 0,transparent 50%),#0b0d16;
+    color:var(--ink);min-height:100vh;font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    padding:34px 26px 90px;-webkit-font-smoothing:antialiased}
+  .kicker{font:800 11.5px/1 ui-sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#7c84ff;margin:0 0 10px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:-.025em;font-weight:850;background:linear-gradient(92deg,#fff,#cfe6a8 55%,#9be85a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#aeb5cc;margin:0 0 22px;max-width:900px;font-size:15.5px}.sub b{color:#fff}
+
+  .wrap{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;max-width:1120px}
+  .stage{flex:0 0 420px;background:linear-gradient(180deg,#101426,#0b0e1c);border:1px solid var(--line);border-radius:30px;
+    padding:24px;position:relative;overflow:hidden;box-shadow:0 50px 90px -45px #000,inset 0 1px 0 #ffffff10}
+  .stage::after{content:"";position:absolute;inset:0;background:radial-gradient(85% 55% at 50% 8%,var(--aura,#34e39b22),transparent 60%);transition:.6s;pointer-events:none}
+  .scene{position:relative;height:360px;display:grid;place-items:center;z-index:2}
+  .ring{position:absolute;width:300px;height:300px;border-radius:50%;
+    background:conic-gradient(from -90deg,var(--rc,#34e39b) calc(var(--pct,0)*1%),#ffffff10 0);
+    -webkit-mask:radial-gradient(closest-side,transparent 72%,#000 73%);mask:radial-gradient(closest-side,transparent 72%,#000 73%);
+    transition:--pct .5s cubic-bezier(.4,.1,.2,1),--rc .6s;filter:drop-shadow(0 0 14px var(--rg,#34e39b55))}
+  @property --pct{syntax:'<number>';inherits:true;initial-value:0}
+  @property --rc{syntax:'<color>';inherits:false;initial-value:#34e39b}
+  .read{position:absolute;bottom:14px;left:0;right:0;text-align:center;z-index:5;pointer-events:none}
+  .read .big{font:850 32px/1 ui-sans-serif;letter-spacing:-.02em}.read .sm{font:750 11px ui-sans-serif;color:#7c84a0;margin-top:3px}
+  .mood{position:absolute;top:14px;right:14px;z-index:5;font:800 12px ui-sans-serif;padding:6px 12px;border-radius:999px;background:#34e39b22;color:#34e39b;transition:.5s}
+  .cap{text-align:center;font:850 18px ui-sans-serif;letter-spacing:-.015em;margin:6px 0 0;min-height:24px;transition:.35s;z-index:2;position:relative}
+
+  /* control side */
+  .side{flex:1 1 300px;min-width:300px}
+  .panel{background:#0f1326;border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin-bottom:18px;box-shadow:0 24px 50px -34px #000}
+  .panel h3{margin:0 0 12px;font-size:16px}
+  .row{display:flex;align-items:center;gap:14px;margin:14px 0}
+  .row label{font:800 11px ui-sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7c84a0;width:54px}
+  input[type=range]{flex:1;accent-color:var(--good);height:4px}
+  .btn{border:0;border-radius:12px;padding:11px 16px;font:800 13.5px ui-sans-serif;cursor:pointer;background:linear-gradient(180deg,#8ee06a,#46c47e);color:#06210f;box-shadow:0 10px 24px -10px #46c47eaa,inset 0 1px 0 #ffffff66}
+  .btn.ghost{background:#1a2038;color:#cfd5ee;box-shadow:none;border:1px solid var(--line)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-block;background:#161b30;border:1px solid var(--line);border-radius:999px;padding:8px 13px;font:750 12px ui-sans-serif;color:#aab2cf;cursor:pointer;margin:8px 7px 0 0;transition:.15s}
+  .chip:hover{background:#1d2440;color:#fff}
+  .note{font-size:12.7px;color:#8b93b1;line-height:1.7}.note b{color:#cfd5ee}
+  .x{color:var(--volt)}
+
+  /* ====================== RIG MOTION (big, springy, Duo-grade) ====================== */
+  .pip{transform-box:fill-box;transform-origin:50% 96%}
+  /* continuous lively idle bounce — large amplitude, squash on land, stretch in air */
+  .pip[data-mood=track] .body,.pip[data-mood=goal] .bodyIdle{animation:bounce 1.05s cubic-bezier(.5,0,.3,1) infinite}
+  @keyframes bounce{
+    0%{transform:translateY(0) scale(1,1)}
+    12%{transform:translateY(3px) scale(1.09,.9)}      /* anticipation squat */
+    40%{transform:translateY(-30px) scale(.92,1.12)}   /* leap + stretch */
+    62%{transform:translateY(0) scale(1.12,.86)}        /* land squash */
+    78%{transform:translateY(-7px) scale(.98,1.03)}     /* rebound */
+    100%{transform:translateY(0) scale(1,1)}
+  }
+  /* hungry: heavy, slow, droopy sway — clearly alive but low energy */
+  .pip[data-mood=hungry] .body{animation:slump 2.6s ease-in-out infinite}
+  @keyframes slump{0%,100%{transform:translateY(2px) rotate(-3deg) scale(1.02,.98)}50%{transform:translateY(6px) rotate(3deg) scale(1.03,.97)}}
+  /* over: dizzy stuffed wobble */
+  .pip[data-mood=over] .body{animation:wobble .5s ease-in-out infinite}
+  @keyframes wobble{0%,100%{transform:rotate(-4deg) scale(1.08,.95)}50%{transform:rotate(4deg) scale(1.1,.93)}}
+
+  /* arms swing opposite the bounce */
+  .armL{transform-box:fill-box;transform-origin:88% 14%}.armR{transform-box:fill-box;transform-origin:12% 14%}
+  .pip[data-mood=track] .armL{animation:swingL 1.05s ease-in-out infinite}
+  .pip[data-mood=track] .armR{animation:swingR 1.05s ease-in-out infinite}
+  @keyframes swingL{0%,100%{transform:rotate(8deg)}45%{transform:rotate(-26deg)}}
+  @keyframes swingR{0%,100%{transform:rotate(-8deg)}45%{transform:rotate(26deg)}}
+  /* feet little splay */
+  .feet{transform-box:fill-box;transform-origin:50% 0}
+  .pip[data-mood=track] .feet{animation:feet 1.05s ease-in-out infinite}
+  @keyframes feet{0%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}62%{transform:translateY(1px)}}
+
+  /* head-sprout secondary motion — whips & overshoots after the body (delay) */
+  .sprout{transform-box:fill-box;transform-origin:50% 100%}
+  .pip[data-mood=track] .sprout{animation:sproutWhip 1.05s cubic-bezier(.4,0,.3,1.4) infinite;animation-delay:.08s}
+  @keyframes sproutWhip{0%,100%{transform:rotate(0)}30%{transform:rotate(-16deg)}55%{transform:rotate(14deg)}75%{transform:rotate(-6deg)}}
+  .pip[data-mood=hungry] .sprout{animation:wilt 2.6s ease-in-out infinite}
+  @keyframes wilt{0%,100%{transform:rotate(22deg) scaleY(.86)}50%{transform:rotate(26deg) scaleY(.84)}}
+
+  /* eyes: blink + pupil drift; cheeks */
+  .lid{transform-box:fill-box;transform-origin:center;animation:blink 4.4s infinite}.lid.b{animation-delay:.06s}
+  @keyframes blink{0%,5%,100%{transform:scaleY(0)}2%,3%{transform:scaleY(1.1)}}
+  .pupils{animation:look 5.5s ease-in-out infinite}
+  @keyframes look{0%,30%{transform:translate(0,0)}40%,55%{transform:translate(4px,1px)}65%,82%{transform:translate(-4px,2px)}90%,100%{transform:translate(0,0)}}
+
+  /* floor shadow reacts to bounce */
+  .shadow{transform-box:fill-box;transform-origin:center}
+  .pip[data-mood=track] .shadow{animation:sh 1.05s cubic-bezier(.5,0,.3,1) infinite}
+  @keyframes sh{0%,100%{transform:scale(1);opacity:.32}40%{transform:scale(.7);opacity:.16}62%{transform:scale(1.12);opacity:.36}}
+
+  /* GOAL celebration: full-body jump + spin + confetti */
+  .pip.cheer{animation:cheer .9s cubic-bezier(.3,1.5,.4,1)}
+  @keyframes cheer{0%{transform:translateY(0) scale(1)}25%{transform:translateY(6px) scale(1.12,.86)}55%{transform:translateY(-54px) scale(.9,1.14) rotate(8deg)}80%{transform:translateY(0) scale(1.1,.9) rotate(-3deg)}100%{transform:translateY(0) scale(1)}}
+  .confetti{opacity:0}
+  .pip[data-mood=goal] .confetti{animation:conf 1.4s ease-out infinite}
+  @keyframes conf{0%{opacity:0;transform:translateY(10px) scale(.4) rotate(0)}20%{opacity:1}100%{opacity:0;transform:translateY(-46px) scale(1.1) rotate(220deg)}}
+
+  /* just-ate: anticipation squat then big leap (overrides idle briefly) */
+  .pip.ate .body{animation:ate .8s cubic-bezier(.28,1.5,.4,1)!important}
+  @keyframes ate{0%{transform:translateY(0) scale(1)}16%{transform:translateY(8px) scale(1.16,.82)}46%{transform:translateY(-40px) scale(.86,1.18)}72%{transform:translateY(0) scale(1.14,.86)}100%{transform:translateY(0) scale(1)}}
+
+  .sweat{opacity:0}.pip[data-mood=over] .sweat,.pip[data-mood=hungry] .sweat{animation:sweat 1.9s ease-in infinite}
+  @keyframes sweat{0%{opacity:0;transform:translate(0,0)}18%{opacity:.95}100%{opacity:0;transform:translate(2px,22px)}}
+  .zzz{opacity:0}.pip[data-mood=hungry] .zzz{animation:zzz 3.4s ease-in-out infinite}
+  @keyframes zzz{0%,60%,100%{opacity:0;transform:translateY(0) scale(.6)}75%{opacity:.85;transform:translateY(-12px) scale(1)}}
+  .rumble{opacity:0}.pip[data-mood=hungry] .belly{animation:rumble .26s linear infinite}
+  @keyframes rumble{0%,100%{transform:translateX(0)}50%{transform:translateX(1.4px)}}
+</style>
+</head>
+<body>
+  <p class="kicker">Zealova · nutrition companion</p>
+  <h1>Meet Pip — a mascot that actually moves 🫛</h1>
+  <p class="sub">One character, <b>fully rigged</b>: springy idle bounce with squash-&amp;-stretch, arms that swing, a head-sprout that whips and overshoots a beat behind the body, blinking eyes that glance around, and a real <b>anticipation-then-leap on every meal you log</b>. This is hand-coded CSS to prove the motion language; the shipped <b>Lottie</b> will be even smoother. Drive the day with the slider.</p>
+
+  <div class="wrap">
+    <div class="stage" id="stage">
+      <div class="scene">
+        <div class="ring" id="ring"></div>
+        <!-- PIP -->
+        <div class="pip" id="pip" data-mood="track">
+          <svg viewBox="0 0 240 270" width="240" height="270" style="overflow:visible">
+            <defs>
+              <radialGradient id="bodyG" cx="40%" cy="30%" r="78%">
+                <stop offset="0" stop-color="#f3ffd2"/><stop offset="46%" stop-color="var(--bMid,#aef05a)"/><stop offset="100%" stop-color="var(--bEdge,#5fc23a)"/></radialGradient>
+              <radialGradient id="bellyG" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#fbffe9"/><stop offset="100%" stop-color="#eafcc4"/></radialGradient>
+              <linearGradient id="sproutG" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4fae2f"/><stop offset="1" stop-color="#9be85a"/></linearGradient>
+              <filter id="soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="3.4"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+
+            <!-- floor shadow -->
+            <ellipse class="shadow" cx="120" cy="250" rx="58" ry="13" fill="#000" opacity=".3"/>
+
+            <!-- confetti (goal) -->
+            <g class="confetti"><rect x="60" y="60" width="7" height="7" rx="2" fill="#ff7a6b"/></g>
+            <g class="confetti" style="animation-delay:.4s"><rect x="176" y="70" width="7" height="7" rx="2" fill="#ffce5a"/></g>
+            <g class="confetti" style="animation-delay:.8s"><rect x="118" y="44" width="7" height="7" rx="2" fill="#7cc4ff"/></g>
+
+            <g class="body">
+              <!-- head sprout (secondary motion) -->
+              <g class="sprout">
+                <path d="M120,70 C118,40 116,24 120,12 C124,24 122,40 120,70 Z" fill="url(#sproutG)"/>
+                <path d="M120,34 C104,30 96,18 100,8 C114,10 120,22 120,34 Z" fill="url(#sproutG)"/>
+                <circle cx="120" cy="13" r="4.5" fill="#c2f04a"/>
+              </g>
+
+              <!-- arms -->
+              <g class="armL"><path d="M60,150 q-26,6 -30,30 q14,4 24,-8 q8,-12 6,-22 z" fill="url(#bodyG)"/></g>
+              <g class="armR"><path d="M180,150 q26,6 30,30 q-14,4 -24,-8 q-8,-12 -6,-22 z" fill="url(#bodyG)"/></g>
+
+              <!-- feet -->
+              <g class="feet"><ellipse cx="98" cy="236" rx="17" ry="11" fill="var(--bEdge,#5fc23a)"/><ellipse cx="142" cy="236" rx="17" ry="11" fill="var(--bEdge,#5fc23a)"/></g>
+
+              <!-- main body -->
+              <path d="M120,72 C176,72 196,116 196,160 C196,212 162,234 120,234 C78,234 44,212 44,160 C44,116 64,72 120,72 Z" fill="url(#bodyG)" filter="url(#soft)"/>
+              <!-- belly -->
+              <g class="belly"><ellipse cx="120" cy="172" rx="42" ry="46" fill="url(#bellyG)"/></g>
+              <!-- rim light -->
+              <path d="M150,86 C176,98 188,128 188,158" stroke="#ffffff66" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+              <!-- FACE -->
+              <g class="face">
+                <!-- brows -->
+                <path class="browL" d="M86,124 q12,-6 22,-1" stroke="#3a6b1e" stroke-width="4" fill="none" stroke-linecap="round" style="display:none"/>
+                <path class="browR" d="M132,123 q10,-5 22,1" stroke="#3a6b1e" stroke-width="4" fill="none" stroke-linecap="round" style="display:none"/>
+                <!-- eyes -->
+                <g>
+                  <ellipse cx="100" cy="142" rx="15" ry="17" fill="#fff"/><ellipse cx="140" cy="142" rx="15" ry="17" fill="#fff"/>
+                  <g class="pupils">
+                    <circle cx="102" cy="145" r="7.5" fill="#1b2236"/><circle cx="142" cy="145" r="7.5" fill="#1b2236"/>
+                    <circle cx="105" cy="142" r="2.6" fill="#fff"/><circle cx="145" cy="142" r="2.6" fill="#fff"/>
+                  </g>
+                  <rect class="lid"   x="84" y="124" width="32" height="36" rx="16" fill="url(#bodyG)"/>
+                  <rect class="lid b" x="124" y="124" width="32" height="36" rx="16" fill="url(#bodyG)"/>
+                </g>
+                <!-- cheeks -->
+                <circle cx="78" cy="166" r="9" fill="#ff8f6a" opacity=".55"/><circle cx="162" cy="166" r="9" fill="#ff8f6a" opacity=".55"/>
+                <!-- mouths -->
+                <path class="mTrack" d="M104,176 q16,16 32,0" stroke="#2c5417" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path class="mGoal"  d="M100,172 q20,26 40,0 q-20,8 -40,0 z" fill="#2c5417" style="display:none"/>
+                <path class="mHungry" d="M106,182 q14,-10 28,0" stroke="#2c5417" stroke-width="4.4" fill="none" stroke-linecap="round" style="display:none"/>
+                <ellipse class="mOver" cx="120" cy="180" rx="11" ry="13" fill="#2c5417" style="display:none"/>
+                <!-- tongue lick (just-ate) -->
+                <path class="lick" d="M128,182 q10,2 8,12" stroke="#ff7a8a" stroke-width="5" fill="none" stroke-linecap="round" style="display:none"/>
+              </g>
+
+              <!-- fork prop -->
+              <g class="armR2"></g>
+            </g>
+
+            <!-- emotes -->
+            <g class="sweat"><path d="M168,128 q5,10 0,16 q-5,-6 0,-16 z" fill="#7cc6ff"/></g>
+            <text class="zzz" x="170" y="96" font-size="20" font-weight="800" fill="#cdd6ee">z</text>
+          </svg>
+        </div>
+
+        <div class="mood" id="moodPill">Fueling</div>
+        <div class="read"><div class="big" id="big">780</div><div class="sm" id="sm">of 1,500 kcal</div></div>
+      </div>
+      <div class="cap" id="cap">Fueling up nicely.</div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <h3>Drive the day</h3>
+        <div class="row"><label>Eaten</label><input type="range" id="slider" min="0" max="128" value="48"/></div>
+        <div class="btns"><button class="btn" id="logBtn">🍽 Log a meal</button><button class="btn ghost" id="playBtn">⏸ Auto</button></div>
+        <div>
+          <span class="chip" data-r="5">Empty</span><span class="chip" data-r="48">Mid-day</span>
+          <span class="chip" data-r="88">Almost</span><span class="chip" data-r="100">Goal 🎉</span><span class="chip" data-r="120">Over</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>What makes it feel alive</h3>
+        <p class="note">
+          • <b>Springy idle</b>: anticipation squat → leap → <span class="x">land squash</span> → rebound, looping (never frozen).<br>
+          • <b>Secondary motion</b>: the head-sprout whips a beat <i>behind</i> the body and overshoots.<br>
+          • <b>Arms + feet</b> swing counter to the bounce; the floor shadow shrinks when airborne.<br>
+          • <b>Eyes</b> blink and glance around; brows + mouth reshape per mood.<br>
+          • <b>Log a meal</b> → anticipation squat then a big leap + tongue-lick.<br>
+          • <b>Hungry</b>: heavy droopy sway, wilted sprout, tummy rumble, “z”.<br>
+          • <b>Goal</b>: full jump-spin + confetti. <b>Over</b>: stuffed dizzy wobble + sweat.
+        </p>
+      </div>
+      <div class="panel">
+        <h3>Honesty</h3>
+        <p class="note">True Duolingo fluidity = a hand-keyframed <b>Lottie/Rive rig</b> with dozens of poses. This CSS pushes the motion far enough to judge the <b>personality + motion language</b>; the shipped Lottie animator works from exactly these poses and arcs. If you like Pip, I author the rig; if not, tell me what to change (rounder? a beak? a fork prop? different colour?).</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const GOAL=1500,$=id=>document.getElementById(id);
+const moodOf=p=>p<14?'hungry':p<86?'track':p<=101?'goal':'over';
+const MM={hungry:{t:'Running low',c:'#ff7a6b',rc:'#ff7a6b',rg:'#ff7a6b55',a:'#ff7a6b22',bMid:'#cfe08a',bEdge:'#8aa85a'},
+  track:{t:'Fueling',c:'#34e39b',rc:'#34e39b',rg:'#34e39b66',a:'#34e39b22',bMid:'#aef05a',bEdge:'#5fc23a'},
+  goal:{t:'Nailed it',c:'#9be85a',rc:'#9be85a',rg:'#9be85a77',a:'#9be85a26',bMid:'#b6f06a',bEdge:'#5fc23a'},
+  over:{t:'Over budget',c:'#ffb14a',rc:'#ffb14a',rg:'#ffb14a66',a:'#ffb14a22',bMid:'#ffd27a',bEdge:'#e89a3a'}};
+const CAP={hungry:["Running on empty.","Feed me? 🥺","Out of fuel.","So hungry."],
+  track:["Fueling up nicely.","Right on pace!","Feeling great.","Munch munch."],
+  goal:["Nailed it! 🎉","Perfect day!","Bang on target!","Best buddy ever."],
+  over:["A touch over.","Over by {x}…","Ohh, too full.","Past the line by {x}."]};
+let capIdx=0,last='track';
+const pip=$('pip');
+function paint(pct){
+  const f=Math.min(pct/100,1.3),mood=moodOf(pct),m=MM[mood];
+  if(mood!==last){capIdx=(capIdx+1)%4;last=mood;}
+  pip.dataset.mood=mood;
+  $('stage').style.setProperty('--aura',m.a);
+  $('ring').style.setProperty('--pct',Math.min(pct,100));
+  $('ring').style.setProperty('--rc',m.rc);$('ring').style.setProperty('--rg',m.rg);
+  pip.style.setProperty('--bMid',m.bMid);pip.style.setProperty('--bEdge',m.bEdge);
+  // face per mood
+  const show=(sel,on)=>{const e=pip.querySelector(sel);if(e)e.style.display=on?'':'none';};
+  show('.mTrack',mood==='track');show('.mGoal',mood==='goal');show('.mHungry',mood==='hungry');show('.mOver',mood==='over');
+  show('.browL',mood==='hungry'||mood==='over');show('.browR',mood==='hungry'||mood==='over');
+  // numbers
+  const left=Math.round(GOAL*(1-pct/100));
+  $('big').textContent=(left<0?'+'+Math.abs(left):left).toLocaleString();
+  $('sm').textContent=left<0?'over goal':'of 1,500 kcal';
+  const pill=$('moodPill');pill.textContent=m.t;pill.style.color=m.c;pill.style.background=m.c+'22';
+  const over=Math.max(0,Math.round((pct-100)/100*GOAL));
+  $('cap').textContent=CAP[mood][capIdx%4].replace('{x}',over+' kcal');
+  if(mood==='goal'){cheer();}
+}
+function logMeal(){
+  pip.classList.remove('ate');void pip.offsetWidth;pip.classList.add('ate');
+  const lick=pip.querySelector('.lick');if(lick){lick.style.display='';setTimeout(()=>lick.style.display='none',700);}
+}
+function cheer(){pip.classList.remove('cheer');void pip.offsetWidth;pip.classList.add('cheer');}
+$('slider').addEventListener('input',e=>{stop();paint(+e.target.value);});
+$('logBtn').addEventListener('click',logMeal);
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{stop();$('slider').value=c.dataset.r;paint(+c.dataset.r);logMeal();}));
+let playing=true,dir=1,t;
+function tick(){if(!playing)return;let v=+$('slider').value+dir;if(v>=128){v=128;dir=-1;}if(v<=0){v=0;dir=1;}
+  const pm=last;$('slider').value=v;paint(v);if(last!==pm&&last==='track')logMeal();t=setTimeout(tick,90);}
+function stop(){playing=false;clearTimeout(t);$('playBtn').textContent='▶ Play';}
+$('playBtn').addEventListener('click',()=>{playing=!playing;$('playBtn').textContent=playing?'⏸ Auto':'▶ Play';if(playing)tick();});
+paint(48);tick();
+</script>
+</body>
+</html>

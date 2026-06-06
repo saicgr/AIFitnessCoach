@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Zealova — Finn the shark, inside the ring (v5)</title>
+<style>
+  :root{--ink:#eef2fb;--mut:#8a92a8;--line:#1e2950;--good:#34e39b;--sea:#3aa0ff}
+  *{box-sizing:border-box}html,body{margin:0}
+  body{background:
+      radial-gradient(120% 90% at 16% -10%,#10244a 0,transparent 55%),
+      radial-gradient(120% 90% at 100% 0,#0a1c3a 0,transparent 50%),#070c18;
+    color:var(--ink);min-height:100vh;font:15px/1.55 ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;
+    padding:34px 26px 90px;-webkit-font-smoothing:antialiased}
+  .kicker{font:800 11.5px/1 ui-sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#5fa8ff;margin:0 0 10px}
+  h1{font-size:30px;margin:0 0 8px;letter-spacing:-.025em;font-weight:850;background:linear-gradient(92deg,#fff,#bfe0ff 55%,#5fa8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#aeb8d2;margin:0 0 22px;max-width:920px;font-size:15.5px}.sub b{color:#fff}
+  .wrap{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;max-width:1120px}
+
+  .stage{flex:0 0 420px;background:linear-gradient(180deg,#0c1530,#070c1c);border:1px solid var(--line);border-radius:30px;
+    padding:22px;position:relative;overflow:hidden;box-shadow:0 50px 90px -45px #000,inset 0 1px 0 #ffffff10}
+  .stage::after{content:"";position:absolute;inset:0;background:radial-gradient(80% 55% at 50% 30%,var(--aura,#34e39b22),transparent 60%);transition:.6s;pointer-events:none}
+  .bubbles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
+  .bub{position:absolute;bottom:-20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffffff55,#5fa8ff22);animation:rise linear infinite}
+  @keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.55}90%{opacity:.4}100%{transform:translateY(-440px) translateX(var(--dx,0));opacity:0}}
+
+  .scene{position:relative;height:360px;display:grid;place-items:center;z-index:2}
+  /* the donut ring */
+  .ring{position:absolute;width:300px;height:300px;border-radius:50%;
+    background:conic-gradient(from -90deg,var(--rc,#34e39b) calc(var(--pct,0)*1%),#ffffff10 0);
+    -webkit-mask:radial-gradient(closest-side,transparent 71%,#000 72%);mask:radial-gradient(closest-side,transparent 71%,#000 72%);
+    transition:--pct .55s cubic-bezier(.4,.1,.2,1),--rc .6s;filter:drop-shadow(0 0 16px var(--rg,#34e39b55))}
+  @property --pct{syntax:'<number>';inherits:true;initial-value:0}
+  @property --rc{syntax:'<color>';inherits:false;initial-value:#34e39b}
+
+  /* everything INSIDE the ring: mascot stacked above the calorie readout, fitted to the inner hole (~210px) */
+  .core{position:absolute;width:212px;height:212px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;z-index:4}
+  .soft{position:absolute;top:118px;width:120px;height:20px;border-radius:50%;background:#000;opacity:.22;filter:blur(7px);z-index:3}
+
+  .sprite{position:relative;width:200px;height:150px;display:grid;place-items:center;margin-top:6px;
+    transform-origin:50% 88%}
+  /* CALM motion only — gentle breathe + slow underwater sway. No bob, no hop. */
+  .sprite{animation:breathe 4.4s ease-in-out infinite}
+  @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.02,.99)}}
+  .sway{animation:sway 7s ease-in-out infinite;transform-origin:50% 90%}
+  @keyframes sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
+  .sprite img{position:absolute;max-height:150px;max-width:188px;object-fit:contain;opacity:0;
+    transition:opacity .55s ease, transform .55s ease;filter:drop-shadow(0 10px 14px #00000066);transform:scale(.97)}
+  .sprite img.on{opacity:1;transform:scale(1)}
+
+  /* just-ate: a soft pulse (NOT a bounce) */
+  .sprite.pulse{animation:pulse .5s ease}
+  @keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+  .read{position:relative;text-align:center;z-index:5;margin-top:-2px}
+  .read .big{font:850 30px/1 ui-sans-serif;letter-spacing:-.02em}
+  .read .sm{font:750 11px ui-sans-serif;color:#8b96b2;margin-top:3px}
+
+  /* particles around the mascot, still inside the ring */
+  .fx{position:absolute;inset:0;z-index:6;pointer-events:none}
+  .p{position:absolute;opacity:0;font-size:19px;will-change:transform,opacity}
+  .show .p.heart{animation:floatUp 2.6s ease-out infinite}
+  .show .p.spark{animation:twk 1.9s ease-in-out infinite}
+  .show .p.conf{animation:conf 1.5s ease-out infinite}
+  .show .p.sweat{animation:sweat 2s ease-in infinite}
+  .show .p.zzz{animation:zzz 3.4s ease-in-out infinite}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(6px) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-54px) scale(1.02)}}
+  @keyframes twk{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(18deg)}}
+  @keyframes conf{0%{opacity:0;transform:translateY(6px) rotate(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-48px) rotate(240deg) scale(1)}}
+  @keyframes sweat{0%{opacity:0;transform:translate(0,0)}18%{opacity:.95}100%{opacity:0;transform:translate(2px,26px)}}
+  @keyframes zzz{0%,55%,100%{opacity:0;transform:translateY(0) scale(.5)}72%{opacity:.9;transform:translateY(-14px) scale(1)}}
+
+  .mood{position:absolute;top:14px;right:14px;z-index:7;font:800 12px ui-sans-serif;padding:6px 12px;border-radius:999px;background:#34e39b22;color:#34e39b;transition:.5s}
+  .cap{text-align:center;font:850 18px ui-sans-serif;letter-spacing:-.015em;margin:10px 0 0;min-height:24px;transition:.35s}
+
+  .side{flex:1 1 300px;min-width:300px}
+  .panel{background:#0b1226;border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin-bottom:18px;box-shadow:0 24px 50px -34px #000}
+  .panel h3{margin:0 0 12px;font-size:16px}
+  .row{display:flex;align-items:center;gap:14px;margin:14px 0}
+  .row label{font:800 11px ui-sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7c84a0;width:54px}
+  input[type=range]{flex:1;accent-color:var(--good);height:4px}
+  .btn{border:0;border-radius:12px;padding:11px 16px;font:800 13.5px ui-sans-serif;cursor:pointer;background:linear-gradient(180deg,#4fb3ff,#2f7be0);color:#04121f;box-shadow:0 10px 24px -10px #2f7be0aa,inset 0 1px 0 #ffffff66}
+  .btn.ghost{background:#152043;color:#cfd5ee;box-shadow:none;border:1px solid var(--line)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap}
+  .chip{display:inline-block;background:#101a36;border:1px solid var(--line);border-radius:999px;padding:8px 13px;font:750 12px ui-sans-serif;color:#aab2cf;cursor:pointer;margin:8px 7px 0 0;transition:.15s}
+  .chip:hover{background:#16244a;color:#fff}
+  .note{font-size:12.7px;color:#90a0c0;line-height:1.7}.note b{color:#d6deef}
+</style>
+</head>
+<body>
+  <p class="kicker">Zealova · nutrition companion</p>
+  <h1>Finn — inside the ring, calm motion 🦈</h1>
+  <p class="sub">Fixed: Finn now sits <b>inside the calorie ring</b> with the “calories left” number beneath him, and the <b>bouncing is gone</b>. Motion is calm and ambient — a slow breathe, a gentle underwater sway, drifting bubbles, and per-state particles. The day's fuel cross-fades him between the 5 poses; logging a meal gives a soft pulse (no hop).</p>
+
+  <div class="wrap">
+    <div class="stage" id="stage">
+      <div class="bubbles" id="bubbles"></div>
+      <div class="scene">
+        <div class="ring" id="ring"></div>
+        <div class="sway">
+          <div class="core">
+            <div class="soft"></div>
+            <div class="sprite" id="sprite">
+              <img data-m="hungry" src="../../mobile/flutter/assets/mascot/shark/empty.png" alt="hungry"/>
+              <img data-m="track"  src="../../mobile/flutter/assets/mascot/shark/mid.png"   alt="mid"/>
+              <img data-m="track2" src="../../mobile/flutter/assets/mascot/shark/almost.png" alt="almost"/>
+              <img data-m="goal"   src="../../mobile/flutter/assets/mascot/shark/goal.png"  alt="goal"/>
+              <img data-m="over"   src="../../mobile/flutter/assets/mascot/shark/over.png"  alt="over"/>
+            </div>
+            <div class="read"><div class="big" id="big">900</div><div class="sm" id="sm">kcal left</div></div>
+            <div class="fx" id="fx"></div>
+          </div>
+        </div>
+        <div class="mood" id="moodPill">Fueling</div>
+      </div>
+      <div class="cap" id="cap">Fueling up nicely.</div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <h3>Drive the day</h3>
+        <div class="row"><label>Eaten</label><input type="range" id="slider" min="0" max="128" value="40"/></div>
+        <div class="btns"><button class="btn" id="logBtn">🍽 Log a meal</button><button class="btn ghost" id="playBtn">⏸ Auto</button></div>
+        <div>
+          <span class="chip" data-r="5">Empty</span><span class="chip" data-r="40">Mid-day</span>
+          <span class="chip" data-r="74">Almost</span><span class="chip" data-r="100">Goal 🏆</span><span class="chip" data-r="120">Over</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>The 5 states → calorie arc</h3>
+        <p class="note">
+          🦈💤 <b>empty</b> — 0–14% · hungry, holding belly, zzz<br>
+          🦈🍽 <b>mid</b> — 14–55% · happy, plate, hearts<br>
+          🦈✨ <b>almost</b> — 55–86% · big grin, sparkle<br>
+          🦈🏆 <b>goal</b> — 86–101% · trophy, confetti<br>
+          🦈⚖️ <b>over</b> — &gt;101% · worried, junk food, sweat
+        </p>
+      </div>
+      <div class="panel">
+        <h3>Ships as</h3>
+        <p class="note">Assets live in <b>mobile/flutter/assets/mascot/shark/</b>. In <code>hero_nutrition_card.dart</code>: the mascot sits in the ring center above the “kcal left” text, an <code>AnimatedSwitcher</code> cross-fades the 5 poses by <code>eaten/goal</code>, a calm <code>AnimationController</code> drives the breathe/sway, and logging triggers the soft pulse + a particle burst. Tweaks? bigger/smaller Finn, calmer/no sway, different particles, drop the junk in Over.</p>
+      </div>
+    </div>
+  </div>
+
+<script>
+const GOAL=1500,$=id=>document.getElementById(id);
+const moodOf=p=>p<14?'hungry':p<55?'track':p<86?'track2':p<=101?'goal':'over';
+const MM={
+  hungry:{t:'Running low',c:'#ff7a6b',rc:'#ff7a6b',rg:'#ff7a6b55',a:'#ff7a6b22'},
+  track :{t:'Fueling',     c:'#34e39b',rc:'#34e39b',rg:'#34e39b66',a:'#34e39b22'},
+  track2:{t:'Almost there', c:'#7fe34e',rc:'#7fe34e',rg:'#7fe34e66',a:'#7fe34e22'},
+  goal  :{t:'Nailed it',   c:'#9be85a',rc:'#9be85a',rg:'#9be85a88',a:'#9be85a2a'},
+  over  :{t:'Over budget', c:'#ffb14a',rc:'#ffb14a',rg:'#ffb14a66',a:'#ffb14a22'}
+};
+const CAP={
+  hungry:["Running on empty.","Feed me? 🥺","Out of fuel.","So hungry."],
+  track :["Fueling up nicely.","Right on pace!","Tasty start.","Munch munch."],
+  track2:["Almost there!","So close now.","Home stretch.","Nearly nailed it."],
+  goal  :["Nailed it! 🏆","Perfect day!","Bang on target!","Champion."],
+  over  :["A touch over.","Over by {x}…","Ohh, too full.","Past the line by {x}."]
+};
+const FX={
+  hungry:[{cls:'zzz',t:'💤',x:58,y:6,d:0},{cls:'sweat',t:'💧',x:70,y:24,d:.6}],
+  track :[{cls:'heart',t:'💙',x:56,y:26,d:0},{cls:'heart',t:'💙',x:74,y:34,d:.9}],
+  track2:[{cls:'spark',t:'⭐',x:56,y:8,d:0},{cls:'spark',t:'✨',x:78,y:20,d:.7}],
+  goal  :[{cls:'conf',t:'🎉',x:40,y:8,d:0},{cls:'conf',t:'🎊',x:72,y:4,d:.4},{cls:'conf',t:'⭐',x:56,y:0,d:.8}],
+  over  :[{cls:'sweat',t:'💦',x:64,y:14,d:0},{cls:'sweat',t:'💧',x:54,y:24,d:.7}]
+};
+
+let capIdx=0,last='track';
+const sprite=$('sprite'),fx=$('fx');
+function paint(pct){
+  const mood=moodOf(pct),m=MM[mood];
+  if(mood!==last){capIdx=(capIdx+1)%4;last=mood;}
+  sprite.querySelectorAll('img').forEach(im=>im.classList.toggle('on',im.dataset.m===mood));
+  $('ring').style.setProperty('--pct',Math.min(pct,100));
+  $('ring').style.setProperty('--rc',m.rc);$('ring').style.setProperty('--rg',m.rg);
+  $('stage').style.setProperty('--aura',m.a);
+  fx.classList.remove('show');fx.innerHTML='';
+  (FX[mood]||[]).forEach(p=>{const e=document.createElement('div');e.className='p '+p.cls;e.textContent=p.t;
+    e.style.left=p.x+'%';e.style.top=p.y+'%';e.style.animationDelay=p.d+'s';fx.appendChild(e);});
+  void fx.offsetWidth;fx.classList.add('show');
+  const left=Math.round(GOAL*(1-pct/100));
+  $('big').textContent=(left<0?'+'+Math.abs(left):left).toLocaleString();
+  $('sm').textContent=left<0?'over goal':'kcal left';
+  const pill=$('moodPill');pill.textContent=m.t;pill.style.color=m.c;pill.style.background=m.c+'22';
+  const over=Math.max(0,Math.round((pct-100)/100*GOAL));
+  $('cap').textContent=CAP[mood][capIdx%4].replace('{x}',over+' kcal');
+}
+function logMeal(){sprite.classList.remove('pulse');void sprite.offsetWidth;sprite.classList.add('pulse');setTimeout(()=>sprite.classList.remove('pulse'),520);}
+
+(function(){const b=$('bubbles');for(let i=0;i<12;i++){const d=document.createElement('div');d.className='bub';
+  const s=4+Math.random()*11;d.style.width=s+'px';d.style.height=s+'px';d.style.left=(6+Math.random()*88)+'%';
+  d.style.setProperty('--dx',(Math.random()*30-15)+'px');d.style.animationDuration=(6+Math.random()*5)+'s';
+  d.style.animationDelay=(Math.random()*6)+'s';b.appendChild(d);}})();
+
+$('slider').addEventListener('input',e=>{stop();paint(+e.target.value);});
+$('logBtn').addEventListener('click',logMeal);
+document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{stop();$('slider').value=c.dataset.r;paint(+c.dataset.r);logMeal();}));
+let playing=true,dir=1,t;
+function tick(){if(!playing)return;let v=+$('slider').value+dir;if(v>=128){v=128;dir=-1;}if(v<=0){v=0;dir=1;}
+  $('slider').value=v;paint(v);t=setTimeout(tick,95);}
+function stop(){playing=false;clearTimeout(t);$('playBtn').textContent='▶ Play';}
+$('playBtn').addEventListener('click',()=>{playing=!playing;$('playBtn').textContent=playing?'⏸ Auto':'▶ Play';if(playing)tick();});
+paint(40);tick();
+</script>
+</body>
+</html>
