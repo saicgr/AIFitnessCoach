@@ -1692,7 +1692,10 @@ Guidelines:
 Analyze this nutrition facts label from food packaging.
 {multi_note}
 TASKS:
-1. Read the product name and brand if visible
+1. Read the product name and brand if visible. If a packaging SIZE descriptor is
+   printed on the front (e.g. "King Size", "Share Size", "Fun Size", "Family
+   Size", "Party Size"), INCLUDE it in "product_name" (e.g. "Almond Joy King
+   Size") — it is a distinct product with its own net weight, not optional.
 2. Extract serving size and servings per container
 3. Extract ALL nutrition facts PER SERVING (the values printed on the label)
 4. The user consumed {servings_consumed} serving(s) - multiply all values accordingly
@@ -1816,6 +1819,38 @@ Guidelines:
 
             # L2+L3 portion validation (no DB rows in label OCR flow).
             result["food_items"] = _safe_finalize(result.get("food_items") or [], "nutrition_label_ocr")
+
+            # Fix A — descriptive serving unit + count card for label scans.
+            # The OCR result carries the label's own "Serving size 1/4 Pizza
+            # (138g)" + "8 servings per container", but the per-item dicts above
+            # ship only "1 serving(s)" with NO weight, so the app could only show
+            # a generic unit. Parse the serving descriptor + per-serving grams and
+            # attach serving_label / servings_per_container / weight_per_unit_g /
+            # count / weight_g so the card renders "1/4 pizza = 138g" + a
+            # "N per container" caption and supports count scaling.
+            try:
+                from services.gemini.parsers import parse_serving_label as _psl
+                _sl = _psl(result.get("serving_size"))
+                _serv_label = _sl.get("serving_label")
+                _per_serv_g = _sl.get("grams")
+                _spc = result.get("servings_per_container")
+                _spc_int = int(_spc) if isinstance(_spc, (int, float)) and _spc >= 1 else None
+                _count = int(servings_consumed) if float(servings_consumed).is_integer() and servings_consumed >= 1 else None
+                for _fi in result["food_items"]:
+                    if not isinstance(_fi, dict):
+                        continue
+                    if _serv_label and not _fi.get("serving_label"):
+                        _fi["serving_label"] = _serv_label
+                    if _spc_int is not None:
+                        _fi["servings_per_container"] = _spc_int
+                    if _per_serv_g and _per_serv_g > 0 and not _fi.get("weight_g"):
+                        _fi["weight_per_unit_g"] = _per_serv_g
+                        if _count:
+                            _fi["count"] = _count
+                            _fi["weight_g"] = round(_per_serv_g * _count, 1)
+                            _fi["portion_basis"] = "by_count"
+            except Exception as _sl_err:
+                logger.debug(f"[label-ocr] serving-label enrichment skipped: {_sl_err}")
 
             logger.info(
                 f"Nutrition label analysis complete: {result['total_calories']} cal "

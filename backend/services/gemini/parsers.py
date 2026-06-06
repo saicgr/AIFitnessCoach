@@ -430,6 +430,76 @@ def _sanitize_foreign_name(name: str, original_query: Optional[str]) -> str:
     return name
 
 
+# ── Serving-label parsing (Fix A — descriptive serving unit) ────────────────
+# Turns a raw serving string ("1/4 Pizza (138g)", "2 scoops (35 g)") into a
+# descriptive unit noun + grams, so the app can render "1/4 pizza = 138g" instead
+# of a generic "1 pcs = 138g". Returns serving_label=None for bare countable
+# nouns ("1 serving(s)", "pcs", "100g") so genuine AI piece-counts keep their
+# existing wording (no regression for "5 tater tots").
+
+_SERVING_PAREN_RE = regex_module.compile(r"\(([^)]*)\)")
+_SERVING_GRAMS_RE = regex_module.compile(
+    r"([\d.]+)\s*(g|gram|grams|gm|ml|oz|ounce|ounces)\b", regex_module.IGNORECASE
+)
+_GENERIC_SERVING_NOUNS = frozenset({
+    "serving", "servings", "serving(s)", "pcs", "pc", "piece", "pieces",
+    "piece(s)", "unit", "units", "unit(s)", "ct", "count", "portion",
+    "portions", "item", "items", "each",
+})
+_WEIGHT_ONLY_RE = regex_module.compile(
+    r"^\d+(\.\d+)?\s*(g|gram|grams|gm|kg|mg|ml|l|oz|ounce|ounces|lb|lbs|pound|pounds)$",
+    regex_module.IGNORECASE,
+)
+_BARE_COUNT_RE = regex_module.compile(
+    r"^\d+(\.\d+)?\s*(serving\(?s?\)?|piece\(?s?\)?|pcs?|portion\(?s?\)?|"
+    r"unit\(?s?\)?|count|ct|item\(?s?\)?|each)$",
+    regex_module.IGNORECASE,
+)
+
+
+def parse_serving_label(raw: Optional[str]) -> Dict[str, Optional[float]]:
+    """Parse a raw serving string → {"serving_label": str|None, "grams": float|None}.
+
+    Examples:
+        "1/4 Pizza (138g)" -> {"serving_label": "1/4 pizza", "grams": 138.0}
+        "2 scoops (35 g)"  -> {"serving_label": "2 scoops",  "grams": 35.0}
+        "1 cup (240ml)"    -> {"serving_label": "1 cup",     "grams": 240.0}
+        "1 bar (1.6 oz)"   -> {"serving_label": "1 bar",     "grams": 45.4}
+        "1 serving(s)" / "pcs" / "100g" -> {"serving_label": None, ...}
+    """
+    out: Dict[str, Optional[float]] = {"serving_label": None, "grams": None}
+    if not raw or not isinstance(raw, str):
+        return out
+
+    s = raw.strip()
+    # Grams (or oz→g, ml→1:1) from a "(NN g)" clause anywhere in the string.
+    gm = _SERVING_GRAMS_RE.search(s)
+    if gm:
+        try:
+            val = float(gm.group(1))
+            unit = gm.group(2).lower()
+            if unit.startswith(("oz", "ounce")):
+                out["grams"] = round(val * 28.3495, 1)
+            else:  # g / ml (ml treated 1:1 for label-weight display)
+                out["grams"] = val
+        except ValueError:
+            pass
+
+    # Descriptive label = string minus any parentheticals, normalized.
+    label = _SERVING_PAREN_RE.sub("", s)
+    label = regex_module.sub(r"\s+", " ", label).strip().strip(" .,:;-").lower()
+    if not label or len(label) > 40:
+        return out
+    # Reject bare weights ("100g") and bare countable nouns ("1 serving(s)").
+    if _WEIGHT_ONLY_RE.match(label) or _BARE_COUNT_RE.match(label):
+        return out
+    if label in _GENERIC_SERVING_NOUNS:
+        return out
+
+    out["serving_label"] = label
+    return out
+
+
 class ParsersMixin:
     """Mixin providing parsing methods for GeminiService."""
 
@@ -753,6 +823,31 @@ class ParsersMixin:
             weight_g = item['weight_g']
             weight_source = item.get('weight_source', 'estimated')
 
+            # B2 — packaging-size variant integrity. If the user asked for a size
+            # variant ("almond joy king size") that the matched base row does NOT
+            # represent, do NOT clobber the AI's size-aware estimate with the base
+            # product's portion/macros. Defer to the AI estimate (the user's
+            # correct expectation that Analyze handles a not-truly-found product)
+            # and flag for confirmation instead of asserting a wrong "verified".
+            if nutrition_data:
+                try:
+                    from services.food_match_gate import unsatisfied_packaging_qualifiers
+                    _unsat = unsatisfied_packaging_qualifiers(
+                        [original_query, food_names[i]], nutrition_data
+                    )
+                except Exception:
+                    _unsat = set()
+                if _unsat:
+                    logger.info(
+                        f"[{source_label}] PACKAGING-VARIANT mismatch for "
+                        f"'{food_names[i]}': unmatched {sorted(_unsat)} vs "
+                        f"'{nutrition_data.get('display_name')}' — deferring to AI estimate"
+                    )
+                    nutrition_data = None
+                    item['requires_user_confirmation'] = True
+                    if not item.get('confidence'):
+                        item['confidence'] = 'medium'
+
             if nutrition_data:
                 # Check if data has valid calories (non-zero, or legitimately zero-cal)
                 calories_per_100g = nutrition_data.get('calories_per_100g', 0)
@@ -851,6 +946,14 @@ class ParsersMixin:
             # despite the prompt rule (e.g. "Fromage La Vache Qui Rit" for a user
             # query of "laughing cow cheese"), rewrite it to the user's wording.
             item['name'] = _sanitize_foreign_name(item.get('name', ''), original_query)
+
+            # Fix A — descriptive serving unit. Surface a human serving noun
+            # ("1/4 pizza", "2 scoops") parsed from the AI's amount string so the
+            # app can render it instead of a generic "pcs". None for bare counts.
+            if not item.get('serving_label'):
+                _sl = parse_serving_label(item.get('amount'))
+                if _sl.get('serving_label'):
+                    item['serving_label'] = _sl['serving_label']
 
             enhanced_items.append(item)
 

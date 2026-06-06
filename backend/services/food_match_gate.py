@@ -217,6 +217,94 @@ def content_words(query_or_tokens) -> List[str]:
     return out
 
 
+# ── Packaging-size qualifier integrity ─────────────────────────────────────
+# A branded packaged food's size variant ("King Size", "Fun Size", "Share Size")
+# is a DISTINCT SKU with its own net weight — NOT a loose size adjective like
+# "large coffee". The generic `_SIZE_DESCRIPTORS` droplist (used for fuzzy
+# RECALL) intentionally drops "king" so "almond joy king" still recalls the
+# base "almond joy" row. But the OVERRIDE/VERIFY decision must NOT silently keep
+# the base portion and call it "verified" when the user asked for a variant the
+# matched row doesn't represent. These helpers are a SEPARATE detector consulted
+# at the override choke points; they do not change recall.
+
+# RELIABLE signal: explicit "<word> size" (and share-pack) bigrams. These fire
+# unconditionally — they are unambiguous packaging language.
+_PACKAGING_SIZE_BIGRAMS: FrozenSet[str] = frozenset({
+    "king size", "fun size", "snack size", "share size", "sharing size",
+    "family size", "party size", "bite size", "mini size", "jumbo size",
+    "share pack", "share bag", "sharing bag",
+})
+# WEAKER signal: standalone tokens that act as a packaging size ONLY for branded
+# candy/snack products (so "king crab", "burger king", "king's hawaiian" never
+# misfire). Deliberately EXCLUDES mini/jumbo/fun/share/bite — those are real
+# product names ("Mini Eggs", "Fun Dip") and only count via the bigrams above.
+_PACKAGING_STANDALONE: FrozenSet[str] = frozenset({"king", "family", "party"})
+_BRANDED_SNACK_CATEGORIES: FrozenSet[str] = frozenset({
+    "candy", "chocolate", "chocolates", "confection", "confectionery",
+    "snack", "snacks", "dessert", "desserts",
+})
+
+
+def _row_is_branded_snack(row: Dict[str, Any]) -> bool:
+    """True when the row is a branded packaged candy/snack — the only context in
+    which a STANDALONE size token (e.g. "king") is a packaging qualifier."""
+    if row.get("restaurant_name"):
+        return True
+    cat = (row.get("food_category") or "").lower()
+    return any(c in cat for c in _BRANDED_SNACK_CATEGORIES)
+
+
+def unsatisfied_packaging_qualifiers(
+    query_texts: Iterable[Optional[str]],
+    row: Dict[str, Any],
+) -> Set[str]:
+    """Packaging-size qualifiers the user asked for (across the original query
+    AND the AI item name) that the matched DB `row` does NOT satisfy.
+
+    Non-empty result => the match is a base/wrong-variant and must NOT be stamped
+    verified or have its portion clobbered (the caller defers to the AI estimate
+    and surfaces a confirm affordance). Empty => safe to proceed as before.
+
+    Safe by construction: a qualifier is "satisfied" when the row's name/variants
+    already contain it (so "burger king", "king crab", "king's hawaiian" never
+    fire); standalone tokens fire only for branded candy/snack rows.
+    """
+    combined = " ".join(normalize_query(t) for t in query_texts if t)
+    if not combined:
+        return set()
+    qtokens = set(combined.split())
+    row_tokens = match_tokens_for_row(
+        row.get("display_name") or row.get("name") or "",
+        row.get("food_name_normalized"),
+        row.get("variant_names"),
+    )
+    unsatisfied: Set[str] = set()
+    # Bigrams (unconditional).
+    for bg in _PACKAGING_SIZE_BIGRAMS:
+        if bg in combined and not all(w in row_tokens for w in bg.split()):
+            unsatisfied.add(bg)
+    # Standalone tokens — branded candy/snack only, and only if the row name
+    # itself doesn't already carry the token.
+    if _row_is_branded_snack(row):
+        for tok in _PACKAGING_STANDALONE:
+            if tok in qtokens and tok not in row_tokens:
+                unsatisfied.add(tok)
+    return unsatisfied
+
+
+def extract_packaging_qualifiers(text: Optional[str]) -> Set[str]:
+    """Packaging-size qualifiers present in free text (branded-context agnostic;
+    bigrams + standalone). Used for logging / tests; the override decision uses
+    `unsatisfied_packaging_qualifiers` against a specific row."""
+    n = normalize_query(text or "")
+    if not n:
+        return set()
+    toks = set(n.split())
+    out = {bg for bg in _PACKAGING_SIZE_BIGRAMS if bg in n}
+    out |= {t for t in _PACKAGING_STANDALONE if t in toks}
+    return out
+
+
 # ── Similarity ─────────────────────────────────────────────────────────────
 
 def _ngrams(s: str, n: int = 3) -> Set[str]:

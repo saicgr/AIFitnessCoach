@@ -366,6 +366,8 @@ FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
       requiresUserConfirmation: json['requires_user_confirmation'] as bool?,
       verifiedSource: json['verified_source'] as String?,
       verifiedMatchName: json['verified_match_name'] as String?,
+      servingLabel: json['serving_label'] as String?,
+      servingsPerContainer: (json['servings_per_container'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
@@ -392,6 +394,8 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
       'requires_user_confirmation': instance.requiresUserConfirmation,
       'verified_source': instance.verifiedSource,
       'verified_match_name': instance.verifiedMatchName,
+      'serving_label': instance.servingLabel,
+      'servings_per_container': instance.servingsPerContainer,
     };
 
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>

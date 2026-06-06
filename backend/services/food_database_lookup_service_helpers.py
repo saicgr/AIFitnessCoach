@@ -1113,7 +1113,15 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             return best_row
 
     def _override_to_nutrition(self, override: Dict) -> Dict:
-        """Convert an override dict to the standard nutrition dict format."""
+        """Convert an override dict to the standard nutrition dict format.
+
+        Carries the matched row's identity (display_name / variant_names /
+        restaurant_name / food_category) so downstream consumers can run the
+        packaging-size qualifier integrity check (see
+        food_match_gate.unsatisfied_packaging_qualifiers) before trusting the
+        override's portion — e.g. reject "almond joy" base for a "king size"
+        query. These are metadata only; nutrition math ignores them.
+        """
         return {
             "calories_per_100g": override["calories_per_100g"],
             "protein_per_100g": override["protein_per_100g"],
@@ -1122,6 +1130,10 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             "fiber_per_100g": override["fiber_per_100g"],
             "override_weight_per_piece_g": override.get("override_weight_per_piece_g"),
             "override_serving_g": override.get("override_serving_g"),
+            "display_name": override.get("display_name"),
+            "variant_names": override.get("variant_names") or [],
+            "restaurant_name": override.get("restaurant_name"),
+            "food_category": override.get("food_category"),
         }
 
     # Match-score → similarity mapping for override search results

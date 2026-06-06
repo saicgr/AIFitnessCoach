@@ -238,6 +238,7 @@ def _scale_override_to_item(
 
 def apply_global_verified_crosscheck(
     food_items: List[Dict[str, Any]],
+    original_query: Optional[str] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, float], int]:
     """Cross-check AI-estimated image items against the verified food DB.
 
@@ -295,6 +296,31 @@ def apply_global_verified_crosscheck(
                 except Exception as e:
                     logger.debug(f"[global-crosscheck] lookup failed for '{name}': {e}")
                     override = None
+
+                # B2 — packaging-size variant integrity. Don't stamp a base
+                # product 'verified' when the user asked for a size variant it
+                # doesn't represent ("almond joy king size" → base 45g bar).
+                # Defer to the AI estimate + flag for confirmation instead.
+                if override is not None:
+                    try:
+                        from services.food_match_gate import (
+                            unsatisfied_packaging_qualifiers,
+                        )
+                        _unsat = unsatisfied_packaging_qualifiers(
+                            [original_query, name], override
+                        )
+                    except Exception:
+                        _unsat = set()
+                    if _unsat:
+                        logger.info(
+                            f"[global-crosscheck] PACKAGING-VARIANT mismatch for "
+                            f"'{name}': unmatched {sorted(_unsat)} vs "
+                            f"'{override.get('display_name')}' — keeping AI estimate"
+                        )
+                        new_item["requires_user_confirmation"] = True
+                        if not new_item.get("confidence"):
+                            new_item["confidence"] = "medium"
+                        override = None
 
                 if override is not None:
                     scaled = _scale_override_to_item(new_item, override)

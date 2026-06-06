@@ -714,6 +714,16 @@ class FoodItemRanking {
   @JsonKey(name: 'verified_match_name')
   final String? verifiedMatchName;
 
+  // Fix A — descriptive serving unit. The real package serving noun
+  // ("1/4 pizza", "2 scoops", "1 cookie"); drives the count-mode unit label
+  // instead of a generic "pcs". Null when the source has no descriptive serving.
+  @JsonKey(name: 'serving_label')
+  final String? servingLabel;
+  // Servings per container from a scanned label (e.g. 8). Powers the
+  // "N per container" / whole-item caption. Null when unknown.
+  @JsonKey(name: 'servings_per_container')
+  final int? servingsPerContainer;
+
   const FoodItemRanking({
     required this.name,
     this.amount,
@@ -737,6 +747,8 @@ class FoodItemRanking {
     this.requiresUserConfirmation,
     this.verifiedSource,
     this.verifiedMatchName,
+    this.servingLabel,
+    this.servingsPerContainer,
   });
 
   /// L4 — true when this item is shaky enough to ask the user to confirm.
@@ -772,6 +784,71 @@ class FoodItemRanking {
 
   /// Get the display unit (defaults to 'g')
   String get displayUnit => unit ?? 'g';
+
+  /// Measure-words that are NOT whole items — a fraction of these does not map
+  /// to "N = 1 whole X" (no "3 = 1 whole cup").
+  static const _measureWords = {
+    'cup', 'cups', 'scoop', 'scoops', 'tbsp', 'tsp', 'oz', 'ml', 'g', 'l',
+    'tablespoon', 'teaspoon', 'gram', 'grams', 'ounce', 'ounces',
+  };
+
+  /// Fix A — the unit noun shown in count/both mode. Prefers the descriptive
+  /// serving label ("1/4 pizza") when present; for a multi-count measure
+  /// ("2 scoops") it falls back to the generic unit so the stepper count never
+  /// double-renders (see [servingCaption]); else the existing pcs/servings.
+  String get servingNoun {
+    final sl = servingLabel?.trim();
+    if (sl != null && sl.isNotEmpty && !_isMultiCountMeasure(sl)) {
+      // Strip a leading "1 " from singular descriptors ("1 cookie" -> "cookie";
+      // "1/4 pizza" keeps its fraction).
+      final m = RegExp(r'^1\s+(.+)$').firstMatch(sl);
+      return m != null ? m.group(1)! : sl;
+    }
+    return weightPerUnitG != null ? 'pcs' : 'servings';
+  }
+
+  /// True when the serving label is an "N measureWord" phrase with N >= 2 (e.g.
+  /// "2 scoops") — these stay out of the stepper unit to avoid "2 x 2 scoops".
+  bool _isMultiCountMeasure(String sl) {
+    final m = RegExp(r'^(\d+)\s+([a-z]+)$').firstMatch(sl.toLowerCase());
+    if (m == null) return false;
+    final n = int.tryParse(m.group(1)!) ?? 1;
+    return n >= 2 && _measureWords.contains(m.group(2));
+  }
+
+  /// A caption surfaced for a multi-count measure label ("= 2 scoops (35g)")
+  /// so the info isn't lost when [servingNoun] falls back to the generic unit.
+  String? get servingCaption {
+    final sl = servingLabel?.trim();
+    if (sl != null && sl.isNotEmpty && _isMultiCountMeasure(sl)) {
+      final w = weightPerUnitG ?? weightG;
+      return w != null ? '= $sl (${w.round()}$displayUnit)' : '= $sl';
+    }
+    return null;
+  }
+
+  /// Fix A — the whole-item relationship caption ("4 = 1 whole pizza · 8 per
+  /// container"). Only emits the whole-item clause for a unit-fraction (1/N) of
+  /// a genuine whole item (not a measure word). Always appends a "N per
+  /// container" clause when servingsPerContainer >= 2.
+  String? get wholeItemCaption {
+    String? whole;
+    final sl = servingLabel?.trim().toLowerCase();
+    if (sl != null && sl.isNotEmpty) {
+      final m = RegExp(r'^1\s*/\s*(\d+)\s+(.+)$').firstMatch(sl);
+      if (m != null) {
+        final denom = int.tryParse(m.group(1)!) ?? 0;
+        final noun = m.group(2)!.trim();
+        if (denom >= 2 && noun.isNotEmpty && !_measureWords.contains(noun)) {
+          whole = '$denom = 1 whole $noun';
+        }
+      }
+    }
+    final spc = servingsPerContainer;
+    final container = (spc != null && spc >= 2) ? '$spc per container' : null;
+    if (whole != null && container != null) return '$whole · $container';
+    return whole ?? container;
+  }
 
   /// Check if this is a liquid (ml, oz, cups)
   bool get isLiquid => ['ml', 'oz', 'cups'].contains(displayUnit);
@@ -838,6 +915,8 @@ class FoodItemRanking {
       requiresUserConfirmation: false,
       verifiedSource: verifiedSource,
       verifiedMatchName: verifiedMatchName,
+      servingLabel: servingLabel,
+      servingsPerContainer: servingsPerContainer,
     );
   }
 
@@ -883,6 +962,8 @@ class FoodItemRanking {
       requiresUserConfirmation: false,
       verifiedSource: verifiedSource,
       verifiedMatchName: verifiedMatchName,
+      servingLabel: servingLabel,
+      servingsPerContainer: servingsPerContainer,
     );
   }
 
@@ -912,6 +993,8 @@ class FoodItemRanking {
       requiresUserConfirmation: false,
       verifiedSource: verifiedSource,
       verifiedMatchName: verifiedMatchName,
+      servingLabel: servingLabel,
+      servingsPerContainer: servingsPerContainer,
     );
   }
 }

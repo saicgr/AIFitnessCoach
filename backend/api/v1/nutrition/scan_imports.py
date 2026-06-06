@@ -241,6 +241,32 @@ async def scan_nutrition_label(
             analysis["total_carbs_g"] = override_totals["carbs_g"]
             analysis["total_fat_g"] = override_totals["fat_g"]
 
+        # B3 — auto-capture this scanned product into the per-user low-trust lane
+        # (food_overrides_user_contributed). With the prompt nudge, product_name
+        # carries the packaging size ("Almond Joy King Size"), so the next time
+        # THIS user types it the right variant (real net weight) resolves
+        # immediately; everyone else only sees it after the cross-user promotion
+        # job (scripts/promote_user_contributed.py) corroborates it — a single
+        # mis-OCR'd label can never poison the global verified DB. Opt-out and
+        # idempotency are enforced inside _upsert_user_contributed.
+        try:
+            _pname = (analysis.get("product_name") or "").strip()
+            _items = analysis.get("food_items") or []
+            if _pname and _pname.lower() != "unknown" and _items:
+                _norm = " ".join(_pname.lower().split())
+                if _norm and len(_norm) >= 4:
+                    from services.food_analysis.cache_service_helpers import (
+                        get_food_analysis_cache_service,
+                    )
+                    await get_food_analysis_cache_service()._upsert_user_contributed(
+                        user_id=user_id,
+                        food_name_normalized=_norm,
+                        display_name=_pname,
+                        analysis_item=_items[0],
+                    )
+        except Exception as _cap_err:
+            logger.debug(f"[scan-label] variant auto-capture skipped: {_cap_err}")
+
         scan_meta = {
             "kind": "label",
             "product_name": analysis.get("product_name"),

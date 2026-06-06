@@ -405,8 +405,30 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             if food_analysis.get("cache_hit") and food_analysis.get(
                 "cache_source"
             ) in ("override", "common_foods", "multi_lookup", "user_contributed"):
+                # B2 — packaging-size variant integrity (stale-cache guard). Don't
+                # stamp a base product 'verified' when the query asked for a size
+                # variant it doesn't represent ("almond joy king size" → base bar).
+                # A fresh (cache-miss) analysis is corrected upstream in
+                # _enhance_food_items_with_nutrition_db; this catches entries that
+                # were cached before that guard existed.
+                from services.food_match_gate import unsatisfied_packaging_qualifiers
                 for _it in food_items:
-                    if isinstance(_it, dict):
+                    if not isinstance(_it, dict):
+                        continue
+                    try:
+                        _unsat = unsatisfied_packaging_qualifiers([body.description], _it)
+                    except Exception:
+                        _unsat = set()
+                    if _unsat:
+                        logger.info(
+                            f"[STREAM text] packaging-variant mismatch "
+                            f"({sorted(_unsat)}) for '{_it.get('name')}' — not "
+                            f"stamping verified, flagging for confirmation"
+                        )
+                        _it["requires_user_confirmation"] = True
+                        if not _it.get("confidence"):
+                            _it["confidence"] = "medium"
+                    else:
                         _it.setdefault("verified_source", "override_db")
 
             overall_meal_score = food_analysis.get('overall_meal_score')

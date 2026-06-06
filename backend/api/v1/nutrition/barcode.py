@@ -168,6 +168,18 @@ async def log_food_from_barcode(request: LogBarcodeRequest, http_request: Reques
             "brand": product.brand,
         }
 
+        # Fix A — descriptive serving unit. The serving arbiter resolves a human
+        # serving label ("2 scoops (35 g)") onto nutrients.serving_size; surface
+        # it so the app renders the real serving noun instead of a generic "pcs".
+        try:
+            from services.gemini.parsers import parse_serving_label
+            _serv_raw = getattr(product.nutrients, "serving_size", None)
+            _sl = parse_serving_label(_serv_raw if isinstance(_serv_raw, str) else None)
+            if _sl.get("serving_label"):
+                food_item["serving_label"] = _sl["serving_label"]
+        except Exception:
+            pass
+
         # Store food quality metadata in food_item
         if product.nutriscore_grade:
             food_item["nutriscore_grade"] = product.nutriscore_grade

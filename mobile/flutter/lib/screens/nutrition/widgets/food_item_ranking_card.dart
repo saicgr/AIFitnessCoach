@@ -598,7 +598,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  Text(widget.item.weightPerUnitG != null ? 'pcs' : 'servings',
+                  Text(widget.item.servingNoun,
                       style: TextStyle(fontSize: 12, color: textMuted)),
                 ],
               )
@@ -627,7 +627,7 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                     ),
                   ),
                   const SizedBox(width: 2),
-                  Text('pcs = ${_currentWeight.round()}${widget.item.displayUnit}', style: TextStyle(fontSize: 12, color: textMuted)),
+                  Text('${widget.item.servingNoun} = ${_currentWeight.round()}${widget.item.displayUnit}', style: TextStyle(fontSize: 12, color: textMuted)),
                 ],
               ),
             const SizedBox(width: 6),
@@ -650,6 +650,16 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
             ],
           ],
         ),
+        // Fix A — whole-item / per-container caption ("4 = 1 whole pizza · 8
+        // per container") + multi-count measure caption ("= 2 scoops (35g)").
+        if (widget.item.wholeItemCaption != null || widget.item.servingCaption != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              widget.item.wholeItemCaption ?? widget.item.servingCaption!,
+              style: TextStyle(fontSize: 11, color: textMuted),
+            ),
+          ),
         Padding(
           padding: const EdgeInsets.only(top: 6),
           child: _buildPortionPresets(teal, glassSurface, textMuted),
