@@ -18,7 +18,8 @@ import '../../../data/repositories/hydration_repository.dart';
 import '../../nutrition/log_meal_sheet.dart';
 import '../../nutrition/widgets/micro_settings_sheet.dart';
 import '../../nutrition/widgets/calories_burned_sheet.dart';
-import '../../nutrition/widgets/nutrition_goals_card.dart' show showNutritionCalculationSheet;
+import '../../nutrition/widgets/nutrition_goals_card.dart'
+    show showNutritionCalculationSheet;
 import '../../nutrition/widgets/edit_targets_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
@@ -67,7 +68,10 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _entrance = CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic);
+    _entrance = CurvedAnimation(
+      parent: _animController,
+      curve: Curves.easeOutCubic,
+    );
     _pageController = PageController();
     _loadData();
   }
@@ -109,7 +113,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     // update repaints the card on its own; the slowest never blocks the others.
     unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
     unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
-    unawaited(ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
+    unawaited(
+      ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
+    );
   }
 
   /// Persist an edited goal. [key] is one of: calories, protein, carbs, fat.
@@ -191,8 +197,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final accent = AccentColorScope.of(context).getColor(isDark);
     final l10n = AppLocalizations.of(context);
@@ -206,7 +216,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     // not configured targets, treat the target as unset (0 → empty ring) and
     // render a "Set a calorie target" CTA instead of presenting 2000 as real.
     final hasCalorieTarget = prefsState.hasConfiguredTargets;
-    final calorieTarget = hasCalorieTarget ? prefsState.currentCalorieTarget : 0;
+    final calorieTarget = hasCalorieTarget
+        ? prefsState.currentCalorieTarget
+        : 0;
     final proteinConsumed = (summary?.totalProteinG ?? 0).round();
     final carbsConsumed = (summary?.totalCarbsG ?? 0).round();
     final fatConsumed = (summary?.totalFatG ?? 0).round();
@@ -221,19 +233,27 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final caloriesBurnedToday = summary?.caloriesBurnedToday ?? 0;
     final burnAdjusted = summary?.burnAdjusted == true;
     final netCalorieRemainder = summary?.netCalorieRemainder;
-    final showBurnRow = hasCalorieTarget &&
+    final showBurnRow =
+        hasCalorieTarget &&
         burnAdjusted &&
         caloriesBurnedToday > 0 &&
         netCalorieRemainder != null;
 
-    final proteinColor = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final carbsColor = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    final proteinColor = isDark
+        ? AppColors.macroProtein
+        : AppColorsLight.macroProtein;
+    final carbsColor = isDark
+        ? AppColors.macroCarbs
+        : AppColorsLight.macroCarbs;
     final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
-    final buttonBg = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final buttonBg = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final buttonFg = isDark ? Colors.black : Colors.white;
 
-    final calorieProgress =
-        calorieTarget > 0 ? (caloriesConsumed / calorieTarget).clamp(0.0, 1.3) : 0.0;
+    final calorieProgress = calorieTarget > 0
+        ? (caloriesConsumed / calorieTarget).clamp(0.0, 1.3)
+        : 0.0;
 
     // Aggregate micronutrients from the day's logged meals (summary-level
     // model has no micro totals, but each FoodLog carries them).
@@ -252,7 +272,10 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
     final microPages = <List<_MicroSpec>>[];
     for (var i = 0; i < microSpecs.length; i += 6) {
       microPages.add(
-        microSpecs.sublist(i, i + 6 > microSpecs.length ? microSpecs.length : i + 6),
+        microSpecs.sublist(
+          i,
+          i + 6 > microSpecs.length ? microSpecs.length : i + 6,
+        ),
       );
     }
     final pageCount = 1 + microPages.length; // page 0 = macros
@@ -278,7 +301,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
           color: cardBg,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
+            color: (isDark ? Colors.white : Colors.black).withValues(
+              alpha: 0.08,
+            ),
           ),
           boxShadow: [
             BoxShadow(
@@ -293,14 +318,17 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
           child: _isLoading
               ? const SizedBox(
                   height: 220,
-                  child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  child: Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 )
               : Column(
                   // Embedded lives in an unbounded scroll view, so the column
                   // must hug its content (it has no Expanded then). Home gives
                   // it a bounded height, where max + Expanded fills the area.
-                  mainAxisSize:
-                      widget.embedded ? MainAxisSize.min : MainAxisSize.max,
+                  mainAxisSize: widget.embedded
+                      ? MainAxisSize.min
+                      : MainAxisSize.max,
                   children: [
                     // Embedded header chrome — subtle (i) info + pencil edit
                     // affordances in the top-right (ported from the old
@@ -314,22 +342,32 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                           children: [
                             IconButton(
                               onPressed: _showInfoSheet,
-                              icon: Icon(Icons.info_outline_rounded,
-                                  size: 18, color: textSecondary),
+                              icon: Icon(
+                                Icons.info_outline_rounded,
+                                size: 18,
+                                color: textSecondary,
+                              ),
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 28),
+                                minWidth: 32,
+                                minHeight: 28,
+                              ),
                               tooltip: 'How your targets are calculated',
                             ),
                             IconButton(
                               onPressed: _showEditTargetsSheet,
-                              icon: Icon(Icons.edit_outlined,
-                                  size: 16, color: textSecondary),
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                size: 16,
+                                color: textSecondary,
+                              ),
                               visualDensity: VisualDensity.compact,
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
-                                  minWidth: 32, minHeight: 28),
+                                minWidth: 32,
+                                minHeight: 28,
+                              ),
                               tooltip: 'Edit targets',
                             ),
                           ],
@@ -361,54 +399,58 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                       // (perf pass, issue #14).
                       child: RepaintBoundary(
                         child: PageView(
-                        controller: _pageController,
-                        onPageChanged: (_) => HapticService.selection(),
-                        children: [
-                          // Page 1 — calorie ring + macro pills
-                          _MacrosPage(
-                            entrance: _entrance,
-                            accent: accent,
-                            isDark: isDark,
-                            textPrimary: textPrimary,
-                            textSecondary: textSecondary,
-                            caloriesRemaining: caloriesRemaining,
-                            calorieTarget: calorieTarget,
-                            caloriesConsumed: caloriesConsumed,
-                            hasCalorieTarget: hasCalorieTarget,
-                            calorieProgress: calorieProgress,
-                            showBurnRow: showBurnRow,
-                            caloriesBurnedToday: caloriesBurnedToday,
-                            netCalorieRemainder: netCalorieRemainder ?? 0,
-                            onTapBurned: () {
-                              HapticService.light();
-                              showCaloriesBurnedSheet(
-                                context, caloriesBurnedToday.toDouble());
-                            },
-                            proteinConsumed: proteinConsumed,
-                            carbsConsumed: carbsConsumed,
-                            fatConsumed: fatConsumed,
-                            proteinTarget: proteinTarget,
-                            carbsTarget: carbsTarget,
-                            fatTarget: fatTarget,
-                            proteinColor: proteinColor,
-                            carbsColor: carbsColor,
-                            fatColor: fatColor,
-                            onEditCalorieGoal: (v) => _commitGoal('calories', v),
-                            onEditProteinGoal: (v) => _commitGoal('protein', v),
-                            onEditCarbsGoal: (v) => _commitGoal('carbs', v),
-                            onEditFatGoal: (v) => _commitGoal('fat', v),
-                          ),
-                          // Micronutrient pages — user-customizable (which tiles
-                          // show + order live in microVisibilityProvider, edited
-                          // via the tune gear beside the dots). Each page is a
-                          // 3×2 grid of up to 6 tiles.
-                          for (final tiles in microPages)
-                            _MicroGridPage(
+                          controller: _pageController,
+                          onPageChanged: (_) => HapticService.selection(),
+                          children: [
+                            // Page 1 — calorie ring + macro pills
+                            _MacrosPage(
                               entrance: _entrance,
+                              accent: accent,
                               isDark: isDark,
-                              tiles: tiles,
+                              textPrimary: textPrimary,
+                              textSecondary: textSecondary,
+                              caloriesRemaining: caloriesRemaining,
+                              calorieTarget: calorieTarget,
+                              caloriesConsumed: caloriesConsumed,
+                              hasCalorieTarget: hasCalorieTarget,
+                              calorieProgress: calorieProgress,
+                              showBurnRow: showBurnRow,
+                              caloriesBurnedToday: caloriesBurnedToday,
+                              netCalorieRemainder: netCalorieRemainder ?? 0,
+                              onTapBurned: () {
+                                HapticService.light();
+                                showCaloriesBurnedSheet(
+                                  context,
+                                  caloriesBurnedToday.toDouble(),
+                                );
+                              },
+                              proteinConsumed: proteinConsumed,
+                              carbsConsumed: carbsConsumed,
+                              fatConsumed: fatConsumed,
+                              proteinTarget: proteinTarget,
+                              carbsTarget: carbsTarget,
+                              fatTarget: fatTarget,
+                              proteinColor: proteinColor,
+                              carbsColor: carbsColor,
+                              fatColor: fatColor,
+                              onEditCalorieGoal: (v) =>
+                                  _commitGoal('calories', v),
+                              onEditProteinGoal: (v) =>
+                                  _commitGoal('protein', v),
+                              onEditCarbsGoal: (v) => _commitGoal('carbs', v),
+                              onEditFatGoal: (v) => _commitGoal('fat', v),
                             ),
-                        ],
+                            // Micronutrient pages — user-customizable (which tiles
+                            // show + order live in microVisibilityProvider, edited
+                            // via the tune gear beside the dots). Each page is a
+                            // 3×2 grid of up to 6 tiles.
+                            for (final tiles in microPages)
+                              _MicroGridPage(
+                                entrance: _entrance,
+                                isDark: isDark,
+                                tiles: tiles,
+                              ),
+                          ],
                         ),
                       ),
                     ),
@@ -451,8 +493,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                                   width: 26,
                                   height: 26,
                                   decoration: BoxDecoration(
-                                    color: (isDark ? Colors.white : Colors.black)
-                                        .withValues(alpha: 0.06),
+                                    color:
+                                        (isDark ? Colors.white : Colors.black)
+                                            .withValues(alpha: 0.06),
                                     shape: BoxShape.circle,
                                   ),
                                   child: Icon(
@@ -517,11 +560,18 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                             mainAxisAlignment: MainAxisAlignment.center,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.insights_outlined, size: 13, color: textSecondary),
+                              Icon(
+                                Icons.insights_outlined,
+                                size: 13,
+                                color: textSecondary,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 l10n.heroWorkoutCardViewDetails,
-                                style: TextStyle(color: textSecondary, fontSize: 11),
+                                style: TextStyle(
+                                  color: textSecondary,
+                                  fontSize: 11,
+                                ),
                               ),
                             ],
                           ),
@@ -601,8 +651,9 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
 
     final scaler = MediaQuery.textScalerOf(context);
     final over = netRemaining < 0;
-    final netLabel =
-        over ? 'Net ${netRemaining.abs()} over' : 'Net $netRemaining left';
+    final netLabel = over
+        ? 'Net ${netRemaining.abs()} over'
+        : 'Net $netRemaining left';
 
     // (text, fontSize, weight) for every chip, mirroring `_NetRemainingRow`.
     const detail = 10.5;
@@ -678,14 +729,14 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
   // from the aggregated [_MicroTotals] by stable id. (Hydration is no longer a
   // carousel tile — it has a dedicated tracker on the Daily tab.)
   _MicroSpec _specForMicro(MicroCatalogEntry e, _MicroTotals m) => _MicroSpec(
-        e.name,
-        _microValue(e.id, m),
-        e.goal,
-        e.unit,
-        e.emoji,
-        e.color,
-        e.fixed,
-      );
+    e.name,
+    _microValue(e.id, m),
+    e.goal,
+    e.unit,
+    e.emoji,
+    e.color,
+    e.fixed,
+  );
 
   double _microValue(String id, _MicroTotals m) {
     switch (id) {
@@ -803,185 +854,187 @@ class _MacrosPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final over = caloriesRemaining < 0;
-    // Ring is a fixed square (== the 3-pill stack height) so the pills keep
-    // their width — an AspectRatio in a Row would derive width from the tall
-    // bounded height and crush the pills.
-    //
-    // TOP-ALIGN (not Center): the carousel SizedBox is sized to the TALLEST
-    // page (the 2-col micro grid, which is taller than the 120px ring+pill
-    // stack on the embedded Nutrition card). Centering pushed the ring + pills
-    // down into the vertical middle, leaving a large empty gap ABOVE the ring.
-    // Aligning to topCenter parks the natural-height ring+pill row at the top
-    // so the leftover height sits harmlessly BELOW it. The Row hugs its content
-    // (mainAxisSize.min on the cross axis via the fixed-height ring), so the
-    // 3 macro pills always render at full width instead of being squeezed.
-    return Align(
-      alignment: Alignment.topCenter,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.max,
-        children: [
-          // Calorie ring — sized to match the compact 3-pill stack height
-          // (3 × 36 + 2 × 6 = 120) so the ring and pills stay vertically
-          // balanced with the unified micro-tile-style pills.
-          SizedBox(
-            width: 120,
-            height: 120,
-            child: AnimatedBuilder(
-              animation: entrance,
-              builder: (context, _) {
-                final t = entrance.value;
-                final shown = (caloriesRemaining * t).round();
-                return Stack(
-                  alignment: Alignment.center,
+    // The carousel sizes every page to the TALLEST page (the 2-col micro grid,
+    // taller than the old fixed 120px ring+pill stack). Rather than top-align
+    // the short macro content and leave empty space below (the height mismatch
+    // the user flagged), STRETCH the ring + pills to fill that height so page 1
+    // visually matches the micronutrient grid pages.
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              // Calorie ring — a square that fills the page height so it stays
+              // balanced with the macro pills, which now stretch to fill the same
+              // height as the (taller) micronutrient grid page. Previously a fixed
+              // 120×120 box left page 1 visibly shorter than the grid pages.
+              AspectRatio(
+                aspectRatio: 1,
+                child: AnimatedBuilder(
+                  animation: entrance,
+                  builder: (context, _) {
+                    final t = entrance.value;
+                    final shown = (caloriesRemaining * t).round();
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CustomPaint(
+                          size: Size.infinite,
+                          painter: _CalorieRingPainter(
+                            progress: calorieProgress * t,
+                            color: over ? AppColors.error : accent,
+                            trackColor: (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.08),
+                          ),
+                        ),
+                        if (!hasCalorieTarget)
+                          // No target configured → CTA, never the 2000 fallback.
+                          // (The edit affordance is the pencil in the card header.)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.add_circle_outline,
+                                  size: 18,
+                                  color: accent,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Set a calorie\ntarget',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.1,
+                                    color: textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                l10n.heroNutritionCardCalLeft.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  color: textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  over ? '+${shown.abs()}' : '$shown',
+                                  maxLines: 1,
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.0,
+                                    color: over ? AppColors.error : textPrimary,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              _EditableGoal(
+                                value: calorieTarget,
+                                prefix: 'of ',
+                                suffix: '',
+                                onCommit: onEditCalorieGoal,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Macro pills — each stretches to fill the page height so the 3-pill
+              // stack matches the micronutrient grid page (8px gaps mirror the
+              // grid's mainAxisSpacing). No more short page-1 with empty space.
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
                   children: [
-                    CustomPaint(
-                      size: Size.infinite,
-                      painter: _CalorieRingPainter(
-                        progress: calorieProgress * t,
-                        color: over ? AppColors.error : accent,
-                        trackColor: (isDark ? Colors.white : Colors.black)
-                            .withValues(alpha: 0.08),
+                    Expanded(
+                      child: _MacroPill(
+                        entrance: entrance,
+                        order: 0,
+                        emoji: '🍖',
+                        label: l10n.weeklyCheckinSheetProtein,
+                        consumed: proteinConsumed,
+                        goal: proteinTarget,
+                        color: proteinColor,
+                        isDark: isDark,
+                        onEditGoal: onEditProteinGoal,
                       ),
                     ),
-                    if (!hasCalorieTarget)
-                      // No target configured → CTA, never the 2000 fallback.
-                      // (The edit affordance is the pencil in the card header.)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add_circle_outline,
-                                size: 18, color: accent),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Set a calorie\ntarget',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                height: 1.1,
-                                color: textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            l10n.heroNutritionCardCalLeft.toUpperCase(),
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                              color: textSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              over ? '+${shown.abs()}' : '$shown',
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w800,
-                                height: 1.0,
-                                color: over ? AppColors.error : textPrimary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          _EditableGoal(
-                            value: calorieTarget,
-                            prefix: 'of ',
-                            suffix: '',
-                            onCommit: onEditCalorieGoal,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: textSecondary,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: _MacroPill(
+                        entrance: entrance,
+                        order: 1,
+                        emoji: '🍞',
+                        label: l10n.weeklyCheckinSheetCarbs,
+                        consumed: carbsConsumed,
+                        goal: carbsTarget,
+                        color: carbsColor,
+                        isDark: isDark,
+                        onEditGoal: onEditCarbsGoal,
                       ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: _MacroPill(
+                        entrance: entrance,
+                        order: 2,
+                        emoji: '🧈',
+                        label: l10n.weeklyCheckinSheetFat,
+                        consumed: fatConsumed,
+                        goal: fatTarget,
+                        color: fatColor,
+                        isDark: isDark,
+                        onEditGoal: onEditFatGoal,
+                      ),
+                    ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          // Macro pills
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _MacroPill(
-                  entrance: entrance,
-                  order: 0,
-                  emoji: '🍖',
-                  label: l10n.weeklyCheckinSheetProtein,
-                  consumed: proteinConsumed,
-                  goal: proteinTarget,
-                  color: proteinColor,
-                  isDark: isDark,
-                  onEditGoal: onEditProteinGoal,
-                ),
-                const SizedBox(height: 6),
-                _MacroPill(
-                  entrance: entrance,
-                  order: 1,
-                  emoji: '🍞',
-                  label: l10n.weeklyCheckinSheetCarbs,
-                  consumed: carbsConsumed,
-                  goal: carbsTarget,
-                  color: carbsColor,
-                  isDark: isDark,
-                  onEditGoal: onEditCarbsGoal,
-                ),
-                const SizedBox(height: 6),
-                _MacroPill(
-                  entrance: entrance,
-                  order: 2,
-                  emoji: '🧈',
-                  label: l10n.weeklyCheckinSheetFat,
-                  consumed: fatConsumed,
-                  goal: fatTarget,
-                  color: fatColor,
-                  isDark: isDark,
-                  onEditGoal: onEditFatGoal,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-      // F4 — net-remaining breakdown. Hidden entirely unless real burn data is
-      // present (showBurnRow). Factual copy, no "you can eat X more!" gamified
-      // framing (ED-safety). Tapping the burned figure opens the existing
-      // calories-burned breakdown sheet.
-      if (showBurnRow) ...[
-        const SizedBox(height: 8),
-        _NetRemainingRow(
-          calorieTarget: calorieTarget,
-          caloriesConsumed: caloriesConsumed,
-          caloriesBurned: caloriesBurnedToday,
-          netRemaining: netCalorieRemainder,
-          textPrimary: textPrimary,
-          textSecondary: textSecondary,
-          accent: accent,
-          onTapBurned: onTapBurned,
         ),
-      ],
+        // F4 — net-remaining breakdown. Hidden entirely unless real burn data is
+        // present (showBurnRow). Factual copy, no "you can eat X more!" gamified
+        // framing (ED-safety). Tapping the burned figure opens the existing
+        // calories-burned breakdown sheet.
+        if (showBurnRow) ...[
+          const SizedBox(height: 8),
+          _NetRemainingRow(
+            calorieTarget: calorieTarget,
+            caloriesConsumed: caloriesConsumed,
+            caloriesBurned: caloriesBurnedToday,
+            netRemaining: netCalorieRemainder,
+            textPrimary: textPrimary,
+            textSecondary: textSecondary,
+            accent: accent,
+            onTapBurned: onTapBurned,
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -1056,8 +1109,11 @@ class _NetRemainingRow extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.local_fire_department_outlined,
-                      size: 12, color: accent),
+                  Icon(
+                    Icons.local_fire_department_outlined,
+                    size: 12,
+                    color: accent,
+                  ),
                   const SizedBox(width: 2),
                   Text(
                     '+ $caloriesBurned burned',
@@ -1106,81 +1162,86 @@ class _MacroPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final tile = color.withValues(alpha: isDark ? 0.16 : 0.10);
     final chipBg = color.withValues(alpha: isDark ? 0.28 : 0.18);
-    final labelColor = (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary);
+    final labelColor = (isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary);
 
-    // The pill body, built once.
+    // The pill body, built once. No fixed height — the pill stretches to fill
+    // the Expanded slot the macro page gives it, so the 3-pill stack matches
+    // the micronutrient grid page height.
     final body = Container(
-      height: 36,
-          decoration: BoxDecoration(
-            color: tile,
-            // Match the micronutrient tiles (page 2/3): 16px radius + 42px emoji
-            // chip so all three carousel pages read as one consistent card.
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.22)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: chipBg,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-                ),
-                child: Text(emoji, style: const TextStyle(fontSize: 16)),
+      decoration: BoxDecoration(
+        color: tile,
+        // Match the micronutrient tiles (page 2/3): 16px radius + 42px emoji
+        // chip so all three carousel pages read as one consistent card.
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: chipBg,
+              borderRadius: const BorderRadius.horizontal(
+                left: Radius.circular(16),
               ),
-              const SizedBox(width: 9),
-              // Compact inline layout: LABEL · consumed / goal on one row so
-              // the pill is 34px tall (issue 2) instead of the old 2-line 42px.
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      label.toUpperCase(),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.3,
-                        color: labelColor,
-                      ),
-                    ),
-                    const Spacer(),
-                    TweenAnimationBuilder<int>(
-                      tween: IntTween(begin: 0, end: consumed),
-                      duration: const Duration(milliseconds: 1000),
-                      curve: Curves.easeOutCubic,
-                      builder: (context, v, _) => Text(
-                        '$v',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          height: 1.0,
-                          color: color,
-                        ),
-                      ),
-                    ),
-                    _EditableGoal(
-                      value: goal,
-                      prefix: ' / ',
-                      suffix: 'g',
-                      onCommit: onEditGoal,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: labelColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 6),
-            ],
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 16)),
           ),
-        ); // end `final body = Container(...)`
+          const SizedBox(width: 9),
+          // Compact inline layout: LABEL · consumed / goal on one row so
+          // the pill is 34px tall (issue 2) instead of the old 2-line 42px.
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.3,
+                    color: labelColor,
+                  ),
+                ),
+                const Spacer(),
+                TweenAnimationBuilder<int>(
+                  tween: IntTween(begin: 0, end: consumed),
+                  duration: const Duration(milliseconds: 1000),
+                  curve: Curves.easeOutCubic,
+                  builder: (context, v, _) => Text(
+                    '$v',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      height: 1.0,
+                      color: color,
+                    ),
+                  ),
+                ),
+                _EditableGoal(
+                  value: goal,
+                  prefix: ' / ',
+                  suffix: 'g',
+                  onCommit: onEditGoal,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: labelColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+        ],
+      ),
+    ); // end `final body = Container(...)`
 
     // Drive the staggered entrance via AnimatedBuilder so the pill fades in as
     // the controller animates AND stays visible once it settles. Previously the
@@ -1218,7 +1279,14 @@ class _MicroSpec {
   final Color color;
   final int fixed; // decimal places for display
   const _MicroSpec(
-      this.name, this.value, this.goal, this.unit, this.emoji, this.color, this.fixed);
+    this.name,
+    this.value,
+    this.goal,
+    this.unit,
+    this.emoji,
+    this.color,
+    this.fixed,
+  );
 }
 
 class _MicroGridPage extends StatelessWidget {
@@ -1243,7 +1311,12 @@ class _MicroGridPage extends StatelessWidget {
       childAspectRatio: 3.55,
       children: [
         for (int i = 0; i < tiles.length; i++)
-          _MicroTile(spec: tiles[i], entrance: entrance, order: i, isDark: isDark),
+          _MicroTile(
+            spec: tiles[i],
+            entrance: entrance,
+            order: i,
+            isDark: isDark,
+          ),
       ],
     );
   }
@@ -1280,7 +1353,9 @@ class _MicroTile extends StatelessWidget {
     final c = spec.color;
     final tile = c.withValues(alpha: isDark ? 0.16 : 0.10);
     final chipBg = c.withValues(alpha: isDark ? 0.28 : 0.18);
-    final labelColor = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final labelColor = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
     final start = (0.2 + order * 0.06).clamp(0.0, 0.9);
     final local = ((entrance.value - start) / (1 - start)).clamp(0.0, 1.0);
@@ -1302,7 +1377,9 @@ class _MicroTile extends StatelessWidget {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: chipBg,
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(16),
+                  ),
                 ),
                 child: Text(spec.emoji, style: const TextStyle(fontSize: 16)),
               ),
@@ -1418,7 +1495,9 @@ class _EditableGoalState extends State<_EditableGoal> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focus.requestFocus();
       _controller.selection = TextSelection(
-          baseOffset: 0, extentOffset: _controller.text.length);
+        baseOffset: 0,
+        extentOffset: _controller.text.length,
+      );
     });
   }
 
@@ -1432,8 +1511,9 @@ class _EditableGoalState extends State<_EditableGoal> {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AccentColorScope.of(context)
-        .getColor(Theme.of(context).brightness == Brightness.dark);
+    final accent = AccentColorScope.of(
+      context,
+    ).getColor(Theme.of(context).brightness == Brightness.dark);
     if (_editing) {
       return Row(
         mainAxisSize: MainAxisSize.min,
@@ -1573,10 +1653,21 @@ class _MicroTotals {
   });
 
   factory _MicroTotals.fromMeals(List<FoodLog> meals) {
-    double fiber = 0, sugar = 0, sodium = 0, potassium = 0, chol = 0, calcium = 0;
+    double fiber = 0,
+        sugar = 0,
+        sodium = 0,
+        potassium = 0,
+        chol = 0,
+        calcium = 0;
     double iron = 0, vitC = 0, vitA = 0, vitD = 0, satFat = 0;
     double vitE = 0, vitK = 0, b6 = 0, b12 = 0, b9 = 0;
-    double mag = 0, zinc = 0, phos = 0, sel = 0, copper = 0, mang = 0, omega3 = 0;
+    double mag = 0,
+        zinc = 0,
+        phos = 0,
+        sel = 0,
+        copper = 0,
+        mang = 0,
+        omega3 = 0;
     for (final m in meals) {
       fiber += m.fiberG ?? 0;
       sugar += m.sugarG ?? 0;

@@ -178,17 +178,27 @@ class DailyCoachInsight {
   }
 }
 
-/// Args for the family provider — date + tz + source + refresh flag.
+/// Args for the family provider — date + tz + source + refresh/fresh flags.
 class _InsightArgs {
   final DateTime localDate;
   final String tz;
   final String source;
+
+  /// `refresh=true` → server regenerates the AI text (headline/body),
+  /// bypassing the per-day text cache. Expensive (a Gemini call).
   final bool refresh;
+
+  /// `fresh=true` → server recomputes the grounded graph blocks fresh from the
+  /// DB (bypassing its 120s block memo) WITHOUT regenerating the AI text. Cheap
+  /// — used after a log so the numbers update instantly while the text stays.
+  final bool fresh;
+
   const _InsightArgs({
     required this.localDate,
     required this.tz,
     this.source = 'home',
     this.refresh = false,
+    this.fresh = false,
   });
 
   String get dateString =>
@@ -200,10 +210,11 @@ class _InsightArgs {
       dateString == other.dateString &&
       tz == other.tz &&
       source == other.source &&
-      refresh == other.refresh;
+      refresh == other.refresh &&
+      fresh == other.fresh;
 
   @override
-  int get hashCode => Object.hash(dateString, tz, source, refresh);
+  int get hashCode => Object.hash(dateString, tz, source, refresh, fresh);
 }
 
 /// Daily coach insight for today, in the user's local timezone. Watching this
@@ -383,13 +394,20 @@ final chatOpenInsightProvider =
   return _fetchInsight(ref, args, cacheKey: cacheKey);
 });
 
-/// Manual refresh — pass `?refresh=true` to bust the server cache. Use after
-/// a workout completion / day-rollover / large meal logged.
+/// TEXT refresh — `?refresh=true&fresh=true`: server regenerates the AI
+/// headline/body (Gemini) AND recomputes the graph blocks fresh. Use after a
+/// completion-class event (workout finished, fast ended, sleep logged, first
+/// meal) and on the manual long-press / ⋮ refresh.
+///
+/// Crucially this WRITES THROUGH to the home disk cache (cacheKey +
+/// `pin:false`): the prior implementation passed no cacheKey, so after the
+/// caller did `ref.invalidate(dailyCoachInsightProvider)` the main provider
+/// re-read the UNCHANGED 12h disk cache and the regenerated text never showed.
+/// Writing through means the follow-up invalidate surfaces the fresh payload.
+/// `pin:false` keeps the main provider the single pinned listener.
 final dailyCoachInsightRefreshProvider =
     FutureProvider.autoDispose
         .family<DailyCoachInsight, DateTime>((ref, date) async {
-  // NOTE: intentionally NOT keepAlive — this is the manual `refresh=true`
-  // cache-buster; pinning it would defeat its purpose.
   final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   final tzState = ref.watch(timezoneProvider);
   if (tzState.isLoading || userId == null || userId.isEmpty) {
@@ -402,12 +420,41 @@ final dailyCoachInsightRefreshProvider =
       tz: tzState.timezone,
       source: 'home',
       refresh: true,
+      fresh: true,
     ),
+    cacheKey: DataCacheService.coachInsightKey,
+    pin: false,
+  );
+});
+
+/// NUMBERS refresh — `?fresh=true` only: server recomputes the grounded graph
+/// blocks fresh from the DB but returns the CACHED AI text (no Gemini call, no
+/// cost). Use after every log so the graphs reflect the new data instantly.
+/// Like the text refresh it write-throughs the home disk cache (pin:false) so a
+/// follow-up `ref.invalidate(dailyCoachInsightProvider)` surfaces fresh blocks.
+final dailyCoachInsightNumbersRefreshProvider =
+    FutureProvider.autoDispose
+        .family<DailyCoachInsight, DateTime>((ref, date) async {
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  final tzState = ref.watch(timezoneProvider);
+  if (tzState.isLoading || userId == null || userId.isEmpty) {
+    return _buildClientFallback(ref);
+  }
+  return _fetchInsight(
+    ref,
+    _InsightArgs(
+      localDate: DateTime(date.year, date.month, date.day),
+      tz: tzState.timezone,
+      source: 'home',
+      fresh: true,
+    ),
+    cacheKey: DataCacheService.coachInsightKey,
+    pin: false,
   );
 });
 
 Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
-    {String? cacheKey}) async {
+    {String? cacheKey, bool pin = true}) async {
   final api = ref.read(apiClientProvider);
   // Up to 2 attempts. The retry exists because the most likely on-device
   // failure is a TRANSIENT one — a stale access token mid-refresh at cold
@@ -430,20 +477,26 @@ Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args,
           'tz': args.tz,
           'source': args.source,
           if (args.refresh) 'refresh': 'true',
+          if (args.fresh) 'fresh': 'true',
         },
       );
       final data = res.data;
       if (data is Map<String, dynamic>) {
         // Write-through the REAL response so the next warm start paints
-        // instantly from disk. Only the home provider passes a cacheKey.
-        if (cacheKey != null) {
+        // instantly from disk. Only callers that pass a cacheKey persist.
+        // GUARD: never write a server FALLBACK payload (delivery=
+        // deterministic_fallback — e.g. Gemini cost-capped / timed out) over a
+        // good cached insight. On a text refresh that gets capped we keep the
+        // prior cached AI text rather than downgrading it to a template.
+        final isServerFallback =
+            (data['delivery'] as String?) == 'deterministic_fallback';
+        if (cacheKey != null && !isServerFallback) {
           final uid = Supabase.instance.client.auth.currentUser?.id;
           await DataCacheService.instance.cache(cacheKey, data, userId: uid);
-          // Pin only a REAL fetched insight (home provider). A fallback is never
-          // pinned, so a transient failure retries on the next watch instead of
-          // freezing for the session. The chat-open / refresh providers pass no
-          // cacheKey and intentionally stay un-pinned.
-          ref.keepAlive();
+          // Pin only when asked (the main home provider). The numbers/text
+          // write-through refreshers pass pin:false — they only need the disk
+          // write, and the main provider stays the single pinned listener.
+          if (pin) ref.keepAlive();
         }
         return DailyCoachInsight.fromJson(data);
       }

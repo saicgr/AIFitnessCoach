@@ -134,6 +134,14 @@ class FoodLog {
   /// when a log has multiple food items.
   @JsonKey(name: 'user_query')
   final String? userQuery;
+  /// Client-generated stable key (WR9/A11) that threads through the optimistic
+  /// splice → `/nutrition/log-direct` write → server row → daily-summary read.
+  /// The merge reconciles a local optimistic row against the authoritative
+  /// server row by THIS key (not the ephemeral `optimistic_<ts>` id), so a
+  /// refresh landing mid-save can never strand a phantom duplicate. NULL for
+  /// legacy rows + paths that don't supply one.
+  @JsonKey(name: 'idempotency_key')
+  final String? idempotencyKey;
   @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
   final DateTime createdAt;
 
@@ -185,6 +193,7 @@ class FoodLog {
     this.imageUrl,
     this.sourceType,
     this.userQuery,
+    this.idempotencyKey,
     required this.createdAt,
   });
 
@@ -210,6 +219,67 @@ class FoodLog {
   factory FoodLog.fromJson(Map<String, dynamic> json) =>
       _$FoodLogFromJson(json);
   Map<String, dynamic> toJson() => _$FoodLogToJson(this);
+
+  /// Returns a copy with selected fields replaced. Used to reconcile an
+  /// optimistic row to its authoritative server identity (swap the synthetic
+  /// `optimistic_<ts>` id for the real food_log_id, stamp the idempotency key)
+  /// without rebuilding every field by hand at the call site.
+  FoodLog copyWith({
+    String? id,
+    String? idempotencyKey,
+    String? imageUrl,
+  }) =>
+      FoodLog(
+        id: id ?? this.id,
+        userId: userId,
+        mealType: mealType,
+        loggedAt: loggedAt,
+        foodItems: foodItems,
+        totalCalories: totalCalories,
+        proteinG: proteinG,
+        carbsG: carbsG,
+        fatG: fatG,
+        fiberG: fiberG,
+        healthScore: healthScore,
+        healthScoreReasons: healthScoreReasons,
+        aiFeedback: aiFeedback,
+        notes: notes,
+        moodBefore: moodBefore,
+        moodAfter: moodAfter,
+        energyLevel: energyLevel,
+        sodiumMg: sodiumMg,
+        sugarG: sugarG,
+        saturatedFatG: saturatedFatG,
+        cholesterolMg: cholesterolMg,
+        potassiumMg: potassiumMg,
+        calciumMg: calciumMg,
+        ironMg: ironMg,
+        vitaminAUg: vitaminAUg,
+        vitaminCMg: vitaminCMg,
+        vitaminDIu: vitaminDIu,
+        vitaminEMg: vitaminEMg,
+        vitaminKUg: vitaminKUg,
+        vitaminB6Mg: vitaminB6Mg,
+        vitaminB12Ug: vitaminB12Ug,
+        vitaminB9Ug: vitaminB9Ug,
+        magnesiumMg: magnesiumMg,
+        zincMg: zincMg,
+        phosphorusMg: phosphorusMg,
+        seleniumUg: seleniumUg,
+        copperMg: copperMg,
+        manganeseMg: manganeseMg,
+        omega3G: omega3G,
+        inflammationScore: inflammationScore,
+        isUltraProcessed: isUltraProcessed,
+        glycemicLoad: glycemicLoad,
+        fodmapRating: fodmapRating,
+        fodmapReason: fodmapReason,
+        imageUrl: imageUrl ?? this.imageUrl,
+        sourceType: sourceType,
+        userQuery: userQuery,
+        idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+        createdAt: createdAt,
+      );
 }
 
 @JsonSerializable()

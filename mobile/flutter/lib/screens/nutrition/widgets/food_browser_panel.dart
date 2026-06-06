@@ -685,72 +685,90 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
           // Default display mode: pages for multi-group, list for single
           final effectiveMode = isMultiGroup ? _displayMode : _SearchDisplayMode.list;
 
-          return Column(
-            children: [
-              // Search timing + results
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (state.searchTimeMs != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
+          // LayoutBuilder gives us the panel's real height so the personal
+          // "Your Foods" section can be capped to a fraction of it. That
+          // section is NOT itself scrollable (the DB results below own the
+          // Expanded scroll area), so without a cap a user with several
+          // saved/recent matches would push the whole Column past its box \u2014
+          // the "BOTTOM OVERFLOWED BY 69 PIXELS" stripe seen above the action
+          // chips. Capping + an internal scroll guarantees it can never spill.
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final maxPersonalHeight = constraints.maxHeight.isFinite
+                  ? constraints.maxHeight * 0.5
+                  : double.infinity;
+              return Column(
+                children: [
+                  // Search timing (fixed, tiny)
+                  if (state.searchTimeMs != null)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
                         child: Text(
                           '${state.totalCount} results \u00b7 ${state.searchTimeMs}ms',
                           style: TextStyle(fontSize: 11, color: textMuted),
                         ),
                       ),
-                    // Personal results (always shown above groups)
-                    if (personalResults.isNotEmpty) ...[
-                      _BrowseSectionHeader(
-                        icon: Icons.person_outline,
-                        title: AppLocalizations.of(context).foodBrowserPanelYourFoods,
-                        count: personalResults.length,
-                        isDark: widget.isDark,
+                    ),
+                  // Personal results (saved + recent) \u2014 capped + self-scrolling
+                  // so a long list never overflows the sheet.
+                  if (personalResults.isNotEmpty)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxPersonalHeight),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _BrowseSectionHeader(
+                              icon: Icons.person_outline,
+                              title: AppLocalizations.of(context).foodBrowserPanelYourFoods,
+                              count: personalResults.length,
+                              isDark: widget.isDark,
+                            ),
+                            const SizedBox(height: 6),
+                            ...personalResults.map((result) {
+                              final key = 'search_${result.source.name}_${result.id}';
+                              return _ExpandableSearchCard(
+                                result: result,
+                                logState: _logStates[key],
+                                isExpanded: _expandedSearchKey == key,
+                                onTap: () => setState(() {
+                                  _expandedSearchKey = _expandedSearchKey == key ? null : key;
+                                }),
+                                onLog: (desc) => _logFood(desc, key),
+                                isWeightEditable: false,
+                                isDark: widget.isDark,
+                                goalTags: _buildGoalTags(
+                                  goals: userGoals,
+                                  calories: result.calories,
+                                  protein: result.protein ?? 0,
+                                  carbs: result.carbs ?? 0,
+                                  fat: result.fat ?? 0,
+                                  isDark: widget.isDark,
+                                ),
+                                apiClient: ref.read(apiClientProvider),
+                                searchService: ref.read(search.foodSearchServiceProvider),
+                                isSelected: _selectedSearchKeys.contains(key),
+                                onToggleSelect: () => setState(() {
+                                  if (_selectedSearchKeys.contains(key)) {
+                                    _selectedSearchKeys.remove(key);
+                                    _selectedSearchResults.remove(key);
+                                  } else {
+                                    _selectedSearchKeys.add(key);
+                                    _selectedSearchResults[key] = result;
+                                  }
+                                }),
+                              );
+                            }),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      ...personalResults.map((result) {
-                        final key = 'search_${result.source.name}_${result.id}';
-                        return _ExpandableSearchCard(
-                          result: result,
-                          logState: _logStates[key],
-                          isExpanded: _expandedSearchKey == key,
-                          onTap: () => setState(() {
-                            _expandedSearchKey = _expandedSearchKey == key ? null : key;
-                          }),
-                          onLog: (desc) => _logFood(desc, key),
-                          isWeightEditable: false,
-                          isDark: widget.isDark,
-                          goalTags: _buildGoalTags(
-                            goals: userGoals,
-                            calories: result.calories,
-                            protein: result.protein ?? 0,
-                            carbs: result.carbs ?? 0,
-                            fat: result.fat ?? 0,
-                            isDark: widget.isDark,
-                          ),
-                          apiClient: ref.read(apiClientProvider),
-                          searchService: ref.read(search.foodSearchServiceProvider),
-                          isSelected: _selectedSearchKeys.contains(key),
-                          onToggleSelect: () => setState(() {
-                            if (_selectedSearchKeys.contains(key)) {
-                              _selectedSearchKeys.remove(key);
-                              _selectedSearchResults.remove(key);
-                            } else {
-                              _selectedSearchKeys.add(key);
-                              _selectedSearchResults[key] = result;
-                            }
-                          }),
-                        );
-                      }),
-                      const SizedBox(height: 12),
-                    ],
-                  ],
-                ),
-              ),
-              // DB results with display mode
-              Expanded(
+                    ),
+                  // DB results with display mode
+                  Expanded(
                 child: _SearchResultsPageView(
                   groups: foodGroups,
                   displayMode: effectiveMode,
@@ -808,7 +826,9 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                     ),
                   ),
                 ),
-            ],
+                ],
+              );
+            },
           );
         }
         // FoodSearchInitial

@@ -40,6 +40,10 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         ai_feedback: Optional[str] = None,
         health_score: Optional[int] = None,
         logged_at: Optional[str] = None,
+        # Client-generated double-log guard (migration 2245). When supplied,
+        # a unique (user_id, idempotency_key) index makes the insert idempotent:
+        # a replayed POST returns the already-created row instead of duplicating.
+        idempotency_key: Optional[str] = None,
         # Micronutrients
         sodium_mg: Optional[float] = None,
         sugar_g: Optional[float] = None,
@@ -143,6 +147,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "health_score": health_score,
             "source_type": source_type,
         }
+        if idempotency_key:
+            data["idempotency_key"] = idempotency_key
         if input_type:
             # Normalize to lowercase to match CHECK constraint allowlist.
             data["input_type"] = input_type.lower()
@@ -237,8 +243,36 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             if value is not None:
                 data[key] = value
 
-        result = self.client.table("food_logs").insert(data).execute()
-        return result.data[0] if result.data else None
+        try:
+            result = self.client.table("food_logs").insert(data).execute()
+            return result.data[0] if result.data else None
+        except Exception as insert_err:
+            # Idempotency: a replayed POST (double-tap, offline-queue replay, or
+            # a 401-refresh Dio retry) hits the unique (user_id, idempotency_key)
+            # index from migration 2245. Treat the duplicate as success and
+            # return the row that already exists so the caller's optimistic UI
+            # reconciles to one log instead of erroring or duplicating.
+            err_text = str(insert_err).lower()
+            is_dupe = idempotency_key and (
+                "duplicate key" in err_text
+                or "unique" in err_text
+                or "23505" in err_text
+                or "uq_food_logs_user_idempotency_key" in err_text
+            )
+            if is_dupe:
+                existing = (
+                    self.client.table("food_logs")
+                    .select("*")
+                    .eq("user_id", user_id)
+                    .eq("idempotency_key", idempotency_key)
+                    .is_("deleted_at", "null")
+                    .limit(1)
+                    .execute()
+                )
+                if existing.data:
+                    return existing.data[0]
+            # Not a handled duplicate — re-raise so the real failure surfaces.
+            raise
 
     def get_food_log(self, log_id: str) -> Optional[Dict[str, Any]]:
         """

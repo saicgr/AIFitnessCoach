@@ -39,10 +39,51 @@ async def create_weight_log(request: WeightLogCreate, current_user: dict = Depen
         }
         if request.notes:
             log_data["notes"] = request.notes
+        if request.idempotency_key:
+            log_data["idempotency_key"] = request.idempotency_key
 
-        result = db.client.table("weight_logs")\
-            .insert(log_data)\
-            .execute()
+        # Idempotency pre-check (migration 2246). A replayed POST (double-tap /
+        # auth-refresh retry) returns the already-created row instead of a dup.
+        if request.idempotency_key:
+            prior = db.client.table("weight_logs").select("*")\
+                .eq("user_id", request.user_id)\
+                .eq("idempotency_key", request.idempotency_key)\
+                .limit(1).execute()
+            if prior.data:
+                data = prior.data[0]
+                logger.info(
+                    f"[WEIGHT] Idempotent replay (key={request.idempotency_key}) "
+                    f"— returning existing log {data.get('id')}"
+                )
+                return WeightLogResponse(
+                    id=data["id"],
+                    user_id=data["user_id"],
+                    weight_kg=float(data["weight_kg"]),
+                    logged_at=datetime.fromisoformat(str(data["logged_at"]).replace("Z", "+00:00")),
+                    source=data.get("source", "manual"),
+                    notes=data.get("notes"),
+                    created_at=datetime.fromisoformat(str(data["created_at"]).replace("Z", "+00:00")) if data.get("created_at") else None,
+                )
+
+        try:
+            result = db.client.table("weight_logs")\
+                .insert(log_data)\
+                .execute()
+        except Exception as insert_err:
+            # Race: two replays landed at once — the unique index rejected the
+            # second. Recover the row that won instead of surfacing an error.
+            err_text = str(insert_err).lower()
+            is_dupe = request.idempotency_key and (
+                "duplicate key" in err_text or "unique" in err_text
+                or "23505" in err_text or "uq_weight_logs_user_idempotency_key" in err_text
+            )
+            if not is_dupe:
+                raise
+            recovered = db.client.table("weight_logs").select("*")\
+                .eq("user_id", request.user_id)\
+                .eq("idempotency_key", request.idempotency_key)\
+                .limit(1).execute()
+            result = recovered
 
         if not result.data:
             raise safe_internal_error(ValueError("Failed to create weight log"), "nutrition")

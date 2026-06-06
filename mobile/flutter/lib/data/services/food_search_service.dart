@@ -477,9 +477,14 @@ class FoodSearchService {
         limit: 20,
       );
 
-      // Filter logs that fuzzy-match the query
+      // Filter logs that fuzzy-match the query.
+      // Match ONLY on actual food item names — never on the meal slot
+      // (breakfast/lunch/dinner/snack). The slot is not a food name, and
+      // matching it produced bogus rows: e.g. "chc" bigram-matches "lunch"
+      // (shared "ch"), surfacing every recent lunch with the slot label as
+      // its title. A log with no parsed items can't match a food query, so
+      // it is correctly excluded.
       final matchingLogs = logs.where((log) {
-        if (_fuzzyMatch(log.mealType, query)) return true;
         for (final item in log.foodItems) {
           if (_fuzzyMatch(item.name, query)) return true;
         }

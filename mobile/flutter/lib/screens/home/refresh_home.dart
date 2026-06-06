@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/providers/billing_reminder_provider.dart';
+import '../../data/providers/coach_refresh_coordinator.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/discover_provider.dart';
 import '../../data/providers/gym_profile_provider.dart';
@@ -70,6 +71,10 @@ Future<void> refreshAllHome(WidgetRef ref) async {
   for (final p in secondaryTileProviders) {
     ref.invalidate(p);
   }
+
+  // Refresh the Home coach card's graph numbers (cheap, no Gemini) so a
+  // pull-to-refresh reflects any data logged since the card was generated.
+  ref.read(coachRefreshCoordinatorProvider).bumpNumbers();
 
   // Run the prewarmer; bootstrap prefetch is omitted because its API takes
   // a Riverpod `Ref` (not `WidgetRef`) and the per-provider invalidations

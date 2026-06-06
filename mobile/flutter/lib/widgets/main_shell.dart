@@ -12,6 +12,7 @@ import '../core/providers/subscription_provider.dart';
 import '../data/services/recipe_notification_router.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
+import '../data/providers/coach_refresh_coordinator.dart';
 import '../data/providers/discover_provider.dart';
 import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
@@ -237,6 +238,12 @@ class MainShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Keep the coach-card auto-refresh coordinator alive app-wide: it listens
+    // to meal/workout/fast/sleep changes and silently refreshes the Home coach
+    // card so it reflects freshly-logged data even when the log happened on
+    // another tab. `watch` returns the same instance (a Provider), so this adds
+    // no rebuild churn.
+    ref.watch(coachRefreshCoordinatorProvider);
     final selectedIndex = _calculateSelectedIndex(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;

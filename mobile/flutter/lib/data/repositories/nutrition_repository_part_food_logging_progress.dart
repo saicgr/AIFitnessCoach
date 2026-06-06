@@ -15,12 +15,19 @@ part of 'nutrition_repository.dart';
 class _NutritionDiskCache {
   static const _prefix = 'nutrition_summary_v1::';
 
-  static String _key(String userId) => '$_prefix$userId';
+  // Keyed by user AND date. A single key per user (the old scheme) held only
+  // the most-recently-loaded date, so navigating the date strip to yesterday
+  // overwrote today's cold-start snapshot — on restart the Nutrition tab then
+  // showed an empty day until the network returned (and showed nothing at all
+  // if the server read came back empty). Per-date keys make every visited day
+  // independently durable; date-nav can never clobber another day's cache.
+  static String _key(String userId, String dateStr) =>
+      '$_prefix$userId::$dateStr';
 
   static Future<DailyNutritionSummary?> read(String userId, String todayStr) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_key(userId));
+      final raw = prefs.getString(_key(userId, todayStr));
       if (raw == null || raw.isEmpty) return null;
       final envelope = jsonDecode(raw) as Map<String, dynamic>;
       // Discard the cache if it's not for today's local date — yesterday's
@@ -44,7 +51,7 @@ class _NutritionDiskCache {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-        _key(userId),
+        _key(userId, todayStr),
         jsonEncode({
           'date': todayStr,
           'cached_at': DateTime.now().toIso8601String(),
@@ -59,7 +66,14 @@ class _NutritionDiskCache {
   static Future<void> clear(String userId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_key(userId));
+      // Remove every per-date snapshot for this user (logout / account switch).
+      final userPrefix = '$_prefix$userId::';
+      final keys = prefs.getKeys()
+          .where((k) => k == '$_prefix$userId' || k.startsWith(userPrefix))
+          .toList();
+      for (final k in keys) {
+        await prefs.remove(k);
+      }
     } catch (_) {/* best-effort */}
   }
 }
@@ -834,26 +848,48 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     try {
       final logs = await _repository.getFoodLogs(userId, limit: limit);
       // Don't let an empty (stale/cached/flaky) response wipe logs still on
-      // screen when a just-written local row is present — keep last-good.
-      if (logs.isEmpty && _hasRecentLocalLog()) {
+      // screen when an unsynced or just-written local row is present — keep
+      // last-good. Carry forward any UNSYNCED local rows (optimistic id, write
+      // not yet confirmed) the server payload omits so a slow/queued save can't
+      // be dropped from the history list either.
+      if (logs.isEmpty && _hasUnconfirmedOrRecentLocalLog()) {
         debugPrint(
-            '🥗 [NutritionProvider] loadRecentLogs: ignored empty response — recent local log present');
+            '🥗 [NutritionProvider] loadRecentLogs: ignored empty response — unsynced/recent local log present');
       } else {
-        state = state.copyWith(recentLogs: logs, loadedLogsDate: todayStr);
+        final unsynced = [
+          for (final l in state.recentLogs)
+            if (l.id.startsWith('optimistic_') &&
+                !logs.any((s) =>
+                    s.id == l.id ||
+                    (l.idempotencyKey != null &&
+                        l.idempotencyKey!.isNotEmpty &&
+                        s.idempotencyKey == l.idempotencyKey)))
+              l,
+        ];
+        final merged = unsynced.isEmpty ? logs : [...unsynced, ...logs];
+        state = state.copyWith(recentLogs: merged, loadedLogsDate: todayStr);
       }
+      _lastLoadedUserId = userId;
+      // Any successful nutrition read proves we're online — opportunistically
+      // drain a stranded offline meal-write queue (the connectivity listener
+      // only fires on a CHANGE, so a queue from a prior already-online launch
+      // never flushes otherwise). Cheap + idempotent; safe fire-and-forget.
+      unawaited(_flushMealQueue());
     } catch (e) {
       debugPrint('Error loading recent food logs: $e');
     }
   }
 
-  /// True when `recentLogs` holds a log written within the last 90 s — used
-  /// to reject an empty server response that would wipe a just-logged row.
-  /// An all-old `recentLogs` (or an empty one) returns false, so a genuine
-  /// "everything deleted" empty response is still accepted.
-  bool _hasRecentLocalLog() {
+  /// True when `recentLogs` holds an UNSYNCED row (optimistic id — its write
+  /// hasn't confirmed, so it must never be dropped regardless of age) or a row
+  /// written within the last 120 s (server cache may predate it). An all-old,
+  /// all-synced `recentLogs` returns false, so a genuine "everything deleted"
+  /// empty response is still accepted.
+  bool _hasUnconfirmedOrRecentLocalLog() {
     if (state.recentLogs.isEmpty) return false;
-    final cutoff = DateTime.now().subtract(const Duration(seconds: 90));
-    return state.recentLogs.any((l) => l.createdAt.isAfter(cutoff));
+    final cutoff = DateTime.now().subtract(const Duration(seconds: 120));
+    return state.recentLogs.any(
+        (l) => l.id.startsWith('optimistic_') || l.createdAt.isAfter(cutoff));
   }
 
   /// Force refresh all data (use after logging a meal, etc.)
@@ -896,8 +932,14 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     final remaining = [...summary.meals]..removeAt(idx);
     // Tombstone the id so an in-flight background refresh can't resurrect it.
     _deletedTombstones.add(logId);
+    // Keep `recentLogs` consistent so the history list never shows a meal the
+    // summary just dropped (#12 divergence — the two lists are independent).
+    final nextLogs = state.recentLogs.any((m) => m.id == logId)
+        ? state.recentLogs.where((m) => m.id != logId).toList()
+        : state.recentLogs;
     state = state.copyWith(
       todaySummary: _recomputeTotals(summary, remaining),
+      recentLogs: nextLogs,
     );
     return removed;
   }
@@ -920,6 +962,66 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     return original;
   }
 
+  /// (WR9b) Reconcile an optimistic row to its authoritative server identity.
+  /// Once `/nutrition/log-direct` returns the real `food_log_id`, swap the
+  /// synthetic `optimistic_<ts>` id for it (and stamp the idempotency key) in
+  /// BOTH `todaySummary.meals` and `recentLogs`, in place. This makes a later
+  /// summary refresh dedupe by id, and makes any delete/edit target the
+  /// PERSISTED row instead of the phantom. Without it, the merge re-adds the
+  /// optimistic row next to the server row — the duplicate the user sees, where
+  /// deleting one then orphans the survivor and the day vanishes on reload.
+  ///
+  /// No-op if the optimistic row is already gone (deleted, or already replaced
+  /// by the key-based merge). If the server row is ALSO present (a refresh
+  /// raced ahead and merged by key), the optimistic duplicate is dropped rather
+  /// than creating two rows that share the real id.
+  void reconcileLoggedMeal(String optimisticId, String realId,
+      {String? idempotencyKey}) {
+    if (optimisticId == realId || realId.isEmpty) return;
+
+    // Tombstones are keyed by id. If the user deleted the optimistic row before
+    // the save returned, carry that delete forward to the real id so an in-
+    // flight refresh can't resurrect the now-persisted row.
+    if (_deletedTombstones.remove(optimisticId)) {
+      _deletedTombstones.add(realId);
+    }
+
+    List<FoodLog> reconcileList(List<FoodLog> list) {
+      final idx = list.indexWhere((m) => m.id == optimisticId);
+      if (idx < 0) return list;
+      final next = [...list];
+      if (next.any((m) => m.id == realId)) {
+        // Server row already merged in by key — drop the optimistic duplicate.
+        next.removeAt(idx);
+      } else {
+        next[idx] = next[idx]
+            .copyWith(id: realId, idempotencyKey: idempotencyKey);
+      }
+      return next;
+    }
+
+    final summary = state.todaySummary;
+    final logs = state.recentLogs;
+    final nextLogs = reconcileList(logs);
+
+    DailyNutritionSummary? nextSummary = summary;
+    if (summary != null) {
+      final nextMeals = reconcileList(summary.meals);
+      if (!identical(nextMeals, summary.meals)) {
+        nextSummary = _recomputeTotals(summary, nextMeals);
+      }
+    }
+
+    final summaryChanged = !identical(nextSummary, summary);
+    final logsChanged = !identical(nextLogs, logs);
+    if (summaryChanged || logsChanged) {
+      state = state.copyWith(
+        todaySummary: nextSummary,
+        recentLogs: nextLogs,
+      );
+    }
+  }
+
   /// Re-insert a meal previously removed via [optimisticRemoveLog]. Used by
   /// the Undo action on swipe-delete. Inserts at the position that keeps
   /// the list sorted by `loggedAt` ascending.
@@ -937,8 +1039,14 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       }
     }
     list.insert(insertAt, meal);
+    // Restore into `recentLogs` too (optimisticRemoveLog dropped it from both),
+    // so Undo brings the meal back to the history list as well as the summary.
+    final logs = state.recentLogs.any((m) => m.id == meal.id)
+        ? state.recentLogs
+        : [meal, ...state.recentLogs];
     state = state.copyWith(
       todaySummary: _recomputeTotals(summary, list),
+      recentLogs: logs,
     );
   }
 
@@ -980,7 +1088,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// (Part 4 / WR1) Returns the optimistic [FoodLog] it spliced in so the
   /// caller can pass its `id` to [optimisticRemoveLog] for a clean WR4
   /// rollback if the background `/nutrition/log-direct` POST later fails.
-  FoodLog spliceLog(LogFoodResponse response, String mealType, String userId) {
+  FoodLog spliceLog(LogFoodResponse response, String mealType, String userId,
+      {String? idempotencyKey}) {
     final now = DateTime.now();
     final foodItems = response.foodItems
         .map((r) => FoodItem(
@@ -1000,6 +1109,10 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
     final newLog = FoodLog(
       id: response.foodLogId ?? 'optimistic_${now.millisecondsSinceEpoch}',
+      // (WR9b) Stamp the same client key the write carries so the merge can
+      // reconcile this optimistic row against the authoritative server row by
+      // key — immune to the synthetic id never matching the server's UUID.
+      idempotencyKey: idempotencyKey,
       userId: userId,
       mealType: mealType,
       loggedAt: now,
@@ -1312,10 +1425,17 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// makes a just-logged meal disappear:
   ///  - drops meals optimistically deleted (tombstoned) that the payload
   ///    still carries (a refetch whose request predated the delete);
-  ///  - re-adds a local meal the payload omitted IF it was logged in the last
-  ///    90 s — a just-logged meal the server cache predates. An OLDER meal the
-  ///    server omits is treated as a genuine delete and is NOT resurrected, so
-  ///    a truly empty day and cross-device deletes still reconcile correctly.
+  ///  - matches a local optimistic row to its authoritative server row by
+  ///    `idempotency_key` (not the synthetic `optimistic_<ts>` id), so a
+  ///    just-reconciled row is recognised as already-present and never re-added
+  ///    as a phantom duplicate — even if a refresh raced ahead of the id swap;
+  ///  - re-adds a local meal the payload omitted when it is still UNSYNCED
+  ///    (synthetic `optimistic_` id — its `/log-direct` write hasn't confirmed)
+  ///    regardless of age, so a slow / failed / offline-queued save can never
+  ///    silently drop a logged meal. A CONFIRMED local row (real id) the server
+  ///    momentarily omits is re-added only within a short cache-lag window, so
+  ///    a genuine cross-device delete still reconciles instead of resurrecting
+  ///    forever.
   DailyNutritionSummary _mergeServerSummary(
     DailyNutritionSummary server,
     DailyNutritionSummary? local,
@@ -1329,10 +1449,6 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     // stale-cache / racy-read / timezone-window artifact — never the user
     // clearing their whole day (real deletes are tombstoned + force-refreshed,
     // and a genuinely empty day starts empty locally so this never trips).
-    // Without this, ANY reload that came back empty (e.g. the refresh fired
-    // right after saving daily targets) silently dropped every meal logged
-    // more than 90s ago via the re-add window below — the "my food vanished
-    // after I changed my targets" bug.
     if (server.meals.isEmpty &&
         local != null &&
         local.meals.any((m) => !_deletedTombstones.contains(m.id))) {
@@ -1351,13 +1467,25 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
 
     if (local != null && local.meals.isNotEmpty) {
-      final present = meals.map((m) => m.id).toSet();
-      final cutoff = DateTime.now().subtract(const Duration(seconds: 90));
+      // Server identity = real ids ∪ idempotency keys. A reconciled or keyed
+      // local row matches its server row by EITHER, so it is never re-added.
+      final presentIds = meals.map((m) => m.id).toSet();
+      final presentKeys = <String>{
+        for (final m in meals)
+          if (m.idempotencyKey != null && m.idempotencyKey!.isNotEmpty)
+            m.idempotencyKey!,
+      };
+      // Confirmed rows the server momentarily omits (cache lag) are re-added
+      // only within this short window; unsynced rows are re-added regardless.
+      final cutoff = DateTime.now().subtract(const Duration(seconds: 120));
       final extras = <FoodLog>[
         for (final m in local.meals)
-          if (!present.contains(m.id) &&
+          if (!presentIds.contains(m.id) &&
+              !(m.idempotencyKey != null &&
+                  m.idempotencyKey!.isNotEmpty &&
+                  presentKeys.contains(m.idempotencyKey)) &&
               !_deletedTombstones.contains(m.id) &&
-              m.createdAt.isAfter(cutoff))
+              (m.id.startsWith('optimistic_') || m.createdAt.isAfter(cutoff)))
             m,
       ];
       if (extras.isNotEmpty) {

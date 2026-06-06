@@ -335,8 +335,11 @@ class _DayCell extends StatelessWidget {
     );
   }
 
-  /// Today cell: filled solid accent rounded-rect pill (matching
-  /// `NutritionDateStrip`) with white label + white number stacked inside.
+  /// Today cell: accent-colored day label above an accent-filled rounded-rect
+  /// number pill. Shares the *exact* same vertical layout as every other cell
+  /// (label → 4 → 32-tall slot → 4 → dot) so all day letters stay on one
+  /// baseline. The pill is slightly wider than the 32 sibling circles
+  /// (minWidth 36) to mark "today" without ever protruding above the row.
   Widget _buildTodayPill() {
     return Expanded(
       child: GestureDetector(
@@ -348,34 +351,31 @@ class _DayCell extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Text(
+                dayLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: accentColor,
+                ),
+              ),
+              const SizedBox(height: 4),
               Container(
+                height: 32,
                 constraints: const BoxConstraints(minWidth: 36),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: accentColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      dayLabel,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$dateNumber',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  '$dateNumber',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 4),

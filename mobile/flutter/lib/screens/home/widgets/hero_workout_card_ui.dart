@@ -187,42 +187,12 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
       );
     }
 
-    // Surface 1.2 / 2.2 — prefer the bundled per-workout-type illustration
-    // when one is mapped for this workout's `type` (Upper / Lower / Cardio /
-    // HIIT / Yoga / etc.). The asset pipeline is fail-soft: a missing PNG
-    // falls through to the per-exercise endpoint URL, then the gradient.
-    if (_typeAssetPath != null) {
-      return _wrapHeroWithFigureFade(
-        isDark: isDark,
-        accentColor: accentColor,
-        child: Image.asset(
-          _typeAssetPath!,
-          fit: BoxFit.cover,
-          // Bias the crop so the figure's TORSO sits center-frame and any
-          // overflow happens at the top edge (where the head fade hides
-          // it). Prior `Alignment.center` was producing visibly cropped
-          // foreheads / faces on the per-exercise illustrations that
-          // serve as the fail-soft fallback below.
-          alignment: const Alignment(0.0, 0.32),
-          errorBuilder: (_, __, ___) {
-            if (_backgroundImageUrl != null) {
-              return CachedNetworkImage(
-                imageUrl: _backgroundImageUrl!,
-                fit: BoxFit.cover,
-                alignment: const Alignment(0.0, 0.32),
-                memCacheWidth: 400,
-                memCacheHeight: 400,
-                fadeInDuration: const Duration(milliseconds: 250),
-                placeholder: (_, __) => const SizedBox.shrink(),
-                errorWidget: (_, __, ___) => const SizedBox.shrink(),
-              );
-            }
-            return const SizedBox.shrink();
-          },
-        ),
-      );
-    }
-
+    // Prefer the PER-EXERCISE illustration (matches the Home hero card in
+    // unified_home_widgets.dart, which the user expects this surface to mirror).
+    // The bundled per-workout-type art (`strength.png` etc.) is only the
+    // fail-soft fallback when the workout's first exercise has no image — that
+    // way a "Gentle Upper Strength" card shows the actual exercise, not the
+    // generic squat figure. Final fallback is the accent gradient.
     if (_backgroundImageUrl != null) {
       return _wrapHeroWithFigureFade(
         isDark: isDark,
@@ -235,7 +205,34 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
           memCacheHeight: 400,
           fadeInDuration: const Duration(milliseconds: 250),
           placeholder: (_, __) => const SizedBox.shrink(),
-          errorWidget: (_, __, ___) => const SizedBox.shrink(),
+          // No per-exercise image after all → fall through to the bundled
+          // type art if one is mapped, else nothing (gradient shows behind).
+          errorWidget: (_, __, ___) => _typeAssetPath != null
+              ? Image.asset(
+                  _typeAssetPath!,
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(0.0, 0.32),
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                )
+              : const SizedBox.shrink(),
+        ),
+      );
+    }
+
+    // No per-exercise image resolved (empty workout / unnamed first exercise /
+    // lookup pending or failed) — fall back to the bundled per-workout-type
+    // illustration (Upper / Lower / Cardio / HIIT / Yoga / etc.).
+    if (_typeAssetPath != null) {
+      return _wrapHeroWithFigureFade(
+        isDark: isDark,
+        accentColor: accentColor,
+        child: Image.asset(
+          _typeAssetPath!,
+          fit: BoxFit.cover,
+          // Bias the crop so the figure's TORSO sits center-frame and any
+          // overflow happens at the top edge (where the head fade hides it).
+          alignment: const Alignment(0.0, 0.32),
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
         ),
       );
     }

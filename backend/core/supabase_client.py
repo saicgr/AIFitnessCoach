@@ -85,8 +85,17 @@ class SupabaseManager:
             # Configure auth client with longer timeout (10s instead of default 5s)
             # This prevents ReadTimeout errors on cold starts or slow network.
             # Applied to the dedicated auth client since that's where Auth calls run.
+            #
+            # transport=retries=3 mirrors the PostgREST session below: GoTrue is
+            # reached over the same Supabase edge proxy that closes idle
+            # keep-alive connections, so an auth call that reuses a stale socket
+            # would otherwise surface a bare SSLEOFError ("EOF occurred in
+            # violation of protocol") to the caller (e.g. the home bootstrap's
+            # resolve_timezone/auth path). Retrying connection-level failures
+            # makes the auth path as resilient to those drops as PostgREST.
             self._supabase_auth.auth._http_client = httpx.Client(
                 timeout=httpx.Timeout(10.0),
+                transport=httpx.HTTPTransport(retries=3),
                 follow_redirects=True,
             )
 

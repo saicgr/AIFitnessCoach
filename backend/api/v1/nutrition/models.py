@@ -50,6 +50,11 @@ class FoodLogResponse(BaseModel):
     # Origin-of-log tracking
     source_type: Optional[str] = None  # 'image' | 'barcode' | 'text' | 'chat' | 'restaurant' | 'parse_app_screenshot' | 'parse_nutrition_label'
     user_query: Optional[str] = None   # Originating user input (search query, caption, chat message, product name, etc.)
+    # Client double-log guard (migration 2245). Returned so the app can reconcile
+    # an optimistic row to this authoritative server row BY KEY — the optimistic
+    # row's synthetic id never matches the server UUID, so without the key a
+    # post-save refresh re-adds the optimistic row as a phantom duplicate.
+    idempotency_key: Optional[str] = None
     # Key micronutrients
     sodium_mg: Optional[float] = None
     sugar_g: Optional[float] = None
@@ -322,6 +327,9 @@ class LogDirectRequest(BaseModel):
     user_id: str
     meal_type: str = Field(..., max_length=20)
     food_items: List[dict]
+    # Client-generated double-log guard (WR9/A11). Reused across an offline
+    # replay so the SAME key dedupes against migration 2245's unique index.
+    idempotency_key: Optional[str] = Field(default=None, max_length=64)
     total_calories: int
     total_protein: int
     total_carbs: int
@@ -604,6 +612,10 @@ class WeightLogCreate(BaseModel):
     logged_at: Optional[datetime] = None
     source: str = "manual"
     notes: Optional[str] = None
+    # Client-generated double-log guard (migration 2246). A rapid double-tap of
+    # "Save weight" or a 401-refresh Dio retry reuses the SAME key so the unique
+    # (user_id, idempotency_key) index returns the existing row instead of a dup.
+    idempotency_key: Optional[str] = None
 
 
 class WeightLogResponse(BaseModel):

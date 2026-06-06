@@ -14,6 +14,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -95,11 +96,24 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             ),
           ),
           padding: EdgeInsetsDirectional.fromSTEB(16, 10, 10, isMinimized ? 12 : 14),
-          child: insightAsync.when(
-            data: (insight) =>
-                _content(c, insight, isMinimized: isMinimized),
-            loading: () => _skeleton(c, isMinimized: isMinimized),
-            error: (_, __) => _errorPlaceholder(c),
+          // Render the previous insight in place during a SILENT refresh.
+          // Riverpod keeps the last `AsyncData` value through `AsyncLoading`
+          // (auto refresh) and `AsyncError` (failed refresh), so an auto-update
+          // never flashes the skeleton or blanks the card — it swaps the new
+          // headline/body/graphs in once they land, and keeps the last-good
+          // insight if the refresh fails. The skeleton shows only on the very
+          // first cold load (no value yet); the error placeholder only when the
+          // first load failed AND produced no value (rare — the provider falls
+          // back to a deterministic insight).
+          child: Builder(
+            builder: (_) {
+              final insight = insightAsync.valueOrNull;
+              if (insight != null) {
+                return _content(c, insight, isMinimized: isMinimized);
+              }
+              if (insightAsync.hasError) return _errorPlaceholder(c);
+              return _skeleton(c, isMinimized: isMinimized);
+            },
           ),
         ),
       ),
@@ -938,13 +952,28 @@ class _BlocksCarousel extends ConsumerStatefulWidget {
 }
 
 class _BlocksCarouselState extends ConsumerState<_BlocksCarousel> {
-  // Tall enough for the tallest compact block (a chart: ~96 chart + title +
-  // container padding). Shorter blocks (metric) top-align in the page.
+  // Floor height — fits the typical compact chart (~96 chart + title + padding)
+  // and gives every page a consistent minimum. Pages that render TALLER (a
+  // server-sent `metric` / `stat_grid` block ignores `compact`, or a chart with
+  // a 2-line title) grow the viewport via measurement below instead of
+  // overflowing the old hard-capped box (the 49px RenderFlex overflow).
   static const double _kHeight = 134;
   // Hard cap so the carousel can't sprawl (real graphs + prompts).
   static const int _kMaxPages = 4;
   final PageController _controller = PageController();
   int _page = 0;
+
+  // Measured natural height per page index. The viewport sizes to the ACTIVE
+  // page's measured height (floored at [_kHeight]) so no block is ever clipped,
+  // while short pages don't leave dead space.
+  final Map<int, double> _pageHeights = {};
+
+  double _viewportHeight(int pageCount) {
+    final active = _page.clamp(0, pageCount - 1);
+    final measured = _pageHeights[active];
+    if (measured == null || measured < _kHeight) return _kHeight;
+    return measured;
+  }
 
   @override
   void dispose() {
@@ -989,13 +1018,36 @@ class _BlocksCarouselState extends ConsumerState<_BlocksCarousel> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: _kHeight,
-          child: PageView.builder(
-            controller: _controller,
-            onPageChanged: (i) => setState(() => _page = i),
-            itemCount: pages.length,
-            itemBuilder: (_, i) => pages[i],
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          child: SizedBox(
+            height: _viewportHeight(pages.length),
+            child: PageView.builder(
+              controller: _controller,
+              onPageChanged: (i) => setState(() => _page = i),
+              itemCount: pages.length,
+              itemBuilder: (_, i) => SingleChildScrollView(
+                // NeverScrollable: the page itself never scrolls — the scroll
+                // view only exists so a page taller than the (not-yet-measured)
+                // viewport is absorbed for a single frame instead of throwing a
+                // RenderFlex overflow. Once `_MeasureSize` reports the real
+                // height, the viewport grows to fit it (see [_viewportHeight]).
+                physics: const NeverScrollableScrollPhysics(),
+                child: _MeasureSize(
+                  onChange: (size) {
+                    if (size.height <= 0) return;
+                    if (_pageHeights[i] == size.height) return;
+                    // Defer the rebuild out of layout.
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) return;
+                      setState(() => _pageHeights[i] = size.height);
+                    });
+                  },
+                  child: pages[i],
+                ),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 8),
@@ -1066,5 +1118,49 @@ class _BlocksCarouselState extends ConsumerState<_BlocksCarousel> {
         ),
       ),
     );
+  }
+}
+
+typedef _SizeChanged = void Function(Size size);
+
+/// Reports its child's laid-out size via [onChange] whenever it changes.
+/// Used by [_BlocksCarousel] to size its PageView viewport to the active
+/// page's real height (so server blocks of any height never overflow the
+/// carousel) without a measurement package. The child is laid out with its
+/// natural height (the carousel wraps it in a NeverScrollable
+/// SingleChildScrollView) so the reported size is the intrinsic page height.
+class _MeasureSize extends SingleChildRenderObjectWidget {
+  final _SizeChanged onChange;
+
+  const _MeasureSize({required this.onChange, required Widget super.child});
+
+  @override
+  _MeasureSizeRenderObject createRenderObject(BuildContext context) =>
+      _MeasureSizeRenderObject(onChange);
+
+  @override
+  void updateRenderObject(
+    BuildContext context,
+    _MeasureSizeRenderObject renderObject,
+  ) {
+    renderObject.onChange = onChange;
+  }
+}
+
+class _MeasureSizeRenderObject extends RenderProxyBox {
+  _MeasureSizeRenderObject(this.onChange);
+
+  _SizeChanged onChange;
+  Size? _previous;
+
+  @override
+  void performLayout() {
+    super.performLayout();
+    final newSize = child?.size ?? Size.zero;
+    if (_previous == newSize) return;
+    _previous = newSize;
+    // Fire after this layout pass settles; the listener schedules its own
+    // post-frame setState so we never mutate the tree mid-layout.
+    onChange(newSize);
   }
 }

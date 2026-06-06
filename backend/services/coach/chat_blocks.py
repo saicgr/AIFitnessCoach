@@ -758,16 +758,24 @@ def build_briefing_blocks(
     user_id: str,
     leading_pillar: Optional[str] = None,
     max_blocks: int = 3,
+    bypass_cache: bool = False,
 ) -> List[Dict[str, Any]]:
     """Grounded glance graphs for a daily briefing (morning/evening) or the home
     coach card. Leads with the [leading_pillar]'s topic when that topic has data,
     then follows [_BRIEFING_TOPIC_PRIORITY]; capped at [max_blocks]. The cheap
     ordering runs every call; the expensive per-topic build is memoized per user
     (see note above). NEVER raises; returns [] when no topic has data.
+
+    [bypass_cache] skips the 120s memo READ so the per-topic map is recomputed
+    fresh from the DB — used when the client just logged a meal/workout/fast/sleep
+    and needs the graph numbers to reflect it immediately (the memo is per-worker,
+    so a per-process bust would be unreliable; recomputing reads the source of
+    truth regardless of which worker serves the request). The recomputed map is
+    still written back to the memo so the next non-bypass call is cheap.
     """
     now = time.monotonic()
     hit = _by_topic_cache.get(user_id)
-    if hit is not None and hit[0] > now:
+    if hit is not None and hit[0] > now and not bypass_cache:
         by_topic = hit[1]
     else:
         by_topic = _compute_by_topic(user_id)

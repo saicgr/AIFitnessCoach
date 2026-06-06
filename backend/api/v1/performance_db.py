@@ -468,6 +468,11 @@ async def create_workout_log(log: WorkoutLogCreate,
         if log.metadata:
             log_data["metadata"] = log.metadata
 
+        # Double-log guard (migration 2247): the same key on a retry returns the
+        # existing row from db.create_workout_log instead of a duplicate session.
+        if log.idempotency_key:
+            log_data["idempotency_key"] = log.idempotency_key
+
         logger.info(f"Creating workout log: workout_id={log.workout_id}, user_id={log.user_id}")
         created = db.create_workout_log(log_data)
 

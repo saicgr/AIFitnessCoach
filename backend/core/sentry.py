@@ -19,9 +19,56 @@ from core.logger import get_logger
 logger = get_logger(__name__)
 
 
+# Transient upstream-connection drops. Render terminates *inbound* TLS at its
+# edge proxy (uvicorn speaks plain HTTP behind it), so any `_ssl.c` error can
+# ONLY be an *outbound* HTTPS socket — a pooled keep-alive to Supabase
+# (PostgREST / GoTrue) that the edge proxy already closed, surfaced when we
+# write the next request onto it ("Error N while writing to socket. EOF
+# occurred in violation of protocol"). These are NEVER a mobile client hangup
+# and are unactionable per-event: the SDK recycles the dead socket on the next
+# call. Filtering them stops quota burn. A genuine Supabase outage still
+# surfaces distinctly as sustained 503s (pool exhaustion) + ConnectTimeouts,
+# which are intentionally NOT in this set — we keep visibility into those.
+_TRANSIENT_CONN_TYPE_NAMES = frozenset({
+    "SSLEOFError",          # ssl: peer closed TLS mid-stream
+    "ConnectionResetError",  # builtin: RST on an established socket
+    "BrokenPipeError",       # builtin: write to a half-closed socket
+    "RemoteProtocolError",   # httpx + httpcore: "Server disconnected"
+    "WriteError",            # httpx + httpcore: write onto a dead socket
+    "ReadError",             # httpx + httpcore: read from a dropped socket
+})
+_TRANSIENT_CONN_MSG_MARKERS = (
+    "EOF occurred in violation of protocol",
+    "Server disconnected",
+    "while writing to socket",
+    "while reading from socket",
+)
+
+
+def _is_transient_connection_drop(exc: Optional[BaseException]) -> bool:
+    """True if exc — or anything in its cause/context chain — is a transient
+    upstream socket drop (a stale Supabase keep-alive closed mid-write).
+
+    Walks `__cause__` (explicit `raise ... from e`, e.g. httpx wrapping an
+    ssl error) then `__context__` (implicit re-raise) so the signature is
+    found even when our code wraps it in a 500. Cycle-guarded.
+    """
+    seen: set[int] = set()
+    cur = exc
+    while cur is not None and id(cur) not in seen:
+        seen.add(id(cur))
+        if type(cur).__name__ in _TRANSIENT_CONN_TYPE_NAMES:
+            return True
+        msg = str(cur)
+        if any(marker in msg for marker in _TRANSIENT_CONN_MSG_MARKERS):
+            return True
+        cur = cur.__cause__ or cur.__context__
+    return False
+
+
 def _before_send(event: dict, hint: dict) -> Optional[dict]:
-    """Drop expected 4xx HTTPExceptions + benign stale-JWT AuthApiErrors so
-    they don't count against quota.
+    """Drop expected 4xx HTTPExceptions + benign stale-JWT AuthApiErrors +
+    transient upstream connection drops so they don't count against quota.
 
     Filters applied, in order:
     1. 4xx HTTPException (fastapi OR starlette flavor — some middlewares
@@ -32,6 +79,8 @@ def _before_send(event: dict, hint: dict) -> Optional[dict]:
        rotated or expired — 401 response is correct, Sentry event is
        noise. The marker list + helper live in `core.auth` so a later
        rename stays in one place.
+    3. Transient outbound socket drops to Supabase (stale keep-alive closed
+       mid-write). Unactionable noise — see _is_transient_connection_drop.
 
     All imports are lazy + wrapped in try/except so a missing dependency
     or a rename in supabase-py can never break Sentry init.
@@ -57,6 +106,12 @@ def _before_send(event: dict, hint: dict) -> Optional[dict]:
             return None
     except Exception:
         pass  # core.auth not importable (shouldn't happen; defensive).
+
+    try:
+        if _is_transient_connection_drop(exc_value):
+            return None
+    except Exception:
+        pass  # never let the filter itself break event delivery.
 
     return event
 

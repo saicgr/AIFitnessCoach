@@ -100,6 +100,7 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   imageUrl: json['image_url'] as String?,
   sourceType: json['source_type'] as String?,
   userQuery: json['user_query'] as String?,
+  idempotencyKey: json['idempotency_key'] as String?,
   createdAt: _parseDateTimeOrNow(json['created_at'] as String?),
 );
 
@@ -151,6 +152,7 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'image_url': instance.imageUrl,
   'source_type': instance.sourceType,
   'user_query': instance.userQuery,
+  'idempotency_key': instance.idempotencyKey,
   'created_at': instance.createdAt.toIso8601String(),
 };
 

@@ -19,6 +19,7 @@ import '../../data/providers/home_layout_provider.dart';
 import '../../data/services/home_prewarmer.dart';
 import 'refresh_home.dart';
 import '../../data/providers/local_layout_provider.dart';
+import '../../data/providers/coach_refresh_coordinator.dart';
 import '../../data/providers/secondary_tile_providers.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
@@ -355,6 +356,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         for (final p in secondaryTileProviders) {
           ref.invalidate(p);
         }
+
+        // Refresh the coach card's graph numbers on resume (cheap, no Gemini)
+        // so a return-from-background reflects anything logged elsewhere — and,
+        // importantly, the overnight Health-Connect sleep import that runs just
+        // below in `_checkForWorkoutImports()`. The sleep-value change also
+        // trips the coordinator's sleep listener, which regenerates the text.
+        ref.read(coachRefreshCoordinatorProvider).bumpNumbers();
 
         // L9: The refresh() call above already updates provider state internally,
         // so we avoid a redundant ref.invalidate(workoutsProvider) which would
@@ -1216,24 +1224,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Below-the-fold: a single lazily-building SliverList. Each visible
     // section maps to one child = section widget + its trailing kHomeGap,
     // so inter-section spacing matches the eager path exactly.
-    final lazyCount = visible.length - eagerCount;
-    if (lazyCount > 0) {
+    final lazySections = visible.sublist(eagerCount);
+    if (lazySections.isNotEmpty) {
       slivers.add(
         SliverList(
           delegate: SliverChildBuilderDelegate(
             (context, index) {
-              final section = visible[eagerCount + index];
+              final section = lazySections[index];
               final gap =
                   section == HomeSection.quickActions ? 6.0 : kHomeGap;
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _widgetForSection(section),
-                  SizedBox(height: gap),
-                ],
+              // Stable per-section identity (key + findChildIndexCallback): when
+              // the visible-section set reorders or a section self-hides (the
+              // menstrual gate resolving async, a card dropping out, a My Space
+              // reorder), the sliver MOVES the existing element — and any
+              // keep-alive child it holds — to its new index by identity rather
+              // than rebuilding position-blind. Without this, a kept-alive child
+              // could land out of monotonic order, tripping
+              // RenderSliverMultiBoxAdaptor._debugVerifyChildOrder's
+              // `indexOf(child) > index` assert; and an InheritedElement could
+              // deactivate while a stale dependent survived, tripping
+              // InheritedElement.debugDeactivated's `_dependents.isEmpty`.
+              return KeyedSubtree(
+                key: ValueKey('home_section_${section.name}'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _widgetForSection(section),
+                    SizedBox(height: gap),
+                  ],
+                ),
               );
             },
-            childCount: lazyCount,
+            childCount: lazySections.length,
+            findChildIndexCallback: (Key key) {
+              if (key is ValueKey<String>) {
+                final idx = lazySections.indexWhere(
+                  (s) => 'home_section_${s.name}' == key.value,
+                );
+                return idx >= 0 ? idx : null;
+              }
+              return null;
+            },
           ),
         ),
       );

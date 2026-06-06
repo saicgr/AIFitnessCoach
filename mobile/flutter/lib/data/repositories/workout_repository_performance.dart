@@ -70,14 +70,22 @@ extension WorkoutRepositoryPerformance on WorkoutRepository {
     // workouts.gym_profile_id), so this client value is advisory only and
     // omitted from the body when null.
     String? gymProfileId,
+    String? idempotencyKey,
   }) async {
     try {
       debugPrint('🔍 [Workout] Creating workout log for workout: $workoutId');
+      // Double-log guard (migration 2247). One completion log per workout: a
+      // double-tap of "Finish", or a Dio auth-refresh retry replaying the same
+      // body, reuses this stable key so the server returns the existing session
+      // instead of duplicating it. Keyed by workoutId — exactly one log per
+      // workout completion (a redo after uncomplete hard-deletes the old row).
+      final idemKey = idempotencyKey ?? 'wklog_$workoutId';
       final data = <String, dynamic>{
         'workout_id': workoutId,
         'user_id': userId,
         'sets_json': setsJson,
         'total_time_seconds': totalTimeSeconds,
+        'idempotency_key': idemKey,
         if (gymProfileId != null) 'gym_profile_id': gymProfileId,
       };
       // Add metadata as a Map (backend expects dict, not JSON string)

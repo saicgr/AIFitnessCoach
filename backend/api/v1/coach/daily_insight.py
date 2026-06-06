@@ -1461,6 +1461,12 @@ async def daily_insight(
     source: str = Query("home", description="home | pillar_stat"),
     context: Optional[str] = Query(None, description="Pillar stat label (source=pillar_stat only)"),
     refresh: bool = Query(False, description="Force regenerate, bypassing cache"),
+    fresh: bool = Query(
+        False,
+        description="Recompute the grounded graph blocks fresh from the DB "
+        "(bypass the 120s block memo), WITHOUT regenerating the cached AI text. "
+        "Used after a meal/workout/fast/sleep log so the numbers update instantly.",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     try:
@@ -1521,11 +1527,17 @@ async def daily_insight(
         # Fix 3: the light `greeting` (shown the rest of the day, incl. the
         # user's late-night open) now also carries grounded graphs so the coach
         # opening always shows real data, not a canned prompt.
+        # When the client asks for fresh data (after a log) or forces a text
+        # regenerate, bypass the 120s per-worker block memo so graph numbers
+        # reflect the just-logged meal/workout/fast/sleep immediately.
+        _blocks_bypass = fresh or refresh
         briefing_blocks: Optional[List[Dict[str, Any]]] = None
         if source in ("morning_brief", "evening_recap", "morning_brief_onboarding", "greeting"):
             try:
                 from services.coach.chat_blocks import build_briefing_blocks
-                briefing_blocks = build_briefing_blocks(user_id) or None
+                briefing_blocks = build_briefing_blocks(
+                    user_id, bypass_cache=_blocks_bypass
+                ) or None
             except Exception as e:
                 logger.warning(f"[daily_insight] briefing blocks build failed: {e}")
                 briefing_blocks = None
@@ -1539,7 +1551,10 @@ async def daily_insight(
             try:
                 from services.coach.chat_blocks import build_briefing_blocks
                 return build_briefing_blocks(
-                    user_id, leading_pillar=pillar, max_blocks=_HOME_BLOCK_COUNT
+                    user_id,
+                    leading_pillar=pillar,
+                    max_blocks=_HOME_BLOCK_COUNT,
+                    bypass_cache=_blocks_bypass,
                 ) or None
             except Exception as e:
                 logger.warning(f"[daily_insight] home block build failed: {e}")

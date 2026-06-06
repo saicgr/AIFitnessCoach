@@ -444,6 +444,10 @@ class WorkoutLogCreate(BaseModel):
     # (workouts.gym_profile_id, fallback users.active_gym_profile_id) and
     # overrides whatever the client sent. NULL is valid (legacy/unassigned).
     gym_profile_id: Optional[str] = Field(default=None, max_length=100, description="Gym the set was logged at (server-derived; client value advisory).")
+    # Client-generated double-log guard (migration 2247). One stable key per
+    # workout-session completion, so a double-tap of "Finish" or a 401-refresh
+    # Dio retry returns the existing log instead of duplicating the session.
+    idempotency_key: Optional[str] = Field(default=None, max_length=64)
 
 
 class WorkoutLog(WorkoutLogCreate):

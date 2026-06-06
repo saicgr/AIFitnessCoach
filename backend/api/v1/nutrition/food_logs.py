@@ -133,6 +133,7 @@ async def list_food_logs(
                 inflammation_score=log.get("inflammation_score"),
                 is_ultra_processed=log.get("is_ultra_processed"),
                 image_url=resign_food_image_url(log.get("image_url")),
+                idempotency_key=log.get("idempotency_key"),
                 created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
             ))
 
@@ -205,6 +206,7 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             inflammation_score=log.get("inflammation_score"),
             is_ultra_processed=log.get("is_ultra_processed"),
             image_url=log.get("image_url"),
+            idempotency_key=log.get("idempotency_key"),
             created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
         )
 

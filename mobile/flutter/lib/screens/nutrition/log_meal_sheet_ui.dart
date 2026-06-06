@@ -140,8 +140,22 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     final orange = accentEnum.getColor(isDark);
     final hasText = _descriptionController.text.trim().isNotEmpty;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(12, 4, 12, MediaQuery.of(context).padding.bottom + 4),
+    // Solid footer surface. The capture chips and Analyze pill are themselves
+    // translucent (tinted Material on the glass sheet); without an opaque
+    // backing the scrolling results list reads straight through them. A near-
+    // opaque fill + a hairline top divider seats the footer as a clear,
+    // self-contained action bar over the glass body.
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.72)
+            : Colors.white.withValues(alpha: 0.92),
+        border: Border(
+          top: BorderSide(color: GlassSheetStyle.borderColor(isDark), width: 0.5),
+        ),
+      ),
+      child: Padding(
+      padding: EdgeInsets.fromLTRB(12, 8, 12, MediaQuery.of(context).padding.bottom + 4),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -249,6 +263,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
           // Daily macro summary pill
           _buildDailyMacroBar(isDark),
         ],
+      ),
       ),
     );
   }

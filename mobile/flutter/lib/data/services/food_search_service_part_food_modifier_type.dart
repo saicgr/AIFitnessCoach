@@ -348,10 +348,14 @@ class FoodSearchResult {
 
   /// Create from FoodLog model (recent)
   factory FoodSearchResult.fromFoodLog(FoodLog log) {
-    // Get primary food name from items
+    // Get primary food name from the logged items. Recent results are only
+    // surfaced when an item name matched the query, so foodItems is normally
+    // non-empty here. If a log somehow has no parsed items, fall back to a
+    // readable "Recent meal" label — NEVER the raw meal slot ("lunch"), which
+    // is not a food and reads as a phantom duplicate entry.
     final primaryFood = log.foodItems.isNotEmpty
         ? log.foodItems.first.name
-        : log.mealType;
+        : 'Recent meal';
 
     return FoodSearchResult(
       id: log.id,

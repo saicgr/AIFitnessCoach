@@ -210,7 +210,8 @@ class _ActiveWorkoutScreenState
   /// adoption via `performance_logs.logging_mode` without touching the
   /// shared SetLoggingMixin path.
   @override
-  Future<void> logAllSetPerformances(String workoutLogId, String userId) async {
+  Future<void> logAllSetPerformances(String workoutLogId, String userId,
+      {String? gymProfileId}) async {
     final workoutRepo = ref.read(workoutRepositoryProvider);
 
     final records = <Map<String, dynamic>>[];
@@ -234,6 +235,9 @@ class _ActiveWorkoutScreenState
           'weight_kg': setLog.weight,
           'is_completed': true,
           'set_type': 'working',
+          // Per-gym progress tracking — attribute every set row to the gym
+          // the workout was performed at (server re-derives authoritatively).
+          if (gymProfileId != null) 'gym_profile_id': gymProfileId,
           if (setLog.rpe != null) 'rpe': setLog.rpe!.toDouble(),
           if (setLog.rir != null) 'rir': setLog.rir,
           if (setLog.notes.isNotEmpty) 'notes': setLog.notes,

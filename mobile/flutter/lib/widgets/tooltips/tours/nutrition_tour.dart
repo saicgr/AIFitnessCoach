@@ -26,10 +26,10 @@ class NutritionTour {
   // Refactor to instance method accepting BuildContext to enable l10n.
   static List<EmptyStateTip> steps() => [
         EmptyStateTip(
-          icon: Icons.add_circle_outline_rounded,
+          icon: Icons.restaurant_menu_rounded,
           title: 'Log a meal',
           body:
-              'Tap the camera, barcode, or + button — vision OCR auto-fills calories and macros.',
+              'Tap Log Meal to add food by photo, barcode, or search. AI auto-fills the calories and macros for you.',
           targetKey: TooltipAnchors.nutritionLogMeal,
           targetPadding: const EdgeInsets.all(10),
           targetRadius: 18,

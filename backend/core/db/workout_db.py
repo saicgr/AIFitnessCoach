@@ -574,8 +574,47 @@ class WorkoutDB(BaseDB):
         Returns:
             Created log record or None
         """
-        result = self.client.table("workout_logs").insert(data).execute()
-        return result.data[0] if result.data else None
+        idem = data.get("idempotency_key")
+        user_id = data.get("user_id")
+        # Double-log guard (migration 2247). A replayed completion (double-tap of
+        # "Finish", or a 401-refresh Dio retry firing the same body) reuses the
+        # key; return the already-created session instead of duplicating it.
+        if idem and user_id:
+            prior = (
+                self.client.table("workout_logs")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("idempotency_key", idem)
+                .limit(1)
+                .execute()
+            )
+            if prior.data:
+                return prior.data[0]
+        try:
+            result = self.client.table("workout_logs").insert(data).execute()
+            return result.data[0] if result.data else None
+        except Exception as insert_err:
+            # Race: two replays landed at once — the unique index rejected the
+            # second. Recover the winning row instead of surfacing an error.
+            err_text = str(insert_err).lower()
+            is_dupe = idem and (
+                "duplicate key" in err_text
+                or "unique" in err_text
+                or "23505" in err_text
+                or "uq_workout_logs_user_idempotency_key" in err_text
+            )
+            if is_dupe and user_id:
+                existing = (
+                    self.client.table("workout_logs")
+                    .select("*")
+                    .eq("user_id", user_id)
+                    .eq("idempotency_key", idem)
+                    .limit(1)
+                    .execute()
+                )
+                if existing.data:
+                    return existing.data[0]
+            raise
 
     def delete_workout_logs_by_workout(self, workout_id: str) -> bool:
         """

@@ -880,6 +880,49 @@ async def log_food_direct(
     try:
         db = get_supabase_db()
 
+        # Idempotency short-circuit (migration 2245). If the client reused its
+        # idempotency_key on a replay (double-tap, offline-queue replay, or a
+        # 401-refresh Dio retry), the meal is already logged — return the
+        # existing row and skip EVERY side effect (streak bump, score
+        # enrichment Gemini call, cache invalidation). The unique index on
+        # create_food_log is the race safety net for two replays landing at
+        # once; this pre-check handles the common sequential replay cheaply.
+        if body.idempotency_key:
+            try:
+                prior = (
+                    db.client.table("food_logs")
+                    .select("*")
+                    .eq("user_id", body.user_id)
+                    .eq("idempotency_key", body.idempotency_key)
+                    .is_("deleted_at", "null")
+                    .limit(1)
+                    .execute()
+                )
+                if prior.data:
+                    existing = prior.data[0]
+                    logger.info(
+                        f"[LOG-DIRECT] Idempotent replay (key={body.idempotency_key}) "
+                        f"— returning existing log {existing.get('id')}, skipping side effects"
+                    )
+                    return LogFoodResponse(
+                        success=True,
+                        food_log_id=existing.get("id"),
+                        food_items=existing.get("food_items") or body.food_items,
+                        total_calories=existing.get("total_calories") or body.total_calories,
+                        protein_g=float(existing.get("protein_g") or body.total_protein),
+                        carbs_g=float(existing.get("carbs_g") or body.total_carbs),
+                        fat_g=float(existing.get("fat_g") or body.total_fat),
+                        fiber_g=float(existing.get("fiber_g") or 0.0),
+                        overall_meal_score=body.overall_meal_score,
+                        health_score=existing.get("health_score") or body.health_score,
+                        source_type=existing.get("source_type") or body.source_type,
+                        confidence_score=0.9,
+                        confidence_level="high",
+                    )
+            except Exception as idem_err:
+                # Pre-check is best-effort; the unique index still guards the insert.
+                logger.warning(f"[LOG-DIRECT] idempotency pre-check skipped: {idem_err}")
+
         # Build micronutrients dict from request
         micronutrients = {}
         micronutrient_fields = [
@@ -944,11 +987,14 @@ async def log_food_direct(
             body.total_carbs = int(round(override_totals["carbs_g"]))
             body.total_fat = int(round(override_totals["fat_g"]))
 
-        # Create food log directly
+        # Create food log directly. The idempotency_key (when the client sent
+        # one) makes this insert dedupe against migration 2245's unique index —
+        # a replayed POST returns the existing row instead of a duplicate.
         created_log = db.create_food_log(
             user_id=body.user_id,
             meal_type=body.meal_type,
             food_items=body.food_items,
+            idempotency_key=body.idempotency_key,
             total_calories=body.total_calories,
             protein_g=body.total_protein,
             carbs_g=body.total_carbs,

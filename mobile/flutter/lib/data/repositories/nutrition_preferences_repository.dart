@@ -181,9 +181,20 @@ class NutritionPreferencesRepository {
     DateTime? loggedAt,
     String source = 'manual',
     String? notes,
+    String? idempotencyKey,
   }) async {
     try {
       debugPrint('⚖️ [NutritionPrefs] Logging weight for $userId: $weightKg kg');
+      // Deterministic double-log guard (migration 2246). A rapid double-tap of
+      // "Save weight" — or a 401-refresh Dio retry firing the same body —
+      // reuses the SAME key for an identical weight in the same minute, so the
+      // server returns the existing row instead of creating a duplicate entry.
+      final ts = (loggedAt ?? DateTime.now()).toUtc();
+      final minuteBucket =
+          '${ts.year}${ts.month.toString().padLeft(2, '0')}${ts.day.toString().padLeft(2, '0')}'
+          '${ts.hour.toString().padLeft(2, '0')}${ts.minute.toString().padLeft(2, '0')}';
+      final key = idempotencyKey ??
+          'wt_${userId}_${weightKg.toStringAsFixed(2)}_$minuteBucket';
       final response = await _client.post(
         '/nutrition/weight-logs',
         data: {
@@ -191,6 +202,7 @@ class NutritionPreferencesRepository {
           'weight_kg': weightKg,
           'logged_at': Tz.timestamp(loggedAt),
           'source': source,
+          'idempotency_key': key,
           if (notes != null) 'notes': notes,
         },
       );

@@ -173,6 +173,7 @@ async def get_daily_summary(
                 image_url=resign_food_image_url(log.get("image_url")),
                 source_type=log.get("source_type"),
                 user_query=log.get("user_query"),
+                idempotency_key=log.get("idempotency_key"),
                 # Key micronutrients (optional surfacing in row detail)
                 sodium_mg=log.get("sodium_mg"),
                 sugar_g=log.get("sugar_g"),

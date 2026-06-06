@@ -649,8 +649,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // the rings/pinned nutrients update within one frame. `spliceLog` returns
     // the optimistic FoodLog so we can roll it back by id on failure (WR4).
     final nutritionNotifier = ref.read(nutritionProvider.notifier);
-    final optimisticLog =
-        nutritionNotifier.spliceLog(response, mealType, userId);
+    final optimisticLog = nutritionNotifier.spliceLog(response, mealType, userId,
+        idempotencyKey: idempotencyKey);
     final optimisticLogId = optimisticLog.id;
 
     // (WR5) If the analyzed response carries no remote photo URL yet (the S3
@@ -690,12 +690,22 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           trackerMicros: _pendingTrackerMicros, // Gap 7 sugar/caffeine/alcohol
         );
         savedLogId = savedResponse.foodLogId;
+        // (WR9b) Reconcile the optimistic row to the authoritative server row:
+        // swap its synthetic `optimistic_<ts>` id for the real food_log_id so a
+        // later summary refresh dedupes by id (not just idempotency_key) and any
+        // delete/edit targets the PERSISTED row, never the phantom. Without this
+        // the merge re-adds the optimistic row next to the server row → the
+        // duplicate the user sees, then deleting one orphans the survivor.
+        if (savedLogId != null && savedLogId!.isNotEmpty) {
+          nutritionNotifier.reconcileLoggedMeal(optimisticLogId, savedLogId!,
+              idempotencyKey: idempotencyKey);
+        }
         // (WR5) The photo's S3 upload finished as part of the POST — swap the
         // optimistic row's (possibly local file://) image for the remote URL.
         if (savedResponse.imageUrl != null &&
             savedResponse.imageUrl!.isNotEmpty) {
           nutritionNotifier.updateLogImageUrl(
-              optimisticLogId, savedResponse.imageUrl);
+              savedLogId ?? optimisticLogId, savedResponse.imageUrl);
         }
       } catch (e) {
         debugPrint('❌ [LogMeal] Background save failed: $e');
