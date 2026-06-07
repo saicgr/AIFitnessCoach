@@ -59,12 +59,20 @@
 
         Removed 2026-05-07 per Google Play "Health Connect Permissions"
         policy ("Excessive data access for declared feature"):
-          READ_DISTANCE, READ_FLOORS_CLIMBED, READ_HEART_RATE_VARIABILITY,
-          READ_ELEVATION_GAINED, READ_POWER, READ_SPEED, READ_RESPIRATORY_RATE,
-          READ_BASAL_METABOLIC_RATE, READ_OXYGEN_SATURATION,
-          READ_BODY_TEMPERATURE.
-        These data types were also dropped from the iOS HealthKit request
-        set at the same time so Android and iOS stay aligned.
+          READ_DISTANCE, READ_FLOORS_CLIMBED, READ_ELEVATION_GAINED,
+          READ_POWER, READ_SPEED, READ_BASAL_METABOLIC_RATE.
+
+        RE-DECLARED 2026-06-07 for the new **Vitals** feature (each maps 1:1
+        to a visible signal on the Vitals screen, satisfying Minimum Scope):
+          READ_HEART_RATE_VARIABILITY → Vitals "HRV" signal + baseline band
+          READ_RESPIRATORY_RATE       → Vitals "Respiratory rate" signal
+          READ_OXYGEN_SATURATION      → Vitals "Blood oxygen" signal
+          READ_BODY_TEMPERATURE       → Vitals "Skin temperature" signal
+        These require a Health Connect declaration resubmission (see
+        docs/planning/HEALTH_CONNECT_RESUBMISSION.md). Runtime reads stay
+        gated by kVitalsAndroidEnabled in Dart until that approval lands, so
+        shipping this manifest before approval is safe (no query is issued).
+        iOS reads them now via HealthKit (no equivalent review gate).
 
         Permission → feature map:
           READ_WEIGHT, WRITE_WEIGHT     → Body-measurements card on Home,
@@ -105,6 +113,11 @@
     <uses-permission android:name="android.permission.health.WRITE_BODY_FAT"/>
     <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
     <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE"/>
+    <!-- Vitals overnight bio-signals (gated by kVitalsAndroidEnabled, pending HC resubmission) -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY"/>
+    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE"/>
     <uses-permission android:name="android.permission.health.READ_STEPS"/>
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
