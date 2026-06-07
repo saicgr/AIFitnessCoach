@@ -26,6 +26,14 @@ class StatSectionHeader extends StatelessWidget {
   /// Tooltip / a11y label for the trends icon.
   final String trendsTooltip;
 
+  /// Optional "customize" affordance — a small tune icon (before the trends /
+  /// see-all actions) that opens a reorder + show/hide sheet for the section's
+  /// cards. Tinted with [trendsAccent] when provided.
+  final VoidCallback? onCustomize;
+
+  /// Tooltip / a11y label for the customize icon.
+  final String customizeTooltip;
+
   const StatSectionHeader({
     super.key,
     required this.title,
@@ -35,6 +43,8 @@ class StatSectionHeader extends StatelessWidget {
     this.onTrendsTap,
     this.trendsAccent,
     this.trendsTooltip = 'Custom trends',
+    this.onCustomize,
+    this.customizeTooltip = 'Customize stats',
   });
 
   @override
@@ -58,6 +68,16 @@ class StatSectionHeader extends StatelessWidget {
               ),
             ),
           ),
+          if (onCustomize != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: _HeaderIconButton(
+                tooltip: customizeTooltip,
+                icon: Icons.tune_rounded,
+                color: trendsAccent ?? textMuted,
+                onTap: onCustomize!,
+              ),
+            ),
           if (onTrendsTap != null)
             _TrendsIconButton(
               tooltip: trendsTooltip,
@@ -92,6 +112,45 @@ class StatSectionHeader extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// Generic accent-tinted square icon button used in [StatSectionHeader]
+/// (e.g. the customize/tune action). Matches [_TrendsIconButton]'s footprint.
+class _HeaderIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _HeaderIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(9),
+        onTap: () {
+          HapticService.light();
+          onTap();
+        },
+        child: Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(9),
+          ),
+          child: Icon(icon, size: 17, color: color),
+        ),
       ),
     );
   }

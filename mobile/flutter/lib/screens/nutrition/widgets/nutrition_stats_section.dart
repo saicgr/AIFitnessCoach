@@ -11,7 +11,9 @@ import '../../../core/utils/weight_utils.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/models/nutrition.dart';
+import '../../../data/models/fueling_split.dart';
 import '../../../data/providers/nutrition_stats_provider.dart';
+import '../../../data/providers/nutrition_stats_layout_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../log_meal_sheet.dart';
 import '../../../data/providers/fueling_split_provider.dart';
@@ -24,6 +26,8 @@ import '../../../widgets/nutrition_stats/calorie_trend_card.dart';
 import '../../../widgets/nutrition_stats/macro_breakdown_card.dart';
 import '../../../widgets/nutrition_stats/tdee_card.dart';
 import '../../../widgets/nutrition_stats/adherence_card.dart';
+import '../../../widgets/nutrition_stats/inflammation_card.dart';
+import 'nutrition_stats_customize_sheet.dart';
 
 /// "NUTRITION STATS" section embedded in the Nutrition tab's Daily view.
 ///
@@ -104,6 +108,12 @@ class NutritionStatsSection extends ConsumerWidget {
           title: 'Nutrition stats',
           isDark: isDark,
           onSeeAll: () => context.push('/stats'),
+          trendsAccent: accent,
+          // Reorder + show/hide the cards below. Hidden behind the empty-state
+          // gate so there's nothing to customize when the week has no data.
+          onCustomize: isEmptyWeek
+              ? null
+              : () => NutritionStatsCustomizeSheet.show(context, isDark: isDark),
           // Custom Trends is reachable from the app-bar trends icon; the
           // duplicate per-section entry was removed to avoid two buttons.
         ),
@@ -139,68 +149,112 @@ class NutritionStatsSection extends ConsumerWidget {
         const SizedBox(height: 16),
 
         // The reusable stat cards align to the same 16px gutter (supplied by
-        // the parent scroll view) as the rest of the Daily column.
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              // 2 — Calorie trend.
-              CalorieTrendCard(
-                weeklyNutrition: weeklyNutrition,
-                cardColor: cardColor,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-                textMuted: textMuted,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 16),
-
-              // 3 — Macro breakdown.
-              MacroBreakdownCard(
-                weeklyNutrition: weeklyNutrition,
-                cardColor: cardColor,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-                textMuted: textMuted,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 16),
-
-              // 4 — TDEE & energy balance.
-              TDEECard(
-                detailedTDEE: detailedTDEE,
-                weeklySummary: weeklySummary,
-                cardColor: cardColor,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-                textMuted: textMuted,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 16),
-
-              // 5 — Adherence & consistency.
-              AdherenceCard(
-                adherence: adherence,
-                cardColor: cardColor,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-                textMuted: textMuted,
-                isDark: isDark,
-              ),
-              const SizedBox(height: 16),
-
-              // 6 — Fueling split (owned by another agent; imported only).
-              // Custom trends now lives as a compact icon in the section
-              // header (beside "See all"), not a full-width card here.
-              FuelingSplitCard(
-                fueling: fueling,
-                isDark: isDark,
-                accent: accent,
-              ),
+        // the parent scroll view) as the rest of the Daily column. Order and
+        // visibility are user-controlled via nutritionStatsLayoutProvider; the
+        // customize sheet (header tune icon) edits it.
+        Builder(builder: (context) {
+          final layout = ref.watch(nutritionStatsLayoutProvider);
+          final visible = layout.visible;
+          final cards = <Widget>[];
+          for (final card in visible) {
+            cards.add(_buildStatCard(
+              card,
+              weeklyNutrition: weeklyNutrition,
+              detailedTDEE: detailedTDEE,
+              weeklySummary: weeklySummary,
+              adherence: adherence,
+              fueling: fueling,
+              cardColor: cardColor,
+              textPrimary: textPrimary,
+              textSecondary: textSecondary,
+              textMuted: textMuted,
+              accent: accent,
+            ));
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                if (i > 0) const SizedBox(height: 16),
+                cards[i],
+              ],
             ],
-        ),
+          );
+        }),
         ],
       ],
     );
+  }
+
+  /// Renders a single stat card by its [NutritionStatCard] kind. Each card
+  /// owns its own provider/loading/empty states, so this is a pure dispatch.
+  Widget _buildStatCard(
+    NutritionStatCard card, {
+    required AsyncValue<WeeklyNutritionData?> weeklyNutrition,
+    required AsyncValue<DetailedTDEE?> detailedTDEE,
+    required AsyncValue<WeeklySummaryData?> weeklySummary,
+    required AsyncValue<AdherenceSummary?> adherence,
+    required AsyncValue<FuelingSplit?> fueling,
+    required Color cardColor,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color textMuted,
+    required Color accent,
+  }) {
+    switch (card) {
+      case NutritionStatCard.inflammation:
+        return InflammationCard(
+          userId: userId,
+          cardColor: cardColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          isDark: isDark,
+        );
+      case NutritionStatCard.calorieTrend:
+        return CalorieTrendCard(
+          weeklyNutrition: weeklyNutrition,
+          cardColor: cardColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          isDark: isDark,
+        );
+      case NutritionStatCard.macroBreakdown:
+        return MacroBreakdownCard(
+          weeklyNutrition: weeklyNutrition,
+          cardColor: cardColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          isDark: isDark,
+        );
+      case NutritionStatCard.tdee:
+        return TDEECard(
+          detailedTDEE: detailedTDEE,
+          weeklySummary: weeklySummary,
+          cardColor: cardColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          isDark: isDark,
+        );
+      case NutritionStatCard.adherence:
+        return AdherenceCard(
+          adherence: adherence,
+          cardColor: cardColor,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          isDark: isDark,
+        );
+      case NutritionStatCard.fuelingSplit:
+        return FuelingSplitCard(
+          fueling: fueling,
+          isDark: isDark,
+          accent: accent,
+        );
+    }
   }
 }
 
