@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Zealova — Finn the shark, inside the ring (v5)</title>
+<title>Zealova — Finn the shark, centered in the ring (v5)</title>
 <style>
   :root{--ink:#eef2fb;--mut:#8a92a8;--line:#1e2950;--good:#34e39b;--sea:#3aa0ff}
   *{box-sizing:border-box}html,body{margin:0}
@@ -19,59 +19,54 @@
 
   .stage{flex:0 0 420px;background:linear-gradient(180deg,#0c1530,#070c1c);border:1px solid var(--line);border-radius:30px;
     padding:22px;position:relative;overflow:hidden;box-shadow:0 50px 90px -45px #000,inset 0 1px 0 #ffffff10}
-  .stage::after{content:"";position:absolute;inset:0;background:radial-gradient(80% 55% at 50% 30%,var(--aura,#34e39b22),transparent 60%);transition:.6s;pointer-events:none}
+  .stage::after{content:"";position:absolute;inset:0;background:radial-gradient(70% 50% at 50% 45%,var(--aura,#34e39b22),transparent 62%);transition:.6s;pointer-events:none}
   .bubbles{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:1}
   .bub{position:absolute;bottom:-20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffffff55,#5fa8ff22);animation:rise linear infinite}
-  @keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.55}90%{opacity:.4}100%{transform:translateY(-440px) translateX(var(--dx,0));opacity:0}}
+  @keyframes rise{0%{transform:translateY(0) translateX(0);opacity:0}10%{opacity:.5}90%{opacity:.35}100%{transform:translateY(-440px) translateX(var(--dx,0));opacity:0}}
 
-  .scene{position:relative;height:360px;display:grid;place-items:center;z-index:2}
-  /* the donut ring */
-  .ring{position:absolute;width:300px;height:300px;border-radius:50%;
+  /* one shared centre for ring + mascot */
+  .scene{position:relative;height:360px;z-index:2}
+  .ring{position:absolute;top:50%;left:50%;width:300px;height:300px;transform:translate(-50%,-50%);border-radius:50%;
     background:conic-gradient(from -90deg,var(--rc,#34e39b) calc(var(--pct,0)*1%),#ffffff10 0);
     -webkit-mask:radial-gradient(closest-side,transparent 71%,#000 72%);mask:radial-gradient(closest-side,transparent 71%,#000 72%);
     transition:--pct .55s cubic-bezier(.4,.1,.2,1),--rc .6s;filter:drop-shadow(0 0 16px var(--rg,#34e39b55))}
   @property --pct{syntax:'<number>';inherits:true;initial-value:0}
   @property --rc{syntax:'<color>';inherits:false;initial-value:#34e39b}
 
-  /* everything INSIDE the ring: mascot stacked above the calorie readout, fitted to the inner hole (~210px) */
-  .core{position:absolute;width:212px;height:212px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;z-index:4}
-  .soft{position:absolute;top:118px;width:120px;height:20px;border-radius:50%;background:#000;opacity:.22;filter:blur(7px);z-index:3}
+  /* centred on the SAME point as the ring; fits inside the inner hole (~206px) */
+  .center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:206px;height:206px;z-index:4;display:grid;place-items:center}
+  .sway{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    animation:sway 7s ease-in-out infinite;transform-origin:50% 60%}
+  @keyframes sway{0%,100%{transform:rotate(-1.1deg)}50%{transform:rotate(1.1deg)}}
 
-  .sprite{position:relative;width:200px;height:150px;display:grid;place-items:center;margin-top:6px;
-    transform-origin:50% 88%}
-  /* CALM motion only — gentle breathe + slow underwater sway. No bob, no hop. */
-  .sprite{animation:breathe 4.4s ease-in-out infinite}
+  .sprite{position:relative;width:178px;height:140px;display:grid;place-items:center;transform-origin:50% 86%;
+    animation:breathe 4.6s ease-in-out infinite}
   @keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.02,.99)}}
-  .sway{animation:sway 7s ease-in-out infinite;transform-origin:50% 90%}
-  @keyframes sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
-  .sprite img{position:absolute;max-height:150px;max-width:188px;object-fit:contain;opacity:0;
-    transition:opacity .55s ease, transform .55s ease;filter:drop-shadow(0 10px 14px #00000066);transform:scale(.97)}
+  .sprite img{position:absolute;max-height:140px;max-width:168px;object-fit:contain;opacity:0;
+    transition:opacity .55s ease, transform .55s ease;filter:drop-shadow(0 9px 13px #00000070);transform:scale(.97)}
   .sprite img.on{opacity:1;transform:scale(1)}
-
-  /* just-ate: a soft pulse (NOT a bounce) */
   .sprite.pulse{animation:pulse .5s ease}
   @keyframes pulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
 
-  .read{position:relative;text-align:center;z-index:5;margin-top:-2px}
-  .read .big{font:850 30px/1 ui-sans-serif;letter-spacing:-.02em}
-  .read .sm{font:750 11px ui-sans-serif;color:#8b96b2;margin-top:3px}
+  .read{position:relative;text-align:center;z-index:5;margin-top:2px}
+  .read .big{font:850 28px/1 ui-sans-serif;letter-spacing:-.02em}
+  .read .sm{font:750 10.5px ui-sans-serif;color:#8b96b2;margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
 
-  /* particles around the mascot, still inside the ring */
-  .fx{position:absolute;inset:0;z-index:6;pointer-events:none}
-  .p{position:absolute;opacity:0;font-size:19px;will-change:transform,opacity}
+  .fx{position:absolute;inset:-24px;z-index:6;pointer-events:none}
+  .p{position:absolute;opacity:0;font-size:18px;will-change:transform,opacity}
   .show .p.heart{animation:floatUp 2.6s ease-out infinite}
   .show .p.spark{animation:twk 1.9s ease-in-out infinite}
   .show .p.conf{animation:conf 1.5s ease-out infinite}
   .show .p.sweat{animation:sweat 2s ease-in infinite}
   .show .p.zzz{animation:zzz 3.4s ease-in-out infinite}
-  @keyframes floatUp{0%{opacity:0;transform:translateY(6px) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-54px) scale(1.02)}}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(6px) scale(.6)}25%{opacity:1}100%{opacity:0;transform:translateY(-52px) scale(1.02)}}
   @keyframes twk{0%,100%{opacity:.2;transform:scale(.6) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(18deg)}}
-  @keyframes conf{0%{opacity:0;transform:translateY(6px) rotate(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-48px) rotate(240deg) scale(1)}}
-  @keyframes sweat{0%{opacity:0;transform:translate(0,0)}18%{opacity:.95}100%{opacity:0;transform:translate(2px,26px)}}
+  @keyframes conf{0%{opacity:0;transform:translateY(6px) rotate(0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translateY(-46px) rotate(240deg) scale(1)}}
+  @keyframes sweat{0%{opacity:0;transform:translate(0,0)}18%{opacity:.95}100%{opacity:0;transform:translate(2px,24px)}}
   @keyframes zzz{0%,55%,100%{opacity:0;transform:translateY(0) scale(.5)}72%{opacity:.9;transform:translateY(-14px) scale(1)}}
 
   .mood{position:absolute;top:14px;right:14px;z-index:7;font:800 12px ui-sans-serif;padding:6px 12px;border-radius:999px;background:#34e39b22;color:#34e39b;transition:.5s}
-  .cap{text-align:center;font:850 18px ui-sans-serif;letter-spacing:-.015em;margin:10px 0 0;min-height:24px;transition:.35s}
+  .cap{text-align:center;font:850 18px ui-sans-serif;letter-spacing:-.015em;margin:10px 0 0;min-height:24px;transition:.35s;position:relative;z-index:3}
 
   .side{flex:1 1 300px;min-width:300px}
   .panel{background:#0b1226;border:1px solid var(--line);border-radius:20px;padding:20px 22px;margin-bottom:18px;box-shadow:0 24px 50px -34px #000}
@@ -89,17 +84,16 @@
 </head>
 <body>
   <p class="kicker">Zealova · nutrition companion</p>
-  <h1>Finn — inside the ring, calm motion 🦈</h1>
-  <p class="sub">Fixed: Finn now sits <b>inside the calorie ring</b> with the “calories left” number beneath him, and the <b>bouncing is gone</b>. Motion is calm and ambient — a slow breathe, a gentle underwater sway, drifting bubbles, and per-state particles. The day's fuel cross-fades him between the 5 poses; logging a meal gives a soft pulse (no hop).</p>
+  <h1>Finn — centered in the ring 🦈</h1>
+  <p class="sub">Now the ring and the mascot share the exact same centre: Finn sits <b>inside</b> the donut with the “kcal left” number just below him. Calm motion only — a slow breathe, a faint sway, drifting bubbles, per-state particles. The day's fuel cross-fades him through the 5 poses; logging a meal is a soft pulse.</p>
 
   <div class="wrap">
     <div class="stage" id="stage">
       <div class="bubbles" id="bubbles"></div>
       <div class="scene">
         <div class="ring" id="ring"></div>
-        <div class="sway">
-          <div class="core">
-            <div class="soft"></div>
+        <div class="center">
+          <div class="sway">
             <div class="sprite" id="sprite">
               <img data-m="hungry" src="../../mobile/flutter/assets/mascot/shark/empty.png" alt="hungry"/>
               <img data-m="track"  src="../../mobile/flutter/assets/mascot/shark/mid.png"   alt="mid"/>
@@ -108,8 +102,8 @@
               <img data-m="over"   src="../../mobile/flutter/assets/mascot/shark/over.png"  alt="over"/>
             </div>
             <div class="read"><div class="big" id="big">900</div><div class="sm" id="sm">kcal left</div></div>
-            <div class="fx" id="fx"></div>
           </div>
+          <div class="fx" id="fx"></div>
         </div>
         <div class="mood" id="moodPill">Fueling</div>
       </div>
@@ -138,7 +132,7 @@
       </div>
       <div class="panel">
         <h3>Ships as</h3>
-        <p class="note">Assets live in <b>mobile/flutter/assets/mascot/shark/</b>. In <code>hero_nutrition_card.dart</code>: the mascot sits in the ring center above the “kcal left” text, an <code>AnimatedSwitcher</code> cross-fades the 5 poses by <code>eaten/goal</code>, a calm <code>AnimationController</code> drives the breathe/sway, and logging triggers the soft pulse + a particle burst. Tweaks? bigger/smaller Finn, calmer/no sway, different particles, drop the junk in Over.</p>
+        <p class="note">Assets live in <b>mobile/flutter/assets/mascot/shark/</b>. In <code>hero_nutrition_card.dart</code> the mascot renders in the ring centre above “kcal left”; an <code>AnimatedSwitcher</code> cross-fades the 5 poses by <code>eaten/goal</code>, a calm controller drives the breathe, particles handle zzz/hearts/sparkle/confetti/sweat. Size, sway amount, particles — all tunable. Say the tweaks.</p>
       </div>
     </div>
   </div>
@@ -161,11 +155,11 @@ const CAP={
   over  :["A touch over.","Over by {x}…","Ohh, too full.","Past the line by {x}."]
 };
 const FX={
-  hungry:[{cls:'zzz',t:'💤',x:58,y:6,d:0},{cls:'sweat',t:'💧',x:70,y:24,d:.6}],
-  track :[{cls:'heart',t:'💙',x:56,y:26,d:0},{cls:'heart',t:'💙',x:74,y:34,d:.9}],
-  track2:[{cls:'spark',t:'⭐',x:56,y:8,d:0},{cls:'spark',t:'✨',x:78,y:20,d:.7}],
-  goal  :[{cls:'conf',t:'🎉',x:40,y:8,d:0},{cls:'conf',t:'🎊',x:72,y:4,d:.4},{cls:'conf',t:'⭐',x:56,y:0,d:.8}],
-  over  :[{cls:'sweat',t:'💦',x:64,y:14,d:0},{cls:'sweat',t:'💧',x:54,y:24,d:.7}]
+  hungry:[{cls:'zzz',t:'💤',x:60,y:2,d:0},{cls:'sweat',t:'💧',x:74,y:22,d:.6}],
+  track :[{cls:'heart',t:'💙',x:58,y:18,d:0},{cls:'heart',t:'💙',x:78,y:28,d:.9}],
+  track2:[{cls:'spark',t:'⭐',x:58,y:2,d:0},{cls:'spark',t:'✨',x:80,y:14,d:.7}],
+  goal  :[{cls:'conf',t:'🎉',x:38,y:2,d:0},{cls:'conf',t:'🎊',x:74,y:-2,d:.4},{cls:'conf',t:'⭐',x:56,y:-6,d:.8}],
+  over  :[{cls:'sweat',t:'💦',x:66,y:8,d:0},{cls:'sweat',t:'💧',x:54,y:18,d:.7}]
 };
 
 let capIdx=0,last='track';

@@ -12,6 +12,22 @@
 
 ---
 
+## ✅ Implementation status — _Shipped 2026-06-06_
+
+The audit's build list has been executed (tracker: `~/.claude/plans/we-have-a-new-ethereal-scroll.md`). All touched files analyze-clean (zero new errors); backend parser unit-tested.
+
+- **Meal Planner (P1):** `/nutrition/meal-planner` route + shell · 14-day multi-day strip · one-tap AI per-slot swap (reuses `simulate(withSwaps)`) · `/nutrition/grocery` route.
+- **Quick Actions (P2):** Meal Plan · New Recipe (`RecipeBuilderSheet`) · From Fridge (`/nutrition/from-fridge`) · Custom Trends tiles added.
+- **Mascot (P3):** `NutritionMascot` (shark "Finn") — 5-pose cross-fade by calorie progress, **centered inside the ring**, calm motion + particles + log-pulse; wired into `hero_nutrition_card.dart`. Assets in `assets/mascot/shark/`.
+- **Nutrition Score 0–100 (P3.4):** `_ScoreDial` `outOf` option (stored score stays 1-10).
+- **Workout (P4):** "Week X of N · phase" chip (`plan_header.dart`) · NL activity logging (`POST /cardio/parse-text`, deterministic MET, + "Describe it" field) · richer generation loader caption.
+- **Onboarding (P6):** goal-feasibility line + confetti plan-reveal.
+- **Already shipped (audit was stale):** before/after comparison gallery (Stats Photos tab), skip-a-scheduled-workout (home workout-options + missed-workout banner).
+- **Covered by existing flows (no redundant build):** what-if (analyze-preview + companion totals + meal-plan simulate), burn view (net-burn row + burned sheet), pre-scan context (describe mode).
+- **Dropped per user:** Social branch move (next update).
+
+---
+
 ## 1. Tag legend
 
 Same scheme as `amy_feature_requests_audit.md` / `youtube_audit_tasks_immediate.md`:
