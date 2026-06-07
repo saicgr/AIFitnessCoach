@@ -355,6 +355,35 @@ docs/planning/marketing/content/<YYYY-MM-DD>/
 
 Two agents fill it: **reels-producer** writes the reels/shorts, **social-post-creator** writes the carousels. Both hand you the hooks in chat after writing, so you can act without opening files.
 
+### What to run and when (the full cheat-sheet)
+
+**Every day (morning, over coffee)** — drafts the day's Reddit + X posts and your founder story. Reels/carousels are NOT daily, they're the Fri/Sat/Sun batch below.
+
+```
+Quick GEO status check
+```
+```
+Draft today's build-in-public thread
+```
+
+**Friday (~5:45pm)** — plan tomorrow's reels:
+
+```
+Generate this Saturday's reel shot list — one idea, three native versions for TikTok, Instagram, and YouTube
+```
+
+**Saturday (after you film, ~4pm)** — turn footage into native cuts:
+
+```
+I recorded these clips: <describe what you filmed>. Give me native versions per platform — one idea, three native cuts
+```
+
+**Sunday (~9:30am)** — the weekly text + carousels pack:
+
+```
+Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, native carousels (IG polished + a distinct TikTok Photo Mode version)
+```
+
 ### Prompts to generate a batch (paste into Claude Code)
 
 Full batch (recommended — reels + carousels, all platforms, one idea):
