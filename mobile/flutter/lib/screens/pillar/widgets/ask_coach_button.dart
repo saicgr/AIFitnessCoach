@@ -24,6 +24,10 @@ const Set<String> kValidAskCoachSources = {
   'refuel',
   'vo2max',
   'cardio_pr',
+  // Samsung-parity health metrics
+  'vitals',
+  'heart_health',
+  'fitness_index',
 };
 
 /// Toggle (always true) — kept as a named const so the assert in the

@@ -9,6 +9,10 @@ import '../../data/providers/combined_health_provider.dart';
 import '../../data/providers/recovery_provider.dart';
 import '../../data/providers/training_load_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
+import '../../data/repositories/vitals_repository.dart';
+import '../../data/repositories/heart_health_repository.dart';
+import '../../data/repositories/fitness_index_repository.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/activity_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/health_goals_service.dart';
@@ -222,6 +226,13 @@ class _CombinedHealthScreenState extends ConsumerState<CombinedHealthScreen> {
         const SizedBox(height: 12),
         // ── Activity streak
         _ActivityStreakCard(history: history, isDark: isDark),
+        const SizedBox(height: 12),
+        // ── Samsung-parity health metrics (Vitals / Heart Health / Fitness Index)
+        const _VitalsHubCard(),
+        const SizedBox(height: 12),
+        const _HeartHealthHubCard(),
+        const SizedBox(height: 12),
+        const _FitnessIndexHubCard(),
         const SizedBox(height: 12),
         // ── Per-metric sections
         //
@@ -1046,6 +1057,165 @@ class _HealthAiCoachButton extends StatelessWidget {
           child: Icon(Icons.auto_awesome_rounded, size: 18, color: accent),
         ),
       ),
+    );
+  }
+}
+
+
+// ===========================================================================
+// Samsung-parity health-metric hub cards (Vitals / Heart Health / Fitness Index)
+// Each is a glanceable, tappable entry into its dedicated detail screen.
+// ===========================================================================
+
+class _MetricHubCard extends StatelessWidget {
+  final IconData icon;
+  final Color accent;
+  final String title;
+  final String value;
+  final String subtitle;
+  final String route;
+  const _MetricHubCard({
+    required this.icon,
+    required this.accent,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.route,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final card = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        context.push(route);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: card,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: accent, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary)),
+                  const SizedBox(height: 2),
+                  Text(subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12.5, color: textSecondary)),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(value,
+                style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    color: textPrimary)),
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right_rounded,
+                color: textSecondary.withValues(alpha: 0.7)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VitalsHubCard extends ConsumerWidget {
+  const _VitalsHubCard();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final async = ref.watch(vitalsProvider);
+    final (value, subtitle) = async.maybeWhen(
+      data: (d) => d.hasAnyReading
+          ? (
+              d.outOfRangeCount > 0 ? '${d.outOfRangeCount}!' : '✓',
+              d.outOfRangeCount > 0
+                  ? '${d.outOfRangeCount} signal${d.outOfRangeCount == 1 ? '' : 's'} out of range'
+                  : 'All overnight signals in range'
+            )
+          : ('–', 'Connect a wearable to track vitals'),
+      orElse: () => ('–', 'Overnight heart, HRV, oxygen, temp'),
+    );
+    return _MetricHubCard(
+      icon: Icons.monitor_heart_rounded,
+      accent: accent,
+      title: 'Vitals',
+      value: value,
+      subtitle: subtitle,
+      route: '/health/vitals',
+    );
+  }
+}
+
+class _HeartHealthHubCard extends ConsumerWidget {
+  const _HeartHealthHubCard();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(heartHealthProvider);
+    final (value, subtitle) = async.maybeWhen(
+      data: (d) => ('${d.score}', '${d.label} heart health habits'),
+      orElse: () => ('–', 'Sleep, activity, strain, body comp'),
+    );
+    return _MetricHubCard(
+      icon: Icons.favorite_rounded,
+      accent: const Color(0xFFEF4444),
+      title: 'Heart Health Score',
+      value: value,
+      subtitle: subtitle,
+      route: '/health/heart-health',
+    );
+  }
+}
+
+class _FitnessIndexHubCard extends ConsumerWidget {
+  const _FitnessIndexHubCard();
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final async = ref.watch(fitnessIndexProvider);
+    final (value, subtitle) = async.maybeWhen(
+      data: (d) =>
+          (d.overall?.toString() ?? '–', 'Focus: ${d.focus} · 5-axis radar'),
+      orElse: () => ('–', 'Body comp, cardio, strength, more'),
+    );
+    return _MetricHubCard(
+      icon: Icons.radar_rounded,
+      accent: accent,
+      title: 'Fitness Index',
+      value: value,
+      subtitle: subtitle,
+      route: '/health/fitness-index',
     );
   }
 }

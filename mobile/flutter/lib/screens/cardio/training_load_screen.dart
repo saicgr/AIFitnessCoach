@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/training_load_repository.dart';
 import '../../widgets/cardio/training_load_chart.dart';
+import '../../widgets/cardio/daily_cardio_load_card.dart';
 import '../../widgets/glass_back_button.dart';
 import '../pillar/widgets/ask_coach_button.dart';
 
@@ -77,6 +78,10 @@ class TrainingLoadScreen extends ConsumerWidget {
                   data: (state) => _HeroBlock(state: state),
                 ),
               ),
+
+              // Today's progress — intraday Daily Cardio Load accumulation
+              // + target band + the "Balanced" ACWR bar (Samsung-parity).
+              const DailyCardioLoadCard(),
 
               // Chart
               const Padding(

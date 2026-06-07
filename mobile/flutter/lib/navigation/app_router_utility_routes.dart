@@ -100,6 +100,24 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const CombinedHealthScreen(),
       ),
 
+      // Vitals — 5 overnight bio-signals vs personal baseline (Samsung-parity).
+      GoRoute(
+        path: '/health/vitals',
+        builder: (context, state) => const VitalsDetailScreen(),
+      ),
+
+      // Heart Health Score — fused 0-100 cardiovascular habit score.
+      GoRoute(
+        path: '/health/heart-health',
+        builder: (context, state) => const HeartHealthDetailScreen(),
+      ),
+
+      // Fitness Index — 5-axis fitness radar + k-anon peer percentile.
+      GoRoute(
+        path: '/health/fitness-index',
+        builder: (context, state) => const FitnessIndexDetailScreen(),
+      ),
+
       // Cycle-aware reminder settings
       GoRoute(
         path: '/settings/cycle',

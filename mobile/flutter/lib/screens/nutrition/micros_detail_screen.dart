@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/micronutrients.dart';
+import '../../data/providers/antioxidant_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/charts/mini_sparkline.dart';
 import 'nutrient_explorer.dart';
 
 /// F5 — full-screen "Vitamins & minerals" detail view.
@@ -128,6 +130,7 @@ class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
                     totalFoods: _totalFoods,
                     isDark: isDark,
                   ),
+                  const _AntioxidantCard(),
                   Expanded(
                     child: NutrientExplorerTab(
                       userId: '',
@@ -231,6 +234,86 @@ class _ErrorState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// Antioxidant rollup card — a food-truth answer to Samsung's wrist-optical
+/// Antioxidant Index. Sums vit A/C/E + selenium/zinc/copper/manganese intake
+/// vs their combined RDA into a 0-100 score, with a 14-day trend sparkline and
+/// the day's top contributing foods. Hidden on error / before first load.
+class _AntioxidantCard extends ConsumerWidget {
+  const _AntioxidantCard();
+
+  Color _scoreColor(int s) => s >= 70
+      ? const Color(0xFF22C55E)
+      : (s >= 40 ? const Color(0xFFF59E0B) : const Color(0xFFF97316));
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final async = ref.watch(antioxidantProvider);
+    return async.maybeWhen(
+      data: (d) => _build(context, isDark, d),
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _build(BuildContext context, bool isDark, AntioxidantData d) {
+    final card = isDark ? AppColors.surface : AppColorsLight.surface;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final color = _scoreColor(d.score);
+    final trend = d.trend.map((t) => t.score.toDouble()).toList();
+    final contributors = d.topContributors.map((c) => c.name).take(3).join(' · ');
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: card,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shield_moon_rounded, size: 18, color: color),
+              const SizedBox(width: 8),
+              Text('Antioxidants',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary)),
+              const Spacer(),
+              Text('${d.score}',
+                  style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: color)),
+              Text(' /100',
+                  style: TextStyle(fontSize: 12, color: textSecondary)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (trend.length >= 2)
+            MiniSparkline(values: trend, color: color, height: 34),
+          const SizedBox(height: 8),
+          Text(
+            contributors.isNotEmpty
+                ? 'Top sources today: $contributors'
+                : 'Log antioxidant-rich foods (berries, citrus, leafy greens, nuts) to lift your score.',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12.5, color: textSecondary, height: 1.35),
+          ),
+        ],
       ),
     );
   }
