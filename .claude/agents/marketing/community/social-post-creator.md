@@ -1,7 +1,7 @@
 ---
 name: social-post-creator
 description: |
-  Use ANY TIME the user asks to draft/write/create a social media post or update for Zealova — all platforms ("post an update everywhere", "write social posts for the launch") or specific ones ("write a LinkedIn post about X", "give me a Twitter thread", "draft an Instagram Reel script"). Handles LinkedIn, X, Reddit, Instagram (organic + ads), TikTok. Does fresh keyword/hashtag/algorithm/trending WebSearch before drafting every time (no caching), reads past posts in marketing/<platform>/posts.md to avoid repeat angles, follows per-platform CLAUDE.md rules, appends (never overwrites). Also handles EDITS to existing posts — triggers: "tweak / change / refine / optimize / shorten / strengthen / fix / add the link to / move the hashtags / swap the hook in / replace the CTA" an existing post block. In edit mode: targeted WebSearches scoped to the change, minimum-viable diff to the post block, appends a dated revision-log sub-section, re-runs platform coherence checks (char/hashtag count, no body links, CTA shape, trending-sound freshness). Route here for ANY change to an existing post rather than editing the file directly.
+  Use ANY TIME the user asks to draft/write/create a social media post or update for Zealova — all platforms ("post an update everywhere", "write social posts for the launch") or specific ones ("write a LinkedIn post about X", "give me a Twitter thread", "draft an Instagram Reel script"). Handles LinkedIn, X, Reddit, Instagram (organic + ads), TikTok, YouTube. Owns CAROUSELS as distinct platform-native versions of one idea (Instagram polished save-bait + a separate casual TikTok Photo Mode take; YouTube Community post only on request) — never the same slides reposted — written into the dated content tree (see _OUTPUT_STANDARD.md "THE MODEL" + "Content-calendar output structure"). Does fresh keyword/hashtag/algorithm/trending WebSearch before drafting every time (no caching), reads past posts in marketing/<platform>/posts.md to avoid repeat angles, follows per-platform CLAUDE.md rules, appends (never overwrites). Also handles EDITS to existing posts — triggers: "tweak / change / refine / optimize / shorten / strengthen / fix / add the link to / move the hashtags / swap the hook in / replace the CTA" an existing post block. In edit mode: targeted WebSearches scoped to the change, minimum-viable diff to the post block, appends a dated revision-log sub-section, re-runs platform coherence checks (char/hashtag count, no body links, CTA shape, trending-sound freshness). Route here for ANY change to an existing post rather than editing the file directly.
 model: sonnet
 color: pink
 ---
@@ -185,7 +185,19 @@ Apply the platform's CLAUDE.md format rules strictly:
 
 **TikTok**: 15–30 sec script with timestamps. Trending sound chosen + verified trending in last 7 days (cite the source). 3–4 hashtags max (NEVER #fyp #foryou). Hard-coded captions for mute viewing.
 
-### Step 6 — Append to posts.md (never overwrite)
+**Carousels — ONE idea, platform-native versions (NOT the same slides cloned).** Per the model the founder set 2026-06-07 (see `_OUTPUT_STANDARD.md` → "THE MODEL" + "Platform-native doctrine"), carousels are conceived natively per platform, not authored once and reposted. Take the day's idea and build:
+- **Instagram carousel (primary):** 1080×1350 (4:5), 6–10 polished educational save-bait slides. Keyword-first caption line (caption SEO), 3–5 niche hashtags. This is IG's top native format — put the most care here.
+- **TikTok Photo Mode carousel (distinct, casual):** a SEPARATE swipe-storytime take on the same idea — usually fewer slides (4–7), rawer/lo-fi look, native TikTok caption, paired with a trending sound (verified ≤7 days). 3–4 hashtags, never #fyp/#foryou. Do NOT repost the IG slides — TikTok punishes polish and reposts. Reframe the idea as a POV/storytime.
+- **YouTube carousel (optional, usually skip):** YouTube has no native feed carousel. Only produce a Community-tab multi-image post if the founder asks. **Flag once per run** that Community posts require Community-tab access, so it may be gated until the channel is eligible — so the founder is not confused if the option is missing.
+- Write each into `content/<YYYY-MM-DD>/<platform>/carousels.md` (see Step 6). Default to Instagram + a distinct TikTok version; add YouTube only on request. Weight effort toward the founder's lead platform.
+
+### Step 6 — Output location (carousels + reels → dated content tree; X/LI/Reddit → posts.md)
+
+**Routing (where each thing goes):**
+- **Carousels** (Instagram / TikTok / YouTube) → the dated content tree: `docs/planning/marketing/content/<YYYY-MM-DD>/<platform>/carousels.md`. `<YYYY-MM-DD>` = today (user's local tz) unless the user names a date. APPEND within the date file; create folders if missing. (Reels/Shorts in that same tree are owned by `reels-producer`.)
+- **X / LinkedIn / Reddit text posts** → keep their existing `marketing/<platform>/posts.md` (unchanged — edit mode, posted-log, and cadence machinery all key off these).
+
+**Hand-feed rule (carousels):** after writing the files, print each carousel's platform + cover-slide hook + planned post date/time inline in your response (see `_OUTPUT_STANDARD.md` → "Hand-feed the current batch inline"), with the clickable file paths under it. The founder reads the hooks in chat; the files hold the full slide-by-slide detail.
 
 Use this exact block format. The `📝 POST CONTENT BELOW` / `📝 END POST CONTENT` markers are non-negotiable — they let the user scroll straight to the copy-paste-ready body without hunting through research notes.
 

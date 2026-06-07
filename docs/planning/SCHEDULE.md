@@ -62,12 +62,12 @@ Draft today's build-in-public thread
 | 6:15 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
 | 6:30 | GYM 2hr | — |
 | 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
-| **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, 3 IG carousels` |
+| **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, native carousels (IG polished + a distinct TikTok Photo Mode version)` |
 | **10:00** | **Hireable social pack** (40m) | `Write Hireable's weekly social pack` |
 | **10:40** | **Mobi social pack** (40m) | `Write Mobiprompt's weekly social pack` |
 | **11:20** | **UV social pack** (30m) | `Write Ultraviolet's weekly social pack` |
 | **11:50** | **Founder posts** (15m) | `Write founder Wed thread + next Sun reflection` |
-| **12:05** | **Schedule everything (20m):** X+LI → Typefully · IG carousel + 3 Reels → Meta Business Suite (Mon/Wed/Fri 11am) · 3 Reels → TikTok @zealova native scheduler · 3 Reels → YouTube Shorts @zealova manual upload · Reddit drafts → Notion. **YouTube long-form** (when ready, after polish step mid-week following 1st Sun) — upload separately to YouTube @zealova with thumbnail + timestamped description. | — |
+| **12:05** | **Schedule everything (20m):** X+LI → Typefully · Reddit drafts → Notion. Native pieces (one idea, three native versions), drops Mon/Wed/Fri 11am: **TikTok** 3 native reels + 2 Photo Mode carousels → TikTok @zealova scheduler · **Instagram** 2 native Reels + 2 carousels → Meta Business Suite · **YouTube** 1 native Short → YT Shorts @zealova manual upload. **YouTube long-form** (when ready, after polish step mid-week following 1st Sun) — upload separately to YouTube @zealova with thumbnail + timestamped description. | — |
 | 12:25 | 5m engagement target list | — |
 | 12:30 | lunch with wife | — |
 | **1:00** | **🎯 GEO CONTENT BLOCK — comp page** (30m intel) | `Profile <competitor>` (next in /vs/ queue) |
@@ -97,8 +97,8 @@ Draft today's build-in-public thread
 | 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Zealova X thread + Hireable LI #1 | — |
 | 8:00 | day job | — |
-| **11:00** | **Zealova Reel #1 auto-fires** (IG + TT + YT Shorts — scheduled Sun) | — |
-| **11:00** | Zealova IG carousel auto-fires (save-bait) | — |
+| **11:00** | **Idea A drops, native per platform** (scheduled Sun): TikTok native cut + IG native Reel | — |
+| **11:00** | **Idea A carousel:** IG polished save-bait + distinct TikTok Photo Mode version | — |
 | 12:00 | Hireable r/indiehackers + 5 viral comments (15m) | — |
 | 12:00 | (parallel, 5m) scout for tomorrow's Reddit reply | `Scout 1 Zealova-relevant thread for me to reply to tomorrow` |
 | 12:15 | lunch + LazyApply 45 | — |
@@ -146,7 +146,7 @@ Draft today's build-in-public thread
 | 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Founder X thread + Hireable X + Hireable LI #2 | — |
 | 8:00 | day job | — |
-| **11:00** | **Zealova Reel #2 auto-fires** (IG + TT + YT Shorts) | — |
+| **11:00** | **Idea B drops, native per platform** (scheduled Sun): TikTok native cut + YouTube native Short (the most searchable idea of the week) | — |
 | **12:00** | Hireable r/cscareerquestions (live) + **🎯 15m listicle pitches in parallel** | `Send 5 listicle pitches this week` then `Follow up on last week's pitches` |
 | 12:15 | lunch + LazyApply 45 | — |
 | 12:50 | Zealova X tweet auto-fires + reply | — |
@@ -192,14 +192,14 @@ Draft today's build-in-public thread
 | 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Zealova X + UV X thread + Mobi LI #2 | — |
 | 8:00 | day job | — |
-| **11:00** | **Zealova Reel #3 auto-fires** (IG + TT + YT Shorts) | — |
-| **11:00** | Zealova IG carousel auto-fires | — |
+| **11:00** | **Idea C drops, native per platform** (scheduled Sun): TikTok native cut + IG native Reel | — |
+| **11:00** | **Idea C carousel:** IG polished save-bait + distinct TikTok Photo Mode version | — |
 | 12:00 | UV r/webdev (live) + 5 fitness IG + 5 AI builder X comments | — |
 | 12:15 | lunch + LazyApply 45 | — |
 | **12:50** | reply-to-trending (2m live) | `Find a viral fitness X or Reddit post from today and draft my Zealova POV reply` |
 | 1:00 | day job | — |
 | 5:00 | 40 evening apps (1.5hr) | — |
-| **5:45** | **🎯 Reels prep (10m)** — Friday-night shot list for tomorrow | `What should I record this Saturday?` |
+| **5:45** | **🎯 Reels prep (10m)** — Friday-night shot list for tomorrow (one idea, three native versions) | `Generate this Saturday's reel shot list — one idea, three native versions for TikTok, Instagram, and YouTube` |
 | 6:30 | **DATE NIGHT** — phone away | — |
 | 10:30 | bed | — |
 
@@ -218,9 +218,9 @@ Draft today's build-in-public thread
 | 11:00 | cleaning with wife (1.5hr) | — |
 | 12:30 | lunch | — |
 | 1:30 | 75 weekend apps (1.5hr) | — |
-| **3:00** | **🎯 Record 3 Zealova Reels (1hr)** — Cal AI external-camera style per Fri shot list. **Every Saturday, no exceptions.** | — |
-| **4:00** | **🎯 Repurpose into 9 platform exports (30m)** — generate TikTok/IG/YT Shorts variants per clip | `I recorded these 3 clips: <descriptions>. Give me the 9 platform exports` |
-| **4:30** | **Edit 9 exports in CapCut (30m)** — different hook/audio/caption per platform per clip | — |
+| **3:00** | **🎯 Record this week's footage (1hr)** — Cal AI external-camera style per Fri shot list. **Every Saturday, no exceptions.** | — |
+| **4:00** | **🎯 Cut into native versions per platform (30m)** — ONE idea → a distinct native piece per platform (TikTok raw trend cut, IG polished Reel, YT searchable voice-over Short). NOT identical exports. See CONTENT ENGINE section. | `I recorded these clips: <descriptions>. Give me native versions per platform — one idea, three native cuts` |
+| **4:30** | **Edit the native cuts in CapCut (30m)** — each platform its own hook/edit/pacing/audio, never a reposted clip | — |
 | **5:00** | **Zealova Reddit live** — draft first | `Draft my r/getmotivated post for tonight` OR `Draft my r/Fitness Saturday self-promo post` |
 | 5:10 | wife time | — |
 | 10:30 | bed | — |
@@ -335,6 +335,48 @@ Then:
 
 ---
 
+## CONTENT ENGINE — "one idea, three native versions" (set 2026-06-07)
+
+**The rule:** each batch picks ONE idea, then makes a genuinely platform-native piece for each platform. Never the same video or carousel reposted across all three. A TikTok dumped on YouTube flops; a polished IG Reel reads as an ad on TikTok. Same idea, three different machines:
+- **TikTok** — raw trend / POV cut, trending sound, lo-fi. (+ Photo Mode carousel: casual swipe-storytime.)
+- **Instagram** — polished Reel + the save-bait educational carousel (IG's strongest format).
+- **YouTube** — searchable voice-over Short with a findable title (evergreen, gets indexed). Carousels: none native, skip.
+
+**Lead platform: TikTok** (most effort there; keep IG + YT lighter while still new). Change this line if you'd rather lead with IG.
+
+**Where it lands** — one dated folder, open it and everything for the day is there:
+
+```
+docs/planning/marketing/content/<YYYY-MM-DD>/
+  instagram/  reels.md   carousels.md
+  tiktok/     reels.md   carousels.md
+  youtube/    shorts.md   (carousels optional)
+```
+
+Two agents fill it: **reels-producer** writes the reels/shorts, **social-post-creator** writes the carousels. Both hand you the hooks in chat after writing, so you can act without opening files.
+
+### Prompts to generate a batch (paste into Claude Code)
+
+Full batch (recommended — reels + carousels, all platforms, one idea):
+
+```
+Generate today's content batch — one idea, three native versions. Reels for TikTok, Instagram, and YouTube, plus distinct carousels for Instagram and TikTok. Lead platform TikTok. Write to the dated content folder and hand me the hooks.
+```
+
+Just the reels / shorts:
+
+```
+Generate today's reel batch — one idea, three native versions for TikTok, Instagram, and YouTube
+```
+
+Just the carousels:
+
+```
+Draft today's carousels — one idea, native versions for Instagram and TikTok
+```
+
+---
+
 ## WEEK AT A GLANCE
 
 ```
@@ -358,14 +400,15 @@ Install/audience work (separate from GEO — Cal AI playbook):
   Sun 9:30   — Social packs ×5 apps (social-post-creator) — drafts X/LI/IG/Reddit copy
   Sun 12:05  — Queue everything into Typefully + MBS + TT + YT
   1st Sun 3-5pm — Record + rough-edit 1 YouTube long-form  ← LLM-citation engine
-  Mon 11am    — Reel #1 auto-drops (IG + TikTok + YT Shorts) + IG carousel
-  Wed 11am    — Reel #2 auto-drops
+  Mon 11am    — Idea A native: TikTok cut + IG Reel + carousel (IG + TikTok Photo Mode)
+  Wed 11am    — Idea B native: TikTok cut + YouTube Short
   Mid-week after 1st Sun — 1hr polish + upload
-  Fri  5:45pm — Reels shot list      (reels-producer shot-list)  ← prep tomorrow
-  Fri 11am    — Reel #3 auto-drops + IG carousel
-  Sat 3:00pm  — Record 3 Reels       (manual filming per shot list)
-  Sat 4:00pm  — Repurpose to 9 exports (reels-producer repurpose)  ← TT/IG/YT variants
-  Sat 4:30pm  — Edit 9 exports (manual CapCut)
+  Fri  5:45pm — Reel shot list, one idea 3 native versions  (reels-producer shot-list)  ← prep tomorrow
+  Fri 11am    — Idea C native: TikTok cut + IG Reel + carousel (IG + TikTok Photo Mode)
+  Sat 3:00pm  — Record this week's footage  (manual filming per shot list)
+  Sat 4:00pm  — Cut into native versions per platform (reels-producer)  ← TikTok/IG/YT distinct
+  Weekly tally: TikTok 3 reels + 2 carousels · IG 2 reels + 2 carousels · YouTube 1 Short
+  Sat 4:30pm  — Edit the native cuts (manual CapCut)  ← each platform its own hook/edit/audio
   (after posting) — log it           (reels-producer log)
   1st of month — performance review  (reels-producer performance)
 

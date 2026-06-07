@@ -466,6 +466,66 @@ logged or diagnosed.
 
 ---
 
+## ⚠️ Content-calendar output structure (binding for reels-producer + social-post-creator ONLY)
+
+All POSTABLE visual content (Reels / Shorts / carousels) is written into ONE dated,
+platform-partitioned tree so the founder opens a single date folder and sees everything to
+post that day. This supersedes the old flat paths (`reels/shot-lists.md`,
+`marketing/<platform>/posts.md`) for Reels + carousels.
+
+```
+docs/planning/marketing/content/<YYYY-MM-DD>/
+  instagram/
+    reels.md        ← reels-producer       (per-reel hook, audio, caption, shot-by-shot)
+    carousels.md    ← social-post-creator  (slide-by-slide + caption + hashtags)
+  tiktok/
+    reels.md        ← reels-producer       (TikTok-native raw/trend cut: own hook, edit, sound)
+    carousels.md    ← social-post-creator  (TikTok Photo Mode: casual swipe-storytime, own slides+sound)
+  youtube/
+    shorts.md       ← reels-producer       (search-native voice-over Short + searchable title)
+    carousels.md    ← social-post-creator  (OPTIONAL — Community multi-image post; eligibility-gated, often skipped)
+```
+
+Same IDEA across the row; each cell is a DISTINCT native artifact, not a reposted copy.
+
+**Rules:**
+- `<YYYY-MM-DD>` = the batch/post date in the user's local timezone. Default to **today** unless the user names another date. Create the date + platform folders if missing.
+- **reels-producer owns** `reels.md` (instagram, tiktok) + `shorts.md` (youtube). **social-post-creator owns** `carousels.md` (instagram primary, tiktok Photo Mode; youtube only on request).
+- **THE MODEL — one idea, three native versions (binding, set by the founder 2026-06-07).** Each batch starts from ONE idea / wedge (e.g. "food-scan surprise"). That single idea is then conceived NATIVELY for each platform — a different shoot, format, edit, length, and audio per platform, matched to that platform's culture and discovery engine (see "Platform-native doctrine" below). **Do NOT write one clip/carousel and clone it into three files with only the caption swapped.** The shared thing is the IDEA; the artifact is distinct per platform. Each platform file notes the shared idea at the top (e.g. `Idea: food-scan surprise`) so the founder sees the through-line.
+- **Reels / Shorts** — each platform's `reels.md` / `shorts.md` describes a platform-native piece for that day's idea: TikTok gets a raw trend / POV cut with a trending sound; Instagram gets a more polished Reel; YouTube gets a searchable voice-over Short. Different hooks, different edits, different audio. Never identical copy (also avoids the watermark/fingerprint penalty).
+- **Carousels are platform-specific, NOT one carousel cloned.** Instagram is the primary: a polished educational save-bait carousel. TikTok Photo Mode is a SEPARATE, more casual swipe-storytime version of the same idea (usually fewer slides, native caption, a trending sound) — never the IG slides reposted. YouTube has no native carousel: produce a Community multi-image post ONLY if the founder asks, and flag that Community-tab access is eligibility-gated; otherwise skip YouTube carousels. When in doubt, carousels are IG-first.
+- **Lead-platform weighting.** The founder is new and time-boxed. Unless told otherwise, put the most effort into the founder's lead platform and keep the other two lighter. Ask once (AskUserQuestion) which platform is the lead if it is not recorded anywhere.
+- **APPEND within a date file** (never overwrite a prior batch in the same date file).
+- `reels/posted-log.md` and `reels/performance.md` stay where they are (logging + perf history, not per-date drafts). X / LinkedIn / Reddit text posts keep their existing `marketing/<platform>/posts.md` — this dated tree is for Reels + carousels only.
+
+### Platform-native doctrine (what "native" means per platform — use this to make the 3 versions genuinely different)
+
+Each platform is a different machine with a different discovery engine and culture. The 3 versions of one idea must reflect that, not just swap captions.
+
+| | TikTok | Instagram | YouTube Shorts |
+|---|---|---|---|
+| **Culture** | Raw, fast, authentic. Polish reads as an ad and gets punished. Lo-fi wins. | More polished and aesthetic. Polish helps. Aspirational. | Search-first, intent-driven, teaching tone. |
+| **Discovery** | For-You algo + sound + trend velocity. ~48h lifespan. | Explore + audio + hashtags + saves/sends. ~48h–1wk. | **Search + suggested. Evergreen** — resurfaces for months. |
+| **Reel/Short shape** | POV / storytime / comment-reply / duet. Native text-on-screen. Trending sound mandatory. Hook in <1s. | Polished Reel, trending or curated audio, caption-SEO + 3–5 niche hashtags. | Searchable TITLE is half the battle. Voice-over that teaches (gets transcribed/indexed). Longer is fine. |
+| **Carousel shape** | Photo Mode: casual swipe-storytime, fewer slides, native caption, a sound. | **Primary format.** Polished educational save-bait, 6–10 slides, keyword-first caption. | None native. Community multi-image post only, eligibility-gated. Usually skip. |
+| **Hook style** | "POV: you..." / fast visual shock / trend format | "Why I stopped..." / aesthetic reveal / save-prompt | spoken question / "I tested..." / searchable phrasing |
+
+**Rule of thumb:** TikTok = react to a trend raw. Instagram = make it look good and save-worthy. YouTube = make it findable and teach. Same idea, three different machines.
+
+## ⚠️ Hand-feed the current batch inline (binding for reels-producer + social-post-creator)
+
+Writing to the file is NOT enough. After writing, the agent's RESPONSE must hand the founder
+the date's content inline so they can act without opening the file. The founder is new to
+content creation — make it skimmable. At the top of the "what to do next" section, print for
+the date just produced:
+
+- **Each reel / short:** the platform + the hook line (first 3 sec, verbatim) + the trending audio + length. One line each.
+- **Each carousel:** the platform + the cover-slide hook + the planned post date/time. One line each.
+
+Then list the clickable file paths under it. The founder reads the hooks in chat; the files
+hold the full shot-by-shot / slide-by-slide detail. A run that writes the files but does not
+hand-feed the hooks inline is a failed run.
+
 ## Hand-off / "what to do next" note (always last)
 
 Every output ends with a "what to do next" section, in plain English. Format:
