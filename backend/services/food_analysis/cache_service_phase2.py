@@ -79,6 +79,22 @@ _NON_FOOD_TOKEN_RE = re.compile(
     re.IGNORECASE,
 )
 
+# High-confidence whole-token brand-abbreviation expansion so common shorthand
+# ("mcd nuggets", "bk whopper") resolves to the same override/common-foods rows
+# as the full brand name. Whole-token only (never substring) to avoid mangling
+# real words. Keep this map deliberately small + unambiguous — anything fuzzier
+# is handled by the downstream trigram match, and exact repeats by recent_log.
+# Deliberately NOT mapping ambiguous tokens (e.g. "tb" = tablespoon, not Taco Bell).
+_BRAND_ALIASES = {
+    "mcd": "mcdonalds",
+    "mcds": "mcdonalds",
+    "bk": "burger king",
+    "dq": "dairy queen",
+    "cfa": "chick fil a",
+    "tbell": "taco bell",
+    "cbo": "chipotle",
+}
+
 
 def _normalize_food_name(raw: str) -> str:
     """Canonical normalization for cache keys + DB lookups.
@@ -97,6 +113,14 @@ def _normalize_food_name(raw: str) -> str:
     # Normalize whitespace + lowercase + collapse multi-whitespace
     s = s.replace("_", " ")
     s = _MULTI_WS_RE.sub(" ", s).strip().lower()
+    # Whole-token brand-abbreviation expansion (high-confidence map only).
+    if s and _BRAND_ALIASES:
+        _toks = s.split(" ")
+        _expanded = [_BRAND_ALIASES.get(t, t) for t in _toks]
+        _s2 = " ".join(_expanded)
+        if _s2 != s:
+            logger.debug("brand-alias normalize: %r -> %r", s, _s2)
+            s = _s2
     # Canonical DB form uses underscores between words (e.g.
     # 'baked_chicken_breast', 'big_mac_american'). Output in that form so
     # exact-match lookups against food_nutrition_overrides_canonical hit

@@ -395,6 +395,7 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
         user_id: Optional[str] = None,
         personal_history: Optional[List[Dict]] = None,
         standing_rules_block: str = "",
+        fast_macros_only: bool = False,
     ) -> Optional[Dict]:
         """
         Parse a text description of food and extract nutrition information with goal-based rankings.
@@ -405,6 +406,14 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
             user_goals: List of user fitness goals (e.g., ["build_muscle", "lose_weight"])
             nutrition_targets: Dict with daily_calorie_target, daily_protein_target_g, etc.
             rag_context: Optional RAG context from ChromaDB for personalized feedback
+            fast_macros_only: SPEED PATH. When True the model emits a MINIMAL JSON —
+                macros + micronutrient numbers only, NO coaching prose (encouragements,
+                warnings, ai_suggestion, recommended_swap, overall_meal_score). The
+                streaming endpoint then streams those in via a deferred `coach_tips`
+                event (see food_logging_stream.py). Generating the prose was the bulk
+                of the output tokens — dropping it is what takes time-to-result from
+                ~14s to ~4s. The slow `scoring_criteria` / `tip_guidance` prompt blocks
+                are also omitted in this mode. Caps max_output_tokens lower.
 
         Returns:
             Dictionary with food_items (with rankings), total_calories, macros, ai_suggestion, etc.
@@ -434,6 +443,9 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
                 # the food-text cache, otherwise a stale (rule-free) result
                 # would be served after the user adds/edits a rule.
                 standing_rules_block or "",
+                # Speed path returns a tip-less (macros-only) shape — must NOT
+                # share a cache entry with a full-mode caller, and vice versa.
+                "fast" if fast_macros_only else "full",
             )
             # Skip cache entirely when there's personal history — the note is
             # user-specific AND mood_before-specific, and we'd rather re-run than
@@ -533,9 +545,47 @@ ULTRA-PROCESSED (is_ultra_processed): true if food would be NOVA Group 4 — con
 
 Per-item inflammation_score: Rate EACH food item individually. Meal-level inflammation_score: Calorie-weighted average of all items (round to nearest int)."""
 
+        # SPEED PATH — macros-only schema. No coaching prose (encouragements,
+        # warnings, ai_suggestion, recommended_swap, overall_meal_score): those
+        # stream in later via the deferred `coach_tips` event. The model emits a
+        # fraction of the tokens → time-to-result drops from ~14s to ~4s. Keep
+        # the cheap micronutrient NUMBERS so the micro display stays instant, and
+        # keep personal_history_note / applied_instruction_note only when their
+        # inputs are present (otherwise they're always null anyway).
+        if fast_macros_only:
+            _ph_note = (
+                ',\n  "personal_history_note": "Short friendly callout when user has prior history with this food — else null"'
+                if personal_history else ""
+            )
+            response_format = '''{{
+  "food_items": [
+    {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
+  ],
+  "total_calories": 450,
+  "protein_g": 25,
+  "carbs_g": 40,
+  "fat_g": 15,
+  "fiber_g": 5,
+  "sugar_g": 8,
+  "sodium_mg": 500,
+  "cholesterol_mg": 50,
+  "vitamin_a_ug": 150,
+  "vitamin_c_mg": 10,
+  "vitamin_d_iu": 40,
+  "calcium_mg": 100,
+  "iron_mg": 2,
+  "potassium_mg": 300,
+  "added_sugar_g": 5,
+  "caffeine_mg": 0,
+  "alcohol_g": 0,
+  "inflammation_score": 5,
+  "is_ultra_processed": false,
+  "corrected_query": "Corrected food description or null if no typos",
+  "applied_instruction_note": "Short past-tense note of what a user CORRECTION/INSTRUCTION changed — null if the input was a plain food description with no correction"''' + _ph_note + '''
+}}'''
         # Response format with micronutrients for complete nutrient tracking
         # Added count, weight_per_unit_g for countable items, and unit for measurement type
-        if user_goals or nutrition_targets:
+        elif user_goals or nutrition_targets:
             response_format = '''{{
   "food_items": [
     {{"name": "Food name", "amount": "portion", "calories": 150, "protein_g": 10, "carbs_g": 15, "fat_g": 5, "fiber_g": 2, "goal_score": 7, "weight_g": 100, "unit": "g", "count": null, "weight_per_unit_g": null, "inflammation_score": 5, "is_ultra_processed": false}}
@@ -623,10 +673,18 @@ SCORE-BASED TIP TONE:
 - Score 6-7: Balanced tone — briefly note what's good, then lead with a concrete improvement. Do NOT be overly enthusiastic. A 6/10 meal is average, not great. Example: "Good protein from chicken. Swap white rice for brown rice and skip the cheese to cut 150 cal and add fiber."
 - Score 8-10: Reinforce positive behavior and explain specific health benefits."""
 
+        # SPEED PATH — drop the scoring rubric + coach-tip guidance entirely.
+        # Both only exist to drive coaching prose / the overall_meal_score, which
+        # the fast schema no longer emits (it streams in via `coach_tips`).
+        # Removing them shrinks the prompt AND removes the model's reason to emit
+        # the slow prose fields.
+        _scoring_block = "" if fast_macros_only else (scoring_criteria if user_goals else "")
+        _tip_block = "" if fast_macros_only else tip_guidance
+
         prompt = f'''Parse food and return nutrition JSON. Be fast and accurate.
 
 Food: "{description}"
-{user_context}{rag_section}{standing_rules_block}{personal_history_section}{scoring_criteria if user_goals else ""}{tip_guidance}
+{user_context}{rag_section}{standing_rules_block}{personal_history_section}{_scoring_block}{_tip_block}
 
 Return ONLY JSON (no markdown):
 {response_format}
@@ -949,7 +1007,10 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    max_output_tokens=8192,
+                    # Fast path emits a small macros-only JSON (no prose) — a
+                    # tighter cap bounds worst-case generation time. Full mode
+                    # keeps 8192 so dense regional multi-item meals don't truncate.
+                    max_output_tokens=2048 if fast_macros_only else 8192,
                     temperature=0.2,
                     thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),

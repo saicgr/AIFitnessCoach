@@ -276,6 +276,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     # over-budget fork are model-generated here.
                     "next_meal_suggestion": review.get("next_meal_suggestion", ""),
                     "over_budget_fork": review.get("over_budget_fork"),
+                    # Smart sauce/side suggestions for the detected food.
+                    "suggested_addons": review.get("suggested_addons", []),
                 }
         except Exception as e:
             logger.error(f"[EnrichTips] Gemini call failed: {e}", exc_info=True)
@@ -289,6 +291,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             "health_score": health_score,
             "next_meal_suggestion": "",
             "over_budget_fork": None,
+            "suggested_addons": [],
         }
 
     async def analyze_food(
@@ -303,9 +306,18 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         meal_type: Optional[str] = None,
         personal_history: Optional[List[Dict]] = None,
         standing_rules_block: str = "",
+        fast_macros_only: bool = False,
     ) -> Dict[str, Any]:
         """
         Analyze food with intelligent caching.
+
+        fast_macros_only (SPEED PATH): when True, (1) a cache-miss runs the
+        macros-only Gemini schema (no coaching prose), and (2) cache HITS skip
+        the synchronous `_enrich_cache_hit_with_tips` Gemini call entirely. Both
+        the miss and the hit therefore return with NO tips — the streaming
+        endpoint streams tips in afterwards via a deferred `coach_tips` event.
+        This is what makes branded cache hits truly instant (<500ms) instead of
+        paying a 5-8s `generate_food_review` call on every hit.
 
         Order of operations:
         0a. Check user's saved foods (instant, user-scoped)
@@ -344,8 +356,27 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(saved)
                 result["cache_hit"] = True
                 result["cache_source"] = "saved_food"
-                # Enrich cache hit with contextual tips
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                # Enrich cache hit with contextual tips (skipped on the speed
+                # path — tips stream in later via the deferred `coach_tips` event).
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                return result
+
+        # Step 0a.5: Match the user's OWN recent food logs (instant, ungated).
+        # If they typed the exact same thing before ("Mcd nuggets"), return the
+        # macros they already logged — no Gemini, no override lookup. This is the
+        # most common repeat-logging path and resolves sub-second. Distinct from
+        # Step 0b (user_contributed, gated by the contribute flag) and from the
+        # mood/symptom personal-history lookup.
+        if use_cache and user_id:
+            recent = await self._try_recent_log(description, user_id)
+            if recent:
+                logger.info(f"🎯 Recent-log HIT: {description}")
+                result.update(recent)
+                result["cache_hit"] = True
+                result["cache_source"] = "recent_log"
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 0b: Phase-2 user_contributed cache (per-user dishes from past
@@ -362,7 +393,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(analysis)
                 result["cache_hit"] = True
                 result["cache_source"] = "user_contributed"
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 0c: Try food nutrition overrides (canonical 198k rows)
@@ -373,7 +405,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(override)
                 result["cache_hit"] = True
                 result["cache_source"] = "override"
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 1: Try common foods database (instant lookup)
@@ -384,7 +417,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(common_food)
                 result["cache_hit"] = True
                 result["cache_source"] = "common_foods"
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 1b: Try multi-item lookup (overrides + common foods)
@@ -395,7 +429,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(multi_result)
                 result["cache_hit"] = True
                 result["cache_source"] = "multi_lookup"
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 1c: Try modified override (base item + modifiers like "extra patty", "no cheese")
@@ -406,7 +441,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(modified)
                 result["cache_hit"] = True
                 result["cache_source"] = "modified_override"
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 2: Try food analysis cache (cached AI response)
@@ -417,7 +453,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(cached)
                 result["cache_hit"] = True
                 result["cache_source"] = "analysis_cache"
-                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                if not fast_macros_only:
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
         # Step 2.5: Phase-2 compound-decompose for multi-dish text inputs
@@ -470,7 +507,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     result.update(aggregated)
                     result["cache_hit"] = True
                     result["cache_source"] = "compound_decompose"
-                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                    if not fast_macros_only:
+                        await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                     logger.info(
                         f"🎯 Compound HIT: {len(component_results)} components from cache stack"
                     )
@@ -528,6 +566,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 personal_history=personal_history,
                 # L3 — standing food-logging rules injected into the Gemini prompt.
                 standing_rules_block=standing_rules_block,
+                fast_macros_only=fast_macros_only,
             )
         finally:
             # Resolve + de-register the in-flight future BEFORE the leader does
@@ -723,6 +762,66 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
 
         except Exception as e:
             logger.warning(f"Saved food lookup failed: {e}", exc_info=True)
+            return None
+
+    async def _try_recent_log(
+        self, description: str, user_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Match the user's OWN most-recent food log by the exact text they typed.
+
+        High-confidence exact-repeat match (LOWER+TRIM on user_query) — when a
+        user logs "Mcd nuggets" today and again tomorrow, the second log resolves
+        instantly from their prior entry instead of re-running Gemini. Window:
+        last 90 days. Reuses _saved_food_to_analysis for the row→analysis shape.
+
+        Args:
+            description: Food description (the raw text the user typed)
+            user_id: User ID for scoping
+
+        Returns:
+            Formatted analysis result if a matching prior log exists, else None.
+        """
+        try:
+            supabase = get_supabase()
+            normalized = description.strip().lower()
+            if not normalized:
+                return None
+            async with supabase.get_session() as session:
+                result = await session.execute(
+                    text(
+                        "SELECT food_items, total_calories, protein_g, carbs_g, "
+                        "fat_g, fiber_g "
+                        "FROM food_logs "
+                        "WHERE user_id = :uid AND deleted_at IS NULL "
+                        "AND food_items IS NOT NULL "
+                        "AND LOWER(TRIM(user_query)) = :q "
+                        "AND logged_at > (NOW() - INTERVAL '90 days') "
+                        "ORDER BY logged_at DESC LIMIT 1"
+                    ),
+                    {"uid": user_id, "q": normalized},
+                )
+                row = result.fetchone()
+
+            if not row:
+                return None
+
+            m = dict(row._mapping)
+            # Reshape food_logs row (protein_g/…) into the saved_foods shape
+            # (total_protein_g/…) so the existing mapper handles it.
+            saved_like = {
+                "name": description.strip(),
+                "total_calories": m.get("total_calories"),
+                "total_protein_g": m.get("protein_g"),
+                "total_carbs_g": m.get("carbs_g"),
+                "total_fat_g": m.get("fat_g"),
+                "total_fiber_g": m.get("fiber_g"),
+                "food_items": m.get("food_items") or [],
+            }
+            return self._saved_food_to_analysis(saved_like)
+
+        except Exception as e:
+            logger.warning(f"Recent-log lookup failed: {e}", exc_info=True)
             return None
 
     def _saved_food_to_analysis(self, saved: Dict[str, Any]) -> Dict[str, Any]:

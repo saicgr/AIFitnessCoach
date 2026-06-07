@@ -565,6 +565,47 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
             return {"lighter_next_meal": lighter, "workout_tweak": workout}
         return None
 
+    @staticmethod
+    def _sanitize_addons(raw) -> list:
+        """Normalize the model's `suggested_addons` into a clean list.
+
+        Each entry must have a non-empty name + numeric macros. Caps at 5,
+        drops malformed/zero-everything rows, and bounds obviously bogus
+        calories. Returns [] when nothing valid — the client renders no chips.
+        """
+        if not isinstance(raw, list):
+            return []
+        out = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name", "") or "").strip()
+            if not name or len(name) > 60:
+                continue
+            try:
+                cal = max(0, min(1500, int(round(float(item.get("calories", 0) or 0)))))
+                p = max(0.0, round(float(item.get("protein_g", 0) or 0), 1))
+                c = max(0.0, round(float(item.get("carbs_g", 0) or 0), 1))
+                f = max(0.0, round(float(item.get("fat_g", 0) or 0), 1))
+                w = item.get("weight_g")
+                w = round(float(w), 1) if w not in (None, "") else None
+            except (TypeError, ValueError):
+                continue
+            # Skip entries with no nutritional signal at all.
+            if cal == 0 and p == 0 and c == 0 and f == 0:
+                continue
+            out.append({
+                "name": name,
+                "calories": cal,
+                "protein_g": p,
+                "carbs_g": c,
+                "fat_g": f,
+                "weight_g": w,
+            })
+            if len(out) >= 5:
+                break
+        return out
+
     async def generate_food_review(
         self,
         food_name: str,
@@ -738,10 +779,14 @@ Return ONLY valid JSON (no markdown) with this exact structure:
   "over_budget_fork": {{
     "lighter_next_meal": "one short sentence — a specific lighter meal for the rest of today",
     "workout_tweak": "one short sentence — a specific tomorrow-workout adjustment"
-  }}
+  }},
+  "suggested_addons": [
+    {{"name": "Sweet & Sour Sauce", "calories": 50, "protein_g": 0, "carbs_g": 12, "fat_g": 0, "weight_g": 28}}
+  ]
 }}
 - next_meal_suggestion: ONLY fill when daily budget context is provided AND there is meaningful budget left; otherwise empty string.
 - over_budget_fork: ONLY fill BOTH options when the prompt explicitly says the day is well over budget; otherwise set both to empty strings.
+- suggested_addons: 3-5 sauces / dips / condiments / small sides that commonly PAIR with this specific food and that the user likely had but may not have logged (e.g. nuggets → dipping sauces; fries → ketchup; toast → butter/jam; salad → dressing). Each needs realistic macros for ONE typical serving. Use the food's own cuisine/brand for relevance. Return [] when no add-on makes sense (e.g. a plain beverage, a complete bowl). Do NOT suggest the food itself or a full meal — only small accompaniments.
 
 Rules:
 - health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
@@ -768,7 +813,7 @@ Rules:
                 contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
                 config=types.GenerateContentConfig(
                     system_instruction="You are a nutrition expert AI. Return only valid JSON.",
-                    max_output_tokens=1200,
+                    max_output_tokens=1400,
                     temperature=0.1,
                     thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
@@ -793,6 +838,7 @@ Rules:
                     "health_score": max(1, min(10, int(data.get("health_score", 5)))),
                     "next_meal_suggestion": str(data.get("next_meal_suggestion", "") or "").strip(),
                     "over_budget_fork": self._sanitize_fork(data.get("over_budget_fork")),
+                    "suggested_addons": self._sanitize_addons(data.get("suggested_addons")),
                 }
 
             # Fallback: manual markdown strip
@@ -812,6 +858,7 @@ Rules:
                 "health_score": max(1, min(10, int(data.get("health_score", 5)))),
                 "next_meal_suggestion": str(data.get("next_meal_suggestion", "") or "").strip(),
                 "over_budget_fork": self._sanitize_fork(data.get("over_budget_fork")),
+                "suggested_addons": self._sanitize_addons(data.get("suggested_addons")),
             }
 
         except asyncio.TimeoutError:
