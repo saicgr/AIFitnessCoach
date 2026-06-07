@@ -151,6 +151,45 @@ List<RouteBase> _utilityRoutes() => [
         },
       ),
 
+      // Meal Planner — day view with 4 slots, macro rings, coach review,
+      // grocery + apply-to-today. Previously only reachable via the Recipes
+      // sub-tab; now a first-class deep-linkable route (also a Quick Action
+      // tile + nutrition entry). Optional `?date=YYYY-MM-DD` query selects the
+      // planned day (defaults to today).
+      GoRoute(
+        path: '/nutrition/meal-planner',
+        builder: (context, state) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final dateStr = state.uri.queryParameters['date'];
+          final date = DateTime.tryParse(dateStr ?? '') ?? DateTime.now();
+          return _MealPlannerRouteShell(isDark: isDark, date: date);
+        },
+      ),
+
+      // Grocery — standalone, surfaced entry. With `?listId=…` opens that
+      // specific list (e.g. the planner's "Grocery" button); without it,
+      // opens the grocery-lists index so the feature is discoverable on its
+      // own rather than buried behind the meal planner.
+      GoRoute(
+        path: '/nutrition/grocery',
+        builder: (context, state) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final listId = state.uri.queryParameters['listId'];
+          return _GroceryRouteShell(isDark: isDark, listId: listId);
+        },
+      ),
+
+      // From Fridge — snap your fridge/pantry → AI suggests recipes. Surfaced
+      // as a standalone route (also a Quick Action tile); lands on the scan
+      // screen with an empty photo tray so the user adds shots there.
+      GoRoute(
+        path: '/nutrition/from-fridge',
+        builder: (context, state) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return _FromFridgeRouteShell(isDark: isDark);
+        },
+      ),
+
       // Glossary
       GoRoute(
         path: '/glossary',
@@ -657,6 +696,86 @@ class _SavedHubRouteShell extends ConsumerWidget {
           userId: snap.data ?? '',
           isDark: isDark,
         );
+      },
+    );
+  }
+}
+
+/// Route shell for `/nutrition/meal-planner` — resolves the current user id
+/// then mounts [MealPlannerScreen] for the requested day. Surfaces the planner
+/// as a first-class, deep-linkable destination (it previously had no route).
+class _MealPlannerRouteShell extends ConsumerWidget {
+  final bool isDark;
+  final DateTime date;
+  const _MealPlannerRouteShell({required this.isDark, required this.date});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<String?>(
+      future: ref.read(apiClientProvider).getUserId(),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return MealPlannerScreen(
+          userId: snap.data ?? '',
+          isDark: isDark,
+          date: date,
+        );
+      },
+    );
+  }
+}
+
+/// Route shell for `/nutrition/grocery` — resolves the current user id then
+/// mounts either a specific [GroceryListScreen] (when `listId` is supplied,
+/// e.g. from the planner's Grocery button) or the discoverable
+/// [GroceryListsIndexScreen] when opened standalone.
+class _GroceryRouteShell extends ConsumerWidget {
+  final bool isDark;
+  final String? listId;
+  const _GroceryRouteShell({required this.isDark, this.listId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<String?>(
+      future: ref.read(apiClientProvider).getUserId(),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        final uid = snap.data ?? '';
+        final lid = listId;
+        if (lid != null && lid.isNotEmpty) {
+          return GroceryListScreen(listId: lid, userId: uid, isDark: isDark);
+        }
+        return GroceryListsIndexScreen(userId: uid, isDark: isDark);
+      },
+    );
+  }
+}
+
+/// Route shell for `/nutrition/from-fridge` — resolves the current user id
+/// then mounts [RecipeFromFridgeScreen] (snap fridge → AI recipe suggestions).
+class _FromFridgeRouteShell extends ConsumerWidget {
+  final bool isDark;
+  const _FromFridgeRouteShell({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<String?>(
+      future: ref.read(apiClientProvider).getUserId(),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return RecipeFromFridgeScreen(userId: snap.data ?? '', isDark: isDark);
       },
     );
   }

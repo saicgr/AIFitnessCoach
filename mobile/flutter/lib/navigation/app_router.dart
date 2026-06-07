@@ -209,6 +209,10 @@ import '../screens/wrapped/weekly_wrapped_screen.dart';
 import '../screens/dashboard/coach_dashboard_screen.dart';
 import '../screens/gym_profile/find_gyms_screen.dart';
 import '../screens/nutrition/recipes/public_recipe_screen.dart';
+import '../screens/nutrition/meal_planner/meal_planner_screen.dart';
+import '../screens/nutrition/grocery/grocery_list_screen.dart';
+import '../screens/nutrition/grocery/grocery_lists_index_screen.dart';
+import '../screens/nutrition/recipes/recipe_from_fridge_screen.dart';
 
 part 'app_router_workout_routes.dart';
 part 'app_router_pre_auth_routes.dart';

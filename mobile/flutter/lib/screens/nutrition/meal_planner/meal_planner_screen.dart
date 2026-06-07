@@ -45,9 +45,16 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
   bool _loading = true;
   String? _error;
 
+  /// The day currently being planned. Initialised from the route/caller's
+  /// `date`, then swapped by the multi-day day-strip — each day has its own
+  /// per-date meal plan (the backend is per-date), so changing the day just
+  /// re-fetches/creates that day's plan.
+  late DateTime _selectedDate;
+
   @override
   void initState() {
     super.initState();
+    _selectedDate = DateUtils.dateOnly(widget.date);
     _load();
   }
 
@@ -55,12 +62,12 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
     setState(() { _loading = true; _error = null; });
     final repo = ref.read(recipeRepositoryProvider);
     try {
-      final plans = await repo.listMealPlans(widget.userId, planDate: widget.date);
+      final plans = await repo.listMealPlans(widget.userId, planDate: _selectedDate);
       MealPlan plan;
       if (plans.isEmpty) {
         plan = await repo.createMealPlan(
           widget.userId,
-          MealPlanCreate(planDate: widget.date, name: 'Plan for ${widget.date.month}/${widget.date.day}'),
+          MealPlanCreate(planDate: _selectedDate, name: 'Plan for ${_selectedDate.month}/${_selectedDate.day}'),
         );
       } else {
         plan = plans.first;
@@ -72,7 +79,9 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
         ));
         plan = await repo.getMealPlan(plan.id);
       }
-      final sim = await repo.simulatePlan(plan.id, withSwaps: false);
+      // withSwaps: true so the backend returns per-item AI alternates
+      // (`swap_suggestions`) — surfaced as a one-tap "↻ swap" on each slot.
+      final sim = await repo.simulatePlan(plan.id, withSwaps: true);
       if (mounted) setState(() { _plan = plan; _sim = sim; _loading = false; });
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
@@ -118,6 +127,8 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
               ],
             ),
           ),
+          // Multi-day strip — plan any of the next two weeks, not just today.
+          _buildDayStrip(text, muted, accent, surface),
           const SizedBox(height: 4),
           Expanded(
             child: _loading
@@ -190,7 +201,7 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
               final applyBtn = ElevatedButton.icon(
                 onPressed: () async {
                   try {
-                    final res = await ref.read(recipeRepositoryProvider).applyPlan(_plan!.id, widget.date);
+                    final res = await ref.read(recipeRepositoryProvider).applyPlan(_plan!.id, _selectedDate);
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
                         'Logged ${res.foodLogIds.length} item(s)'
@@ -244,8 +255,77 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
     );
   }
 
+  /// Horizontal day selector — today + the next 13 days. Tapping a day swaps
+  /// `_selectedDate` and re-fetches that day's plan. Keeps the planner a
+  /// multi-day tool rather than today-only.
+  Widget _buildDayStrip(Color text, Color muted, Color accent, Color surface) {
+    final today = DateUtils.dateOnly(DateTime.now());
+    const weekday = ['', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+    return SizedBox(
+      height: 64,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: 14,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final day = today.add(Duration(days: i));
+          final selected = DateUtils.isSameDay(day, _selectedDate);
+          final isToday = i == 0;
+          return GestureDetector(
+            onTap: selected
+                ? null
+                : () {
+                    setState(() => _selectedDate = day);
+                    _load();
+                  },
+            child: Container(
+              width: 50,
+              decoration: BoxDecoration(
+                color: selected ? accent : surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                    color: selected ? accent : muted.withValues(alpha: 0.15)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isToday ? 'TODAY' : weekday[day.weekday],
+                    style: TextStyle(
+                      color: selected ? Colors.white : muted,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '${day.day}',
+                    style: TextStyle(
+                      color: selected ? Colors.white : text,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildBody(Color accent, Color text, Color muted, Color surface) {
     final p = _plan!;
+    // Per-item AI alternates from the simulate pass. Only recipe-backed swaps
+    // are one-tap-applicable here (the Dart model carries `newRecipeId`).
+    final swaps = <String, AiSwapSuggestion>{};
+    for (final s in _sim?.swapSuggestions ?? const <AiSwapSuggestion>[]) {
+      final id = s.itemId;
+      if (id != null && s.newRecipeId != null) swaps[id] = s;
+    }
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       children: [
@@ -259,14 +339,42 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
           _MealSlotCard(
             mealType: m, items: p.items.where((i) => i.mealType == m).toList(),
             isDark: widget.isDark, accent: accent,
+            swaps: swaps,
             onAdd: () => _addToSlot(m),
             onRemove: (id) async {
               await ref.read(recipeRepositoryProvider).removePlanItem(p.id, id);
               await _load();
             },
+            onSwap: (item, s) => _applySwap(m, item, s),
           ),
       ],
     );
+  }
+
+  /// Apply an AI swap to a slot item: drop the current recipe, add the
+  /// suggested alternate, and re-simulate. Reuses the existing add/remove
+  /// plan-item endpoints (no new backend).
+  Future<void> _applySwap(MealSlot meal, MealPlanItem item, AiSwapSuggestion s) async {
+    final newId = s.newRecipeId;
+    if (newId == null || _plan == null) return;
+    final repo = ref.read(recipeRepositoryProvider);
+    try {
+      await repo.removePlanItem(_plan!.id, item.id);
+      await repo.addPlanItem(
+        _plan!.id,
+        MealPlanItemCreate(mealType: meal, recipeId: newId, servings: item.servings),
+      );
+      await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Swapped to ${s.toLabel}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Swap failed: $e')));
+      }
+    }
   }
 
   Future<void> _addToSlot(MealSlot meal) async {
@@ -321,9 +429,13 @@ class _MealSlotCard extends StatelessWidget {
   final Color accent;
   final VoidCallback onAdd;
   final ValueChanged<String> onRemove;
+  /// itemId → AI alternate suggestion (recipe-backed) for that slot item.
+  final Map<String, AiSwapSuggestion> swaps;
+  final void Function(MealPlanItem item, AiSwapSuggestion swap) onSwap;
   const _MealSlotCard({
     required this.mealType, required this.items, required this.isDark,
     required this.accent, required this.onAdd, required this.onRemove,
+    this.swaps = const {}, required this.onSwap,
   });
 
   @override
@@ -357,18 +469,58 @@ class _MealSlotCard extends StatelessWidget {
               child: Text(AppLocalizations.of(context).mealPlannerEmptyTapToAdd, style: TextStyle(color: muted, fontSize: 12)),
             )
           else
-            ...items.map((i) => ListTile(
-              dense: true, contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.restaurant_menu, color: accent, size: 18),
-              title: Text(i.recipeId != null ? AppLocalizations.of(context).mealPlannerRecipe : AppLocalizations.of(context).mealPlannerCustomItems,
-                  style: TextStyle(color: text)),
-              subtitle: Text('×${i.servings.toStringAsFixed(1)} servings',
-                  style: TextStyle(color: muted, fontSize: 11)),
-              trailing: IconButton(
-                icon: Icon(Icons.close, size: 16, color: muted),
-                onPressed: () => onRemove(i.id),
-              ),
-            )),
+            ...items.map((i) {
+              final swap = swaps[i.id];
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    dense: true, contentPadding: EdgeInsets.zero,
+                    leading: Icon(Icons.restaurant_menu, color: accent, size: 18),
+                    title: Text(i.recipeId != null ? AppLocalizations.of(context).mealPlannerRecipe : AppLocalizations.of(context).mealPlannerCustomItems,
+                        style: TextStyle(color: text)),
+                    subtitle: Text('×${i.servings.toStringAsFixed(1)} servings',
+                        style: TextStyle(color: muted, fontSize: 11)),
+                    trailing: IconButton(
+                      icon: Icon(Icons.close, size: 16, color: muted),
+                      onPressed: () => onRemove(i.id),
+                    ),
+                  ),
+                  // AI alternate for this exact slot — one tap to swap.
+                  if (swap != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 6),
+                      child: InkWell(
+                        onTap: () => onSwap(i, swap),
+                        borderRadius: BorderRadius.circular(10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: accent.withValues(alpha: 0.30)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.autorenew, size: 14, color: accent),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Swap to ${swap.toLabel}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            }),
         ],
       ),
     );
