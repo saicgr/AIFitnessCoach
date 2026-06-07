@@ -685,6 +685,39 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             user_id, from_date=start_of_day, to_date=end_of_day, limit=100
         )
 
+        # Daily inflammation aggregate (0-10). Calorie-weighted so a tiny garnish
+        # can't swing the day's score; falls back to a simple mean when every
+        # scored log has 0 calories. Only logs that actually carry a score count
+        # (None means enrichment is still pending — never treated as 0). Mirrors
+        # the per-day logic the daily/weekly report endpoints expose, but lands
+        # on the core summary so BOTH the daily view and the weekly trend get it
+        # without a second query.
+        scored = [l for l in logs if l.get("inflammation_score") is not None]
+        daily_inflammation: Optional[float] = None
+        inflammation_contributors: List[str] = []
+        if scored:
+            weight = sum((l.get("total_calories") or 0) for l in scored)
+            if weight > 0:
+                daily_inflammation = round(
+                    sum(l["inflammation_score"] * (l.get("total_calories") or 0)
+                        for l in scored) / weight,
+                    1,
+                )
+            else:
+                daily_inflammation = round(
+                    sum(l["inflammation_score"] for l in scored) / len(scored), 1
+                )
+            # Top contributors: highest-score distinct foods (drives the
+            # "what's driving it" copy on the daily meter).
+            seen: set = set()
+            for l in sorted(scored, key=lambda x: x["inflammation_score"], reverse=True):
+                name = l.get("food_name")
+                if name and name not in seen:
+                    seen.add(name)
+                    inflammation_contributors.append(name)
+                if len(inflammation_contributors) >= 3:
+                    break
+
         return {
             "date": date,
             "total_calories": sum(log.get("total_calories") or 0 for log in logs),
@@ -692,6 +725,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "total_carbs_g": sum(float(log.get("carbs_g") or 0) for log in logs),
             "total_fat_g": sum(float(log.get("fat_g") or 0) for log in logs),
             "total_fiber_g": sum(float(log.get("fiber_g") or 0) for log in logs),
+            "inflammation_score": daily_inflammation,
+            "inflammation_contributors": inflammation_contributors,
             "meal_count": len(logs),
             "meals": logs,
         }
