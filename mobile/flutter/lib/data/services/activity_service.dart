@@ -124,6 +124,14 @@ class ActivityService {
           // EXERCISE_TIME: that would re-expand the deliberately minimised HC
           // permission scope and needs a Play Data Safety review first.
           'active_minutes': activity.activeMinutes ?? 0,
+          // Vitals overnight bio-signals — only sent when present so a daytime
+          // sync (no overnight reading yet) never nulls out the night's values.
+          if (activity.hrv != null) 'hrv': activity.hrv,
+          if (activity.bloodOxygen != null) 'blood_oxygen': activity.bloodOxygen,
+          if (activity.respiratoryRate != null)
+            'respiratory_rate': activity.respiratoryRate,
+          if (activity.bodyTemperature != null)
+            'body_temperature': activity.bodyTemperature,
           'source': Platform.isAndroid ? 'health_connect' : 'apple_health',
         },
       );

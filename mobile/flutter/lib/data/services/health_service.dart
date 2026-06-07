@@ -22,6 +22,16 @@ part 'health_service_part_daily_activity.dart';
 part 'health_service_ui.dart';
 
 
+/// Whether the Vitals overnight bio-signals (HRV / respiratory rate / SpO2 /
+/// skin temperature) are read on **Android**. iOS reads them unconditionally
+/// (HealthKit has no per-type Play review). On Android these four types were
+/// dropped 2026-05-07 for Minimum-Scope compliance and re-declared in the
+/// manifest 2026-06-07 for Vitals — flip this to `true` once the Health
+/// Connect declaration resubmission is approved (see
+/// docs/planning/HEALTH_CONNECT_RESUBMISSION.md). Until then the manifest
+/// declares the intent but we never query the types (they'd return empty).
+const bool kVitalsAndroidEnabled = false;
+
 /// Health service provider
 final healthServiceProvider = Provider<HealthService>((ref) {
   return HealthService();
@@ -237,11 +247,15 @@ class HealthService {
   static const Set<HealthDataType> _iOSOnlyTypes = {
     HealthDataType.SLEEP_IN_BED,
     HealthDataType.INSULIN_DELIVERY,
+    // HealthKit exposes HRV as SDNN only.
+    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
   };
 
   // Types that are only available on Android (not supported on iOS).
   static const Set<HealthDataType> _androidOnlyTypes = {
     HealthDataType.TOTAL_CALORIES_BURNED,
+    // Health Connect exposes HRV as RMSSD only.
+    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
     HealthDataType.SLEEP_DEEP,
     HealthDataType.SLEEP_LIGHT,
     HealthDataType.SLEEP_REM,
@@ -251,24 +265,30 @@ class HealthService {
     HealthDataType.SLEEP_SESSION,
   };
 
-  // Types that were removed entirely (both Android Health Connect AND iOS
-  // HealthKit) on 2026-05-07 to comply with Google Play's "Minimum Scope"
-  // Health Connect Permissions policy. None of these data types are read
-  // or surfaced anywhere in the user-facing product, so requesting them
-  // would be excessive scope on both platforms.
+  // Types that remain removed (both Android Health Connect AND iOS HealthKit)
+  // for Google Play "Minimum Scope" compliance — none surface in-product.
   //
-  // Removed: Distance (delta + walking/running), FloorsClimbed,
-  // HeartRateVariability (RMSSD + SDNN), ElevationGained, Power, Speed,
-  // RespiratoryRate, BasalMetabolicRate (basal energy burned),
-  // OxygenSaturation (blood oxygen), BodyTemperature.
+  // NOTE: HeartRateVariability, RespiratoryRate, OxygenSaturation (blood
+  // oxygen) and BodyTemperature were re-instated 2026-06-07 to power the
+  // **Vitals** feature (see `_vitalsTypes`) — they now map 1:1 to a visible
+  // surface, which is exactly what the Minimum-Scope policy requires. They
+  // are read unconditionally on iOS (no Play review gate) and gated on
+  // Android behind [kVitalsAndroidEnabled] until the Health Connect
+  // declaration resubmission clears (see docs HEALTH_CONNECT_RESUBMISSION).
   static const Set<HealthDataType> _removedTypes = {
     HealthDataType.DISTANCE_DELTA,
     HealthDataType.DISTANCE_WALKING_RUNNING,
     HealthDataType.FLIGHTS_CLIMBED,
+    HealthDataType.BASAL_ENERGY_BURNED,
+  };
+
+  // Overnight bio-signals for the Vitals feature. HRV is platform-split
+  // (HealthKit exposes SDNN, Health Connect exposes RMSSD — see the
+  // iOS/Android-only sets below); the other three are cross-platform.
+  static const Set<HealthDataType> _vitalsTypes = {
     HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
     HealthDataType.HEART_RATE_VARIABILITY_SDNN,
     HealthDataType.RESPIRATORY_RATE,
-    HealthDataType.BASAL_ENERGY_BURNED,
     HealthDataType.BLOOD_OXYGEN,
     HealthDataType.BODY_TEMPERATURE,
   };
@@ -277,6 +297,13 @@ class HealthService {
   List<HealthDataType> _getAvailableTypes(List<HealthDataType> types) {
     return types.where((type) {
       if (_removedTypes.contains(type)) return false;
+      // Vitals signals: read on iOS now; gated on Android until the Health
+      // Connect declaration resubmission clears (see kVitalsAndroidEnabled).
+      if (_vitalsTypes.contains(type) &&
+          Platform.isAndroid &&
+          !kVitalsAndroidEnabled) {
+        return false;
+      }
       if (Platform.isAndroid) {
         return !_iOSOnlyTypes.contains(type);
       } else if (Platform.isIOS) {
@@ -284,6 +311,60 @@ class HealthService {
       }
       return true;
     }).toList();
+  }
+
+  /// Latest overnight reading for each Vitals signal (HRV, respiratory rate,
+  /// blood oxygen, skin/body temperature) over the last ~18h. Returns a map
+  /// keyed `hrv` / `respiratoryRate` / `bloodOxygen` / `bodyTemperature`; a
+  /// value is null when the signal is unavailable (no wearable, permission not
+  /// granted, or Android-gated by [kVitalsAndroidEnabled] via
+  /// `_getAvailableTypes`). NO fabrication — absent signal stays null.
+  Future<Map<String, double?>> getOvernightVitals() async {
+    final result = <String, double?>{
+      'hrv': null,
+      'respiratoryRate': null,
+      'bloodOxygen': null,
+      'bodyTemperature': null,
+    };
+    try {
+      final types = _getAvailableTypes(_vitalsTypes.toList());
+      if (types.isEmpty) return result; // Android-gated or platform-unsupported
+      final now = DateTime.now();
+      final start = now.subtract(const Duration(hours: 18));
+      final data = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: types,
+      );
+      final dedup = _health.removeDuplicates(data);
+
+      double? latestOf(List<HealthDataType> wanted) {
+        HealthDataPoint? best;
+        for (final p in dedup) {
+          if (!wanted.contains(p.type)) continue;
+          if (best == null || p.dateTo.isAfter(best.dateTo)) best = p;
+        }
+        if (best == null) return null;
+        final v = best.value;
+        if (v is NumericHealthValue) return v.numericValue.toDouble();
+        return null;
+      }
+
+      result['hrv'] = latestOf([
+        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+      ]);
+      result['respiratoryRate'] = latestOf([HealthDataType.RESPIRATORY_RATE]);
+      // SpO2 comes back as a 0-1 fraction on some platforms and 0-100 on
+      // others — normalise to a percentage.
+      final spo2 = latestOf([HealthDataType.BLOOD_OXYGEN]);
+      result['bloodOxygen'] =
+          (spo2 != null && spo2 <= 1.0) ? spo2 * 100.0 : spo2;
+      result['bodyTemperature'] = latestOf([HealthDataType.BODY_TEMPERATURE]);
+    } catch (e) {
+      debugPrint('❌ [Vitals] getOvernightVitals error: $e');
+    }
+    return result;
   }
 
   /// Install Health Connect app on Android

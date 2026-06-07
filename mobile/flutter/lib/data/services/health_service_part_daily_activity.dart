@@ -3,14 +3,14 @@ part of 'health_service.dart';
 
 /// Daily activity data.
 ///
-/// The following fields were removed 2026-05-07 to comply with Google Play's
-/// Health Connect "Minimum Scope" policy (and dropped on iOS per the same
-/// product decision):
-///   distanceMeters / distanceKm / distanceMiles, hrv, bloodOxygen,
-///   bodyTemperature, respiratoryRate, flightsClimbed, basalCalories.
+/// Still dropped 2026-05-07 for Health Connect "Minimum Scope":
+///   distanceMeters / distanceKm / distanceMiles, flightsClimbed, basalCalories.
 /// Distance for cardio workouts is still tracked through the cardio session
-/// pipeline (manual entry / Strava / Garmin / direct watch sync), which is
-/// independent of Health Connect.
+/// pipeline (manual entry / Strava / Garmin / direct watch sync).
+///
+/// RESUMED 2026-06-07 for the Vitals feature: hrv, bloodOxygen,
+/// respiratoryRate, bodyTemperature — the overnight bio-signals the Vitals
+/// screen baselines. Read on iOS now; Android gated by kVitalsAndroidEnabled.
 class DailyActivity {
   final int steps;
   final double caloriesBurned;
@@ -18,6 +18,11 @@ class DailyActivity {
   final int? sleepMinutes;
   final int? deepSleepMinutes;
   final int? remSleepMinutes;
+  // Vitals overnight bio-signals (null when no wearable reading).
+  final double? hrv;             // RMSSD/SDNN, ms
+  final double? bloodOxygen;     // SpO2, %
+  final double? respiratoryRate; // breaths/min
+  final double? bodyTemperature; // skin/body temp, °
   final DateTime date;
   final bool isFromHealthConnect;
   final bool isFromWatch;
@@ -66,6 +71,10 @@ class DailyActivity {
     this.sleepEfficiency,
     this.sleepScore,
     this.wakeUps,
+    this.hrv,
+    this.bloodOxygen,
+    this.respiratoryRate,
+    this.bodyTemperature,
   });
 
   /// Lossless serialization for the SharedPreferences disk cache so the Home
@@ -96,6 +105,10 @@ class DailyActivity {
         'sleep_efficiency': sleepEfficiency,
         'sleep_score': sleepScore,
         'wake_ups': wakeUps,
+        'hrv': hrv,
+        'blood_oxygen': bloodOxygen,
+        'respiratory_rate': respiratoryRate,
+        'body_temperature': bodyTemperature,
       };
 
   factory DailyActivity.fromJson(Map<String, dynamic> json) => DailyActivity(
@@ -125,6 +138,10 @@ class DailyActivity {
         sleepEfficiency: (json['sleep_efficiency'] as num?)?.toDouble(),
         sleepScore: json['sleep_score'] as int?,
         wakeUps: json['wake_ups'] as int?,
+        hrv: (json['hrv'] as num?)?.toDouble(),
+        bloodOxygen: (json['blood_oxygen'] as num?)?.toDouble(),
+        respiratoryRate: (json['respiratory_rate'] as num?)?.toDouble(),
+        bodyTemperature: (json['body_temperature'] as num?)?.toDouble(),
       );
 }
 
@@ -468,6 +485,9 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       final activeEnergy = await _healthService.getTodayActiveEnergy();
       final sleepData = await _healthService.getSleepData(days: 1);
       final vitalsData = await _healthService.getTodayVitals();
+      // Vitals overnight bio-signals (HRV / respiratory / SpO2 / skin temp).
+      // Empty/null on Android until kVitalsAndroidEnabled flips post-review.
+      final overnight = await _healthService.getOvernightVitals();
 
       // Resting HR now comes from getTodayVitals (midnight→now), the SAME
       // calendar-day window as steps/calories — the old getHeartRateData(days:1)
@@ -500,6 +520,10 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         sleepEfficiency: sleepData.hasData ? sleepData.efficiency : null,
         sleepScore: sleepScore,
         wakeUps: sleepData.hasData ? sleepData.wakeUps : null,
+        hrv: overnight['hrv'],
+        bloodOxygen: overnight['bloodOxygen'],
+        respiratoryRate: overnight['respiratoryRate'],
+        bodyTemperature: overnight['bodyTemperature'],
       );
 
       // Stamp the cache AFTER a successful fetch — failed fetches must not

@@ -36,6 +36,17 @@ class TrainingLoadRepository {
         .toList();
   }
 
+  /// Today's intraday Daily Cardio Load accumulation + target band + ACWR.
+  Future<TrainingLoadToday> fetchToday() async {
+    debugPrint('🏃 [TrainingLoad] fetchToday');
+    final response = await _apiClient.get('/training-load/today');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load today\'s cardio load (${response.statusCode})');
+    }
+    return TrainingLoadToday.fromJson(
+        Map<String, dynamic>.from(response.data as Map));
+  }
+
   /// Latest day's TRIMP / acute / chronic / ACWR + classification state.
   Future<TrainingLoadState> fetchCurrent() async {
     debugPrint('🏃 [TrainingLoad] fetchCurrent');
@@ -72,6 +83,14 @@ final trainingLoadCurrentProvider =
   ref.keepAlive();
   final repo = ref.watch(trainingLoadRepositoryProvider);
   return repo.fetchCurrent();
+});
+
+/// Today's intraday Daily Cardio Load — drives the "Today's progress" chart.
+final trainingLoadTodayProvider =
+    FutureProvider.autoDispose<TrainingLoadToday>((ref) async {
+  ref.keepAlive();
+  final repo = ref.watch(trainingLoadRepositoryProvider);
+  return repo.fetchToday();
 });
 
 // ---------------------------------------------------------------------------
@@ -144,6 +163,65 @@ class TrainingLoadState {
       state: json['state'] as String,
       interpretation: json['interpretation'] as String,
       daysOfHistory: json['days_of_history'] as int? ?? 0,
+    );
+  }
+}
+
+/// One point on today's cumulative cardio-load curve.
+@immutable
+class TrainingLoadIntradayPoint {
+  final int minute; // minute of the user-local day (0-1440)
+  final double cumulative;
+  const TrainingLoadIntradayPoint({required this.minute, required this.cumulative});
+
+  factory TrainingLoadIntradayPoint.fromJson(Map<String, dynamic> json) =>
+      TrainingLoadIntradayPoint(
+        minute: json['minute'] as int,
+        cumulative: (json['cumulative'] as num).toDouble(),
+      );
+}
+
+/// Today's intraday Daily Cardio Load accumulation + target band + ACWR state.
+@immutable
+class TrainingLoadToday {
+  final DateTime asOf;
+  final int workoutCount;
+  final double dailyLoad;
+  final List<TrainingLoadIntradayPoint> points;
+  final double? targetMin;
+  final double? targetMax;
+  final double? acwr;
+  final String state;
+  final String interpretation;
+
+  const TrainingLoadToday({
+    required this.asOf,
+    required this.workoutCount,
+    required this.dailyLoad,
+    required this.points,
+    required this.targetMin,
+    required this.targetMax,
+    required this.acwr,
+    required this.state,
+    required this.interpretation,
+  });
+
+  bool get hasTarget => targetMin != null && targetMax != null;
+
+  factory TrainingLoadToday.fromJson(Map<String, dynamic> json) {
+    return TrainingLoadToday(
+      asOf: DateTime.parse(json['as_of'] as String),
+      workoutCount: json['workout_count'] as int? ?? 0,
+      dailyLoad: (json['daily_load'] as num?)?.toDouble() ?? 0,
+      points: ((json['points'] as List<dynamic>?) ?? [])
+          .map((e) => TrainingLoadIntradayPoint.fromJson(
+              Map<String, dynamic>.from(e as Map)))
+          .toList(),
+      targetMin: (json['target_min'] as num?)?.toDouble(),
+      targetMax: (json['target_max'] as num?)?.toDouble(),
+      acwr: (json['acwr'] as num?)?.toDouble(),
+      state: json['state'] as String? ?? 'calibration',
+      interpretation: json['interpretation'] as String? ?? '',
     );
   }
 }

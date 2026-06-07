@@ -24,6 +24,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../repositories/training_load_repository.dart';
 import '../repositories/vo2max_repository.dart';
+import '../repositories/vitals_repository.dart';
+import '../repositories/heart_health_repository.dart';
+import '../repositories/fitness_index_repository.dart';
+import 'antioxidant_provider.dart';
 import 'combined_health_provider.dart';
 import 'content_catalogs_provider.dart';
 import 'data_gaps_provider.dart';
@@ -62,6 +66,12 @@ final List<ProviderOrFamily> secondaryTileProviders = <ProviderOrFamily>[
   trainingEffectProvider,
   trainingLoadHistoryProvider,
   trainingLoadCurrentProvider,
+  trainingLoadTodayProvider,
+  // Samsung-parity health metrics
+  vitalsProvider,
+  heartHealthProvider,
+  fitnessIndexProvider,
+  antioxidantProvider,
   // Home insight / pattern / signal
   workoutMilestoneProvider,
   dayOfWeekSkipProvider,

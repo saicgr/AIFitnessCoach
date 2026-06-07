@@ -5,12 +5,15 @@ extension HealthServiceExt on HealthService {
 
   // Data types we want to read from Health Connect / HealthKit.
   //
-  // Removed 2026-05-07 to comply with Google Play "Minimum Scope" Health
-  // Connect Permissions policy: Distance (delta + walking/running),
-  // FloorsClimbed (FLIGHTS_CLIMBED), HeartRateVariability (RMSSD + SDNN),
-  // ElevationGained, Power, Speed, RespiratoryRate, BasalMetabolicRate
-  // (BASAL_ENERGY_BURNED), OxygenSaturation (BLOOD_OXYGEN), BodyTemperature.
-  // None of these surface in the user-facing product.
+  // Still removed for Minimum-Scope compliance: Distance (delta +
+  // walking/running), FloorsClimbed, ElevationGained, Power, Speed,
+  // BasalMetabolicRate (BASAL_ENERGY_BURNED).
+  //
+  // Re-instated 2026-06-07 for the **Vitals** feature: HeartRateVariability
+  // (SDNN on iOS / RMSSD on Android), RespiratoryRate, OxygenSaturation
+  // (BLOOD_OXYGEN), BodyTemperature. Read on iOS now; gated on Android by
+  // [kVitalsAndroidEnabled] via _getAvailableTypes until the Health Connect
+  // declaration resubmission is approved.
   static final List<HealthDataType> _readTypes = [
     // Body measurements
     HealthDataType.WEIGHT,
@@ -19,6 +22,13 @@ extension HealthServiceExt on HealthService {
     // Heart
     HealthDataType.HEART_RATE,
     HealthDataType.RESTING_HEART_RATE,
+
+    // Vitals — overnight bio-signals (gated on Android, see above)
+    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+    HealthDataType.RESPIRATORY_RATE,
+    HealthDataType.BLOOD_OXYGEN,
+    HealthDataType.BODY_TEMPERATURE,
 
     // Activity
     HealthDataType.STEPS,
