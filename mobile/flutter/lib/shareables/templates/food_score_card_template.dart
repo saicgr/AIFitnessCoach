@@ -13,11 +13,15 @@ import '../widgets/macro_viz.dart';
 class FoodScoreCardTemplate extends StatelessWidget {
   final Shareable data;
   final bool showWatermark;
+  /// Display the score out of 100 instead of 10 (Calorii-audit P3.4 — a more
+  /// marketable dial). Underlying score stays 1-10.
+  final int scoreOutOf;
 
   const FoodScoreCardTemplate({
     super.key,
     required this.data,
     this.showWatermark = true,
+    this.scoreOutOf = 10,
   });
 
   @override
@@ -79,7 +83,7 @@ class FoodScoreCardTemplate extends StatelessWidget {
             Expanded(
               child: Center(
                 child: score != null
-                    ? _ScoreDial(score: score, size: dialSize)
+                    ? _ScoreDial(score: score, size: dialSize, outOf: scoreOutOf)
                     : _CalorieHero(calories: nutrition.calories, mul: mul),
               ),
             ),
@@ -128,14 +132,18 @@ Color _bandColor(int score) {
 }
 
 class _ScoreDial extends StatelessWidget {
-  final int score; // 1-10
+  final int score; // stored 1-10
   final double size;
+  /// Display scale — 10 (default) or 100 for a more marketable 0–100 dial
+  /// (Calorii-audit P3.4). The underlying arc fill is unchanged (score/10).
+  final int outOf;
 
-  const _ScoreDial({required this.score, required this.size});
+  const _ScoreDial({required this.score, required this.size, this.outOf = 10});
 
   @override
   Widget build(BuildContext context) {
     final color = _bandColor(score);
+    final displayValue = outOf == 100 ? score * 10 : score;
     return SizedBox(
       width: size,
       height: size,
@@ -153,17 +161,17 @@ class _ScoreDial extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '$score',
+                '$displayValue',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: size * 0.34,
+                  fontSize: size * (outOf == 100 ? 0.28 : 0.34),
                   fontWeight: FontWeight.w900,
                   height: 1,
                   letterSpacing: -2,
                 ),
               ),
               Text(
-                'OUT OF 10',
+                'OUT OF $outOf',
                 style: TextStyle(
                   color: color,
                   fontSize: size * 0.055,
