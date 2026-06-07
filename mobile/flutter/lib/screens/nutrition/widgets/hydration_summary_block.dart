@@ -9,10 +9,17 @@ class HydrationSummaryBlock extends ConsumerWidget {
   final bool isDark;
   final VoidCallback? onTap;
 
+  /// Quick-log affordance. When provided, a circular blue "+" button renders in
+  /// the header that opens the drink-log sheet directly (the whole-card tap is
+  /// reserved for "view details"). Wired to the same handler as [onTap] today,
+  /// but kept separate so the two intents can diverge later.
+  final VoidCallback? onAdd;
+
   const HydrationSummaryBlock({
     super.key,
     required this.isDark,
     this.onTap,
+    this.onAdd,
   });
 
   @override
@@ -108,6 +115,28 @@ class HydrationSummaryBlock extends ConsumerWidget {
                     ),
                   ),
                 ),
+                if (onAdd != null) ...[
+                  const SizedBox(width: 8),
+                  // Quick-log "+": filled blue circle. Opens the drink-log
+                  // sheet without going through "view details".
+                  Material(
+                    color: electricBlue,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: onAdd,
+                      child: const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: Icon(
+                          Icons.add,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
 

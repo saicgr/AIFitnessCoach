@@ -171,8 +171,11 @@ class OptionalTrackersStrip extends ConsumerWidget {
         ];
         if (cards.isEmpty) return const SizedBox.shrink();
         // Wrap so 1-3 cards adapt cleanly SE→iPad without overflow.
+        // Leading (top) gap so the strip never touches the Hydration card above
+        // it; an empty strip (SizedBox.shrink) contributes zero, leaving a
+        // single 12px gap between Hydration and Vitamins.
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(top: 12),
           child: Wrap(spacing: 10, runSpacing: 10, children: cards),
         );
       },

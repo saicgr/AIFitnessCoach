@@ -601,12 +601,16 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     // Nutrition tabs (and mis-landed on Patterns); tapping the
                     // card now opens the drink-log sheet inline.
                     onTap: _logWaterFromCard,
+                    // Explicit "+" quick-log affordance on the card header.
+                    onAdd: _logWaterFromCard,
                   ),
-                  const SizedBox(height: 12),
                 ],
 
                 // Gap 7 — opt-in sugar / caffeine / alcohol trackers. Renders
                 // nothing unless the user enabled at least one in Settings.
+                // Owns its own leading gap so an empty strip never doubles the
+                // spacing between Hydration and Vitamins (it returns
+                // SizedBox.shrink when no tracker is enabled).
                 if (widget.userId.isNotEmpty && widget.isViewingToday)
                   OptionalTrackersStrip(
                     userId: widget.userId,
@@ -712,6 +716,15 @@ class _LeftoversCarousel extends ConsumerWidget {
                               );
                           // Invalidate so the carousel updates portions_remaining
                           ref.invalidate(activeCookEventsProvider(userId));
+                          // Reflect the logged leftover on the Daily summary
+                          // (rings + meal list), Home timeline, and the weekly
+                          // NUTRITION STATS + inflammation trend.
+                          final notifier = ref.read(
+                              dailyNutritionProvider(todayNutritionKey())
+                                  .notifier);
+                          notifier.load(userId, forceRefresh: true);
+                          notifier.refreshTimeline();
+                          notifier.refreshNutritionStats(userId);
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Logged ${ev.recipeName ?? "leftover"}')),
