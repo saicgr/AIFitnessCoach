@@ -10,6 +10,8 @@ import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/providers/saved_trends_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../shareables/adapters/trends_adapter.dart';
+import '../../shareables/shareable_sheet.dart';
 import '../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/trends/metric_picker_sheet.dart';
@@ -84,12 +86,21 @@ class _SavedTrend {
   final List<TrendMetric> overlays;
   final TrendRange range;
 
-  const _SavedTrend(this.primary, this.overlays, this.range);
+  /// Per-metric colour overrides (metric -> color). Empty when the user kept
+  /// the default palette. Persisted so a restored trend looks identical.
+  final Map<TrendMetric, Color> colors;
+
+  const _SavedTrend(this.primary, this.overlays, this.range,
+      {this.colors = const {}});
 
   Map<String, dynamic> toJson() => {
         'primary': primary.name,
         'overlays': overlays.map((m) => m.name).toList(),
         'range': range.name,
+        if (colors.isNotEmpty)
+          'colors': {
+            for (final e in colors.entries) e.key.name: e.value.toARGB32(),
+          },
       };
 
   static _SavedTrend? fromJson(Map<String, dynamic> j) {
@@ -105,13 +116,43 @@ class _SavedTrend {
       final m = metricByName(raw as String?);
       if (m != null && m != p) overlays.add(m);
     }
-    return _SavedTrend(p, overlays.take(_kMaxOverlays).toList(), r);
+    // Legacy saved trends have no 'colors' key — defaults apply.
+    final colors = <TrendMetric, Color>{};
+    final rawColors = j['colors'];
+    if (rawColors is Map) {
+      rawColors.forEach((k, v) {
+        final m = metricByName(k as String?);
+        final intVal = v is num ? v.toInt() : null;
+        if (m != null && intVal != null) colors[m] = Color(intVal);
+      });
+    }
+    return _SavedTrend(p, overlays.take(_kMaxOverlays).toList(), r,
+        colors: colors);
   }
 }
+
+/// Swatch palette offered in the per-metric colour picker — distinct, legible
+/// hues across light/dark. The first row mirrors [_kOverlayPalette] so the
+/// defaults are reachable; the rest add range.
+const List<Color> _kColorSwatches = [
+  Color(0xFFE0823D), // amber
+  Color(0xFF3DA5E0), // sky
+  Color(0xFFB05CD6), // violet
+  Color(0xFF3DC97A), // green
+  Color(0xFFE0533D), // coral
+  Color(0xFFE0C53D), // gold
+  Color(0xFF3DC9C2), // teal
+  Color(0xFFE03D8F), // magenta
+];
 
 class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   late TrendMetric _primary;
   final List<TrendMetric> _overlays = [];
+
+  /// Per-metric colour overrides chosen by the user (color picker on a chip's
+  /// swatch). Absent metrics fall back to the default (accent for the primary,
+  /// the overlay palette by position). Persisted with a saved trend.
+  final Map<TrendMetric, Color> _metricColors = {};
 
   /// User-selected chart style for the single-primary view (Line / Area / Bar).
   /// Only meaningful when there are no overlays; overlays always render as the
@@ -266,10 +307,17 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       );
       return;
     }
+    // Capture only the overrides for metrics actually in this set.
+    final inSet = {_primary, ..._overlays};
+    final savedColors = <TrendMetric, Color>{
+      for (final e in _metricColors.entries)
+        if (inSet.contains(e.key)) e.key: e.value,
+    };
     setState(() {
       _saved = [
         ..._saved,
-        _SavedTrend(_primary, List.of(_overlays), _range),
+        _SavedTrend(_primary, List.of(_overlays), _range,
+            colors: savedColors),
       ];
     });
     await _persistSaved();
@@ -360,7 +408,13 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       bottomNavigationBar: SafeArea(
         top: false,
         minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-        child: _saveButton(colors),
+        child: Row(
+          children: [
+            Expanded(child: _saveButton(colors)),
+            const SizedBox(width: 10),
+            _shareButton(colors),
+          ],
+        ),
       ),
     );
   }
@@ -652,6 +706,11 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       if (cyclePhasesOn && kind == TrendEventKind.period) continue;
       key.write('|ev${kind.name}:${ev?.count(kind) ?? -1}');
     }
+    // Per-metric colour overrides — a recolour must rebuild the chart.
+    key.write('|c${_primary.name}:${_metricColors[_primary]?.toARGB32() ?? 0}');
+    for (final o in _overlays) {
+      key.write('|c${o.name}:${_metricColors[o]?.toARGB32() ?? 0}');
+    }
     final keyStr = key.toString();
 
     // Cache hit → reuse the exact same widget instance (Flutter then skips
@@ -667,7 +726,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           label: o.series.metric.displayName,
           unit: o.series.unit,
           points: o.series.points,
-          color: _kOverlayPalette[o.index % _kOverlayPalette.length],
+          color: _colorFor(_overlays[o.index], colors),
         ),
     ];
 
@@ -720,7 +779,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         child: PremiumMetricChart(
           points: primary.points,
           type: _ctType,
-          color: colors.accent,
+          color: _colorFor(_primary, colors),
           unit: primary.unit,
           height: 260,
         ),
@@ -734,7 +793,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           label: primary.metric.displayName,
           unit: primary.unit,
           points: primary.points,
-          color: colors.accent,
+          color: _colorFor(_primary, colors),
         ),
         overlays: chartOverlays,
         events: events,
@@ -963,23 +1022,25 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             _metricChip(
               colors,
               label: _primary.displayName,
-              color: colors.accent,
+              color: _colorFor(_primary, colors),
               dashed: false,
               isPrimary: true,
               onTap: () => _pickMetric(
                 exclude: {_primary, ..._overlays},
                 onPicked: (m) => setState(() => _primary = m),
               ),
+              onColorTap: () => _pickColor(_primary),
             ),
             for (var i = 0; i < _overlays.length; i++)
               _metricChip(
                 colors,
                 label: _overlays[i].displayName,
-                color: _kOverlayPalette[i % _kOverlayPalette.length],
+                color: _colorFor(_overlays[i], colors),
                 dashed: true,
                 isPrimary: false,
                 onRemove: () =>
                     setState(() => _overlays.removeAt(i)),
+                onColorTap: () => _pickColor(_overlays[i]),
               ),
             if (_overlays.length < _kMaxOverlays)
               _addMetricChip(colors)
@@ -1021,6 +1082,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     required bool isPrimary,
     VoidCallback? onTap,
     VoidCallback? onRemove,
+    VoidCallback? onColorTap,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -1034,10 +1096,18 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Line-style swatch — solid (primary) vs dashed (overlay).
-            CustomPaint(
-              size: const Size(16, 3),
-              painter: _LineSwatchPainter(color: color, dashed: dashed),
+            // Line-style swatch — solid (primary) vs dashed (overlay). Tap to
+            // recolour this metric's line.
+            GestureDetector(
+              onTap: onColorTap,
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: CustomPaint(
+                  size: const Size(16, 3),
+                  painter: _LineSwatchPainter(color: color, dashed: dashed),
+                ),
+              ),
             ),
             const SizedBox(width: 7),
             Text(label,
@@ -1704,6 +1774,73 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     );
   }
 
+  // ── Share button ────────────────────────────────────────────────────────
+
+  Widget _shareButton(ThemeColors colors) {
+    return SizedBox(
+      height: 50,
+      child: OutlinedButton(
+        onPressed: _shareTrend,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colors.accent,
+          side: BorderSide(color: colors.cardBorder),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: const Icon(Icons.ios_share_rounded, size: 20),
+      ),
+    );
+  }
+
+  /// Build a [Shareable] from the live trend (title, range, every selected
+  /// metric's latest value + colour) and open the branded share gallery.
+  Future<void> _shareTrend() async {
+    HapticService.selection();
+    final colors = ref.colors(context);
+
+    String? fmtLatest(TrendMetric m, {String? unitOut}) {
+      final s = ref.read(trendSeriesProvider(TrendSeriesKey(m, _range))).valueOrNull;
+      final pts = s?.points ?? const <TrendPoint>[];
+      if (pts.isEmpty) return null;
+      final v = pts.last.value;
+      final unit = s?.unit ?? '';
+      return '${_fmtNum(v)}${unit.isNotEmpty ? ' $unit' : ''}';
+    }
+
+    final metrics = <TrendShareMetric>[];
+    final primaryVal = fmtLatest(_primary);
+    metrics.add(TrendShareMetric(
+      label: _primary.displayName,
+      value: primaryVal ?? '—',
+      color: _colorFor(_primary, colors),
+    ));
+    for (final o in _overlays) {
+      metrics.add(TrendShareMetric(
+        label: o.displayName,
+        value: fmtLatest(o) ?? '—',
+        color: _colorFor(o, colors),
+      ));
+    }
+
+    final primarySeries =
+        ref.read(trendSeriesProvider(TrendSeriesKey(_primary, _range))).valueOrNull;
+    final heroPts = primarySeries?.points ?? const <TrendPoint>[];
+
+    final shareable = TrendsAdapter.build(
+      title: _chartTitle(),
+      periodLabel: _range.label.toUpperCase(),
+      accent: _colorFor(_primary, colors),
+      metrics: metrics,
+      heroValue: heroPts.isNotEmpty ? heroPts.last.value : null,
+      heroUnit: primarySeries?.unit ?? '',
+    );
+
+    if (!mounted) return;
+    await ShareableSheet.show(context, data: shareable);
+  }
+
   // ── Save button + saved rows ────────────────────────────────────────────
 
   Widget _saveButton(ThemeColors colors) {
@@ -1875,6 +2012,9 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
                                       ..clear()
                                       ..addAll(t.overlays);
                                     _range = t.range;
+                                    _metricColors
+                                      ..clear()
+                                      ..addAll(t.colors);
                                   });
                                   Navigator.of(sheetCtx).pop();
                                 },
@@ -1958,10 +2098,122 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     if (_overlays.isEmpty) {
       return '$primaryName over time';
     }
-    if (_overlays.length == 1) {
-      return '$primaryName vs ${_overlays.first.displayName} over time';
+    final names = _overlays.map((m) => m.displayName).toList();
+    // Name the metrics so the title is honest about what's plotted. Cap at 3
+    // before collapsing to "+N more" so a long selection can't run off-screen.
+    if (names.length <= 3) {
+      return '$primaryName vs ${_humanJoin(names)} over time';
     }
-    return '$primaryName vs ${_overlays.length} metrics over time';
+    return '$primaryName vs ${names.take(2).join(', ')} +${names.length - 2} more over time';
+  }
+
+  /// Default colour for a metric: the user's accent for the primary, the
+  /// overlay palette by position for overlays.
+  Color _defaultColorFor(TrendMetric m, ThemeColors colors) {
+    if (m == _primary) return colors.accent;
+    final idx = _overlays.indexOf(m);
+    if (idx >= 0) return _kOverlayPalette[idx % _kOverlayPalette.length];
+    return colors.accent;
+  }
+
+  /// Resolved colour for a metric: the user override if set, else the default.
+  Color _colorFor(TrendMetric m, ThemeColors colors) =>
+      _metricColors[m] ?? _defaultColorFor(m, colors);
+
+  /// Open the per-metric colour picker. Persists nothing on its own; the
+  /// override lands in [_metricColors] and is saved with the trend.
+  Future<void> _pickColor(TrendMetric metric) async {
+    HapticService.selection();
+    final colors = ref.colors(context);
+    final current = _colorFor(metric, colors);
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: colors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${metric.displayName} colour',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 14,
+                  runSpacing: 14,
+                  children: [
+                    for (final c in _kColorSwatches)
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.light();
+                          setState(() => _metricColors[metric] = c);
+                          Navigator.of(sheetCtx).pop();
+                        },
+                        child: Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: c,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: (c.toARGB32() == current.toARGB32())
+                                  ? colors.textPrimary
+                                  : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          child: (c.toARGB32() == current.toARGB32())
+                              ? const Icon(Icons.check,
+                                  size: 20, color: Colors.white)
+                              : null,
+                        ),
+                      ),
+                    // Reset-to-default chip.
+                    GestureDetector(
+                      onTap: () {
+                        HapticService.light();
+                        setState(() => _metricColors.remove(metric));
+                        Navigator.of(sheetCtx).pop();
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.cardBorder, width: 2),
+                        ),
+                        child: Icon(Icons.refresh_rounded,
+                            size: 20, color: colors.textMuted),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Oxford-style join: ["A"] -> "A", ["A","B"] -> "A & B",
+  /// ["A","B","C"] -> "A, B & C". No em dashes (copy rule).
+  static String _humanJoin(List<String> items) {
+    if (items.isEmpty) return '';
+    if (items.length == 1) return items.first;
+    final head = items.sublist(0, items.length - 1).join(', ');
+    return '$head & ${items.last}';
   }
 
   static String _fmtNum(double v) {
