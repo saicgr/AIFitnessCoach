@@ -41,6 +41,12 @@ _SCORE_COLUMNS = (
     "inflammation_score",
     "is_ultra_processed",
     "inflammation_triggers",
+    # Health score — backfilled like the rest so barcode / saved-food / quick-
+    # log / manual rows (which land via /log-direct without scoring) get the
+    # "Health N/10" pill too, not just inflammation. When Gemini omits it we
+    # fall back to the deterministic macro score (see _deterministic_health).
+    "health_score",
+    "health_score_reasons",
     "added_sugar_g",
     "glycemic_load",
     "fodmap_rating",
@@ -112,13 +118,57 @@ def _build_seed_description(row: Dict[str, Any]) -> Optional[str]:
     return "\n\n".join(parts)
 
 
+_CLUSTER_HEADLINE = (
+    "inflammation_score", "is_ultra_processed", "fodmap_rating", "glycemic_load",
+)
+
+
+def _cluster_missing(row: Dict[str, Any]) -> bool:
+    """True when NONE of the inflammation-cluster signals are populated."""
+    return all(row.get(k) in (None, "", 0) for k in _CLUSTER_HEADLINE)
+
+
+def _health_missing(row: Dict[str, Any]) -> bool:
+    """True when the row has no usable health_score (1-10)."""
+    return row.get("health_score") in (None, "", 0)
+
+
 def _row_needs_enrichment(row: Dict[str, Any]) -> bool:
     """True when the row is missing the headline scoring fields. We don't
-    require ALL columns — just the four signals the Daily/Detail UIs render
-    visibly (inflammation chip, NOVA flag, FODMAP rating, glycemic load).
+    require ALL columns — just the inflammation-cluster signals the Daily/Detail
+    UIs render (inflammation chip, NOVA flag, FODMAP rating, glycemic load) OR a
+    missing health_score. The health_score clause is what lets a barcode row —
+    which HAS a NOVA inflammation_score but no health_score — still qualify.
     """
-    headline = ("inflammation_score", "is_ultra_processed", "fodmap_rating", "glycemic_load")
-    return all(row.get(k) in (None, "", 0) for k in headline)
+    return _cluster_missing(row) or _health_missing(row)
+
+
+def _deterministic_health(row: Dict[str, Any]) -> Optional[int]:
+    """Deterministic 1-10 health score from the row's confirmed macros (no
+    Gemini). Used to guarantee health is never left null after enrichment so
+    the backfill doesn't re-select the same row forever. Returns None only when
+    the row has no calories to score from.
+    """
+    cal = row.get("total_calories")
+    if not cal:
+        return None
+    try:
+        from services.food_analysis.cache_service import (
+            get_food_analysis_cache_service,
+        )
+        svc = get_food_analysis_cache_service()
+        carbs = row.get("carbs_g")
+        sugar = row.get("sugar_g")
+        return svc._compute_health_score(
+            int(cal),
+            float(row.get("protein_g") or 0),
+            float(row.get("fiber_g") or 0),
+            float(carbs) if carbs is not None else None,
+            float(sugar) if sugar is not None else None,
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"[score_enrich] deterministic health failed: {e}")
+        return None
 
 
 def _extract_scoring_fields(gemini_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -284,6 +334,24 @@ async def enrich_food_log_scores(food_log_id: str, user_id: str) -> bool:
         logger.info(f"[score_enrich] food_log {food_log_id} already has scores; skipping")
         return False
 
+    # Fast path: ONLY health_score is missing (the inflammation cluster is
+    # already populated — e.g. a barcode row carries a NOVA inflammation_score
+    # but no health_score). Write a deterministic health score from the
+    # confirmed macros and stop. This skips the cache-stack/Gemini pass entirely
+    # AND never clobbers the existing cluster values.
+    if _health_missing(row) and not _cluster_missing(row):
+        h = _deterministic_health(row)
+        if h is None:
+            logger.info(f"[score_enrich] food_log {food_log_id} health-only but too sparse; skipping")
+            return False
+        try:
+            db.client.table("food_logs").update({"health_score": h}).eq("id", food_log_id).execute()
+            logger.info(f"[score_enrich] food_log {food_log_id} health-only fill = {h}")
+            return True
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"[score_enrich] health-only write failed {food_log_id}: {e}")
+            return False
+
     seed = _build_seed_description(row)
     if not seed:
         logger.info(f"[score_enrich] food_log {food_log_id} too sparse to score; skipping")
@@ -295,6 +363,12 @@ async def enrich_food_log_scores(food_log_id: str, user_id: str) -> bool:
     cached_payload = await _try_cache_stack_enrichment(row, user_id)
     if cached_payload:
         cached_payload["score_status"] = "ok"
+        # Cache stack fills the inflammation cluster + micros but not health.
+        # Add a deterministic health score when the row lacks one.
+        if _health_missing(row) and not cached_payload.get("health_score"):
+            h = _deterministic_health(row)
+            if h is not None:
+                cached_payload["health_score"] = h
         try:
             db.client.table("food_logs").update(cached_payload).eq("id", food_log_id).execute()
             logger.info(
@@ -344,6 +418,14 @@ async def enrich_food_log_scores(food_log_id: str, user_id: str) -> bool:
     # "Gemini decided it's not applicable" (e.g., FODMAP n/a for grilled
     # chicken) rather than "we never tried".
     update_payload["score_status"] = "ok"
+
+    # Guarantee a health_score: Gemini's (already in update_payload via
+    # _SCORE_COLUMNS) if it emitted one, else the deterministic macro score so
+    # the row is never left without it (prevents the backfill re-selecting it).
+    if _health_missing(row) and not update_payload.get("health_score"):
+        h = _deterministic_health(row)
+        if h is not None:
+            update_payload["health_score"] = h
 
     try:
         db.client.table("food_logs").update(update_payload).eq("id", food_log_id).execute()

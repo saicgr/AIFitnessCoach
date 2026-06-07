@@ -1098,11 +1098,14 @@ async def log_food_direct(
         # foods, quick log, manual entry, restaurant menu re-log, app
         # screenshot OCR, nutrition label OCR — every mode that funnels
         # through /log-direct without computing scores upstream.
+        # Fire when EITHER headline score is missing. Barcode supplies a NOVA
+        # inflammation_score but no health_score, so the old all-null gate left
+        # barcode (and any path with partial scores) permanently un-enriched;
+        # enrich_food_log_scores re-checks the row + serves ~95% from the
+        # override-DB cache, so over-triggering is cheap.
         if (
             food_log_id != "unknown"
-            and body.inflammation_score is None
-            and body.fodmap_rating is None
-            and body.glycemic_load is None
+            and (body.inflammation_score is None or body.health_score is None)
         ):
             from services.food_score_enrichment import enrich_food_log_scores
             background_tasks.add_task(
