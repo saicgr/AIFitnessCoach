@@ -20384,6 +20384,12 @@ class AppLocalizationsTa extends AppLocalizations {
   String get logMealSheetBackToResults => 'முடிவுகளுக்குத் திரும்பு';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'பார்கோடு';
 
   @override

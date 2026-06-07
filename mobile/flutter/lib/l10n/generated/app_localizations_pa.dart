@@ -20043,6 +20043,12 @@ class AppLocalizationsPa extends AppLocalizations {
   String get logMealSheetBackToResults => 'ਨਤੀਜਿਆਂ \'ਤੇ ਵਾਪਸ ਜਾਓ';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'ਬਾਰਕੋਡ';
 
   @override

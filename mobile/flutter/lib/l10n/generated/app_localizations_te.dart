@@ -20227,6 +20227,12 @@ class AppLocalizationsTe extends AppLocalizations {
   String get logMealSheetBackToResults => 'ఫలితాలకు తిరిగి వెళ్ళు';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'బార్‌కోడ్';
 
   @override

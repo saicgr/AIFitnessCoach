@@ -20388,6 +20388,12 @@ class AppLocalizationsMl extends AppLocalizations {
   String get logMealSheetBackToResults => 'ഫലങ്ങളിലേക്ക് മടങ്ങുക';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'ബാർകോഡ്';
 
   @override

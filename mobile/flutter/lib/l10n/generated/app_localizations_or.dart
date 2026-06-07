@@ -20166,6 +20166,12 @@ class AppLocalizationsOr extends AppLocalizations {
   String get logMealSheetBackToResults => 'ଫଳାଫଳକୁ ଫେରିଯାଆନ୍ତୁ';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'ବାରକୋଡ୍';
 
   @override

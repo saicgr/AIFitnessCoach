@@ -20116,6 +20116,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get logMealSheetBackToResults => 'ফলাফলে ফিরে যান';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'বারকোড';
 
   @override

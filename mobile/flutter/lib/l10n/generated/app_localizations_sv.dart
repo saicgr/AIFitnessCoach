@@ -20017,6 +20017,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get logMealSheetBackToResults => 'Tillbaka till resultaten';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Streckkod';
 
   @override

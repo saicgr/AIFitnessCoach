@@ -20090,6 +20090,12 @@ class AppLocalizationsFi extends AppLocalizations {
   String get logMealSheetBackToResults => 'Takaisin tuloksiin';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Viivakoodi';
 
   @override

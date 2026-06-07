@@ -20048,6 +20048,12 @@ class AppLocalizationsCs extends AppLocalizations {
   String get logMealSheetBackToResults => 'Zpět k výsledkům';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Čárový kód';
 
   @override

@@ -20133,6 +20133,12 @@ class AppLocalizationsHa extends AppLocalizations {
   String get logMealSheetBackToResults => 'Koma ga sakamakon';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Barcode';
 
   @override

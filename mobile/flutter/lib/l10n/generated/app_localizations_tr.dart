@@ -20046,6 +20046,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get logMealSheetBackToResults => 'Sonuçlara dön';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Barkod';
 
   @override

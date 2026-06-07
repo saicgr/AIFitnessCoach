@@ -20148,6 +20148,12 @@ class AppLocalizationsPl extends AppLocalizations {
   String get logMealSheetBackToResults => 'Powrót do wyników';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Kod kreskowy';
 
   @override

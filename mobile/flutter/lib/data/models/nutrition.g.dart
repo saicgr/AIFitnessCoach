@@ -452,6 +452,9 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
           : OverBudgetFork.fromJson(
               json['over_budget_fork'] as Map<String, dynamic>,
             ),
+      suggestedAddons: (json['suggested_addons'] as List<dynamic>?)
+          ?.map((e) => SuggestedAddon.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -497,6 +500,8 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'remembered_message': instance.rememberedMessage,
       'next_meal_suggestion': instance.nextMealSuggestion,
       'over_budget_fork': instance.overBudgetFork?.toJson(),
+      'suggested_addons':
+          instance.suggestedAddons?.map((e) => e.toJson()).toList(),
     };
 
 OverBudgetFork _$OverBudgetForkFromJson(Map<String, dynamic> json) =>

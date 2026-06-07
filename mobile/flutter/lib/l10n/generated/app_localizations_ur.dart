@@ -20069,6 +20069,12 @@ class AppLocalizationsUr extends AppLocalizations {
   String get logMealSheetBackToResults => 'نتائج پر واپس جائیں';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'بارکوڈ';
 
   @override

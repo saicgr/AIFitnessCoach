@@ -851,7 +851,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                               else
                                 Icon(Icons.add, size: 14, color: teal),
                               const SizedBox(width: 4),
-                              Text(AppLocalizations.of(context).tilePickerAdd,
+                              Text(AppLocalizations.of(context).logMealSheetAddSauceSide,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: teal,
@@ -1021,6 +1021,10 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   ),
                 if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
 
+                // Smart sauce/side suggestions — tappable chips that append
+                // instantly. Arrive with the deferred `coach_tips` event.
+                _buildSuggestedAddons(isDark, response),
+
                 // AI Coach Tip (also surfaces the personal_history pill when
                 // the server flagged this food as one the user has had bad
                 // reactions to before).
@@ -1156,6 +1160,75 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   /// • the over-budget coach fork (lighter next meal OR a tomorrow-workout
   ///   tweak) when the day is well over budget.
   /// Returns an empty box when there is nothing coach-worthy to show.
+  /// Smart sauce/side suggestion chips. Each appends instantly on tap (no
+  /// server round-trip). Renders nothing until the deferred `coach_tips` event
+  /// supplies suggestions.
+  Widget _buildSuggestedAddons(bool isDark, LogFoodResponse response) {
+    final addons = response.suggestedAddons;
+    if (addons == null || addons.isEmpty) return const SizedBox.shrink();
+
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.restaurant_outlined, size: 15, color: textMuted),
+              const SizedBox(width: 6),
+              Text(
+                AppLocalizations.of(context).logMealSheetAddSauceOrSide,
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final addon in addons)
+                GestureDetector(
+                  onTap: () => _addSuggestedAddon(addon),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: teal.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: teal.withValues(alpha: 0.6)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add, size: 13, color: teal),
+                        const SizedBox(width: 4),
+                        Text(
+                          addon.name,
+                          style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w600),
+                        ),
+                        if (addon.calories > 0) ...[
+                          const SizedBox(width: 5),
+                          Text(
+                            '${addon.calories} kcal',
+                            style: TextStyle(fontSize: 11, color: textMuted),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCoachingExtras(bool isDark, LogFoodResponse response) {
     final fits = _computeFitsYourDay();
     final nextMeal = response.nextMealSuggestion?.trim() ?? '';

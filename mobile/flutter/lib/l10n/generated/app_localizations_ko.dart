@@ -19253,6 +19253,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get logMealSheetBackToResults => '결과로 돌아가기';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => '바코드';
 
   @override

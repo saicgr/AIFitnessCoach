@@ -21333,6 +21333,8 @@
   "logMealSheetAnalyzing": "Analyzing…",
   "logMealSheetAnythingElseInThe": "Anything else in the photos? (e.g. flax seeds, whey protein)",
   "logMealSheetBackToResults": "Back to results",
+  "logMealSheetAddSauceOrSide": "Add a sauce or side?",
+  "logMealSheetAddSauceSide": "Add sauce / item",
   "logMealSheetBarcode": "Barcode",
   "logMealSheetBarcodeScan": "Barcode scan",
   "logMealSheetCached": "(Cached)",

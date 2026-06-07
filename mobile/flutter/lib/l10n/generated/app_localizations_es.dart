@@ -20225,6 +20225,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get logMealSheetBackToResults => 'Volver a los resultados';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Código de barras';
 
   @override

@@ -20022,6 +20022,12 @@ class AppLocalizationsTh extends AppLocalizations {
   String get logMealSheetBackToResults => 'กลับไปที่ผลลัพธ์';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'บาร์โค้ด';
 
   @override

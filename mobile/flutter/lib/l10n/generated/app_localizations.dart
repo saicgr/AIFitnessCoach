@@ -33720,6 +33720,18 @@ abstract class AppLocalizations {
   /// **'Back to results'**
   String get logMealSheetBackToResults;
 
+  /// No description provided for @logMealSheetAddSauceOrSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a sauce or side?'**
+  String get logMealSheetAddSauceOrSide;
+
+  /// No description provided for @logMealSheetAddSauceSide.
+  ///
+  /// In en, this message translates to:
+  /// **'Add sauce / item'**
+  String get logMealSheetAddSauceSide;
+
   /// No description provided for @logMealSheetBarcode.
   ///
   /// In en, this message translates to:

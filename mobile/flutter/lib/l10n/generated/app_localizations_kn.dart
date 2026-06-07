@@ -20225,6 +20225,12 @@ class AppLocalizationsKn extends AppLocalizations {
   String get logMealSheetBackToResults => 'ಫಲಿತಾಂಶಗಳಿಗೆ ಹಿಂತಿರುಗಿ';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'ಬಾರ್ಕೋಡ್';
 
   @override

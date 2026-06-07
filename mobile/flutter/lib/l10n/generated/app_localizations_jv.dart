@@ -20061,6 +20061,12 @@ class AppLocalizationsJv extends AppLocalizations {
   String get logMealSheetBackToResults => 'Bali menyang asil';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Barcode';
 
   @override

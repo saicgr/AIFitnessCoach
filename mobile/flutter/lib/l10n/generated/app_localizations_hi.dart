@@ -20051,6 +20051,12 @@ class AppLocalizationsHi extends AppLocalizations {
   String get logMealSheetBackToResults => 'परिणामों पर वापस जाएं';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'बारकोड';
 
   @override

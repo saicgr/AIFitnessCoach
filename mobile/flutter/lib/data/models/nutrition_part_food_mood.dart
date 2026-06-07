@@ -1080,6 +1080,47 @@ class FoodLogEditRecord {
       );
 }
 
+/// A smart sauce / side / condiment suggestion for the analyzed food, generated
+/// by the deferred coach-review call (e.g. nuggets → "Sweet & Sour Sauce").
+/// Carries its own macros so the client can append it INSTANTLY on tap, with no
+/// server round-trip. Hand-serialized (not @JsonSerializable) to keep the
+/// generated `.g.dart` untouched.
+class SuggestedAddon {
+  final String name;
+  final int calories;
+  final double proteinG;
+  final double carbsG;
+  final double fatG;
+  final double? weightG;
+
+  const SuggestedAddon({
+    required this.name,
+    this.calories = 0,
+    this.proteinG = 0,
+    this.carbsG = 0,
+    this.fatG = 0,
+    this.weightG,
+  });
+
+  factory SuggestedAddon.fromJson(Map<String, dynamic> json) => SuggestedAddon(
+        name: (json['name'] as String?)?.trim() ?? '',
+        calories: (json['calories'] as num?)?.toInt() ?? 0,
+        proteinG: (json['protein_g'] as num?)?.toDouble() ?? 0,
+        carbsG: (json['carbs_g'] as num?)?.toDouble() ?? 0,
+        fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
+        weightG: (json['weight_g'] as num?)?.toDouble(),
+      );
+
+  Map<String, dynamic> toJson() => <String, dynamic>{
+        'name': name,
+        'calories': calories,
+        'protein_g': proteinG,
+        'carbs_g': carbsG,
+        'fat_g': fatG,
+        'weight_g': weightG,
+      };
+}
+
 @JsonSerializable(explicitToJson: true)
 class LogFoodResponse {
   final bool success;
@@ -1195,6 +1236,12 @@ class LogFoodResponse {
   @JsonKey(name: 'over_budget_fork')
   final OverBudgetFork? overBudgetFork;
 
+  // Smart sauce/side suggestions for the detected food. Arrives with the
+  // deferred `coach_tips` event (a beat after the macro card); rendered as
+  // tappable chips that append instantly. Null/empty when none apply.
+  @JsonKey(name: 'suggested_addons')
+  final List<SuggestedAddon>? suggestedAddons;
+
   const LogFoodResponse({
     required this.success,
     this.foodLogId,  // Optional for analyze-only responses
@@ -1237,6 +1284,7 @@ class LogFoodResponse {
     this.rememberedMessage,
     this.nextMealSuggestion,
     this.overBudgetFork,
+    this.suggestedAddons,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
@@ -1347,6 +1395,7 @@ class LogFoodResponse {
       rememberedMessage: rememberedMessage,
       nextMealSuggestion: nextMealSuggestion,
       overBudgetFork: overBudgetFork,
+      suggestedAddons: suggestedAddons,
     );
   }
 
@@ -1358,9 +1407,11 @@ class LogFoodResponse {
     List<String>? warnings,
     String? recommendedSwap,
     int? healthScore,
+    int? overallMealScore,
     List<String>? healthScoreReasons,
     String? nextMealSuggestion,
     OverBudgetFork? overBudgetFork,
+    List<SuggestedAddon>? suggestedAddons,
   }) {
     return LogFoodResponse(
       success: success,
@@ -1371,7 +1422,7 @@ class LogFoodResponse {
       carbsG: carbsG,
       fatG: fatG,
       fiberG: fiberG,
-      overallMealScore: overallMealScore,
+      overallMealScore: overallMealScore ?? this.overallMealScore,
       healthScore: healthScore ?? this.healthScore,
       healthScoreReasons: healthScoreReasons ?? this.healthScoreReasons,
       goalAlignmentPercentage: goalAlignmentPercentage,
@@ -1404,6 +1455,7 @@ class LogFoodResponse {
       rememberedMessage: rememberedMessage,
       nextMealSuggestion: nextMealSuggestion ?? this.nextMealSuggestion,
       overBudgetFork: overBudgetFork ?? this.overBudgetFork,
+      suggestedAddons: suggestedAddons ?? this.suggestedAddons,
     );
   }
 }

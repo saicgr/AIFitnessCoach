@@ -20157,6 +20157,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get logMealSheetBackToResults => 'Назад к результатам';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Штрихкод';
 
   @override

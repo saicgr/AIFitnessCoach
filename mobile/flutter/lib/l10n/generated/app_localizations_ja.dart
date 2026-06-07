@@ -19239,6 +19239,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get logMealSheetBackToResults => '結果に戻る';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'バーコード';
 
   @override

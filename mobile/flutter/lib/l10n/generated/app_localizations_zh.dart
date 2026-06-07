@@ -18975,6 +18975,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get logMealSheetBackToResults => '返回结果';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => '条形码';
 
   @override

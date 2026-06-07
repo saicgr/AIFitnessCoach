@@ -21,6 +21,11 @@ import '../../utils/tz.dart';
 import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
 import '../providers/timeline_provider.dart';
+// Stats refresh after a meal log (clears the stale-while-revalidate caches +
+// invalidates the NUTRITION STATS providers). Library import cycle with
+// nutrition_stats_provider is fine — only runtime symbol references, no
+// top-level init dependency.
+import '../providers/nutrition_stats_provider.dart';
 import '../../services/post_meal_checkin_reminder.dart';
 // Meal-suggestion widget — staged. Re-enable once widget feature ships.
 // import '../../services/meal_suggestion_widget_service.dart';
@@ -634,8 +639,12 @@ class NutritionRepository {
                   for (final k in const [
                     'ai_suggestion', 'encouragements', 'warnings',
                     'recommended_swap', 'health_score', 'health_score_reasons',
+                    // Refines the score badge with the LLM's goal-aware score.
+                    'overall_meal_score',
                     // L1 — coaching extras delivered with the late tips.
                     'next_meal_suggestion', 'over_budget_fork',
+                    // Smart sauce/side suggestions (tappable chips).
+                    'suggested_addons',
                   ]) {
                     if (data[k] != null) merged[k] = data[k];
                   }
@@ -834,8 +843,12 @@ class NutritionRepository {
                   for (final k in const [
                     'ai_suggestion', 'encouragements', 'warnings',
                     'recommended_swap', 'health_score', 'health_score_reasons',
+                    // Refines the score badge with the LLM's goal-aware score.
+                    'overall_meal_score',
                     // L1 — coaching extras delivered with the late tips.
                     'next_meal_suggestion', 'over_budget_fork',
+                    // Smart sauce/side suggestions (tappable chips).
+                    'suggested_addons',
                   ]) {
                     if (data[k] != null) merged[k] = data[k];
                   }

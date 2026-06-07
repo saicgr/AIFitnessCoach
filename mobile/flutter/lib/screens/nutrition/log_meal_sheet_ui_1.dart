@@ -540,6 +540,46 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       rememberedMessage: base.rememberedMessage,
       nextMealSuggestion: base.nextMealSuggestion,
       overBudgetFork: base.overBudgetFork,
+      // Preserve sauce/side suggestions across portion edits.
+      suggestedAddons: base.suggestedAddons,
+    );
+  }
+
+  /// Append a suggested sauce/side instantly from its carried macros — NO
+  /// server round-trip (instant feel). The tapped suggestion is removed from
+  /// the chip row so it isn't offered twice.
+  void _addSuggestedAddon(SuggestedAddon addon) {
+    if (_analyzedResponse == null) return;
+    final base = _analyzedResponse!;
+    final newItem = FoodItemRanking(
+      name: addon.name,
+      amount: addon.weightG != null ? '${addon.weightG!.round()}g' : '1 serving',
+      calories: addon.calories,
+      proteinG: addon.proteinG,
+      carbsG: addon.carbsG,
+      fatG: addon.fatG,
+      fiberG: 0,
+      weightG: addon.weightG,
+      weightSource: 'estimated',
+      unit: 'g',
+      confidence: 'medium',
+    );
+    final updatedItems = List<FoodItemRanking>.from(base.foodItems)..add(newItem);
+    _originalFoodItems ??= List<FoodItemRanking>.from(base.foodItems);
+    _originalFoodItems!.add(newItem);
+    final remaining = (base.suggestedAddons ?? const <SuggestedAddon>[])
+        .where((a) => a.name != addon.name)
+        .toList();
+    setState(() {
+      _analyzedResponse = _rebuildResponseWithItems(updatedItems)
+          .copyWithCoachTips(suggestedAddons: remaining);
+    });
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_addon_added',
+      properties: <String, Object>{
+        'addon': addon.name,
+        'calories': addon.calories,
+      },
     );
   }
 
@@ -2469,6 +2509,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // Reconcile: the server now holds the real rows. forceRefresh swaps
         // the optimistic rows for authoritative data in place.
         nutritionNotifier.load(widget.userId, forceRefresh: true);
+        // Refresh the weekly NUTRITION STATS + inflammation trend.
+        nutritionNotifier.refreshNutritionStats(widget.userId);
       } catch (e) {
         debugPrint('❌ [LogMeal] menu log-selected-items failed: $e');
         // (WR4) Roll back every optimistic row so the meal list doesn't show
@@ -2861,6 +2903,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         // forceRefresh replaces the optimistic row with the authoritative
         // server row in place (server-derived fields: streak, adherence).
         nutritionNotifier.load(userId, forceRefresh: true);
+        // Refresh the NUTRITION STATS section (weekly aggregates + inflammation
+        // trend) so it reflects the new meal without a manual pull-to-refresh.
+        nutritionNotifier.refreshNutritionStats(userId);
         // Schedule the 45-min reminder after save completes (needs foodLogId)
         final logId = getSavedLogId?.call();
         if (logId != null && logId.isNotEmpty) {
@@ -2875,6 +2920,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       }));
     } else {
       nutritionNotifier.load(userId, forceRefresh: true);
+      nutritionNotifier.refreshNutritionStats(userId);
     }
 
     // Show success sheet immediately — don't block on backend save
@@ -3010,6 +3056,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             // Reconcile server-derived fields in the background.
             nutritionNotifier.load(widget.userId,
                 forceRefresh: true);
+            // Refresh the weekly NUTRITION STATS + inflammation trend.
+            nutritionNotifier.refreshNutritionStats(widget.userId);
           }
         } else {
           debugPrint('🔍 [LogMeal] User cancelled barcode confirmation');

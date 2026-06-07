@@ -20107,6 +20107,12 @@ class AppLocalizationsNl extends AppLocalizations {
   String get logMealSheetBackToResults => 'Terug naar resultaten';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Barcode';
 
   @override

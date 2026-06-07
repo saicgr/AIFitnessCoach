@@ -20085,6 +20085,12 @@ class AppLocalizationsVi extends AppLocalizations {
   String get logMealSheetBackToResults => 'Quay lại kết quả';
 
   @override
+  String get logMealSheetAddSauceOrSide => 'Add a sauce or side?';
+
+  @override
+  String get logMealSheetAddSauceSide => 'Add sauce / item';
+
+  @override
   String get logMealSheetBarcode => 'Mã vạch';
 
   @override
