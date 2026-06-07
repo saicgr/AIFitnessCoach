@@ -446,8 +446,38 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             textAlign: TextAlign.center,
           ),
         ),
+
+        const SizedBox(height: 8),
+
+        // Rotating encouragement sub-caption — advances with the steps so the
+        // wait feels narrated rather than blank (feedback_instant_feel_ai_generation).
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: Text(
+            _encouragement(),
+            key: ValueKey('enc-${_currentStep.clamp(0, 99)}'),
+            style: TextStyle(
+              fontSize: 12.5,
+              fontStyle: FontStyle.italic,
+              color: textSecondary.withValues(alpha: 0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
       ],
     );
+  }
+
+  /// Step-indexed encouragement so the loader narrates progress.
+  String _encouragement() {
+    const pool = [
+      'Reading your goals…',
+      'Picking the best moves for you…',
+      'Balancing your training week…',
+      'Dialing in sets and reps…',
+      'Adding the finishing touches…',
+    ];
+    return pool[_currentStep.clamp(0, pool.length - 1)];
   }
 
   Widget _buildErrorState(bool isDark, Color textPrimary, Color textSecondary) {

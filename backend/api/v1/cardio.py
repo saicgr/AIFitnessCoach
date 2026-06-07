@@ -850,5 +850,110 @@ async def get_cardio_trends(
         raise safe_internal_error(e, "cardio_trends")
 
 
+# ---------------------------------------------------------------------------
+# Natural-language activity logging (Calorii-audit P4.3)
+# ---------------------------------------------------------------------------
+# Deterministic parse of free text like "30 min brisk walk" or "ran 5k" into a
+# cardio_type + duration + distance + intensity, with an optional MET-based
+# calorie estimate when the caller supplies weight. No LLM on this hot path
+# (feedback_prefer_local_algo_over_rag) — fully testable and instant.
+
+
+class ParseCardioTextRequest(BaseModel):
+    text: str = Field(..., max_length=500)
+    weight_kg: Optional[float] = Field(default=None, gt=0, le=500)
+
+
+class ParseCardioTextResponse(BaseModel):
+    cardio_type: str
+    duration_minutes: Optional[int] = None
+    distance_km: Optional[float] = None
+    intensity: Optional[str] = None
+    calories_burned: Optional[int] = None
+    matched: bool
+
+
+# MET values at moderate intensity (Compendium of Physical Activities, approx).
+_CARDIO_MET = {
+    "running": 9.8, "cycling": 7.5, "swimming": 8.0, "rowing": 7.0,
+    "elliptical": 5.0, "walking": 3.5, "hiking": 6.0,
+    "stair_climbing": 8.0, "jump_rope": 11.0, "other": 6.0,
+}
+_CARDIO_KEYWORDS = {
+    "running": ["running", "run ", "ran", "jog", "sprint"],
+    "cycling": ["cycl", "bike", "biking", "biked", "spin"],
+    "swimming": ["swim", "swam", "laps"],
+    "rowing": ["rowing", "rowed", "erg", "row "],
+    "elliptical": ["elliptical", "cross trainer"],
+    "walking": ["walk", "stroll"],
+    "hiking": ["hike", "hiking", "trek"],
+    "stair_climbing": ["stair", "stairmaster", "step mill"],
+    "jump_rope": ["jump rope", "jumprope", "skipping", "skip rope"],
+}
+_INTENSITY_FACTOR = {"light": 0.8, "moderate": 1.0, "vigorous": 1.2}
+
+
+def parse_cardio_text(text: str, weight_kg: Optional[float]) -> ParseCardioTextResponse:
+    """Pure, deterministic parser (unit-testable without FastAPI/DB)."""
+    import re
+    t = " " + (text or "").lower().strip() + " "
+
+    cardio_type = "other"
+    for k, words in _CARDIO_KEYWORDS.items():
+        if any(w in t for w in words):
+            cardio_type = k
+            break
+
+    duration_min: Optional[int] = None
+    h = re.search(r"(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|hr|h)\b", t)
+    m = re.search(r"(\d+)\s*(?:minutes?|mins?|min|m)\b", t)
+    if h:
+        duration_min = int(round(float(h.group(1)) * 60))
+    if m:
+        duration_min = (duration_min or 0) + int(m.group(1))
+
+    distance_km: Optional[float] = None
+    kx = re.search(r"(\d+(?:\.\d+)?)\s*k(?:m|ms)?\b", t)
+    mi = re.search(r"(\d+(?:\.\d+)?)\s*(?:miles?|mi)\b", t)
+    if kx:
+        distance_km = round(float(kx.group(1)), 2)
+    elif mi:
+        distance_km = round(float(mi.group(1)) * 1.60934, 2)
+
+    intensity = "moderate"
+    if any(w in t for w in [" easy", " light", " slow", " gentle", " leisure"]):
+        intensity = "light"
+    elif any(w in t for w in [" brisk", " fast", " hard", " intense", " vigorous", " hiit", " sprint"]):
+        intensity = "vigorous"
+
+    calories: Optional[int] = None
+    if weight_kg and duration_min:
+        met = _CARDIO_MET.get(cardio_type, 6.0) * _INTENSITY_FACTOR[intensity]
+        calories = int(round(met * weight_kg * (duration_min / 60.0)))
+
+    matched = cardio_type != "other" or duration_min is not None or distance_km is not None
+    return ParseCardioTextResponse(
+        cardio_type=cardio_type,
+        duration_minutes=duration_min,
+        distance_km=distance_km,
+        intensity=intensity,
+        calories_burned=calories,
+        matched=matched,
+    )
+
+
+@router.post("/parse-text", response_model=ParseCardioTextResponse, tags=["Cardio"])
+async def parse_cardio_text_endpoint(
+    request: ParseCardioTextRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Parse a free-text activity description into structured cardio fields."""
+    try:
+        return parse_cardio_text(request.text, request.weight_kg)
+    except Exception as e:
+        logger.error(f"parse_cardio_text failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "cardio")
+
+
 # Include secondary endpoints
 router.include_router(_endpoints_router)

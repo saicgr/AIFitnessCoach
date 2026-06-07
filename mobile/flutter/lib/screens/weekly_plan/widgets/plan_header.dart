@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/weekly_plan.dart';
+import '../../../services/mesocycle_planner.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Header widget showing weekly plan overview
@@ -68,6 +69,9 @@ class PlanHeader extends StatelessWidget {
                 ),
             ],
           ),
+          // Periodization label — "Week X of N · Phase" (Calorii-audit P4.2).
+          // Self-hides when there's no active mesocycle.
+          const _MesocyclePhaseChip(),
           const SizedBox(height: 20),
 
           // Stats row
@@ -182,6 +186,58 @@ class PlanHeader extends StatelessWidget {
               color: color,
               fontWeight: FontWeight.w500,
               fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Week X of N · <phase>" chip. Loads the active mesocycle context async and
+/// hides itself when none is set. (Calorii-audit P4.2 — periodization label.)
+class _MesocyclePhaseChip extends StatefulWidget {
+  const _MesocyclePhaseChip();
+
+  @override
+  State<_MesocyclePhaseChip> createState() => _MesocyclePhaseChipState();
+}
+
+class _MesocyclePhaseChipState extends State<_MesocyclePhaseChip> {
+  MesocycleContext? _ctx;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final c = await MesocyclePlanner.getCurrentContext();
+      if (mounted) setState(() => _ctx = c);
+    } catch (_) {
+      // Non-critical — chip simply stays hidden.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ctx = _ctx;
+    if (ctx == null) return const SizedBox.shrink();
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Row(
+        children: [
+          Icon(Icons.timeline_rounded, size: 16, color: cs.onPrimaryContainer),
+          const SizedBox(width: 6),
+          Text(
+            'Week ${ctx.weekNumber} of ${ctx.totalWeeks} · ${ctx.phaseDisplayName}',
+            style: TextStyle(
+              color: cs.onPrimaryContainer,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

@@ -32,6 +32,9 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
   final _maxHeartRateController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _notesController = TextEditingController();
+  // NL quick-entry (Calorii-audit P4.3): "30 min brisk walk" → auto-fill.
+  final _describeController = TextEditingController();
+  bool _parsing = false;
 
   // Focus nodes for keyboard handling
   final _durationFocus = FocusNode();
@@ -65,6 +68,7 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
     _maxHeartRateController.dispose();
     _caloriesController.dispose();
     _notesController.dispose();
+    _describeController.dispose();
     _durationFocus.dispose();
     _distanceFocus.dispose();
     _avgHrFocus.dispose();
@@ -97,6 +101,45 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Natural-language quick entry (Calorii-audit P4.3) — type it once
+              // ("30 min brisk walk", "ran 5k") and auto-fill the form below.
+              _SectionHeader(title: 'Describe it', isDark: isDark)
+                  .animate()
+                  .fadeIn(),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _describeController,
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _parseDescription(),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 30 min brisk walk, ran 5k…',
+                        prefixIcon: const Icon(Icons.bolt_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _parsing
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : FilledButton(
+                          onPressed: _parseDescription,
+                          child: const Text('Auto-fill'),
+                        ),
+                ],
+              ).animate().fadeIn(delay: 30.ms),
+
+              const SizedBox(height: 24),
+
               // Cardio Type Section
               _SectionHeader(title: AppLocalizations.of(context).logCardioActivityType, isDark: isDark)
                   .animate()
@@ -326,6 +369,40 @@ class _LogCardioScreenState extends ConsumerState<LogCardioScreen> {
         ),
       );
       Navigator.of(context).pop(session);
+    }
+  }
+
+  /// Parse the free-text description via the deterministic backend parser and
+  /// pre-fill type/duration/distance/calories. (Calorii-audit P4.3.)
+  Future<void> _parseDescription() async {
+    final text = _describeController.text.trim();
+    if (text.isEmpty) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _parsing = true);
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.dio.post(
+        '/cardio/parse-text',
+        data: {'text': text},
+      );
+      final d = (res.data as Map).cast<String, dynamic>();
+      if (!mounted) return;
+      setState(() {
+        final ct = d['cardio_type'] as String?;
+        if (ct != null) _selectedType = CardioType.fromValue(ct);
+        final dur = d['duration_minutes'];
+        if (dur != null) _durationController.text = '$dur';
+        final dist = d['distance_km'];
+        if (dist != null) _distanceController.text = '${dist is num ? dist : dist}';
+        final cal = d['calories_burned'];
+        if (cal != null) _caloriesController.text = '$cal';
+      });
+    } catch (_) {
+      if (mounted) {
+        _showError('Couldn\'t read that. Try e.g. "30 min brisk walk".');
+      }
+    } finally {
+      if (mounted) setState(() => _parsing = false);
     }
   }
 
