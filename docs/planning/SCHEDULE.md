@@ -4,6 +4,54 @@
 
 ---
 
+## ⚡ QUICK PROMPTS — copy-paste these (full reference: CONTENT ENGINE section below)
+
+**👉 Generate ALL of today's content at once** (one idea, three native versions — reels + carousels, every platform):
+
+```
+Generate today's content batch — one idea, three native versions. Reels for TikTok, Instagram, and YouTube, plus distinct carousels for Instagram and TikTok. Lead platform TikTok. Write to the dated content folder and hand me the hooks.
+```
+
+**Every morning:**
+
+```
+Quick GEO status check
+```
+
+```
+Draft today's build-in-public thread
+```
+
+**Friday — plan tomorrow's reels:**
+
+```
+Generate this Saturday's reel shot list — one idea, three native versions for TikTok, Instagram, and YouTube
+```
+
+**Saturday — after filming, make the native cuts:**
+
+```
+I recorded these clips: <describe what you filmed>. Give me native versions per platform — one idea, three native cuts
+```
+
+**Sunday — weekly text + carousels pack:**
+
+```
+Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, native carousels (IG polished + a distinct TikTok Photo Mode version)
+```
+
+Just the reels, or just the carousels:
+
+```
+Generate today's reel batch — one idea, three native versions for TikTok, Instagram, and YouTube
+```
+
+```
+Draft today's carousels — one idea, native versions for Instagram and TikTok
+```
+
+---
+
 ## ⚠️ ONE-OFF OVERRIDE — week of 2026-05-12 (publishing week)
 
 **Saturday 2026-05-16 = LAUNCH DAY.** Normal Sat (Reels record + edit) is replaced with App Store + Play Store submission work. See override block below "SATURDAY" section. **Marketing pauses through 2026-05-22:** no Reels recorded, Mon/Wed/Fri 11am drops empty next week. All text-based posting (Reddit, X, LinkedIn, comparison page Sun, listicle pitches Wed) continues — those don't depend on Saturday filming. Schedule resumes normal on **Sat 2026-05-23** with Reels recording back on.
