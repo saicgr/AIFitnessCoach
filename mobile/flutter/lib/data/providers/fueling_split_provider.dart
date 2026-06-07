@@ -47,6 +47,23 @@ bool _fuelingRevalidated = false;
 /// JWT-expiry rule). Used to scope disk-cache entries per user.
 String? get _liveUserId => Supabase.instance.client.auth.currentUser?.id;
 
+/// Hard-clear the fueling-split cache (BOTH the static in-memory value and the
+/// SharedPreferences disk snapshot) so a following `ref.invalidate` re-fetches
+/// from the server instead of re-serving the stale-while-revalidate snapshot.
+/// Called after a write event (e.g. a meal logged) — see
+/// `invalidateNutritionStats` in nutrition_stats_provider.dart.
+Future<void> clearFuelingSplitCache() async {
+  _fuelingCache = null;
+  _fuelingCacheOwner = null;
+  _fuelingRevalidated = false;
+  try {
+    await DataCacheService.instance
+        .invalidate(_kFuelingSplitKey, userId: _liveUserId);
+  } catch (_) {
+    // Best-effort; an invalidate re-fetch still corrects it next cycle.
+  }
+}
+
 /// Serialize a [FuelingSplit] to the exact wire shape `FuelingSplit.fromJson`
 /// reads. The model has no `toJson` and lives in a file we don't own, so the
 /// serializer lives here.

@@ -1131,6 +1131,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       // because those screens already show their own list-level spinner.
       _cachedMicronutrientsTime = null;
       await notifier.deleteLog(_userId!, mealId);
+      // Removing a meal changes the weekly aggregates — refresh the stats.
+      notifier.refreshNutritionStats(_userId!);
       ref.read(posthogServiceProvider).capture(
         eventName: 'food_log_deleted',
         properties: <String, Object>{'food_log_id': mealId},
@@ -1169,7 +1171,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         properties: <String, Object>{'food_log_id': mealId},
       );
       // Errors restore the meal locally and surface via state.error.
-      unawaited(notifier.commitDeleteLog(_userId!, mealId, removed));
+      unawaited(notifier.commitDeleteLog(_userId!, mealId, removed).then((_) {
+        // Removing a meal changes the weekly aggregates — refresh the stats.
+        notifier.refreshNutritionStats(_userId!);
+      }));
     });
   }
 
@@ -1200,6 +1205,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ..['logged_at'] = DateTime.now().toUtc().toIso8601String();
         notifier.spliceRawLog(FoodLog.fromJson(json), _userId!);
       }
+      // A copied meal adds calories/macros to the day — refresh the stats.
+      notifier.refreshNutritionStats(_userId!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

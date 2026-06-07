@@ -57,6 +57,10 @@ class NutritionTab extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () async {
+        // Clear both cache tiers first — a plain invalidate would re-serve the
+        // stale-while-revalidate snapshot, making pull-to-refresh show last
+        // cycle's numbers until a second pull.
+        await clearNutritionStatsAndFuelingCaches();
         ref.invalidate(weeklySummaryProvider(userId!));
         ref.invalidate(weeklyNutritionProvider(userId!));
         ref.invalidate(detailedTDEEProvider(userId!));

@@ -112,6 +112,10 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
       ref
           .read(dailyNutritionProvider(todayNutritionKey()).notifier)
           .refreshTimeline();
+      // Refresh the weekly NUTRITION STATS + inflammation trend too.
+      ref
+          .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+          .refreshNutritionStats(widget.userId);
     } catch (_) {
       if (!mounted) return;
       HapticService.error();

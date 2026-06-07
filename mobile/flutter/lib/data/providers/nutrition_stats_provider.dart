@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/nutrition_preferences.dart';
 import '../repositories/nutrition_repository.dart';
 import '../services/data_cache_service.dart';
+import 'fueling_split_provider.dart';
 
 // In-memory caches for nutrition aggregates. Mirrors the workouts cache pattern
 // in `workout_repository.dart`: returns cached data instantly on screen entry
@@ -132,6 +133,7 @@ Map<String, dynamic> _weeklyNutritionToJson(WeeklyNutritionData v) => {
                 'total_carbs_g': d.carbsG,
                 'total_fat_g': d.fatG,
                 'meal_count': d.meals,
+                'inflammation_score': d.inflammationScore,
               })
           .toList(),
     };
@@ -207,3 +209,76 @@ final weeklyNutritionProvider =
     );
   },
 );
+
+/// Per-day inflammation series for the past week, derived from the SAME weekly
+/// payload the calorie trend uses — no extra network call. Each point is a
+/// (date, score 0-10) pair; days with no scored log are omitted (null), so the
+/// card can show an honest "log more to see your trend" state rather than a
+/// fabricated flat line. The aggregate average is the mean of the present days.
+typedef WeeklyInflammation = ({
+  List<({String date, double? score})> series,
+  double? weekAverage,
+  int daysWithScore,
+});
+
+/// Lightweight selector over [weeklyNutritionProvider]; recomputes only when the
+/// underlying weekly data changes. Returns null while the source is loading so
+/// the card skeletons instead of flashing an empty state.
+final weeklyInflammationProvider =
+    Provider.autoDispose.family<AsyncValue<WeeklyInflammation?>, String>(
+  (ref, userId) {
+    final weekly = ref.watch(weeklyNutritionProvider(userId));
+    return weekly.whenData((data) {
+      if (data == null) return null;
+      final series = data.dailySummaries
+          .map((d) => (date: d.date, score: d.inflammationScore))
+          .toList();
+      final scored =
+          series.where((p) => p.score != null).map((p) => p.score!).toList();
+      final avg = scored.isEmpty
+          ? null
+          : scored.reduce((a, b) => a + b) / scored.length;
+      return (
+        series: series,
+        weekAverage: avg,
+        daysWithScore: scored.length,
+      );
+    });
+  },
+);
+
+/// Hard-clear ALL nutrition-stats caches (static in-memory + SharedPreferences
+/// disk) for every aggregate the NUTRITION STATS section reads. Plain
+/// `ref.invalidate` is NOT enough on these providers: they use stale-while-
+/// revalidate, so an invalidate re-serves the cached snapshot first and the
+/// section shows last cycle's numbers (see the cache contract in this file +
+/// DataCacheService's note). Callers must clear here, THEN invalidate, so the
+/// provider re-run hits the synchronous fetch path and paints fresh data.
+Future<void> clearNutritionStatsAndFuelingCaches() async {
+  clearNutritionStatsCache();
+  await clearFuelingSplitCache();
+  final user = _liveUserId;
+  final cache = DataCacheService.instance;
+  await Future.wait<void>([
+    cache.invalidate(_kWeeklySummaryKey, userId: user),
+    cache.invalidate(_kDetailedTDEEKey, userId: user),
+    cache.invalidate(_kAdherenceSummaryKey, userId: user),
+    cache.invalidate(_kWeeklyNutritionKey, userId: user),
+  ]);
+}
+
+/// Force the NUTRITION STATS section to refetch after a write (e.g. a meal
+/// logged). Clears both cache tiers, then invalidates every stats provider so
+/// the section paints fresh numbers WITHOUT a manual pull-to-refresh.
+///
+/// Takes the long-lived [Ref] from a notifier (which survives the log sheet's
+/// dispose) rather than a widget's WidgetRef. The weekly inflammation trend
+/// rides on [weeklyNutritionProvider], so invalidating that refreshes it too.
+Future<void> invalidateNutritionStats(Ref ref, String userId) async {
+  await clearNutritionStatsAndFuelingCaches();
+  ref.invalidate(weeklySummaryProvider(userId));
+  ref.invalidate(weeklyNutritionProvider(userId));
+  ref.invalidate(detailedTDEEProvider(userId));
+  ref.invalidate(adherenceSummaryProvider(userId));
+  ref.invalidate(fuelingSplitProvider);
+}
