@@ -15,6 +15,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/hydration_repository.dart';
+import 'nutrition_mascot.dart';
 import '../../nutrition/log_meal_sheet.dart';
 import '../../nutrition/widgets/micro_settings_sheet.dart';
 import '../../nutrition/widgets/calories_burned_sheet.dart';
@@ -969,9 +970,24 @@ class _MacrosPage extends StatelessWidget {
                             ),
                           )
                         else
-                          Column(
+                          // FittedBox guards against vertical overflow on short
+                          // devices now that the mascot sits above the number
+                          // inside the (compact) ring.
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              // Finn the shark, centered inside the ring above
+                              // "kcal left". Particles off at this small size.
+                              NutritionMascot(
+                                progress: calorieProgress,
+                                size: 54,
+                                showParticles: false,
+                                justAteTick:
+                                    (calorieTarget - caloriesRemaining).round(),
+                              ),
+                              const SizedBox(height: 2),
                               Text(
                                 l10n.heroNutritionCardCalLeft.toUpperCase(),
                                 style: TextStyle(
@@ -1008,6 +1024,7 @@ class _MacrosPage extends StatelessWidget {
                                 ),
                               ),
                             ],
+                          ),
                           ),
                       ],
                     );

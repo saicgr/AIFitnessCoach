@@ -269,6 +269,7 @@ flutter:
     - assets/images/shareable_backgrounds/workout/
     - assets/images/shareable_backgrounds/nutrition/
     - assets/images/shareable_backgrounds/abstract/
+    - assets/mascot/shark/
     - assets/fonts/
 
   # Bundled OFL display faces for the shareables redesign (Anton = display
