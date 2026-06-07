@@ -22,8 +22,13 @@ String inflammationLabel(num score) {
 
 /// Compact, color-graded inflammation pill for a logged-food row.
 ///
-/// Renders "🔥 N" (or "🔥 N/10" when [compact] is false) tinted by severity,
-/// and on tap opens the shared [ScoreExplainSheet] for inflammation so the user
+/// Renders "Infl N" (or "Inflammation N/10" when [compact] is false) tinted by
+/// severity. Deliberately label-led with NO flame emoji — a flame reads as a
+/// reward/streak in a fitness app, which made a HIGH inflammation score look
+/// positive. The word "Infl"/"Inflammation" + the red→green color band make it
+/// read as "lower is better" instead.
+///
+/// On tap opens the shared [ScoreExplainSheet] for inflammation so the user
 /// gets the same explanation surfaced from Menu Analysis and the food history
 /// screen. Returns nothing when the score is null (enrichment pending) — the
 /// caller should guard on null too, but this keeps it safe to drop in.
@@ -62,10 +67,11 @@ class InflammationChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🔥', style: TextStyle(fontSize: 10)),
-              const SizedBox(width: 4),
               Text(
-                compact ? '$score' : '$score/10',
+                // Label-led so a high score never reads as a reward. Compact
+                // ("Infl 7") for tight rows; full ("Inflammation 7/10") on the
+                // roomier daily stats card.
+                compact ? 'Infl $score' : 'Inflammation $score/10',
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,

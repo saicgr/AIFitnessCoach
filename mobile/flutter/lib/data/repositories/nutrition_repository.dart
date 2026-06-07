@@ -645,6 +645,9 @@ class NutritionRepository {
                     'next_meal_suggestion', 'over_budget_fork',
                     // Smart sauce/side suggestions (tappable chips).
                     'suggested_addons',
+                    // Inflammation — fast path often omits it; the late review
+                    // fills it so the "Inflammation N/10" pill can render.
+                    'inflammation_score',
                   ]) {
                     if (data[k] != null) merged[k] = data[k];
                   }
@@ -849,6 +852,9 @@ class NutritionRepository {
                     'next_meal_suggestion', 'over_budget_fork',
                     // Smart sauce/side suggestions (tappable chips).
                     'suggested_addons',
+                    // Inflammation — fast path often omits it; the late review
+                    // fills it so the "Inflammation N/10" pill can render.
+                    'inflammation_score',
                   ]) {
                     if (data[k] != null) merged[k] = data[k];
                   }

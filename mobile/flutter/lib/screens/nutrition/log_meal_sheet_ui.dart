@@ -980,12 +980,16 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ],
                   ),
                 ),
-                // Secondary score breakdown (health score + goal alignment %)
+                // Secondary score breakdown (health score + inflammation +
+                // goal alignment %). Inflammation sits beside Health so both
+                // diet-quality scores read together (user request).
                 if (response.healthScore != null ||
-                    response.goalAlignmentPercentage != null) ...[
+                    response.goalAlignmentPercentage != null ||
+                    response.inflammationScore != null) ...[
                   const SizedBox(height: 8),
                   MealScoreBreakdownRow(
                     healthScore: response.healthScore,
+                    inflammationScore: response.inflammationScore,
                     goalAlignmentPercentage: response.goalAlignmentPercentage,
                     // Pass AI-emitted reasons through, falling back to local
                     // derivation if older response didn't include them.
@@ -1164,8 +1168,11 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   /// server round-trip). Renders nothing until the deferred `coach_tips` event
   /// supplies suggestions.
   Widget _buildSuggestedAddons(bool isDark, LogFoodResponse response) {
-    final addons = response.suggestedAddons;
-    if (addons == null || addons.isEmpty) return const SizedBox.shrink();
+    final addons = response.suggestedAddons ?? const <SuggestedAddon>[];
+    // Render the section whenever there are food items — so the user can ALWAYS
+    // add a custom sauce/side via "+ Other…", even before the deferred
+    // suggestion chips arrive or when the model returned none.
+    if (response.foodItems.isEmpty) return const SizedBox.shrink();
 
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -1221,6 +1228,32 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ),
                   ),
                 ),
+              // "+ Other…" — escape hatch when none of the suggested chips fit.
+              // Styled distinctly (muted outline, no fill) so it reads as
+              // "type your own" vs the pre-priced suggestions. Opens the same
+              // free-text add-food sheet the top/bottom buttons use.
+              GestureDetector(
+                onTap: () => _handleAddFoodItem(entryPoint: 'addon_section'),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.transparent,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: textMuted.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.edit_outlined, size: 13, color: textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Other…',
+                        style: TextStyle(fontSize: 12, color: textMuted, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),

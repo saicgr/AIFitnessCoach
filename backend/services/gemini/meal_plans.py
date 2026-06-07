@@ -566,6 +566,32 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
         return None
 
     @staticmethod
+    def _sanitize_inflammation_score(raw) -> Optional[int]:
+        """Clamp the model's meal-level inflammation_score to 0-10, or None
+        when absent/unparseable (the client then renders no inflammation pill).
+        """
+        if raw is None:
+            return None
+        try:
+            return max(0, min(10, int(round(float(raw)))))
+        except (TypeError, ValueError):
+            return None
+
+    @staticmethod
+    def _sanitize_triggers(raw) -> list:
+        """Normalize inflammation_triggers into up to 3 short non-empty tags."""
+        if not isinstance(raw, list):
+            return []
+        out = []
+        for t in raw:
+            tag = str(t or "").strip()
+            if tag and len(tag) <= 40:
+                out.append(tag)
+            if len(out) >= 3:
+                break
+        return out
+
+    @staticmethod
     def _sanitize_addons(raw) -> list:
         """Normalize the model's `suggested_addons` into a clean list.
 
@@ -782,11 +808,14 @@ Return ONLY valid JSON (no markdown) with this exact structure:
   }},
   "suggested_addons": [
     {{"name": "Sweet & Sour Sauce", "calories": 50, "protein_g": 0, "carbs_g": 12, "fat_g": 0, "weight_g": 28}}
-  ]
+  ],
+  "inflammation_score": 6,
+  "inflammation_triggers": ["refined flour", "seed oil"]
 }}
 - next_meal_suggestion: ONLY fill when daily budget context is provided AND there is meaningful budget left; otherwise empty string.
 - over_budget_fork: ONLY fill BOTH options when the prompt explicitly says the day is well over budget; otherwise set both to empty strings.
-- suggested_addons: 3-5 sauces / dips / condiments / small sides that commonly PAIR with this specific food and that the user likely had but may not have logged (e.g. nuggets → dipping sauces; fries → ketchup; toast → butter/jam; salad → dressing). Each needs realistic macros for ONE typical serving. Use the food's own cuisine/brand for relevance. Return [] when no add-on makes sense (e.g. a plain beverage, a complete bowl). Do NOT suggest the food itself or a full meal — only small accompaniments.
+- suggested_addons: 3-5 sauces / dips / condiments / small sides that commonly PAIR with this specific food and that the user likely had but may not have logged (e.g. nuggets → dipping sauces; fries → ketchup; toast → butter/jam; salad → dressing). Each needs realistic macros for ONE typical serving. Return [] when no add-on makes sense (e.g. a plain beverage, a complete bowl). Do NOT suggest the food itself or a full meal — only small accompaniments.
+  CUISINE-AUTHENTIC: match the dish's actual regional cuisine and suggest the accompaniments a person from that region would really add — not a generic Western default. Examples: South-Indian dosa / idli / vada → coconut chutney, peanut (palli) chutney, tomato-onion chutney, sambar, gunpowder podi with ghee; North-Indian roti / naan → dal, raita, pickle (achaar), butter; Mexican tacos → salsa, guacamole, crema, pico de gallo; Japanese → soy sauce, wasabi, pickled ginger; Italian pasta → parmesan, olive oil, chili flakes. Prefer the named regional item over a vague one ("peanut chutney" not "chutney").
 
 Rules:
 - health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
@@ -802,6 +831,8 @@ Rules:
 - For fried foods: always warn about seed oils and inflammatory omega-6
 - ai_suggestion must be specific and actionable — NOT generic like 'pair with a salad' or 'balance it out later'
 - If health_score <= 3, recommended_swap is REQUIRED (non-empty string)
+- inflammation_score: integer 0-10 for the WHOLE meal (0-3 = anti-inflammatory: oily fish, leafy greens, berries, olive oil, turmeric; 4-6 = neutral; 7-10 = highly inflammatory: deep-fried, ultra-processed, refined flour/sugar, seed oils, processed meat). Judge by ingredients + cooking method, NOT calories.
+- inflammation_triggers: 1-3 SHORT tags naming the main drivers of the score (e.g. ["seed oil", "refined flour"] for a high score, or ["omega-3", "high fiber"] for a low score). Always provide them.
 '''
 
         try:
@@ -839,6 +870,8 @@ Rules:
                     "next_meal_suggestion": str(data.get("next_meal_suggestion", "") or "").strip(),
                     "over_budget_fork": self._sanitize_fork(data.get("over_budget_fork")),
                     "suggested_addons": self._sanitize_addons(data.get("suggested_addons")),
+                    "inflammation_score": self._sanitize_inflammation_score(data.get("inflammation_score")),
+                    "inflammation_triggers": self._sanitize_triggers(data.get("inflammation_triggers")),
                 }
 
             # Fallback: manual markdown strip

@@ -278,6 +278,11 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     "over_budget_fork": review.get("over_budget_fork"),
                     # Smart sauce/side suggestions for the detected food.
                     "suggested_addons": review.get("suggested_addons", []),
+                    # Inflammation — surfaced beside Health on the estimate
+                    # screen. The fast macro path often omits it, so this
+                    # deferred review is the reliable source for it.
+                    "inflammation_score": review.get("inflammation_score"),
+                    "inflammation_triggers": review.get("inflammation_triggers", []),
                 }
         except Exception as e:
             logger.error(f"[EnrichTips] Gemini call failed: {e}", exc_info=True)
@@ -292,6 +297,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             "next_meal_suggestion": "",
             "over_budget_fork": None,
             "suggested_addons": [],
+            "inflammation_score": None,
+            "inflammation_triggers": [],
         }
 
     async def analyze_food(

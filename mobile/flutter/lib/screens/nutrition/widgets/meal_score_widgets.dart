@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import 'inflammation_chip.dart' show inflammationColor;
 import 'score_explain_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -196,10 +197,6 @@ class _LabeledScorePill extends StatelessWidget {
   final String value;
   final Color color;
   final bool showHelpIcon;
-  /// When true the pill wraps itself in [Expanded]. Set to false when the
-  /// caller already provides flex (e.g. wraps the pill in a GestureDetector
-  /// that's itself inside an Expanded) to avoid nested-Expanded asserts.
-  final bool selfExpand;
 
   const _LabeledScorePill({
     required this.icon,
@@ -207,12 +204,15 @@ class _LabeledScorePill extends StatelessWidget {
     required this.value,
     required this.color,
     this.showHelpIcon = false,
-    this.selfExpand = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final inner = Container(
+    // Content-sized (mainAxisSize.min, no Flexible) so the pill is safe inside
+    // the parent Wrap — a Flexible/Expanded child under Wrap's unbounded width
+    // would throw. Labels are short ("Health", "Inflammation", "Goal Fit"), so
+    // they never need to ellipsize.
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
@@ -220,19 +220,16 @@ class _LabeledScorePill extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.30)),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              '$label ',
-              style: TextStyle(
-                fontSize: 11,
-                color: color.withValues(alpha: 0.85),
-                fontWeight: FontWeight.w500,
-              ),
-              overflow: TextOverflow.ellipsis,
+          Text(
+            '$label ',
+            style: TextStyle(
+              fontSize: 11,
+              color: color.withValues(alpha: 0.85),
+              fontWeight: FontWeight.w500,
             ),
           ),
           Text(
@@ -250,8 +247,6 @@ class _LabeledScorePill extends StatelessWidget {
         ],
       ),
     );
-    if (selfExpand) return Expanded(child: inner);
-    return inner;
   }
 }
 
@@ -264,16 +259,27 @@ class MealScoreBreakdownRow extends StatelessWidget {
   /// Health pill is tapped. Pass either Gemini-emitted tags or locally
   /// derived ones via `healthReasonsFromSignals`.
   final List<String>? healthScoreReasons;
+  /// Meal-level inflammation score (0-10). When present, an "Inflammation N/10"
+  /// pill renders beside Health so the two diet-quality scores read together
+  /// at a glance (user request — they only saw Health here before).
+  final int? inflammationScore;
+  /// `inflammation_triggers` tags shown by the ScoreExplainSheet when the
+  /// inflammation pill is tapped.
+  final List<String>? inflammationTriggers;
 
   const MealScoreBreakdownRow({
     super.key,
     this.healthScore,
     this.goalAlignmentPercentage,
     this.healthScoreReasons,
+    this.inflammationScore,
+    this.inflammationTriggers,
   });
 
   bool get _hasAnything =>
-      healthScore != null || goalAlignmentPercentage != null;
+      healthScore != null ||
+      goalAlignmentPercentage != null ||
+      inflammationScore != null;
 
   Color _healthColor(int score) {
     // 3-tier scheme aligned with ScoreExplainSheet's legend bands so the
@@ -296,38 +302,57 @@ class MealScoreBreakdownRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!_hasAnything) return const SizedBox.shrink();
 
-    return Row(
+    // Wrap (not Row) so up to three pills — Health, Inflammation, Goal Fit —
+    // flow onto a second line on narrow devices (iPhone SE) instead of
+    // overflowing. NOTE: every pill must use selfExpand:false here — an
+    // Expanded inside a Wrap throws a ParentDataWidget error.
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
         if (healthScore != null)
           // Tap-to-explain — opens ScoreExplainSheet with reason chips.
-          // Wrap in Expanded so the GestureDetector inherits the pill's
-          // flex (the pill itself uses Expanded internally).
-          Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => ScoreExplainSheet.showHealth(
-                context,
-                score: healthScore,
-                reasons: healthScoreReasons ?? const ['ai_unavailable'],
-              ),
-              child: _LabeledScorePill(
-                icon: Icons.favorite,
-                label: AppLocalizations.of(context).mealScoreWidgetsHealth,
-                value: '${healthScore!}/10',
-                color: _healthColor(healthScore!),
-                showHelpIcon: true,
-              ),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => ScoreExplainSheet.showHealth(
+              context,
+              score: healthScore,
+              reasons: healthScoreReasons ?? const ['ai_unavailable'],
+            ),
+            child: _LabeledScorePill(
+              icon: Icons.favorite,
+              label: AppLocalizations.of(context).mealScoreWidgetsHealth,
+              value: '${healthScore!}/10',
+              color: _healthColor(healthScore!),
+              showHelpIcon: true,
             ),
           ),
-        if (healthScore != null && goalAlignmentPercentage != null)
-          const SizedBox(width: 8),
+        if (inflammationScore != null)
+          // Inflammation, beside Health. Neutral icon (NOT a flame — see
+          // InflammationChip) + the shared inflammationColor() grading so the
+          // pill matches the chip everywhere else.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => ScoreExplainSheet.show(
+              context,
+              kind: ScoreKind.inflammation,
+              value: inflammationScore,
+              triggers: inflammationTriggers ?? const [],
+            ),
+            child: _LabeledScorePill(
+              icon: Icons.bubble_chart_outlined,
+              label: 'Inflammation',
+              value: '${inflammationScore!}/10',
+              color: inflammationColor(inflammationScore!),
+              showHelpIcon: true,
+            ),
+          ),
         if (goalAlignmentPercentage != null)
           _LabeledScorePill(
             icon: Icons.flag,
             label: AppLocalizations.of(context).mealScoreWidgetsGoalFit,
             value: '${goalAlignmentPercentage!}%',
             color: _alignmentColor(goalAlignmentPercentage!),
-            selfExpand: true,
           ),
       ],
     );
