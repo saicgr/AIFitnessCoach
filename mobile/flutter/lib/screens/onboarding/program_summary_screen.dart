@@ -1,3 +1,4 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -23,7 +24,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
     final quizData = ref.watch(preAuthQuizProvider);
 
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
+    return _withConfetti(Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       body: SafeArea(
         child: Column(
@@ -109,7 +110,7 @@ class ProgramSummaryScreen extends ConsumerWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildSummaryGrid(
@@ -425,6 +426,18 @@ class ProgramSummaryScreen extends ConsumerWidget {
     );
   }
 
+  /// Overlays an auto-playing confetti burst on the plan-reveal screen
+  /// (Calorii-audit P6.2). The single wrapping paren keeps the change balanced.
+  Widget _withConfetti(Widget child) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        child,
+        const IgnorePointer(child: _PlanRevealConfetti()),
+      ],
+    );
+  }
+
   String _formatGoal(BuildContext context, String? goal) {
     final l10n = AppLocalizations.of(context)!;
     if (goal == null) return l10n.programSummaryGeneralFitness;
@@ -490,5 +503,56 @@ class _RegenerateWrapper extends StatelessWidget {
       context.go('/workout-generation');
     });
     return const Scaffold(body: Center(child: CircularProgressIndicator()));
+  }
+}
+
+/// Auto-playing confetti burst for the plan-reveal moment.
+class _PlanRevealConfetti extends StatefulWidget {
+  const _PlanRevealConfetti();
+
+  @override
+  State<_PlanRevealConfetti> createState() => _PlanRevealConfettiState();
+}
+
+class _PlanRevealConfettiState extends State<_PlanRevealConfetti> {
+  late final ConfettiController _confetti;
+
+  @override
+  void initState() {
+    super.initState();
+    _confetti = ConfettiController(duration: const Duration(seconds: 2));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _confetti.play();
+    });
+  }
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConfettiWidget(
+        confettiController: _confetti,
+        blastDirectionality: BlastDirectionality.explosive,
+        emissionFrequency: 0.05,
+        numberOfParticles: 22,
+        maxBlastForce: 18,
+        minBlastForce: 8,
+        gravity: 0.25,
+        shouldLoop: false,
+        colors: const [
+          Color(0xFF22C55E),
+          Color(0xFF3B82F6),
+          Color(0xFFF59E0B),
+          Color(0xFFEC4899),
+          Color(0xFF8B5CF6),
+        ],
+      ),
+    );
   }
 }

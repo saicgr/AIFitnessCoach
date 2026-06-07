@@ -366,6 +366,26 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               ],
             ),
           ).animate(delay: 1200.ms).fadeIn().slideY(begin: 0.04),
+          if (_feasibilityLine(quiz) != null) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.check_circle_rounded,
+                    size: 16, color: Color(0xFF22C55E)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _feasibilityLine(quiz)!,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ).animate(delay: 1350.ms).fadeIn().slideY(begin: 0.04),
+          ],
         ],
       ),
     );
@@ -478,6 +498,24 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     if (g == 'gain_strength') return 'Week 1 of your strength plan.';
     if (g == 'improve_fitness') return 'Week 1 of your fitness plan.';
     return 'Your first week starts here.';
+  }
+
+  /// Feasibility framing (Calorii-audit P6.1) — an *estimated* timeline at a
+  /// healthy pace rather than an unsafe "completely achievable in X months"
+  /// claim. The quiz stores no weekly-rate/target-date, so we estimate from a
+  /// safe default rate (0.75 kg/wk loss · 0.25 kg/wk gain). Returns null when
+  /// there's no meaningful delta (maintenance is covered by the outcome line).
+  String? _feasibilityLine(PreAuthQuizData quiz) {
+    final cur = quiz.weightKg;
+    final goal = quiz.goalWeightKg;
+    if (cur == null || goal == null || cur <= 0 || goal <= 0) return null;
+    final deltaKg = (goal - cur).abs();
+    if (deltaKg < 0.5) return null;
+    final losing = goal < cur;
+    final rateKgPerWeek = losing ? 0.75 : 0.25;
+    final weeks = (deltaKg / rateKgPerWeek).ceil();
+    if (weeks <= 0) return null;
+    return 'Achievable in about $weeks weeks at a healthy pace.';
   }
 
   /// 0-indexed defaults (Mon=0..Sun=6) — match storage convention from
