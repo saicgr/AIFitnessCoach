@@ -71,6 +71,12 @@ class DailyNutritionEntry {
   final double fatG;
   final int meals;
 
+  /// Calorie-weighted daily inflammation score (0-10) computed server-side from
+  /// that day's food logs. Null when no log on the day carried a score yet
+  /// (enrichment pending) — never coerced to 0, so the trend skips empty days
+  /// rather than plotting a fake "perfect" reading.
+  final double? inflammationScore;
+
   const DailyNutritionEntry({
     required this.date,
     required this.calories,
@@ -78,6 +84,7 @@ class DailyNutritionEntry {
     required this.carbsG,
     required this.fatG,
     required this.meals,
+    this.inflammationScore,
   });
 
   factory DailyNutritionEntry.fromJson(Map<String, dynamic> json) {
@@ -88,6 +95,7 @@ class DailyNutritionEntry {
       carbsG: (json['total_carbs_g'] as num?)?.toDouble() ?? 0.0,
       fatG: (json['total_fat_g'] as num?)?.toDouble() ?? 0.0,
       meals: (json['meal_count'] as num?)?.toInt() ?? 0,
+      inflammationScore: (json['inflammation_score'] as num?)?.toDouble(),
     );
   }
 

@@ -13,6 +13,7 @@ import '../../../widgets/fullscreen_image_viewer.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'food_report_dialog.dart';
 import 'food_source_indicator.dart';
+import 'inflammation_chip.dart';
 import 'score_explain_sheet.dart';
 import 'health_reason_builder.dart';
 
@@ -365,6 +366,14 @@ class LoggedMealsSection extends StatelessWidget {
                     // Null for image-with-thumbnail (already visible) and
                     // plain text entries (default).
                     _buildSourceBadge(meal, textMuted) ?? const SizedBox.shrink(),
+                    // Per-food inflammation chip — color-graded, tap opens the
+                    // shared explain sheet. Only when the log carries a score
+                    // (null = enrichment pending, never shown as 0).
+                    if (meal.inflammationScore != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: InflammationChip(score: meal.inflammationScore!),
+                      ),
                   ],
                 ),
               ),
