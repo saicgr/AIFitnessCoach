@@ -11,6 +11,7 @@ import '../data/repositories/hydration_repository.dart';
 import '../data/services/api_client.dart';
 import '../screens/fasting/widgets/log_weight_sheet.dart';
 import '../screens/nutrition/log_meal_sheet.dart';
+import '../screens/nutrition/recipe_builder_sheet.dart';
 import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'mood_picker_sheet.dart';
 import 'main_shell.dart';
@@ -58,10 +59,11 @@ const _categories = <String, List<String>>{
     'food', 'photo_food', 'scan_food', 'scan_menu', 'barcode_food',
     'weight', 'water', 'photo', 'mood', 'measure',
   ],
-  // PLAN: workout flows + review/progress surfaces.
+  // PLAN: workout flows + review/progress surfaces + meal planning.
   'Plan': [
+    'meal_planner', 'recipe_creator', 'from_fridge',
     'quick_workout', 'workout', 'steps', 'library',
-    'schedule', 'habits', 'history', 'progress', 'stats', 'summaries', 'achievements',
+    'schedule', 'habits', 'history', 'progress', 'stats', 'custom_trends', 'summaries', 'achievements',
   ],
   // TOOLS: chat, hydration, settings.
   'Tools': ['chat', 'hydration', 'settings'],
@@ -225,6 +227,21 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         case 'chat':
           Navigator.pop(context);
           runAfterPop(() => rootCtx.push('/chat'));
+          return;
+        case 'recipe_creator':
+          final uid = await ref.read(apiClientProvider).getUserId();
+          if (!mounted) return;
+          Navigator.pop(context);
+          runAfterPop(() => showGlassSheet<void>(
+                context: rootCtx,
+                useRootNavigator: true,
+                builder: (_) => GlassSheet(
+                  child: RecipeBuilderSheet(
+                    userId: uid ?? '',
+                    isDark: isDark,
+                  ),
+                ),
+              ));
           return;
         default:
           Navigator.pop(context);

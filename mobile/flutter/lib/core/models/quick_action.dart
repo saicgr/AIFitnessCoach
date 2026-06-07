@@ -20,6 +20,10 @@ enum QuickActionBehavior {
   // profile (find-or-restore-or-create on the backend), then invalidates the
   // workout providers so Today/Workouts regenerate against bodyweight.
   travelMode,
+  // Opens the RecipeBuilderSheet (create a custom recipe from scratch /
+  // ingredients). Surfaced because the builder previously had no entry point
+  // outside the Food Library.
+  recipeBuilder,
 }
 
 class QuickAction {
@@ -291,6 +295,39 @@ const quickActionRegistry = <String, QuickAction>{
     color: Color(0xFFF59E0B),
     behavior: QuickActionBehavior.travelMode,
   ),
+  // Calorii-audit surfacing — all four already exist as features; these
+  // tiles just make them reachable from Quick Actions.
+  'meal_planner': QuickAction(
+    id: 'meal_planner',
+    label: 'Meal Plan',
+    icon: Icons.event_note_outlined,
+    color: Color(0xFF22C55E),
+    behavior: QuickActionBehavior.route,
+    route: '/nutrition/meal-planner',
+  ),
+  'recipe_creator': QuickAction(
+    id: 'recipe_creator',
+    label: 'New Recipe',
+    icon: Icons.menu_book_outlined,
+    color: Color(0xFF16A34A),
+    behavior: QuickActionBehavior.recipeBuilder,
+  ),
+  'from_fridge': QuickAction(
+    id: 'from_fridge',
+    label: 'From Fridge',
+    icon: Icons.kitchen_outlined,
+    color: Color(0xFF10B981),
+    behavior: QuickActionBehavior.route,
+    route: '/nutrition/from-fridge',
+  ),
+  'custom_trends': QuickAction(
+    id: 'custom_trends',
+    label: 'Custom Trends',
+    icon: Icons.insights_outlined,
+    color: Color(0xFF6366F1),
+    behavior: QuickActionBehavior.route,
+    route: '/trends/custom',
+  ),
 };
 
 // Home shortcut bar layout (home-v27 redesign — `CompactQuickActionsRow`):
@@ -328,6 +365,8 @@ const defaultQuickActionOrder = [
   // region (after identify_equipment, before chat); never displaces the
   // protected primary slots (slot 9 = scan_menu, slot 10 = More).
   'travel_mode',
+  // Calorii-audit surfacing tiles — More-only by default, pinnable.
+  'meal_planner', 'recipe_creator', 'from_fridge', 'custom_trends',
   // 'chat' kept in the catalog for users who want to re-pin it.
   'chat',
 ];
