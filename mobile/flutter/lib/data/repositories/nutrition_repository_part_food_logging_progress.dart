@@ -624,6 +624,20 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   DailyNutritionNotifier(this._repository, this._ref, this._dateKey)
       : super(const DailyNutritionState());
 
+  /// Past-date notifiers auto-dispose when the user navigates away, but an
+  /// in-flight `load`/`loadLogs`/optimistic-commit can resolve afterwards and
+  /// try to push state into a disposed notifier — which throws
+  /// `StateError: Tried to use DailyNutritionNotifier after dispose`
+  /// (the production crash this guards against). Dropping the write on a
+  /// disposed notifier is correct: nothing is listening to a navigated-away
+  /// date. Async getter reads of `state.*` after an `await` are guarded
+  /// inline with `if (!mounted) return;` since the getter still throws.
+  @override
+  set state(DailyNutritionState value) {
+    if (!mounted) return;
+    super.state = value;
+  }
+
   bool get _isToday => _dateKey == todayNutritionKey();
 
   /// Parse [_dateKey] into a DateTime stamped with the current wall-clock time —
@@ -681,6 +695,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     if (!forceRefresh && state.summary == null) {
       state = state.copyWith(isLoading: true, error: null);
       final cached = await _NutritionDiskCache.read(userId, _dateKey);
+      if (!mounted) return;
       if (cached != null) {
         debugPrint('🥗 [Nutrition] Seeded $_dateKey from disk cache');
         state = state.copyWith(isLoading: false, summary: cached);
@@ -700,7 +715,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
         '🥗 [Nutrition] load($_dateKey) network: ${stopwatch.elapsedMilliseconds}ms '
         '(meals=${raw.meals.length}, kcal=${raw.totalCalories})',
       );
-      if (epoch != _summaryLoadEpoch) return;
+      if (!mounted || epoch != _summaryLoadEpoch) return;
       // A raced response for a DIFFERENT date must never render here.
       if (raw.date.isNotEmpty && raw.date != _dateKey) return;
       final summary = _mergeServerSummary(raw, localBefore);
@@ -730,7 +745,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       debugPrint(
         '🥗 [Nutrition] load($_dateKey) FAILED after ${stopwatch.elapsedMilliseconds}ms: $e',
       );
-      if (epoch != _summaryLoadEpoch) return;
+      if (!mounted || epoch != _summaryLoadEpoch) return;
       if (state.summary == null) {
         state = state.copyWith(isLoading: false, error: e.toString());
       } else {
@@ -789,6 +804,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       }
       try {
         final logs = await _repository.getFoodLogs(userId, limit: limit);
+        if (!mounted) return;
         // Don't let an empty (stale/cached/flaky) response wipe logs still on
         // screen when an unsynced or just-written local row is present.
         if (logs.isEmpty && _hasUnconfirmedOrRecentLocalLog()) {
@@ -823,6 +839,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       final nextDayStr = nutritionKeyFor(date.add(const Duration(days: 1)));
       final rawLogs = await _repository.getFoodLogs(userId,
           fromDate: _dateKey, toDate: nextDayStr);
+      if (!mounted) return;
       final logs = rawLogs.where((log) {
         final local = log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
         return nutritionKeyFor(local) == _dateKey;
@@ -863,6 +880,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       await load(userId, forceRefresh: true);
       await loadLogs(userId, forceRefresh: true);
     } catch (e) {
+      if (!mounted) return;
       state = state.copyWith(error: e.toString());
     }
   }
@@ -874,6 +892,10 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// taps Undo. Returns null if the log isn't in `todaySummary` (e.g. it
   /// was logged on another date and we're looking at a backfilled view).
   FoodLog? optimisticRemoveLog(String logId) {
+    // Reachable from a post-network async callback (e.g. the log sheet's
+    // write-failed rollback) after a past-date notifier has disposed — the
+    // `state` getter would throw. Bail quietly; nothing is listening.
+    if (!mounted) return null;
     final summary = state.summary;
     if (summary == null) return null;
     final idx = summary.meals.indexWhere((m) => m.id == logId);
@@ -899,6 +921,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// No-op + null return when the id isn't in `todaySummary` (e.g. viewing
   /// a different date than the meal lives on).
   FoodLog? optimisticUpdateLog(String logId, FoodLog Function(FoodLog) transform) {
+    if (!mounted) return null;
     final summary = state.summary;
     if (summary == null) return null;
     final idx = summary.meals.indexWhere((m) => m.id == logId);
@@ -925,6 +948,10 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// than creating two rows that share the real id.
   void reconcileLoggedMeal(String optimisticId, String realId,
       {String? idempotencyKey}) {
+    // Always invoked from the log sheet's post-`/log-direct` async callback; the
+    // target date may have disposed (user navigated away) — bail before the
+    // `state` getter throws.
+    if (!mounted) return;
     if (optimisticId == realId || realId.isEmpty) return;
 
     // Tombstones are keyed by id. If the user deleted the optimistic row before
@@ -971,6 +998,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// the Undo action on swipe-delete. Inserts at the position that keeps
   /// the list sorted by `loggedAt` ascending.
   void restoreLog(FoodLog meal) {
+    if (!mounted) return;
     final summary = state.summary;
     if (summary == null) return;
     // Undo — lift the tombstone so the meal can re-appear from the server.
@@ -999,6 +1027,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   /// Use this when callers have already converted the API response to a
   /// [FoodLog] (e.g. recipe logging, browser-panel relog).
   void spliceRawLog(FoodLog newLog, String userId) {
+    if (!mounted) return;
     final updatedLogs = [newLog, ...state.logs];
     final currentSummary = state.summary;
     final updatedMeals = <FoodLog>[...(currentSummary?.meals ?? []), newLog];
@@ -1203,6 +1232,20 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     }
   }
 
+  /// Force the NUTRITION STATS section (weekly summary, calorie trend, macros,
+  /// TDEE, adherence, fueling split, inflammation trend) to refetch after a
+  /// meal is logged. Uses the notifier's long-lived [_ref], which survives the
+  /// log sheet's dispose — so calling this from a post-pop `saveFuture.then`
+  /// callback (where the sheet's own WidgetRef is already gone) is safe.
+  /// Fire-and-forget: the cache clear is async but ordering is internal.
+  void refreshNutritionStats(String userId) {
+    if (userId.isEmpty) return;
+    // ignore: unawaited_futures
+    invalidateNutritionStats(_ref, userId).catchError((Object e) {
+      debugPrint('🥗 [Nutrition] stats refresh skipped: $e');
+    });
+  }
+
   /// (Part 4 / WR4) Roll back a set of optimistic rows in one shot. Used when
   /// a multi-dish menu log fails after several rows were already spliced.
   void optimisticRemoveLogs(Iterable<String> logIds) {
@@ -1286,6 +1329,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       try {
         await networkUpdate();
       } catch (e) {
+        if (!mounted) return;
         state = state.copyWith(error: e.toString());
       }
       return;
@@ -1293,6 +1337,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
     try {
       await networkUpdate();
     } catch (e) {
+      if (!mounted) return;
       // Roll back to the pre-edit row so the UI never shows an edit the
       // server rejected.
       optimisticUpdateLog(logId, (_) => original);
@@ -1319,6 +1364,7 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
       // server-derived metadata (recent logs, weekly aggregates) in sync.
       unawaited(loadLogs(userId, forceRefresh: true));
     } catch (e) {
+      if (!mounted) return;
       // Roll back the optimistic removal if the network call fails so the
       // user doesn't end up with a deleted-locally-but-still-on-server row.
       // restoreLog also lifts the tombstone.
