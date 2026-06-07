@@ -642,6 +642,12 @@ from . import cardio_autotag_endpoints; router.include_router(cardio_autotag_end
 # SLICE_VO2MAX — GET /vo2max/history + /vo2max/latest (reads cardio_metrics).
 from . import vo2max_endpoints; router.include_router(vo2max_endpoints.router, tags=["VO2max"])  # router already declares prefix=/vo2max
 
+# SLICE_HEALTH_METRICS — Samsung-parity Vitals + Heart Health Score (prefix=/health).
+from . import health_metrics_endpoints; router.include_router(health_metrics_endpoints.router, tags=["Health Metrics"])
+
+# SLICE_FITNESS_INDEX — 5-axis fitness radar + k-anon peer percentile (prefix=/fitness-index).
+from . import fitness_index_endpoints; router.include_router(fitness_index_endpoints.router, tags=["Fitness Index"])
+
 # SLICE_GPS — POST /cardio-logs/{id}/route (S3 polyline upload).
 from . import cardio_route; router.include_router(cardio_route.router, tags=["Cardio Route"])
 

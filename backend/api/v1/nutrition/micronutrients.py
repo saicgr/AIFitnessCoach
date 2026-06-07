@@ -1,10 +1,11 @@
 """Micronutrient tracking, RDA, and pinned nutrients endpoints."""
 import asyncio
 from core.db import get_supabase_db
-from datetime import datetime
+from datetime import datetime, date as _date, timedelta
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today
 from core.auth import get_current_user
@@ -492,4 +493,152 @@ async def update_pinned_nutrients(user_id: str, request: PinnedNutrientsUpdate, 
         raise
     except Exception as e:
         logger.error(f"Failed to update pinned nutrients: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+# ============================================
+# Antioxidant rollup (Samsung-parity Antioxidant Index, food-truth)
+# ============================================
+class AntioxidantTrendPoint(BaseModel):
+    date: str
+    score: int
+
+
+class AntioxidantContributor(BaseModel):
+    name: str
+    contribution_pct: int  # share of today's antioxidant intake
+
+
+class AntioxidantScoreResponse(BaseModel):
+    date: str
+    score: int                       # 0-100, % of combined antioxidant RDA (capped per-nutrient)
+    nutrients_counted: int           # flagged antioxidants with a target + any intake today
+    coverage: NutrientCoverage       # foods_with_micro_data / total_foods (today)
+    trend: List[AntioxidantTrendPoint]
+    top_contributors: List[AntioxidantContributor]
+
+
+def _antioxidant_day_score(logs: list, antiox: dict) -> tuple[int, int, int, int]:
+    """Return (score, nutrients_counted, foods_with_micro, total_foods) for one
+    day's logs. score = mean over flagged nutrients of min(intake/target,1)*100;
+    a nutrient with zero logged intake still counts (drags the mean) so an empty
+    day reads low rather than absent — but a day with NO logged food returns 0/0."""
+    if not logs:
+        return 0, 0, 0, 0
+    totals: dict = {}
+    foods_with_micro = 0
+    for log in logs:
+        has_any = False
+        for key in antiox:
+            v = log.get(key)
+            if v is None:
+                continue
+            try:
+                fv = float(v)
+            except (TypeError, ValueError):
+                continue
+            totals[key] = totals.get(key, 0.0) + fv
+            if fv > 0:
+                has_any = True
+        if has_any:
+            foods_with_micro += 1
+    # Score over flagged nutrients that have a usable target.
+    fracs = []
+    for key, rda in antiox.items():
+        target = rda.get("rda_target") or rda.get("rda_target_female") or 0
+        if not target:
+            continue
+        intake = totals.get(key, 0.0)
+        fracs.append(min(intake / target, 1.0))
+    if not fracs:
+        return 0, 0, foods_with_micro, len(logs)
+    score = int(round(sum(fracs) / len(fracs) * 100))
+    counted = sum(1 for k in antiox if totals.get(k, 0.0) > 0)
+    return score, counted, foods_with_micro, len(logs)
+
+
+@router.get("/antioxidant-score/{user_id}", response_model=AntioxidantScoreResponse)
+async def get_antioxidant_score(
+    request: Request,
+    user_id: str,
+    date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Antioxidant rollup from REAL logged food (vit A/C/E, selenium, zinc,
+    copper, manganese flagged via nutrient_rdas.is_antioxidant) — a food-truth
+    answer to Samsung's wrist-optical Antioxidant Index. Returns today's 0-100
+    score, a 14-day trend, and the top contributing foods."""
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+        if date is None:
+            date = get_user_today(user_tz)
+        today = _date.fromisoformat(date)
+
+        # Flagged antioxidant RDAs.
+        rda_res = db.client.table("nutrient_rdas").select("*").eq(
+            "is_antioxidant", True).execute()
+        antiox = {r["nutrient_key"]: r for r in (rda_res.data or [])}
+        if not antiox:
+            raise HTTPException(status_code=500, detail="No antioxidant nutrients configured")
+
+        # Pull the whole 14-day window once, bucket by local date.
+        window_start = (today - timedelta(days=13)).isoformat()
+        ws_utc, _ = local_date_to_utc_range(window_start, user_tz)
+        _, we_utc = local_date_to_utc_range(date, user_tz)
+        logs_res = db.client.table("food_logs").select("*").eq(
+            "user_id", user_id).is_("deleted_at", "null").gte(
+            "logged_at", ws_utc).lte("logged_at", we_utc).order(
+            "logged_at", desc=True).limit(400).execute()
+        all_logs = logs_res.data or []
+
+        # Bucket by user-local date (approx: compare logged_at date in window).
+        by_day: dict = {}
+        for log in all_logs:
+            d = str(log.get("logged_at") or "")[:10]
+            if d:
+                by_day.setdefault(d, []).append(log)
+
+        trend: List[AntioxidantTrendPoint] = []
+        for i in range(13, -1, -1):
+            d = (today - timedelta(days=i)).isoformat()
+            sc, _, _, _ = _antioxidant_day_score(by_day.get(d, []), antiox)
+            trend.append(AntioxidantTrendPoint(date=d, score=sc))
+
+        today_logs = by_day.get(date, [])
+        score, counted, fwm, total = _antioxidant_day_score(today_logs, antiox)
+
+        # Top contributors today: rank foods by summed antioxidant fraction.
+        contrib: list = []
+        for log in today_logs:
+            frac = 0.0
+            for key, rda in antiox.items():
+                target = rda.get("rda_target") or rda.get("rda_target_female") or 0
+                v = log.get(key)
+                if target and v is not None:
+                    try:
+                        frac += min(float(v) / target, 1.0)
+                    except (TypeError, ValueError):
+                        pass
+            if frac > 0:
+                contrib.append((log.get("food_name") or log.get("name") or "Food", frac))
+        total_frac = sum(f for _, f in contrib) or 1.0
+        contrib.sort(key=lambda x: x[1], reverse=True)
+        top = [
+            AntioxidantContributor(name=n, contribution_pct=int(round(f / total_frac * 100)))
+            for n, f in contrib[:3]
+        ]
+
+        return AntioxidantScoreResponse(
+            date=date,
+            score=score,
+            nutrients_counted=counted,
+            coverage=NutrientCoverage(foods_with_micro_data=fwm, total_foods=total),
+            trend=trend,
+            top_contributors=top,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to compute antioxidant score: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")

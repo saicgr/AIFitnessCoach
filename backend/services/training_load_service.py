@@ -531,6 +531,129 @@ def compute_training_load_history(
     return [p for p in full if p.date >= visible_start]
 
 
+class TrainingLoadIntradayPoint(BaseModel):
+    minute: int = Field(..., ge=0, le=1440)  # minute of the user-local day
+    cumulative: float = Field(..., ge=0)      # cumulative TRIMP up to this minute
+
+
+class TrainingLoadToday(BaseModel):
+    """Today's intraday Daily Cardio Load accumulation + the ACWR snapshot."""
+    as_of: date
+    workout_count: int
+    daily_load: float
+    points: List[TrainingLoadIntradayPoint]
+    # Daily target band, derived from the 28-day chronic daily average
+    # (ACWR-aligned: 0.8x..1.5x). None until a chronic baseline exists.
+    target_min: Optional[float] = None
+    target_max: Optional[float] = None
+    acwr: Optional[float] = None
+    state: str
+    interpretation: str
+
+
+def _parse_dt(value: Any) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
+def compute_today_intraday(
+    db, user_id: str, local_date: date, day_start_iso: str, day_end_iso: str,
+) -> TrainingLoadToday:
+    """Cumulative cardio-load curve across today (Samsung-parity Daily Cardio
+    Load), plus the daily target band + current ACWR state. Each session's
+    TRIMP is added at its time-of-day; the curve steps up at each workout.
+
+    `day_start_iso`/`day_end_iso` are the user-local day's UTC bounds (from
+    local_date_to_utc_range) so the minute-of-day axis is in the user's tz.
+    """
+    profile = _load_user_profile(db, user_id)
+    day_start = _parse_dt(day_start_iso) or datetime.combine(
+        local_date, datetime.min.time(), tzinfo=timezone.utc)
+
+    timed: List[tuple] = []  # (timestamp, trimp)
+
+    def _add(ts, trimp):
+        if ts is not None and trimp and trimp > 0:
+            timed.append((ts, trimp))
+
+    # cardio_logs (duration in seconds, has RPE).
+    try:
+        res = (
+            db.client.table("cardio_logs")
+            .select("performed_at, duration_seconds, avg_heart_rate, rpe, "
+                    "calories, activity_type")
+            .eq("user_id", user_id)
+            .gte("performed_at", day_start_iso)
+            .lte("performed_at", day_end_iso)
+            .execute()
+        )
+        for row in (res.data or []):
+            _add(_parse_dt(row.get("performed_at")), compute_session_trimp(
+                duration_minutes=float(row.get("duration_seconds") or 0) / 60.0,
+                avg_hr=row.get("avg_heart_rate"),
+                resting_hr=profile["resting_hr"], max_hr=profile["max_hr"],
+                gender=profile["gender"], rpe=row.get("rpe"),
+                calories=row.get("calories"),
+                activity_type=row.get("activity_type")))
+    except Exception as e:
+        logger.warning(f"[TrainingLoad] intraday cardio_logs failed: {e}")
+
+    # cardio_sessions (duration in minutes, no RPE).
+    try:
+        res = (
+            db.client.table("cardio_sessions")
+            .select("started_at, completed_at, duration_minutes, "
+                    "avg_heart_rate, calories_burned")
+            .eq("user_id", user_id)
+            .gte("started_at", day_start_iso)
+            .lte("started_at", day_end_iso)
+            .execute()
+        )
+        for row in (res.data or []):
+            _add(_parse_dt(row.get("completed_at") or row.get("started_at")),
+                 compute_session_trimp(
+                     duration_minutes=float(row.get("duration_minutes") or 0),
+                     avg_hr=row.get("avg_heart_rate"),
+                     resting_hr=profile["resting_hr"], max_hr=profile["max_hr"],
+                     gender=profile["gender"],
+                     calories=row.get("calories_burned")))
+    except Exception as e:
+        logger.warning(f"[TrainingLoad] intraday cardio_sessions failed: {e}")
+
+    timed.sort(key=lambda x: x[0])
+    points = [TrainingLoadIntradayPoint(minute=0, cumulative=0.0)]
+    cum = 0.0
+    for ts, trimp in timed:
+        minute = int((ts - day_start).total_seconds() // 60)
+        minute = max(0, min(1440, minute))
+        cum += trimp
+        points.append(TrainingLoadIntradayPoint(minute=minute, cumulative=round(cum, 1)))
+
+    st = current_state(db, user_id)
+    target_min = target_max = None
+    if st.chronic_load and st.chronic_load > 0:
+        daily_chronic = st.chronic_load / 28.0
+        target_min = round(daily_chronic * 0.8, 1)
+        target_max = round(daily_chronic * 1.5, 1)
+
+    return TrainingLoadToday(
+        as_of=local_date,
+        workout_count=len(timed),
+        daily_load=round(cum, 1),
+        points=points,
+        target_min=target_min,
+        target_max=target_max,
+        acwr=st.acwr,
+        state=st.state,
+        interpretation=st.interpretation,
+    )
+
+
 def current_state(db, user_id: str) -> TrainingLoadState:
     """Latest TrainingLoadState — pulls 120d of history under the hood."""
     history = compute_training_load_history(db, user_id, days=120)

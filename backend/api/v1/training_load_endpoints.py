@@ -11,17 +11,25 @@ Computes live from `cardio_logs` + `cardio_sessions`. A future agent owns a
 daily snapshot job (`cardio_metric_snapshot_job.py`) — until then every
 request recomputes.
 """
+from datetime import date
 from typing import List
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
+from core.timezone_utils import (
+    resolve_timezone,
+    get_user_today,
+    local_date_to_utc_range,
+)
 from services.training_load_service import (
     TrainingLoadDayPoint,
     TrainingLoadState,
+    TrainingLoadToday,
+    compute_today_intraday,
     compute_training_load_history,
     current_state,
 )
@@ -48,6 +56,26 @@ async def get_training_load_history(
         return compute_training_load_history(db, user_id, days=days)
     except Exception as e:
         logger.error(f"[TrainingLoad] history error: {e}", exc_info=True)
+        raise safe_internal_error(e, "training_load")
+
+
+@router.get("/today", response_model=TrainingLoadToday)
+async def get_training_load_today(
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+) -> TrainingLoadToday:
+    """Today's intraday Daily Cardio Load accumulation curve + target band +
+    current ACWR state, computed in the user's local timezone."""
+    user_id = current_user["id"]
+    try:
+        db = get_supabase_db()
+        tz = resolve_timezone(request, db, user_id)
+        local_date_str = get_user_today(tz)
+        start_iso, end_iso = local_date_to_utc_range(local_date_str, tz)
+        return compute_today_intraday(
+            db, user_id, date.fromisoformat(local_date_str), start_iso, end_iso)
+    except Exception as e:
+        logger.error(f"[TrainingLoad] today error: {e}", exc_info=True)
         raise safe_internal_error(e, "training_load")
 
 

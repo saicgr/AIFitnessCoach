@@ -69,3 +69,26 @@ async def snapshot_fitness_profiles(
         return {"snapshot_count": count}
     except Exception as e:
         raise safe_internal_error(e, "cron.snapshot-fitness-profiles")
+
+
+@router.post("/refresh-fitness-index-cohort")
+async def refresh_fitness_index_cohort(
+    request: Request,
+    x_cron_secret: Optional[str] = Header(None, alias="X-Cron-Secret"),
+):
+    """
+    Rebuild the Fitness Index peer-percentile cohort snapshot from each user's
+    latest fitness_index_daily row (excluding profile_stats_visible = false).
+    Powers GET /api/v1/fitness-index per-axis percentiles. Idempotent (TRUNCATE
+    + re-insert inside the RPC). Recommended cadence: hourly or daily.
+    """
+    _verify_cron_secret(request, x_cron_secret)
+
+    try:
+        db = get_supabase_db()
+        res = db.client.rpc("refresh_fitness_index_cohort_snapshot", {}).execute()
+        count = res.data if isinstance(res.data, int) else (res.data or 0)
+        logger.info(f"✅ Fitness Index cohort refreshed: {count} users")
+        return {"cohort_size": count}
+    except Exception as e:
+        raise safe_internal_error(e, "cron.refresh-fitness-index-cohort")
