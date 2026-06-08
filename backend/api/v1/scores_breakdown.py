@@ -435,7 +435,7 @@ async def exercise_strength_score(
     # performance_logs is the flat per-set source (also powers exercise history).
     perf = (
         db.client.table("performance_logs")
-        .select("exercise_name, reps_completed, weight_kg, recorded_at, is_pr")
+        .select("exercise_name, reps_completed, weight_kg, recorded_at")
         .eq("user_id", user_id)
         .ilike("exercise_name", name)  # case-insensitive exact (no wildcards)
         .gte("recorded_at", since)
