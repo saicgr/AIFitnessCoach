@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -83,10 +86,14 @@ class _WorkoutSummaryScreenV2State
     try {
       final repo = ref.read(workoutRepositoryProvider);
 
+      // Hard ceiling so a wedged request / slow parse can never leave the
+      // screen on its loading spinner forever (the "summary takes super long to
+      // load" half of the report). On timeout this throws TimeoutException,
+      // which the catch below turns into the existing retry error state.
       final results = await Future.wait([
         repo.getWorkoutCompletionSummary(widget.workoutId),
         repo.getWorkoutLogByWorkoutId(widget.workoutId),
-      ]);
+      ]).timeout(ApiConstants.receiveTimeout);
 
       if (!mounted) return;
 
