@@ -308,6 +308,8 @@ async def recent_level_ups(current_user: dict = Depends(get_current_user)):
 async def score_target(
     muscle_group: str,
     target_reps: int = 8,
+    exercise_name: str = "",
+    equipment: str = "",
     current_user: dict = Depends(get_current_user),
 ):
     """Deterministic weight×reps target that would raise a muscle's strength
@@ -382,6 +384,8 @@ async def score_target(
         best_exercise_name=best_exercise_name,
         best_estimated_1rm_kg=best_1rm,
         target_reps=target_reps,
+        exercise_name=exercise_name,
+        equipment=equipment,
     )
     return {
         "muscle_group": muscle,

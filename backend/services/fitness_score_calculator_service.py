@@ -48,6 +48,61 @@ MUSCLE_LEVEL_THRESHOLDS: List[tuple] = [
     ("elite", 90),
 ]
 
+# Per-muscle DEFAULT strength standard (a key into STRENGTH_STANDARDS) used to
+# anchor a level-up target when the user has NO qualifying best lift on the
+# muscle yet AND the current exercise doesn't resolve to a known standard.
+# This replaces the old blanket squat fallback, which produced an identical
+# (and often absurd: 1.25× bodyweight) target on every muscle — including
+# isolation/bodyweight moves. Pick a movement representative of the muscle so
+# the ratio is muscle-appropriate. Keys are normalized muscle tokens; lookup is
+# substring-tolerant (see _resolve_muscle_default_key).
+_MUSCLE_DEFAULT_STANDARD: Dict[str, str] = {
+    "chest": "bench_press",
+    "pec": "bench_press",
+    "back": "lat_pulldown",
+    "lat": "lat_pulldown",
+    "trap": "barbell_row",
+    "rhomboid": "barbell_row",
+    "shoulder": "overhead_press",
+    "delt": "overhead_press",
+    "tricep": "tricep_extension",
+    "bicep": "bicep_curl",
+    "forearm": "bicep_curl",
+    "quad": "squat",
+    "hamstring": "leg_curl",
+    "glute": "hip_thrust",
+    "calf": "calf_raise",
+    "calves": "calf_raise",
+}
+
+# Rep goal per next-level band for BODYWEIGHT / unloadable exercises, where a
+# weight target is meaningless. The pill nudges "Hit N+ clean reps" instead.
+_REP_GOAL_BY_NEXT_LEVEL: Dict[str, int] = {
+    "novice": 12,
+    "intermediate": 15,
+    "advanced": 20,
+    "elite": 25,
+}
+
+
+def _is_bodyweight_equipment(equipment: str) -> bool:
+    """True when the equipment string denotes an unloadable bodyweight move."""
+    e = (equipment or "").strip().lower()
+    return e in ("", "bodyweight", "body weight", "none", "body_weight")
+
+
+def _resolve_muscle_default_key(muscle_group: str) -> str:
+    """Map a muscle string (e.g. "Shoulders (deltoids)") to a representative
+    STRENGTH_STANDARDS key via substring match. Falls back to "bicep_curl"
+    (small, conservative ratios) rather than squat for an unrecognized muscle.
+    """
+    m = (muscle_group or "").strip().lower()
+    for token, key in _MUSCLE_DEFAULT_STANDARD.items():
+        if token in m:
+            return key
+    return "bicep_curl"
+
+
 # Overall-fitness level thresholds (mirror LEVEL_THRESHOLDS below but as an
 # ordered ascending list for level-up crossing detection).
 OVERALL_LEVEL_THRESHOLDS: List[tuple] = [
@@ -444,14 +499,25 @@ class FitnessScoreCalculatorService:
         best_exercise_name: str,
         best_estimated_1rm_kg: float,
         target_reps: int = 8,
+        exercise_name: str = "",
+        equipment: str = "",
     ) -> Optional[Dict[str, Any]]:
-        """Deterministically compute the weight×reps target that would raise a
-        muscle's strength score into its NEXT level band.
+        """Deterministically compute the target that would raise a muscle's
+        strength score into its NEXT level band.
 
         Shown as an in-workout pill ("Hit 80kg×8 to level up Chest"). No LLM —
         inverts StrengthCalculatorService.classify_strength_level's bodyweight-ratio
         banding, then converts the required 1RM back to a working weight at the
         given rep target via the Brzycki relationship.
+
+        Exercise/equipment aware:
+          - The bodyweight-ratio standard is resolved from the CURRENT exercise
+            first, then the user's best lift, then a MUSCLE-APPROPRIATE default
+            (never a blanket squat — that produced an identical absurd target on
+            every muscle for users with no qualifying lift yet).
+          - For BODYWEIGHT / unloadable exercises a rep-based target is returned
+            (``target_kind="reps"``, ``target_working_weight_kg=None``) instead of
+            a nonsensical loaded number.
 
         Returns None when the muscle is already at the top band (elite) or when
         bodyweight is unknown (can't anchor the ratio).
@@ -472,12 +538,35 @@ class FitnessScoreCalculatorService:
 
         next_level = _level_for_score(next_floor, MUSCLE_LEVEL_THRESHOLDS)[0]
 
-        # Resolve the bodyweight-ratio standard for the user's best lift on this
-        # muscle (falls back to the squat standard, matching classify logic).
-        normalized = StrengthCalculatorService._normalize_exercise_name(
-            best_exercise_name or ""
+        # --- Bodyweight / unloadable: rep-based target (no load makes sense) ---
+        if _is_bodyweight_equipment(equipment):
+            rep_goal = _REP_GOAL_BY_NEXT_LEVEL.get(next_level, 15)
+            # Don't nudge below what the plan already prescribes.
+            rep_goal = max(rep_goal, int(target_reps or 0))
+            return {
+                "muscle_group": muscle_group,
+                "current_score": current_score,
+                "next_level": next_level,
+                "next_level_score_floor": next_floor,
+                "points_to_next_level": max(0, next_floor - current_score),
+                "best_exercise_name": best_exercise_name or "",
+                "current_best_1rm_kg": round(best_estimated_1rm_kg or 0, 1),
+                "target_1rm_kg": None,
+                "target_reps": rep_goal,
+                "target_working_weight_kg": None,
+                "delta_1rm_kg": None,
+                "target_kind": "reps",
+                "target_label": f"{rep_goal}+ clean reps",
+            }
+
+        # --- Loaded: resolve a muscle-appropriate ratio standard ---
+        standards = self._resolve_strength_standard(
+            STRENGTH_STANDARDS,
+            StrengthCalculatorService,
+            exercise_name=exercise_name,
+            best_exercise_name=best_exercise_name,
+            muscle_group=muscle_group,
         )
-        standards = STRENGTH_STANDARDS.get(normalized) or STRENGTH_STANDARDS["squat"]
         if (gender or "male").lower() == "female":
             standards = {k: v * 0.65 for k, v in standards.items()}
 
@@ -514,10 +603,51 @@ class FitnessScoreCalculatorService:
             "target_reps": reps,
             "target_working_weight_kg": required_working_weight_kg,
             "delta_1rm_kg": delta_1rm,
+            "target_kind": "load",
             # Human-readable, unit-agnostic label; the Flutter side localizes
             # kg→lb using the user's workout-weight unit setting.
             "target_label": f"{required_working_weight_kg:g} kg × {reps}",
         }
+
+    @staticmethod
+    def _resolve_strength_standard(
+        strength_standards: Dict[str, Dict[str, float]],
+        calculator_cls,
+        *,
+        exercise_name: str,
+        best_exercise_name: str,
+        muscle_group: str,
+    ) -> Dict[str, float]:
+        """Pick the bodyweight-ratio standard band for a level-up target.
+
+        Resolution order (most specific → most general), NEVER blanket squat:
+          1. The CURRENT exercise (exact, then substring against standard keys).
+          2. The user's best lift on this muscle (same matching).
+          3. A muscle-appropriate default (``_MUSCLE_DEFAULT_STANDARD``).
+          4. A conservative isolation default (bicep_curl) — small ratios so an
+             unknown movement never demands a 1.25×-bodyweight squat-equivalent.
+        """
+        def _match(name: str) -> Optional[Dict[str, float]]:
+            if not name:
+                return None
+            norm = calculator_cls._normalize_exercise_name(name)
+            if norm in strength_standards:
+                return strength_standards[norm]
+            # Substring tolerance: "cable_upper_chest_crossover" → "bench_press"
+            # won't match, but "close_grip_bench_press" → "bench_press" will.
+            for key, band in strength_standards.items():
+                if key in norm or norm in key:
+                    return band
+            return None
+
+        return (
+            _match(exercise_name)
+            or _match(best_exercise_name)
+            or strength_standards.get(
+                _resolve_muscle_default_key(muscle_group), {}
+            )
+            or strength_standards["bicep_curl"]
+        )
 
     @staticmethod
     def is_score_stale(calculated_at: Optional[Any], now: Optional[datetime] = None) -> bool:
