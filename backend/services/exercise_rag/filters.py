@@ -294,6 +294,10 @@ _WARMUP_FILLER_PATTERNS = [
     "jumping jacks", "high knees", "butt kicks", "butt kickers",
     "seal jacks", "neck rotation", "ankle circles", "wrist circles",
     "torso twist", "hip circles",
+    # "arm pulse(s)" — cardio micro-movement that was slipping into strength
+    # workouts (category=cardio, mislabeled compound). NOT bare "pulse" — that
+    # false-positives on legit burnout moves like "pulse squat".
+    "arm pulse", "arm pulses",
 ]
 
 

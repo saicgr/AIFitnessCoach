@@ -85,6 +85,17 @@ settings = get_settings()
 logger = get_logger(__name__)
 
 
+# Workout types where cardio/plyometric-category exercises are the INTENDED
+# content and must NOT be filtered out. Every other type (strength, hypertrophy,
+# upper_body, lower_body, push, pull, legs, arms, core, full_body, …) is a
+# "lifting" workout where a category=cardio filler (e.g. "Arm Pulses") is junk.
+# "mixed" is included since a mixed session may legitimately want light cardio.
+_CARDIO_INTENT_TYPES = {
+    "cardio", "hiit", "conditioning", "circuit",
+    "boxing", "combat", "endurance", "metcon", "crossfit", "tabata", "mixed",
+}
+
+
 # ---------------------------------------------------------------------------
 # Phase 3K — SQL-based safe candidate fetcher
 # ---------------------------------------------------------------------------
@@ -1183,6 +1194,7 @@ class ExerciseRAGService:
             filtered_candidates = []
             seen = []
             no_media_count = 0
+            no_cardio_filtered = 0
 
             # Pre-compute bench/rack availability (constant across all exercises)
             user_equipment_lower = [eq.lower() for eq in equipment]
@@ -1307,6 +1319,21 @@ class ExerciseRAGService:
                         logger.debug(f"Filtered out '{meta.get('name')}' - stretch exercise in {workout_type_preference} workout")
                         continue
 
+                # Drop cardio-category fillers (e.g. "Arm Pulses", jumping jacks)
+                # from lifting workouts. `category` is authoritative and indexed
+                # in ChromaDB; `movement_pattern` is not (and is often mislabeled
+                # "compound" on these moves). Cardio-intent workout types keep
+                # them — that's their intended content.
+                if (workout_type_preference or "").lower() not in _CARDIO_INTENT_TYPES:
+                    cat = (meta.get("category", "") or "").lower()
+                    if cat in ("cardio", "plyometric"):
+                        no_cardio_filtered += 1
+                        logger.debug(
+                            f"Filtered out '{meta.get('name')}' - {cat} category "
+                            f"in {workout_type_preference} workout"
+                        )
+                        continue
+
                 # Filter out warmup/filler exercises from strength workouts
                 if workout_type_preference in ("strength", "hypertrophy"):
                     if is_warmup_filler_exercise(meta.get("name", "")):
@@ -1364,6 +1391,11 @@ class ExerciseRAGService:
 
             if require_media and no_media_count > 0:
                 logger.info(f"Filtered out {no_media_count} exercises due to missing media")
+            if no_cardio_filtered > 0:
+                logger.info(
+                    f"Filtered out {no_cardio_filtered} cardio/plyometric exercises "
+                    f"from {workout_type_preference} workout"
+                )
 
             return filtered_candidates, seen
 
