@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -467,8 +469,10 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       final success = await repo.uncompleteWorkout(widget.workout.id!);
 
       if (success && mounted) {
-        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-        ref.read(workoutsProvider.notifier).silentRefresh();
+        // Full-set refresh so muscle/score/consistency revert too (not just
+        // workouts/today).
+        unawaited(refreshAfterWorkoutMutation(
+            source: 'uncomplete', workoutId: widget.workout.id));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

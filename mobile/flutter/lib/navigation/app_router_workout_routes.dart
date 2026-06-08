@@ -328,6 +328,7 @@ List<RouteBase> _workoutRoutes() => [
             calories: (data['calories'] as num).toInt(),
             workoutLogId: data['workoutLogId'] as String?,
             exercisesPerformance: data['exercisesPerformance'] as List<Map<String, dynamic>>?,
+            exerciseSets: data['exerciseSets'] as List<Map<String, dynamic>>?,
             totalRestSeconds: data['totalRestSeconds'] as int?,
             avgRestSeconds: data['avgRestSeconds'] as double?,
             totalSets: data['totalSets'] as int?,

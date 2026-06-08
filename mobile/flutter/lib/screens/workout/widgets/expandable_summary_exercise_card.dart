@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';
 
@@ -9,6 +10,8 @@ class ExpandableSummaryExerciseCard extends StatefulWidget {
   final ExerciseComparisonInfo? comparison;
   final List<SetLogInfo> setLogs;
   final bool isDark;
+  /// True when the user prefers kg for workout weights (set weights stored kg).
+  final bool useKg;
   final Color accentColor;
   final bool isExpanded;
   final VoidCallback onToggle;
@@ -21,6 +24,7 @@ class ExpandableSummaryExerciseCard extends StatefulWidget {
     this.comparison,
     required this.setLogs,
     required this.isDark,
+    required this.useKg,
     required this.accentColor,
     required this.isExpanded,
     required this.onToggle,
@@ -428,7 +432,7 @@ class _ExpandableSummaryExerciseCardState
           Expanded(
             child: Center(
               child: Text(
-                AppLocalizations.of(context)!.expandableSummaryExerciseCardKg(setLog.weightKg.toStringAsFixed(1)),
+                WeightUtils.formatWorkoutWeight(setLog.weightKg, useKg: widget.useKg),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
@@ -653,7 +657,7 @@ class _ExpandableSummaryExerciseCardState
               Expanded(
                 child: _buildComparisonMetric(
                   'Volume',
-                  '${comparison.currentVolumeKg.toStringAsFixed(0)} kg',
+                  '${(widget.useKg ? comparison.currentVolumeKg : WeightUtils.kgToLbs(comparison.currentVolumeKg)).toStringAsFixed(0)} ${WeightUtils.workoutUnitLabel(widget.useKg)}',
                   comparison.volumeDiffKg,
                   comparison.volumeDiffPercent,
                 ),
@@ -664,7 +668,7 @@ class _ExpandableSummaryExerciseCardState
                 Expanded(
                   child: _buildComparisonMetric(
                     'Max Weight',
-                    '${comparison.currentMaxWeightKg!.toStringAsFixed(1)} kg',
+                    WeightUtils.formatWorkoutWeight(comparison.currentMaxWeightKg!, useKg: widget.useKg),
                     comparison.weightDiffKg,
                     comparison.weightDiffPercent,
                   ),
@@ -676,7 +680,7 @@ class _ExpandableSummaryExerciseCardState
                 Expanded(
                   child: _buildComparisonMetric(
                     'Est. 1RM',
-                    '${comparison.current1rmKg!.toStringAsFixed(1)} kg',
+                    WeightUtils.formatWorkoutWeight(comparison.current1rmKg!, useKg: widget.useKg),
                     comparison.rmDiffKg,
                     comparison.rmDiffPercent,
                   ),
@@ -809,7 +813,7 @@ class _ExpandableSummaryExerciseCardState
     if (exercise.sets != null) parts.add('${exercise.sets} sets');
     if (exercise.reps != null) parts.add('${exercise.reps} reps');
     if (exercise.weight != null && exercise.weight! > 0) {
-      parts.add('@ ${exercise.weight!.toStringAsFixed(1)} kg');
+      parts.add('@ ${WeightUtils.formatWorkoutWeight(exercise.weight!, useKg: widget.useKg)}');
     }
     if (exercise.durationSeconds != null) {
       parts.add('${exercise.durationSeconds}s');
@@ -820,13 +824,22 @@ class _ExpandableSummaryExerciseCardState
   String _comparisonDetailText(ExerciseComparisonInfo comparison) {
     final parts = <String>[];
     if (comparison.weightDiffKg != null && comparison.weightDiffKg != 0) {
-      parts.add(
-          'Weight: ${comparison.previousMaxWeightKg?.toStringAsFixed(1) ?? "?"} -> ${comparison.currentMaxWeightKg?.toStringAsFixed(1) ?? "?"} kg');
+      final prev = comparison.previousMaxWeightKg;
+      final cur = comparison.currentMaxWeightKg;
+      final prevStr = prev != null
+          ? WeightUtils.formatWorkoutWeight(prev, useKg: widget.useKg, withUnit: false)
+          : '?';
+      final curStr = cur != null
+          ? WeightUtils.formatWorkoutWeight(cur, useKg: widget.useKg)
+          : '? ${WeightUtils.workoutUnitLabel(widget.useKg)}';
+      parts.add('Weight: $prevStr -> $curStr');
     }
     if (comparison.volumeDiffKg != null && comparison.volumeDiffKg != 0) {
       final sign = comparison.volumeDiffKg! >= 0 ? '+' : '';
-      parts.add(
-          'Volume: $sign${comparison.volumeDiffKg!.toStringAsFixed(0)} kg');
+      final vol = widget.useKg
+          ? comparison.volumeDiffKg!
+          : WeightUtils.kgToLbs(comparison.volumeDiffKg!);
+      parts.add('Volume: $sign${vol.toStringAsFixed(0)} ${WeightUtils.workoutUnitLabel(widget.useKg)}');
     }
     if (comparison.repsDiff != null && comparison.repsDiff != 0) {
       final sign = comparison.repsDiff! >= 0 ? '+' : '';

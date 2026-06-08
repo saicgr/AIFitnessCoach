@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/cardio_pr.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../cardio/cardio_pr_history_sheet.dart';
@@ -38,7 +41,7 @@ Future<void> showTrophiesEarnedSheet(
   );
 }
 
-class _TrophiesEarnedSheet extends StatelessWidget {
+class _TrophiesEarnedSheet extends ConsumerWidget {
   final List<Map<String, dynamic>> newPRs;
   final Map<String, dynamic>? achievements;
   final int totalWorkouts;
@@ -54,8 +57,10 @@ class _TrophiesEarnedSheet extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // PR weights are stored in kg; render in the user's WORKOUT weight unit.
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final l = AppLocalizations.of(context)!;
     final backgroundColor = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -151,7 +156,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                         ...newPRs.asMap().entries.map((entry) {
                           final pr = entry.value;
                           final index = entry.key;
-                          return _buildPRCard(context, pr, elevated, cardBorder)
+                          return _buildPRCard(context, pr, elevated, cardBorder, useKg)
                               .animate(delay: Duration(milliseconds: 150 + (index * 50)))
                               .fadeIn()
                               .slideX(begin: 0.1);
@@ -315,6 +320,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
     Map<String, dynamic> pr,
     Color elevated,
     Color cardBorder,
+    bool useKg,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -411,7 +417,10 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${weightKg?.toStringAsFixed(1) ?? '--'} kg',
+                      weightKg != null
+                          ? WeightUtils.formatWorkoutWeight(
+                              weightKg.toDouble(), useKg: useKg)
+                          : '--',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -440,7 +449,7 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                           children: [
                             Icon(Icons.arrow_upward, size: 12, color: AppColors.green),
                             Text(
-                              '+${(improvement as num).toStringAsFixed(1)}kg',
+                              '+${WeightUtils.formatWorkoutWeight((improvement as num).toDouble(), useKg: useKg, space: false)}',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

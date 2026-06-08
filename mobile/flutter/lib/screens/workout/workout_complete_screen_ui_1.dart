@@ -3,42 +3,15 @@ part of 'workout_complete_screen.dart';
 /// UI builder methods extracted from _WorkoutCompleteScreenState
 extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
 
-  /// Strength-Score level-up celebration (B6) — confetti + card when the
-  /// just-finished workout pushed a muscle/overall score across a level
-  /// threshold. Self-contained: fetches `/scores/recent-level-ups`, fires its
-  /// own confetti, and collapses to zero height when nothing crossed. Surfaced
-  /// via `_buildExercisesSection()` so the parent's existing render hook picks
-  /// it up without any new parent state.
-  Widget _buildScoreLevelUpCelebration() {
-    // Muscles trained this workout — used to prioritize the headline when
-    // multiple muscles level up at once.
-    final trained = <String>{
-      for (final ex in widget.workout.exercises)
-        ...[
-          ex.primaryMuscle,
-          ex.muscleGroup,
-          ex.bodyPart,
-        ].whereType<String>().map((m) => m.trim().toLowerCase()).where(
-              (m) => m.isNotEmpty,
-            ),
-    };
-    return ScoreLevelUpCelebration(trainedMuscles: trained);
-  }
-
-  /// Per-exercise breakdown — each exercise with sets x reps x avg weight and
-  /// a PR badge where the lift set a personal record. Prepends the
-  /// Strength-Score level-up celebration (B6) so a leveled-up muscle gets a
-  /// confetti moment. Returns null only when there is neither a level-up nor
-  /// any logged performance to show. (The user wanted to see what they
-  /// actually did + which PRs landed, not just aggregate totals.)
+  /// Per-exercise breakdown (2D) — each exercise is a compact tap-to-expand
+  /// row: collapsed shows "N×reps · avg weight" + a PR badge; expanded reveals
+  /// every set's weight × reps with the PR set starred. Collapsed by default so
+  /// the whole list fits without scrolling regardless of phone size. Returns
+  /// null when there is no logged performance to show (the level-up moment now
+  /// lives inside the merged Coach card).
   Widget? _buildExercisesSection() {
     final perf = widget.exercisesPerformance;
-    // Always render the celebration widget — it self-hides when there's no
-    // level-up. When there's also no exercise performance, return just the
-    // celebration (which collapses to zero height if nothing crossed).
-    if (perf == null || perf.isEmpty) {
-      return _buildScoreLevelUpCelebration();
-    }
+    if (perf == null || perf.isEmpty) return null;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -47,15 +20,25 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final useKg = ref.watch(useKgForWorkoutProvider);
-    final unit = useKg ? 'kg' : 'lb';
 
-    final prNames = <String>{
+    // PR lookup by exercise name — drives the badge AND the per-set star.
+    final prByName = <String, PersonalRecordInfo>{
       for (final pr
           in (widget.personalRecords ?? const <PersonalRecordInfo>[]))
-        pr.exerciseName.toLowerCase().trim(),
+        pr.exerciseName.toLowerCase().trim(): pr,
+    };
+    // Per-set rows by exercise name (passed through from the finalizer).
+    final setsByName = <String, List<Map<String, dynamic>>>{
+      for (final ex in (widget.exerciseSets ?? const <Map<String, dynamic>>[]))
+        ((ex['name'] as String?) ?? '').toLowerCase().trim():
+            ((ex['sets'] as List?)
+                    ?.whereType<Map>()
+                    .map((m) => Map<String, dynamic>.from(m))
+                    .toList() ??
+                const <Map<String, dynamic>>[]),
     };
 
-    final exercisesCard = Container(
+    return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -81,93 +64,23 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           for (final e in perf)
-            _exerciseBreakdownRow(
-                e, prNames, useKg, unit, textPrimary, textMuted),
-        ],
-      ),
-    );
-
-    // Prepend the Strength-Score level-up celebration (self-hiding; carries
-    // its own bottom spacing so no stray gap appears when nothing crossed).
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildScoreLevelUpCelebration(),
-        exercisesCard,
-      ],
-    );
-  }
-
-  Widget _exerciseBreakdownRow(
-    Map<String, dynamic> e,
-    Set<String> prNames,
-    bool useKg,
-    String unit,
-    Color textPrimary,
-    Color textMuted,
-  ) {
-    final name = (e['name'] as String?) ?? 'Exercise';
-    final sets = (e['sets'] as num?)?.toInt() ?? 0;
-    final reps = (e['reps'] as num?)?.toInt() ?? 0;
-    final wKg = (e['weight_kg'] as num?)?.toDouble() ?? 0;
-    final w = useKg ? wKg : WeightUtils.kgToLbs(wKg);
-    final isPr = prNames.contains(name.toLowerCase().trim());
-    final detail = w > 0
-        ? '$sets sets · $reps reps · ${w.toStringAsFixed(0)}$unit avg'
-        : '$sets sets · $reps reps';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Flexible(
-                child: Text(
-                  name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                ),
-              ),
-              if (isPr) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFCD34D),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.emoji_events_rounded,
-                          size: 11, color: Color(0xFF7A5C00)),
-                      SizedBox(width: 3),
-                      Text(
-                        'PR',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF7A5C00),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(detail, style: TextStyle(fontSize: 12, color: textMuted)),
+            () {
+              final name = (e['name'] as String?) ?? 'Exercise';
+              final key = name.toLowerCase().trim();
+              return _ExpandableExerciseRow(
+                name: name,
+                sets: (e['sets'] as num?)?.toInt() ?? 0,
+                reps: (e['reps'] as num?)?.toInt() ?? 0,
+                avgWeightKg: (e['weight_kg'] as num?)?.toDouble() ?? 0,
+                pr: prByName[key],
+                perSets: setsByName[key] ?? const <Map<String, dynamic>>[],
+                useKg: useKg,
+                textPrimary: textPrimary,
+                textMuted: textMuted,
+              );
+            }(),
         ],
       ),
     );
@@ -245,12 +158,8 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       ),
     ];
 
-    return MetricGrid(
-      items: cells,
-      columns: 2,
-      spacing: 10,
-      numberSize: StatType.secondary,
-    );
+    // 2A — page the 8 stats into two swipeable 2×2 grids (shorter screen).
+    return _StatsCarousel(cells: cells);
   }
 
 
@@ -941,6 +850,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
 
 
   Widget _buildNewPRsSection() {
+    final useKg = ref.watch(useKgForWorkoutProvider);
     return Builder(
       builder: (context) {
         final isDarkPR = Theme.of(context).brightness == Brightness.dark;
@@ -1022,7 +932,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '${(pr['weight_kg'] as num).toStringAsFixed(1)} kg${reps != null ? ' x $reps' : ''}',
+                                '${WeightUtils.formatWorkoutWeight((pr['weight_kg'] as num).toDouble(), useKg: useKg)}${reps != null ? ' x $reps' : ''}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.success,
@@ -1031,7 +941,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                               ),
                               if (estimated1rm != null)
                                 Text(
-                                  '1RM: ${estimated1rm.toStringAsFixed(1)} kg',
+                                  '1RM: ${WeightUtils.formatWorkoutWeight(estimated1rm.toDouble(), useKg: useKg)}',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: textPrimaryPR.withOpacity(0.7),
@@ -1054,7 +964,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                '+${improvementKg.toStringAsFixed(1)} kg${improvementPercent != null ? ' (+${improvementPercent.toStringAsFixed(1)}%)' : ''}',
+                                '+${WeightUtils.formatWorkoutWeight(improvementKg.toDouble(), useKg: useKg)}${improvementPercent != null ? ' (+${improvementPercent.toStringAsFixed(1)}%)' : ''}',
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,
@@ -1263,4 +1173,337 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     );
   }
 
+}
+
+/// One tap-to-expand exercise row on the completion screen (2D). Collapsed:
+/// name + optional PR badge + chevron, with a one-line "N×reps · avg" summary.
+/// Expanded: every working set's weight × reps, with the set that landed the
+/// PR starred. Default collapsed so the whole list fits without scrolling.
+class _ExpandableExerciseRow extends StatefulWidget {
+  final String name;
+  final int sets;
+  final int reps;
+  final double avgWeightKg;
+  final PersonalRecordInfo? pr;
+  final List<Map<String, dynamic>> perSets;
+  final bool useKg;
+  final Color textPrimary;
+  final Color textMuted;
+
+  const _ExpandableExerciseRow({
+    required this.name,
+    required this.sets,
+    required this.reps,
+    required this.avgWeightKg,
+    required this.pr,
+    required this.perSets,
+    required this.useKg,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  @override
+  State<_ExpandableExerciseRow> createState() => _ExpandableExerciseRowState();
+}
+
+class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
+  bool _expanded = false;
+
+  bool get _expandable => widget.perSets.isNotEmpty;
+
+  /// Index of the set that best matches the PR (weight≈ + reps), else the
+  /// heaviest set; -1 when this exercise didn't set a PR. Best-effort — per-set
+  /// PRs aren't tracked server-side, so we map the exercise-level PR onto a set.
+  int get _prSetIndex {
+    if (widget.pr == null || widget.perSets.isEmpty) return -1;
+    final targetKg = widget.pr!.weightKg;
+    final targetReps = widget.pr!.reps;
+    int best = -1;
+    double bestScore = double.infinity;
+    for (var i = 0; i < widget.perSets.length; i++) {
+      final w = (widget.perSets[i]['weight_kg'] as num?)?.toDouble() ?? 0;
+      final r = (widget.perSets[i]['reps'] as num?)?.toInt() ?? 0;
+      // Lower is better: weight delta dominates, reps delta breaks ties.
+      final score = (w - targetKg).abs() + (r - targetReps).abs() * 0.01;
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  String _fmtWeightKg(double kg) => kg > 0
+      ? WeightUtils.formatWorkoutWeight(kg, useKg: widget.useKg, space: false)
+      : 'BW';
+
+  @override
+  Widget build(BuildContext context) {
+    final avg = widget.avgWeightKg;
+    final summary = avg > 0
+        ? '${widget.sets}×${widget.reps} · ${_fmtWeightKg(avg)} avg'
+        : '${widget.sets}×${widget.reps}';
+    final prIdx = _prSetIndex;
+
+    final header = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: widget.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (widget.pr != null) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFCD34D),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.emoji_events_rounded,
+                              size: 11, color: Color(0xFF7A5C00)),
+                          SizedBox(width: 3),
+                          Text(
+                            'PR',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF7A5C00),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 2),
+              Text(summary,
+                  style: TextStyle(fontSize: 12, color: widget.textMuted)),
+            ],
+          ),
+        ),
+        if (_expandable)
+          Icon(
+            _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+            size: 20,
+            color: widget.textMuted,
+          ),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _expandable
+              ? InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () => setState(() => _expanded = !_expanded),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: header,
+                  ),
+                )
+              : header,
+          if (_expanded && _expandable)
+            Padding(
+              padding: const EdgeInsets.only(top: 6, left: 2),
+              child: Wrap(
+                spacing: 14,
+                runSpacing: 4,
+                children: [
+                  for (var i = 0; i < widget.perSets.length; i++)
+                    _SetChip(
+                      index: i + 1,
+                      label: _setLabel(widget.perSets[i]),
+                      isPr: i == prIdx,
+                      textPrimary: widget.textPrimary,
+                      textMuted: widget.textMuted,
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _setLabel(Map<String, dynamic> s) {
+    final kg = (s['weight_kg'] as num?)?.toDouble() ?? 0;
+    final reps = (s['reps'] as num?)?.toInt() ?? 0;
+    return '${_fmtWeightKg(kg)} × $reps';
+  }
+}
+
+class _SetChip extends StatelessWidget {
+  final int index;
+  final String label;
+  final bool isPr;
+  final Color textPrimary;
+  final Color textMuted;
+
+  const _SetChip({
+    required this.index,
+    required this.label,
+    required this.isPr,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'S$index',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: textMuted,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textPrimary,
+          ),
+        ),
+        if (isPr) ...[
+          const SizedBox(width: 3),
+          const Text('🏆', style: TextStyle(fontSize: 11)),
+        ],
+      ],
+    );
+  }
+}
+
+/// 2A — the 8 completion stats paged into swipeable 2×2 grids with a dot
+/// indicator. Uses a page-snapping HORIZONTAL scroll view (not a PageView) so
+/// it sizes to its content height — a fixed-height PageView inside the
+/// completion screen's vertical scroll view would hit the "unbounded height"
+/// white-screen the result-layout test guards against.
+class _StatsCarousel extends StatefulWidget {
+  final List<MetricCell> cells;
+  const _StatsCarousel({required this.cells});
+
+  @override
+  State<_StatsCarousel> createState() => _StatsCarouselState();
+}
+
+class _StatsCarouselState extends State<_StatsCarousel> {
+  final ScrollController _controller = ScrollController();
+  int _page = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Pages of 4 cells → each a 2×2 grid.
+    final pages = <List<MetricCell>>[];
+    for (var i = 0; i < widget.cells.length; i += 4) {
+      final end =
+          (i + 4) > widget.cells.length ? widget.cells.length : i + 4;
+      pages.add(widget.cells.sublist(i, end));
+    }
+    // Nothing to page — render a single grid.
+    if (pages.length <= 1) {
+      return MetricGrid(
+        items: widget.cells,
+        columns: 2,
+        spacing: 10,
+        numberSize: StatType.secondary,
+      );
+    }
+
+    final c = ThemeColors.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final pageWidth = constraints.maxWidth;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                if (pageWidth > 0) {
+                  final p = (_controller.offset / pageWidth)
+                      .round()
+                      .clamp(0, pages.length - 1);
+                  if (p != _page) setState(() => _page = p);
+                }
+                return false;
+              },
+              child: SingleChildScrollView(
+                controller: _controller,
+                scrollDirection: Axis.horizontal,
+                physics: const PageScrollPhysics(),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final page in pages)
+                      SizedBox(
+                        width: pageWidth,
+                        child: MetricGrid(
+                          items: page,
+                          columns: 2,
+                          spacing: 10,
+                          numberSize: StatType.secondary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < pages.length; i++)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: i == _page ? 18 : 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: i == _page
+                          ? c.accent
+                          : c.textMuted.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

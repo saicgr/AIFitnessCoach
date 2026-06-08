@@ -8,8 +8,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../data/services/pr_detection_service.dart';
 import 'pr_details_sheet.dart';
 
@@ -187,27 +189,36 @@ class _PRInlineCelebrationBannerState extends State<PRInlineCelebrationBanner> {
                           ],
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          AppLocalizations.of(context)!.prInlineCelebrationValue2(widget.pr.exerciseName, widget.pr.formattedValue),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withOpacity(0.9),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (widget.pr.previousValue != null) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.pr.formattedImprovement,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withOpacity(0.7),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                        Consumer(builder: (context, ref, _) {
+                          final useKg = ref.watch(useKgForWorkoutProvider);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context)!.prInlineCelebrationValue2(widget.pr.exerciseName, widget.pr.formattedValueIn(useKg)),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white.withOpacity(0.9),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (widget.pr.previousValue != null) ...[
+                                const SizedBox(height: 2),
+                                Text(
+                                  widget.pr.formattedImprovementIn(useKg),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          );
+                        }),
                       ],
                     ),
                   ),

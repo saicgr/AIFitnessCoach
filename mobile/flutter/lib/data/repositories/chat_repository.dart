@@ -20,6 +20,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/week_start_provider.dart';
+import '../../core/providers/workout_mutation_coordinator.dart';
 import '../../core/providers/serious_mode_provider.dart';
 import '../../core/providers/synced_visibility_provider.dart';
 import '../../core/providers/ble_heart_rate_provider.dart';

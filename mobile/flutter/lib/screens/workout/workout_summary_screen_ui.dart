@@ -14,8 +14,11 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
         ? _formatDuration(wc.currentDurationSeconds)
         : workout?.formattedDurationShort ?? '--';
     final exerciseCount = wc?.currentExercises ?? workout?.exerciseCount ?? 0;
+    final useKg = ref.watch(useKgForWorkoutProvider);
+    // Volume is an aggregate (Σ reps×weight) — convert linearly, do NOT
+    // gym-snap (snapping is only for individual liftable weights).
     final volume = wc != null
-        ? '${wc.currentTotalVolumeKg.toStringAsFixed(0)} kg'
+        ? '${(useKg ? wc.currentTotalVolumeKg : WeightUtils.kgToLbs(wc.currentTotalVolumeKg)).toStringAsFixed(0)} ${WeightUtils.workoutUnitLabel(useKg)}'
         : '--';
     final calories = wc != null && wc.currentCalories > 0
         ? '${wc.currentCalories}'
@@ -327,6 +330,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
 
   Widget _buildPRCard(
       PersonalRecordInfo pr, bool isDark, Color accentColor) {
+    final useKg = ref.watch(useKgForWorkoutProvider);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
@@ -372,7 +376,7 @@ extension _WorkoutSummaryScreenStateUI on _WorkoutSummaryScreenState {
           ),
           const SizedBox(height: 4),
           Text(
-            '${pr.weightKg.toStringAsFixed(1)} kg x ${pr.reps} reps  |  Est. 1RM: ${pr.estimated1rmKg.toStringAsFixed(1)} kg',
+            '${WeightUtils.formatWorkoutWeight(pr.weightKg, useKg: useKg)} x ${pr.reps} reps  |  Est. 1RM: ${WeightUtils.formatWorkoutWeight(pr.estimated1rmKg, useKg: useKg)}',
             style: TextStyle(
               fontSize: 12,
               color: isDark ? AppColors.textSecondary : Colors.grey.shade600,

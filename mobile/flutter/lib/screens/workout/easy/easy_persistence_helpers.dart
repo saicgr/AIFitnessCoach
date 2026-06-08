@@ -14,17 +14,13 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cache/offline_write_queue.dart';
+import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../core/utils/default_weights.dart';
 
 import '../../../data/models/exercise.dart';
 import '../../../data/services/rating_prompt_service.dart';
 import '../../../data/models/workout.dart';
-import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
-import '../../../data/providers/milestones_provider.dart';
-import '../../../data/providers/muscle_analytics_provider.dart';
-import '../../../data/providers/scores_provider.dart';
-import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -186,6 +182,9 @@ class EasyLocalAggregates {
   final double totalVolumeKg;
   final int calories;
   final List<Map<String, dynamic>> exercisesPerformance;
+  /// Per-set breakdown for the completion screen's tap-to-expand rows:
+  /// [{name, sets: [{set_number, reps, weight_kg, set_type}]}].
+  final List<Map<String, dynamic>> exerciseSets;
   final String setsJson;
   final List<Map<String, dynamic>> setsJsonList;
 
@@ -195,6 +194,7 @@ class EasyLocalAggregates {
     required this.totalVolumeKg,
     required this.calories,
     required this.exercisesPerformance,
+    required this.exerciseSets,
     required this.setsJson,
     required this.setsJsonList,
   });
@@ -212,6 +212,7 @@ EasyLocalAggregates computeEasyAggregates({
   int totalReps = 0;
   double totalVolumeKg = 0;
   final exercisesPerformance = <Map<String, dynamic>>[];
+  final exerciseSets = <Map<String, dynamic>>[];
   final setsJsonList = <Map<String, dynamic>>[];
 
   // Per-gym progress tracking: stamp each set in the persisted sets_json with
@@ -229,6 +230,7 @@ EasyLocalAggregates computeEasyAggregates({
     int exTotalReps = 0;
     double exTotalWeight = 0;
     int exSetCount = 0;
+    final perSetRows = <Map<String, dynamic>>[];
 
     for (int sIdx = 0; sIdx < st.completed.length; sIdx++) {
       final s = st.completed[sIdx];
@@ -240,6 +242,14 @@ EasyLocalAggregates computeEasyAggregates({
         exSetCount++;
         exTotalReps += s.reps;
         exTotalWeight += s.weight;
+        if (s.setType != 'warmup') {
+          perSetRows.add(<String, dynamic>{
+            'set_number': perSetRows.length + 1,
+            'reps': s.reps,
+            'weight_kg': s.weight,
+            'set_type': s.setType,
+          });
+        }
       }
       setsJsonList.add(<String, dynamic>{
         'exercise_index': i,
@@ -266,6 +276,12 @@ EasyLocalAggregates computeEasyAggregates({
       'reps': exTotalReps,
       'weight_kg': exSetCount > 0 ? exTotalWeight / exSetCount : 0,
     });
+    if (perSetRows.isNotEmpty) {
+      exerciseSets.add(<String, dynamic>{
+        'name': exercise.name,
+        'sets': perSetRows,
+      });
+    }
   }
 
   return EasyLocalAggregates(
@@ -277,6 +293,7 @@ EasyLocalAggregates computeEasyAggregates({
     // returns a precise number.
     calories: workout.estimatedCalories,
     exercisesPerformance: exercisesPerformance,
+    exerciseSets: exerciseSets,
     setsJson: jsonEncode(setsJsonList),
     setsJsonList: setsJsonList,
   );
@@ -348,19 +365,10 @@ Future<void> runEasyBackgroundSave({
     ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
     unawaited(ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
 
-    // 4) Invalidate every history/score provider so the new session shows
-    //    up immediately. Mirrors the Advanced flow.
-    ref.invalidate(workoutsProvider);
-    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-    ref.invalidate(muscleHeatmapProvider);
-    ref.invalidate(muscleFrequencyProvider);
-    ref.invalidate(muscleBalanceProvider);
-    ref.invalidate(scoresProvider);
-    ref.invalidate(milestonesProvider);
-    ref.invalidate(consistencyProvider);
-    ref.invalidate(consistencyDataProvider);
-    ref.invalidate(activityHeatmapProvider);
-    ref.invalidate(calendarHeatmapProvider);
+    // 4) Refresh Home + Workout tab + analytics through the single durable
+    //    chokepoint (root container, dispose-proof). Mirrors the Advanced flow.
+    unawaited(refreshAfterWorkoutMutation(
+        source: 'complete_easy', workoutId: workout.id));
     try {
       unawaited(
           ref.read(ratingPromptServiceProvider).recordWorkoutCompleted());
@@ -406,9 +414,14 @@ Future<void> _easyCompleteWithOfflineFallback({
           '/workouts/$wid/complete',
           data: {'idempotency_key': queuedBody['idempotency_key']},
         );
-        return r.statusCode != null &&
+        final ok = r.statusCode != null &&
             r.statusCode! >= 200 &&
             r.statusCode! < 300;
+        if (ok) {
+          unawaited(refreshAfterWorkoutMutation(
+              source: 'offline_replay_easy', workoutId: wid));
+        }
+        return ok;
       } catch (_) {
         return false; // transient — keep queued
       }

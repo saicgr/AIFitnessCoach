@@ -882,6 +882,7 @@ class EasyActiveWorkoutScreenState
       'calories': aggregates.calories,
       'workoutLogId': _workoutLogId,
       'exercisesPerformance': aggregates.exercisesPerformance,
+      'exerciseSets': aggregates.exerciseSets,
       'totalSets': aggregates.totalSets,
       'totalReps': aggregates.totalReps,
       'totalVolumeKg': aggregates.totalVolumeKg,

@@ -12,17 +12,13 @@ import '../../../core/models/set_progression.dart';
 import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
+import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/services/workout_tour_steps.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
-import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
-import '../../../data/providers/milestones_provider.dart';
-import '../../../data/providers/muscle_analytics_provider.dart';
-import '../../../data/providers/scores_provider.dart';
-import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
@@ -267,6 +263,10 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     unawaited(_runBackgroundCompletionSave(workout));
 
     final exercisesPerformance = <Map<String, dynamic>>[];
+    // Per-set breakdown for the completion screen's tap-to-expand rows
+    // (each set's reps + weight, so the user can see exactly what they did and
+    // which set landed the PR). Aggregates live in `exercisesPerformance`.
+    final exerciseSets = <Map<String, dynamic>>[];
     for (int i = 0; i < exercises.length; i++) {
       final exercise = exercises[i];
       final sets = completedSets[i] ?? [];
@@ -279,6 +279,23 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           'reps': totalExReps,
           'weight_kg': avgWeight,
         });
+        // Skip warmups — show the working/failure/amrap sets that count.
+        final working =
+            sets.where((s) => s.setType != 'warmup').toList(growable: false);
+        if (working.isNotEmpty) {
+          exerciseSets.add({
+            'name': exercise.name,
+            'sets': [
+              for (int j = 0; j < working.length; j++)
+                {
+                  'set_number': j + 1,
+                  'reps': working[j].reps,
+                  'weight_kg': working[j].weight,
+                  'set_type': working[j].setType,
+                },
+            ],
+          });
+        }
       }
     }
 
@@ -300,6 +317,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         // expected — the completion screen handles a deferred id.
         'workoutLogId': null,
         'exercisesPerformance': exercisesPerformance,
+        'exerciseSets': exerciseSets,
         'totalRestSeconds': totalRestSeconds,
         'avgRestSeconds': avgRestSeconds,
         'totalSets': totalCompletedSets,
@@ -419,10 +437,12 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         }));
       }
 
-      // Refresh every screen that summarizes workout history. Debounced
-      // (WF10) so the optimistic completed state doesn't flicker when the
-      // silent revalidation lands.
-      _scheduleCompletionRefresh(workout);
+      // Post-completion refresh is fired from _completeWorkoutWithOfflineFallback
+      // AFTER /complete confirms server-side (and from the offline replay sender
+      // when a queued completion lands later) via refreshAfterWorkoutMutation —
+      // it runs on the root container so the active screen being disposed by
+      // context.go('/workout-complete') can't strand it (the old
+      // _scheduleCompletionRefresh timer was gated on `mounted` and never fired).
 
       // XP refresh — the server awards workout_complete XP inline, so just
       // reload local XP state. The legacy client-driven mark stays as a
@@ -448,6 +468,10 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       final response = await workoutRepo.completeWorkout(workout.id!);
       if (response != null) {
         debugPrint('✅ [Complete] Workout marked complete on server');
+        // Server confirmed → refresh Home + Workout tab + analytics from the
+        // root container (dispose-proof; the originating screen is gone).
+        unawaited(refreshAfterWorkoutMutation(
+            source: 'complete_advanced', workoutId: workout.id));
         return;
       }
       // Null response = non-200 the repo already rolled back. Treat as a
@@ -475,41 +499,22 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
             '/workouts/$wid/complete',
             data: {'idempotency_key': queuedBody['idempotency_key']},
           );
-          // 2xx delivered; the server de-dupes a replay via the key.
-          return resp.statusCode != null &&
+          final ok = resp.statusCode != null &&
               resp.statusCode! >= 200 &&
               resp.statusCode! < 300;
+          // A queued completion that lands minutes later must STILL refresh the
+          // UI — previously offline replays updated the server silently and the
+          // Home/Workout tabs stayed stale until an app restart.
+          if (ok) {
+            unawaited(refreshAfterWorkoutMutation(
+                source: 'offline_replay', workoutId: wid));
+          }
+          return ok; // 2xx delivered; the server de-dupes a replay via the key.
         } catch (_) {
           return false; // transient — keep queued, stop the flush
         }
       },
     );
-  }
-
-  /// WF10 — debounced post-completion provider refresh. Without the debounce
-  /// a burst of invalidations (completion + background writes resolving back
-  /// to back) makes the optimistic "completed" state flicker between the
-  /// optimistic value and each silent revalidation. Coalesce into one pass.
-  Timer? _completionRefreshDebounce;
-  void _scheduleCompletionRefresh(Workout workout) {
-    _completionRefreshDebounce?.cancel();
-    _completionRefreshDebounce =
-        Timer(const Duration(milliseconds: 400), () {
-      if (!mounted) return;
-      ref.invalidate(workoutsProvider);
-      // Refresh /today so completedWorkout/completedToday flip server-side
-      // without the in-memory cache reverting the optimistic update.
-      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-      ref.invalidate(muscleHeatmapProvider);
-      ref.invalidate(muscleFrequencyProvider);
-      ref.invalidate(muscleBalanceProvider);
-      ref.invalidate(scoresProvider);
-      ref.invalidate(milestonesProvider);
-      ref.invalidate(consistencyProvider);
-      ref.invalidate(consistencyDataProvider);
-      ref.invalidate(activityHeatmapProvider);
-      ref.invalidate(calendarHeatmapProvider);
-    });
   }
 
   /// Build comprehensive workout metadata JSON

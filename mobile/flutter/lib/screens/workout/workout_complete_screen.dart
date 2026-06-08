@@ -39,9 +39,7 @@ import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
 import 'widgets/hydration_dialog.dart';
 import 'widgets/sauna_dialog.dart';
-import 'widgets/score_level_up_celebration.dart'; // B6 — strength-score level-up celebration
-import 'widgets/ai_coach_report_card.dart';
-import 'widgets/workout_ai_recap_card.dart'; // B8 — persisted post-workout AI recap
+import 'widgets/workout_ai_recap_card.dart'; // B8 — merged post-workout Coach card (recap + muscles + pills + level-up)
 import 'widgets/share_templates/_share_common.dart';
 import '../../shareables/adapters/workout_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
@@ -78,6 +76,10 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   // Additional workout performance data for AI Coach feedback
   final String? workoutLogId;
   final List<Map<String, dynamic>>? exercisesPerformance;
+  /// Per-set breakdown for tap-to-expand exercise rows:
+  /// [{name, sets: [{set_number, reps, weight_kg, set_type}]}]. Optional —
+  /// rows fall back to the aggregate summary when absent.
+  final List<Map<String, dynamic>>? exerciseSets;
   final List<Map<String, dynamic>>? plannedExercises; // NEW: For skip detection
   final Map<int, int>? exerciseTimeSeconds; // NEW: Per-exercise timing
   final int? totalRestSeconds;
@@ -126,6 +128,7 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
     required this.calories,
     this.workoutLogId,
     this.exercisesPerformance,
+    this.exerciseSets,
     this.plannedExercises,
     this.exerciseTimeSeconds,
     this.totalRestSeconds,
@@ -827,25 +830,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         .fadeIn(delay: 250.ms),
                   ],
 
-                  const SizedBox(height: 12),
-
-                  // AI Coach Report Card (muscles worked, stats, AI insight)
-                  AiCoachReportCard(
-                    exercises: widget.workout.exercises,
-                    aiSummary: _aiSummary,
-                    isLoadingSummary: _isLoadingSummary,
-                    isExpanded: _isAiReviewExpanded,
-                    onToggleExpand: () => setState(() => _isAiReviewExpanded = !_isAiReviewExpanded),
-                    totalSets: widget.totalSets ?? 0,
-                    totalVolumeKg: widget.totalVolumeKg ?? 0,
-                    durationSeconds: widget.duration,
-                    newPRs: _newPRs,
-                    performanceComparison: widget.performanceComparison,
-                    useKg: ref.watch(useKgForWorkoutProvider),
-                  ).animate().fadeIn(delay: 300.ms),
-
-                  // Persisted post-workout AI recap (B8) — volume vs last
-                  // comparable session, PRs, what stood out, one coaching cue.
+                  // ONE merged Coach card (2C): AI recap + muscles-worked strip
+                  // + quick pills + strength level-up, collapsed by default.
+                  // Replaces the old three stacked cards (AiCoachReportCard +
+                  // WorkoutAiRecapCard + ScoreLevelUpCelebration).
                   const SizedBox(height: 12),
                   WorkoutAiRecapCard(
                     workoutId: widget.workout.id ?? '',
@@ -861,14 +849,23 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               'time_seconds': e.durationSeconds ?? 0,
                             })
                         .toList(),
+                    workoutExercises: widget.workout.exercises,
                     totalSets: widget.totalSets ?? 0,
                     totalReps: widget.totalReps ?? 0,
                     totalVolumeKg: widget.totalVolumeKg ?? 0,
                     totalTimeSeconds: widget.duration,
                     earnedPRs: _newPRs,
+                    performanceComparison: widget.performanceComparison,
+                    trainedMuscles: <String>{
+                      for (final ex in widget.workout.exercises)
+                        ...[ex.primaryMuscle, ex.muscleGroup, ex.bodyPart]
+                            .whereType<String>()
+                            .map((m) => m.trim().toLowerCase())
+                            .where((m) => m.isNotEmpty),
+                    },
                     totalWorkoutsCompleted: _totalWorkoutCount,
                     useKg: ref.watch(useKgForWorkoutProvider),
-                  ).animate().fadeIn(delay: 340.ms),
+                  ).animate().fadeIn(delay: 320.ms),
 
                   // Per-exercise breakdown (sets x reps x weight + PR badges).
                   if (_buildExercisesSection() != null) ...[

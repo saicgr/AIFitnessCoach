@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/utils/equipment_scope.dart';
+import '../../core/utils/weight_utils.dart';
 import '../models/exercise.dart';
 import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
@@ -120,6 +121,52 @@ class DetectedPR {
     }
     return '+${diff.toStringAsFixed(1)}kg';
   }
+
+  // ── Unit-aware display (workout weight unit). Weights stored in kg; weight/
+  // oneRM gym-snap, volume converts linearly, reps are unit-less. Prefer these
+  // over the kg-baked getters above at every display site. ──────────────────
+
+  String formattedValueIn(bool useKg) {
+    switch (type) {
+      case PRType.weight:
+      case PRType.oneRM:
+        return WeightUtils.formatWorkoutWeight(newValue, useKg: useKg, space: false);
+      case PRType.reps:
+        return '${newValue.toInt()} reps';
+      case PRType.volume:
+        final v = useKg ? newValue : WeightUtils.kgToLbs(newValue);
+        return '${v.toStringAsFixed(0)}${WeightUtils.workoutUnitLabel(useKg)}';
+    }
+  }
+
+  String formattedPreviousValueIn(bool useKg) {
+    if (previousValue == null) return '';
+    switch (type) {
+      case PRType.weight:
+      case PRType.oneRM:
+        return WeightUtils.formatWorkoutWeight(previousValue!, useKg: useKg, space: false);
+      case PRType.reps:
+        return '${previousValue!.toInt()} reps';
+      case PRType.volume:
+        final v = useKg ? previousValue! : WeightUtils.kgToLbs(previousValue!);
+        return '${v.toStringAsFixed(0)}${WeightUtils.workoutUnitLabel(useKg)}';
+    }
+  }
+
+  String formattedImprovementIn(bool useKg) {
+    if (previousValue == null) return 'NEW!';
+    final diff = newValue - previousValue!;
+    if (type == PRType.reps) return '+${diff.toInt()} reps';
+    if (type == PRType.volume) {
+      final d = useKg ? diff : WeightUtils.kgToLbs(diff);
+      return '+${d.toStringAsFixed(0)}${WeightUtils.workoutUnitLabel(useKg)}';
+    }
+    return '+${WeightUtils.formatWorkoutWeight(diff, useKg: useKg, space: false)}';
+  }
+
+  /// "<weight> × <reps>" for the set line, in the user's workout unit.
+  String formattedWeightSetIn(bool useKg) =>
+      '${WeightUtils.formatWorkoutWeight(weight, useKg: useKg, space: false)} × $reps';
 
   /// Get a motivating message based on the PR
   String get celebrationMessage {

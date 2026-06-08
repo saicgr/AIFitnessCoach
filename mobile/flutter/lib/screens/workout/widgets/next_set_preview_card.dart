@@ -9,8 +9,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
 /// Data class for next set preview from the backend
@@ -56,7 +59,7 @@ class NextSetPreviewData {
 }
 
 /// Glassmorphic card showing AI-recommended parameters for the next set
-class NextSetPreviewCard extends StatelessWidget {
+class NextSetPreviewCard extends ConsumerWidget {
   /// The preview data from the backend
   final NextSetPreviewData previewData;
 
@@ -94,9 +97,11 @@ class NextSetPreviewCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AppLocalizations.of(context)!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // AI-recommended weight is backend kg; render in the workout weight unit.
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 380;
 
@@ -133,8 +138,8 @@ class NextSetPreviewCard extends StatelessWidget {
             ],
           ),
           child: isCompact
-              ? _buildCompactContent(isDark, isSmallScreen, l)
-              : _buildFullContent(isDark, isSmallScreen, l),
+              ? _buildCompactContent(isDark, isSmallScreen, l, useKg)
+              : _buildFullContent(isDark, isSmallScreen, l, useKg),
         ),
       ),
     )
@@ -143,7 +148,7 @@ class NextSetPreviewCard extends StatelessWidget {
         .slideY(begin: 0.1, end: 0, duration: 300.ms);
   }
 
-  Widget _buildCompactContent(bool isDark, bool isSmallScreen, AppLocalizations l) {
+  Widget _buildCompactContent(bool isDark, bool isSmallScreen, AppLocalizations l, bool useKg) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -214,7 +219,7 @@ class NextSetPreviewCard extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      '${previewData.recommendedWeight.toStringAsFixed(1)} kg',
+                      WeightUtils.formatWorkoutWeight(previewData.recommendedWeight, useKg: useKg),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -235,7 +240,7 @@ class NextSetPreviewCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          '${weightDelta > 0 ? '+' : ''}${weightDelta.toStringAsFixed(1)}',
+                          '${weightDelta > 0 ? '+' : ''}${(useKg ? weightDelta : WeightUtils.kgToLbs(weightDelta)).toStringAsFixed(1)}',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -291,7 +296,7 @@ class NextSetPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _buildFullContent(bool isDark, bool isSmallScreen, AppLocalizations l) {
+  Widget _buildFullContent(bool isDark, bool isSmallScreen, AppLocalizations l, bool useKg) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -420,7 +425,10 @@ class NextSetPreviewCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
                           Text(
-                            previewData.recommendedWeight.toStringAsFixed(1),
+                            WeightUtils.formatWorkoutWeight(
+                                previewData.recommendedWeight,
+                                useKg: useKg,
+                                withUnit: false),
                             style: TextStyle(
                               fontSize: isSmallScreen ? 32 : 38,
                               fontWeight: FontWeight.bold,
@@ -430,7 +438,7 @@ class NextSetPreviewCard extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(bottom: 6),
                             child: Text(
-                              ' kg',
+                              ' ${WeightUtils.workoutUnitLabel(useKg)}',
                               style: TextStyle(
                                 fontSize: isSmallScreen ? 14 : 16,
                                 fontWeight: FontWeight.w500,
@@ -467,7 +475,7 @@ class NextSetPreviewCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${weightDelta > 0 ? '+' : ''}${weightDelta.toStringAsFixed(1)} kg',
+                                '${weightDelta > 0 ? '+' : ''}${(useKg ? weightDelta : WeightUtils.kgToLbs(weightDelta)).toStringAsFixed(1)} ${WeightUtils.workoutUnitLabel(useKg)}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,

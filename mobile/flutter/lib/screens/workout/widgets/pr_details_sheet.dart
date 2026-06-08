@@ -6,9 +6,11 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../data/services/pr_detection_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../achievements/achievements_screen.dart';
@@ -28,14 +30,15 @@ Future<void> showPRDetailsSheet({
 }
 
 /// Bottom sheet content displaying PR details
-class PRDetailsSheet extends StatelessWidget {
+class PRDetailsSheet extends ConsumerWidget {
   final List<DetectedPR> prs;
 
   const PRDetailsSheet({super.key, required this.prs});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final useKg = ref.watch(useKgForWorkoutProvider);
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -117,6 +120,7 @@ class PRDetailsSheet extends StatelessWidget {
                 return _PRDetailCard(
                   pr: pr,
                   isDark: isDark,
+                  useKg: useKg,
                   textPrimary: textPrimary,
                   textSecondary: textSecondary,
                   textMuted: textMuted,
@@ -177,6 +181,7 @@ class PRDetailsSheet extends StatelessWidget {
 class _PRDetailCard extends StatelessWidget {
   final DetectedPR pr;
   final bool isDark;
+  final bool useKg;
   final Color textPrimary;
   final Color textSecondary;
   final Color textMuted;
@@ -186,6 +191,7 @@ class _PRDetailCard extends StatelessWidget {
   const _PRDetailCard({
     required this.pr,
     required this.isDark,
+    required this.useKg,
     required this.textPrimary,
     required this.textSecondary,
     required this.textMuted,
@@ -288,7 +294,7 @@ class _PRDetailCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      pr.formattedValue,
+                      pr.formattedValueIn(useKg),
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -315,7 +321,7 @@ class _PRDetailCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatPreviousValue(),
+                      pr.formattedPreviousValueIn(useKg),
                       style: TextStyle(
                         fontSize: 16,
                         color: textSecondary,
@@ -366,7 +372,7 @@ class _PRDetailCard extends StatelessWidget {
           // Set details
           const SizedBox(height: 12),
           Text(
-            AppLocalizations.of(context)!.prDetailsSheetKgXReps(pr.weight.toStringAsFixed(1), pr.reps),
+            pr.formattedWeightSetIn(useKg),
             style: TextStyle(
               fontSize: 13,
               color: textMuted,
@@ -375,19 +381,5 @@ class _PRDetailCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatPreviousValue() {
-    if (pr.previousValue == null) return '';
-    switch (pr.type) {
-      case PRType.weight:
-        return '${pr.previousValue!.toStringAsFixed(1)}kg';
-      case PRType.reps:
-        return '${pr.previousValue!.toInt()} reps';
-      case PRType.volume:
-        return '${pr.previousValue!.toStringAsFixed(0)}kg';
-      case PRType.oneRM:
-        return '${pr.previousValue!.toStringAsFixed(1)}kg';
-    }
   }
 }

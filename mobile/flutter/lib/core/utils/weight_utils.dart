@@ -75,6 +75,37 @@ class WeightUtils {
   /// Get the unit label ('kg' or 'lbs')
   static String getUnitLabel(bool useKg) => useKg ? 'kg' : 'lbs';
 
+  /// Short unit label for WORKOUT lifting weights ('kg' or 'lb').
+  ///
+  /// Gym shorthand — matches the active-workout / summary / PR surfaces
+  /// (e.g. "76lb avg"). Body weight uses [getUnitLabel] ('lbs').
+  static String workoutUnitLabel(bool useKg) => useKg ? 'kg' : 'lb';
+
+  /// THE canonical formatter for a WORKOUT LIFTING weight (stored in kg).
+  ///
+  /// Converts to the user's workout weight unit via [fromKgSnapped] so that:
+  ///   - a value the user originally entered in lbs round-trips EXACTLY
+  ///     (57 lb → stored ~25.85 kg → "57 lb", never "56.9 lb"), and
+  ///   - clean AI-generated kg values map to the lbs gym-goers recognize.
+  ///
+  /// Use this for every exercise / PR / set / 1RM / volume weight shown to the
+  /// user. Do NOT use it for BODY weight (weigh-ins, goal weight) — those use
+  /// the body-weight preference via [formatWeightFromKg] / [fromKg].
+  ///
+  /// [withUnit] appends the short label ('kg'/'lb'); [space] controls the gap
+  /// between value and label ("57 lb" vs "57lb").
+  static String formatWorkoutWeight(
+    double weightKg, {
+    required bool useKg,
+    bool withUnit = true,
+    bool space = true,
+  }) {
+    final value = fromKgSnapped(weightKg, displayInLbs: !useKg);
+    final v = formatWeightValue(value);
+    if (!withUnit) return v;
+    return space ? '$v ${workoutUnitLabel(useKg)}' : '$v${workoutUnitLabel(useKg)}';
+  }
+
   // ============================================================
   // ROUNDING METHODS
   // ============================================================

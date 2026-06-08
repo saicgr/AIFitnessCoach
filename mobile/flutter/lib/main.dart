@@ -13,6 +13,7 @@ import 'core/config/environment_config.dart';
 import 'core/constants/api_constants.dart';
 import 'core/accessibility/accessibility_provider.dart';
 import 'core/providers/subscription_provider.dart';
+import 'core/providers/workout_mutation_coordinator.dart';
 import 'data/services/data_cache_service.dart';
 import 'data/services/haptic_service.dart';
 import 'data/services/image_url_cache.dart';
@@ -238,6 +239,10 @@ void main() async {
       ),
     ],
   );
+  // Expose the root container so off-widget-tree logic (background completion
+  // saves, offline-queue replays, disposed-screen callbacks) can refresh
+  // providers — see refreshAfterWorkoutMutation / appProviderContainer.
+  appProviderContainer = container;
 
   // Wire onboarding analytics stub to PostHog
   AnalyticsService.init(container.read(posthogServiceProvider));

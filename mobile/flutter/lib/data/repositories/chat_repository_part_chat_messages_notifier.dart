@@ -2484,10 +2484,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     if (workoutId != null) {
       // Mark the workout as complete
       await _workoutRepository.completeWorkout(workoutId.toString());
-      // Refresh workouts list AND today provider so the hero carousel +
-      // week-strip checkmark flip immediately for the just-completed workout.
-      await _workoutsNotifier.refresh();
-      _refreshTodayWorkout();
+      // Single durable chokepoint — refresh Home + Workout tab + analytics
+      // (hero carousel + week-strip checkmark + muscle/score/consistency).
+      await refreshAfterWorkoutMutation(
+          source: 'chat', workoutId: workoutId.toString());
       debugPrint('✅ [Chat] Workout marked as complete');
     }
   }

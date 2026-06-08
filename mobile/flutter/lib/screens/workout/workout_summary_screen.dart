@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/providers/user_provider.dart';
+import '../../core/providers/workout_mutation_coordinator.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/utils/weight_utils.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
-import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
@@ -330,6 +334,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
               comparison: comparisonMatch,
               setLogs: exerciseSets,
               isDark: isDark,
+              useKg: ref.watch(useKgForWorkoutProvider),
               accentColor: accentColor,
               isExpanded: _expandedExercises.contains(index),
               onToggle: () {
@@ -815,8 +820,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       final repo = ref.read(workoutRepositoryProvider);
       final success = await repo.uncompleteWorkout(widget.workoutId);
       if (success && mounted) {
-        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-        ref.read(workoutsProvider.notifier).silentRefresh();
+        unawaited(refreshAfterWorkoutMutation(
+            source: 'uncomplete', workoutId: widget.workoutId));
         if (mounted) context.pop();
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -910,7 +915,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     if (exercise.sets != null) parts.add('${exercise.sets} sets');
     if (exercise.reps != null) parts.add('${exercise.reps} reps');
     if (exercise.weight != null && exercise.weight! > 0) {
-      parts.add('@ ${exercise.weight!.toStringAsFixed(1)} kg');
+      final useKg = ref.read(useKgForWorkoutProvider);
+      parts.add('@ ${WeightUtils.formatWorkoutWeight(exercise.weight!, useKg: useKg)}');
     }
     if (exercise.durationSeconds != null) {
       parts.add('${exercise.durationSeconds}s');
