@@ -40,6 +40,7 @@ import 'core/services/analytics_service.dart';
 import 'core/services/posthog_service.dart';
 import 'core/services/sentry_service.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'widgets/branded_error_widget.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,11 +110,31 @@ void main() async {
   ]);
   logStartup('parallel init wait', startupClock.elapsedMilliseconds);
 
+  // Branded global error surface: replaces Flutter's default red/grey box for
+  // any BUILD-phase error. Because Flutter substitutes this in place of the
+  // failed widget, a screen-level build error is contained inside its route
+  // instead of white-screening the whole app. (Render/layout-phase asserts such
+  // as "BoxConstraints forces an infinite height" are NOT routed here — those
+  // are prevented by the self-bounding layout contract + the regression gate in
+  // test/screens/workout/workout_result_unbounded_layout_test.dart.)
+  ErrorWidget.builder =
+      (FlutterErrorDetails details) => BrandedErrorWidget(details: details);
+
   // Wire up Crashlytics + Sentry error handlers.
   // Only report truly fatal errors as fatal; rendering/layout errors are non-fatal.
   FlutterError.onError = (FlutterErrorDetails details) {
     final message = details.exceptionAsString();
-    final isRenderingError = message.contains('RenderFlex overflowed') ||
+    // The catastrophic white-screen layout class: a child forced infinite
+    // height, or a flex child inside an unbounded box → layout throws → the
+    // route paints blank. Tag these distinctly (they previously mis-bucketed as
+    // 'flutter_fatal' with no signal) so a regression of the self-bounding
+    // layout contract is findable in Sentry at a glance.
+    final isLayoutUnbounded = message.contains('forces an infinite') ||
+        message.contains('was not laid out') ||
+        message.contains("'hasSize'") ||
+        message.contains('non-zero flex but incoming');
+    final isRenderingError = isLayoutUnbounded ||
+        message.contains('RenderFlex overflowed') ||
         message.contains('Failed to interpolate TextStyles') ||
         message.contains('Error thrown resolving an image codec') ||
         details.library == 'rendering library';
@@ -153,7 +174,12 @@ void main() async {
               ? SentryLevel.warning
               : SentryLevel.error;
           scope.setTag(
-              'error.kind', isRenderingError ? 'rendering' : 'flutter_fatal');
+              'error.kind',
+              isLayoutUnbounded
+                  ? 'layout_unbounded'
+                  : isRenderingError
+                      ? 'rendering'
+                      : 'flutter_fatal');
           if (details.library != null) {
             scope.setTag('flutter.library', details.library!);
           }
