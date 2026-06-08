@@ -12,6 +12,9 @@ from datetime import datetime
 import json
 
 from core.db.base import BaseDB
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class WorkoutDB(BaseDB):
@@ -172,6 +175,55 @@ class WorkoutDB(BaseDB):
             it will retry without the problematic field. This handles cases where
             new columns haven't been migrated yet.
         """
+        # Fail-open completeness tripwire (migration 2255): FLAG — never block —
+        # a generated workout that slipped through below its exercise floor. The
+        # real guarantee is the application-level completeness terminal stage;
+        # this only makes any regression observable + queryable (is_degraded).
+        # Manual / quick / user-created workouts are exempt — a user may
+        # legitimately build a 1-move session. Wrapped so it can NEVER block.
+        try:
+            _gsrc = (data.get("generation_source") or "").lower()
+            _exempt = _gsrc in ("manual", "user_created", "quick_workout", "manual_create")
+            if not _exempt and not data.get("is_degraded"):
+                _exs = data.get("exercises_json")
+                if isinstance(_exs, str):
+                    try:
+                        _exs = json.loads(_exs)
+                    except Exception:
+                        _exs = None
+                if isinstance(_exs, list):
+                    _distinct = len({
+                        (e.get("name") or "").strip().lower()
+                        for e in _exs
+                        if isinstance(e, dict) and (e.get("name") or "").strip()
+                    })
+                    from api.v1.workouts.exercise_target import min_exercise_floor
+                    _floor = min_exercise_floor(
+                        data.get("duration_minutes"), None, data.get("type") or "strength"
+                    )
+                    if 0 < _distinct < _floor:
+                        data["is_degraded"] = True
+                        if not data.get("degraded_reason"):
+                            data["degraded_reason"] = "write_guard_fallback"
+                        logger.warning(
+                            f"⚠️ [WriteGuard] Thin workout slipped through: {_distinct} "
+                            f"distinct exercise(s) < floor {_floor} "
+                            f"(source={_gsrc}, type={data.get('type')}); flagged "
+                            f"is_degraded, NOT blocked."
+                        )
+                        try:
+                            import sentry_sdk
+                            sentry_sdk.add_breadcrumb(
+                                category="workout",
+                                level="warning",
+                                message="thin_workout_write_guard",
+                                data={"distinct": _distinct, "floor": _floor, "source": _gsrc},
+                            )
+                        except Exception:
+                            pass
+        except Exception:
+            pass  # fail open — the tripwire must never block an insert
+
         try:
             result = self.client.table("workouts").insert(data).execute()
             return result.data[0] if result.data else None
@@ -182,6 +234,13 @@ class WorkoutDB(BaseDB):
             if "schema cache" in error_msg and "estimated_duration_minutes" in error_msg:
                 # Remove the problematic field and retry
                 data_copy = {k: v for k, v in data.items() if k != "estimated_duration_minutes"}
+                result = self.client.table("workouts").insert(data_copy).execute()
+                return result.data[0] if result.data else None
+            # Belt-and-suspenders: if the migration-2255 columns aren't in the
+            # PostgREST schema cache yet (just-deployed), strip them and retry so
+            # generation never 500s on the new additive columns.
+            if "schema cache" in error_msg and ("is_degraded" in error_msg or "degraded_reason" in error_msg):
+                data_copy = {k: v for k, v in data.items() if k not in ("is_degraded", "degraded_reason")}
                 result = self.client.table("workouts").insert(data_copy).execute()
                 return result.data[0] if result.data else None
 

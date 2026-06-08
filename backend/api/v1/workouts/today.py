@@ -1104,6 +1104,22 @@ async def get_today_workout(
                     f"scheduled_date={_demoted_rows[0].get('scheduled_date')!r}"
                 )
             if _safe_today_rows:
+                # Deterministic winner when a (user, today) legitimately has more
+                # than one active row — e.g. a scheduled generated workout plus an
+                # exempt quick_workout (migration 2048's unique index intentionally
+                # excludes manual/quick sources, so this overlap is by design).
+                # Without a stable order the home card could flicker between them.
+                # Priority: in-progress > non-degraded > most-recently-created.
+                def _today_sort_key(r: dict):
+                    status = (r.get("status") or "").lower()
+                    in_progress = status in ("in_progress", "active", "started")
+                    is_deg = bool(r.get("is_degraded"))
+                    return (
+                        1 if in_progress else 0,
+                        0 if is_deg else 1,
+                        str(r.get("created_at") or ""),
+                    )
+                _safe_today_rows.sort(key=_today_sort_key, reverse=True)
                 today_workout = _row_to_summary(_safe_today_rows[0], user_today_str=today_str, locale=_display_locale, db_client=db)
                 has_workout_today = True
                 logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")

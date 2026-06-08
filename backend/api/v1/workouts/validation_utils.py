@@ -467,27 +467,11 @@ def cap_exercise_count_by_density(
     if not exercises or not duration_minutes or duration_minutes <= 0:
         return exercises
 
-    is_circuit = (workout_type or "").lower() in (
-        "cardio", "hiit", "circuit", "metcon", "endurance",
-    )
-
-    # Hard absolute brackets — these are the §E ceilings, not the
-    # exercise/min ratio. Ratio-based fallback applies only above 30 min.
-    # Short-session table (workout_quality_checklist §E "≤4 ex for ≤15 min").
-    if duration_minutes <= 5:
-        absolute_max = 2
-    elif duration_minutes <= 10:
-        absolute_max = 3
-    elif duration_minutes <= 15:
-        absolute_max = 4 if is_circuit else 3
-    elif duration_minutes <= 20:
-        absolute_max = 5 if is_circuit else 4
-    elif duration_minutes <= 30:
-        absolute_max = 7 if is_circuit else 5
-    else:
-        # Ratio fallback for longer sessions.
-        min_per_ex = 4.0 if is_circuit else 7.0
-        absolute_max = max(3, int(duration_minutes / min_per_ex))
+    # Single source of truth for the density ceiling (exercise_target.density_max
+    # reproduces the §E brackets verbatim) so the cap, the target, and the floor
+    # never drift apart.
+    from api.v1.workouts.exercise_target import density_max
+    absolute_max = density_max(duration_minutes, workout_type)
 
     if len(exercises) <= absolute_max:
         return exercises

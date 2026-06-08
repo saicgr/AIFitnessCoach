@@ -1134,7 +1134,45 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                                 f"Keeping all {len(exercises)} exercises to meet minimum."
                             )
 
-                if len(exercises) < MIN_EXERCISES_REQUIRED:
+                # TERMINAL COMPLETENESS STAGE (WORKOUT_COMPLETENESS_V2) — mirror
+                # of the library path. Backfills a thin streaming workout to its
+                # floor from the RAG broadening cascade (no reserve on this path).
+                # FAIL OPEN: any error keeps the pre-stage list.
+                _stream_degraded_reason = None
+                from services.workout_completeness import completeness_enabled
+                if exercises and completeness_enabled(body.user_id):
+                    try:
+                        from api.v1.workouts.exercise_target import (
+                            target_exercise_count,
+                            min_exercise_floor,
+                        )
+                        from services.workout_completeness import ensure_complete_workout
+                        from services.exercise_rag.service import get_exercise_rag_service
+
+                        _ct_target = target_exercise_count(target_duration, fitness_level, _wo_type)
+                        _ct_floor = min_exercise_floor(target_duration, fitness_level, _wo_type)
+                        exercises, _stream_degraded_reason = await ensure_complete_workout(
+                            exercises,
+                            target=_ct_target,
+                            floor=_ct_floor,
+                            focus_area=(focus_areas[0] if focus_areas else (workout_type_override or "full_body")),
+                            equipment=equipment if isinstance(equipment, list) else [],
+                            fitness_level=fitness_level or "intermediate",
+                            goals=goals if isinstance(goals, list) else [],
+                            workout_type=_wo_type,
+                            reserve_pool=None,
+                            avoided_exercises=avoided_exercises or [],
+                            avoided_muscles=avoided_muscles,
+                            user_id=str(body.user_id),
+                            rag_service=get_exercise_rag_service(),
+                        )
+                    except Exception as _ce:  # noqa: BLE001 — fail open
+                        logger.warning(
+                            f"[Streaming Completeness] stage raised, keeping pre-stage exercises: {_ce}",
+                            exc_info=True,
+                        )
+                        _stream_degraded_reason = None
+                elif len(exercises) < MIN_EXERCISES_REQUIRED:
                     logger.error(
                         f"[Streaming Exercise Count] Workout '{workout_name}' has only {len(exercises)} exercises "
                         f"(minimum required: {MIN_EXERCISES_REQUIRED})."
@@ -1210,6 +1248,8 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "estimated_calories": _estimated_calories,
                 "generation_method": "ai",
                 "generation_source": "streaming_generation",
+                "is_degraded": bool(_stream_degraded_reason),
+                "degraded_reason": _stream_degraded_reason,
             }
 
             # Replace today's canonical workout if one already exists for the

@@ -88,6 +88,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
     equipment: list = []
     workout_days: list = []
     training_split = None
+    # Completeness terminal stage (WORKOUT_COMPLETENESS_V2): truthful reason when
+    # a workout ships below its floor because the real pool is too small. Bound
+    # here so the persistence block always has it defined.
+    _degraded_reason: Optional[str] = None
     gym_profile_id = body.gym_profile_id if getattr(body, "gym_profile_id", None) else None
     workout_type_override = getattr(body, "workout_type", None)
 
@@ -948,6 +952,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # This is a safety net in case the AI still includes avoided exercises
             filtered_exercises = []  # Track filtered exercises for auto-substitution
 
+            # Reserve pool: exercises dropped by the *aesthetic* trims below
+            # (movement-pattern dedup, bodyweight trim) — NOT the safety filters
+            # (equipment / focus mismatch / avoided). The terminal completeness
+            # stage (WORKOUT_COMPLETENESS_V2) restores from this first when a
+            # workout ends up below its floor, so over-trimming is self-healing.
+            reserve_pool: List[Dict[str, Any]] = []
+
             if avoided_exercises:
                 original_count = len(exercises)
                 avoided_lower = [ae.lower() for ae in avoided_exercises]
@@ -1052,6 +1063,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     current_count = pattern_counts.get(pattern, 0)
                     if current_count >= MAX_PER_PATTERN:
                         filtered_exercises.append(ex)
+                        # Distinct exercise dropped only for variety — keep it as
+                        # a restore candidate if the workout ends up thin.
+                        reserve_pool.append(ex)
                         logger.debug(f"🔄 [Variety] Filtered '{ex_name}' - pattern '{pattern}' has {current_count} exercises (max {MAX_PER_PATTERN})")
                         continue
                     pattern_counts[pattern] = current_count + 1
@@ -1105,6 +1119,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 if bodyweight_ratio > 0.3 and bodyweight_count > 1:
                     # Trim excess bodyweight exercises — keep at most 1
                     exercises = equip_exercises + bw_exercises[:1]
+                    # Dropped bodyweight moves become low-priority restore
+                    # candidates (appended after the higher-value pattern drops).
+                    reserve_pool.extend(bw_exercises[1:])
                     removed_count = bodyweight_count - 1
                     logger.info(
                         f"🔧 [Equipment] Trimmed to {len(exercises)} exercises "
@@ -1386,6 +1403,58 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                                 f"User may see mismatched exercises (e.g., push-ups in leg workout)."
                             )
 
+                # ============================================================
+                # TERMINAL COMPLETENESS STAGE (WORKOUT_COMPLETENESS_V2)
+                # ============================================================
+                # Last step before persistence. Restores a thin post-cascade
+                # workout to its duration/type floor by backfilling from the
+                # reserve (variety/bodyweight drops) then the RAG broadening
+                # cascade. A healthy RAG pool that got over-trimmed self-heals
+                # instead of shipping "1 exercise". On by default; a no-op (zero
+                # latency) when the workout already meets target. FAIL OPEN: any
+                # error keeps the pre-stage list — generation is never blocked.
+                from services.workout_completeness import completeness_enabled
+                _use_completeness = completeness_enabled(body.user_id)
+
+                if exercises and _use_completeness:
+                    try:
+                        from api.v1.workouts.exercise_target import (
+                            target_exercise_count,
+                            min_exercise_floor,
+                        )
+                        from services.workout_completeness import ensure_complete_workout
+
+                        _ct_hell = (intensity_preference or "").lower() == "hell"
+                        _ct_target = target_exercise_count(
+                            target_duration, fitness_level, workout_type, is_hell_mode=_ct_hell
+                        )
+                        _ct_floor = min_exercise_floor(
+                            target_duration, fitness_level, workout_type
+                        )
+                        exercises, _degraded_reason = await ensure_complete_workout(
+                            exercises,
+                            target=_ct_target,
+                            floor=_ct_floor,
+                            focus_area=(focus_areas[0] if focus_areas else (body.workout_type or "full_body")),
+                            equipment=equipment if isinstance(equipment, list) else [],
+                            fitness_level=fitness_level or "intermediate",
+                            goals=goals if isinstance(goals, list) else [],
+                            workout_type=workout_type,
+                            reserve_pool=reserve_pool,
+                            injuries=injury_names,
+                            avoided_exercises=avoided_exercises or [],
+                            avoided_muscles=avoided_muscles,
+                            candidate_pool_size=len(rag_exercises) if rag_exercises else None,
+                            user_id=str(body.user_id),
+                            rag_service=exercise_rag,
+                        )
+                    except Exception as _ce:  # noqa: BLE001 — fail open
+                        logger.warning(
+                            f"⚠️ [Completeness] stage raised, keeping pre-stage exercises: {_ce}",
+                            exc_info=True,
+                        )
+                        _degraded_reason = None
+
                 # MINIMUM EXERCISE COUNT VALIDATION
                 # Count distinct exercises, not set entries. Advanced
                 # techniques like "Added failure set to X" can duplicate
@@ -1396,7 +1465,40 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     for ex in exercises
                     if (ex.get("name") or "").strip()
                 }
-                if len(distinct_exercise_names) < MIN_EXERCISES_REQUIRED:
+                if _use_completeness:
+                    # New path: completeness already backfilled toward the floor.
+                    # If still thin, _degraded_reason explains WHY — attach a
+                    # TRUTHFUL note (only mention equipment when that's the real
+                    # cause, never to a full-gym user). Never 422, never block.
+                    if _degraded_reason:
+                        _DEGRADED_NOTES = {
+                            "tiny_equipment_pool": (
+                                f"Limited equipment for {focus_areas[0] if focus_areas else 'this focus'} — "
+                                f"add more to your gym profile to unlock more variety."
+                            ),
+                            "injury_constrained": (
+                                "Kept to movements that are safe around your logged injuries."
+                            ),
+                            "niche_focus": (
+                                "This focus has a small exercise pool — showing the best available."
+                            ),
+                            "heavy_exclusions": (
+                                "Your exclusion preferences narrowed the pool — showing the best available."
+                            ),
+                        }
+                        _truthful = _DEGRADED_NOTES.get(
+                            _degraded_reason, "Showing the best available exercises for this session."
+                        )
+                        if workout_description:
+                            workout_description = f"{workout_description.strip()} ({_truthful})"
+                        else:
+                            workout_description = _truthful
+                        logger.warning(
+                            f"⚠️ [Completeness] Degraded ship: {len(distinct_exercise_names)} distinct "
+                            f"exercise(s), reason={_degraded_reason}, focus={focus_areas}"
+                        )
+                elif len(distinct_exercise_names) < MIN_EXERCISES_REQUIRED:
+                    # LEGACY path (flag off): byte-identical to pre-change behavior.
                     _eq_for_log = equipment if isinstance(equipment, list) else []
                     # Per feedback_no_preflight_rejection_for_injury_focus:
                     # never 422 on focus/equipment combos — always return real
@@ -1541,6 +1643,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             "estimated_calories": _estimated_calories,
             "generation_method": _generation_method,
             "generation_source": _generation_source,
+            # Completeness invariant (migration 2255): True only when the
+            # workout shipped below its floor because the real pool was tiny.
+            "is_degraded": bool(_degraded_reason),
+            "degraded_reason": _degraded_reason,
         }
 
         # If we reserved a placeholder up-front (lines 138-152), UPDATE it
