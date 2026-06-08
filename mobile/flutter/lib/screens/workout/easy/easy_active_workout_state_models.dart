@@ -29,6 +29,11 @@ class EasyExerciseState {
   double targetWeightKg; // always kg; converted for display only
   int totalSets;
 
+  /// Set true once the user manually edits the weight, so the async
+  /// smart-weight preload never clobbers an in-flight edit (it only guards on
+  /// "no set logged yet", which isn't enough — the edit can precede the log).
+  bool userEditedWeight;
+
   /// True when the exercise is measured by hold time (planks, wall sits,
   /// dead-hangs) rather than reps. Drives the focal column to render a
   /// seconds stepper instead of weight + reps.
@@ -46,6 +51,7 @@ class EasyExerciseState {
     required this.totalSets,
     this.isTimed = false,
     this.durationSeconds = 30,
+    this.userEditedWeight = false,
     List<SetLog>? completed,
   }) : completed = completed ?? <SetLog>[];
 

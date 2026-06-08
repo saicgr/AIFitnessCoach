@@ -78,9 +78,12 @@ class EasyCompletedDots extends StatelessWidget {
         final weightDisplay = useKg
             ? set.weight
             : set.weight * 2.20462; // simple display-only convert
+        // "BW" for bodyweight so the detail never reads a bare "×12".
+        final wTok =
+            weightDisplay <= 0 ? 'BW' : _fmtWeight(weightDisplay);
         dots.add(_Dot(
           label: 'Set ${i + 1}',
-          detail: '${_fmtWeight(weightDisplay)}×${set.reps}',
+          detail: '$wTok×${set.reps}',
           color: isEditingThis ? editingColor : doneColor,
           bold: isEditingThis,
           trailingCheck: !isEditingThis,

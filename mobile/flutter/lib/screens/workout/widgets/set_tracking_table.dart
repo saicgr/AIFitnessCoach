@@ -590,6 +590,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
         weight: rawWeight,
         reps: displayReps,
         weightLabel: label,
+        isBodyweight: s.isBodyweight || rawWeight == null || rawWeight <= 0,
       ));
     }
     return out;

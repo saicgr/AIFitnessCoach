@@ -36,12 +36,17 @@ class RailSetSummary {
   /// workout-weight-unit preference to avoid re-doing it on every build.
   final String? weightLabel;
 
+  /// True for bodyweight sets (no external load). Rendered as a "BW" token so
+  /// the pill reads "1 ✓ BW×12" instead of "1✓×12" (which looks like tick+X).
+  final bool isBodyweight;
+
   const RailSetSummary({
     required this.displayIndex,
     required this.status,
     this.weight,
     this.reps,
     this.weightLabel,
+    this.isBodyweight = false,
   });
 }
 

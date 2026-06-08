@@ -100,7 +100,13 @@ class _NumericEditSheetState extends State<_NumericEditSheet> {
       Navigator.of(context).pop();
       return;
     }
-    final clamped = parsed.clamp(widget.min, widget.max).toDouble();
+    var clamped = parsed.clamp(widget.min, widget.max).toDouble();
+    // Weight (non-integer) commits: snap to the nearest 0.5 so a typed or
+    // float-artifact value like 32.56 lands clean (32.5) without overriding a
+    // deliberate fine entry like 47.5. Reps/duration (integerOnly) are exact.
+    if (!widget.integerOnly) {
+      clamped = (clamped * 2).round() / 2;
+    }
     Navigator.of(context).pop(clamped);
   }
 

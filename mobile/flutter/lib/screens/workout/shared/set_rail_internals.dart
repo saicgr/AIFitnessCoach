@@ -85,9 +85,13 @@ class RailPill extends StatelessWidget {
       case RailSetStatus.done:
       case RailSetStatus.warmup:
         if (compact) return '$prefix✓';
-        final w = summary.weightLabel ?? _formatWeight(summary.weight);
         final r = summary.reps?.toString() ?? '-';
-        return '$prefix✓$w×$r';
+        // "BW" token for bodyweight so the pill never reads "✓×12" (tick+X);
+        // spaces around the ✓ separate it from the × glyph for weighted sets.
+        final w = summary.isBodyweight
+            ? 'BW'
+            : (summary.weightLabel ?? _formatWeight(summary.weight));
+        return '$prefix ✓ $w×$r';
       case RailSetStatus.current:
         return compact ? '●$prefix' : '● $prefix';
       case RailSetStatus.upcoming:
@@ -104,9 +108,23 @@ class RailPill extends StatelessWidget {
   String _a11yLabel() {
     switch (summary.status) {
       case RailSetStatus.done:
-        return 'Set ${summary.displayIndex}, completed, tap to edit';
       case RailSetStatus.warmup:
-        return 'Warm-up set, completed, tap to edit';
+        final isWarmup = summary.status == RailSetStatus.warmup;
+        final reps = summary.reps;
+        final loadPart = summary.isBodyweight
+            ? 'bodyweight'
+            : (summary.weightLabel ??
+                (summary.weight != null ? _formatWeight(summary.weight) : null));
+        final detail = [
+          if (loadPart != null) loadPart,
+          if (reps != null) '$reps reps',
+        ].join(', ');
+        final head = isWarmup
+            ? 'Warm-up set, completed'
+            : 'Set ${summary.displayIndex}, completed';
+        return detail.isEmpty
+            ? '$head, tap to edit'
+            : '$head, $detail, tap to edit';
       case RailSetStatus.current:
         return 'Set ${summary.displayIndex}, current';
       case RailSetStatus.upcoming:

@@ -31,6 +31,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/providers/weight_increments_provider.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../core/services/haptic_service.dart';
@@ -215,7 +216,18 @@ class EasyActiveWorkoutScreenState
   }
 
   void _setWeight(double v) {
-    setState(() => _perExercise[_currentIndex]!.displayWeight = v);
+    setState(() {
+      final st = _perExercise[_currentIndex]!;
+      st.displayWeight = v;
+      st.userEditedWeight = true;
+      // Keep canonical kg in sync so a kg↔lb toggle re-derives from kg and
+      // never drifts on coarse-step equipment. Only when adjusting the LIVE
+      // set target — not while editing a previously-logged set.
+      if (_editingSetIndex == null) {
+        final useKg = ref.read(useKgForWorkoutProvider);
+        st.targetWeightKg = useKg ? v : v / 2.20462;
+      }
+    });
     HapticService.instance.tick();
   }
 
@@ -240,7 +252,10 @@ class EasyActiveWorkoutScreenState
     }
     final log = state.completed[setIndex];
     final useKg = ref.read(useKgForWorkoutProvider);
-    final displayWeight = useKg ? log.weight : log.weight * 2.20462;
+    final ex = _exercises[_currentIndex];
+    final displayWeight = useKg
+        ? log.weight
+        : kgToDisplayLbs(log.weight, ex.equipment, exerciseName: ex.name);
     setState(() {
       _editingSetIndex = setIndex;
       state.displayWeight = displayWeight;
@@ -287,7 +302,10 @@ class EasyActiveWorkoutScreenState
       }
       // Load target values into the focal stepper for the new current set.
       final targetWeightKg = state.targetWeightKg;
-      state.displayWeight = useKg ? targetWeightKg : targetWeightKg * 2.20462;
+      final ex = _exercises[_currentIndex];
+      state.displayWeight = useKg
+          ? targetWeightKg
+          : kgToDisplayLbs(targetWeightKg, ex.equipment, exerciseName: ex.name);
       state.reps = state.targetReps;
       _editingSetIndex = null;
     });
@@ -387,12 +405,16 @@ class EasyActiveWorkoutScreenState
           );
           if (suggestion == null || suggestion.suggestedWeight <= 0) return;
           if (!mounted) return;
-          // Don't clobber a value the user has already touched.
-          if (state.completed.isNotEmpty) return;
+          // Don't clobber a value the user has already logged OR manually
+          // edited (the edit can land before the first set is logged, so the
+          // logged-set guard alone isn't enough — also check userEditedWeight).
+          if (state.completed.isNotEmpty || state.userEditedWeight) return;
           final kg = suggestion.suggestedWeight;
           setState(() {
             state.targetWeightKg = kg;
-            state.displayWeight = useKg ? kg : kg * 2.20462;
+            // Equipment-aware snap (same pipeline as Advanced), not raw ×2.20462.
+            state.displayWeight =
+                useKg ? kg : kgToDisplayLbs(kg, ex.equipment, exerciseName: ex.name);
           });
         } catch (_) {/* swallow per-exercise failure */}
       }));
@@ -417,10 +439,15 @@ class EasyActiveWorkoutScreenState
             .toLowerCase();
         if (muscle.isEmpty) return;
         final targetReps = ex.getTargetForSet(1)?.targetReps ?? ex.reps ?? 8;
+        final exName = (ex.name).trim();
+        final equip = (ex.equipment ?? '').trim();
         try {
-          // Cache by (muscle, reps) so different rep schemes still resolve,
-          // while same-muscle/same-reps exercises share one fetch.
-          final cacheKey = '$muscle|$targetReps';
+          // Cache by (muscle, reps, exercise, equipment): the target is now
+          // exercise-aware (different exercises on the same muscle can differ,
+          // and bodyweight moves return a rep goal), so the key must include
+          // exercise identity — keying by muscle alone made every exercise on
+          // a muscle show the identical (often nonsensical) target.
+          final cacheKey = '$muscle|$targetReps|$exName|$equip';
           ScoreTarget? target;
           if (_scoreTargetByMuscle.containsKey(cacheKey)) {
             target = _scoreTargetByMuscle[cacheKey];
@@ -429,6 +456,8 @@ class EasyActiveWorkoutScreenState
               ref: ref,
               muscleGroup: muscle,
               targetReps: targetReps,
+              exerciseName: exName,
+              equipment: equip,
             );
             _scoreTargetByMuscle[cacheKey] = target;
           }
@@ -676,13 +705,18 @@ class EasyActiveWorkoutScreenState
     final target = _exercises[_currentIndex].getTargetForSet(nextSetNumber);
     if (target != null) {
       final useKg = ref.read(useKgForWorkoutProvider);
+      final ex = _exercises[_currentIndex];
       final targetKg =
           (target.targetWeightKg ?? st.targetWeightKg).toDouble();
       setState(() {
         st.targetReps = target.targetReps;
         st.targetWeightKg = targetKg;
         st.reps = target.targetReps;
-        st.displayWeight = useKg ? targetKg : targetKg * 2.20462;
+        // Per-set target carries its own (possibly pyramid) weight; snap it the
+        // same equipment-aware way as the initial seed so steppers stay clean.
+        st.displayWeight = useKg
+            ? targetKg
+            : kgToDisplayLbs(targetKg, ex.equipment, exerciseName: ex.name);
       });
     }
   }
@@ -1006,15 +1040,27 @@ class EasyActiveWorkoutScreenState
           final s = _perExercise[i];
           if (s == null) continue;
           final ex = _exercises[i];
-          final raw = next
-              ? s.displayWeight * 0.453592
-              : s.displayWeight * 2.20462;
-          s.displayWeight = snapToRealIncrement(
-            raw,
-            ex.equipment,
-            exerciseName: ex.name,
-            useKg: next,
-          );
+          // Re-derive the display value from the CANONICAL kg, not from the
+          // old display value. Converting the display each flip drifts on
+          // coarse-step equipment (62.5kg → 140lb → 65kg); going kg→display
+          // every time is lossless. While editing a previously-logged set on
+          // the current exercise, the focal stepper is showing that log's
+          // value — convert it directly so the in-progress edit is preserved.
+          if (_editingSetIndex != null && i == _currentIndex) {
+            final raw =
+                next ? s.displayWeight * 0.453592 : s.displayWeight * 2.20462;
+            s.displayWeight = snapToRealIncrement(
+              raw,
+              ex.equipment,
+              exerciseName: ex.name,
+              useKg: next,
+            );
+          } else {
+            s.displayWeight = next
+                ? s.targetWeightKg
+                : kgToDisplayLbs(s.targetWeightKg, ex.equipment,
+                    exerciseName: ex.name);
+          }
         }
       });
     });
@@ -1026,6 +1072,20 @@ class EasyActiveWorkoutScreenState
     final exercise = _exercises[_currentIndex];
     final state = _perExercise[_currentIndex]!;
     final currentSetNumber = state.completedCount + 1;
+
+    // Use the user's configured per-equipment increment (same source as
+    // Advanced), expressed in the workout's DISPLAY unit. The increment is a
+    // separate setting with its own unit (feedback_weight_unit_separation), so
+    // convert when it differs from the display unit; keep the lb step clean.
+    final inc = ref.watch(weightIncrementsProvider);
+    final double weightStep = useKg
+        ? inc.getIncrementKg(exercise.equipment)
+        : (inc.unit == 'lbs'
+            ? inc.getIncrement(exercise.equipment)
+            : (() {
+                final lbs = inc.getIncrementKg(exercise.equipment) * 2.20462;
+                return (lbs * 2).round() / 2; // nearest 0.5 lb
+              })());
 
     final mq = MediaQuery.of(context);
     final safeAreaH = mq.size.height - mq.padding.top - mq.padding.bottom;
@@ -1049,7 +1109,7 @@ class EasyActiveWorkoutScreenState
       workoutSeconds: _timer.workoutSeconds,
       useKg: useKg,
       compact: compact,
-      weightStep: useKg ? 2.5 : 5.0,
+      weightStep: weightStep > 0 ? weightStep : (useKg ? 2.5 : 5.0),
       accent: accent,
       isDark: isDark,
       preSetInsight: computeEasyPreSetInsight(

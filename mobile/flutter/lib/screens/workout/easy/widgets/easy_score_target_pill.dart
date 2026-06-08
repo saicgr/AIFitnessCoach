@@ -14,7 +14,7 @@ import 'package:flutter/material.dart';
 
 import '../score_target_service.dart';
 
-class EasyScoreTargetPill extends StatelessWidget {
+class EasyScoreTargetPill extends StatefulWidget {
   /// The fetched target for the current exercise's primary muscle, or null.
   final ScoreTarget? target;
 
@@ -31,13 +31,21 @@ class EasyScoreTargetPill extends StatelessWidget {
     required this.accent,
   });
 
+  @override
+  State<EasyScoreTargetPill> createState() => _EasyScoreTargetPillState();
+}
+
+class _EasyScoreTargetPillState extends State<EasyScoreTargetPill> {
+  bool _expanded = false;
+
   String _titleCase(String s) =>
       s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
   @override
   Widget build(BuildContext context) {
-    final t = target;
+    final t = widget.target;
     if (t == null) return const SizedBox.shrink();
+    final accent = widget.accent;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = accent.withValues(alpha: isDark ? 0.14 : 0.10);
@@ -46,7 +54,36 @@ class EasyScoreTargetPill extends StatelessWidget {
 
     final muscle = _titleCase(t.muscleGroup);
     final level = _titleCase(t.nextLevel);
-    final label = t.displayLabel(useKg: useKg);
+    final label = t.displayLabel(useKg: widget.useKg);
+
+    final baseStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+      color: strong,
+    );
+    final span = TextSpan(
+      style: baseStyle,
+      children: [
+        const TextSpan(text: 'Hit '),
+        TextSpan(
+          text: label,
+          style: TextStyle(fontWeight: FontWeight.w800, color: accent),
+        ),
+        TextSpan(
+          text: t.isStale
+              ? ' to refresh + level up $muscle'
+              : ' to level up $muscle',
+        ),
+        if (t.pointsToNextLevel > 0)
+          TextSpan(
+            text: '  ·  ${t.pointsToNextLevel} pts to $level',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: strong.withValues(alpha: 0.6),
+            ),
+          ),
+      ],
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 2, 20, 2),
@@ -57,52 +94,64 @@ class EasyScoreTargetPill extends StatelessWidget {
           borderRadius: BorderRadius.circular(15),
           border: Border.all(color: border),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              t.isStale ? Icons.refresh_rounded : Icons.bolt_rounded,
-              size: 15,
-              color: accent,
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: RichText(
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                text: TextSpan(
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: strong,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            // Reserve room for the icon (15) + gap (6) + chevron (16) + gap (4).
+            final textMaxWidth =
+                (constraints.maxWidth - 15 - 6 - 16 - 4).clamp(0.0, double.infinity);
+            final tp = TextPainter(
+              text: span,
+              maxLines: 1,
+              textDirection: Directionality.of(context),
+            )..layout(maxWidth: textMaxWidth);
+            final overflows = tp.didExceedMaxLines;
+
+            final textWidget = RichText(
+              text: span,
+              maxLines: _expanded ? null : 1,
+              overflow:
+                  _expanded ? TextOverflow.clip : TextOverflow.ellipsis,
+            );
+
+            final row = Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  // Nudge the icon to align with the first text line.
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Icon(
+                    t.isStale ? Icons.refresh_rounded : Icons.bolt_rounded,
+                    size: 15,
+                    color: accent,
                   ),
-                  children: [
-                    const TextSpan(text: 'Hit '),
-                    TextSpan(
-                      text: label,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: accent,
-                      ),
-                    ),
-                    TextSpan(
-                      text: t.isStale
-                          ? ' to refresh + level up $muscle'
-                          : ' to level up $muscle',
-                    ),
-                    if (t.pointsToNextLevel > 0)
-                      TextSpan(
-                        text: '  ·  ${t.pointsToNextLevel} pts to $level',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: strong.withValues(alpha: 0.6),
-                        ),
-                      ),
-                  ],
                 ),
-              ),
-            ),
-          ],
+                const SizedBox(width: 6),
+                Flexible(child: textWidget),
+                if (overflows) ...[
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 1),
+                    child: Icon(
+                      _expanded
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      size: 16,
+                      color: accent,
+                    ),
+                  ),
+                ],
+              ],
+            );
+
+            // Only tappable when there's hidden tail to reveal.
+            if (!overflows) return row;
+            return GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: row,
+            );
+          },
         ),
       ),
     );

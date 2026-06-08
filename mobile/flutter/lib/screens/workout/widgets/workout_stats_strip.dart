@@ -53,7 +53,7 @@ class WorkoutStatsStrip extends ConsumerWidget {
           orElse: () => _kFallbackBodyWeightKg,
         );
 
-    final totalVolumeKg = _computeVolumeKg(setLogs);
+    final totalVolumeKg = _computeVolumeKg(setLogs, bodyWeightKg: bodyWeightKg);
     final calories = _computeCalories(
       seconds: workoutSeconds,
       bodyWeightKg: bodyWeightKg,
@@ -104,14 +104,27 @@ class WorkoutStatsStrip extends ConsumerWidget {
     );
   }
 
-  static double _computeVolumeKg(List<SetLog> logs) {
+  /// Bodyweight "load" fraction used when a working set has no external load,
+  /// so a bodyweight set isn't counted as 0 volume (which read as "Volume 0"
+  /// mid-workout while the completion summary showed a non-zero number). This
+  /// mirrors the backend default in `bodyweight_proxy_load_kg`
+  /// (`_BW_FRACTION_DEFAULT = 0.60`). The live strip can't see each set's
+  /// exercise (SetLog carries no name/pattern), so it uses the single default
+  /// fraction; the post-workout summary remains authoritative with the finer
+  /// per-movement-pattern fractions.
+  static const double _kBodyweightVolumeFraction = 0.60;
+
+  static double _computeVolumeKg(List<SetLog> logs, {required double bodyWeightKg}) {
     double total = 0;
     for (final s in logs) {
       // Skip warmup sets so the number matches what lifters think of as
       // "working volume" — the same convention the post-workout summary
       // uses (see workout_summary_advanced.dart → _VolumeBreakdownSection).
       if (s.setType.toLowerCase() == 'warmup') continue;
-      total += s.weight * s.reps;
+      final load = s.weight > 0
+          ? s.weight
+          : (bodyWeightKg > 0 ? bodyWeightKg * _kBodyweightVolumeFraction : 0);
+      total += load * s.reps;
     }
     return total;
   }

@@ -997,7 +997,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     final weight = previous.weightKg;
     final reps = previous.reps;
     if (weight == null && reps == null) return '-';
-    if (weight == null) return '× $reps';
+    // Bodyweight (no load): "BW × 7" rather than a bare "× 7".
+    if (weight == null || weight <= 0) return 'BW × $reps';
     if (reps == null) return '${weight.toInt()}';
     return '${weight.toInt()} × $reps';
   }

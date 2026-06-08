@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/cache/offline_write_queue.dart';
+import '../../../core/utils/default_weights.dart';
 
 import '../../../data/models/exercise.dart';
 import '../../../data/services/rating_prompt_service.dart';
@@ -428,8 +429,13 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
     final targetReps = firstTarget?.targetReps ?? ex.reps ?? 10;
     final targetWeightKg =
         (firstTarget?.targetWeightKg ?? ex.weight ?? 0).toDouble();
-    final displayWeight =
-        useKg ? targetWeightKg : targetWeightKg * 2.20462;
+    // Snap kg→lb through the SAME equipment-aware pipeline Advanced uses
+    // (barbell bar+plate floor, dumbbell/cable/machine stacks) so Easy shows a
+    // plate-friendly number — not a raw 44.0/38.07 conversion, and never a
+    // 25 lb prescription that's below the empty bar.
+    final displayWeight = useKg
+        ? targetWeightKg
+        : kgToDisplayLbs(targetWeightKg, ex.equipment, exerciseName: ex.name);
     final total = (ex.setTargets != null && ex.setTargets!.isNotEmpty)
         ? ex.setTargets!.length
         : (ex.sets ?? 3);
