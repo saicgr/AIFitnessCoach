@@ -655,11 +655,15 @@ class _HeaderSection extends StatelessWidget {
                 color: isDark ? AppColors.textMuted : Colors.grey.shade500,
               ),
               const SizedBox(width: 4),
-              Text(
-                dateStr,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+              Flexible(
+                child: Text(
+                  dateStr,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 10),
@@ -933,12 +937,16 @@ class _HeartRateSection extends StatelessWidget {
             children: [
               const Icon(Icons.favorite, size: 16, color: Color(0xFFF44336)),
               const SizedBox(width: 6),
-              Text(
-                AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimary : Colors.black87,
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).workoutSummaryGeneralHeartRate,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -1368,12 +1376,16 @@ class _PersonalRecordsSection extends StatelessWidget {
                 child: const Icon(Icons.emoji_events, size: 13, color: Colors.white),
               ),
               const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimary : Colors.black87,
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -1430,14 +1442,18 @@ class _PersonalRecordsSection extends StatelessWidget {
                           const SizedBox(height: 3),
                           Row(
                             children: [
-                              Text(
-                                AppLocalizations.of(context)!.workoutSummaryGeneralLbXReps(weightLbs.toStringAsFixed(1), pr.reps),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
-                                      ? AppColors.textSecondary
-                                      : Colors.grey.shade700,
+                              Flexible(
+                                child: Text(
+                                  AppLocalizations.of(context)!.workoutSummaryGeneralLbXReps(weightLbs.toStringAsFixed(1), pr.reps),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDark
+                                        ? AppColors.textSecondary
+                                        : Colors.grey.shade700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -1540,12 +1556,16 @@ class _CoachReviewSection extends StatelessWidget {
                     size: 13, color: Colors.white),
               ),
               const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).workoutSummaryGeneralAiCoachReview,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? AppColors.textPrimary : Colors.black87,
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context).workoutSummaryGeneralAiCoachReview,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

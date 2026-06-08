@@ -866,14 +866,19 @@ class _SummarySetRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  weightText,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? WorkoutDesign.textPrimary
-                        : WorkoutDesign.textPrimaryLight,
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      weightText,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark
+                            ? WorkoutDesign.textPrimary
+                            : WorkoutDesign.textPrimaryLight,
+                      ),
+                    ),
                   ),
                 ),
                 if (hasNotes) ...[
@@ -991,14 +996,18 @@ class _SummaryTimingRow extends StatelessWidget {
             child: Divider(
                 height: 1, thickness: 0.5, color: borderColor),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: textMuted,
-                fontStyle: FontStyle.italic,
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),

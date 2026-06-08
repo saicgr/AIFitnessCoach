@@ -1844,8 +1844,11 @@ class _SupersetDetailsSection extends StatelessWidget {
       child: Column(
         children: supersets.map((ss) {
           final groupId = ss['group_id'] ?? '';
-          final exercises =
-              (ss['exercises'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
+          // Tolerate both shapes the backend has shipped over time: a list of
+          // maps ({name, muscle_group}) OR a legacy list of plain name strings.
+          // A hard `.cast<Map>()` here threw "String is not a subtype of Map"
+          // → white-screened the Advanced tab on any string-shaped blob.
+          final exercises = (ss['exercises'] as List<dynamic>?) ?? const [];
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(10),
@@ -1870,8 +1873,12 @@ class _SupersetDetailsSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                ...exercises.map((ex) {
-                  final name = ex['name'] as String? ?? 'Exercise';
+                ...exercises.map((exRaw) {
+                  final ex = exRaw is Map
+                      ? Map<String, dynamic>.from(exRaw)
+                      : const <String, dynamic>{};
+                  final name = (ex['name'] as String?) ??
+                      (exRaw is String ? exRaw : 'Exercise');
                   final muscle = ex['muscle_group'] as String?;
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
@@ -3801,13 +3808,17 @@ class _SessionScoreRings extends StatelessWidget {
             children: [
               Icon(Icons.radar_rounded, size: 14, color: textMuted),
               const SizedBox(width: 6),
-              Text(
-                l.summarySessionScore,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: textMuted,
-                  letterSpacing: 0.8,
+              Expanded(
+                child: Text(
+                  l.summarySessionScore,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: textMuted,
+                    letterSpacing: 0.8,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -4430,13 +4441,17 @@ class _SessionTimeline extends StatelessWidget {
           children: [
             Icon(Icons.timeline_rounded, size: 14, color: textMuted),
             const SizedBox(width: 6),
-            Text(
-              AppLocalizations.of(context)!.summarySessionTimeline,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: textMuted,
-                letterSpacing: 0.8,
+            Expanded(
+              child: Text(
+                AppLocalizations.of(context)!.summarySessionTimeline,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: textMuted,
+                  letterSpacing: 0.8,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -4725,13 +4740,17 @@ class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
       children: [
         Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
         const SizedBox(width: 6),
-        Text(
-          AppLocalizations.of(context)!.summaryMusclesHit,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: textMuted,
-            letterSpacing: 0.8,
+        Expanded(
+          child: Text(
+            AppLocalizations.of(context)!.summaryMusclesHit,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 0.8,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -5050,18 +5069,21 @@ class _FrontBackToggle extends StatelessWidget {
       );
     }
 
-    return Container(
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          pill(AppLocalizations.of(context)!.summaryAtlasFront, AtlasAsset.musclesFront, Icons.person_rounded),
-          pill(AppLocalizations.of(context)!.summaryAtlasBack, AtlasAsset.musclesBack, Icons.accessibility_new_rounded),
-        ],
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            pill(AppLocalizations.of(context)!.summaryAtlasFront, AtlasAsset.musclesFront, Icons.person_rounded),
+            pill(AppLocalizations.of(context)!.summaryAtlasBack, AtlasAsset.musclesBack, Icons.accessibility_new_rounded),
+          ],
+        ),
       ),
     );
   }
@@ -5113,13 +5135,17 @@ class _PyramidDeepDiveSection extends StatelessWidget {
             children: [
               Icon(Icons.fitness_center_rounded, size: 14, color: textMuted),
               const SizedBox(width: 6),
-              Text(
-                AppLocalizations.of(context)!.summaryPerExerciseDeepDiveLabel,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: textMuted,
-                  letterSpacing: 0.8,
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(context)!.summaryPerExerciseDeepDiveLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: textMuted,
+                    letterSpacing: 0.8,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -5282,31 +5308,36 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        Icon(_modelIcon, size: 11, color: accent),
-                        const SizedBox(width: 4),
-                        Text(
-                          _modelLabel,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: accent,
-                          ),
-                        ),
-                        if (best1RM > 0) ...[
-                          Text(' · ',
-                              style: TextStyle(fontSize: 11, color: textMuted)),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(_modelIcon, size: 11, color: accent),
+                          const SizedBox(width: 4),
                           Text(
-                            'est. 1RM ${best1RM.toStringAsFixed(0)} lb',
+                            _modelLabel,
                             style: TextStyle(
                               fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: textMuted,
+                              fontWeight: FontWeight.w700,
+                              color: accent,
                             ),
                           ),
+                          if (best1RM > 0) ...[
+                            Text(' · ',
+                                style: TextStyle(fontSize: 11, color: textMuted)),
+                            Text(
+                              'est. 1RM ${best1RM.toStringAsFixed(0)} lb',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: textMuted,
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -5442,14 +5473,17 @@ class _PyramidShapeBars extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary,
+                        Flexible(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
                         if (amrap) ...[
                           const SizedBox(width: 4),

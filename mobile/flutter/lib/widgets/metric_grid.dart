@@ -52,18 +52,27 @@ class MetricGrid extends StatelessWidget {
         i,
         (i + columns) > items.length ? items.length : i + columns,
       );
-      rows.add(Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (var c = 0; c < columns; c++) ...[
-            if (c > 0) SizedBox(width: spacing),
-            Expanded(
-              child: c < rowItems.length
-                  ? _MetricTile(cell: rowItems[c], numberSize: numberSize)
-                  : const SizedBox.shrink(),
-            ),
+      // IntrinsicHeight bounds the Row's height to its tallest tile so the
+      // `CrossAxisAlignment.stretch` (which keeps both tiles equal-height) is
+      // resolved against a FINITE height. Without it, inside a vertically
+      // unbounded parent (the result screens live in a SingleChildScrollView)
+      // `stretch` hands children a tight h=Infinity → "BoxConstraints forces an
+      // infinite height" → the whole route white-screens. See
+      // test/screens/workout/workout_result_unbounded_layout_test.dart.
+      rows.add(IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var c = 0; c < columns; c++) ...[
+              if (c > 0) SizedBox(width: spacing),
+              Expanded(
+                child: c < rowItems.length
+                    ? _MetricTile(cell: rowItems[c], numberSize: numberSize)
+                    : const SizedBox.shrink(),
+              ),
+            ],
           ],
-        ],
+        ),
       ));
       if (i + columns < items.length) rows.add(SizedBox(height: spacing));
     }

@@ -346,6 +346,12 @@ class _RecapSkeleton extends StatelessWidget {
 
     final shimmer = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      // MUST be min: this card lives inside the completion screen's vertical
+      // SingleChildScrollView (unbounded height). A default mainAxisSize.max
+      // Column forces infinite height there ("BoxConstraints forces an infinite
+      // height"), which fails layout for the WHOLE screen → blank screen on
+      // workout finish. The outer skeleton Column is min; this inner one was not.
+      mainAxisSize: MainAxisSize.min,
       children: [
         bar(0.85, 16),
         const SizedBox(height: 12),
