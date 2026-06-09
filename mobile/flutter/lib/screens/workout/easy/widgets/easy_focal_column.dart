@@ -53,7 +53,7 @@ class EasyFocalColumn extends StatelessWidget {
             : 320.0;
         final tight = compact || availableHeight < 280.0;
         final stepperCompact = compact || availableHeight < 320.0;
-        final gapBetweenSteppers = tight ? 8.0 : 14.0;
+        final gapBetweenSteppers = tight ? 6.0 : 12.0;
         final logBtnHeight = tight ? 60.0 : 72.0;
         final verticalPad = tight ? 4.0 : 8.0;
         final logFontSize = tight ? 17.0 : 19.0;
@@ -103,7 +103,7 @@ class EasyFocalColumn extends StatelessWidget {
           children: [
             const Spacer(),
             Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
