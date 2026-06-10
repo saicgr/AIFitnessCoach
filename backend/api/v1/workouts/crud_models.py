@@ -177,6 +177,19 @@ class WorkoutSummaryResponse(BaseModel):
     completion_method: Optional[str] = None
     completed_at: Optional[str] = None
     set_logs: List[SetLogInfo] = []
+    # Actual tracked time from workout_logs.total_time_seconds — distinct from
+    # workout["duration_minutes"] which is the PLANNED duration. 0 = no log.
+    duration_seconds: int = 0
+    # Calories for the hero stats. None = unknown (frontend hides the chip).
+    # calories_source: "tracked" (workout_performance_summary) or
+    # "planned_estimate" (generation-time MET estimate).
+    calories_kcal: Optional[int] = None
+    calories_source: Optional[str] = None
+    # Previous-session sets keyed by lowercase exercise name:
+    # {name: [{set_number, weight_kg, reps_completed, rir, recorded_at}]}.
+    # Lets the summary table show "Previous" even when the active client
+    # didn't embed previous_* into sets_json (e.g. Easy mode).
+    previous_sets: Dict[str, List[dict]] = {}
     # Cardio-specific aggregates surfaced to the advanced summary's cardio
     # panel (Issue 14 follow-up). Populated from `workouts.generation_metadata`
     # for imported sessions and from `workout_logs` for manually logged

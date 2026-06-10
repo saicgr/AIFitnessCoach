@@ -1093,6 +1093,7 @@ async def get_workout_completion_summary(workout_id: str,
                     "set_duration_seconds, rest_duration_seconds, logging_mode, "
                     "ai_input_source, is_ai_recommended_set_type, tempo, is_completed"
                 ).eq("workout_log_id", workout_log_id).order("exercise_name").order("set_number").execute()
+                skipped_rows = 0
                 for pl in perf_logs_response.data or []:
                     # `notes` may be TEXT[] (post-migration), a legacy single
                     # string, or null. Coerce to a list of non-empty strings.
@@ -1118,32 +1119,87 @@ async def get_workout_completion_summary(workout_id: str,
                         # Supabase returns timestamps as ISO strings already.
                         return str(val) if not isinstance(val, str) else val
 
-                    set_logs.append(SetLogInfo(
-                        exercise_name=pl.get("exercise_name", ""),
-                        set_number=pl.get("set_number", 0),
-                        reps_completed=pl.get("reps_completed", 0),
-                        weight_kg=float(pl.get("weight_kg", 0) or 0),
-                        rpe=float(pl.get("rpe")) if pl.get("rpe") is not None else None,
-                        rir=pl.get("rir"),
-                        set_type=pl.get("set_type", "working"),
-                        notes=notes_list,
-                        notes_audio_url=pl.get("notes_audio_url"),
-                        notes_photo_urls=photos_list,
-                        target_reps=pl.get("target_reps"),
-                        target_weight_kg=float(pl["target_weight_kg"]) if pl.get("target_weight_kg") is not None else None,
-                        failed_at_rep=pl.get("failed_at_rep"),
-                        recorded_at=_to_iso(pl.get("recorded_at")),
-                        started_at=_to_iso(pl.get("started_at")),
-                        set_duration_seconds=pl.get("set_duration_seconds"),
-                        rest_duration_seconds=pl.get("rest_duration_seconds"),
-                        logging_mode=pl.get("logging_mode"),
-                        ai_input_source=pl.get("ai_input_source"),
-                        is_ai_recommended_set_type=pl.get("is_ai_recommended_set_type"),
-                        tempo=pl.get("tempo"),
-                        is_completed=pl.get("is_completed"),
-                    ))
+                    # NOTE: `or`-coalesce required fields — `.get(k, default)`
+                    # does NOT default when the column exists with an explicit
+                    # NULL, and one bad row used to raise out of this loop and
+                    # silently drop EVERY set_log from the response. The
+                    # per-row try keeps a single malformed row from doing the
+                    # same again.
+                    try:
+                        set_logs.append(SetLogInfo(
+                            exercise_name=pl.get("exercise_name") or "",
+                            set_number=pl.get("set_number") or 0,
+                            reps_completed=pl.get("reps_completed") or 0,
+                            weight_kg=float(pl.get("weight_kg", 0) or 0),
+                            rpe=float(pl.get("rpe")) if pl.get("rpe") is not None else None,
+                            rir=pl.get("rir"),
+                            set_type=pl.get("set_type") or "working",
+                            notes=notes_list,
+                            notes_audio_url=pl.get("notes_audio_url"),
+                            notes_photo_urls=photos_list,
+                            target_reps=pl.get("target_reps"),
+                            target_weight_kg=float(pl["target_weight_kg"]) if pl.get("target_weight_kg") is not None else None,
+                            failed_at_rep=pl.get("failed_at_rep"),
+                            recorded_at=_to_iso(pl.get("recorded_at")),
+                            started_at=_to_iso(pl.get("started_at")),
+                            set_duration_seconds=pl.get("set_duration_seconds"),
+                            rest_duration_seconds=pl.get("rest_duration_seconds"),
+                            logging_mode=pl.get("logging_mode"),
+                            ai_input_source=pl.get("ai_input_source"),
+                            is_ai_recommended_set_type=pl.get("is_ai_recommended_set_type"),
+                            tempo=pl.get("tempo"),
+                            is_completed=pl.get("is_completed"),
+                        ))
+                    except Exception as row_err:
+                        skipped_rows += 1
+                        logger.warning(f"Skipping malformed performance_log row in summary: {row_err}")
+                if skipped_rows:
+                    logger.warning(f"completion-summary: skipped {skipped_rows} malformed performance_log rows for workout {workout_id}")
             except Exception as e:
                 logger.warning(f"Failed to fetch performance logs for summary: {e}", exc_info=True)
+
+        # Previous-session sets per exercise — ONE query for all exercises in
+        # this workout (mirrors /exercise-last-performance without N round
+        # trips). Grouped to the newest prior workout_log per exercise so the
+        # summary table can render the "Previous" column even when the active
+        # client didn't embed previous_* into sets_json (e.g. Easy mode).
+        previous_sets: dict = {}
+        if workout_log_id and set_logs:
+            try:
+                exercise_names = sorted({sl.exercise_name for sl in set_logs if sl.exercise_name})
+                if exercise_names:
+                    prev_logs_response = supabase.table("performance_logs").select(
+                        "exercise_name, set_number, weight_kg, reps_completed, rir, recorded_at, workout_log_id"
+                    ).eq("user_id", user_id).in_("exercise_name", exercise_names).neq(
+                        "workout_log_id", workout_log_id
+                    ).order("recorded_at", desc=True).limit(400).execute()
+
+                    # Newest prior session per exercise = the workout_log_id of
+                    # the first (most recent) row seen for that exercise.
+                    latest_log_per_exercise: dict = {}
+                    grouped: dict = {}
+                    for row in prev_logs_response.data or []:
+                        name = (row.get("exercise_name") or "").strip()
+                        if not name:
+                            continue
+                        key = name.lower()
+                        log_id = row.get("workout_log_id")
+                        if key not in latest_log_per_exercise:
+                            latest_log_per_exercise[key] = log_id
+                        if log_id != latest_log_per_exercise[key]:
+                            continue
+                        grouped.setdefault(key, []).append({
+                            "set_number": row.get("set_number", 0),
+                            "weight_kg": float(row.get("weight_kg", 0) or 0),
+                            "reps_completed": row.get("reps_completed", 0),
+                            "rir": row.get("rir"),
+                            "recorded_at": str(row.get("recorded_at")) if row.get("recorded_at") else None,
+                        })
+                    for key, sets in grouped.items():
+                        sets.sort(key=lambda s: s.get("set_number") or 0)
+                    previous_sets = grouped
+            except Exception as e:
+                logger.warning(f"Failed to fetch previous-session sets for summary: {e}", exc_info=True)
 
         # Get personal records
         prs_response = supabase.table("personal_records").select("*").eq("workout_id", workout_id).execute()
@@ -1237,100 +1293,15 @@ async def get_workout_completion_summary(workout_id: str,
             except Exception as e:
                 logger.warning(f"Failed to build performance comparison for summary: {e}", exc_info=True)
 
-        # Generate AI coach summary (long-form) and hero_narrative (punchy
-        # one-liner) in parallel — both share the same context but speak in
-        # different voices.
+        # AI coach copy is NOT generated here anymore. The two blocking Gemini
+        # calls that used to run on every view made this endpoint multi-second
+        # and re-billed per visit; the structured, persisted recap at
+        # GET/POST /feedback/recap/{workout_id} (workout_ai_recaps) is the
+        # single source of AI coach copy for both the Summary card and the
+        # Advanced hero. coach_summary/hero_narrative remain in the schema for
+        # back-compat and stay None for tracked workouts — no canned fallback.
         coach_summary = None
         hero_narrative = None
-        try:
-            exercises = existing.get("exercises") or existing.get("exercises_json") or []
-            if isinstance(exercises, str):
-                exercises = json.loads(exercises)
-
-            exercise_details = []
-            for ec in exercise_comparisons:
-                detail = f"- {ec.exercise_name}: {ec.current_sets}x{ec.current_reps} @ {ec.current_max_weight_kg or 0:.1f}kg"
-                if ec.status == 'improved' and ec.volume_diff_percent:
-                    detail += f" (IMPROVED: volume +{ec.volume_diff_percent:.1f}%)"
-                elif ec.status == 'declined' and ec.volume_diff_percent:
-                    detail += f" (DECLINED: volume {ec.volume_diff_percent:.1f}%)"
-                elif ec.status == 'first_time':
-                    detail += " (first time)"
-                exercise_details.append(detail)
-
-            wc = workout_comparison_info
-            total_vol = wc.current_total_volume_kg if wc else 0
-            calories = wc.current_calories if wc else 0
-            vol_change = f"{wc.volume_diff_percent:+.1f}%" if wc and wc.volume_diff_percent else "N/A"
-
-            pr_details = [
-                f"- {pr.exercise_name}: {pr.weight_kg:.1f}kg x {pr.reps} reps (1RM: {pr.estimated_1rm_kg:.1f}kg, +{pr.improvement_percent:.1f}%)"
-                for pr in personal_records if pr.improvement_percent
-            ] or ["None"]
-
-            summary_prompt = (
-                f"You are an expert fitness coach analyzing a completed workout. "
-                f"Respond ONLY with valid JSON (no markdown, no code fences).\n\n"
-                f"Workout: {existing.get('name')} ({existing.get('type')})\n"
-                f"Duration: {duration_seconds // 60} minutes\n"
-                f"Total Volume: {total_vol:.0f} kg (change: {vol_change})\n"
-                f"Calories: {calories}\n\n"
-                f"Exercises:\n" + "\n".join(exercise_details) + "\n\n"
-                f"Personal Records:\n" + "\n".join(pr_details) + "\n\n"
-                f"Respond with this JSON structure:\n"
-                f'{{"highlights": ["specific positive callout 1", "specific positive callout 2"], '
-                f'"areas_to_improve": ["specific improvement suggestion"], '
-                f'"overall_rating": 8, '
-                f'"summary": "2-3 sentence encouraging overall summary"}}\n\n'
-                f"Rules:\n"
-                f"- highlights: 2-3 bullet points mentioning specific exercises and numbers\n"
-                f"- areas_to_improve: 0-2 items, only if exercises declined. Empty array if all improved\n"
-                f"- overall_rating: 1-10 based on effort and progression\n"
-                f"- summary: Personalized, encouraging, mention specific achievements. Under 60 words.\n"
-                f"- No emojis anywhere"
-            )
-
-            # Punchy hero card — one sentence, anchored to a real delta.
-            hero_prompt = (
-                f"You are a concise fitness coach writing a ONE-LINE headline "
-                f"for a post-workout hero card. Plain text, no JSON, no quotes, "
-                f"no emojis.\n\n"
-                f"Workout: {existing.get('name')}\n"
-                f"Total Volume: {total_vol:.0f} kg ({vol_change} vs last)\n"
-                f"New PRs: {len([p for p in personal_records if p.improvement_percent])}\n"
-                f"Exercises improved: {improved_count}, declined: {declined_count}, first-time: {first_time_count}\n"
-                f"Top PRs: " + "; ".join(pr_details[:2]) + "\n\n"
-                f"Rules:\n"
-                f"- Exactly ONE sentence, max 18 words.\n"
-                f"- Anchor to a specific number or exercise from the data above "
-                f"(e.g. a PR, a volume delta, a 'first time' exercise).\n"
-                f"- Encouraging but not cheesy; skip generic phrases like "
-                f"'great job' or 'you crushed it'.\n"
-                f"- If the session declined vs last, acknowledge honestly "
-                f"(e.g. 'Lighter session — use it to sharpen form before "
-                f"next week').\n"
-                f"- No emojis, no markdown, no hashtags, no exclamation "
-                f"marks unless a PR was hit."
-            )
-
-            coach_summary, hero_narrative = await asyncio.gather(
-                ai_insights_service.gemini.chat(user_message=summary_prompt),
-                ai_insights_service.gemini.chat(user_message=hero_prompt),
-                return_exceptions=True,
-            )
-            if isinstance(coach_summary, Exception):
-                logger.warning(f"Failed to generate AI coach summary: {coach_summary}")
-                coach_summary = "Great work completing your workout!"
-            if isinstance(hero_narrative, Exception):
-                logger.warning(f"Failed to generate hero narrative: {hero_narrative}")
-                hero_narrative = None
-            elif hero_narrative:
-                # Defensive trim — strip stray quotes or trailing whitespace
-                # the model sometimes returns despite the prompt.
-                hero_narrative = hero_narrative.strip().strip('"').strip("'").strip()
-        except Exception as e:
-            logger.warning(f"Failed to generate AI coach summary: {e}", exc_info=True)
-            coach_summary = "Great work completing your workout!"
 
         # ── Cardio aggregates ────────────────────────────────────────────
         # Pull distance / HR / pace / elevation from generation_metadata
@@ -1371,12 +1342,31 @@ async def get_workout_completion_summary(workout_id: str,
             if km > 0:
                 pace_s_per_km = duration_seconds / km
 
+        # Calories: prefer the tracked value (workout_performance_summary via
+        # the comparison), else the generation-time MET estimate. None when
+        # neither exists — the frontend hides the chip rather than show 0/'--'.
+        calories_kcal = None
+        calories_source = None
+        wc_info = workout_comparison_info
+        if wc_info and (wc_info.current_calories or 0) > 0:
+            calories_kcal = int(wc_info.current_calories)
+            calories_source = "tracked"
+        else:
+            planned_cal = existing.get("estimated_calories") or gen_meta.get("estimated_calories")
+            if isinstance(planned_cal, (int, float)) and planned_cal > 0:
+                calories_kcal = int(planned_cal)
+                calories_source = "planned_estimate"
+
         return WorkoutSummaryResponse(
             workout=workout_data, performance_comparison=performance_comparison,
             personal_records=personal_records, coach_summary=coach_summary,
             hero_narrative=hero_narrative,
             completion_method=completion_method, completed_at=str(completed_at) if completed_at else None,
             set_logs=set_logs,
+            duration_seconds=duration_seconds or 0,
+            calories_kcal=calories_kcal,
+            calories_source=calories_source,
+            previous_sets=previous_sets,
             distance_meters=distance_m,
             avg_hr_bpm=int(avg_hr) if isinstance(avg_hr, (int, float)) else None,
             max_hr_bpm=int(max_hr) if isinstance(max_hr, (int, float)) else None,
