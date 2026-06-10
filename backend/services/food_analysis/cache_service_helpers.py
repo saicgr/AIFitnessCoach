@@ -314,6 +314,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         personal_history: Optional[List[Dict]] = None,
         standing_rules_block: str = "",
         fast_macros_only: bool = False,
+        defer_hit_tips: bool = False,
     ) -> Dict[str, Any]:
         """
         Analyze food with intelligent caching.
@@ -325,6 +326,13 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         endpoint streams tips in afterwards via a deferred `coach_tips` event.
         This is what makes branded cache hits truly instant (<500ms) instead of
         paying a 5-8s `generate_food_review` call on every hit.
+
+        defer_hit_tips: like fast_macros_only it skips the synchronous
+        `_enrich_cache_hit_with_tips` Gemini call on cache HITS, but a
+        cache-miss still runs the FULL Gemini schema (coaching prose intact).
+        Used by the non-streaming /log-text endpoint, which enriches the
+        persisted row with tips in a background task instead of making the
+        user wait ~5s for them.
 
         Order of operations:
         0a. Check user's saved foods (instant, user-scoped)
@@ -365,7 +373,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result["cache_source"] = "saved_food"
                 # Enrich cache hit with contextual tips (skipped on the speed
                 # path — tips stream in later via the deferred `coach_tips` event).
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -382,7 +390,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(recent)
                 result["cache_hit"] = True
                 result["cache_source"] = "recent_log"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -400,7 +408,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(analysis)
                 result["cache_hit"] = True
                 result["cache_source"] = "user_contributed"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -412,7 +420,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(override)
                 result["cache_hit"] = True
                 result["cache_source"] = "override"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -424,7 +432,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(common_food)
                 result["cache_hit"] = True
                 result["cache_source"] = "common_foods"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -436,7 +444,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(multi_result)
                 result["cache_hit"] = True
                 result["cache_source"] = "multi_lookup"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -448,7 +456,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(modified)
                 result["cache_hit"] = True
                 result["cache_source"] = "modified_override"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -460,7 +468,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result.update(cached)
                 result["cache_hit"] = True
                 result["cache_source"] = "analysis_cache"
-                if not fast_macros_only:
+                if not (fast_macros_only or defer_hit_tips):
                     await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
@@ -514,7 +522,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     result.update(aggregated)
                     result["cache_hit"] = True
                     result["cache_source"] = "compound_decompose"
-                    if not fast_macros_only:
+                    if not (fast_macros_only or defer_hit_tips):
                         await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                     logger.info(
                         f"🎯 Compound HIT: {len(component_results)} components from cache stack"

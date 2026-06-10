@@ -96,13 +96,17 @@ async def get_user_calorie_bias(user_id: str) -> int:
     Returns 0 (no bias) if the user has no preference set or on error.
     """
     try:
+        import asyncio
         db = get_supabase_db()
-        result = (
-            db.client.table("nutrition_preferences")
+        # Sync .execute() would block the event loop — run it in the default
+        # executor (this helper sits on the food-logging hot path).
+        result = await asyncio.get_running_loop().run_in_executor(
+            None,
+            lambda: db.client.table("nutrition_preferences")
             .select("calorie_estimate_bias")
             .eq("user_id", user_id)
             .limit(1)
-            .execute()
+            .execute(),
         )
         if result.data:
             bias = result.data[0].get("calorie_estimate_bias", 0)

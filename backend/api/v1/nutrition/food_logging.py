@@ -47,7 +47,20 @@ def _extract_micronutrients(food_analysis: dict) -> dict:
     return micros
 
 
-def _is_hydration_tracking_enabled(db, user_id: str) -> bool:
+# supabase-py's .execute() is synchronous — run inline in an async handler it
+# blocks the event loop for the full DB round-trip, stalling every in-flight
+# request (same fix as api/v1/stats.py `_stats_pool`). All pre-response DB
+# reads/writes on the food-logging hot path go through this pool.
+from concurrent.futures import ThreadPoolExecutor
+_foodlog_pool = ThreadPoolExecutor(max_workers=8, thread_name_prefix="foodlog")
+
+
+async def _run_blocking(fn):
+    """Run a blocking DB call in the food-logging thread pool."""
+    return await asyncio.get_running_loop().run_in_executor(_foodlog_pool, fn)
+
+
+async def _is_hydration_tracking_enabled(db, user_id: str) -> bool:
     """Whether the user has hydration tracking on (Gap 6 preference).
 
     Defaults to True (preserves current always-on behavior) when the preference
@@ -56,8 +69,8 @@ def _is_hydration_tracking_enabled(db, user_id: str) -> bool:
     entirely — no extra LLM call, matching Amy's opt-out-to-save-cost design.
     """
     try:
-        res = (
-            db.client.table("nutrition_preferences")
+        res = await _run_blocking(
+            lambda: db.client.table("nutrition_preferences")
             .select("hydration_tracking_enabled")
             .eq("user_id", user_id)
             .maybe_single()
@@ -68,6 +81,49 @@ def _is_hydration_tracking_enabled(db, user_id: str) -> bool:
     except Exception as e:
         logger.debug(f"hydration_tracking_enabled read fell back to default: {e}")
     return True
+
+
+async def _enrich_log_tips_in_background(
+    food_log_id: str,
+    user_id: str,
+    food_analysis: dict,
+    meal_type: Optional[str],
+    mood_before: Optional[str],
+) -> None:
+    """Deferred coach-tips for /log-text cache hits (defer_hit_tips=True).
+
+    Runs AFTER the response is sent: computes the contextual tips Gemini call
+    that used to block the endpoint for ~5s, then persists the resulting
+    ai_feedback / health_score onto the food_logs row so the log detail view
+    still gets its tip on the next fetch. Best-effort — a tips failure must
+    never surface as a logging error.
+    """
+    try:
+        from services.food_analysis_cache_service import get_food_analysis_cache_service
+        cache_service = get_food_analysis_cache_service()
+        await cache_service._enrich_cache_hit_with_tips(
+            food_analysis, meal_type, mood_before, user_id
+        )
+        update: dict = {}
+        if food_analysis.get("ai_suggestion"):
+            update["ai_feedback"] = food_analysis["ai_suggestion"]
+        if food_analysis.get("health_score") is not None:
+            update["health_score"] = food_analysis["health_score"]
+        if not update:
+            return
+        db = get_supabase_db()
+        await _run_blocking(
+            lambda: db.client.table("food_logs")
+            .update(update)
+            .eq("id", food_log_id)
+            .execute()
+        )
+        # Bust the day-summary cache so the tip shows on the next fetch.
+        from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        await invalidate_daily_summary_cache(user_id)
+        logger.info(f"[DeferredTips] persisted tips for log {food_log_id}")
+    except Exception as e:
+        logger.warning(f"[DeferredTips] enrichment failed for {food_log_id}: {e}")
 
 
 async def _await_and_persist_text_hydration(
@@ -497,6 +553,45 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
     try:
         db = get_supabase_db()
 
+        # Personal food history — if user has re-logged this food before with
+        # bad mood/energy, we want Gemini to cite it. Needs only the raw
+        # description, so it starts FIRST and overlaps the user fetch + RAG
+        # below (previously these three ran sequentially, ~1.5-3.5s serial).
+        # Exceptions are consumed inside the task so an orphaned task (e.g.
+        # when analyze_food raises) never logs "exception never retrieved".
+        candidate_names = [p.strip() for p in body.description.split(",") if p.strip()]
+
+        async def _history_lookup() -> list:
+            try:
+                return await lookup_personal_history_for_foods(
+                    body.user_id, candidate_names
+                )
+            except Exception as hist_err:
+                logger.warning(f"personal history lookup failed: {hist_err}")
+                return []
+
+        history_task = asyncio.create_task(_history_lookup())
+
+        # User row (goals + targets) and the Gap-6 hydration pref are
+        # independent blocking reads — run them concurrently in the pool.
+        def _fetch_user_enriched():
+            try:
+                u = db.get_user(body.user_id)
+                return db.enrich_user_with_nutrition_targets(u) if u else None
+            except Exception as e:
+                logger.warning(f"Could not fetch user goals/targets: {e}", exc_info=True)
+                return None
+
+        async def _hydration_pref() -> bool:
+            if getattr(body, "skip_hydration", False):
+                return False
+            return await _is_hydration_tracking_enabled(db, body.user_id)
+
+        user, hydration_enabled = await asyncio.gather(
+            _run_blocking(_fetch_user_enriched),
+            _hydration_pref(),
+        )
+
         # Gap 1 — water-in-text. When hydration tracking is on, kick off a
         # language-agnostic Flash-Lite pass that detects a beverage in the entry
         # ("2 eggs and a glass of water" / "deux oeufs et un verre d'eau"). It
@@ -504,42 +599,37 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         # we await it after the food log is created. Gated on the user's pref so
         # an opted-out user pays zero extra LLM cost (see Gap 6).
         hydration_task = None
-        if not getattr(body, "skip_hydration", False) and _is_hydration_tracking_enabled(db, body.user_id):
+        if hydration_enabled:
             from services.food_analysis.hydration_split import detect_hydration_in_text
             hydration_task = asyncio.create_task(
                 detect_hydration_in_text(body.description, body.user_id)
             )
 
-        # Fetch user goals and nutrition targets for personalized analysis
         user_goals = None
         nutrition_targets = None
-        try:
-            user = db.get_user(body.user_id)
-            if user:
-                user = db.enrich_user_with_nutrition_targets(user)
-                # Parse goals from JSON string
-                goals_str = user.get('goals', '[]')
-                if isinstance(goals_str, str):
-                    import json
-                    try:
-                        user_goals = json.loads(goals_str)
-                    except json.JSONDecodeError:
-                        user_goals = []
-                elif isinstance(goals_str, list):
-                    user_goals = goals_str
+        if user:
+            # Parse goals from JSON string
+            goals_str = user.get('goals', '[]')
+            if isinstance(goals_str, str):
+                import json
+                try:
+                    user_goals = json.loads(goals_str)
+                except json.JSONDecodeError:
+                    user_goals = []
+            elif isinstance(goals_str, list):
+                user_goals = goals_str
 
-                # Get nutrition targets
-                nutrition_targets = {
-                    'daily_calorie_target': user.get('daily_calorie_target'),
-                    'daily_protein_target_g': user.get('daily_protein_target_g'),
-                    'daily_carbs_target_g': user.get('daily_carbs_target_g'),
-                    'daily_fat_target_g': user.get('daily_fat_target_g'),
-                }
-                logger.info(f"User goals: {user_goals}, targets: {nutrition_targets}")
-        except Exception as e:
-            logger.warning(f"Could not fetch user goals/targets: {e}", exc_info=True)
+            # Get nutrition targets
+            nutrition_targets = {
+                'daily_calorie_target': user.get('daily_calorie_target'),
+                'daily_protein_target_g': user.get('daily_protein_target_g'),
+                'daily_carbs_target_g': user.get('daily_carbs_target_g'),
+                'daily_fat_target_g': user.get('daily_fat_target_g'),
+            }
+            logger.info(f"User goals: {user_goals}, targets: {nutrition_targets}")
 
-        # Get RAG context from nutrition knowledge base (if user has goals)
+        # Get RAG context from nutrition knowledge base (if user has goals).
+        # Runs while the personal-history task above is still in flight.
         rag_context = None
         if user_goals:
             try:
@@ -554,20 +644,15 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             except Exception as e:
                 logger.warning(f"Could not fetch RAG context: {e}", exc_info=True)
 
-        # Personal food history — if user has re-logged this food before with
-        # bad mood/energy, we want Gemini to cite it. Use a naive split on
-        # commas as the first-pass candidate set; deeper name extraction will
-        # fire on subsequent logs when the parsed food_items are known.
-        candidate_names = [p.strip() for p in body.description.split(",") if p.strip()]
-        try:
-            personal_history = await lookup_personal_history_for_foods(
-                body.user_id, candidate_names
-            )
-        except Exception as hist_err:
-            logger.warning(f"personal history lookup failed: {hist_err}")
-            personal_history = []
+        personal_history = await history_task
 
-        # Parse description through cache service (DB-first, then Gemini)
+        # Parse description through cache service (DB-first, then Gemini).
+        # defer_hit_tips: a cache HIT returns instantly with macros only — the
+        # ~5s synchronous coach-tips Gemini call (measured: it dominated this
+        # endpoint's latency) moves to a background task that updates the row
+        # after the response. A cache MISS still runs the full Gemini schema
+        # with coaching prose inline. Same product pattern as the streaming
+        # endpoint's deferred `coach_tips` event.
         cache_service = get_food_analysis_cache_service()
         food_analysis = await cache_service.analyze_food(
             description=body.description,
@@ -579,6 +664,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             mood_before=body.mood_before,
             meal_type=body.meal_type,
             personal_history=personal_history or None,
+            defer_hit_tips=True,
         )
 
         # Cache-hit paths skip Gemini's prompt, so the personal_history_note is
@@ -596,7 +682,9 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             # Gap 1 — a beverage-only entry ("a glass of water") parses to zero
             # food items. Instead of 400-ing, log the hydration and return a
             # success with empty food_items so the client shows "water logged".
-            user_tz_water = resolve_timezone(request, db, body.user_id) if request else None
+            user_tz_water = await _run_blocking(
+                lambda: resolve_timezone(request, db, body.user_id)
+            ) if request else None
             hydration_only = await _await_and_persist_text_hydration(
                 db, hydration_task, body.user_id, user_tz_water
             )
@@ -648,10 +736,11 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
 
         # Apply per-user food overrides — their personal cal/P/C/F corrections
         # for foods they've edited before. Runs AFTER bias so explicit user
-        # overrides trump the calorie-bias heuristic.
+        # overrides trump the calorie-bias heuristic. (Blocking DB lookup →
+        # pool.)
         from services.food_override_service import apply_user_food_overrides
-        food_items, override_totals, num_overridden = apply_user_food_overrides(
-            db, body.user_id, food_items,
+        food_items, override_totals, num_overridden = await _run_blocking(
+            lambda: apply_user_food_overrides(db, body.user_id, food_items)
         )
         if num_overridden:
             logger.info(
@@ -662,17 +751,21 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             carbs_g = override_totals["carbs_g"]
             fat_g = override_totals["fat_g"]
 
-        # Resolve timezone for logged_at timestamp
-        user_tz_logged_at = None
-        if request:
-            user_tz = resolve_timezone(request, db, body.user_id)
-            user_tz_logged_at = get_user_now_iso(user_tz)
+        # Resolve timezone ONCE and reuse it for logged_at, the streak
+        # background task, sleep-risk flags, and hydration persist (was
+        # resolved 3x per request, each a potential blocking DB fallback).
+        user_tz = await _run_blocking(
+            lambda: resolve_timezone(request, db, body.user_id)
+        )
+        user_tz_logged_at = get_user_now_iso(user_tz) if request else None
 
         # Passive mood inference — respect the user toggle before running.
         inference_patch: dict = {}
         try:
-            prefs = db.client.table("user_nutrition_preferences")\
+            prefs = await _run_blocking(
+                lambda: db.client.table("user_nutrition_preferences")
                 .select("passive_inference_enabled").eq("user_id", body.user_id).maybe_single().execute()
+            )
             inference_enabled = True
             if prefs and prefs.data and prefs.data.get("passive_inference_enabled") is not None:
                 inference_enabled = bool(prefs.data["passive_inference_enabled"])
@@ -697,8 +790,8 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         except Exception as inf_err:
             logger.warning(f"passive inference skipped: {inf_err}")
 
-        # Save to database using positional arguments
-        created_log = db.create_food_log(
+        # Save to database (blocking insert → pool)
+        created_log = await _run_blocking(lambda: db.create_food_log(
             user_id=body.user_id,
             meal_type=body.meal_type,
             food_items=food_items,
@@ -716,12 +809,28 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             user_query=body.description,
             **micronutrients,
             **inference_patch,
-        )
+        ))
 
         # Get the food log ID from the created record
         food_log_id = created_log.get('id') if created_log else "unknown"
 
         logger.info(f"Successfully logged food from text as {food_log_id}")
+
+        # Deferred coach tips (defer_hit_tips): a cache hit returned without
+        # the ~5s tips Gemini call — compute + persist them after the response.
+        if (
+            food_log_id != "unknown"
+            and food_analysis.get("cache_hit")
+            and not (ai_suggestion or encouragements or warnings)
+        ):
+            background_tasks.add_task(
+                _enrich_log_tips_in_background,
+                food_log_id,
+                body.user_id,
+                food_analysis,
+                body.meal_type,
+                body.mood_before,
+            )
 
         # User-history RAG (§1b.9) — refresh today's nutrition doc.
         try:
@@ -740,12 +849,11 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
 
-        # Background: update nutrition streak
-        db = get_supabase_db()
+        # Background: update nutrition streak (reuses the tz resolved above)
         background_tasks.add_task(
             _update_nutrition_streak,
             user_id=body.user_id,
-            user_tz=resolve_timezone(request, db, body.user_id),
+            user_tz=user_tz,
         )
 
         # Background: Log activity analytics (non-critical, don't block response)
@@ -775,14 +883,16 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
 
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
-        _tz_for_flags = resolve_timezone(request, db, body.user_id)
-        sleep_risk = _compute_sleep_risk_flag(body.user_id, food_items, _tz_for_flags)
+        # (health_goals lookup is blocking → pool; tz reused from above.)
+        sleep_risk = await _run_blocking(
+            lambda: _compute_sleep_risk_flag(body.user_id, food_items, user_tz)
+        )
 
         # Gap 1 — water-in-text. Await the concurrent hydration detection and
         # persist any beverage found ("...and a glass of water") so a single
         # entry logs both food and hydration.
         hydration_logged = await _await_and_persist_text_hydration(
-            db, hydration_task, body.user_id, _tz_for_flags
+            db, hydration_task, body.user_id, user_tz
         )
 
         return LogFoodResponse(
@@ -889,8 +999,8 @@ async def log_food_direct(
         # once; this pre-check handles the common sequential replay cheaply.
         if body.idempotency_key:
             try:
-                prior = (
-                    db.client.table("food_logs")
+                prior = await _run_blocking(
+                    lambda: db.client.table("food_logs")
                     .select("*")
                     .eq("user_id", body.user_id)
                     .eq("idempotency_key", body.idempotency_key)
@@ -963,19 +1073,27 @@ async def log_food_direct(
                     )
             except Exception as e:
                 logger.warning(f"[LOG-DIRECT] Invalid logged_at '{body.logged_at}': {e}")
+        # Resolve timezone ONCE and reuse it for logged_at, the streak
+        # background task, and sleep-risk flags (was resolved up to 3x per
+        # request, each a potential blocking DB fallback).
+        user_tz = await _run_blocking(
+            lambda: resolve_timezone(request, db, body.user_id)
+        )
         if not user_tz_logged_at and request:
-            user_tz = resolve_timezone(request, db, body.user_id)
             user_tz_logged_at = get_user_now_iso(user_tz)
 
         # Apply per-user food overrides. Skip any item the client just edited
         # in the Log Meal sheet — those are the user's fresh corrections and
         # we'd otherwise double-apply a stale override on top of them.
+        # (Blocking DB lookup → pool.)
         edited_indices = (
             {e.food_item_index for e in (body.item_edits or [])}
         )
         from services.food_override_service import apply_user_food_overrides
-        applied_items, override_totals, num_overridden = apply_user_food_overrides(
-            db, body.user_id, list(body.food_items), skip_indices=edited_indices,
+        applied_items, override_totals, num_overridden = await _run_blocking(
+            lambda: apply_user_food_overrides(
+                db, body.user_id, list(body.food_items), skip_indices=edited_indices,
+            )
         )
         if num_overridden:
             logger.info(
@@ -990,7 +1108,8 @@ async def log_food_direct(
         # Create food log directly. The idempotency_key (when the client sent
         # one) makes this insert dedupe against migration 2245's unique index —
         # a replayed POST returns the existing row instead of a duplicate.
-        created_log = db.create_food_log(
+        # (Blocking insert → pool.)
+        created_log = await _run_blocking(lambda: db.create_food_log(
             user_id=body.user_id,
             meal_type=body.meal_type,
             food_items=body.food_items,
@@ -1023,7 +1142,7 @@ async def log_food_direct(
             fodmap_rating=body.fodmap_rating,
             fodmap_reason=body.fodmap_reason,
             **micronutrients,
-        )
+        ))
 
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food directly as {food_log_id}")
@@ -1080,11 +1199,11 @@ async def log_food_direct(
         await invalidate_daily_summary_cache(body.user_id)
         await invalidate_bootstrap_cache(body.user_id)
 
-        # Background: update nutrition streak
+        # Background: update nutrition streak (reuses the tz resolved above)
         background_tasks.add_task(
             _update_nutrition_streak,
             user_id=body.user_id,
-            user_tz=resolve_timezone(request, get_supabase_db(), body.user_id),
+            user_tz=user_tz,
         )
 
         # Backfill rich scoring (inflammation, NOVA, FODMAP, micronutrients)
@@ -1118,10 +1237,9 @@ async def log_food_direct(
 
         # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
         # Covers menu-scan and direct logging (input_type="menu_scan" etc.).
-        sleep_risk = _compute_sleep_risk_flag(
-            body.user_id,
-            body.food_items,
-            resolve_timezone(request, get_supabase_db(), body.user_id),
+        # (health_goals lookup is blocking → pool; tz reused from above.)
+        sleep_risk = await _run_blocking(
+            lambda: _compute_sleep_risk_flag(body.user_id, body.food_items, user_tz)
         )
 
         return LogFoodResponse(

@@ -194,7 +194,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             try:
                 from api.v1.nutrition.food_logging import _is_hydration_tracking_enabled
                 from services.food_analysis.hydration_split import detect_hydration_in_text
-                if _is_hydration_tracking_enabled(db, body.user_id):
+                if await _is_hydration_tracking_enabled(db, body.user_id):
                     hydration_task = asyncio.create_task(
                         detect_hydration_in_text(body.description, body.user_id)
                     )
