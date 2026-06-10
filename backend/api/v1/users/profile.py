@@ -874,6 +874,15 @@ async def update_user(user_id: str, user: UserUpdate,
             updated = db.update_user(user_id, update_data)
             logger.debug(f"Updated {len(update_data)} fields for user {user_id}")
 
+            # The user record is cached for /today (preferences.workout_days
+            # feeds schedule resolution) — bust it so a profile update is
+            # visible on the next poll despite the 300s cache TTL.
+            try:
+                from api.v1.workouts.today import invalidate_today_workout_cache
+                await invalidate_today_workout_cache(user_id)
+            except Exception as e:
+                logger.warning(f"[PROFILE] today-cache invalidation failed for {user_id}: {e}")
+
             # Equipment-change → workout-invalidation hook (plan §D).
             # When the user's equipment selection actually changed, drop
             # today's not-yet-started workout + every upcoming pre-cached

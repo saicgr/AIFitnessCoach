@@ -282,3 +282,12 @@ async def _process_user_profile(supabase, user_id: str, item: SyncBulkItem):
     supabase.client.table("users").update(payload).eq(
         "id", user_id
     ).execute()
+
+    # The user record is cached for /today (preferences.workout_days,
+    # equipment feed schedule resolution) — bust it so a profile sync is
+    # visible on the next poll despite the 300s cache TTL.
+    try:
+        from api.v1.workouts.today import invalidate_today_workout_cache
+        await invalidate_today_workout_cache(user_id)
+    except Exception as e:
+        logger.warning(f"[SYNC] today-cache invalidation failed for {user_id}: {e}")

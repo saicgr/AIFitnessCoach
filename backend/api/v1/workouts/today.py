@@ -44,11 +44,17 @@ _today_workout_cache = RedisCache(prefix="workout_today", ttl_seconds=1800, max_
 # Short TTL for transient states (is_generating, needs_generation) to prevent poll storms
 _TRANSIENT_CACHE_TTL = 30  # seconds
 
-# Redis cache for user records — avoids Supabase query on every cache miss
-_user_record_cache = RedisCache(prefix="user_record", ttl_seconds=60, max_size=200)
+# Redis cache for user records — avoids Supabase query on every cache miss.
+# 300s is safe because every writer that can change what /today reads from
+# this record (preferences.workout_days, equipment) calls
+# invalidate_today_workout_cache: users/profile.py PUT, sync.py profile sync,
+# gym_profiles_endpoints, and the workout completion hooks.
+_user_record_cache = RedisCache(prefix="user_record", ttl_seconds=300, max_size=200)
 
-# Redis cache for active gym profile IDs — queried on every /today call
-_gym_profile_cache = RedisCache(prefix="gym_profile", ttl_seconds=30, max_size=200)
+# Redis cache for active gym profile IDs — queried on every /today call.
+# 120s is safe: gym profile activation/edits invalidate via
+# invalidate_today_workout_cache (gym_profiles_endpoints.py).
+_gym_profile_cache = RedisCache(prefix="gym_profile", ttl_seconds=120, max_size=200)
 
 
 async def invalidate_today_workout_cache(user_id: str, gym_profile_id: str = None, date: str = None):
