@@ -1,0 +1,229 @@
+{
+  "label": "final",
+  "base": "http://127.0.0.1:8765",
+  "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+  "timestamp": "2026-06-09T22:41:28",
+  "stats_overview": {
+    "n": 10,
+    "p50_ms": 174.1,
+    "p95_ms": 1708.5,
+    "min_ms": 141.0,
+    "max_ms": 1708.5,
+    "raw_ms": [
+      214.8,
+      225.2,
+      169.3,
+      179.0,
+      141.0,
+      158.3,
+      145.3,
+      163.6,
+      1708.5,
+      197.2
+    ]
+  },
+  "stats_overview_body": {
+    "quick_stats": {
+      "total_workouts": 17,
+      "workouts_this_week": 0,
+      "workouts_this_month": 0,
+      "current_streak": 9,
+      "longest_streak": 9,
+      "total_time_minutes": 518,
+      "avg_workout_duration": 30,
+      "total_achievements": 23,
+      "total_prs": 7
+    },
+    "recent_achievements": [
+      {
+        "id": "fca126dc-a690-4547-a0fa-ea3166696d2d",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "achievement_id": "streak_7_days",
+        "earned_at": "2026-05-16T17:02:58.068852Z",
+        "trigger_value": 9.0,
+        "trigger_details": {
+          "unit": "days"
+        },
+        "is_notified": false,
+        "achievement": null,
+        "achievement_name": "7-Day Warrior",
+        "achievement_icon": "\ud83d\udd25",
+        "achievement_category": "consistency"
+      },
+      {
+        "id": "db2efe67-68fd-4dfe-83f9-89b4ed76385e",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "achievement_id": "streak_7_days",
+        "earned_at": "2026-04-29T03:02:51.491072Z",
+        "trigger_value": 9.0,
+        "trigger_details": {
+          "unit": "days"
+        },
+        "is_notified": false,
+        "achievement": null,
+        "achievement_name": "7-Day Warrior",
+        "achievement_icon": "\ud83d\udd25",
+        "achievement_category": "consistency"
+      },
+      {
+        "id": "8265abde-f967-43f4-a856-a6a3ce8bf3fe",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "achievement_id": "streak_7_days",
+        "earned_at": "2026-04-29T03:02:43.288705Z",
+        "trigger_value": 9.0,
+        "trigger_details": {
+          "unit": "days"
+        },
+        "is_notified": false,
+        "achievement": null,
+        "achievement_name": "7-Day Warrior",
+        "achievement_icon": "\ud83d\udd25",
+        "achievement_category": "consistency"
+      },
+      {
+        "id": "cf3aa558-fd96-40e5-8e9b-c7bc37126e28",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "achievement_id": "streak_7_days",
+        "earned_at": "2026-04-29T03:02:31.200920Z",
+        "trigger_value": 9.0,
+        "trigger_details": {
+          "unit": "days"
+        },
+        "is_notified": false,
+        "achievement": null,
+        "achievement_name": "7-Day Warrior",
+        "achievement_icon": "\ud83d\udd25",
+        "achievement_category": "consistency"
+      },
+      {
+        "id": "b8cad2a4-5e44-4e03-bea4-892641fa7f04",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "achievement_id": "streak_7_days",
+        "earned_at": "2026-04-29T03:02:22.497855Z",
+        "trigger_value": 9.0,
+        "trigger_details": {
+          "unit": "days"
+        },
+        "is_notified": false,
+        "achievement": null,
+        "achievement_name": "7-Day Warrior",
+        "achievement_icon": "\ud83d\udd25",
+        "achievement_category": "consistency"
+      }
+    ],
+    "top_prs": [
+      {
+        "id": "e3377552-685e-4cb1-9534-d022063c6b01",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "exercise_name": "Barbell Row",
+        "record_type": "weight_8rm",
+        "record_value": 82.5,
+        "record_unit": "kg",
+        "previous_value": 80.0,
+        "improvement_percentage": 3.13,
+        "workout_id": null,
+        "achieved_at": "2026-04-10T13:09:00Z"
+      },
+      {
+        "id": "adb3fbdd-370a-4b0e-8027-f5fdbad56473",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "exercise_name": "Deadlift",
+        "record_type": "weight_5rm",
+        "record_value": 145.0,
+        "record_unit": "kg",
+        "previous_value": 140.0,
+        "improvement_percentage": 3.57,
+        "workout_id": null,
+        "achieved_at": "2026-04-10T12:56:00Z"
+      },
+      {
+        "id": "4a7bc2b7-7379-4f34-a860-2681f53b69b3",
+        "user_id": "d54e6652-fdf1-4ca0-82d1-23d7c02df294",
+        "exercise_name": "Overhead Press",
+        "record_type": "weight_8rm",
+        "record_value": 52.5,
+        "record_unit": "kg",
+        "previous_value": 50.0,
+        "improvement_percentage": 5.0,
+        "workout_id": null,
+        "achieved_at": "2026-04-08T13:05:00Z"
+      }
+    ],
+    "body_measurements": {
+      "weight_kg": 98.5,
+      "body_fat_percent": null,
+      "chest_cm": null,
+      "waist_cm": null,
+      "hip_cm": null,
+      "bicep_left_cm": null,
+      "bicep_right_cm": null,
+      "thigh_left_cm": null,
+      "thigh_right_cm": null,
+      "measured_at": "2026-05-17T22:59:16.529812Z"
+    }
+  },
+  "stats_quick": {
+    "n": 10,
+    "p50_ms": 152.0,
+    "p95_ms": 206.2,
+    "min_ms": 134.8,
+    "max_ms": 206.2,
+    "raw_ms": [
+      173.9,
+      187.8,
+      162.5,
+      206.2,
+      199.7,
+      134.8,
+      135.2,
+      141.4,
+      136.8,
+      140.8
+    ]
+  },
+  "health_during_stats": {
+    "n": 9,
+    "p50_ms": 8.6,
+    "p95_ms": 11.2,
+    "min_ms": 8.2,
+    "max_ms": 11.2,
+    "raw_ms": [
+      11.2,
+      9.5,
+      8.5,
+      9.1,
+      8.2,
+      8.6,
+      9.1,
+      8.6,
+      8.3
+    ]
+  },
+  "health_idle": {
+    "n": 5,
+    "p50_ms": 6.9,
+    "p95_ms": 9.2,
+    "min_ms": 6.0,
+    "max_ms": 9.2,
+    "raw_ms": [
+      9.2,
+      7.2,
+      6.7,
+      6.9,
+      6.0
+    ]
+  },
+  "log_text": {
+    "n": 3,
+    "p50_ms": 1642.4,
+    "p95_ms": 3699.3,
+    "min_ms": 1441.1,
+    "max_ms": 3699.3,
+    "raw_ms": [
+      3699.3,
+      1441.1,
+      1642.4
+    ]
+  },
+  "log_text_cleanup": []
+}
