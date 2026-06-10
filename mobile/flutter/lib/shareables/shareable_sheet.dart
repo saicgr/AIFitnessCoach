@@ -337,8 +337,22 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
           // it so the gallery ALWAYS keeps >= 2 thumbnail rows, then give
           // the preview the remainder (clamped). Because the preview height
           // is decided HERE, switching aspect ratio never reflows anything.
-          final previewH = _resolvePreviewHeight(constraints.maxHeight);
-          return Column(
+          //
+          // Robustness: a modal bottom sheet can transiently hand its body an
+          // UNBOUNDED maxHeight (mid drag-to-dismiss / open animation). The
+          // Column below has mainAxisSize.min + an `Expanded` gallery — an
+          // `Expanded` under unbounded height throws "BoxConstraints forces an
+          // infinite height" and cascades a flood of "RenderFlex was not laid
+          // out" through every gallery tile (the errors seen while scrolling
+          // the share sheet). Pin a finite ceiling so the Expanded ALWAYS has
+          // a bounded parent.
+          final maxH = constraints.maxHeight.isFinite
+              ? constraints.maxHeight
+              : MediaQuery.of(context).size.height * 0.92;
+          final previewH = _resolvePreviewHeight(maxH);
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxHeight: maxH),
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _header(context),
@@ -379,6 +393,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                 ),
               ),
             ],
+            ),
           );
         },
       ),
@@ -1469,10 +1484,20 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
           // selected export ratio) so the gallery's row height never
           // changes when the user switches 9:16 / 4:5 / 1:1, and >= 2 rows
           // always fit (see `_resolvePreviewHeight`).
-          const designSize = Size(1080, 1350); // fixed 4:5 thumbnail
+          // Render each thumbnail at the SELECTED aspect's design size (not a
+          // hardcoded 4:5) so a 9:16 / 1:1 card isn't squeezed into a 4:5
+          // canvas — that mismatch was overflowing template content by a few
+          // px (the "RenderFlex overflowed by 9/23px" spam). The FittedBox
+          // below still letterboxes the card into the fixed 4:5 tile, so row
+          // height never changes when the user switches ratio.
+          final designSize = _aspect.size;
           const cols = 3;
           const spacing = 8.0;
-          final tileW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
+          // Guard against a transient unbounded width (mid-animation) so tileW
+          // can never go non-finite and blow up the SizedBox below.
+          final availW =
+              constraints.maxWidth.isFinite ? constraints.maxWidth : 0.0;
+          final tileW = (availW - spacing * (cols - 1)) / cols;
           final tileH = tileW / _kGalleryThumbRatio;
 
           return GridView.builder(

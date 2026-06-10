@@ -125,7 +125,22 @@ async def complete_workout(
             "last_modified_method": "completed",
             "completion_method": completion_method,
         }
-        updated = db.update_workout(workout_id, update_data)
+        # CRITICAL write: this is the ONLY flip of workouts.is_completed, which
+        # every Home/Workout surface reads to decide done-vs-upcoming. If it
+        # raises, the client treats /complete as failed and re-queues it — but
+        # we must surface a DISTINCT, greppable signal so a recurrence of the
+        # "logged but never marked complete" divergence is visible on Render.
+        # (Migration 2256's workout_logs trigger is the durable backstop: a
+        # completed workout_log flips is_completed even if this write is lost.)
+        try:
+            updated = db.update_workout(workout_id, update_data)
+        except Exception as flip_err:
+            logger.error(
+                f"[CompletionFlip] FAILED to set is_completed for "
+                f"workout_id={workout_id} user_id={user_id}: {flip_err}",
+                exc_info=True,
+            )
+            raise
         workout = row_to_workout(updated)
 
         logger.info(f"Workout completed: id={workout_id}")

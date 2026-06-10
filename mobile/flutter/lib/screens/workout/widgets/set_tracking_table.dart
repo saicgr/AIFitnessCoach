@@ -348,7 +348,11 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     final weight = double.tryParse(_editWeightController?.text ?? '') ?? 0;
     final reps = int.tryParse(_editRepsController?.text ?? '') ?? 0;
 
-    if (weight > 0 && reps > 0) {
+    // Bodyweight sets legitimately have weight == 0 (no added load), so don't
+    // require weight > 0 there — otherwise editing reps on a bodyweight set was
+    // silently discarded. For loaded exercises we still require a real weight.
+    final isBodyweight = widget.sets[_editingSetIndex!].isBodyweight;
+    if (reps > 0 && (weight > 0 || isBodyweight)) {
       final weightInKg = widget.useKg ? weight : weight / 2.20462;
       widget.onSetUpdated?.call(_editingSetIndex!, weightInKg, reps);
     }
@@ -1013,32 +1017,37 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               ),
             ),
 
-            // Weight input — skipped entirely for bodyweight/timed exercises
-            // (no external load to log). We still reserve the width via a
-            // `_DashCell` so the grid stays aligned with other exercises.
+            // Weight input. Timed exercises (planks/holds/walks) have no weight
+            // row — the reps cell becomes a time target — so they keep an inert
+            // `_DashCell`. Bodyweight exercises now show an OPTIONAL, editable
+            // weight field (placeholder "–") so users can log added/loaded
+            // weight on a bodyweight move (weighted vest, dumbbell, etc.)
+            // instead of a dead dash they couldn't tap.
             SizedBox(
               width: widget.isLeftRightMode ? 56 : 64,
-              child: (set.isBodyweight || set.isTimedExercise)
+              child: set.isTimedExercise
                   ? const _DashCell()
                   : (isEditing
                       ? _DarkInputField(
                           controller: _editWeightController!,
                           onSubmitted: (_) => _saveEditing(),
                           isDark: isDark,
+                          hintText: set.isBodyweight ? '–' : null,
                         )
                       : isActive
                           ? _DarkInputField(
                               controller: widget.weightController,
                               isDark: isDark,
+                              hintText: set.isBodyweight ? '–' : null,
                             )
                           : _CompletedValueCell(
-                              value: set.actualWeight != null
+                              value: set.actualWeight != null && set.actualWeight! > 0
                                   ? (widget.useKg
                                           ? set.actualWeight!
                                           : kgToDisplayLbs(set.actualWeight!, widget.exercise.equipment,
                     exerciseName: widget.exercise.name,))
                                       .toStringAsFixed(0)
-                                  : '',
+                                  : (set.isBodyweight ? '–' : ''),
                               isCompleted: set.isCompleted,
                               isDark: isDark,
                             )),

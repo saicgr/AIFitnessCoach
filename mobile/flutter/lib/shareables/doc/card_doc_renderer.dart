@@ -1098,7 +1098,18 @@ class _ElementBody extends StatelessWidget {
         ));
       }
       if (rows.isNotEmpty) rows.add(SizedBox(height: p.spacing));
-      rows.add(Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: rowTiles));
+      // IntrinsicHeight is REQUIRED: the outer Column lays each row out with an
+      // unbounded main-axis (height) constraint to measure it, and a Row with
+      // `crossAxisAlignment.stretch` under unbounded height throws
+      // "BoxConstraints forces an infinite height" (it tries to stretch its
+      // tiles to an infinite cross-axis). IntrinsicHeight pins the row to its
+      // tallest tile's natural height so stretch has a finite extent to fill.
+      rows.add(IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: rowTiles,
+        ),
+      ));
     }
     return Column(
       mainAxisSize: MainAxisSize.min,

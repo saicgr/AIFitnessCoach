@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/cache/offline_write_queue.dart';
 import '../../../core/models/set_progression.dart';
 import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
@@ -23,6 +22,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/workout_completion_prewarmer.dart';
+import '../../../data/services/workout_completion_queue.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../core/providers/heart_rate_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
@@ -193,13 +193,6 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     await _runFinalizeWorkoutCompletion();
   }
 
-  /// WF9 — disk-persisted offline queue for workout-completion writes. If
-  /// `/complete` fails (offline / 5xx) the completion POST is enqueued here
-  /// and replayed when connectivity returns, so a finished workout is never
-  /// silently lost. Idempotency-keyed so a replay can't double-complete.
-  static final OfflineWriteQueue _completionQueue =
-      OfflineWriteQueue(feature: 'workout_complete');
-
   Future<void> _runFinalizeWorkoutCompletion() async {
 
     final workout = (workoutWidget as dynamic).workout as Workout;
@@ -337,7 +330,8 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   /// navigation path. Called fire-and-forget from
   /// [_runFinalizeWorkoutCompletion] so tapping Finish never awaits
   /// `/complete`. All errors are caught; a failed/offline `/complete` is
-  /// persisted to [_completionQueue] and replayed when connectivity returns.
+  /// persisted via [WorkoutCompletionQueue] and replayed on connectivity
+  /// restored AND on the next app launch / foreground resume.
   Future<void> _runBackgroundCompletionSave(Workout workout) async {
     try {
       final workoutRepo = ref.read(workoutRepositoryProvider);
@@ -481,39 +475,18 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       debugPrint('⚠️ [Complete] /complete failed ($e) — enqueueing for retry');
     }
 
-    // WF9 — persist the completion so it survives an app kill and replays
-    // when the device is back online.
+    // WF9 — persist the completion so it survives an app kill and replays on
+    // connectivity-restored AND on the next app launch / foreground resume
+    // (the launch/resume drain is wired from app.dart). The launch/resume path
+    // is what fixes a `/complete` that failed WHILE ONLINE: the device never
+    // goes offline→online, so the connectivity-only flush would never fire.
+    // Idempotency-keyed so a replay can't double-complete; migration 2256's DB
+    // trigger is the durable backstop.
     final apiClient = ref.read(apiClientProvider);
-    final body = {
-      'workout_id': workout.id,
-      'idempotency_key': OfflineWriteQueue.idempotencyKey('wkout_complete'),
-    };
-    await _completionQueue.enqueue(userId: userId, body: body);
-    _completionQueue.bindConnectivity(
+    await WorkoutCompletionQueue.instance.enqueue(
       userId: userId,
-      sender: (queuedBody) async {
-        try {
-          final wid = queuedBody['workout_id'] as String?;
-          if (wid == null) return true; // poison item — drop it
-          final resp = await apiClient.post(
-            '/workouts/$wid/complete',
-            data: {'idempotency_key': queuedBody['idempotency_key']},
-          );
-          final ok = resp.statusCode != null &&
-              resp.statusCode! >= 200 &&
-              resp.statusCode! < 300;
-          // A queued completion that lands minutes later must STILL refresh the
-          // UI — previously offline replays updated the server silently and the
-          // Home/Workout tabs stayed stale until an app restart.
-          if (ok) {
-            unawaited(refreshAfterWorkoutMutation(
-                source: 'offline_replay', workoutId: wid));
-          }
-          return ok; // 2xx delivered; the server de-dupes a replay via the key.
-        } catch (_) {
-          return false; // transient — keep queued, stop the flush
-        }
-      },
+      workoutId: workout.id!,
+      apiClient: apiClient,
     );
   }
 

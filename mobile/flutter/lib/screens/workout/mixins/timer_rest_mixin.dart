@@ -20,6 +20,7 @@ import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 import '../../../core/models/set_progression.dart';
 import '../widgets/inline_rest_row.dart';
+import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../../../services/intra_workout_autoregulator.dart';
 import 'package:dio/dio.dart';
@@ -481,7 +482,16 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
 
   /// Build inline rest row for V2 design
   Widget buildInlineRestRowV2() {
-    return InlineRestRow(
+    return KeyedSubtree(
+      // Tour anchor: the inline (between-set) rest row is the real,
+      // correctly-sized "Rest Timer" target. The key used to live on the
+      // full-screen between-exercise RestTimerOverlay, which the tour treats as
+      // "oversized" and never spotlights — so the Rest Timer step showed a
+      // dimmed screen with no highlight. Keyed here so it highlights the actual
+      // rest timer whenever it's on screen. (Single holder — removed from the
+      // overlay to avoid a duplicate GlobalKey.)
+      key: TooltipAnchors.restTimer,
+      child: InlineRestRow(
       restDurationSeconds: inlineRestDuration,
       onRestComplete: handleInlineRestComplete,
       onSkipRest: handleInlineRestSkip,
@@ -495,6 +505,7 @@ mixin TimerRestMixin<T extends StatefulWidget> on State<T> {
       currentRpe: inlineRestCurrentRpe,
       adaptationFeedback: inlineRestAdaptationFeedback,
       weightUnit: useKg ? 'kg' : 'lb',
+      ),
     );
   }
 

@@ -612,7 +612,10 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
             // Wrapped in RepaintBoundary to isolate per-second rest timer repaints
             if (isResting && isRestingBetweenExercises)
               Positioned.fill(
-                key: AppTourKeys.restTimerKey,
+                // Tour anchor moved to the inline rest row (timer_rest_mixin):
+                // this full-screen overlay is "oversized" so the tour never
+                // spotlighted it. Keeping the key here too would risk a
+                // duplicate GlobalKey with the inline row.
                 child: RepaintBoundary(
                   child: RestTimerOverlay(
                     restSecondsRemaining: timerController.restSecondsRemaining,
@@ -665,8 +668,14 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                 ),
               ),
 
-            // Floating AI Coach FAB (positioned above thumbnail strip)
-            if (!isResting && !hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
+            // Floating AI Coach FAB (positioned above thumbnail strip).
+            // Gate on !isRestingBetweenExercises (NOT !isResting): inline
+            // between-set rest sets isResting=true but keeps the set list on
+            // screen, so the coach FAB must stay visible. Only the full-screen
+            // between-exercise RestTimerOverlay (which has its own Ask-AI
+            // button) should hide it — otherwise the coach button vanished the
+            // moment the user logged their first set.
+            if (!isRestingBetweenExercises && !hideAICoachForSession && ref.watch(aiSettingsProvider).showAICoachDuringWorkouts)
               Positioned(
                 key: AppTourKeys.workoutAiKey,
                 bottom: MediaQuery.of(context).padding.bottom + 100, // Above thumbnail strip (~80px height + padding)
