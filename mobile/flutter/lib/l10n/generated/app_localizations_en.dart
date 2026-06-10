@@ -2056,7 +2056,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Log sets: 135*8, 145*6, +10...\\nAdd exercise: 3x10 deadlift at 135';
+      'Log sets: 135*8, 145*6, +10...\nAdd exercise: 3x10 deadlift at 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Log sets / Add exercises';
@@ -3409,11 +3409,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Could not load challenges.\\nPlease try again.';
+      'Could not load challenges.\nPlease try again.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Could not load your challenges.\\nPlease try again.';
+      'Could not load your challenges.\nPlease try again.';
 
   @override
   String get challengesCreateChallenge => 'Create Challenge';
@@ -3423,7 +3423,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Join a challenge to compete with\\nfriends and reach your fitness goals!';
+      'Join a challenge to compete with\nfriends and reach your fitness goals!';
 
   @override
   String get challengesMyChallenges => 'My Challenges';
@@ -4888,7 +4888,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get consistencyCardConsistency => 'CONSISTENCY';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Day Best\\nStreak';
+  String get consistencyCardDayBestNstreak => 'Day Best\nStreak';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'of days you showed up';
@@ -5721,7 +5721,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'Add specific skills or objectives you want to improve.\\nAI will help find the right exercises.';
+      'Add specific skills or objectives you want to improve.\nAI will help find the right exercises.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI-Generated Keywords';
@@ -6698,7 +6698,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'You will continue to be billed unless you cancel from the $storeName first.\\n\\n';
+    return 'You will continue to be billed unless you cancel from the $storeName first.\n\n';
   }
 
   @override
@@ -8803,7 +8803,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'Complete your first workout\\nto start tracking progress!';
+      'Complete your first workout\nto start tracking progress!';
 
   @override
   String get emptyStateCreateProgram => 'Create program';
@@ -8825,22 +8825,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get emptyStatePleaseCheckYourInternet =>
-      'Please check your internet connection\\nand try again.';
+      'Please check your internet connection\nand try again.';
 
   @override
   String get emptyStateTipGotIt => 'Got it';
 
   @override
   String get emptyStateTryAdjustingYourFilters =>
-      'Try adjusting your filters\\nor search for something else.';
+      'Try adjusting your filters\nor search for something else.';
 
   @override
   String get emptyStateWeCouldnTFind =>
-      'We couldn\\\'t find what you\\\'re looking for.\\nTry different keywords.';
+      'We couldn\\\'t find what you\\\'re looking for.\nTry different keywords.';
 
   @override
   String get emptyStateYourWorkoutScheduleIs =>
-      'Your workout schedule is empty.\\nStart by creating a program!';
+      'Your workout schedule is empty.\nStart by creating a program!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'TRY ASKING...';
@@ -9335,7 +9335,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Create custom exercises or mark favorites\\nin Library → Mine';
+      'Create custom exercises or mark favorites\nin Library → Mine';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'Failed to add exercise';
@@ -9356,7 +9356,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exerciseAddSheetNoCustomExercisesFavorites =>
-      'No custom exercises, favorites,\\nor staples yet';
+      'No custom exercises, favorites,\nor staples yet';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable =>
@@ -11069,7 +11069,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Describe your equipment or preferences\\ne.g., \"I have a bad shoulde       bodyweight only\"';
+      'Describe your equipment or preferences\ne.g., \"I have a bad shoulde       bodyweight only\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'e.g., \"I only have dumbbells\"';
@@ -12584,11 +12584,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'Complete workouts to see them shared here!\\nFollow friends to see their workouts too.';
+      'Complete workouts to see them shared here!\nFollow friends to see their workouts too.';
 
   @override
   String get feedCouldNotLoadYour =>
-      'Could not load your activity feed.\\nPlease try again later.';
+      'Could not load your activity feed.\nPlease try again later.';
 
   @override
   String get feedCreateYourFirstPost => 'Create your first post!';
@@ -13892,7 +13892,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'Track your mood when logging meals\\nto see patterns and insights';
+      'Track your mood when logging meals\nto see patterns and insights';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'Tracked meals';
@@ -13946,7 +13946,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'We\'ll review and update within 48h.\\nThanks for helping improve our data!';
+      'We\'ll review and update within 48h.\nThanks for helping improve our data!';
 
   @override
   String get foodReportWhatFoodDidYou => 'What food did you actually mean?';
@@ -14250,7 +14250,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Workout history, PRs, and trophies\\nwill be shown here.';
+      'Workout history, PRs, and trophies\nwill be shown here.';
 
   @override
   String get friendSearchFindFriends => 'Find Friends';
@@ -14285,19 +14285,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Add friends to see their workouts\\nand compete in challenges together!';
+      'Add friends to see their workouts\nand compete in challenges together!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Could not load users you follow.\\nPlease try again.';
+      'Could not load users you follow.\nPlease try again.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Could not load your friends list.\\nPlease try again.';
+      'Could not load your friends list.\nPlease try again.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Could not load your followers list.\\nPlease try again.';
+      'Could not load your followers list.\nPlease try again.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Failed to Load Followers';
@@ -14310,7 +14310,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Follow friends to see their workouts\\nand stay motivated together!';
+      'Follow friends to see their workouts\nand stay motivated together!';
 
   @override
   String get friendsFollowers => 'Followers';
@@ -14323,7 +14323,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Keep crushing your workouts!\\nFriends will want to follow your progress.';
+      'Keep crushing your workouts!\nFriends will want to follow your progress.';
 
   @override
   String get friendsNoFollowersYet => 'No Followers Yet';
@@ -15073,7 +15073,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'Map-based location picker is not yet available.\\nFor now, set your gym name in the profile.';
+      'Map-based location picker is not yet available.\nFor now, set your gym name in the profile.';
 
   @override
   String get gymProfileSwitcherActive => 'Active';
@@ -15814,7 +15814,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Find \"$appName\"\\n';
+    return '3. Find \"$appName\"\n';
   }
 
   @override
@@ -17980,7 +17980,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Imported:\\n$summary';
+    return 'Imported:\n$summary';
   }
 
   @override
@@ -18002,7 +18002,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'e.g.\\nDumbbells 5-100 lb\\n2x Squat racks\\nLeg press (plate-loaded)\\nTreadmills x4\\nCable station...';
+      'e.g.\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22329,7 +22329,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Could not load your conversations.\\nPlease try again later.';
+      'Could not load your conversations.\nPlease try again later.';
 
   @override
   String get messagesFailedToLoadMessages => 'Failed to Load Messages';
@@ -22348,7 +22348,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Start a conversation with your friends!\\nYour messages will appear here.';
+      'Start a conversation with your friends!\nYour messages will appear here.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'No data for this day';
@@ -23581,7 +23581,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get myWrappedCompleteAtLeast3 =>
-      'Complete at least 3 workouts this month\\nto unlock your personalized recap';
+      'Complete at least 3 workouts this month\nto unlock your personalized recap';
 
   @override
   String get myWrappedEarnAUniquePersonality =>
@@ -26263,7 +26263,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paywallFeatures7DayFreeTrial =>
-      '7-day free trial\\nCancel anytime, no questions asked';
+      '7-day free trial\nCancel anytime, no questions asked';
 
   @override
   String get paywallFeaturesAiCoachChat => 'AI coach chat';
@@ -26330,7 +26330,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paywallPricing7DayFreeTrial2 =>
-      '7-day free trial\\nCancel anytime, no questions asked';
+      '7-day free trial\nCancel anytime, no questions asked';
 
   @override
   String get paywallPricingAi6Exercises => 'AI · 6 EXERCISES';
@@ -26476,7 +26476,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paywallPricingStartYour7Day =>
-      'Start your 7-day FREE\\ntrial to continue';
+      'Start your 7-day FREE\ntrial to continue';
 
   @override
   String get paywallPricingTerms => 'Terms';
@@ -26490,7 +26490,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paywallPricingWeLlSendYou =>
-      'We\'ll send you a reminder\\nbefore your free trial ends';
+      'We\'ll send you a reminder\nbefore your free trial ends';
 
   @override
   String get paywallPricingWhatYouGet => 'What you get';
@@ -27162,7 +27162,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'When you train body';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Unpin';
@@ -27614,7 +27614,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prSummaryCardLogYourWorkoutsAnd =>
-      'Log your workouts and we\\\'ll track\\nyour best lifts automatically!';
+      'Log your workouts and we\\\'ll track\nyour best lifts automatically!';
 
   @override
   String get prSummaryCardNoPersonalRecordsYet => 'No Personal Records Yet';
@@ -28202,7 +28202,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'This will delete your upcoming incomplete workouts and generate fresh ones using your current program settings.\\n\\nCompleted workouts will NOT be affected.';
+      'This will delete your upcoming incomplete workouts and generate fresh ones using your current program settings.\n\nCompleted workouts will NOT be affected.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28578,7 +28578,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get progressScreenExtCompleteWorkoutsTargetingTh =>
-      'Complete workouts targeting this muscle\\nto see your strength progress.';
+      'Complete workouts targeting this muscle\nto see your strength progress.';
 
   @override
   String get progressScreenExtDetails => 'Details';
@@ -28698,7 +28698,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'A\\nTRANSFORMATION\\nSTUDY';
+      'A\nTRANSFORMATION\nSTUDY';
 
   @override
   String get progressShareTemplatesBreaking => 'BREAKING';
@@ -28744,7 +28744,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nWORKOUTS';
+    return '+$totalWorkouts\nWORKOUTS';
   }
 
   @override
@@ -28800,7 +28800,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\nTUESDAY';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMED';
@@ -29150,7 +29150,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Please wait while we connect you\\nwith a support agent';
+      'Please wait while we connect you\nwith a support agent';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30731,7 +30731,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Could not load predictions.\\n$message';
+    return 'Could not load predictions.\n$message';
   }
 
   @override
@@ -30766,7 +30766,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Could not load predictions.\\n$e';
+    return 'Could not load predictions.\n$e';
   }
 
   @override
@@ -36490,7 +36490,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get strengthOverviewCardCompleteWorkoutsWithResista =>
-      'Complete workouts with resistance exercises\\nto track your strength progress.';
+      'Complete workouts with resistance exercises\nto track your strength progress.';
 
   @override
   String get strengthOverviewCardDragU2630ToReorder =>
@@ -36568,7 +36568,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get strengthOverviewCardYourOverallFitnessScore =>
-      'Your overall fitness score is weighted:\\nStrength 40% + Consistency 30% + Nutrition 20% + Readiness 10%';
+      'Your overall fitness score is weighted:\nStrength 40% + Consistency 30% + Nutrition 20% + Readiness 10%';
 
   @override
   String get strengthOverviewCardYourStrengthScore0 =>
@@ -39369,7 +39369,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Could not load VO2max.\\n$error';
+    return 'Could not load VO2max.\n$error';
   }
 
   @override
@@ -40526,7 +40526,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get welcomeAffirmationYouReInThe =>
-      'You\'re in the right place.\\nLet\'s build your plan together.';
+      'You\'re in the right place.\nLet\'s build your plan together.';
 
   @override
   String get wellnessCheckinCardAddANoteOptional => 'Add a note (optional)';
@@ -40665,7 +40665,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41362,7 +41362,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" and \"$name1\" are already in different supersets.\\n\\nBreak the existing supersets first to create a new pairing.';
+    return '\"$name\" and \"$name1\" are already in different supersets.\n\nBreak the existing supersets first to create a new pairing.';
   }
 
   @override
@@ -41372,7 +41372,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Block \"$name\" from all future AI recommendations?\\n\\n';
+    return 'Block \"$name\" from all future AI recommendations?\n\n';
   }
 
   @override
@@ -41441,7 +41441,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workoutGalleryCompleteAWorkoutAnd =>
-      'Complete a workout and share it\\nto start your gallery';
+      'Complete a workout and share it\nto start your gallery';
 
   @override
   String get workoutGalleryDeleteImage => 'Delete Image?';
@@ -42392,7 +42392,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Warming up helps prevent injury and improves performance.\\n\\nRecommended: 1-2 lighter sets before working sets.';
+      'Warming up helps prevent injury and improves performance.\n\nRecommended: 1-2 lighter sets before working sets.';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';
@@ -43064,7 +43064,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get workoutSummaryGeneralConnectAHeartRate =>
-      'Connect a heart rate monitor\\nto track your zones';
+      'Connect a heart rate monitor\nto track your zones';
 
   @override
   String get workoutSummaryGeneralDifficulty => 'Difficulty';
@@ -43802,7 +43802,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'No leaderboard data yet.\\nStart earning XP to climb the ranks!';
+      'No leaderboard data yet.\nStart earning XP to climb the ranks!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

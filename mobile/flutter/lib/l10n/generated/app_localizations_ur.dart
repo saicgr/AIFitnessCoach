@@ -3432,11 +3432,11 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'چیلنجز لوڈ نہیں ہو سکے۔\\nبراہ کرم دوبارہ کوشش کریں۔';
+      'چیلنجز لوڈ نہیں ہو سکے۔\nبراہ کرم دوبارہ کوشش کریں۔';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'آپ کے چیلنجز لوڈ نہیں ہو سکے۔\\nبراہ کرم دوبارہ کوشش کریں۔';
+      'آپ کے چیلنجز لوڈ نہیں ہو سکے۔\nبراہ کرم دوبارہ کوشش کریں۔';
 
   @override
   String get challengesCreateChallenge => 'چیلنج بنائیں';
@@ -4917,7 +4917,7 @@ class AppLocalizationsUr extends AppLocalizations {
   String get consistencyCardConsistency => 'تسلسل';
 
   @override
-  String get consistencyCardDayBestNstreak => 'بہترین دن\\nاسٹریک';
+  String get consistencyCardDayBestNstreak => 'بہترین دن\nاسٹریک';
 
   @override
   String get consistencyCardOfDaysYouShowed =>
@@ -12655,11 +12655,11 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'انہیں یہاں شیئر ہوتے دیکھنے کے لیے ورک آؤٹس مکمل کریں!\\nدوستوں کے ورک آؤٹس دیکھنے کے لیے انہیں فالو کریں۔';
+      'انہیں یہاں شیئر ہوتے دیکھنے کے لیے ورک آؤٹس مکمل کریں!\nدوستوں کے ورک آؤٹس دیکھنے کے لیے انہیں فالو کریں۔';
 
   @override
   String get feedCouldNotLoadYour =>
-      'آپ کی ایکٹیویٹی فیڈ لوڈ نہیں ہو سکی۔\\nبراہ کرم بعد میں دوبارہ کوشش کریں۔';
+      'آپ کی ایکٹیویٹی فیڈ لوڈ نہیں ہو سکی۔\nبراہ کرم بعد میں دوبارہ کوشش کریں۔';
 
   @override
   String get feedCreateYourFirstPost => 'اپنی پہلی پوسٹ بنائیں!';
@@ -15923,7 +15923,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\" تلاش کریں\\n';
+    return '3. \"$appName\" تلاش کریں\n';
   }
 
   @override
@@ -18107,7 +18107,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'درآمد شدہ:\\n$summary';
+    return 'درآمد شدہ:\n$summary';
   }
 
   @override
@@ -27363,7 +27363,7 @@ class AppLocalizationsUr extends AppLocalizations {
       'جب آپ ٹریننگ کرتے ہیں اس کی تفصیل';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'ان پن کریں';
@@ -28959,7 +28959,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nورک آؤٹس';
+    return '+$totalWorkouts\nورک آؤٹس';
   }
 
   @override
@@ -29014,7 +29014,7 @@ class AppLocalizationsUr extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday => '#تبدیلی\\nمنگل';
+  String get progressShareTemplatesTransformationNtuesday => '#تبدیلی\nمنگل';
 
   @override
   String get progressShareTemplatesTransformed => 'تبدیل شدہ';
@@ -29365,7 +29365,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'براہ کرم انتظار کریں جب تک ہم آپ کو\\nسپورٹ ایجنٹ سے منسلک نہ کر دیں';
+      'براہ کرم انتظار کریں جب تک ہم آپ کو\nسپورٹ ایجنٹ سے منسلک نہ کر دیں';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30954,7 +30954,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'پیشین گوئیاں لوڈ نہیں ہو سکیں.\\n$message';
+    return 'پیشین گوئیاں لوڈ نہیں ہو سکیں.\n$message';
   }
 
   @override
@@ -30989,7 +30989,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'پیش گوئیاں لوڈ نہیں ہو سکیں۔\\n$e';
+    return 'پیش گوئیاں لوڈ نہیں ہو سکیں۔\n$e';
   }
 
   @override
@@ -41672,7 +41672,7 @@ class AppLocalizationsUr extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" اور \"$name1\" پہلے ہی مختلف سپر سیٹس میں ہیں۔\\n\\nنیا جوڑا بنانے کے لیے پہلے موجودہ سپر سیٹس کو توڑیں۔';
+    return '\"$name\" اور \"$name1\" پہلے ہی مختلف سپر سیٹس میں ہیں۔\n\nنیا جوڑا بنانے کے لیے پہلے موجودہ سپر سیٹس کو توڑیں۔';
   }
 
   @override

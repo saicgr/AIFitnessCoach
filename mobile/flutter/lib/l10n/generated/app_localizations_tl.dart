@@ -3464,11 +3464,11 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Hindi ma-load ang mga challenge.\\nPakisubukan muli.';
+      'Hindi ma-load ang mga challenge.\nPakisubukan muli.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Hindi ma-load ang iyong mga challenge.\\nPakisubukan muli.';
+      'Hindi ma-load ang iyong mga challenge.\nPakisubukan muli.';
 
   @override
   String get challengesCreateChallenge => 'Gumawa ng Challenge';
@@ -3479,7 +3479,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Sumali sa challenge para makipagkumpitensya sa\\nmga kaibigan at maabot ang iyong fitness goals!';
+      'Sumali sa challenge para makipagkumpitensya sa\nmga kaibigan at maabot ang iyong fitness goals!';
 
   @override
   String get challengesMyChallenges => 'Aking mga Challenge';
@@ -6802,7 +6802,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Patuloy kang sisingilin maliban na lang kung magkakansela ka muna sa $storeName.\\n\\n';
+    return 'Patuloy kang sisingilin maliban na lang kung magkakansela ka muna sa $storeName.\n\n';
   }
 
   @override
@@ -11248,7 +11248,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Ilarawan ang iyong equipment o mga preference\\nhalimbawa, \"May masakit akong balikat, bodyweight lang\"';
+      'Ilarawan ang iyong equipment o mga preference\nhalimbawa, \"May masakit akong balikat, bodyweight lang\"';
 
   @override
   String get exerciseSwapSheetEGIOnly =>
@@ -16082,7 +16082,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Hanapin ang \"$appName\"\\n';
+    return '3. Hanapin ang \"$appName\"\n';
   }
 
   @override
@@ -18286,7 +18286,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Na-import:\\n$summary';
+    return 'Na-import:\n$summary';
   }
 
   @override
@@ -22695,7 +22695,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Hindi ma-load ang iyong mga pag-uusap.\\nPakisubukang muli mamaya.';
+      'Hindi ma-load ang iyong mga pag-uusap.\nPakisubukang muli mamaya.';
 
   @override
   String get messagesFailedToLoadMessages => 'Hindi Ma-load ang mga Mensahe';
@@ -22715,7 +22715,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Magsimula ng pag-uusap kasama ang iyong mga kaibigan!\\nLalabas dito ang iyong mga mensahe.';
+      'Magsimula ng pag-uusap kasama ang iyong mga kaibigan!\nLalabas dito ang iyong mga mensahe.';
 
   @override
   String get metricHistoryCardNoDataForThis =>
@@ -27611,7 +27611,7 @@ class AppLocalizationsTl extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'When you train body';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Alisin ang pagkaka-pin';
@@ -29185,7 +29185,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'ISANG\\nPAGBABAGO\\nSTUDY';
+      'ISANG\nPAGBABAGO\nSTUDY';
 
   @override
   String get progressShareTemplatesBreaking => 'NAGBABAGONG BALITA';
@@ -29231,7 +29231,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nEHERSISYO';
+    return '+$totalWorkouts\nEHERSISYO';
   }
 
   @override
@@ -31249,7 +31249,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Hindi ma-load ang mga prediction.\\n$message';
+    return 'Hindi ma-load ang mga prediction.\n$message';
   }
 
   @override
@@ -31285,7 +31285,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Hindi ma-load ang mga prediction.\\n$e';
+    return 'Hindi ma-load ang mga prediction.\n$e';
   }
 
   @override
@@ -40023,7 +40023,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Hindi ma-load ang VO2max.\\n$error';
+    return 'Hindi ma-load ang VO2max.\n$error';
   }
 
   @override
@@ -41345,7 +41345,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -42058,7 +42058,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return 'Ang \"$name\" at \"$name1\" ay nasa magkaibang superset na.\\n\\nI-break muna ang mga kasalukuyang superset para makagawa ng bagong pairing.';
+    return 'Ang \"$name\" at \"$name1\" ay nasa magkaibang superset na.\n\nI-break muna ang mga kasalukuyang superset para makagawa ng bagong pairing.';
   }
 
   @override
@@ -42068,7 +42068,7 @@ class AppLocalizationsTl extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'I-block ang \"$name\" sa lahat ng susunod na AI recommendation?\\n\\n';
+    return 'I-block ang \"$name\" sa lahat ng susunod na AI recommendation?\n\n';
   }
 
   @override

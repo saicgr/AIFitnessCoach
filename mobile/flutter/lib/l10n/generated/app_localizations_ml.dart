@@ -2093,7 +2093,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'സെറ്റുകൾ രേഖപ്പെടുത്തുക: 135*8, 145*6, +10...\\nവ്യായാമം ചേർക്കുക: 3x10 ഡെഡ്‌ലിഫ്റ്റ് 135-ൽ';
+      'സെറ്റുകൾ രേഖപ്പെടുത്തുക: 135*8, 145*6, +10...\nവ്യായാമം ചേർക്കുക: 3x10 ഡെഡ്‌ലിഫ്റ്റ് 135-ൽ';
 
   @override
   String get aiTextInputLogSetsAddExercises =>
@@ -3471,11 +3471,11 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'ചലഞ്ചുകൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\\nദയവായി വീണ്ടും ശ്രമിക്കുക.';
+      'ചലഞ്ചുകൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\nദയവായി വീണ്ടും ശ്രമിക്കുക.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'നിങ്ങളുടെ ചലഞ്ചുകൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\\nദയവായി വീണ്ടും ശ്രമിക്കുക.';
+      'നിങ്ങളുടെ ചലഞ്ചുകൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\nദയവായി വീണ്ടും ശ്രമിക്കുക.';
 
   @override
   String get challengesCreateChallenge => 'ചലഞ്ച് സൃഷ്ടിക്കുക';
@@ -5834,7 +5834,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'നിങ്ങൾ മെച്ചപ്പെടുത്താൻ ആഗ്രഹിക്കുന്ന പ്രത്യേക കഴിവുകളോ ലക്ഷ്യങ്ങളോ ചേർക്കുക.\\nശരിയായ വ്യായാമങ്ങൾ കണ്ടെത്താൻ AI സഹായിക്കും.';
+      'നിങ്ങൾ മെച്ചപ്പെടുത്താൻ ആഗ്രഹിക്കുന്ന പ്രത്യേക കഴിവുകളോ ലക്ഷ്യങ്ങളോ ചേർക്കുക.\nശരിയായ വ്യായാമങ്ങൾ കണ്ടെത്താൻ AI സഹായിക്കും.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI-ജനറേറ്റഡ് കീവേഡുകൾ';
@@ -6838,7 +6838,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return '$storeName-ൽ നിന്ന് റദ്ദാക്കുന്നതുവരെ നിങ്ങൾക്ക് ബില്ലിംഗ് തുടരും.\\n\\n';
+    return '$storeName-ൽ നിന്ന് റദ്ദാക്കുന്നതുവരെ നിങ്ങൾക്ക് ബില്ലിംഗ് തുടരും.\n\n';
   }
 
   @override
@@ -11306,7 +11306,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'നിങ്ങളുടെ ഉപകരണങ്ങളെക്കുറിച്ചോ മുൻഗണനകളെക്കുറിച്ചോ വിവരിക്കുക\\nഉദാഹരണത്തിന്, \"എനിക്ക് തോളിൽ വേദനയുണ്ട്, ബോഡി വെയ്റ്റ് മാത്രം മതി\"';
+      'നിങ്ങളുടെ ഉപകരണങ്ങളെക്കുറിച്ചോ മുൻഗണനകളെക്കുറിച്ചോ വിവരിക്കുക\nഉദാഹരണത്തിന്, \"എനിക്ക് തോളിൽ വേദനയുണ്ട്, ബോഡി വെയ്റ്റ് മാത്രം മതി\"';
 
   @override
   String get exerciseSwapSheetEGIOnly =>
@@ -16184,7 +16184,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\" കണ്ടെത്തുക\\n';
+    return '3. \"$appName\" കണ്ടെത്തുക\n';
   }
 
   @override
@@ -18406,7 +18406,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'ഇമ്പോർട്ട് ചെയ്തു:\\n$summary';
+    return 'ഇമ്പോർട്ട് ചെയ്തു:\n$summary';
   }
 
   @override
@@ -22846,7 +22846,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'നിങ്ങളുടെ സംഭാഷണങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\\nദയവായി പിന്നീട് വീണ്ടും ശ്രമിക്കുക.';
+      'നിങ്ങളുടെ സംഭാഷണങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\nദയവായി പിന്നീട് വീണ്ടും ശ്രമിക്കുക.';
 
   @override
   String get messagesFailedToLoadMessages =>
@@ -22867,7 +22867,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'സുഹൃത്തുക്കളുമായി സംഭാഷണം തുടങ്ങൂ!\\nനിങ്ങളുടെ സന്ദേശങ്ങൾ ഇവിടെ കാണാം.';
+      'സുഹൃത്തുക്കളുമായി സംഭാഷണം തുടങ്ങൂ!\nനിങ്ങളുടെ സന്ദേശങ്ങൾ ഇവിടെ കാണാം.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'ഈ ദിവസത്തെ വിവരങ്ങൾ ലഭ്യമല്ല';
@@ -27780,7 +27780,7 @@ class AppLocalizationsMl extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'നിങ്ങൾ ട്രെയിൻ ചെയ്യുമ്പോൾ ബോഡി';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'അൺപിൻ ചെയ്യുക';
@@ -28859,7 +28859,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'ഇത് നിങ്ങളുടെ വരാനിരിക്കുന്ന അപൂർണ്ണമായ വർക്കൗട്ടുകൾ ഇല്ലാതാക്കുകയും നിങ്ങളുടെ നിലവിലെ പ്രോഗ്രാം ക്രമീകരണങ്ങൾ ഉപയോഗിച്ച് പുതിയവ ജനറേറ്റ് ചെയ്യുകയും ചെയ്യും.\\n\\nപൂർത്തിയാക്കിയ വർക്കൗട്ടുകളെ ഇത് ബാധിക്കില്ല.';
+      'ഇത് നിങ്ങളുടെ വരാനിരിക്കുന്ന അപൂർണ്ണമായ വർക്കൗട്ടുകൾ ഇല്ലാതാക്കുകയും നിങ്ങളുടെ നിലവിലെ പ്രോഗ്രാം ക്രമീകരണങ്ങൾ ഉപയോഗിച്ച് പുതിയവ ജനറേറ്റ് ചെയ്യുകയും ചെയ്യും.\n\nപൂർത്തിയാക്കിയ വർക്കൗട്ടുകളെ ഇത് ബാധിക്കില്ല.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -29369,7 +29369,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'ഒരു\\nട്രാൻസ്ഫോർമേഷൻ\\nപഠനം';
+      'ഒരു\nട്രാൻസ്ഫോർമേഷൻ\nപഠനം';
 
   @override
   String get progressShareTemplatesBreaking => 'ബ്രേക്കിംഗ്';
@@ -29415,7 +29415,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nവർക്കൗട്ടുകൾ';
+    return '+$totalWorkouts\nവർക്കൗട്ടുകൾ';
   }
 
   @override
@@ -29471,7 +29471,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#ട്രാൻസ്ഫോർമേഷൻ\\nചൊവ്വ';
+      '#ട്രാൻസ്ഫോർമേഷൻ\nചൊവ്വ';
 
   @override
   String get progressShareTemplatesTransformed => 'മാറ്റം സംഭവിച്ചു';
@@ -31447,7 +31447,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'പ്രവചനങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\\n$message';
+    return 'പ്രവചനങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\n$message';
   }
 
   @override
@@ -31483,7 +31483,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'പ്രവചനങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\\n$e';
+    return 'പ്രവചനങ്ങൾ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.\n$e';
   }
 
   @override
@@ -37408,7 +37408,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get strengthOverviewCardYourOverallFitnessScore =>
-      'നിങ്ങളുടെ മൊത്തത്തിലുള്ള ഫിറ്റ്നസ് സ്കോർ കണക്കാക്കുന്നത് ഇങ്ങനെയാണ്:\\nശക്തി 40% + സ്ഥിരത 30% + പോഷകാഹാരം 20% + റെഡിനസ് 10%';
+      'നിങ്ങളുടെ മൊത്തത്തിലുള്ള ഫിറ്റ്നസ് സ്കോർ കണക്കാക്കുന്നത് ഇങ്ങനെയാണ്:\nശക്തി 40% + സ്ഥിരത 30% + പോഷകാഹാരം 20% + റെഡിനസ് 10%';
 
   @override
   String get strengthOverviewCardYourStrengthScore0 =>
@@ -40270,7 +40270,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max ലോഡ് ചെയ്യാൻ സാധിച്ചില്ല.\\n$error';
+    return 'VO2max ലോഡ് ചെയ്യാൻ സാധിച്ചില്ല.\n$error';
   }
 
   @override
@@ -41594,7 +41594,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -42310,7 +42310,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\", \"$name1\" എന്നിവ ഇതിനകം വ്യത്യസ്ത സൂപ്പർസെറ്റുകളിലാണ്.\\n\\nപുതിയൊരു ജോഡി ഉണ്ടാക്കാൻ നിലവിലുള്ള സൂപ്പർസെറ്റുകൾ ആദ്യം ഒഴിവാക്കുക.';
+    return '\"$name\", \"$name1\" എന്നിവ ഇതിനകം വ്യത്യസ്ത സൂപ്പർസെറ്റുകളിലാണ്.\n\nപുതിയൊരു ജോഡി ഉണ്ടാക്കാൻ നിലവിലുള്ള സൂപ്പർസെറ്റുകൾ ആദ്യം ഒഴിവാക്കുക.';
   }
 
   @override
@@ -42320,7 +42320,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'ഭാവിയിലെ എല്ലാ AI നിർദ്ദേശങ്ങളിൽ നിന്നും \"$name\" ബ്ലോക്ക് ചെയ്യണോ?\\n\\n';
+    return 'ഭാവിയിലെ എല്ലാ AI നിർദ്ദേശങ്ങളിൽ നിന്നും \"$name\" ബ്ലോക്ക് ചെയ്യണോ?\n\n';
   }
 
   @override
@@ -42391,7 +42391,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get workoutGalleryCompleteAWorkoutAnd =>
-      'ഒരു വർക്കൗട്ട് പൂർത്തിയാക്കി അത് ഷെയർ ചെയ്യൂ\\nനിങ്ങളുടെ ഗാലറി തുടങ്ങാൻ';
+      'ഒരു വർക്കൗട്ട് പൂർത്തിയാക്കി അത് ഷെയർ ചെയ്യൂ\nനിങ്ങളുടെ ഗാലറി തുടങ്ങാൻ';
 
   @override
   String get workoutGalleryDeleteImage => 'ചിത്രം നീക്കം ചെയ്യണോ?';
@@ -43366,7 +43366,7 @@ class AppLocalizationsMl extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'വാം അപ്പ് ചെയ്യുന്നത് പരിക്കുകൾ തടയാനും പ്രകടനം മെച്ചപ്പെടുത്താനും സഹായിക്കുന്നു.\\n\\nനിർദ്ദേശിക്കുന്നത്: വർക്കിംഗ് സെറ്റുകൾക്ക് മുമ്പ് 1-2 ലഘുവായ സെറ്റുകൾ.';
+      'വാം അപ്പ് ചെയ്യുന്നത് പരിക്കുകൾ തടയാനും പ്രകടനം മെച്ചപ്പെടുത്താനും സഹായിക്കുന്നു.\n\nനിർദ്ദേശിക്കുന്നത്: വർക്കിംഗ് സെറ്റുകൾക്ക് മുമ്പ് 1-2 ലഘുവായ സെറ്റുകൾ.';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';

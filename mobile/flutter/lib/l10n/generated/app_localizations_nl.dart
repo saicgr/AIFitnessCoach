@@ -2071,7 +2071,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Log sets: 135*8, 145*6, +10...\\nVoeg oefening toe: 3x10 deadlift op 135';
+      'Log sets: 135*8, 145*6, +10...\nVoeg oefening toe: 3x10 deadlift op 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Log sets / Voeg oefeningen toe';
@@ -3437,11 +3437,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Kon uitdagingen niet laden.\\nProbeer het opnieuw.';
+      'Kon uitdagingen niet laden.\nProbeer het opnieuw.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Kon jouw uitdagingen niet laden.\\nProbeer het opnieuw.';
+      'Kon jouw uitdagingen niet laden.\nProbeer het opnieuw.';
 
   @override
   String get challengesCreateChallenge => 'Uitdaging aanmaken';
@@ -4926,7 +4926,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get consistencyCardConsistency => 'CONSISTENTIE';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Beste dag\\nStreak';
+  String get consistencyCardDayBestNstreak => 'Beste dag\nStreak';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'van de dagen dat je er was';
@@ -6755,7 +6755,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Je blijft betalen tenzij je eerst annuleert via de $storeName.\\n\\n';
+    return 'Je blijft betalen tenzij je eerst annuleert via de $storeName.\n\n';
   }
 
   @override
@@ -12687,11 +12687,11 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'Voltooi workouts om ze hier te delen!\\nVolg vrienden om hun workouts ook te zien.';
+      'Voltooi workouts om ze hier te delen!\nVolg vrienden om hun workouts ook te zien.';
 
   @override
   String get feedCouldNotLoadYour =>
-      'Kon je activiteitenfeed niet laden.\\nProbeer het later opnieuw.';
+      'Kon je activiteitenfeed niet laden.\nProbeer het later opnieuw.';
 
   @override
   String get feedCreateYourFirstPost => 'Maak je eerste bericht!';
@@ -15955,7 +15955,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Zoek \"$appName\"\\n';
+    return '3. Zoek \"$appName\"\n';
   }
 
   @override
@@ -18146,7 +18146,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Geïmporteerd:\\n$summary';
+    return 'Geïmporteerd:\n$summary';
   }
 
   @override
@@ -22536,7 +22536,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Kon je gesprekken niet laden.\\nProbeer het later opnieuw.';
+      'Kon je gesprekken niet laden.\nProbeer het later opnieuw.';
 
   @override
   String get messagesFailedToLoadMessages => 'Laden van berichten mislukt';
@@ -22555,7 +22555,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Start een gesprek met je vrienden!\\nJe berichten verschijnen hier.';
+      'Start een gesprek met je vrienden!\nJe berichten verschijnen hier.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Geen gegevens voor deze dag';
@@ -27407,7 +27407,7 @@ class AppLocalizationsNl extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Wanneer je traint body';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Losmaken';
@@ -28957,7 +28957,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'EEN\\nTRANSFORMATIE\\nSTUDIE';
+      'EEN\nTRANSFORMATIE\nSTUDIE';
 
   @override
   String get progressShareTemplatesBreaking => 'BREAKING';
@@ -29002,7 +29002,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nWORKOUTS';
+    return '+$totalWorkouts\nWORKOUTS';
   }
 
   @override
@@ -29058,7 +29058,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATIE\\nDINSDAG';
+      '#TRANSFORMATIE\nDINSDAG';
 
   @override
   String get progressShareTemplatesTransformed => 'GETRANSFORMEERD';
@@ -29410,7 +29410,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Even geduld terwijl we je verbinden\\nmet een ondersteuningsmedewerker';
+      'Even geduld terwijl we je verbinden\nmet een ondersteuningsmedewerker';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31008,7 +31008,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Kon voorspellingen niet laden.\\n$message';
+    return 'Kon voorspellingen niet laden.\n$message';
   }
 
   @override
@@ -31043,7 +31043,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Kon voorspellingen niet laden.\\n$e';
+    return 'Kon voorspellingen niet laden.\n$e';
   }
 
   @override
@@ -39706,7 +39706,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Kon VO2max niet laden.\\n$error';
+    return 'Kon VO2max niet laden.\n$error';
   }
 
   @override
@@ -41715,7 +41715,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" en \"$name1\" zitten al in verschillende supersets.\\n\\nVerbreek eerst de bestaande supersets om een nieuwe combinatie te maken.';
+    return '\"$name\" en \"$name1\" zitten al in verschillende supersets.\n\nVerbreek eerst de bestaande supersets om een nieuwe combinatie te maken.';
   }
 
   @override
@@ -44169,7 +44169,7 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'Nog geen klassementgegevens.\\nBegin met het verdienen van XP om te stijgen in de ranglijst!';
+      'Nog geen klassementgegevens.\nBegin met het verdienen van XP om te stijgen in de ranglijst!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

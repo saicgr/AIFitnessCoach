@@ -2075,7 +2075,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Ghi set: 135*8, 145*6, +10...\\nThêm bài tập: 3x10 deadlift ở mức 135';
+      'Ghi set: 135*8, 145*6, +10...\nThêm bài tập: 3x10 deadlift ở mức 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Ghi set / Thêm bài tập';
@@ -3437,11 +3437,11 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Không thể tải thử thách.\\nVui lòng thử lại.';
+      'Không thể tải thử thách.\nVui lòng thử lại.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Không thể tải thử thách của bạn.\\nVui lòng thử lại.';
+      'Không thể tải thử thách của bạn.\nVui lòng thử lại.';
 
   @override
   String get challengesCreateChallenge => 'Tạo thử thách';
@@ -3451,7 +3451,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Tham gia thử thách để cạnh tranh với\\nbạn bè và đạt mục tiêu thể hình của bạn!';
+      'Tham gia thử thách để cạnh tranh với\nbạn bè và đạt mục tiêu thể hình của bạn!';
 
   @override
   String get challengesMyChallenges => 'Thử thách của tôi';
@@ -6755,7 +6755,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Bạn sẽ tiếp tục bị tính phí trừ khi bạn hủy từ $storeName trước.\\n\\n';
+    return 'Bạn sẽ tiếp tục bị tính phí trừ khi bạn hủy từ $storeName trước.\n\n';
   }
 
   @override
@@ -13997,7 +13997,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'Theo dõi tâm trạng khi ghi lại bữa ăn\\nđể xem các kiểu mẫu và thông tin chi tiết';
+      'Theo dõi tâm trạng khi ghi lại bữa ăn\nđể xem các kiểu mẫu và thông tin chi tiết';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'Bữa ăn đã theo dõi';
@@ -14052,7 +14052,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'Chúng tôi sẽ xem xét và cập nhật trong vòng 48 giờ.\\nCảm ơn bạn đã giúp cải thiện dữ liệu của chúng tôi!';
+      'Chúng tôi sẽ xem xét và cập nhật trong vòng 48 giờ.\nCảm ơn bạn đã giúp cải thiện dữ liệu của chúng tôi!';
 
   @override
   String get foodReportWhatFoodDidYou => 'Bạn thực sự muốn tìm thực phẩm nào?';
@@ -14358,7 +14358,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Lịch sử tập luyện, PR và danh hiệu\\nsẽ được hiển thị tại đây.';
+      'Lịch sử tập luyện, PR và danh hiệu\nsẽ được hiển thị tại đây.';
 
   @override
   String get friendSearchFindFriends => 'Tìm bạn bè';
@@ -14396,19 +14396,19 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Thêm bạn bè để xem các buổi tập của họ\\nvà cùng nhau tham gia thử thách!';
+      'Thêm bạn bè để xem các buổi tập của họ\nvà cùng nhau tham gia thử thách!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Không thể tải danh sách người dùng bạn đang theo dõi.\\nVui lòng thử lại.';
+      'Không thể tải danh sách người dùng bạn đang theo dõi.\nVui lòng thử lại.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Không thể tải danh sách bạn bè của bạn.\\nVui lòng thử lại.';
+      'Không thể tải danh sách bạn bè của bạn.\nVui lòng thử lại.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Không thể tải danh sách người theo dõi của bạn.\\nVui lòng thử lại.';
+      'Không thể tải danh sách người theo dõi của bạn.\nVui lòng thử lại.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Không thể tải người theo dõi';
@@ -14422,7 +14422,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Theo dõi bạn bè để xem các buổi tập của họ\\nvà cùng nhau giữ động lực!';
+      'Theo dõi bạn bè để xem các buổi tập của họ\nvà cùng nhau giữ động lực!';
 
   @override
   String get friendsFollowers => 'Người theo dõi';
@@ -14435,7 +14435,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Hãy tiếp tục tập luyện hăng say nhé!\\nBạn bè sẽ muốn theo dõi tiến trình của bạn.';
+      'Hãy tiếp tục tập luyện hăng say nhé!\nBạn bè sẽ muốn theo dõi tiến trình của bạn.';
 
   @override
   String get friendsNoFollowersYet => 'Chưa có người theo dõi';
@@ -15189,7 +15189,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'Tính năng chọn địa điểm dựa trên bản đồ chưa khả dụng.\\nHiện tại, hãy thiết lập tên phòng tập của bạn trong hồ sơ.';
+      'Tính năng chọn địa điểm dựa trên bản đồ chưa khả dụng.\nHiện tại, hãy thiết lập tên phòng tập của bạn trong hồ sơ.';
 
   @override
   String get gymProfileSwitcherActive => 'Đang hoạt động';
@@ -15939,7 +15939,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Tìm \"$appName\"\\n';
+    return '3. Tìm \"$appName\"\n';
   }
 
   @override
@@ -18128,7 +18128,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Đã nhập:\\n$summary';
+    return 'Đã nhập:\n$summary';
   }
 
   @override
@@ -22506,7 +22506,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Không thể tải các cuộc trò chuyện của bạn.\\nVui lòng thử lại sau.';
+      'Không thể tải các cuộc trò chuyện của bạn.\nVui lòng thử lại sau.';
 
   @override
   String get messagesFailedToLoadMessages => 'Không tải được tin nhắn';
@@ -22526,7 +22526,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Bắt đầu trò chuyện với bạn bè của bạn!\\nTin nhắn của bạn sẽ xuất hiện tại đây.';
+      'Bắt đầu trò chuyện với bạn bè của bạn!\nTin nhắn của bạn sẽ xuất hiện tại đây.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Không có dữ liệu cho ngày này';
@@ -27377,7 +27377,7 @@ class AppLocalizationsVi extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Nội dung khi bạn tập luyện';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Bỏ ghim';
@@ -28432,7 +28432,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Thao tác này sẽ xóa các buổi tập chưa hoàn thành sắp tới của bạn và tạo các buổi tập mới bằng cài đặt chương trình hiện tại.\\n\\nCác buổi tập đã hoàn thành sẽ KHÔNG bị ảnh hưởng.';
+      'Thao tác này sẽ xóa các buổi tập chưa hoàn thành sắp tới của bạn và tạo các buổi tập mới bằng cài đặt chương trình hiện tại.\n\nCác buổi tập đã hoàn thành sẽ KHÔNG bị ảnh hưởng.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28937,7 +28937,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'MỘT\\nNGHIÊN CỨU\\nTHAY ĐỔI';
+      'MỘT\nNGHIÊN CỨU\nTHAY ĐỔI';
 
   @override
   String get progressShareTemplatesBreaking => 'ĐỘT PHÁ';
@@ -28983,7 +28983,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nBUỔI TẬP';
+    return '+$totalWorkouts\nBUỔI TẬP';
   }
 
   @override
@@ -29038,8 +29038,7 @@ class AppLocalizationsVi extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday =>
-      '#THAYĐỔI\\nTHỨ BA';
+  String get progressShareTemplatesTransformationNtuesday => '#THAYĐỔI\nTHỨ BA';
 
   @override
   String get progressShareTemplatesTransformed => 'ĐÃ THAY ĐỔI';
@@ -29390,7 +29389,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Vui lòng đợi trong khi chúng tôi kết nối bạn\\nvới nhân viên hỗ trợ';
+      'Vui lòng đợi trong khi chúng tôi kết nối bạn\nvới nhân viên hỗ trợ';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30985,7 +30984,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Không thể tải dự đoán.\\n$message';
+    return 'Không thể tải dự đoán.\n$message';
   }
 
   @override
@@ -31020,7 +31019,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Không thể tải dự đoán.\\n$e';
+    return 'Không thể tải dự đoán.\n$e';
   }
 
   @override
@@ -39702,7 +39701,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Không thể tải VO2max.\\n$error';
+    return 'Không thể tải VO2max.\n$error';
   }
 
   @override
@@ -41013,7 +41012,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — Zealova\\n(url)';
+    return ') — Zealova\n(url)';
   }
 
   @override
@@ -41711,7 +41710,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" và \"$name1\" đã nằm trong các siêu tập (superset) khác nhau.\\n\\nHãy hủy các siêu tập hiện tại trước để tạo cặp mới.';
+    return '\"$name\" và \"$name1\" đã nằm trong các siêu tập (superset) khác nhau.\n\nHãy hủy các siêu tập hiện tại trước để tạo cặp mới.';
   }
 
   @override
@@ -41721,7 +41720,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Chặn \"$name\" khỏi tất cả các đề xuất AI trong tương lai?\\n\\n';
+    return 'Chặn \"$name\" khỏi tất cả các đề xuất AI trong tương lai?\n\n';
   }
 
   @override
@@ -42747,7 +42746,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Khởi động giúp ngăn ngừa chấn thương và cải thiện hiệu suất.\\n\\nKhuyến nghị: 1-2 hiệp nhẹ trước các hiệp chính.';
+      'Khởi động giúp ngăn ngừa chấn thương và cải thiện hiệu suất.\n\nKhuyến nghị: 1-2 hiệp nhẹ trước các hiệp chính.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 lbs';
@@ -44168,7 +44167,7 @@ class AppLocalizationsVi extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'Chưa có dữ liệu bảng xếp hạng.\\nBắt đầu kiếm XP để leo hạng!';
+      'Chưa có dữ liệu bảng xếp hạng.\nBắt đầu kiếm XP để leo hạng!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

@@ -3455,11 +3455,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Não foi possível carregar os desafios.\\nTente novamente.';
+      'Não foi possível carregar os desafios.\nTente novamente.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Não foi possível carregar seus desafios.\\nTente novamente.';
+      'Não foi possível carregar seus desafios.\nTente novamente.';
 
   @override
   String get challengesCreateChallenge => 'Criar desafio';
@@ -3469,7 +3469,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Participe de um desafio para competir com\\namigos e alcançar suas metas fitness!';
+      'Participe de um desafio para competir com\namigos e alcançar suas metas fitness!';
 
   @override
   String get challengesMyChallenges => 'Meus desafios';
@@ -4953,7 +4953,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get consistencyCardConsistency => 'CONSISTÊNCIA';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Melhor Dia\\nSequência';
+  String get consistencyCardDayBestNstreak => 'Melhor Dia\nSequência';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'dos dias em que você apareceu';
@@ -14430,7 +14430,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'O histórico de treinos, PRs e troféus\\nserão exibidos aqui.';
+      'O histórico de treinos, PRs e troféus\nserão exibidos aqui.';
 
   @override
   String get friendSearchFindFriends => 'Encontrar amigos';
@@ -14468,19 +14468,19 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Adicione amigos para ver seus treinos\\ne competir em desafios juntos!';
+      'Adicione amigos para ver seus treinos\ne competir em desafios juntos!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Não foi possível carregar os usuários que você segue.\\nPor favor, tente novamente.';
+      'Não foi possível carregar os usuários que você segue.\nPor favor, tente novamente.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Não foi possível carregar sua lista de amigos.\\nPor favor, tente novamente.';
+      'Não foi possível carregar sua lista de amigos.\nPor favor, tente novamente.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Não foi possível carregar sua lista de seguidores.\\nPor favor, tente novamente.';
+      'Não foi possível carregar sua lista de seguidores.\nPor favor, tente novamente.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Falha ao carregar seguidores';
@@ -14494,7 +14494,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Siga amigos para ver seus treinos\\ne manter a motivação juntos!';
+      'Siga amigos para ver seus treinos\ne manter a motivação juntos!';
 
   @override
   String get friendsFollowers => 'Seguidores';
@@ -14507,7 +14507,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Continue arrasando nos treinos!\\nSeus amigos vão querer acompanhar seu progresso.';
+      'Continue arrasando nos treinos!\nSeus amigos vão querer acompanhar seu progresso.';
 
   @override
   String get friendsNoFollowersYet => 'Nenhum seguidor ainda';
@@ -16021,7 +16021,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Encontre \"$appName\"\\n';
+    return '3. Encontre \"$appName\"\n';
   }
 
   @override
@@ -18213,7 +18213,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Importado:\\n$summary';
+    return 'Importado:\n$summary';
   }
 
   @override
@@ -22597,7 +22597,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Não foi possível carregar suas conversas.\\nTente novamente mais tarde.';
+      'Não foi possível carregar suas conversas.\nTente novamente mais tarde.';
 
   @override
   String get messagesFailedToLoadMessages => 'Falha ao carregar mensagens';
@@ -22616,7 +22616,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Inicie uma conversa com seus amigos!\\nSuas mensagens aparecerão aqui.';
+      'Inicie uma conversa com seus amigos!\nSuas mensagens aparecerão aqui.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Sem dados para este dia';
@@ -27486,7 +27486,7 @@ class AppLocalizationsPt extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Corpo de quando você treina';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Desafixar';
@@ -29095,7 +29095,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nTREINOS';
+    return '+$totalWorkouts\nTREINOS';
   }
 
   @override
@@ -29151,7 +29151,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMAÇÃO\\nTERÇA-FEIRA';
+      '#TRANSFORMAÇÃO\nTERÇA-FEIRA';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMADO';
@@ -29503,7 +29503,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Por favor, aguarde enquanto conectamos você\\ncom um agente de suporte';
+      'Por favor, aguarde enquanto conectamos você\ncom um agente de suporte';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31140,7 +31140,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Não foi possível carregar as previsões.\\n$e';
+    return 'Não foi possível carregar as previsões.\n$e';
   }
 
   @override
@@ -39840,7 +39840,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Não foi possível carregar o VO2max.\\n$error';
+    return 'Não foi possível carregar o VO2max.\n$error';
   }
 
   @override
@@ -41148,7 +41148,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41855,7 +41855,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" e \"$name1\" já estão em supersets diferentes.\\n\\nQuebre os supersets existentes primeiro para criar um novo emparelhamento.';
+    return '\"$name\" e \"$name1\" já estão em supersets diferentes.\n\nQuebre os supersets existentes primeiro para criar um novo emparelhamento.';
   }
 
   @override
@@ -42895,7 +42895,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'O aquecimento ajuda a prevenir lesões e melhora o desempenho.\\n\\nRecomendado: 1-2 séries mais leves antes das séries de trabalho.';
+      'O aquecimento ajuda a prevenir lesões e melhora o desempenho.\n\nRecomendado: 1-2 séries mais leves antes das séries de trabalho.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 lbs';

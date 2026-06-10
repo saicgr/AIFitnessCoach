@@ -2076,7 +2076,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Cathet set: 135*8, 145*6, +10...\\nTambah latihan: 3x10 deadlift ing 135';
+      'Cathet set: 135*8, 145*6, +10...\nTambah latihan: 3x10 deadlift ing 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Cathet set / Tambah latihan';
@@ -3438,11 +3438,11 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Gagal mbukak tantangan.\\nCoba maneh.';
+      'Gagal mbukak tantangan.\nCoba maneh.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Gagal mbukak tantangan sampeyan.\\nCoba maneh.';
+      'Gagal mbukak tantangan sampeyan.\nCoba maneh.';
 
   @override
   String get challengesCreateChallenge => 'Nggawe Tantangan';
@@ -3452,7 +3452,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Melu tantangan kanggo saingan karo\\nkanca lan nggayuh target fitness sampeyan!';
+      'Melu tantangan kanggo saingan karo\nkanca lan nggayuh target fitness sampeyan!';
 
   @override
   String get challengesMyChallenges => 'Tantanganku';
@@ -5753,7 +5753,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'Tambah katrampilan utawa tujuan khusus sing pengin ditingkatake.\\nAI bakal mbantu nemokake latihan sing pas.';
+      'Tambah katrampilan utawa tujuan khusus sing pengin ditingkatake.\nAI bakal mbantu nemokake latihan sing pas.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'Kata Kunci sing Digawe AI';
@@ -6739,7 +6739,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Sampeyan bakal terus ditagih kajaba sampeyan mbatalake saka $storeName dhisik.\\n\\n';
+    return 'Sampeyan bakal terus ditagih kajaba sampeyan mbatalake saka $storeName dhisik.\n\n';
   }
 
   @override
@@ -9387,7 +9387,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Gawe latihan kustom utawa tandhani favorit\\ning Pustaka → Mine';
+      'Gawe latihan kustom utawa tandhani favorit\ning Pustaka → Mine';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'Gagal nambah latihan';
@@ -14031,7 +14031,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'Kami bakal mriksa lan nganyari sajrone 48 jam.\\nMatur nuwun wis mbantu ningkatake data kita!';
+      'Kami bakal mriksa lan nganyari sajrone 48 jam.\nMatur nuwun wis mbantu ningkatake data kita!';
 
   @override
   String get foodReportWhatFoodDidYou =>
@@ -14336,7 +14336,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Riwayat latihan, PR, lan piala\\nbakal ditampilake ing kene.';
+      'Riwayat latihan, PR, lan piala\nbakal ditampilake ing kene.';
 
   @override
   String get friendSearchFindFriends => 'Golek Kanca';
@@ -14373,19 +14373,19 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Tambah kanca kanggo ndeleng latihan dheweke\\nlan saingan ing tantangan bareng!';
+      'Tambah kanca kanggo ndeleng latihan dheweke\nlan saingan ing tantangan bareng!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Ora bisa mbukak panganggo sing sampeyan tututi.\\nCoba maneh.';
+      'Ora bisa mbukak panganggo sing sampeyan tututi.\nCoba maneh.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Ora bisa mbukak dhaptar kanca sampeyan.\\nCoba maneh.';
+      'Ora bisa mbukak dhaptar kanca sampeyan.\nCoba maneh.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Ora bisa mbukak dhaptar pengikut sampeyan.\\nCoba maneh.';
+      'Ora bisa mbukak dhaptar pengikut sampeyan.\nCoba maneh.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Gagal Mbukak Pengikut';
@@ -14398,7 +14398,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Tututi kanca kanggo ndeleng latihan dheweke\\nlan tetep semangat bareng!';
+      'Tututi kanca kanggo ndeleng latihan dheweke\nlan tetep semangat bareng!';
 
   @override
   String get friendsFollowers => 'Pengikut';
@@ -14411,7 +14411,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Terus semangat latihanmu!\\nKanca-kanca bakal pengin ngetutake progresmu.';
+      'Terus semangat latihanmu!\nKanca-kanca bakal pengin ngetutake progresmu.';
 
   @override
   String get friendsNoFollowersYet => 'Durung Ana Sing Ngetutake';
@@ -15168,7 +15168,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'Pamilih lokasi adhedhasar peta durung kasedhiya.\\nKanggo saiki, atur jeneng gym ing profil.';
+      'Pamilih lokasi adhedhasar peta durung kasedhiya.\nKanggo saiki, atur jeneng gym ing profil.';
 
   @override
   String get gymProfileSwitcherActive => 'Aktif';
@@ -15916,7 +15916,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Goleki \"$appName\"\\n';
+    return '3. Goleki \"$appName\"\n';
   }
 
   @override
@@ -18106,7 +18106,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Wis diimpor:\\n$summary';
+    return 'Wis diimpor:\n$summary';
   }
 
   @override
@@ -18128,7 +18128,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'contone:\\nDumbbells 5-100 lb\\n2x Squat racks\\nLeg press (plate-loaded)\\nTreadmills x4\\nCable station...';
+      'contone:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22487,7 +22487,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Ora bisa mbukak obrolanmu.\\nCoba maneh mengko.';
+      'Ora bisa mbukak obrolanmu.\nCoba maneh mengko.';
 
   @override
   String get messagesFailedToLoadMessages => 'Gagal Mbukak Pesen';
@@ -22507,7 +22507,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Miwiti obrolan karo kanca-kancamu!\\nPesenmu bakal katon ing kene.';
+      'Miwiti obrolan karo kanca-kancamu!\nPesenmu bakal katon ing kene.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Ora ana data kanggo dina iki';
@@ -27351,7 +27351,7 @@ class AppLocalizationsJv extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Isi nalika sampeyan latihan';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Copot sematan';
@@ -28398,7 +28398,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Iki bakal mbusak latihan sing durung rampung lan nggawe sing anyar nggunakake setelan program saiki.\\n\\nLatihan sing wis rampung ORA bakal kena pengaruh.';
+      'Iki bakal mbusak latihan sing durung rampung lan nggawe sing anyar nggunakake setelan program saiki.\n\nLatihan sing wis rampung ORA bakal kena pengaruh.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28943,7 +28943,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nLATIHAN';
+    return '+$totalWorkouts\nLATIHAN';
   }
 
   @override
@@ -28999,7 +28999,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMASI\\nSELASA';
+      '#TRANSFORMASI\nSELASA';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMASI';
@@ -29349,7 +29349,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Mangga ngenteni nalika kita nyambungake sampeyan\\nkaro agen dhukungan';
+      'Mangga ngenteni nalika kita nyambungake sampeyan\nkaro agen dhukungan';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30938,7 +30938,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Ora bisa mbukak prediksi.\\n$message';
+    return 'Ora bisa mbukak prediksi.\n$message';
   }
 
   @override
@@ -30973,7 +30973,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Gagal mbukak prediksi.\\n$e';
+    return 'Gagal mbukak prediksi.\n$e';
   }
 
   @override
@@ -39646,7 +39646,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Gagal mbukak VO2max.\\n$error';
+    return 'Gagal mbukak VO2max.\n$error';
   }
 
   @override
@@ -41650,7 +41650,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" lan \"$name1\" wis ana ing superset sing beda.\\n\\nPedhot superset sing ana dhisik kanggo nggawe pasangan anyar.';
+    return '\"$name\" lan \"$name1\" wis ana ing superset sing beda.\n\nPedhot superset sing ana dhisik kanggo nggawe pasangan anyar.';
   }
 
   @override
@@ -42688,7 +42688,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Pemanasan mbantu nyegah ciloko lan nambah kinerja.\\n\\nDisaranake: 1-2 set luwih entheng sadurunge set latihan.';
+      'Pemanasan mbantu nyegah ciloko lan nambah kinerja.\n\nDisaranake: 1-2 set luwih entheng sadurunge set latihan.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 lbs';
@@ -44104,7 +44104,7 @@ class AppLocalizationsJv extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'Durung ana data papan peringkat.\\nMulai golek XP kanggo munggah peringkat!';
+      'Durung ana data papan peringkat.\nMulai golek XP kanggo munggah peringkat!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

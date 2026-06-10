@@ -6834,7 +6834,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Vous continuerez à être facturé sauf si vous annulez d\'abord via $storeName.\\n\\n';
+    return 'Vous continuerez à être facturé sauf si vous annulez d\'abord via $storeName.\n\n';
   }
 
   @override
@@ -11292,7 +11292,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Décrivez votre équipement ou vos préférences\\npar ex. : \"J\'ai une douleur à l\'épaule, poids du corps uniquement\"';
+      'Décrivez votre équipement ou vos préférences\npar ex. : \"J\'ai une douleur à l\'épaule, poids du corps uniquement\"';
 
   @override
   String get exerciseSwapSheetEGIOnly =>
@@ -14532,7 +14532,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'L\'historique des entraînements, les PR et les trophées\\nseront affichés ici.';
+      'L\'historique des entraînements, les PR et les trophées\nseront affichés ici.';
 
   @override
   String get friendSearchFindFriends => 'Trouver des amis';
@@ -14570,19 +14570,19 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Ajoutez des amis pour voir leurs entraînements\\net participer ensemble à des défis !';
+      'Ajoutez des amis pour voir leurs entraînements\net participer ensemble à des défis !';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Impossible de charger les utilisateurs que vous suivez.\\nVeuillez réessayer.';
+      'Impossible de charger les utilisateurs que vous suivez.\nVeuillez réessayer.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Impossible de charger votre liste d\'amis.\\nVeuillez réessayer.';
+      'Impossible de charger votre liste d\'amis.\nVeuillez réessayer.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Impossible de charger votre liste d\'abonnés.\\nVeuillez réessayer.';
+      'Impossible de charger votre liste d\'abonnés.\nVeuillez réessayer.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Échec du chargement des abonnés';
@@ -14596,7 +14596,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Suivez des amis pour voir leurs entraînements\\net rester motivés ensemble !';
+      'Suivez des amis pour voir leurs entraînements\net rester motivés ensemble !';
 
   @override
   String get friendsFollowers => 'Abonnés';
@@ -14609,7 +14609,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Continuez à tout donner dans vos entraînements !\\nVos amis voudront suivre vos progrès.';
+      'Continuez à tout donner dans vos entraînements !\nVos amis voudront suivre vos progrès.';
 
   @override
   String get friendsNoFollowersYet => 'Aucun abonné pour le moment';
@@ -16136,7 +16136,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Trouvez \"$appName\"\\n';
+    return '3. Trouvez \"$appName\"\n';
   }
 
   @override
@@ -22773,7 +22773,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Impossible de charger vos conversations.\\nVeuillez réessayer plus tard.';
+      'Impossible de charger vos conversations.\nVeuillez réessayer plus tard.';
 
   @override
   String get messagesFailedToLoadMessages => 'Échec du chargement des messages';
@@ -22793,7 +22793,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Commencez une conversation avec vos amis !\\nVos messages apparaîtront ici.';
+      'Commencez une conversation avec vos amis !\nVos messages apparaîtront ici.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Aucune donnée pour ce jour';
@@ -27705,7 +27705,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Corps quand vous vous entraînez';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Détacher';
@@ -29380,7 +29380,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nMARDI';
+      '#TRANSFORMATION\nMARDI';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMÉ';
@@ -29735,7 +29735,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Veuillez patienter pendant que nous vous mettons en relation\\navec un agent du support';
+      'Veuillez patienter pendant que nous vous mettons en relation\navec un agent du support';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31347,7 +31347,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Impossible de charger les prédictions.\\n$message';
+    return 'Impossible de charger les prédictions.\n$message';
   }
 
   @override
@@ -31383,7 +31383,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Impossible de charger les prédictions.\\n$e';
+    return 'Impossible de charger les prédictions.\n$e';
   }
 
   @override
@@ -40151,7 +40151,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Impossible de charger la VO2max.\\n$error';
+    return 'Impossible de charger la VO2max.\n$error';
   }
 
   @override
@@ -43240,7 +43240,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'L\'échauffement aide à prévenir les blessures et améliore les performances.\\n\\nRecommandé : 1 à 2 séries plus légères avant de travailler les séries.';
+      'L\'échauffement aide à prévenir les blessures et améliore les performances.\n\nRecommandé : 1 à 2 séries plus légères avant de travailler les séries.';
 
   @override
   String get workoutShowcase12450Lbs => '12 450 lbs';

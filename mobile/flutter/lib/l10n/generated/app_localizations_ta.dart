@@ -3486,11 +3486,11 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'சவால்களை ஏற்ற முடியவில்லை.\\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
+      'சவால்களை ஏற்ற முடியவில்லை.\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'உங்கள் சவால்களை ஏற்ற முடியவில்லை.\\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
+      'உங்கள் சவால்களை ஏற்ற முடியவில்லை.\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
   String get challengesCreateChallenge => 'சவாலை உருவாக்கு';
@@ -3500,7 +3500,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'நண்பர்களுடன் போட்டியிடவும் உங்கள் உடற்பயிற்சி இலக்குகளை அடையவும்\\nஒரு சவாலில் சேருங்கள்!';
+      'நண்பர்களுடன் போட்டியிடவும் உங்கள் உடற்பயிற்சி இலக்குகளை அடையவும்\nஒரு சவாலில் சேருங்கள்!';
 
   @override
   String get challengesMyChallenges => 'எனது சவால்கள்';
@@ -5007,7 +5007,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get consistencyCardConsistency => 'நிலைத்தன்மை';
 
   @override
-  String get consistencyCardDayBestNstreak => 'சிறந்த நாள்\\nதொடர்';
+  String get consistencyCardDayBestNstreak => 'சிறந்த நாள்\nதொடர்';
 
   @override
   String get consistencyCardOfDaysYouShowed =>
@@ -14560,7 +14560,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'உடற்பயிற்சி வரலாறு, PRs மற்றும் கோப்பைகள்\\nஇங்கே காட்டப்படும்.';
+      'உடற்பயிற்சி வரலாறு, PRs மற்றும் கோப்பைகள்\nஇங்கே காட்டப்படும்.';
 
   @override
   String get friendSearchFindFriends => 'நண்பர்களைக் கண்டுபிடி';
@@ -14598,19 +14598,19 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'நண்பர்களின் உடற்பயிற்சிகளைப் பார்க்க\\nமற்றும் சவால்களில் ஒன்றாகப் போட்டியிட நண்பர்களைச் சேர்க்கவும்!';
+      'நண்பர்களின் உடற்பயிற்சிகளைப் பார்க்க\nமற்றும் சவால்களில் ஒன்றாகப் போட்டியிட நண்பர்களைச் சேர்க்கவும்!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'நீங்கள் பின்தொடரும் பயனர்களை ஏற்ற முடியவில்லை.\\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
+      'நீங்கள் பின்தொடரும் பயனர்களை ஏற்ற முடியவில்லை.\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'உங்கள் நண்பர்கள் பட்டியலை ஏற்ற முடியவில்லை.\\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
+      'உங்கள் நண்பர்கள் பட்டியலை ஏற்ற முடியவில்லை.\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'உங்கள் பின்தொடர்பவர்கள் பட்டியலை ஏற்ற முடியவில்லை.\\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
+      'உங்கள் பின்தொடர்பவர்கள் பட்டியலை ஏற்ற முடியவில்லை.\nதயவுசெய்து மீண்டும் முயற்சிக்கவும்.';
 
   @override
   String get friendsFailedToLoadFollowers =>
@@ -14625,7 +14625,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'நண்பர்களின் உடற்பயிற்சிகளைப் பார்க்க\\nமற்றும் ஒன்றாக ஊக்கத்துடன் இருக்க நண்பர்களைப் பின்தொடரவும்!';
+      'நண்பர்களின் உடற்பயிற்சிகளைப் பார்க்க\nமற்றும் ஒன்றாக ஊக்கத்துடன் இருக்க நண்பர்களைப் பின்தொடரவும்!';
 
   @override
   String get friendsFollowers => 'பின்தொடர்பவர்கள்';
@@ -14638,7 +14638,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'உங்கள் உடற்பயிற்சிகளைத் தொடர்ந்து சிறப்பாகச் செய்யுங்கள்!\\nநண்பர்கள் உங்கள் முன்னேற்றத்தைப் பின்தொடர விரும்புவார்கள்.';
+      'உங்கள் உடற்பயிற்சிகளைத் தொடர்ந்து சிறப்பாகச் செய்யுங்கள்!\nநண்பர்கள் உங்கள் முன்னேற்றத்தைப் பின்தொடர விரும்புவார்கள்.';
 
   @override
   String get friendsNoFollowersYet => 'இன்னும் பின்தொடர்பவர்கள் இல்லை';
@@ -16176,7 +16176,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\"-ஐக் கண்டறியவும்\\n';
+    return '3. \"$appName\"-ஐக் கண்டறியவும்\n';
   }
 
   @override
@@ -18405,7 +18405,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'இறக்குமதி செய்யப்பட்டது:\\n$summary';
+    return 'இறக்குமதி செய்யப்பட்டது:\n$summary';
   }
 
   @override
@@ -22846,7 +22846,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'உங்கள் உரையாடல்களை ஏற்ற முடியவில்லை.\\nதயவுசெய்து பிறகு மீண்டும் முயற்சிக்கவும்.';
+      'உங்கள் உரையாடல்களை ஏற்ற முடியவில்லை.\nதயவுசெய்து பிறகு மீண்டும் முயற்சிக்கவும்.';
 
   @override
   String get messagesFailedToLoadMessages => 'செய்திகளை ஏற்ற முடியவில்லை';
@@ -22866,7 +22866,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'உங்கள் நண்பர்களுடன் உரையாடலைத் தொடங்குங்கள்!\\nஉங்கள் செய்திகள் இங்கே தோன்றும்.';
+      'உங்கள் நண்பர்களுடன் உரையாடலைத் தொடங்குங்கள்!\nஉங்கள் செய்திகள் இங்கே தோன்றும்.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'இந்த நாளுக்குத் தரவு இல்லை';
@@ -27766,7 +27766,7 @@ class AppLocalizationsTa extends AppLocalizations {
       'நீங்கள் பயிற்சி செய்யும்போது உடலின் நிலை';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'பின் நீக்கவும்';
@@ -29394,7 +29394,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nஉடற்பயிற்சிகள்';
+    return '+$totalWorkouts\nஉடற்பயிற்சிகள்';
   }
 
   @override
@@ -31422,7 +31422,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'கணிப்புகளை ஏற்ற முடியவில்லை.\\n$message';
+    return 'கணிப்புகளை ஏற்ற முடியவில்லை.\n$message';
   }
 
   @override
@@ -31457,7 +31457,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'கணிப்புகளை ஏற்ற முடியவில்லை.\\n$e';
+    return 'கணிப்புகளை ஏற்ற முடியவில்லை.\n$e';
   }
 
   @override
@@ -40264,7 +40264,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max-ஐ ஏற்ற முடியவில்லை.\\n$error';
+    return 'VO2max-ஐ ஏற்ற முடியவில்லை.\n$error';
   }
 
   @override
@@ -42308,7 +42308,7 @@ class AppLocalizationsTa extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" மற்றும் \"$name1\" ஏற்கனவே வெவ்வேறு சூப்பர்செட்களில் உள்ளன.\\n\\nபுதிய ஜோடியை உருவாக்க முதலில் ஏற்கனவே உள்ள சூப்பர்செட்களை உடைக்கவும்.';
+    return '\"$name\" மற்றும் \"$name1\" ஏற்கனவே வெவ்வேறு சூப்பர்செட்களில் உள்ளன.\n\nபுதிய ஜோடியை உருவாக்க முதலில் ஏற்கனவே உள்ள சூப்பர்செட்களை உடைக்கவும்.';
   }
 
   @override

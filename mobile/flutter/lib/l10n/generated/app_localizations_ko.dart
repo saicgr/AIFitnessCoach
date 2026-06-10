@@ -1990,7 +1990,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      '세트 기록: 135*8, 145*6, +10...\\n운동 추가: 3x10 데드리프트 135';
+      '세트 기록: 135*8, 145*6, +10...\n운동 추가: 3x10 데드리프트 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => '세트 기록 / 운동 추가';
@@ -3297,11 +3297,10 @@ class AppLocalizationsKo extends AppLocalizations {
   String get challengesChallenge => '챌린지';
 
   @override
-  String get challengesCouldNotLoadChallenges =>
-      '챌린지를 불러올 수 없습니다.\\n다시 시도해주세요.';
+  String get challengesCouldNotLoadChallenges => '챌린지를 불러올 수 없습니다.\n다시 시도해주세요.';
 
   @override
-  String get challengesCouldNotLoadYour => '내 챌린지를 불러올 수 없습니다.\\n다시 시도해주세요.';
+  String get challengesCouldNotLoadYour => '내 챌린지를 불러올 수 없습니다.\n다시 시도해주세요.';
 
   @override
   String get challengesCreateChallenge => '챌린지 만들기';
@@ -3311,7 +3310,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      '챌린지에 참여하여 친구들과 경쟁하고\\n피트니스 목표를 달성하세요!';
+      '챌린지에 참여하여 친구들과 경쟁하고\n피트니스 목표를 달성하세요!';
 
   @override
   String get challengesMyChallenges => '내 챌린지';
@@ -5530,7 +5529,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      '향상시키고 싶은 특정 기술이나 목표를 추가하세요.\\nAI가 적절한 운동을 찾는 데 도움을 드립니다.';
+      '향상시키고 싶은 특정 기술이나 목표를 추가하세요.\nAI가 적절한 운동을 찾는 데 도움을 드립니다.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI 생성 키워드';
@@ -6473,7 +6472,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return '먼저 $storeName에서 취소하지 않으면 계속 요금이 청구됩니다.\\n\\n';
+    return '먼저 $storeName에서 취소하지 않으면 계속 요금이 청구됩니다.\n\n';
   }
 
   @override
@@ -9027,7 +9026,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      '맞춤 운동을 만들거나 즐겨찾기에 표시\\n라이브러리 → 내 운동';
+      '맞춤 운동을 만들거나 즐겨찾기에 표시\n라이브러리 → 내 운동';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => '운동 추가 실패';
@@ -9046,7 +9045,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get exerciseAddSheetNoCustomExercisesFavorites =>
-      '아직 사용자 지정 운동, 즐겨찾기 또는\\n주요 운동이 없습니다';
+      '아직 사용자 지정 운동, 즐겨찾기 또는\n주요 운동이 없습니다';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable => '제안 사항 없음';
@@ -10699,7 +10698,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      '장비나 선호 사항을 설명하세요\\n예: \"어깨가 안 좋아요\", \"맨몸 운동만 가능\"';
+      '장비나 선호 사항을 설명하세요\n예: \"어깨가 안 좋아요\", \"맨몸 운동만 가능\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => '예: \"덤벨만 있어요\"';
@@ -13827,17 +13826,16 @@ class AppLocalizationsKo extends AppLocalizations {
   String get friendSearchTypeANameOr => '이름이나 사용자 이름을 입력하여 사용자를 찾으세요';
 
   @override
-  String get friendsAddFriendsToSee => '친구를 추가하고 운동을 확인하며\\n함께 챌린지에 도전하세요!';
+  String get friendsAddFriendsToSee => '친구를 추가하고 운동을 확인하며\n함께 챌린지에 도전하세요!';
 
   @override
-  String get friendsCouldNotLoadUsers =>
-      '팔로우 중인 사용자를 불러올 수 없습니다.\\n다시 시도해 주세요.';
+  String get friendsCouldNotLoadUsers => '팔로우 중인 사용자를 불러올 수 없습니다.\n다시 시도해 주세요.';
 
   @override
-  String get friendsCouldNotLoadYour => '친구 목록을 불러올 수 없습니다.\\n다시 시도해 주세요.';
+  String get friendsCouldNotLoadYour => '친구 목록을 불러올 수 없습니다.\n다시 시도해 주세요.';
 
   @override
-  String get friendsCouldNotLoadYour2 => '팔로워 목록을 불러올 수 없습니다.\\n다시 시도해 주세요.';
+  String get friendsCouldNotLoadYour2 => '팔로워 목록을 불러올 수 없습니다.\n다시 시도해 주세요.';
 
   @override
   String get friendsFailedToLoadFollowers => '팔로워를 불러오지 못했습니다';
@@ -13849,8 +13847,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get friendsFailedToLoadFriends => '친구를 불러오지 못했습니다';
 
   @override
-  String get friendsFollowFriendsToSee =>
-      '친구를 팔로우하고 운동을 확인하며\\n함께 동기부여를 유지하세요!';
+  String get friendsFollowFriendsToSee => '친구를 팔로우하고 운동을 확인하며\n함께 동기부여를 유지하세요!';
 
   @override
   String get friendsFollowers => '팔로워';
@@ -13863,7 +13860,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      '계속해서 열심히 운동하세요!\\n친구들이 당신의 성장을 지켜볼 것입니다.';
+      '계속해서 열심히 운동하세요!\n친구들이 당신의 성장을 지켜볼 것입니다.';
 
   @override
   String get friendsNoFollowersYet => '아직 팔로워가 없습니다';
@@ -15319,7 +15316,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\" 찾기\\n';
+    return '3. \"$appName\" 찾기\n';
   }
 
   @override
@@ -17363,7 +17360,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return '가져오기 완료:\\n$summary';
+    return '가져오기 완료:\n$summary';
   }
 
   @override
@@ -17384,7 +17381,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      '예:\\nDumbbells 5-100 lb\\n2x Squat racks\\nLeg press (plate-loaded)\\nTreadmills x4\\nCable station...';
+      '예:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -21594,7 +21591,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get messagesCouldNotLoadYour => '대화 목록을 불러올 수 없습니다.\\n나중에 다시 시도해 주세요.';
+  String get messagesCouldNotLoadYour => '대화 목록을 불러올 수 없습니다.\n나중에 다시 시도해 주세요.';
 
   @override
   String get messagesFailedToLoadMessages => '메시지를 불러오지 못했습니다';
@@ -21613,7 +21610,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      '친구와 대화를 시작해 보세요!\\n메시지가 여기에 표시됩니다.';
+      '친구와 대화를 시작해 보세요!\n메시지가 여기에 표시됩니다.';
 
   @override
   String get metricHistoryCardNoDataForThis => '이 날짜에 대한 데이터가 없습니다';
@@ -25401,7 +25398,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get paywallFeatures52Skills => '52가지 스킬';
 
   @override
-  String get paywallFeatures7DayFreeTrial => '7일 무료 체험\\n언제든 취소 가능, 조건 없음';
+  String get paywallFeatures7DayFreeTrial => '7일 무료 체험\n언제든 취소 가능, 조건 없음';
 
   @override
   String get paywallFeaturesAiCoachChat => 'AI 코치 채팅';
@@ -26275,7 +26272,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => '운동 시 본문';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => '고정 해제';
@@ -27762,7 +27759,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get progressShareGalleryTapToOpen => '탭하여 열기';
 
   @override
-  String get progressShareTemplatesANtransformationNstudy => '변화\\n연구';
+  String get progressShareTemplatesANtransformationNstudy => '변화\n연구';
 
   @override
   String get progressShareTemplatesBreaking => '속보';
@@ -27807,7 +27804,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\n운동';
+    return '+$totalWorkouts\n운동';
   }
 
   @override
@@ -27862,7 +27859,7 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday => '#변화\\n화요일';
+  String get progressShareTemplatesTransformationNtuesday => '#변화\n화요일';
 
   @override
   String get progressShareTemplatesTransformed => '변화 완료';
@@ -29756,7 +29753,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return '예측을 불러올 수 없습니다.\\n$e';
+    return '예측을 불러올 수 없습니다.\n$e';
   }
 
   @override
@@ -38110,7 +38107,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max를 불러올 수 없습니다.\\n$error';
+    return 'VO2max를 불러올 수 없습니다.\n$error';
   }
 
   @override
@@ -39364,7 +39361,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -40038,7 +40035,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\"과(와) \"$name1\"은(는) 이미 다른 슈퍼세트에 포함되어 있습니다.\\n\\n새로운 조합을 만들려면 기존 슈퍼세트를 먼저 해제하세요.';
+    return '\"$name\"과(와) \"$name1\"은(는) 이미 다른 슈퍼세트에 포함되어 있습니다.\n\n새로운 조합을 만들려면 기존 슈퍼세트를 먼저 해제하세요.';
   }
 
   @override
@@ -40048,7 +40045,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return '앞으로의 모든 AI 추천에서 \"$name\"을(를) 차단할까요?\\n\\n';
+    return '앞으로의 모든 AI 추천에서 \"$name\"을(를) 차단할까요?\n\n';
   }
 
   @override

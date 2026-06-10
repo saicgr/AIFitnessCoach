@@ -3428,11 +3428,11 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'ไม่สามารถโหลดการท้าทายได้\\nโปรดลองใหม่อีกครั้ง';
+      'ไม่สามารถโหลดการท้าทายได้\nโปรดลองใหม่อีกครั้ง';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'ไม่สามารถโหลดการท้าทายของคุณได้\\nโปรดลองใหม่อีกครั้ง';
+      'ไม่สามารถโหลดการท้าทายของคุณได้\nโปรดลองใหม่อีกครั้ง';
 
   @override
   String get challengesCreateChallenge => 'สร้างการท้าทาย';
@@ -3442,7 +3442,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'เข้าร่วมการท้าทายเพื่อแข่งขันกับ\\nเพื่อนและบรรลุเป้าหมายการออกกำลังกายของคุณ!';
+      'เข้าร่วมการท้าทายเพื่อแข่งขันกับ\nเพื่อนและบรรลุเป้าหมายการออกกำลังกายของคุณ!';
 
   @override
   String get challengesMyChallenges => 'การท้าทายของฉัน';
@@ -4910,7 +4910,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get consistencyCardConsistency => 'ความสม่ำเสมอ';
 
   @override
-  String get consistencyCardDayBestNstreak => 'วันที่ดีที่สุด\\nสตรีค';
+  String get consistencyCardDayBestNstreak => 'วันที่ดีที่สุด\nสตรีค';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'ของวันที่คุณมาออกกำลังกาย';
@@ -15879,7 +15879,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. ค้นหา \"$appName\"\\n';
+    return '3. ค้นหา \"$appName\"\n';
   }
 
   @override
@@ -18068,7 +18068,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'นำเข้าแล้ว:\\n$summary';
+    return 'นำเข้าแล้ว:\n$summary';
   }
 
   @override
@@ -27284,7 +27284,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'รายละเอียดเมื่อคุณฝึกซ้อม';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'เลิกปักหมุด';
@@ -28333,7 +28333,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'การดำเนินการนี้จะลบการออกกำลังกายที่ยังไม่เสร็จสิ้นของคุณและสร้างรายการใหม่โดยใช้การตั้งค่าโปรแกรมปัจจุบันของคุณ\\n\\nการออกกำลังกายที่เสร็จสิ้นแล้วจะไม่ได้รับผลกระทบ';
+      'การดำเนินการนี้จะลบการออกกำลังกายที่ยังไม่เสร็จสิ้นของคุณและสร้างรายการใหม่โดยใช้การตั้งค่าโปรแกรมปัจจุบันของคุณ\n\nการออกกำลังกายที่เสร็จสิ้นแล้วจะไม่ได้รับผลกระทบ';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28876,7 +28876,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nการออกกำลังกาย';
+    return '+$totalWorkouts\nการออกกำลังกาย';
   }
 
   @override
@@ -28932,7 +28932,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\nTUESDAY';
 
   @override
   String get progressShareTemplatesTransformed => 'เปลี่ยนแปลงแล้ว';
@@ -29283,7 +29283,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'โปรดรอสักครู่ขณะที่เราเชื่อมต่อคุณ\\nกับเจ้าหน้าที่ฝ่ายสนับสนุน';
+      'โปรดรอสักครู่ขณะที่เราเชื่อมต่อคุณ\nกับเจ้าหน้าที่ฝ่ายสนับสนุน';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30906,7 +30906,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'ไม่สามารถโหลดการคาดการณ์ได้\\n$e';
+    return 'ไม่สามารถโหลดการคาดการณ์ได้\n$e';
   }
 
   @override
@@ -39548,7 +39548,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'ไม่สามารถโหลด VO2max ได้\\n$error';
+    return 'ไม่สามารถโหลด VO2max ได้\n$error';
   }
 
   @override
@@ -40852,7 +40852,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (Zealova)\\n(url)';
+    return ') — (Zealova)\n(url)';
   }
 
   @override
@@ -41557,7 +41557,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" และ \"$name1\" อยู่ในซูเปอร์เซ็ตที่ต่างกันอยู่แล้ว\\n\\nโปรดยกเลิกซูเปอร์เซ็ตเดิมก่อนเพื่อสร้างการจับคู่ใหม่';
+    return '\"$name\" และ \"$name1\" อยู่ในซูเปอร์เซ็ตที่ต่างกันอยู่แล้ว\n\nโปรดยกเลิกซูเปอร์เซ็ตเดิมก่อนเพื่อสร้างการจับคู่ใหม่';
   }
 
   @override
@@ -42588,7 +42588,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'การวอร์มอัพช่วยป้องกันการบาดเจ็บและเพิ่มประสิทธิภาพในการออกกำลังกาย.\\n\\nแนะนำ: ทำเซตเบาๆ 1-2 เซตก่อนเริ่มเซตจริง';
+      'การวอร์มอัพช่วยป้องกันการบาดเจ็บและเพิ่มประสิทธิภาพในการออกกำลังกาย.\n\nแนะนำ: ทำเซตเบาๆ 1-2 เซตก่อนเริ่มเซตจริง';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 ปอนด์';

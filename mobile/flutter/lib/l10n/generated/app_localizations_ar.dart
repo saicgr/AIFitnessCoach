@@ -2056,7 +2056,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'مجموعات السجل: 135*8، 145*6، +10...\\nإضافة تمرين: 3 × 10 رفع مميت عند 135';
+      'مجموعات السجل: 135*8، 145*6، +10...\nإضافة تمرين: 3 × 10 رفع مميت عند 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'مجموعات السجل/ إضافة تمارين';
@@ -4865,7 +4865,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get consistencyCardConsistency => 'الاستمرارية';
 
   @override
-  String get consistencyCardDayBestNstreak => 'أفضل يوم\\nسلسلة';
+  String get consistencyCardDayBestNstreak => 'أفضل يوم\nسلسلة';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'من الأيام التي التزمت فيها';
@@ -9292,7 +9292,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'قم بإنشاء تمارين مخصصة أو وضع علامة على المفضلة\\nفي المكتبة → خاصتي';
+      'قم بإنشاء تمارين مخصصة أو وضع علامة على المفضلة\nفي المكتبة → خاصتي';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'فشل في إضافة التمرين';
@@ -15009,7 +15009,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'محدد الموقع القائم على الخريطة غير متاح بعد.\\nفي الوقت الحالي، حدد اسم النادي الرياضي الخاص بك في الملف الشخصي.';
+      'محدد الموقع القائم على الخريطة غير متاح بعد.\nفي الوقت الحالي، حدد اسم النادي الرياضي الخاص بك في الملف الشخصي.';
 
   @override
   String get gymProfileSwitcherActive => 'نشط';
@@ -15753,7 +15753,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. ابحث عن \"$appName\"\\n';
+    return '3. ابحث عن \"$appName\"\n';
   }
 
   @override
@@ -17908,7 +17908,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'تم الاستيراد:\\n$summary';
+    return 'تم الاستيراد:\n$summary';
   }
 
   @override
@@ -22251,7 +22251,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'تعذر تحميل محادثاتك.\\nيرجى المحاولة مرة أخرى لاحقاً.';
+      'تعذر تحميل محادثاتك.\nيرجى المحاولة مرة أخرى لاحقاً.';
 
   @override
   String get messagesFailedToLoadMessages => 'فشل تحميل الرسائل';
@@ -22270,7 +22270,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'ابدأ محادثة مع أصدقائك!\\nستظهر رسائلك هنا.';
+      'ابدأ محادثة مع أصدقائك!\nستظهر رسائلك هنا.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'لا توجد بيانات لهذا اليوم';
@@ -23500,7 +23500,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get myWrappedCompleteAtLeast3 =>
-      'أكمل 3 تدريبات على الأقل هذا الشهر\\nلفتح ملخصك الشخصي';
+      'أكمل 3 تدريبات على الأقل هذا الشهر\nلفتح ملخصك الشخصي';
 
   @override
   String get myWrappedEarnAUniquePersonality =>
@@ -23612,7 +23612,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get neatDashboardScreenActiveHours => 'ساعات النشاط';
 
   @override
-  String get neatDashboardScreenActiveHoursNtoday => 'ساعات النشاط\\nاليوم';
+  String get neatDashboardScreenActiveHoursNtoday => 'ساعات النشاط\nاليوم';
 
   @override
   String get neatDashboardScreenAiCoachTip => 'نصيحة مدرب الذكاء الاصطناعي';
@@ -27079,7 +27079,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'جسم عندما تتمرن';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'إلغاء التثبيت';
@@ -28113,7 +28113,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'سيؤدي هذا إلى حذف تمارينك القادمة غير المكتملة وإنشاء تمارين جديدة باستخدام إعدادات برنامجك الحالية.\\n\\nلن تتأثر التمارين المكتملة.';
+      'سيؤدي هذا إلى حذف تمارينك القادمة غير المكتملة وإنشاء تمارين جديدة باستخدام إعدادات برنامجك الحالية.\n\nلن تتأثر التمارين المكتملة.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28604,7 +28604,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'دراسة\\nتحول\\nجسمي';
+      'دراسة\nتحول\nجسمي';
 
   @override
   String get progressShareTemplatesBreaking => 'عاجل';
@@ -28704,7 +28704,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday => '#تحول\\nالثلاثاء';
+  String get progressShareTemplatesTransformationNtuesday => '#تحول\nالثلاثاء';
 
   @override
   String get progressShareTemplatesTransformed => 'تحولت';
@@ -30627,7 +30627,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'تعذر تحميل التوقعات.\\n$message';
+    return 'تعذر تحميل التوقعات.\n$message';
   }
 
   @override
@@ -30662,7 +30662,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'تعذر تحميل التوقعات.\\n$e';
+    return 'تعذر تحميل التوقعات.\n$e';
   }
 
   @override
@@ -39243,7 +39243,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'تعذر تحميل VO2max.\\n$error';
+    return 'تعذر تحميل VO2max.\n$error';
   }
 
   @override
@@ -40528,7 +40528,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (Zealova)\\n(url)';
+    return ') — (Zealova)\n(url)';
   }
 
   @override
@@ -42243,7 +42243,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'تساعد عملية الإحماء على منع الإصابة وتحسين الأداء.\\n\\nيوصى بإجراء مجموعة أو مجموعتين من تمارين الأخف قبل مجموعات العمل.';
+      'تساعد عملية الإحماء على منع الإصابة وتحسين الأداء.\n\nيوصى بإجراء مجموعة أو مجموعتين من تمارين الأخف قبل مجموعات العمل.';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 رطل';

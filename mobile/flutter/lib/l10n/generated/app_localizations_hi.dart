@@ -2070,7 +2070,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'सेट लॉग करें: 135*8, 145*6, +10...\\nव्यायाम जोड़ें: 3x10 डेडलिफ्ट 135 पर';
+      'सेट लॉग करें: 135*8, 145*6, +10...\nव्यायाम जोड़ें: 3x10 डेडलिफ्ट 135 पर';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'सेट लॉग करें / व्यायाम जोड़ें';
@@ -3433,11 +3433,11 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'चैलेंज लोड नहीं हो सके।\\nकृपया पुनः प्रयास करें।';
+      'चैलेंज लोड नहीं हो सके।\nकृपया पुनः प्रयास करें।';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'आपके चैलेंज लोड नहीं हो सके।\\nकृपया पुनः प्रयास करें।';
+      'आपके चैलेंज लोड नहीं हो सके।\nकृपया पुनः प्रयास करें।';
 
   @override
   String get challengesCreateChallenge => 'चैलेंज बनाएं';
@@ -5752,7 +5752,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'विशिष्ट कौशल या उद्देश्य जोड़ें जिन्हें आप सुधारना चाहते हैं।\\nAI सही व्यायाम खोजने में मदद करेगा।';
+      'विशिष्ट कौशल या उद्देश्य जोड़ें जिन्हें आप सुधारना चाहते हैं।\nAI सही व्यायाम खोजने में मदद करेगा।';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI-जनरेटेड कीवर्ड';
@@ -6733,7 +6733,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'जब तक आप पहले $storeName से कैंसिल नहीं करते, आपसे शुल्क लिया जाता रहेगा।\\n\\n';
+    return 'जब तक आप पहले $storeName से कैंसिल नहीं करते, आपसे शुल्क लिया जाता रहेगा।\n\n';
   }
 
   @override
@@ -8847,7 +8847,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'प्रगति ट्रैक करना शुरू करने के लिए\\nअपना पहला वर्कआउट पूरा करें!';
+      'प्रगति ट्रैक करना शुरू करने के लिए\nअपना पहला वर्कआउट पूरा करें!';
 
   @override
   String get emptyStateCreateProgram => 'प्रोग्राम बनाएं';
@@ -8869,22 +8869,22 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get emptyStatePleaseCheckYourInternet =>
-      'कृपया अपना इंटरनेट कनेक्शन जांचें\\nऔर फिर से कोशिश करें।';
+      'कृपया अपना इंटरनेट कनेक्शन जांचें\nऔर फिर से कोशिश करें।';
 
   @override
   String get emptyStateTipGotIt => 'समझ गए';
 
   @override
   String get emptyStateTryAdjustingYourFilters =>
-      'अपने फिल्टर को एडजस्ट करने की कोशिश करें\\nया कुछ और खोजें।';
+      'अपने फिल्टर को एडजस्ट करने की कोशिश करें\nया कुछ और खोजें।';
 
   @override
   String get emptyStateWeCouldnTFind =>
-      'हमें वह नहीं मिला जो आप ढूंढ रहे हैं।\\nअलग कीवर्ड आज़माएं।';
+      'हमें वह नहीं मिला जो आप ढूंढ रहे हैं।\nअलग कीवर्ड आज़माएं।';
 
   @override
   String get emptyStateYourWorkoutScheduleIs =>
-      'आपका वर्कआउट शेड्यूल खाली है।\\nप्रोग्राम बनाकर शुरुआत करें!';
+      'आपका वर्कआउट शेड्यूल खाली है।\nप्रोग्राम बनाकर शुरुआत करें!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'पूछने का प्रयास करें...';
@@ -11122,7 +11122,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'अपने उपकरणों या प्राथमिकताओं का वर्णन करें\\nउदाहरण: \"मेरे कंधे में दर्द है, केवल बॉडीवेट\"';
+      'अपने उपकरणों या प्राथमिकताओं का वर्णन करें\nउदाहरण: \"मेरे कंधे में दर्द है, केवल बॉडीवेट\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'उदाहरण: \"मेरे पास केवल डंबल हैं\"';
@@ -12645,11 +12645,11 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'उन्हें यहाँ साझा होते देखने के लिए वर्कआउट पूरा करें!\\nदोस्तों के वर्कआउट देखने के लिए उन्हें फॉलो करें।';
+      'उन्हें यहाँ साझा होते देखने के लिए वर्कआउट पूरा करें!\nदोस्तों के वर्कआउट देखने के लिए उन्हें फॉलो करें।';
 
   @override
   String get feedCouldNotLoadYour =>
-      'आपकी गतिविधि फ़ीड लोड नहीं हो सकी।\\nकृपया बाद में पुनः प्रयास करें।';
+      'आपकी गतिविधि फ़ीड लोड नहीं हो सकी।\nकृपया बाद में पुनः प्रयास करें।';
 
   @override
   String get feedCreateYourFirstPost => 'अपनी पहली पोस्ट बनाएं!';
@@ -13964,7 +13964,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'पैटर्न और अंतर्दृष्टि देखने के लिए\\nभोजन लॉग करते समय अपना मूड ट्रैक करें';
+      'पैटर्न और अंतर्दृष्टि देखने के लिए\nभोजन लॉग करते समय अपना मूड ट्रैक करें';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'ट्रैक किए गए भोजन';
@@ -14019,7 +14019,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'हम 48 घंटों के भीतर समीक्षा और अपडेट करेंगे।\\nहमारे डेटा को बेहतर बनाने में मदद करने के लिए धन्यवाद!';
+      'हम 48 घंटों के भीतर समीक्षा और अपडेट करेंगे।\nहमारे डेटा को बेहतर बनाने में मदद करने के लिए धन्यवाद!';
 
   @override
   String get foodReportWhatFoodDidYou => 'आपका वास्तव में किस भोजन से मतलब था?';
@@ -14323,7 +14323,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'वर्कआउट इतिहास, PRs, और ट्रॉफियां\\nयहाँ दिखाई जाएंगी।';
+      'वर्कआउट इतिहास, PRs, और ट्रॉफियां\nयहाँ दिखाई जाएंगी।';
 
   @override
   String get friendSearchFindFriends => 'मित्र खोजें';
@@ -14359,19 +14359,19 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'अपने मित्रों के वर्कआउट देखने\\nऔर चुनौतियों में एक साथ प्रतिस्पर्धा करने के लिए मित्र जोड़ें!';
+      'अपने मित्रों के वर्कआउट देखने\nऔर चुनौतियों में एक साथ प्रतिस्पर्धा करने के लिए मित्र जोड़ें!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'आपके द्वारा फॉलो किए जाने वाले उपयोगकर्ताओं को लोड नहीं किया जा सका।\\nकृपया पुनः प्रयास करें।';
+      'आपके द्वारा फॉलो किए जाने वाले उपयोगकर्ताओं को लोड नहीं किया जा सका।\nकृपया पुनः प्रयास करें।';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'आपकी मित्र सूची लोड नहीं की जा सकी।\\nकृपया पुनः प्रयास करें।';
+      'आपकी मित्र सूची लोड नहीं की जा सकी।\nकृपया पुनः प्रयास करें।';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'आपकी फॉलोअर्स सूची लोड नहीं की जा सकी।\\nकृपया पुनः प्रयास करें।';
+      'आपकी फॉलोअर्स सूची लोड नहीं की जा सकी।\nकृपया पुनः प्रयास करें।';
 
   @override
   String get friendsFailedToLoadFollowers => 'फॉलोअर्स लोड करने में विफल';
@@ -14384,7 +14384,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'अपने मित्रों के वर्कआउट देखने\\nऔर एक साथ प्रेरित रहने के लिए उन्हें फॉलो करें!';
+      'अपने मित्रों के वर्कआउट देखने\nऔर एक साथ प्रेरित रहने के लिए उन्हें फॉलो करें!';
 
   @override
   String get friendsFollowers => 'फॉलोअर्स';
@@ -15152,7 +15152,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'मैप-आधारित लोकेशन पिकर अभी उपलब्ध नहीं है।\\nफिलहाल, प्रोफाइल में अपने जिम का नाम सेट करें।';
+      'मैप-आधारित लोकेशन पिकर अभी उपलब्ध नहीं है।\nफिलहाल, प्रोफाइल में अपने जिम का नाम सेट करें।';
 
   @override
   String get gymProfileSwitcherActive => 'सक्रिय';
@@ -15901,7 +15901,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\" खोजें\\n';
+    return '3. \"$appName\" खोजें\n';
   }
 
   @override
@@ -18097,7 +18097,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'आयातित:\\n$summary';
+    return 'आयातित:\n$summary';
   }
 
   @override
@@ -18119,7 +18119,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'उदाहरण के लिए:\\nDumbbells 5-100 lb\\n2x Squat racks\\nLeg press (plate-loaded)\\nTreadmills x4\\nCable station...';
+      'उदाहरण के लिए:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22470,7 +22470,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'आपकी बातचीत लोड नहीं हो सकी।\\nकृपया बाद में पुनः प्रयास करें।';
+      'आपकी बातचीत लोड नहीं हो सकी।\nकृपया बाद में पुनः प्रयास करें।';
 
   @override
   String get messagesFailedToLoadMessages => 'संदेश लोड करने में विफल';
@@ -26432,7 +26432,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get paywallFeatures7DayFreeTrial =>
-      '7-दिन का निःशुल्क परीक्षण\\nकभी भी रद्द करें, कोई सवाल नहीं पूछा जाएगा';
+      '7-दिन का निःशुल्क परीक्षण\nकभी भी रद्द करें, कोई सवाल नहीं पूछा जाएगा';
 
   @override
   String get paywallFeaturesAiCoachChat => 'AI कोच चैट';
@@ -26500,7 +26500,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get paywallPricing7DayFreeTrial2 =>
-      '7-दिन का निःशुल्क परीक्षण\\nकभी भी रद्द करें, कोई सवाल नहीं पूछा जाएगा';
+      '7-दिन का निःशुल्क परीक्षण\nकभी भी रद्द करें, कोई सवाल नहीं पूछा जाएगा';
 
   @override
   String get paywallPricingAi6Exercises => 'AI · 6 व्यायाम';
@@ -27340,7 +27340,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'जब आप ट्रेन करते हैं बॉडी';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'अनपिन करें';
@@ -28394,7 +28394,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'यह आपके आगामी अधूरे वर्कआउट को हटा देगा और आपकी वर्तमान प्रोग्राम सेटिंग्स का उपयोग करके नए वर्कआउट जनरेट करेगा।\\n\\nपूरे किए गए वर्कआउट प्रभावित नहीं होंगे।';
+      'यह आपके आगामी अधूरे वर्कआउट को हटा देगा और आपकी वर्तमान प्रोग्राम सेटिंग्स का उपयोग करके नए वर्कआउट जनरेट करेगा।\n\nपूरे किए गए वर्कआउट प्रभावित नहीं होंगे।';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28896,7 +28896,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'एक\\nट्रांसफॉर्मेशन\\nअध्ययन';
+      'एक\nट्रांसफॉर्मेशन\nअध्ययन';
 
   @override
   String get progressShareTemplatesBreaking => 'ब्रेकिंग';
@@ -28942,7 +28942,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nवर्कआउट';
+    return '+$totalWorkouts\nवर्कआउट';
   }
 
   @override
@@ -28998,7 +28998,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#ट्रांसफॉर्मेशन\\nमंगलवार';
+      '#ट्रांसफॉर्मेशन\nमंगलवार';
 
   @override
   String get progressShareTemplatesTransformed => 'ट्रांसफॉर्म हो गया';
@@ -29349,7 +29349,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'कृपया प्रतीक्षा करें जब तक हम आपको\\nएक सपोर्ट एजेंट से जोड़ते हैं';
+      'कृपया प्रतीक्षा करें जब तक हम आपको\nएक सपोर्ट एजेंट से जोड़ते हैं';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30972,7 +30972,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'अनुमान लोड नहीं हो सके।\\n$e';
+    return 'अनुमान लोड नहीं हो सके।\n$e';
   }
 
   @override
@@ -36830,7 +36830,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get strengthOverviewCardYourOverallFitnessScore =>
-      'आपका ओवरऑल फिटनेस स्कोर वेटेड है:\\nस्ट्रेंथ 40% + निरंतरता 30% + पोषण 20% + रेडिनेस 10%';
+      'आपका ओवरऑल फिटनेस स्कोर वेटेड है:\nस्ट्रेंथ 40% + निरंतरता 30% + पोषण 20% + रेडिनेस 10%';
 
   @override
   String get strengthOverviewCardYourStrengthScore0 =>
@@ -39658,7 +39658,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max लोड नहीं हो सका।\\n$error';
+    return 'VO2max लोड नहीं हो सका।\n$error';
   }
 
   @override
@@ -40957,7 +40957,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (Zealova)\\n(url)';
+    return ') — (Zealova)\n(url)';
   }
 
   @override
@@ -41661,7 +41661,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" और \"$name1\" पहले से ही अलग-अलग सुपरसेट में हैं।\\n\\nनया पेयरिंग बनाने के लिए पहले मौजूदा सुपरसेट को तोड़ें।';
+    return '\"$name\" और \"$name1\" पहले से ही अलग-अलग सुपरसेट में हैं।\n\nनया पेयरिंग बनाने के लिए पहले मौजूदा सुपरसेट को तोड़ें।';
   }
 
   @override
@@ -42697,7 +42697,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'वार्मअप करने से चोट को रोकने में मदद मिलती है और प्रदर्शन में सुधार होता है।\\n\\nअनुशंसित: काम करने से पहले 1-2 हल्के सेट।';
+      'वार्मअप करने से चोट को रोकने में मदद मिलती है और प्रदर्शन में सुधार होता है।\n\nअनुशंसित: काम करने से पहले 1-2 हल्के सेट।';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';

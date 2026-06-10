@@ -2071,7 +2071,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Setleri kaydet: 135*8, 145*6, +10...\\nEgzersiz ekle: 135 ile 3x10 deadlift';
+      'Setleri kaydet: 135*8, 145*6, +10...\nEgzersiz ekle: 135 ile 3x10 deadlift';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Setleri kaydet / Egzersiz ekle';
@@ -3439,11 +3439,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Mücadeleler yüklenemedi.\\nLütfen tekrar deneyin.';
+      'Mücadeleler yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Mücadelelerin yüklenemedi.\\nLütfen tekrar deneyin.';
+      'Mücadelelerin yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get challengesCreateChallenge => 'Mücadele Oluştur';
@@ -4926,7 +4926,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get consistencyCardConsistency => 'SÜREKLİLİK';
 
   @override
-  String get consistencyCardDayBestNstreak => 'En İyi Gün\\nSeri';
+  String get consistencyCardDayBestNstreak => 'En İyi Gün\nSeri';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'gösterdiğin günlerin';
@@ -6737,7 +6737,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Önce $storeName üzerinden iptal etmediğin sürece faturalandırılmaya devam edeceksin.\\n\\n';
+    return 'Önce $storeName üzerinden iptal etmediğin sürece faturalandırılmaya devam edeceksin.\n\n';
   }
 
   @override
@@ -8855,7 +8855,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'İlerlemeni takip etmeye başlamak için\\nilk antrenmanını tamamla!';
+      'İlerlemeni takip etmeye başlamak için\nilk antrenmanını tamamla!';
 
   @override
   String get emptyStateCreateProgram => 'Program oluştur';
@@ -8877,22 +8877,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get emptyStatePleaseCheckYourInternet =>
-      'Lütfen internet bağlantını kontrol et\\nve tekrar dene.';
+      'Lütfen internet bağlantını kontrol et\nve tekrar dene.';
 
   @override
   String get emptyStateTipGotIt => 'Anladım';
 
   @override
   String get emptyStateTryAdjustingYourFilters =>
-      'Filtrelerini ayarlamayı dene\\nveya başka bir şey ara.';
+      'Filtrelerini ayarlamayı dene\nveya başka bir şey ara.';
 
   @override
   String get emptyStateWeCouldnTFind =>
-      'Aradığını bulamadık.\\nFarklı anahtar kelimeler dene.';
+      'Aradığını bulamadık.\nFarklı anahtar kelimeler dene.';
 
   @override
   String get emptyStateYourWorkoutScheduleIs =>
-      'Antrenman programın boş.\\nBir program oluşturarak başla!';
+      'Antrenman programın boş.\nBir program oluşturarak başla!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'ŞUNU SORMAYI DENE...';
@@ -13971,7 +13971,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'Kalıpları ve analizleri görmek için\\nöğün kaydederken ruh halinizi takip edin';
+      'Kalıpları ve analizleri görmek için\nöğün kaydederken ruh halinizi takip edin';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'Takip edilen öğünler';
@@ -14026,7 +14026,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      '48 saat içinde inceleyip güncelleyeceğiz.\\nVerilerimizi geliştirmemize yardımcı olduğunuz için teşekkürler!';
+      '48 saat içinde inceleyip güncelleyeceğiz.\nVerilerimizi geliştirmemize yardımcı olduğunuz için teşekkürler!';
 
   @override
   String get foodReportWhatFoodDidYou => 'Aslında hangi yiyeceği kastettiniz?';
@@ -14329,7 +14329,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Antrenman geçmişi, PR\'lar ve kupalar\\nburada gösterilecektir.';
+      'Antrenman geçmişi, PR\'lar ve kupalar\nburada gösterilecektir.';
 
   @override
   String get friendSearchFindFriends => 'Arkadaş Bul';
@@ -14366,19 +14366,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Arkadaşlarınızın antrenmanlarını görmek\\nve meydan okumalarda yarışmak için arkadaş ekleyin!';
+      'Arkadaşlarınızın antrenmanlarını görmek\nve meydan okumalarda yarışmak için arkadaş ekleyin!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Takip ettiğiniz kullanıcılar yüklenemedi.\\nLütfen tekrar deneyin.';
+      'Takip ettiğiniz kullanıcılar yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Arkadaş listeniz yüklenemedi.\\nLütfen tekrar deneyin.';
+      'Arkadaş listeniz yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Takipçi listeniz yüklenemedi.\\nLütfen tekrar deneyin.';
+      'Takipçi listeniz yüklenemedi.\nLütfen tekrar deneyin.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Takipçiler yüklenemedi';
@@ -14391,7 +14391,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Arkadaşlarınızın antrenmanlarını görmek\\nve birlikte motive kalmak için onları takip edin!';
+      'Arkadaşlarınızın antrenmanlarını görmek\nve birlikte motive kalmak için onları takip edin!';
 
   @override
   String get friendsFollowers => 'Takipçi';
@@ -14404,7 +14404,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Antrenmanlara tam gaz devam!\\nArkadaşların ilerlemeni takip etmek isteyecek.';
+      'Antrenmanlara tam gaz devam!\nArkadaşların ilerlemeni takip etmek isteyecek.';
 
   @override
   String get friendsNoFollowersYet => 'Henüz Takipçi Yok';
@@ -15910,7 +15910,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\" öğesini bulun\\n';
+    return '3. \"$appName\" öğesini bulun\n';
   }
 
   @override
@@ -18090,7 +18090,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'İçe aktarıldı:\\n$summary';
+    return 'İçe aktarıldı:\n$summary';
   }
 
   @override
@@ -18112,7 +18112,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'örn.\\nDambıllar 5-100 lb\\n2x Squat rafı\\nLeg press (plaka yüklü)\\nKoşu bandı x4\\nKablo istasyonu...';
+      'örn.\nDambıllar 5-100 lb\n2x Squat rafı\nLeg press (plaka yüklü)\nKoşu bandı x4\nKablo istasyonu...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22468,7 +22468,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Konuşmalarınız yüklenemedi.\\nLütfen daha sonra tekrar deneyin.';
+      'Konuşmalarınız yüklenemedi.\nLütfen daha sonra tekrar deneyin.';
 
   @override
   String get messagesFailedToLoadMessages => 'Mesajlar Yüklenemedi';
@@ -22488,7 +22488,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Arkadaşlarınızla sohbete başlayın!\\nMesajlarınız burada görünecektir.';
+      'Arkadaşlarınızla sohbete başlayın!\nMesajlarınız burada görünecektir.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Bu gün için veri yok';
@@ -23724,7 +23724,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get myWrappedCompleteAtLeast3 =>
-      'Kişiselleştirilmiş özetinin kilidini açmak için\\nbu ay en az 3 antrenman tamamla';
+      'Kişiselleştirilmiş özetinin kilidini açmak için\nbu ay en az 3 antrenman tamamla';
 
   @override
   String get myWrappedEarnAUniquePersonality =>
@@ -23837,7 +23837,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get neatDashboardScreenActiveHours => 'Aktif Saatler';
 
   @override
-  String get neatDashboardScreenActiveHoursNtoday => 'Bugünkü\\nAktif Saatler';
+  String get neatDashboardScreenActiveHoursNtoday => 'Bugünkü\nAktif Saatler';
 
   @override
   String get neatDashboardScreenAiCoachTip => 'AI Koç İpucu';
@@ -27336,7 +27336,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Antrenman yaptığında gövdesi';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Sabitlemeyi kaldır';
@@ -28385,7 +28385,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Bu işlem, yaklaşan tamamlanmamış antrenmanlarınızı silecek ve mevcut program ayarlarınızı kullanarak yenilerini oluşturacaktır.\\n\\nTamamlanan antrenmanlar etkilenmeyecektir.';
+      'Bu işlem, yaklaşan tamamlanmamış antrenmanlarınızı silecek ve mevcut program ayarlarınızı kullanarak yenilerini oluşturacaktır.\n\nTamamlanan antrenmanlar etkilenmeyecektir.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28884,7 +28884,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'BİR\\nDÖNÜŞÜM\\nÇALIŞMASI';
+      'BİR\nDÖNÜŞÜM\nÇALIŞMASI';
 
   @override
   String get progressShareTemplatesBreaking => 'SON DAKİKA';
@@ -28930,7 +28930,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nANTRENMAN';
+    return '+$totalWorkouts\nANTRENMAN';
   }
 
   @override
@@ -30932,7 +30932,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Tahminler yüklenemedi.\\n$message';
+    return 'Tahminler yüklenemedi.\n$message';
   }
 
   @override
@@ -30967,7 +30967,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Tahminler yüklenemedi.\\n$e';
+    return 'Tahminler yüklenemedi.\n$e';
   }
 
   @override
@@ -39629,7 +39629,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max yüklenemedi.\\n$error';
+    return 'VO2max yüklenemedi.\n$error';
   }
 
   @override
@@ -41639,7 +41639,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" ve \"$name1\" zaten farklı süper setlerde.\\n\\nYeni bir eşleştirme oluşturmak için önce mevcut süper setleri boz.';
+    return '\"$name\" ve \"$name1\" zaten farklı süper setlerde.\n\nYeni bir eşleştirme oluşturmak için önce mevcut süper setleri boz.';
   }
 
   @override
@@ -43352,7 +43352,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get workoutSummaryGeneralConnectAHeartRate =>
-      'Bölgelerinizi takip etmek için\\nbir kalp atış hızı monitörü bağlayın';
+      'Bölgelerinizi takip etmek için\nbir kalp atış hızı monitörü bağlayın';
 
   @override
   String get workoutSummaryGeneralDifficulty => 'Zorluk';

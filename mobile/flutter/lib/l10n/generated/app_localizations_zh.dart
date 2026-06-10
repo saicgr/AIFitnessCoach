@@ -15136,7 +15136,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. 找到 \"$appName\"\\n';
+    return '3. 找到 \"$appName\"\n';
   }
 
   @override
@@ -22512,7 +22512,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get myWrappedCompleteAtLeast3 => '本月至少完成 3 次训练\\n即可解锁你的个性化回顾';
+  String get myWrappedCompleteAtLeast3 => '本月至少完成 3 次训练\n即可解锁你的个性化回顾';
 
   @override
   String get myWrappedEarnAUniquePersonality => '每月至少完成 3 次训练，即可获得独特的健身人格。';
@@ -22623,7 +22623,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get neatDashboardScreenActiveHours => '活跃小时数';
 
   @override
-  String get neatDashboardScreenActiveHoursNtoday => '今日\\n活跃小时数';
+  String get neatDashboardScreenActiveHoursNtoday => '今日\n活跃小时数';
 
   @override
   String get neatDashboardScreenAiCoachTip => 'AI 教练建议';
@@ -25930,7 +25930,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => '训练时段详情';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => '取消置顶';
@@ -27397,7 +27397,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get progressShareGalleryTapToOpen => '点击打开';
 
   @override
-  String get progressShareTemplatesANtransformationNstudy => '一项\\n蜕变\\n研究';
+  String get progressShareTemplatesANtransformationNstudy => '一项\n蜕变\n研究';
 
   @override
   String get progressShareTemplatesBreaking => '突发';
@@ -27442,7 +27442,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\n次锻炼';
+    return '+$totalWorkouts\n次锻炼';
   }
 
   @override
@@ -27497,7 +27497,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get progressShareTemplatesTransformationNtuesday => '#蜕变\\n周二';
+  String get progressShareTemplatesTransformationNtuesday => '#蜕变\n周二';
 
   @override
   String get progressShareTemplatesTransformed => '已蜕变';
@@ -27837,7 +27837,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get queuePositionCardPleaseWaitWhileWe => '请稍候，我们正在为您连接\\n客服专员';
+  String get queuePositionCardPleaseWaitWhileWe => '请稍候，我们正在为您连接\n客服专员';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -38872,7 +38872,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — Zealova\\n(url)';
+    return ') — Zealova\n(url)';
   }
 
   @override
@@ -39535,7 +39535,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '“$name”和“$name1”已存在于不同的超级组中。\\n\\n请先拆除现有的超级组以创建新的组合。';
+    return '“$name”和“$name1”已存在于不同的超级组中。\n\n请先拆除现有的超级组以创建新的组合。';
   }
 
   @override

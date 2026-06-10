@@ -6798,7 +6798,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Continuerai a ricevere l\'addebito a meno che tu non annulli prima dal $storeName.\\n\\n';
+    return 'Continuerai a ricevere l\'addebito a meno che tu non annulli prima dal $storeName.\n\n';
   }
 
   @override
@@ -8924,7 +8924,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'Completa il tuo primo allenamento\\nper iniziare a monitorare i progressi!';
+      'Completa il tuo primo allenamento\nper iniziare a monitorare i progressi!';
 
   @override
   String get emptyStateCreateProgram => 'Crea programma';
@@ -8946,22 +8946,22 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get emptyStatePleaseCheckYourInternet =>
-      'Controlla la tua connessione internet\\ne riprova.';
+      'Controlla la tua connessione internet\ne riprova.';
 
   @override
   String get emptyStateTipGotIt => 'Ho capito';
 
   @override
   String get emptyStateTryAdjustingYourFilters =>
-      'Prova a regolare i filtri\\no a cercare qualcos\'altro.';
+      'Prova a regolare i filtri\no a cercare qualcos\'altro.';
 
   @override
   String get emptyStateWeCouldnTFind =>
-      'Non siamo riusciti a trovare ciò che cerchi.\\nProva con parole chiave diverse.';
+      'Non siamo riusciti a trovare ciò che cerchi.\nProva con parole chiave diverse.';
 
   @override
   String get emptyStateYourWorkoutScheduleIs =>
-      'Il tuo programma di allenamento è vuoto.\\nInizia creando un programma!';
+      'Il tuo programma di allenamento è vuoto.\nInizia creando un programma!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'PROVA A CHIEDERE...';
@@ -9467,7 +9467,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Crea esercizi personalizzati o contrassegnali come preferiti\\n Libreria → Il mio';
+      'Crea esercizi personalizzati o contrassegnali come preferiti\n Libreria → Il mio';
 
   @override
   String get exerciseAddSheetFailedToAddExercise =>
@@ -11231,7 +11231,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Descrivi la tua attrezzatura o le tue preferenze\\nes. \"Ho un problema alla spalla, solo a corpo libero\"';
+      'Descrivi la tua attrezzatura o le tue preferenze\nes. \"Ho un problema alla spalla, solo a corpo libero\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'es. \"Ho solo manubri\"';
@@ -15292,7 +15292,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'Il selettore di posizione basato su mappa non è ancora disponibile.\\nPer ora, imposta il nome della tua palestra nel profilo.';
+      'Il selettore di posizione basato su mappa non è ancora disponibile.\nPer ora, imposta il nome della tua palestra nel profilo.';
 
   @override
   String get gymProfileSwitcherActive => 'Attivo';
@@ -16047,7 +16047,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Trova \"$appName\"\\n';
+    return '3. Trova \"$appName\"\n';
   }
 
   @override
@@ -18254,7 +18254,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Importati:\\n$summary';
+    return 'Importati:\n$summary';
   }
 
   @override
@@ -18276,7 +18276,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'es.\\nManubri 5-100 lb\\n2x Rack per squat\\nLeg press (a dischi)\\nTapis roulant x4\\nStazione cavi...';
+      'es.\nManubri 5-100 lb\n2x Rack per squat\nLeg press (a dischi)\nTapis roulant x4\nStazione cavi...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22644,7 +22644,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Impossibile caricare le tue conversazioni.\\nRiprova più tardi.';
+      'Impossibile caricare le tue conversazioni.\nRiprova più tardi.';
 
   @override
   String get messagesFailedToLoadMessages => 'Impossibile caricare i messaggi';
@@ -22663,7 +22663,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Inizia una conversazione con i tuoi amici!\\nI tuoi messaggi appariranno qui.';
+      'Inizia una conversazione con i tuoi amici!\nI tuoi messaggi appariranno qui.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Nessun dato per questo giorno';
@@ -23908,7 +23908,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get myWrappedCompleteAtLeast3 =>
-      'Completa almeno 3 allenamenti questo mese\\nper sbloccare il tuo riepilogo personalizzato';
+      'Completa almeno 3 allenamenti questo mese\nper sbloccare il tuo riepilogo personalizzato';
 
   @override
   String get myWrappedEarnAUniquePersonality =>
@@ -27539,7 +27539,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Corpo di quando ti alleni';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Rimuovi';
@@ -28603,7 +28603,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Questo eliminerà i tuoi prossimi allenamenti incompleti e ne genererà di nuovi utilizzando le impostazioni attuali del programma.\\n\\nGli allenamenti completati NON saranno influenzati.';
+      'Questo eliminerà i tuoi prossimi allenamenti incompleti e ne genererà di nuovi utilizzando le impostazioni attuali del programma.\n\nGli allenamenti completati NON saranno influenzati.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -29153,7 +29153,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nALLENAMENTI';
+    return '+$totalWorkouts\nALLENAMENTI';
   }
 
   @override
@@ -29563,7 +29563,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Attendi mentre ti mettiamo in contatto\\ncon un operatore';
+      'Attendi mentre ti mettiamo in contatto\ncon un operatore';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31171,7 +31171,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Impossibile caricare le previsioni.\\n$message';
+    return 'Impossibile caricare le previsioni.\n$message';
   }
 
   @override
@@ -31206,7 +31206,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Impossibile caricare le previsioni.\\n$e';
+    return 'Impossibile caricare le previsioni.\n$e';
   }
 
   @override
@@ -39928,7 +39928,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Impossibile caricare il VO2max.\\n$error';
+    return 'Impossibile caricare il VO2max.\n$error';
   }
 
   @override
@@ -41961,7 +41961,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" e \"$name1\" sono già in superset diversi.\\n\\nInterrompi i superset esistenti prima di creare un nuovo abbinamento.';
+    return '\"$name\" e \"$name1\" sono già in superset diversi.\n\nInterrompi i superset esistenti prima di creare un nuovo abbinamento.';
   }
 
   @override
@@ -41971,7 +41971,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Bloccare \"$name\" da tutti i futuri suggerimenti AI?\\n\\n';
+    return 'Bloccare \"$name\" da tutti i futuri suggerimenti AI?\n\n';
   }
 
   @override
@@ -43002,7 +43002,7 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Il riscaldamento aiuta a prevenire gli infortuni e migliora le prestazioni.\\n\\nConsigliato: 1-2 serie più leggere prima di lavorare sulle serie.';
+      'Il riscaldamento aiuta a prevenire gli infortuni e migliora le prestazioni.\n\nConsigliato: 1-2 serie più leggere prima di lavorare sulle serie.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 libbre';

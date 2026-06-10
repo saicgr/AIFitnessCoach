@@ -2060,7 +2060,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Logga set: 135*8, 145*6, +10...\\nLägg till övning: 3x10 marklyft på 135';
+      'Logga set: 135*8, 145*6, +10...\nLägg till övning: 3x10 marklyft på 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Logga set / Lägg till övningar';
@@ -3422,11 +3422,11 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Kunde inte ladda utmaningar.\\nFörsök igen.';
+      'Kunde inte ladda utmaningar.\nFörsök igen.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Kunde inte ladda dina utmaningar.\\nFörsök igen.';
+      'Kunde inte ladda dina utmaningar.\nFörsök igen.';
 
   @override
   String get challengesCreateChallenge => 'Skapa utmaning';
@@ -3436,7 +3436,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Gå med i en utmaning för att tävla mot\\nvänner och nå dina träningsmål!';
+      'Gå med i en utmaning för att tävla mot\nvänner och nå dina träningsmål!';
 
   @override
   String get challengesMyChallenges => 'Mina utmaningar';
@@ -4900,7 +4900,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get consistencyCardConsistency => 'KONSISTENS';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Bästa dag\\nStreak';
+  String get consistencyCardDayBestNstreak => 'Bästa dag\nStreak';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'av dagarna du dök upp';
@@ -6719,7 +6719,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Du kommer fortsätta att debiteras om du inte avslutar via $storeName först.\\n\\n';
+    return 'Du kommer fortsätta att debiteras om du inte avslutar via $storeName först.\n\n';
   }
 
   @override
@@ -9363,7 +9363,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Skapa egna övningar eller markera favoriter\\ni Bibliotek → Mina';
+      'Skapa egna övningar eller markera favoriter\ni Bibliotek → Mina';
 
   @override
   String get exerciseAddSheetFailedToAddExercise =>
@@ -9384,7 +9384,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get exerciseAddSheetNoCustomExercisesFavorites =>
-      'Inga egna övningar, favoriter\\neller basövningar ännu';
+      'Inga egna övningar, favoriter\neller basövningar ännu';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable =>
@@ -13941,7 +13941,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'Spåra ditt humör när du loggar måltider\\nför att se mönster och insikter';
+      'Spåra ditt humör när du loggar måltider\nför att se mönster och insikter';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'Loggade måltider';
@@ -13995,7 +13995,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'Vi granskar och uppdaterar inom 48 timmar.\\nTack för att du hjälper oss att förbättra vår data!';
+      'Vi granskar och uppdaterar inom 48 timmar.\nTack för att du hjälper oss att förbättra vår data!';
 
   @override
   String get foodReportWhatFoodDidYou =>
@@ -14300,7 +14300,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Träningshistorik, PR och troféer\\nvisas här.';
+      'Träningshistorik, PR och troféer\nvisas här.';
 
   @override
   String get friendSearchFindFriends => 'Hitta vänner';
@@ -14336,19 +14336,19 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Lägg till vänner för att se deras träningspass\\noch tävla i utmaningar tillsammans!';
+      'Lägg till vänner för att se deras träningspass\noch tävla i utmaningar tillsammans!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Kunde inte ladda användare du följer.\\nFörsök igen.';
+      'Kunde inte ladda användare du följer.\nFörsök igen.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Kunde inte ladda din vänlista.\\nFörsök igen.';
+      'Kunde inte ladda din vänlista.\nFörsök igen.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Kunde inte ladda din följarlista.\\nFörsök igen.';
+      'Kunde inte ladda din följarlista.\nFörsök igen.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Kunde inte ladda följare';
@@ -14361,7 +14361,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Följ vänner för att se deras träningspass\\noch hålla motivationen uppe tillsammans!';
+      'Följ vänner för att se deras träningspass\noch hålla motivationen uppe tillsammans!';
 
   @override
   String get friendsFollowers => 'Följare';
@@ -14374,7 +14374,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Fortsätt köra hårt med träningen!\\nVänner kommer vilja följa dina framsteg.';
+      'Fortsätt köra hårt med träningen!\nVänner kommer vilja följa dina framsteg.';
 
   @override
   String get friendsNoFollowersYet => 'Inga följare än';
@@ -15879,7 +15879,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Hitta \"$appName\"\\n';
+    return '3. Hitta \"$appName\"\n';
   }
 
   @override
@@ -18062,7 +18062,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Importerat:\\n$summary';
+    return 'Importerat:\n$summary';
   }
 
   @override
@@ -22431,7 +22431,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Kunde inte läsa in dina konversationer.\\nFörsök igen senare.';
+      'Kunde inte läsa in dina konversationer.\nFörsök igen senare.';
 
   @override
   String get messagesFailedToLoadMessages => 'Kunde inte läsa in meddelanden';
@@ -22450,7 +22450,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Starta en konversation med dina vänner!\\nDina meddelanden visas här.';
+      'Starta en konversation med dina vänner!\nDina meddelanden visas här.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Ingen data för denna dag';
@@ -27266,7 +27266,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Beskrivning för när du tränar';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Ta bort nål';
@@ -28308,7 +28308,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Detta tar bort dina kommande ofullständiga träningspass och genererar nya med dina nuvarande programinställningar.\\n\\nSlutförda träningspass påverkas INTE.';
+      'Detta tar bort dina kommande ofullständiga träningspass och genererar nya med dina nuvarande programinställningar.\n\nSlutförda träningspass påverkas INTE.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28852,7 +28852,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nPASS';
+    return '+$totalWorkouts\nPASS';
   }
 
   @override
@@ -28908,7 +28908,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTISDAG';
+      '#TRANSFORMATION\nTISDAG';
 
   @override
   String get progressShareTemplatesTransformed => 'FÖRÄNDRAD';
@@ -29258,7 +29258,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Vänligen vänta medan vi kopplar upp dig\\nmed en supportagent';
+      'Vänligen vänta medan vi kopplar upp dig\nmed en supportagent';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30844,7 +30844,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Kunde inte ladda förutsägelser.\\n$message';
+    return 'Kunde inte ladda förutsägelser.\n$message';
   }
 
   @override
@@ -30879,7 +30879,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Kunde inte läsa in förutsägelser.\\n$e';
+    return 'Kunde inte läsa in förutsägelser.\n$e';
   }
 
   @override
@@ -39534,7 +39534,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Kunde inte läsa in VO2max.\\n$error';
+    return 'Kunde inte läsa in VO2max.\n$error';
   }
 
   @override
@@ -41539,7 +41539,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" och \"$name1\" finns redan i olika superset.\\n\\nBryt de befintliga superseten först för att skapa en ny parkoppling.';
+    return '\"$name\" och \"$name1\" finns redan i olika superset.\n\nBryt de befintliga superseten först för att skapa en ny parkoppling.';
   }
 
   @override
@@ -41618,7 +41618,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get workoutGalleryCompleteAWorkoutAnd =>
-      'Genomför ett träningspass och dela det\\nför att starta ditt galleri';
+      'Genomför ett träningspass och dela det\nför att starta ditt galleri';
 
   @override
   String get workoutGalleryDeleteImage => 'Ta bort bild?';
@@ -43991,7 +43991,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'Ingen data på topplistan ännu.\\nBörja tjäna XP för att klättra i rankingen!';
+      'Ingen data på topplistan ännu.\nBörja tjäna XP för att klättra i rankingen!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

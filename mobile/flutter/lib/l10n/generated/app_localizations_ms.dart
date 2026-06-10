@@ -2082,7 +2082,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Log set: 135*8, 145*6, +10...\\nTambah senaman: 3x10 deadlift pada 135';
+      'Log set: 135*8, 145*6, +10...\nTambah senaman: 3x10 deadlift pada 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Log set / Tambah senaman';
@@ -3449,11 +3449,11 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Tidak dapat memuatkan cabaran.\\nSila cuba lagi.';
+      'Tidak dapat memuatkan cabaran.\nSila cuba lagi.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Tidak dapat memuatkan cabaran anda.\\nSila cuba lagi.';
+      'Tidak dapat memuatkan cabaran anda.\nSila cuba lagi.';
 
   @override
   String get challengesCreateChallenge => 'Cipta Cabaran';
@@ -3463,7 +3463,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Sertai cabaran untuk bersaing dengan\\nkawan-kawan dan capai matlamat kecergasan anda!';
+      'Sertai cabaran untuk bersaing dengan\nkawan-kawan dan capai matlamat kecergasan anda!';
 
   @override
   String get challengesMyChallenges => 'Cabaran Saya';
@@ -4938,7 +4938,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get consistencyCardConsistency => 'KONSISTENSI';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Hari Terbaik\\nRentetan';
+  String get consistencyCardDayBestNstreak => 'Hari Terbaik\nRentetan';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'daripada hari anda hadir';
@@ -14357,7 +14357,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Sejarah senaman, PR, dan trofi\\nakan dipaparkan di sini.';
+      'Sejarah senaman, PR, dan trofi\nakan dipaparkan di sini.';
 
   @override
   String get friendSearchFindFriends => 'Cari Rakan';
@@ -14395,19 +14395,19 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Tambah rakan untuk melihat senaman mereka\\ndan bersaing dalam cabaran bersama-sama!';
+      'Tambah rakan untuk melihat senaman mereka\ndan bersaing dalam cabaran bersama-sama!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Tidak dapat memuatkan pengguna yang anda ikuti.\\nSila cuba lagi.';
+      'Tidak dapat memuatkan pengguna yang anda ikuti.\nSila cuba lagi.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Tidak dapat memuatkan senarai rakan anda.\\nSila cuba lagi.';
+      'Tidak dapat memuatkan senarai rakan anda.\nSila cuba lagi.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Tidak dapat memuatkan senarai pengikut anda.\\nSila cuba lagi.';
+      'Tidak dapat memuatkan senarai pengikut anda.\nSila cuba lagi.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Gagal Memuatkan Pengikut';
@@ -14420,7 +14420,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Ikuti rakan untuk melihat senaman mereka\\ndan kekal bermotivasi bersama-sama!';
+      'Ikuti rakan untuk melihat senaman mereka\ndan kekal bermotivasi bersama-sama!';
 
   @override
   String get friendsFollowers => 'Pengikut';
@@ -14433,7 +14433,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Teruskan usaha senaman anda!\\nRakan-rakan akan ingin mengikuti perkembangan anda.';
+      'Teruskan usaha senaman anda!\nRakan-rakan akan ingin mengikuti perkembangan anda.';
 
   @override
   String get friendsNoFollowersYet => 'Belum Ada Pengikut';
@@ -15191,7 +15191,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'Pemilih lokasi berasaskan peta belum tersedia.\\nBuat masa ini, tetapkan nama gim anda dalam profil.';
+      'Pemilih lokasi berasaskan peta belum tersedia.\nBuat masa ini, tetapkan nama gim anda dalam profil.';
 
   @override
   String get gymProfileSwitcherActive => 'Aktif';
@@ -15941,7 +15941,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Cari \"$appName\"\\n';
+    return '3. Cari \"$appName\"\n';
   }
 
   @override
@@ -18143,7 +18143,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Diimport:\\n$summary';
+    return 'Diimport:\n$summary';
   }
 
   @override
@@ -22525,7 +22525,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Tidak dapat memuatkan perbualan anda.\\nSila cuba lagi kemudian.';
+      'Tidak dapat memuatkan perbualan anda.\nSila cuba lagi kemudian.';
 
   @override
   String get messagesFailedToLoadMessages => 'Gagal Memuatkan Mesej';
@@ -22544,7 +22544,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Mulakan perbualan dengan rakan anda!\\nMesej anda akan muncul di sini.';
+      'Mulakan perbualan dengan rakan anda!\nMesej anda akan muncul di sini.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Tiada data untuk hari ini';
@@ -27402,7 +27402,7 @@ class AppLocalizationsMs extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Badan apabila anda berlatih';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Nyahsemat';
@@ -28456,7 +28456,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Ini akan memadamkan senaman anda yang akan datang yang belum selesai dan menjana yang baharu menggunakan tetapan program semasa anda.\\n\\nSenaman yang telah selesai TIDAK akan terjejas.';
+      'Ini akan memadamkan senaman anda yang akan datang yang belum selesai dan menjana yang baharu menggunakan tetapan program semasa anda.\n\nSenaman yang telah selesai TIDAK akan terjejas.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28999,7 +28999,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nSENAMAN';
+    return '+$totalWorkouts\nSENAMAN';
   }
 
   @override
@@ -29055,7 +29055,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nSELASA';
+      '#TRANSFORMATION\nSELASA';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMED';
@@ -29407,7 +29407,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Sila tunggu sementara kami menghubungkan anda\\ndengan ejen sokongan';
+      'Sila tunggu sementara kami menghubungkan anda\ndengan ejen sokongan';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31002,7 +31002,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Tidak dapat memuatkan ramalan.\\n$message';
+    return 'Tidak dapat memuatkan ramalan.\n$message';
   }
 
   @override
@@ -31037,7 +31037,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Tidak dapat memuatkan ramalan.\\n$e';
+    return 'Tidak dapat memuatkan ramalan.\n$e';
   }
 
   @override
@@ -39724,7 +39724,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Gagal memuatkan VO2max.\\n$error';
+    return 'Gagal memuatkan VO2max.\n$error';
   }
 
   @override
@@ -41740,7 +41740,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" dan \"$name1\" sudah berada dalam set superset yang berbeza.\\n\\nPutuskan superset sedia ada dahulu untuk mencipta pasangan baharu.';
+    return '\"$name\" dan \"$name1\" sudah berada dalam set superset yang berbeza.\n\nPutuskan superset sedia ada dahulu untuk mencipta pasangan baharu.';
   }
 
   @override
@@ -41750,7 +41750,7 @@ class AppLocalizationsMs extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Sekat \"$name\" daripada semua cadangan AI akan datang?\\n\\n';
+    return 'Sekat \"$name\" daripada semua cadangan AI akan datang?\n\n';
   }
 
   @override

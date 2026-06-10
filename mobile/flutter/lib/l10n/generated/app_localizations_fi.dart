@@ -6742,7 +6742,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Sinua laskutetaan edelleen, ellet peruuta tilausta ensin $storeName-palvelussa.\\n\\n';
+    return 'Sinua laskutetaan edelleen, ellet peruuta tilausta ensin $storeName-palvelussa.\n\n';
   }
 
   @override
@@ -9397,7 +9397,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Luo mukautettuja harjoituksia tai merkitse suosikkeja\\nkirjastossa → Minun';
+      'Luo mukautettuja harjoituksia tai merkitse suosikkeja\nkirjastossa → Minun';
 
   @override
   String get exerciseAddSheetFailedToAddExercise =>
@@ -11148,7 +11148,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Kuvaile välineesi tai mieltymyksesi\\nesim. \"Minulla on kipeä olkapää, vain kehonpainoliikkeitä\"';
+      'Kuvaile välineesi tai mieltymyksesi\nesim. \"Minulla on kipeä olkapää, vain kehonpainoliikkeitä\"';
 
   @override
   String get exerciseSwapSheetEGIOnly => 'esim. \"Minulla on vain käsipainot\"';
@@ -15940,7 +15940,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Etsi \"$appName\"\\n';
+    return '3. Etsi \"$appName\"\n';
   }
 
   @override
@@ -18132,7 +18132,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Tuotu:\\n$summary';
+    return 'Tuotu:\n$summary';
   }
 
   @override
@@ -22522,7 +22522,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Keskustelujen lataaminen epäonnistui.\\nYritä myöhemmin uudelleen.';
+      'Keskustelujen lataaminen epäonnistui.\nYritä myöhemmin uudelleen.';
 
   @override
   String get messagesFailedToLoadMessages => 'Viestien lataaminen epäonnistui';
@@ -27400,7 +27400,7 @@ class AppLocalizationsFi extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Kun treenaat -runko';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Irrota';
@@ -29408,7 +29408,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Odota hetki, kun yhdistämme sinut\\ntukiedustajaan';
+      'Odota hetki, kun yhdistämme sinut\ntukiedustajaan';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31037,7 +31037,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Ennusteiden lataaminen epäonnistui.\\n$e';
+    return 'Ennusteiden lataaminen epäonnistui.\n$e';
   }
 
   @override
@@ -39701,7 +39701,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max-arvoa ei voitu ladata.\\n$error';
+    return 'VO2max-arvoa ei voitu ladata.\n$error';
   }
 
   @override
@@ -41004,7 +41004,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41722,7 +41722,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Estä \"$name\" kaikilta tulevilta tekoälysuosituksilta?\\n\\n';
+    return 'Estä \"$name\" kaikilta tulevilta tekoälysuosituksilta?\n\n';
   }
 
   @override
@@ -42748,7 +42748,7 @@ class AppLocalizationsFi extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Lämmittely auttaa estämään loukkaantumisia ja parantaa suorituskykyä.\\n\\nSuositus: 1-2 kevyempää sarjaa ennen työsarjoja.';
+      'Lämmittely auttaa estämään loukkaantumisia ja parantaa suorituskykyä.\n\nSuositus: 1-2 kevyempää sarjaa ennen työsarjoja.';
 
   @override
   String get workoutShowcase12450Lbs => '12 450 lbs';

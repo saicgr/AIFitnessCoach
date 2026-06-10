@@ -2063,7 +2063,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Záznamové sady: 135*8, 145*6, +10...\\nPřidat cvičení: 3x10 deadlift na 135';
+      'Záznamové sady: 135*8, 145*6, +10...\nPřidat cvičení: 3x10 deadlift na 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Sady protokolů/ Přidat cvičení';
@@ -9387,7 +9387,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Vytvořte si vlastní cvičení nebo označte oblíbené\\nin Knihovna → Moje';
+      'Vytvořte si vlastní cvičení nebo označte oblíbené\nin Knihovna → Moje';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'Nepodařilo se přidat cvik';
@@ -14331,7 +14331,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Historie tréninků, PR a trofeje\\nse zobrazí zde.';
+      'Historie tréninků, PR a trofeje\nse zobrazí zde.';
 
   @override
   String get friendSearchFindFriends => 'Najít přátele';
@@ -14368,19 +14368,19 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Přidejte přátele, abyste viděli jejich tréninky\\na společně soutěžili ve výzvách!';
+      'Přidejte přátele, abyste viděli jejich tréninky\na společně soutěžili ve výzvách!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Nepodařilo se načíst uživatele, které sledujete.\\nZkuste to prosím znovu.';
+      'Nepodařilo se načíst uživatele, které sledujete.\nZkuste to prosím znovu.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Nepodařilo se načíst váš seznam přátel.\\nZkuste to prosím znovu.';
+      'Nepodařilo se načíst váš seznam přátel.\nZkuste to prosím znovu.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Nepodařilo se načíst váš seznam sledujících.\\nZkuste to prosím znovu.';
+      'Nepodařilo se načíst váš seznam sledujících.\nZkuste to prosím znovu.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Nepodařilo se načíst sledující';
@@ -14393,7 +14393,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Sledujte přátele, abyste viděli jejich tréninky\\na zůstali společně motivovaní!';
+      'Sledujte přátele, abyste viděli jejich tréninky\na zůstali společně motivovaní!';
 
   @override
   String get friendsFollowers => 'Sledující';
@@ -14406,7 +14406,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Nepolevujte ve svých trénincích!\\nPřátelé budou chtít sledovat váš pokrok.';
+      'Nepolevujte ve svých trénincích!\nPřátelé budou chtít sledovat váš pokrok.';
 
   @override
   String get friendsNoFollowersYet => 'Zatím žádní sledující';
@@ -15911,7 +15911,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Najděte \"$appName\"\\n';
+    return '3. Najděte \"$appName\"\n';
   }
 
   @override
@@ -22468,7 +22468,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Nepodařilo se načíst vaše konverzace.\\nZkuste to prosím později.';
+      'Nepodařilo se načíst vaše konverzace.\nZkuste to prosím později.';
 
   @override
   String get messagesFailedToLoadMessages => 'Nepodařilo se načíst zprávy';
@@ -22487,7 +22487,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Zahajte konverzaci se svými přáteli!\\nVaše zprávy se zobrazí zde.';
+      'Zahajte konverzaci se svými přáteli!\nVaše zprávy se zobrazí zde.';
 
   @override
   String get metricHistoryCardNoDataForThis =>
@@ -27326,7 +27326,7 @@ class AppLocalizationsCs extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Popis sekce když trénujete';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Odepnout';
@@ -28376,7 +28376,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Tímto odstraníte své nadcházející nedokončené tréninky a vygenerujete nové pomocí aktuálního nastavení programu.\\n\\nDokončené tréninky NEBUDOU ovlivněny.';
+      'Tímto odstraníte své nadcházející nedokončené tréninky a vygenerujete nové pomocí aktuálního nastavení programu.\n\nDokončené tréninky NEBUDOU ovlivněny.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28919,7 +28919,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nTRÉNINKŮ';
+    return '+$totalWorkouts\nTRÉNINKŮ';
   }
 
   @override
@@ -30913,7 +30913,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Nepodařilo se načíst předpovědi.\\n$message';
+    return 'Nepodařilo se načíst předpovědi.\n$message';
   }
 
   @override
@@ -30948,7 +30948,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Nepodařilo se načíst předpovědi.\\n$e';
+    return 'Nepodařilo se načíst předpovědi.\n$e';
   }
 
   @override
@@ -39621,7 +39621,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Nepodařilo se načíst VO2max.\\n$error';
+    return 'Nepodařilo se načíst VO2max.\n$error';
   }
 
   @override
@@ -40925,7 +40925,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (Zealova)\\n(url)';
+    return ') — (Zealova)\n(url)';
   }
 
   @override
@@ -41637,7 +41637,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Blokovat \"$name\" ve všech budoucích doporučeních AI?\\n\\n';
+    return 'Blokovat \"$name\" ve všech budoucích doporučeních AI?\n\n';
   }
 
   @override
@@ -42659,7 +42659,7 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Zahřívání pomáhá předcházet zraněním a zlepšuje výkon.\\n\\nDoporučeno: 1–2 lehčí sady před pracovními sadami.';
+      'Zahřívání pomáhá předcházet zraněním a zlepšuje výkon.\n\nDoporučeno: 1–2 lehčí sady před pracovními sadami.';
 
   @override
   String get workoutShowcase12450Lbs => '12 450 lbs';

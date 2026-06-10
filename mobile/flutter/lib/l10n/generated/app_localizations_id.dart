@@ -2077,7 +2077,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Catat set: 135*8, 145*6, +10...\\nTambahkan latihan: 3x10 deadlift pada 135';
+      'Catat set: 135*8, 145*6, +10...\nTambahkan latihan: 3x10 deadlift pada 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Catat set / Tambahkan latihan';
@@ -3439,11 +3439,11 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Tidak dapat memuat tantangan.\\nSilakan coba lagi.';
+      'Tidak dapat memuat tantangan.\nSilakan coba lagi.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Tidak dapat memuat tantangan Anda.\\nSilakan coba lagi.';
+      'Tidak dapat memuat tantangan Anda.\nSilakan coba lagi.';
 
   @override
   String get challengesCreateChallenge => 'Buat Tantangan';
@@ -3453,7 +3453,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Bergabunglah dengan tantangan untuk bersaing dengan\\nteman dan capai target kebugaran Anda!';
+      'Bergabunglah dengan tantangan untuk bersaing dengan\nteman dan capai target kebugaran Anda!';
 
   @override
   String get challengesMyChallenges => 'Tantangan Saya';
@@ -5756,7 +5756,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'Tambahkan keterampilan atau tujuan spesifik yang ingin Anda tingkatkan.\\nAI akan membantu menemukan latihan yang tepat.';
+      'Tambahkan keterampilan atau tujuan spesifik yang ingin Anda tingkatkan.\nAI akan membantu menemukan latihan yang tepat.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'Kata Kunci Buatan AI';
@@ -6737,7 +6737,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Anda akan terus ditagih kecuali Anda membatalkannya dari $storeName terlebih dahulu.\\n\\n';
+    return 'Anda akan terus ditagih kecuali Anda membatalkannya dari $storeName terlebih dahulu.\n\n';
   }
 
   @override
@@ -9393,7 +9393,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Buat latihan khusus atau tandai favorit\\nin Perpustakaan → Milik saya';
+      'Buat latihan khusus atau tandai favorit\nin Perpustakaan → Milik saya';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'Gagal menambahkan latihan';
@@ -11133,7 +11133,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Jelaskan peralatan atau preferensi Anda\\ncontoh: \"Saya punya cedera bahu, hanya berat badan\"';
+      'Jelaskan peralatan atau preferensi Anda\ncontoh: \"Saya punya cedera bahu, hanya berat badan\"';
 
   @override
   String get exerciseSwapSheetEGIOnly =>
@@ -15924,7 +15924,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Temukan \"$appName\"\\n';
+    return '3. Temukan \"$appName\"\n';
   }
 
   @override
@@ -18114,7 +18114,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Diimpor:\\n$summary';
+    return 'Diimpor:\n$summary';
   }
 
   @override
@@ -22492,7 +22492,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'Tidak dapat memuat percakapan Anda.\\nSilakan coba lagi nanti.';
+      'Tidak dapat memuat percakapan Anda.\nSilakan coba lagi nanti.';
 
   @override
   String get messagesFailedToLoadMessages => 'Gagal Memuat Pesan';
@@ -23866,7 +23866,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get neatDashboardScreenActiveHours => 'Jam Aktif';
 
   @override
-  String get neatDashboardScreenActiveHoursNtoday => 'Jam Aktif\\nHari Ini';
+  String get neatDashboardScreenActiveHoursNtoday => 'Jam Aktif\nHari Ini';
 
   @override
   String get neatDashboardScreenAiCoachTip => 'Tips Pelatih AI';
@@ -26527,7 +26527,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paywallPricing7DayFreeTrial2 =>
-      'Uji coba gratis 7 hari\\nBatalkan kapan saja, tanpa syarat';
+      'Uji coba gratis 7 hari\nBatalkan kapan saja, tanpa syarat';
 
   @override
   String get paywallPricingAi6Exercises => 'AI · 6 LATIHAN';
@@ -26676,7 +26676,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paywallPricingStartYour7Day =>
-      'Mulai uji coba GRATIS 7 hari Anda\\nuntuk melanjutkan';
+      'Mulai uji coba GRATIS 7 hari Anda\nuntuk melanjutkan';
 
   @override
   String get paywallPricingTerms => 'Ketentuan';
@@ -26690,7 +26690,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get paywallPricingWeLlSendYou =>
-      'Kami akan mengirimkan pengingat\\nsebelum uji coba gratis Anda berakhir';
+      'Kami akan mengirimkan pengingat\nsebelum uji coba gratis Anda berakhir';
 
   @override
   String get paywallPricingWhatYouGet => 'Apa yang Anda dapatkan';
@@ -27367,7 +27367,7 @@ class AppLocalizationsId extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Isi saat Anda berlatih';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Lepas sematan';
@@ -28964,7 +28964,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nLATIHAN';
+    return '+$totalWorkouts\nLATIHAN';
   }
 
   @override
@@ -29020,7 +29020,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMASI\\nSELASA';
+      '#TRANSFORMASI\nSELASA';
 
   @override
   String get progressShareTemplatesTransformed => 'DITRANSFORMASI';
@@ -29372,7 +29372,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Harap tunggu sementara kami menghubungkan Anda\\ndengan agen dukungan';
+      'Harap tunggu sementara kami menghubungkan Anda\ndengan agen dukungan';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30962,7 +30962,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Tidak dapat memuat prediksi.\\n$message';
+    return 'Tidak dapat memuat prediksi.\n$message';
   }
 
   @override
@@ -30997,7 +30997,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Tidak dapat memuat prediksi.\\n$e';
+    return 'Tidak dapat memuat prediksi.\n$e';
   }
 
   @override
@@ -39674,7 +39674,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Gagal memuat VO2max.\\n$error';
+    return 'Gagal memuat VO2max.\n$error';
   }
 
   @override
@@ -41688,7 +41688,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" dan \"$name1\" sudah berada di superset yang berbeda.\\n\\nHapus superset yang ada terlebih dahulu untuk membuat pasangan baru.';
+    return '\"$name\" dan \"$name1\" sudah berada di superset yang berbeda.\n\nHapus superset yang ada terlebih dahulu untuk membuat pasangan baru.';
   }
 
   @override
@@ -41698,7 +41698,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Blokir \"$name\" dari semua rekomendasi AI di masa mendatang?\\n\\n';
+    return 'Blokir \"$name\" dari semua rekomendasi AI di masa mendatang?\n\n';
   }
 
   @override
@@ -42728,7 +42728,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Pemanasan membantu mencegah cedera dan meningkatkan kinerja.\\n\\nDirekomendasikan: 1-2 set ringan sebelum set kerja.';
+      'Pemanasan membantu mencegah cedera dan meningkatkan kinerja.\n\nDirekomendasikan: 1-2 set ringan sebelum set kerja.';
 
   @override
   String get workoutShowcase12450Lbs => '12.450 lbs';
@@ -44146,7 +44146,7 @@ class AppLocalizationsId extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'Belum ada data papan peringkat.\\nMulai dapatkan XP untuk naik peringkat!';
+      'Belum ada data papan peringkat.\nMulai dapatkan XP untuk naik peringkat!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

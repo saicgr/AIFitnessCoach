@@ -9027,7 +9027,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'カスタム演習を作成するか、お気に入りにマークを付けます\\n [ライブラリ] → [鉱山]';
+      'カスタム演習を作成するか、お気に入りにマークを付けます\n [ライブラリ] → [鉱山]';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'エクササイズの追加に失敗しました';
@@ -12166,10 +12166,10 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'ワークアウトを完了してここにシェアしましょう！\\n友達をフォローして彼らのワークアウトもチェック。';
+      'ワークアウトを完了してここにシェアしましょう！\n友達をフォローして彼らのワークアウトもチェック。';
 
   @override
-  String get feedCouldNotLoadYour => 'アクティビティフィードを読み込めませんでした。\\n後でもう一度お試しください。';
+  String get feedCouldNotLoadYour => 'アクティビティフィードを読み込めませんでした。\n後でもう一度お試しください。';
 
   @override
   String get feedCreateYourFirstPost => '最初の投稿を作成しましょう！';
@@ -26258,7 +26258,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'トレーニング時の詳細';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'ピン留めを外す';
@@ -27791,7 +27791,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nワークアウト';
+    return '+$totalWorkouts\nワークアウト';
   }
 
   @override
@@ -39351,7 +39351,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -40024,7 +40024,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\"と\"$name1\"はすでに異なるスーパーセットに含まれています。\\n\\n新しいペアを作成するには、既存のスーパーセットを解除してください。';
+    return '\"$name\"と\"$name1\"はすでに異なるスーパーセットに含まれています。\n\n新しいペアを作成するには、既存のスーパーセットを解除してください。';
   }
 
   @override
@@ -41016,7 +41016,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'ウォームアップは怪我の予防とパフォーマンスの向上に役立ちます。\\n\\n推奨: ワーキング セットの前に 1 ～ 2 セットの軽いセットを行うことをお勧めします。';
+      'ウォームアップは怪我の予防とパフォーマンスの向上に役立ちます。\n\n推奨: ワーキング セットの前に 1 ～ 2 セットの軽いセットを行うことをお勧めします。';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';

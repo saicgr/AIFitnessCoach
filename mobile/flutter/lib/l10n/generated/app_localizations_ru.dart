@@ -3458,11 +3458,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Не удалось загрузить вызовы.\\nПопробуйте еще раз.';
+      'Не удалось загрузить вызовы.\nПопробуйте еще раз.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Не удалось загрузить ваши вызовы.\\nПопробуйте еще раз.';
+      'Не удалось загрузить ваши вызовы.\nПопробуйте еще раз.';
 
   @override
   String get challengesCreateChallenge => 'Создать вызов';
@@ -3472,7 +3472,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Присоединяйтесь к вызову, чтобы соревноваться с\\nдрузьями и достигать своих фитнес-целей!';
+      'Присоединяйтесь к вызову, чтобы соревноваться с\nдрузьями и достигать своих фитнес-целей!';
 
   @override
   String get challengesMyChallenges => 'Мои вызовы';
@@ -4953,7 +4953,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get consistencyCardConsistency => 'ПОСЛЕДОВАТЕЛЬНОСТЬ';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Лучший день\\nСерия';
+  String get consistencyCardDayBestNstreak => 'Лучший день\nСерия';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'дней, когда вы занимались';
@@ -6782,7 +6782,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'С вас продолжат списывать средства, пока вы не отмените подписку в $storeName.\\n\\n';
+    return 'С вас продолжат списывать средства, пока вы не отмените подписку в $storeName.\n\n';
   }
 
   @override
@@ -12729,11 +12729,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'Завершайте тренировки, чтобы видеть их здесь!\\nПодпишитесь на друзей, чтобы видеть их тренировки.';
+      'Завершайте тренировки, чтобы видеть их здесь!\nПодпишитесь на друзей, чтобы видеть их тренировки.';
 
   @override
   String get feedCouldNotLoadYour =>
-      'Не удалось загрузить ленту активности.\\nПожалуйста, попробуйте позже.';
+      'Не удалось загрузить ленту активности.\nПожалуйста, попробуйте позже.';
 
   @override
   String get feedCreateYourFirstPost => 'Создайте свой первый пост!';
@@ -14414,7 +14414,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'История тренировок, PR и трофеи\\nбудут показаны здесь.';
+      'История тренировок, PR и трофеи\nбудут показаны здесь.';
 
   @override
   String get friendSearchFindFriends => 'Найти друзей';
@@ -14451,19 +14451,19 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Добавьте друзей, чтобы видеть их тренировки\\nи соревноваться вместе!';
+      'Добавьте друзей, чтобы видеть их тренировки\nи соревноваться вместе!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Не удалось загрузить пользователей, на которых вы подписаны.\\nПожалуйста, попробуйте снова.';
+      'Не удалось загрузить пользователей, на которых вы подписаны.\nПожалуйста, попробуйте снова.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Не удалось загрузить ваш список друзей.\\nПожалуйста, попробуйте снова.';
+      'Не удалось загрузить ваш список друзей.\nПожалуйста, попробуйте снова.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Не удалось загрузить ваш список подписчиков.\\nПожалуйста, попробуйте снова.';
+      'Не удалось загрузить ваш список подписчиков.\nПожалуйста, попробуйте снова.';
 
   @override
   String get friendsFailedToLoadFollowers => 'Не удалось загрузить подписчиков';
@@ -14476,7 +14476,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Подпишитесь на друзей, чтобы видеть их тренировки\\nи поддерживать мотивацию вместе!';
+      'Подпишитесь на друзей, чтобы видеть их тренировки\nи поддерживать мотивацию вместе!';
 
   @override
   String get friendsFollowers => 'Подписчики';
@@ -14489,7 +14489,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Продолжайте усердно тренироваться!\\nДрузья захотят следить за вашим прогрессом.';
+      'Продолжайте усердно тренироваться!\nДрузья захотят следить за вашим прогрессом.';
 
   @override
   String get friendsNoFollowersYet => 'Пока нет подписчиков';
@@ -16005,7 +16005,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Найдите \"$appName\"\\n';
+    return '3. Найдите \"$appName\"\n';
   }
 
   @override
@@ -18198,7 +18198,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Импортировано:\\n$summary';
+    return 'Импортировано:\n$summary';
   }
 
   @override
@@ -18220,7 +18220,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'напр.\\nГантели 5-100 фунтов\\n2x Стойки для приседаний\\nЖим ногами (нагружаемый дисками)\\nБеговые дорожки x4\\nТренажер с тросами...';
+      'напр.\nГантели 5-100 фунтов\n2x Стойки для приседаний\nЖим ногами (нагружаемый дисками)\nБеговые дорожки x4\nТренажер с тросами...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -27463,7 +27463,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Описание раздела тренировок';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Открепить';
@@ -29066,7 +29066,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nТРЕНИРОВОК';
+    return '+$totalWorkouts\nТРЕНИРОВОК';
   }
 
   @override
@@ -29122,7 +29122,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\nTUESDAY';
 
   @override
   String get progressShareTemplatesTransformed => 'ТРАНСФОРМАЦИЯ';
@@ -29477,7 +29477,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Пожалуйста, подождите, пока мы соединим вас\\nс агентом поддержки';
+      'Пожалуйста, подождите, пока мы соединим вас\nс агентом поддержки';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31110,7 +31110,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Не удалось загрузить прогнозы.\\n$e';
+    return 'Не удалось загрузить прогнозы.\n$e';
   }
 
   @override
@@ -39815,7 +39815,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Не удалось загрузить VO2max.\\n$error';
+    return 'Не удалось загрузить VO2max.\n$error';
   }
 
   @override
@@ -41128,7 +41128,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41829,7 +41829,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" и \"$name1\" уже находятся в разных суперсетах.\\n\\nСначала разбейте существующие суперсеты, чтобы создать новую пару.';
+    return '\"$name\" и \"$name1\" уже находятся в разных суперсетах.\n\nСначала разбейте существующие суперсеты, чтобы создать новую пару.';
   }
 
   @override
@@ -41839,7 +41839,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Заблокировать \"$name\" во всех будущих рекомендациях ИИ?\\n\\n';
+    return 'Заблокировать \"$name\" во всех будущих рекомендациях ИИ?\n\n';
   }
 
   @override

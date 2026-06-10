@@ -3451,11 +3451,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'Nie udało się wczytać wyzwań.\\nSpróbuj ponownie.';
+      'Nie udało się wczytać wyzwań.\nSpróbuj ponownie.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'Nie udało się wczytać Twoich wyzwań.\\nSpróbuj ponownie.';
+      'Nie udało się wczytać Twoich wyzwań.\nSpróbuj ponownie.';
 
   @override
   String get challengesCreateChallenge => 'Stwórz wyzwanie';
@@ -3465,7 +3465,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Dołącz do wyzwania, aby rywalizować ze\\nznajomymi i osiągać swoje cele fitness!';
+      'Dołącz do wyzwania, aby rywalizować ze\nznajomymi i osiągać swoje cele fitness!';
 
   @override
   String get challengesMyChallenges => 'Moje wyzwania';
@@ -4946,7 +4946,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get consistencyCardConsistency => 'KONSEKWENCJA';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Najlepszy dzień\\nSeria';
+  String get consistencyCardDayBestNstreak => 'Najlepszy dzień\nSeria';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'dni, w których trenowałeś';
@@ -6769,7 +6769,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Nadal będziesz obciążany opłatami, chyba że anulujesz subskrypcję w $storeName.\\n\\n';
+    return 'Nadal będziesz obciążany opłatami, chyba że anulujesz subskrypcję w $storeName.\n\n';
   }
 
   @override
@@ -12709,11 +12709,11 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'Ukończ treningi, aby zobaczyć je tutaj!\\nObserwuj znajomych, aby widzieć również ich treningi.';
+      'Ukończ treningi, aby zobaczyć je tutaj!\nObserwuj znajomych, aby widzieć również ich treningi.';
 
   @override
   String get feedCouldNotLoadYour =>
-      'Nie udało się załadować Twojego kanału aktywności.\\nSpróbuj ponownie później.';
+      'Nie udało się załadować Twojego kanału aktywności.\nSpróbuj ponownie później.';
 
   @override
   String get feedCreateYourFirstPost => 'Utwórz swój pierwszy post!';
@@ -14396,7 +14396,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Historia treningów, PR i trofea\\nbędą wyświetlane tutaj.';
+      'Historia treningów, PR i trofea\nbędą wyświetlane tutaj.';
 
   @override
   String get friendSearchFindFriends => 'Znajdź znajomych';
@@ -14434,19 +14434,19 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Dodaj znajomych, aby widzieć ich treningi\\ni wspólnie rywalizować w wyzwaniach!';
+      'Dodaj znajomych, aby widzieć ich treningi\ni wspólnie rywalizować w wyzwaniach!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Nie udało się załadować obserwowanych użytkowników.\\nSpróbuj ponownie.';
+      'Nie udało się załadować obserwowanych użytkowników.\nSpróbuj ponownie.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Nie udało się załadować listy znajomych.\\nSpróbuj ponownie.';
+      'Nie udało się załadować listy znajomych.\nSpróbuj ponownie.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Nie udało się załadować listy obserwujących.\\nSpróbuj ponownie.';
+      'Nie udało się załadować listy obserwujących.\nSpróbuj ponownie.';
 
   @override
   String get friendsFailedToLoadFollowers =>
@@ -14461,7 +14461,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Obserwuj znajomych, aby widzieć ich treningi\\ni wspólnie dbać o motywację!';
+      'Obserwuj znajomych, aby widzieć ich treningi\ni wspólnie dbać o motywację!';
 
   @override
   String get friendsFollowers => 'Obserwujący';
@@ -14474,7 +14474,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Trenuj dalej!\\nZnajomi będą chcieli śledzić Twoje postępy.';
+      'Trenuj dalej!\nZnajomi będą chcieli śledzić Twoje postępy.';
 
   @override
   String get friendsNoFollowersYet => 'Brak obserwujących';
@@ -15992,7 +15992,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Znajdź \"$appName\"\\n';
+    return '3. Znajdź \"$appName\"\n';
   }
 
   @override
@@ -18187,7 +18187,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'Zaimportowano:\\n$summary';
+    return 'Zaimportowano:\n$summary';
   }
 
   @override
@@ -27453,7 +27453,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Treść kiedy trenujesz';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Odepnij';
@@ -29056,7 +29056,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nTRENINGÓW';
+    return '+$totalWorkouts\nTRENINGÓW';
   }
 
   @override
@@ -29112,7 +29112,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#METAMORFOZA\\nWTOREK';
+      '#METAMORFOZA\nWTOREK';
 
   @override
   String get progressShareTemplatesTransformed => 'PRZEMIENIONY';
@@ -29466,7 +29466,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Proszę czekać, łączymy Cię\\nz konsultantem';
+      'Proszę czekać, łączymy Cię\nz konsultantem';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31097,7 +31097,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Nie można załadować przewidywań.\\n$e';
+    return 'Nie można załadować przewidywań.\n$e';
   }
 
   @override
@@ -39799,7 +39799,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Nie udało się wczytać VO2max.\\n$error';
+    return 'Nie udało się wczytać VO2max.\n$error';
   }
 
   @override
@@ -41115,7 +41115,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41820,7 +41820,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" i \"$name1\" są już w różnych superseriach.\\n\\nNajpierw rozbij istniejące superserie, aby utworzyć nowe połączenie.';
+    return '\"$name\" i \"$name1\" są już w różnych superseriach.\n\nNajpierw rozbij istniejące superserie, aby utworzyć nowe połączenie.';
   }
 
   @override
@@ -44287,7 +44287,7 @@ class AppLocalizationsPl extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'Brak danych w rankingu.\\nZacznij zdobywać XP, aby wspiąć się w górę!';
+      'Brak danych w rankingu.\nZacznij zdobywać XP, aby wspiąć się w górę!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

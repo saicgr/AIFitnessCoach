@@ -3424,11 +3424,11 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'An kasa ɗauko kalubale.\\nDa fatan za a sake gwadawa.';
+      'An kasa ɗauko kalubale.\nDa fatan za a sake gwadawa.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'An kasa ɗauko kalubalenka.\\nDa fatan za a sake gwadawa.';
+      'An kasa ɗauko kalubalenka.\nDa fatan za a sake gwadawa.';
 
   @override
   String get challengesCreateChallenge => 'Ƙirƙiri Kalubale';
@@ -3438,7 +3438,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'Shiga kalubale don yin gasa da\\nabokai da kuma cimma burinka na motsa jiki!';
+      'Shiga kalubale don yin gasa da\nabokai da kuma cimma burinka na motsa jiki!';
 
   @override
   String get challengesMyChallenges => 'Kalubalena';
@@ -4911,7 +4911,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get consistencyCardConsistency => 'DAIDAI TO';
 
   @override
-  String get consistencyCardDayBestNstreak => 'Mafi kyawun Rana\\nJeri';
+  String get consistencyCardDayBestNstreak => 'Mafi kyawun Rana\nJeri';
 
   @override
   String get consistencyCardOfDaysYouShowed => 'na kwanakin da ka halarta';
@@ -5751,7 +5751,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'Ƙara takamaiman ƙwarewa ko manufofin da kake son ingantawa.\\nAI zai taimaka wajen nemo madaidaitan motsa jiki.';
+      'Ƙara takamaiman ƙwarewa ko manufofin da kake son ingantawa.\nAI zai taimaka wajen nemo madaidaitan motsa jiki.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'Kalmomin da AI ya samar';
@@ -6739,7 +6739,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'Za a ci gaba da caje ka sai dai idan ka soke daga $storeName da farko.\\n\\n';
+    return 'Za a ci gaba da caje ka sai dai idan ka soke daga $storeName da farko.\n\n';
   }
 
   @override
@@ -8868,7 +8868,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'Kammala motsa jikinka na farko\\ndon fara bin diddigin ci gabanka!';
+      'Kammala motsa jikinka na farko\ndon fara bin diddigin ci gabanka!';
 
   @override
   String get emptyStateCreateProgram => 'Ƙirƙiri shiri';
@@ -8890,22 +8890,22 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get emptyStatePleaseCheckYourInternet =>
-      'Da fatan za a duba haɗin yanar gizonka\\nkuma a gwada sake.';
+      'Da fatan za a duba haɗin yanar gizonka\nkuma a gwada sake.';
 
   @override
   String get emptyStateTipGotIt => 'Na gane';
 
   @override
   String get emptyStateTryAdjustingYourFilters =>
-      'Gwada daidaita matattararka\\nko neman wani abu daban.';
+      'Gwada daidaita matattararka\nko neman wani abu daban.';
 
   @override
   String get emptyStateWeCouldnTFind =>
-      'Ba mu iya samun abin da kake nema ba.\\nGwada amfani da wasu kalmomi.';
+      'Ba mu iya samun abin da kake nema ba.\nGwada amfani da wasu kalmomi.';
 
   @override
   String get emptyStateYourWorkoutScheduleIs =>
-      'Tsarin motsa jikinka babu komai.\\nFara da ƙirƙirar shiri!';
+      'Tsarin motsa jikinka babu komai.\nFara da ƙirƙirar shiri!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'GWADA TAMBAYA...';
@@ -9408,7 +9408,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'Ƙirƙirar motsa jiki na al\'ada ko yiwa waɗanda aka fi so alama\\nin Library → Nawa';
+      'Ƙirƙirar motsa jiki na al\'ada ko yiwa waɗanda aka fi so alama\nin Library → Nawa';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'An kasa ƙara motsa jiki';
@@ -11159,7 +11159,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get exerciseSwapSheetDescribeYourEquipmentOr =>
-      'Bayyana kayan aikin ka ko abin da kake so\\nalal misali, \"Ina da ciwon kafa, nauyin jiki kawai\"';
+      'Bayyana kayan aikin ka ko abin da kake so\nalal misali, \"Ina da ciwon kafa, nauyin jiki kawai\"';
 
   @override
   String get exerciseSwapSheetEGIOnly =>
@@ -14389,7 +14389,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'Tarihin motsa jiki, PRs, da lambobin yabo\\nza a nuna su a nan.';
+      'Tarihin motsa jiki, PRs, da lambobin yabo\nza a nuna su a nan.';
 
   @override
   String get friendSearchFindFriends => 'Nemo Abokai';
@@ -14426,19 +14426,19 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'Kara abokai don ganin motsa jikinsu\\nda kuma fafatawa a kalubale tare!';
+      'Kara abokai don ganin motsa jikinsu\nda kuma fafatawa a kalubale tare!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'Ba a iya loda masu amfani da kake bi ba.\\nDa fatan za a sake gwadawa.';
+      'Ba a iya loda masu amfani da kake bi ba.\nDa fatan za a sake gwadawa.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'Ba a iya loda jerin abokanka ba.\\nDa fatan za a sake gwadawa.';
+      'Ba a iya loda jerin abokanka ba.\nDa fatan za a sake gwadawa.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'Ba a iya loda jerin mutanen da suke binka ba.\\nDa fatan za a sake gwadawa.';
+      'Ba a iya loda jerin mutanen da suke binka ba.\nDa fatan za a sake gwadawa.';
 
   @override
   String get friendsFailedToLoadFollowers =>
@@ -14452,7 +14452,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'Bi abokai don ganin motsa jikinsu\\nda kuma ci gaba da kasancewa cikin kwarin gwiwa tare!';
+      'Bi abokai don ganin motsa jikinsu\nda kuma ci gaba da kasancewa cikin kwarin gwiwa tare!';
 
   @override
   String get friendsFollowers => 'Mutanen da suke binka';
@@ -14465,7 +14465,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'Ci gaba da yin motsa jikinka!\\nAbokai za su so su bi diddigin ci gaban ka.';
+      'Ci gaba da yin motsa jikinka!\nAbokai za su so su bi diddigin ci gaban ka.';
 
   @override
   String get friendsNoFollowersYet => 'Babu mutanen da suke binka tukuna';
@@ -15974,7 +15974,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. Nemo \"$appName\"\\n';
+    return '3. Nemo \"$appName\"\n';
   }
 
   @override
@@ -18172,7 +18172,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'An shigo da:\\n$summary';
+    return 'An shigo da:\n$summary';
   }
 
   @override
@@ -18194,7 +18194,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'misali:\\nDumbbells 5-100 lb\\n2x Squat racks\\nLeg press (plate-loaded)\\nTreadmills x4\\nCable station...';
+      'misali:\nDumbbells 5-100 lb\n2x Squat racks\nLeg press (plate-loaded)\nTreadmills x4\nCable station...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22564,7 +22564,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'An gaza ɗauko hirarrakinka.\\nDa fatan za a sake gwadawa nan gaba.';
+      'An gaza ɗauko hirarrakinka.\nDa fatan za a sake gwadawa nan gaba.';
 
   @override
   String get messagesFailedToLoadMessages => 'An gaza ɗauko saƙonni';
@@ -22584,7 +22584,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'Fara hira da abokanka!\\nSaƙonninka za su bayyana a nan.';
+      'Fara hira da abokanka!\nSaƙonninka za su bayyana a nan.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'Babu bayanai don wannan rana';
@@ -26745,7 +26745,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get paywallPricingStartYour7Day =>
-      'Fara gwajinka na kwanaki 7 KYAUTA\\ndon ci gaba';
+      'Fara gwajinka na kwanaki 7 KYAUTA\ndon ci gaba';
 
   @override
   String get paywallPricingTerms => 'Sharuɗɗa';
@@ -26759,7 +26759,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get paywallPricingWeLlSendYou =>
-      'Za mu tura maka tunatarwa\\nkafin gwajinka na kyauta ya kare';
+      'Za mu tura maka tunatarwa\nkafin gwajinka na kyauta ya kare';
 
   @override
   String get paywallPricingWhatYouGet => 'Abin da za ka samu';
@@ -27436,7 +27436,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'Jikin lokacin da kake motsa jiki';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'Cire fil';
@@ -28483,7 +28483,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'Wannan zai goge motsa jikin ka da ba a kammala ba kuma ya samar da sababbi ta amfani da saitunan shirin ka na yanzu.\\n\\nBa za a shafi motsa jikin da aka riga aka kammala ba.';
+      'Wannan zai goge motsa jikin ka da ba a kammala ba kuma ya samar da sababbi ta amfani da saitunan shirin ka na yanzu.\n\nBa za a shafi motsa jikin da aka riga aka kammala ba.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28985,7 +28985,7 @@ class AppLocalizationsHa extends AppLocalizations {
   String get progressShareGalleryTapToOpen => 'danna don buɗewa';
 
   @override
-  String get progressShareTemplatesANtransformationNstudy => 'NA\\nNA\\nNA';
+  String get progressShareTemplatesANtransformationNstudy => 'NA\nNA\nNA';
 
   @override
   String get progressShareTemplatesBreaking => 'LABARI MAI ZAFIN GASKIYA';
@@ -29031,7 +29031,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nMOTSA JIKI';
+    return '+$totalWorkouts\nMOTSA JIKI';
   }
 
   @override
@@ -29088,7 +29088,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#CANJINJIKI\\nTALATA';
+      '#CANJINJIKI\nTALATA';
 
   @override
   String get progressShareTemplatesTransformed => 'AN CANZA';
@@ -29439,7 +29439,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'Da fatan za a jira yayin da muke haɗa ku\\nda wakilin tallafi';
+      'Da fatan za a jira yayin da muke haɗa ku\nda wakilin tallafi';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -31039,7 +31039,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'Ba a iya ɗauko hasashen ba.\\n$message';
+    return 'Ba a iya ɗauko hasashen ba.\n$message';
   }
 
   @override
@@ -31074,7 +31074,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'Ba a iya ɗaukar hasashen ba.\\n$e';
+    return 'Ba a iya ɗaukar hasashen ba.\n$e';
   }
 
   @override
@@ -39765,7 +39765,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'Ba a iya ɗora VO2max ba.\\n$error';
+    return 'Ba a iya ɗora VO2max ba.\n$error';
   }
 
   @override
@@ -41774,7 +41774,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" da \"$name1\" tuni suna cikin supersets daban-daban.\\n\\nFasa supersets ɗin da ke akwai tukuna don ƙirƙirar sabon haɗi.';
+    return '\"$name\" da \"$name1\" tuni suna cikin supersets daban-daban.\n\nFasa supersets ɗin da ke akwai tukuna don ƙirƙirar sabon haɗi.';
   }
 
   @override
@@ -41784,7 +41784,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi2BlockFromAllFuture(Object name) {
-    return 'Toshe \"$name\" daga duk shawarwarin AI na gaba?\\n\\n';
+    return 'Toshe \"$name\" daga duk shawarwarin AI na gaba?\n\n';
   }
 
   @override
@@ -42807,7 +42807,7 @@ class AppLocalizationsHa extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'Yin dumama yana taimakawa hana rauni kuma yana haɓaka aiki.\\n\\nAn ba da shawarar: saiti 1-2 masu sauƙi kafin saitin aiki.';
+      'Yin dumama yana taimakawa hana rauni kuma yana haɓaka aiki.\n\nAn ba da shawarar: saiti 1-2 masu sauƙi kafin saitin aiki.';
 
   @override
   String get workoutShowcase12450Lbs => '12,450 lbs';

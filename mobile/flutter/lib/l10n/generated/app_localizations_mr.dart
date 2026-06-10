@@ -2071,7 +2071,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'सेट लॉग करा: 135*8, 145*6, +10...\\nव्यायाम जोडा: 3x10 डेडलिफ्ट 135 वर';
+      'सेट लॉग करा: 135*8, 145*6, +10...\nव्यायाम जोडा: 3x10 डेडलिफ्ट 135 वर';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'सेट लॉग करा / व्यायाम जोडा';
@@ -3440,11 +3440,11 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'चॅलेंज लोड होऊ शकले नाहीत.\\nकृपया पुन्हा प्रयत्न करा.';
+      'चॅलेंज लोड होऊ शकले नाहीत.\nकृपया पुन्हा प्रयत्न करा.';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'तुमची चॅलेंज लोड होऊ शकली नाहीत.\\nकृपया पुन्हा प्रयत्न करा.';
+      'तुमची चॅलेंज लोड होऊ शकली नाहीत.\nकृपया पुन्हा प्रयत्न करा.';
 
   @override
   String get challengesCreateChallenge => 'चॅलेंज तयार करा';
@@ -3454,7 +3454,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get challengesJoinAChallengeTo =>
-      'मित्रांशी स्पर्धा करण्यासाठी आणि तुमची फिटनेस ध्येये गाठण्यासाठी\\nचॅलेंजमध्ये सामील व्हा!';
+      'मित्रांशी स्पर्धा करण्यासाठी आणि तुमची फिटनेस ध्येये गाठण्यासाठी\nचॅलेंजमध्ये सामील व्हा!';
 
   @override
   String get challengesMyChallenges => 'माझी चॅलेंज';
@@ -4925,7 +4925,7 @@ class AppLocalizationsMr extends AppLocalizations {
   String get consistencyCardConsistency => 'सातत्य';
 
   @override
-  String get consistencyCardDayBestNstreak => 'सर्वोत्तम दिवस\\nस्ट्रीक';
+  String get consistencyCardDayBestNstreak => 'सर्वोत्तम दिवस\nस्ट्रीक';
 
   @override
   String get consistencyCardOfDaysYouShowed =>
@@ -5761,7 +5761,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'तुम्हाला सुधारायची असलेली विशिष्ट कौशल्ये किंवा उद्दिष्टे जोडा.\\nयोग्य व्यायाम शोधण्यासाठी AI मदत करेल.';
+      'तुम्हाला सुधारायची असलेली विशिष्ट कौशल्ये किंवा उद्दिष्टे जोडा.\nयोग्य व्यायाम शोधण्यासाठी AI मदत करेल.';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI-जनरेटेड कीवर्ड्स';
@@ -6742,7 +6742,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'जोपर्यंत तुम्ही $storeName वरून रद्द करत नाही, तोपर्यंत तुम्हाला बिल आकारले जाईल.\\n\\n';
+    return 'जोपर्यंत तुम्ही $storeName वरून रद्द करत नाही, तोपर्यंत तुम्हाला बिल आकारले जाईल.\n\n';
   }
 
   @override
@@ -9384,7 +9384,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get exerciseAddSheetCreateCustomExercisesOr =>
-      'कस्टम व्यायाम तयार करा किंवा आवडीचे म्हणून चिन्हांकित करा\\nलायब्ररी → माझे मध्ये';
+      'कस्टम व्यायाम तयार करा किंवा आवडीचे म्हणून चिन्हांकित करा\nलायब्ररी → माझे मध्ये';
 
   @override
   String get exerciseAddSheetFailedToAddExercise => 'व्यायाम जोडण्यात अयशस्वी';
@@ -9404,7 +9404,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get exerciseAddSheetNoCustomExercisesFavorites =>
-      'अद्याप कोणतेही कस्टम व्यायाम, आवडीचे,\\nकिंवा मुख्य व्यायाम नाहीत';
+      'अद्याप कोणतेही कस्टम व्यायाम, आवडीचे,\nकिंवा मुख्य व्यायाम नाहीत';
 
   @override
   String get exerciseAddSheetNoSuggestionsAvailable =>
@@ -12654,11 +12654,11 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get feedCompleteWorkoutsToSee =>
-      'वर्कआउट्स पूर्ण करा आणि ते येथे शेअर केलेले पहा!\\nमित्रांना फॉलो करा आणि त्यांचे वर्कआउट्सही पहा.';
+      'वर्कआउट्स पूर्ण करा आणि ते येथे शेअर केलेले पहा!\nमित्रांना फॉलो करा आणि त्यांचे वर्कआउट्सही पहा.';
 
   @override
   String get feedCouldNotLoadYour =>
-      'तुमची ॲक्टिव्हिटी फीड लोड होऊ शकली नाही.\\nकृपया नंतर पुन्हा प्रयत्न करा.';
+      'तुमची ॲक्टिव्हिटी फीड लोड होऊ शकली नाही.\nकृपया नंतर पुन्हा प्रयत्न करा.';
 
   @override
   String get feedCreateYourFirstPost => 'तुमची पहिली पोस्ट तयार करा!';
@@ -14335,7 +14335,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'वर्कआउट इतिहास, PRs आणि ट्रॉफी\\nयेथे दिसतील.';
+      'वर्कआउट इतिहास, PRs आणि ट्रॉफी\nयेथे दिसतील.';
 
   @override
   String get friendSearchFindFriends => 'मित्र शोधा';
@@ -14371,19 +14371,19 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'तुमच्या मित्रांचे वर्कआउट पाहण्यासाठी\\nआणि आव्हानांमध्ये एकत्र स्पर्धा करण्यासाठी मित्र जोडा!';
+      'तुमच्या मित्रांचे वर्कआउट पाहण्यासाठी\nआणि आव्हानांमध्ये एकत्र स्पर्धा करण्यासाठी मित्र जोडा!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'तुम्ही फॉलो करत असलेले वापरकर्ते लोड होऊ शकले नाहीत.\\nकृपया पुन्हा प्रयत्न करा.';
+      'तुम्ही फॉलो करत असलेले वापरकर्ते लोड होऊ शकले नाहीत.\nकृपया पुन्हा प्रयत्न करा.';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'तुमची मित्र यादी लोड होऊ शकली नाही.\\nकृपया पुन्हा प्रयत्न करा.';
+      'तुमची मित्र यादी लोड होऊ शकली नाही.\nकृपया पुन्हा प्रयत्न करा.';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'तुमची फॉलोअर्स यादी लोड होऊ शकली नाही.\\nकृपया पुन्हा प्रयत्न करा.';
+      'तुमची फॉलोअर्स यादी लोड होऊ शकली नाही.\nकृपया पुन्हा प्रयत्न करा.';
 
   @override
   String get friendsFailedToLoadFollowers => 'फॉलोअर्स लोड करण्यात अयशस्वी';
@@ -14397,7 +14397,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'तुमच्या मित्रांचे वर्कआउट पाहण्यासाठी\\nआणि एकत्र प्रेरित राहण्यासाठी त्यांना फॉलो करा!';
+      'तुमच्या मित्रांचे वर्कआउट पाहण्यासाठी\nआणि एकत्र प्रेरित राहण्यासाठी त्यांना फॉलो करा!';
 
   @override
   String get friendsFollowers => 'फॉलोअर्स';
@@ -14410,7 +14410,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'तुमचे वर्कआउट्स जोमाने सुरू ठेवा!\\nमित्र तुमच्या प्रगतीला फॉलो करू इच्छितील.';
+      'तुमचे वर्कआउट्स जोमाने सुरू ठेवा!\nमित्र तुमच्या प्रगतीला फॉलो करू इच्छितील.';
 
   @override
   String get friendsNoFollowersYet => 'अद्याप कोणीही फॉलोअर्स नाहीत';
@@ -15914,7 +15914,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '३. \"$appName\" शोधा\\n';
+    return '३. \"$appName\" शोधा\n';
   }
 
   @override
@@ -18099,7 +18099,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'इम्पोर्ट केले:\\n$summary';
+    return 'इम्पोर्ट केले:\n$summary';
   }
 
   @override
@@ -18121,7 +18121,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get importEquipmentEGNdumbbells5 =>
-      'उदा.\\nडंबेल 5-100 lb\\n2x स्क्वॅट रॅक\\nलेग प्रेस (प्लेट-लोड केलेले)\\nट्रेडमिल x4\\nकेबल स्टेशन...';
+      'उदा.\nडंबेल 5-100 lb\n2x स्क्वॅट रॅक\nलेग प्रेस (प्लेट-लोड केलेले)\nट्रेडमिल x4\nकेबल स्टेशन...';
 
   @override
   String get importEquipmentEverythingImportedGoesTo =>
@@ -22477,7 +22477,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'तुमचे संभाषण लोड होऊ शकले नाही.\\nकृपया नंतर पुन्हा प्रयत्न करा.';
+      'तुमचे संभाषण लोड होऊ शकले नाही.\nकृपया नंतर पुन्हा प्रयत्न करा.';
 
   @override
   String get messagesFailedToLoadMessages => 'मेसेज लोड करण्यात अयशस्वी';
@@ -22497,7 +22497,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'तुमच्या मित्रांशी संभाषण सुरू करा!\\nतुमचे मेसेज इथे दिसतील.';
+      'तुमच्या मित्रांशी संभाषण सुरू करा!\nतुमचे मेसेज इथे दिसतील.';
 
   @override
   String get metricHistoryCardNoDataForThis => 'या दिवसासाठी कोणताही डेटा नाही';
@@ -27345,7 +27345,7 @@ class AppLocalizationsMr extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'जेव्हा तुम्ही ट्रेन करता बॉडी';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'अनपिन करा';
@@ -28396,7 +28396,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get programMenuButtonThisWillDeleteYour =>
-      'हे तुमचे आगामी अपूर्ण वर्कआउट्स हटवेल आणि तुमच्या सध्याच्या प्रोग्राम सेटिंग्ज वापरून नवीन वर्कआउट्स जनरेट करेल.\\n\\nपूर्ण झालेले वर्कआउट्स प्रभावित होणार नाहीत.';
+      'हे तुमचे आगामी अपूर्ण वर्कआउट्स हटवेल आणि तुमच्या सध्याच्या प्रोग्राम सेटिंग्ज वापरून नवीन वर्कआउट्स जनरेट करेल.\n\nपूर्ण झालेले वर्कआउट्स प्रभावित होणार नाहीत.';
 
   @override
   String get programMenuButtonTryCelebrityWorkoutsSport =>
@@ -28897,7 +28897,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get progressShareTemplatesANtransformationNstudy =>
-      'एक\\nट्रान्सफॉर्मेशन\\nअभ्यास';
+      'एक\nट्रान्सफॉर्मेशन\nअभ्यास';
 
   @override
   String get progressShareTemplatesBreaking => 'ब्रेकिंग';
@@ -28943,7 +28943,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nवर्कआउट्स';
+    return '+$totalWorkouts\nवर्कआउट्स';
   }
 
   @override
@@ -28999,7 +28999,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\nTUESDAY';
 
   @override
   String get progressShareTemplatesTransformed => 'TRANSFORMED';
@@ -30936,7 +30936,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String racePredictorCardCouldNotLoadPredictions(Object message) {
-    return 'अंदाज लोड होऊ शकले नाहीत.\\n$message';
+    return 'अंदाज लोड होऊ शकले नाहीत.\n$message';
   }
 
   @override
@@ -30972,7 +30972,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'अंदाज लोड होऊ शकले नाहीत.\\n$e';
+    return 'अंदाज लोड होऊ शकले नाहीत.\n$e';
   }
 
   @override
@@ -39655,7 +39655,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String vo2maxDetailScreenCouldNotLoadVo(Object error) {
-    return 'VO2max लोड करता आले नाही.\\n$error';
+    return 'VO2max लोड करता आले नाही.\n$error';
   }
 
   @override
@@ -40962,7 +40962,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (Zealova)\\n(url)';
+    return ') — (Zealova)\n(url)';
   }
 
   @override
@@ -41659,7 +41659,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" आणि \"$name1\" आधीच वेगवेगळ्या सुपरसेट्समध्ये आहेत.\\n\\nनवीन जोडी तयार करण्यासाठी आधीचे सुपरसेट्स तोडा.';
+    return '\"$name\" आणि \"$name1\" आधीच वेगवेगळ्या सुपरसेट्समध्ये आहेत.\n\nनवीन जोडी तयार करण्यासाठी आधीचे सुपरसेट्स तोडा.';
   }
 
   @override
@@ -42692,7 +42692,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'वॉर्म अप केल्याने दुखापत टाळण्यास आणि कामगिरी सुधारण्यास मदत होते.\\n\\nशिफारस: मुख्य सेट करण्यापूर्वी १-२ हलके सेट करा.';
+      'वॉर्म अप केल्याने दुखापत टाळण्यास आणि कामगिरी सुधारण्यास मदत होते.\n\nशिफारस: मुख्य सेट करण्यापूर्वी १-२ हलके सेट करा.';
 
   @override
   String get workoutShowcase12450Lbs => '१२,४५० lbs';
@@ -44115,7 +44115,7 @@ class AppLocalizationsMr extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'अजून लीडरबोर्ड डेटा नाही.\\nरँक वाढवण्यासाठी XP मिळवण्यास सुरुवात करा!';
+      'अजून लीडरबोर्ड डेटा नाही.\nरँक वाढवण्यासाठी XP मिळवण्यास सुरुवात करा!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

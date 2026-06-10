@@ -2070,7 +2070,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get aiTextInputLogSets1358 =>
-      'Log sets: 135*8, 145*6, +10...\\nAdd exercise: 3x10 deadlift at 135';
+      'Log sets: 135*8, 145*6, +10...\nAdd exercise: 3x10 deadlift at 135';
 
   @override
   String get aiTextInputLogSetsAddExercises => 'Log sets / Add exercises';
@@ -3435,11 +3435,11 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get challengesCouldNotLoadChallenges =>
-      'ਚੁਣੌਤੀਆਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ।\\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+      'ਚੁਣੌਤੀਆਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ।\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get challengesCouldNotLoadYour =>
-      'ਤੁਹਾਡੀਆਂ ਚੁਣੌਤੀਆਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ।\\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+      'ਤੁਹਾਡੀਆਂ ਚੁਣੌਤੀਆਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ।\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get challengesCreateChallenge => 'ਚੁਣੌਤੀ ਬਣਾਓ';
@@ -4918,7 +4918,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get consistencyCardConsistency => 'ਨਿਰੰਤਰਤਾ';
 
   @override
-  String get consistencyCardDayBestNstreak => 'ਦਿਨ ਦਾ ਸਰਵੋਤਮ\\nਸਟ੍ਰੀਕ';
+  String get consistencyCardDayBestNstreak => 'ਦਿਨ ਦਾ ਸਰਵੋਤਮ\nਸਟ੍ਰੀਕ';
 
   @override
   String get consistencyCardOfDaysYouShowed =>
@@ -6736,7 +6736,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String deleteAccountFlowYouWillContinueTo(Object storeName) {
-    return 'ਤੁਹਾਨੂੰ ਬਿਲਿੰਗ ਜਾਰੀ ਰਹੇਗੀ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਪਹਿਲਾਂ $storeName ਤੋਂ ਰੱਦ ਨਹੀਂ ਕਰਦੇ।\\n\\n';
+    return 'ਤੁਹਾਨੂੰ ਬਿਲਿੰਗ ਜਾਰੀ ਰਹੇਗੀ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਪਹਿਲਾਂ $storeName ਤੋਂ ਰੱਦ ਨਹੀਂ ਕਰਦੇ।\n\n';
   }
 
   @override
@@ -8853,7 +8853,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'ਆਪਣੀ ਪ੍ਰਗਤੀ ਨੂੰ ਟਰੈਕ ਕਰਨਾ ਸ਼ੁਰੂ ਕਰਨ ਲਈ\\nਆਪਣਾ ਪਹਿਲਾ ਵਰਕਆਊਟ ਪੂਰਾ ਕਰੋ!';
+      'ਆਪਣੀ ਪ੍ਰਗਤੀ ਨੂੰ ਟਰੈਕ ਕਰਨਾ ਸ਼ੁਰੂ ਕਰਨ ਲਈ\nਆਪਣਾ ਪਹਿਲਾ ਵਰਕਆਊਟ ਪੂਰਾ ਕਰੋ!';
 
   @override
   String get emptyStateCreateProgram => 'ਖਾਲੀ ਸਥਿਤੀ ਪ੍ਰੋਗਰਾਮ ਬਣਾਓ';
@@ -13961,7 +13961,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get foodMoodAnalyticsTrackYourMoodWhen =>
-      'ਪੈਟਰਨ ਅਤੇ ਜਾਣਕਾਰੀਆਂ ਦੇਖਣ ਲਈ\\nਭੋਜਨ ਲੌਗ ਕਰਦੇ ਸਮੇਂ ਆਪਣੇ ਮੂਡ ਨੂੰ ਟਰੈਕ ਕਰੋ';
+      'ਪੈਟਰਨ ਅਤੇ ਜਾਣਕਾਰੀਆਂ ਦੇਖਣ ਲਈ\nਭੋਜਨ ਲੌਗ ਕਰਦੇ ਸਮੇਂ ਆਪਣੇ ਮੂਡ ਨੂੰ ਟਰੈਕ ਕਰੋ';
 
   @override
   String get foodMoodAnalyticsTrackedMeals => 'ਟਰੈਕ ਕੀਤੇ ਭੋਜਨ';
@@ -14016,7 +14016,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get foodReportWeLlReviewAnd =>
-      'ਅਸੀਂ 48 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਸਮੀਖਿਆ ਅਤੇ ਅਪਡੇਟ ਕਰਾਂਗੇ।\\nਸਾਡੇ ਡੇਟਾ ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰਨ ਲਈ ਧੰਨਵਾਦ!';
+      'ਅਸੀਂ 48 ਘੰਟਿਆਂ ਦੇ ਅੰਦਰ ਸਮੀਖਿਆ ਅਤੇ ਅਪਡੇਟ ਕਰਾਂਗੇ।\nਸਾਡੇ ਡੇਟਾ ਨੂੰ ਬਿਹਤਰ ਬਣਾਉਣ ਵਿੱਚ ਮਦਦ ਕਰਨ ਲਈ ਧੰਨਵਾਦ!';
 
   @override
   String get foodReportWhatFoodDidYou =>
@@ -14320,7 +14320,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get friendProfileWorkoutHistoryPrsAnd =>
-      'ਵਰਕਆਊਟ ਇਤਿਹਾਸ, PRs, ਅਤੇ ਟਰਾਫੀਆਂ\\nਇੱਥੇ ਦਿਖਾਈਆਂ ਜਾਣਗੀਆਂ।';
+      'ਵਰਕਆਊਟ ਇਤਿਹਾਸ, PRs, ਅਤੇ ਟਰਾਫੀਆਂ\nਇੱਥੇ ਦਿਖਾਈਆਂ ਜਾਣਗੀਆਂ।';
 
   @override
   String get friendSearchFindFriends => 'ਦੋਸਤ ਲੱਭੋ';
@@ -14356,19 +14356,19 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get friendsAddFriendsToSee =>
-      'ਆਪਣੇ ਦੋਸਤਾਂ ਦੇ ਵਰਕਆਊਟ ਦੇਖਣ\\nਅਤੇ ਚੁਣੌਤੀਆਂ ਵਿੱਚ ਇਕੱਠੇ ਮੁਕਾਬਲਾ ਕਰਨ ਲਈ ਦੋਸਤ ਸ਼ਾਮਲ ਕਰੋ!';
+      'ਆਪਣੇ ਦੋਸਤਾਂ ਦੇ ਵਰਕਆਊਟ ਦੇਖਣ\nਅਤੇ ਚੁਣੌਤੀਆਂ ਵਿੱਚ ਇਕੱਠੇ ਮੁਕਾਬਲਾ ਕਰਨ ਲਈ ਦੋਸਤ ਸ਼ਾਮਲ ਕਰੋ!';
 
   @override
   String get friendsCouldNotLoadUsers =>
-      'ਤੁਹਾਡੇ ਦੁਆਰਾ ਫਾਲੋ ਕੀਤੇ ਯੂਜ਼ਰ ਲੋਡ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕੇ।\\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+      'ਤੁਹਾਡੇ ਦੁਆਰਾ ਫਾਲੋ ਕੀਤੇ ਯੂਜ਼ਰ ਲੋਡ ਨਹੀਂ ਕੀਤੇ ਜਾ ਸਕੇ।\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get friendsCouldNotLoadYour =>
-      'ਤੁਹਾਡੀ ਦੋਸਤਾਂ ਦੀ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।\\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+      'ਤੁਹਾਡੀ ਦੋਸਤਾਂ ਦੀ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get friendsCouldNotLoadYour2 =>
-      'ਤੁਹਾਡੀ ਫਾਲੋਅਰਜ਼ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।\\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+      'ਤੁਹਾਡੀ ਫਾਲੋਅਰਜ਼ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਕੀਤੀ ਜਾ ਸਕੀ।\nਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get friendsFailedToLoadFollowers => 'ਫਾਲੋਅਰਜ਼ ਲੋਡ ਕਰਨ ਵਿੱਚ ਅਸਫਲ';
@@ -14381,7 +14381,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get friendsFollowFriendsToSee =>
-      'ਆਪਣੇ ਦੋਸਤਾਂ ਦੇ ਵਰਕਆਊਟ ਦੇਖਣ\\nਅਤੇ ਇਕੱਠੇ ਪ੍ਰੇਰਿਤ ਰਹਿਣ ਲਈ ਦੋਸਤਾਂ ਨੂੰ ਫਾਲੋ ਕਰੋ!';
+      'ਆਪਣੇ ਦੋਸਤਾਂ ਦੇ ਵਰਕਆਊਟ ਦੇਖਣ\nਅਤੇ ਇਕੱਠੇ ਪ੍ਰੇਰਿਤ ਰਹਿਣ ਲਈ ਦੋਸਤਾਂ ਨੂੰ ਫਾਲੋ ਕਰੋ!';
 
   @override
   String get friendsFollowers => 'ਫਾਲੋਅਰਜ਼';
@@ -14394,7 +14394,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get friendsKeepCrushingYourWorkouts =>
-      'ਆਪਣੇ ਵਰਕਆਊਟ ਜਾਰੀ ਰੱਖੋ!\\nਦੋਸਤ ਤੁਹਾਡੀ ਪ੍ਰਗਤੀ ਨੂੰ ਫਾਲੋ ਕਰਨਾ ਚਾਹੁਣਗੇ।';
+      'ਆਪਣੇ ਵਰਕਆਊਟ ਜਾਰੀ ਰੱਖੋ!\nਦੋਸਤ ਤੁਹਾਡੀ ਪ੍ਰਗਤੀ ਨੂੰ ਫਾਲੋ ਕਰਨਾ ਚਾਹੁਣਗੇ।';
 
   @override
   String get friendsNoFollowersYet => 'ਅਜੇ ਕੋਈ ਫਾਲੋਅਰ ਨਹੀਂ ਹੈ';
@@ -15148,7 +15148,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get gymLocationPickerMapBasedLocationPicker =>
-      'ਨਕਸ਼ੇ-ਆਧਾਰਿਤ ਸਥਾਨ ਚੋਣਕਾਰ ਅਜੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।\\nਫਿਲਹਾਲ, ਪ੍ਰੋਫਾਈਲ ਵਿੱਚ ਆਪਣੇ ਜਿਮ ਦਾ ਨਾਮ ਸੈੱਟ ਕਰੋ।';
+      'ਨਕਸ਼ੇ-ਆਧਾਰਿਤ ਸਥਾਨ ਚੋਣਕਾਰ ਅਜੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।\nਫਿਲਹਾਲ, ਪ੍ਰੋਫਾਈਲ ਵਿੱਚ ਆਪਣੇ ਜਿਮ ਦਾ ਨਾਮ ਸੈੱਟ ਕਰੋ।';
 
   @override
   String get gymProfileSwitcherActive => 'ਸਰਗਰਮ';
@@ -15897,7 +15897,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '3. \"$appName\" ਲੱਭੋ\\n';
+    return '3. \"$appName\" ਲੱਭੋ\n';
   }
 
   @override
@@ -18085,7 +18085,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'ਇੰਪੋਰਟ ਕੀਤਾ ਗਿਆ:\\n$summary';
+    return 'ਇੰਪੋਰਟ ਕੀਤਾ ਗਿਆ:\n$summary';
   }
 
   @override
@@ -22462,7 +22462,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'ਤੁਹਾਡੀਆਂ ਗੱਲਬਾਤਾਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ।\\nਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
+      'ਤੁਹਾਡੀਆਂ ਗੱਲਬਾਤਾਂ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀਆਂ।\nਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।';
 
   @override
   String get messagesFailedToLoadMessages => 'ਸੁਨੇਹੇ ਲੋਡ ਕਰਨ ਵਿੱਚ ਅਸਫਲ';
@@ -22482,7 +22482,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'ਆਪਣੇ ਦੋਸਤਾਂ ਨਾਲ ਗੱਲਬਾਤ ਸ਼ੁਰੂ ਕਰੋ!\\nਤੁਹਾਡੇ ਸੁਨੇਹੇ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੇ।';
+      'ਆਪਣੇ ਦੋਸਤਾਂ ਨਾਲ ਗੱਲਬਾਤ ਸ਼ੁਰੂ ਕਰੋ!\nਤੁਹਾਡੇ ਸੁਨੇਹੇ ਇੱਥੇ ਦਿਖਾਈ ਦੇਣਗੇ।';
 
   @override
   String get metricHistoryCardNoDataForThis => 'ਇਸ ਦਿਨ ਲਈ ਕੋਈ ਡੇਟਾ ਨਹੀਂ ਹੈ';
@@ -27316,7 +27316,7 @@ class AppLocalizationsPa extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'ਜਦੋਂ ਤੁਸੀਂ ਟ੍ਰੇਨਿੰਗ ਕਰਦੇ ਹੋ ਬਾਡੀ';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'ਅਨਪਿਨ ਕਰੋ';
@@ -28915,7 +28915,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nਵਰਕਆਉਟ';
+    return '+$totalWorkouts\nਵਰਕਆਉਟ';
   }
 
   @override
@@ -28971,7 +28971,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get progressShareTemplatesTransformationNtuesday =>
-      '#TRANSFORMATION\\nTUESDAY';
+      '#TRANSFORMATION\nTUESDAY';
 
   @override
   String get progressShareTemplatesTransformed => 'ਬਦਲਿਆ ਗਿਆ';
@@ -29321,7 +29321,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get queuePositionCardPleaseWaitWhileWe =>
-      'ਕਿਰਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ ਜਦੋਂ ਤੱਕ ਅਸੀਂ ਤੁਹਾਨੂੰ\\nਸਪੋਰਟ ਏਜੰਟ ਨਾਲ ਜੋੜਦੇ ਹਾਂ';
+      'ਕਿਰਪਾ ਕਰਕੇ ਉਡੀਕ ਕਰੋ ਜਦੋਂ ਤੱਕ ਅਸੀਂ ਤੁਹਾਨੂੰ\nਸਪੋਰਟ ਏਜੰਟ ਨਾਲ ਜੋੜਦੇ ਹਾਂ';
 
   @override
   String queuePositionCardValue(Object position) {
@@ -30942,7 +30942,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'ਅਨੁਮਾਨ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੇ।\\n$e';
+    return 'ਅਨੁਮਾਨ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੇ।\n$e';
   }
 
   @override
@@ -40926,7 +40926,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41629,7 +41629,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" ਅਤੇ \"$name1\" ਪਹਿਲਾਂ ਹੀ ਵੱਖ-ਵੱਖ ਸੁਪਰਸੈੱਟਾਂ ਵਿੱਚ ਹਨ।\\n\\nਨਵੀਂ ਜੋੜੀ ਬਣਾਉਣ ਲਈ ਪਹਿਲਾਂ ਮੌਜੂਦਾ ਸੁਪਰਸੈੱਟਾਂ ਨੂੰ ਤੋੜੋ।';
+    return '\"$name\" ਅਤੇ \"$name1\" ਪਹਿਲਾਂ ਹੀ ਵੱਖ-ਵੱਖ ਸੁਪਰਸੈੱਟਾਂ ਵਿੱਚ ਹਨ।\n\nਨਵੀਂ ਜੋੜੀ ਬਣਾਉਣ ਲਈ ਪਹਿਲਾਂ ਮੌਜੂਦਾ ਸੁਪਰਸੈੱਟਾਂ ਨੂੰ ਤੋੜੋ।';
   }
 
   @override
@@ -44081,7 +44081,7 @@ class AppLocalizationsPa extends AppLocalizations {
 
   @override
   String get xpLeaderboardNoLeaderboardDataYet =>
-      'ਅਜੇ ਤੱਕ ਕੋਈ ਲੀਡਰਬੋਰਡ ਡੇਟਾ ਨਹੀਂ ਹੈ।\\nਰੈਂਕ ਵਧਾਉਣ ਲਈ XP ਕਮਾਉਣਾ ਸ਼ੁਰੂ ਕਰੋ!';
+      'ਅਜੇ ਤੱਕ ਕੋਈ ਲੀਡਰਬੋਰਡ ਡੇਟਾ ਨਹੀਂ ਹੈ।\nਰੈਂਕ ਵਧਾਉਣ ਲਈ XP ਕਮਾਉਣਾ ਸ਼ੁਰੂ ਕਰੋ!';
 
   @override
   String xpLeaderboardScreenLevel(Object currentLevel) {

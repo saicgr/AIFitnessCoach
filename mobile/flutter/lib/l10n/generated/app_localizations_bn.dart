@@ -5767,7 +5767,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get customGoalsAddSpecificSkillsOr =>
-      'নির্দিষ্ট দক্ষতা বা লক্ষ্য যোগ করুন যা আপনি উন্নত করতে চান।\\nAI সঠিক ব্যায়াম খুঁজে পেতে সাহায্য করবে।';
+      'নির্দিষ্ট দক্ষতা বা লক্ষ্য যোগ করুন যা আপনি উন্নত করতে চান।\nAI সঠিক ব্যায়াম খুঁজে পেতে সাহায্য করবে।';
 
   @override
   String get customGoalsAiGeneratedKeywords => 'AI-জেনারেটেড কিওয়ার্ড';
@@ -8878,7 +8878,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get emptyStateCompleteYourFirstWorkout =>
-      'আপনার অগ্রগতি ট্র্যাক করা শুরু করতে\\nআপনার প্রথম ওয়ার্কআউট সম্পন্ন করুন!';
+      'আপনার অগ্রগতি ট্র্যাক করা শুরু করতে\nআপনার প্রথম ওয়ার্কআউট সম্পন্ন করুন!';
 
   @override
   String get emptyStateCreateProgram => 'প্রোগ্রাম তৈরি করুন';
@@ -8900,22 +8900,22 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get emptyStatePleaseCheckYourInternet =>
-      'অনুগ্রহ করে আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন\\nএবং আবার চেষ্টা করুন।';
+      'অনুগ্রহ করে আপনার ইন্টারনেট সংযোগ পরীক্ষা করুন\nএবং আবার চেষ্টা করুন।';
 
   @override
   String get emptyStateTipGotIt => 'বুঝেছি';
 
   @override
   String get emptyStateTryAdjustingYourFilters =>
-      'আপনার ফিল্টারগুলো পরিবর্তন করার চেষ্টা করুন\\nঅথবা অন্য কিছু খুঁজুন।';
+      'আপনার ফিল্টারগুলো পরিবর্তন করার চেষ্টা করুন\nঅথবা অন্য কিছু খুঁজুন।';
 
   @override
   String get emptyStateWeCouldnTFind =>
-      'আমরা যা খুঁজছেন তা খুঁজে পাইনি।\\nভিন্ন কিওয়ার্ড দিয়ে চেষ্টা করুন।';
+      'আমরা যা খুঁজছেন তা খুঁজে পাইনি।\nভিন্ন কিওয়ার্ড দিয়ে চেষ্টা করুন।';
 
   @override
   String get emptyStateYourWorkoutScheduleIs =>
-      'আপনার ওয়ার্কআউট শিডিউল খালি।\\nএকটি প্রোগ্রাম তৈরি করে শুরু করুন!';
+      'আপনার ওয়ার্কআউট শিডিউল খালি।\nএকটি প্রোগ্রাম তৈরি করে শুরু করুন!';
 
   @override
   String get enhancedEmptyStateTryAsking => 'জিজ্ঞাসা করে দেখুন...';
@@ -15962,7 +15962,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String healthSyncSectionFindN(Object appName) {
-    return '৩. \"$appName\" খুঁজুন\\n';
+    return '৩. \"$appName\" খুঁজুন\n';
   }
 
   @override
@@ -18156,7 +18156,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String importDialogImportedN(Object summary) {
-    return 'ইম্পোর্ট করা হয়েছে:\\n$summary';
+    return 'ইম্পোর্ট করা হয়েছে:\n$summary';
   }
 
   @override
@@ -22545,7 +22545,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get messagesCouldNotLoadYour =>
-      'আপনার কথোপকথনগুলো লোড করা যায়নি।\\nঅনুগ্রহ করে পরে আবার চেষ্টা করুন।';
+      'আপনার কথোপকথনগুলো লোড করা যায়নি।\nঅনুগ্রহ করে পরে আবার চেষ্টা করুন।';
 
   @override
   String get messagesFailedToLoadMessages => 'মেসেজ লোড করা যায়নি';
@@ -22565,7 +22565,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get messagesStartAConversationWith =>
-      'আপনার বন্ধুদের সাথে কথোপকথন শুরু করুন!\\nআপনার মেসেজগুলো এখানে দেখা যাবে।';
+      'আপনার বন্ধুদের সাথে কথোপকথন শুরু করুন!\nআপনার মেসেজগুলো এখানে দেখা যাবে।';
 
   @override
   String get metricHistoryCardNoDataForThis => 'এই দিনের কোনো তথ্য নেই';
@@ -27408,7 +27408,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pillarDetailWhenYouTrainBody => 'প্রশিক্ষণের সময়কার বিবরণ';
 
   @override
-  String get pinnedMessageBarN => '\\n';
+  String get pinnedMessageBarN => '\n';
 
   @override
   String get pinnedMessageBarUnpin => 'আনপিন করুন';
@@ -29014,7 +29014,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String progressShareTemplatesNworkouts(Object totalWorkouts) {
-    return '+$totalWorkouts\\nওয়ার্কআউট';
+    return '+$totalWorkouts\nওয়ার্কআউট';
   }
 
   @override
@@ -31048,7 +31048,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String racePredictorDetailScreenCouldNotLoadPredictions(Object e) {
-    return 'প্রেডিকশন লোড করা যায়নি।\\n$e';
+    return 'প্রেডিকশন লোড করা যায়নি।\n$e';
   }
 
   @override
@@ -41042,7 +41042,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String workoutActionsSheetN(Object appName, Object url) {
-    return ') — (appName)\\n(url)';
+    return ') — (appName)\n(url)';
   }
 
   @override
@@ -41749,7 +41749,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String workoutDetailScreenUi1AndAreAlreadyIn(Object name, Object name1) {
-    return '\"$name\" এবং \"$name1\" ইতিমধ্যেই আলাদা সুপারসেটে আছে।\\n\\nনতুন পেয়ারিং তৈরি করতে আগে বিদ্যমান সুপারসেটগুলো ভাঙুন।';
+    return '\"$name\" এবং \"$name1\" ইতিমধ্যেই আলাদা সুপারসেটে আছে।\n\nনতুন পেয়ারিং তৈরি করতে আগে বিদ্যমান সুপারসেটগুলো ভাঙুন।';
   }
 
   @override
@@ -42788,7 +42788,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get workoutSheetsMixinWarmingUpHelpsPrevent =>
-      'ওয়ার্ম আপ ইনজুরি প্রতিরোধে সাহায্য করে এবং কর্মক্ষমতা উন্নত করে।\\n\\nপ্রস্তাবিত: ওয়ার্কিং সেটের আগে 1-2 লাইটার সেট।';
+      'ওয়ার্ম আপ ইনজুরি প্রতিরোধে সাহায্য করে এবং কর্মক্ষমতা উন্নত করে।\n\nপ্রস্তাবিত: ওয়ার্কিং সেটের আগে 1-2 লাইটার সেট।';
 
   @override
   String get workoutShowcase12450Lbs => '১২,৪৫০ পাউন্ড';
