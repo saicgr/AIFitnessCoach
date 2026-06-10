@@ -110,7 +110,11 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final scoresState = ref.watch(scoresProvider);
+    // Select just the slices read here — avoids rebuilds on unrelated
+    // scores mutations (readiness, PRs, nutrition).
+    final (combinedStrengthScores, combinedLoading) = ref.watch(
+      scoresProvider.select((s) => (s.strengthScores, s.isLoading)),
+    );
 
     // When a specific gym is selected, read the gym-filtered strength score so
     // the score stops bouncing on gym switch. "All gyms"/unresolved falls back
@@ -125,10 +129,10 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
         : null;
 
     final AllStrengthScores? strengthScores =
-        gymScoped ? gymScoresAsync?.valueOrNull : scoresState.strengthScores;
+        gymScoped ? gymScoresAsync?.valueOrNull : combinedStrengthScores;
     final bool isLoading = gymScoped
         ? (gymScoresAsync?.isLoading ?? false)
-        : scoresState.isLoading;
+        : combinedLoading;
 
     return Container(
       decoration: BoxDecoration(
@@ -215,10 +219,12 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
   // ─── Readiness / Fatigue Strip ─────────────────────────────────────
 
   Widget _buildReadinessStrip(BuildContext context, ColorScheme colorScheme) {
-    final scoresState = ref.watch(scoresProvider);
-    final hasCheckedIn = scoresState.hasCheckedInToday;
-    final readiness = scoresState.todayReadiness ??
-        scoresState.overview?.todayReadiness;
+    // Select just the readiness slices — avoids rebuilds on unrelated
+    // scores mutations.
+    final (hasCheckedIn, readiness) = ref.watch(scoresProvider.select((s) => (
+          s.hasCheckedInToday,
+          s.todayReadiness ?? s.overview?.todayReadiness,
+        )));
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),

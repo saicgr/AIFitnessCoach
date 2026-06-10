@@ -40,21 +40,32 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final scoresState = ref.watch(scoresProvider);
+    // .select() the scalar slices this card reads — a whole-state watch
+    // rebuilt it on every scores mutation (PR loads, errors, etc.).
+    final (
+      initialLoading,
+      overallScore,
+      strengthScore,
+      nutritionScore,
+      consistencyScore,
+      fitnessLevel,
+      readinessScore,
+    ) = ref.watch(scoresProvider.select((s) => (
+          s.isLoading && s.overview == null,
+          s.overallFitnessScore,
+          s.overallStrengthScore,
+          s.nutritionScoreValue,
+          s.consistencyScore,
+          s.fitnessLevel,
+          s.readinessScore,
+        )));
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     // Don't show if still loading initial data
-    if (scoresState.isLoading && scoresState.overview == null) {
+    if (initialLoading) {
       return _buildLoadingCard(isDark);
     }
-
-    final overallScore = scoresState.overallFitnessScore;
-    final strengthScore = scoresState.overallStrengthScore;
-    final nutritionScore = scoresState.nutritionScoreValue;
-    final consistencyScore = scoresState.consistencyScore;
-    final fitnessLevel = scoresState.fitnessLevel;
-    final readinessScore = scoresState.readinessScore;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

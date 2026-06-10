@@ -46,9 +46,11 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final scoresState = ref.watch(scoresProvider);
-    final hasCheckedIn = scoresState.hasCheckedInToday;
-    final todayReadiness = scoresState.todayReadiness;
+    // Select just the readiness slices — avoids rebuilds on unrelated
+    // scores mutations (PR loads, strength, nutrition).
+    final (hasCheckedIn, todayReadiness) = ref.watch(
+      scoresProvider.select((s) => (s.hasCheckedInToday, s.todayReadiness)),
+    );
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),

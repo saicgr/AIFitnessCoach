@@ -38,12 +38,16 @@ class _HomeReadinessCardState extends ConsumerState<HomeReadinessCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final scoresState = ref.watch(scoresProvider);
-    final hasCheckedIn = scoresState.hasCheckedInToday;
-    final todayReadiness = scoresState.todayReadiness;
+    // .select() the 3 slices this card actually reads — a whole-state watch
+    // rebuilt it on every scores mutation (PR loads, nutrition score, etc.).
+    final (hasCheckedIn, todayReadiness, initialLoading) = ref.watch(
+      scoresProvider.select(
+        (s) => (s.hasCheckedInToday, s.todayReadiness, s.isLoading && s.overview == null),
+      ),
+    );
 
     // Don't show if still loading initial data
-    if (scoresState.isLoading && scoresState.overview == null) {
+    if (initialLoading) {
       return const SizedBox.shrink();
     }
 

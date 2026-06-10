@@ -810,12 +810,13 @@ class _MuscleStatusBadge extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scoresState = ref.watch(scoresProvider);
-    final muscleData = scoresState.strengthScores?.muscleScores[muscleGroup];
+    // Select just this muscle's data + readiness — avoids rebuilds on
+    // unrelated scores mutations.
+    final (muscleData, readiness) = ref.watch(scoresProvider.select((s) => (
+          s.strengthScores?.muscleScores[muscleGroup],
+          s.todayReadiness ?? s.overview?.todayReadiness,
+        )));
     if (muscleData == null) return const SizedBox.shrink();
-
-    final readiness =
-        scoresState.todayReadiness ?? scoresState.overview?.todayReadiness;
     final status = determineMuscleStatus(
       muscleData: muscleData,
       readiness: readiness,

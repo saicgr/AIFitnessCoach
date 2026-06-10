@@ -31,9 +31,11 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final scoresState = ref.watch(scoresProvider);
-    final prStats = scoresState.prStats;
-    final isLoading = scoresState.isLoading;
+    // Select just the slices read here — avoids rebuilds on unrelated
+    // scores mutations (readiness, nutrition, strength).
+    final (prStats, isLoading) = ref.watch(
+      scoresProvider.select((s) => (s.prStats, s.isLoading)),
+    );
 
     return Container(
       decoration: BoxDecoration(

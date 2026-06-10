@@ -164,12 +164,14 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     final accent = ref.watch(accentColorProvider);
     final accentColor = accent.getColor(isDark);
 
-    final scoresState = ref.watch(scoresProvider);
+    // Select just the slices read here — avoids rebuilds on unrelated
+    // scores mutations (readiness, nutrition, fitness).
+    final (livePrStats, dotsScore, strengthScores, scoresLoading) =
+        ref.watch(scoresProvider.select(
+            (s) => (s.prStats, s.dotsScore, s.strengthScores, s.isLoading)));
     // Live PR data wins; fall back to the disk snapshot so a cold start shows
     // the real list immediately instead of blocking on a spinner.
-    final prStats = scoresState.prStats ?? _diskPrStats;
-    final dotsScore = scoresState.dotsScore;
-    final strengthScores = scoresState.strengthScores;
+    final prStats = livePrStats ?? _diskPrStats;
     final oneRMsState = ref.watch(userOneRMsProvider);
     final useKg = ref.watch(useKgForWorkoutProvider);
 
@@ -177,7 +179,7 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     // fetch is still running. Only then do we show a skeleton — a returning
     // user always has the disk snapshot, so they never see one.
     final showSkeleton = prStats == null &&
-        (scoresState.isLoading || oneRMsState.isLoading);
+        (scoresLoading || oneRMsState.isLoading);
 
     // Build exercise → 1RM lookup
     final oneRmMap = <String, UserExercise1RM>{};

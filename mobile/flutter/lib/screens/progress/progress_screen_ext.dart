@@ -41,9 +41,13 @@ extension __ProgressScreenStateExt on _ProgressScreenState {
                   padding: const EdgeInsets.all(16),
                   child: Consumer(
                     builder: (context, ref, child) {
-                      final scoresState = ref.watch(scoresProvider);
-                      final muscleData =
-                          scoresState.strengthScores?.muscleScores[muscleGroup];
+                      // Select just this muscle's data + readiness — avoids
+                      // rebuilds on unrelated scores mutations.
+                      final (muscleData, sheetReadiness) =
+                          ref.watch(scoresProvider.select((s) => (
+                                s.strengthScores?.muscleScores[muscleGroup],
+                                s.todayReadiness ?? s.overview?.todayReadiness,
+                              )));
 
                       if (muscleData == null) {
                         return Center(
@@ -157,8 +161,7 @@ extension __ProgressScreenStateExt on _ProgressScreenState {
 
                           // Training status badge
                           Builder(builder: (context) {
-                            final readiness = scoresState.todayReadiness ??
-                                scoresState.overview?.todayReadiness;
+                            final readiness = sheetReadiness;
                             final status = determineMuscleStatus(
                               muscleData: muscleData,
                               readiness: readiness,

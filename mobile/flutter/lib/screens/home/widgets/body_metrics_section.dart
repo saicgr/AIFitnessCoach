@@ -46,11 +46,15 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
 
-    final scoresState = ref.watch(scoresProvider);
-    final overallScore = scoresState.overallFitnessScore;
-    final strengthScore = scoresState.overallStrengthScore;
-    final consistencyScore = scoresState.consistencyScore;
-    final fitnessLevel = scoresState.fitnessLevel;
+    // .select() the 4 scalars this section reads — a whole-state watch
+    // rebuilt it on every scores mutation (isLoading flips, PR loads, etc.).
+    final (overallScore, strengthScore, consistencyScore, fitnessLevel) =
+        ref.watch(scoresProvider.select((s) => (
+              s.overallFitnessScore,
+              s.overallStrengthScore,
+              s.consistencyScore,
+              s.fitnessLevel,
+            )));
 
     return Padding(
       padding: const EdgeInsets.only(top: 24),

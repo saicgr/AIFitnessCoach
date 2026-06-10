@@ -358,13 +358,16 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scoresState = ref.watch(scoresProvider);
-    final prStats = scoresState.prStats;
+    // Select just the slices read here — avoids rebuilds on unrelated
+    // scores mutations.
+    final (prStats, scoresLoading) = ref.watch(
+      scoresProvider.select((s) => (s.prStats, s.isLoading)),
+    );
 
     // Cache-first: `scoresProvider` retains prStats in memory across visits,
     // so a return shows records instantly. The cold load shows a
     // layout-matched skeleton (summary card + PR rows) instead of a spinner.
-    if (scoresState.isLoading && prStats == null) {
+    if (scoresLoading && prStats == null) {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: const [

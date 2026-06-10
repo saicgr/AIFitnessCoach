@@ -23,8 +23,11 @@ class PersonalRecordsCard extends ConsumerWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.colors(context).accent;
 
-    final scoresState = ref.watch(scoresProvider);
-    final prStats = scoresState.prStats;
+    // Select just the slices read here — avoids rebuilds on unrelated
+    // scores mutations (readiness, nutrition, strength).
+    final (prStats, scoresLoading) = ref.watch(
+      scoresProvider.select((s) => (s.prStats, s.isLoading)),
+    );
     final recentPrs = prStats?.recentPrs ?? [];
 
     return Container(
@@ -74,7 +77,7 @@ class PersonalRecordsCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          if (scoresState.isLoading && recentPrs.isEmpty)
+          if (scoresLoading && recentPrs.isEmpty)
             Center(
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 12),
