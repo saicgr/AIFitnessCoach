@@ -9,12 +9,15 @@ Provides endpoints for:
 - Nutrition statistics
 - Progress graphs data
 """
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from core.db import get_supabase_db
 
 from fastapi import APIRouter, HTTPException, Depends, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from typing import List, Optional, Dict, Any
+from typing import Callable, List, Optional, Dict, Any
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel
 
@@ -24,6 +27,19 @@ from models.schemas import AchievementType, UserAchievement, PersonalRecord
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 logger = get_logger(__name__)
+
+# supabase-py's .execute() is synchronous — run inline it blocks the event
+# loop for the full DB round-trip, stalling EVERY in-flight request (measured:
+# /health p95 went from 5ms to 1.4s while /overview ran its 10 sequential
+# queries). Same offload pattern as workouts/today.py `_db_executor` and
+# scores_endpoints.py `_scores_pool`. Errors propagate (fail-fast → 500), no
+# silent fallbacks.
+_stats_pool = ThreadPoolExecutor(max_workers=10, thread_name_prefix="stats")
+
+
+async def _run_db(fn: Callable):
+    """Run a blocking DB call in the stats thread pool."""
+    return await asyncio.get_running_loop().run_in_executor(_stats_pool, fn)
 
 
 # ============================================
@@ -116,18 +132,33 @@ async def get_comprehensive_stats(user_id: str, request: Request,
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        # resolve_timezone can hit the users table when the header is absent.
+        user_tz = await _run_db(lambda: resolve_timezone(request, db, user_id))
 
-        # 1. Quick Stats
-        quick_stats = await _get_quick_stats(user_id, db, user_tz)
+        def _q_achievements():
+            return db.client.table("user_achievements") \
+                .select("*, achievement_types(*)") \
+                .eq("user_id", user_id) \
+                .order("earned_at", desc=True) \
+                .limit(5) \
+                .execute()
 
-        # 2. Recent Achievements (last 5)
-        achievements_result = db.client.table("user_achievements") \
-            .select("*, achievement_types(*)") \
-            .eq("user_id", user_id) \
-            .order("earned_at", desc=True) \
-            .limit(5) \
-            .execute()
+        def _q_prs():
+            return db.client.table("personal_records") \
+                .select("*") \
+                .eq("user_id", user_id) \
+                .order("achieved_at", desc=True) \
+                .limit(3) \
+                .execute()
+
+        # The four sections are independent — run them concurrently.
+        quick_stats, achievements_result, prs_result, measurements = \
+            await asyncio.gather(
+                _get_quick_stats(user_id, db, user_tz),
+                _run_db(_q_achievements),
+                _run_db(_q_prs),
+                _get_latest_body_measurements(user_id, db),
+            )
 
         recent_achievements = [
             UserAchievement(
@@ -144,14 +175,6 @@ async def get_comprehensive_stats(user_id: str, request: Request,
             for a in achievements_result.data
         ]
 
-        # 3. Top Personal Records (top 3)
-        prs_result = db.client.table("personal_records") \
-            .select("*") \
-            .eq("user_id", user_id) \
-            .order("achieved_at", desc=True) \
-            .limit(3) \
-            .execute()
-
         top_prs = [
             PersonalRecord(
                 id=pr["id"],
@@ -166,9 +189,6 @@ async def get_comprehensive_stats(user_id: str, request: Request,
             )
             for pr in prs_result.data
         ]
-
-        # 4. Latest Body Measurements
-        measurements = await _get_latest_body_measurements(user_id, db)
 
         return ComprehensiveStatsResponse(
             quick_stats=quick_stats,
@@ -191,7 +211,7 @@ async def get_quick_stats(user_id: str, request: Request,
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = await _run_db(lambda: resolve_timezone(request, db, user_id))
         return await _get_quick_stats(user_id, db, user_tz)
 
     except Exception as e:
@@ -211,16 +231,16 @@ async def get_workout_frequency(user_id: str, request: Request, weeks: int = 12,
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = await _run_db(lambda: resolve_timezone(request, db, user_id))
         today = date.fromisoformat(get_user_today(user_tz))
         cutoff_date = datetime.combine(today - timedelta(weeks=weeks), datetime.min.time())
 
         # Get workout logs
-        result = db.client.table("workout_logs") \
-            .select("completed_at, duration_minutes") \
-            .eq("user_id", user_id) \
-            .gte("completed_at", cutoff_date.isoformat()) \
-            .execute()
+        result = await _run_db(lambda: db.client.table("workout_logs")
+            .select("completed_at, duration_minutes")
+            .eq("user_id", user_id)
+            .gte("completed_at", cutoff_date.isoformat())
+            .execute())
 
         # Group by week
         weekly_data: Dict[str, Dict[str, Any]] = {}
@@ -266,16 +286,16 @@ async def get_weight_trend(user_id: str, request: Request, days: int = 90,
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = await _run_db(lambda: resolve_timezone(request, db, user_id))
         today = date.fromisoformat(get_user_today(user_tz))
         cutoff_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
-        result = db.client.table("body_measurements") \
-            .select("measured_at, weight_kg, body_fat_percent, bmi") \
-            .eq("user_id", user_id) \
-            .gte("measured_at", cutoff_date.isoformat()) \
-            .order("measured_at", desc=False) \
-            .execute()
+        result = await _run_db(lambda: db.client.table("body_measurements")
+            .select("measured_at, weight_kg, body_fat_percent, bmi")
+            .eq("user_id", user_id)
+            .gte("measured_at", cutoff_date.isoformat())
+            .order("measured_at", desc=False)
+            .execute())
 
         return [
             WeightTrendData(
@@ -303,23 +323,23 @@ async def get_nutrition_stats(user_id: str, request: Request, days: int = 7,
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = await _run_db(lambda: resolve_timezone(request, db, user_id))
         today = date.fromisoformat(get_user_today(user_tz))
         cutoff_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
-        # Get food logs
-        result = db.client.table("food_logs") \
-            .select("logged_at, total_calories, protein_g, carbs_g, fat_g") \
-            .eq("user_id", user_id) \
-            .gte("logged_at", cutoff_date.isoformat()) \
-            .execute()
-
-        # Get hydration logs
-        hydration_result = db.client.table("hydration_logs") \
-            .select("logged_at, amount_ml") \
-            .eq("user_id", user_id) \
-            .gte("logged_at", cutoff_date.isoformat()) \
-            .execute()
+        # Food + hydration logs are independent — fetch concurrently.
+        result, hydration_result = await asyncio.gather(
+            _run_db(lambda: db.client.table("food_logs")
+                .select("logged_at, total_calories, protein_g, carbs_g, fat_g")
+                .eq("user_id", user_id)
+                .gte("logged_at", cutoff_date.isoformat())
+                .execute()),
+            _run_db(lambda: db.client.table("hydration_logs")
+                .select("logged_at, amount_ml")
+                .eq("user_id", user_id)
+                .gte("logged_at", cutoff_date.isoformat())
+                .execute()),
+        )
 
         # Calculate averages
         total_calories = sum(log.get("total_calories", 0) for log in result.data)
@@ -365,16 +385,16 @@ async def get_volume_progress(user_id: str, request: Request, days: int = 30,
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
+        user_tz = await _run_db(lambda: resolve_timezone(request, db, user_id))
         today = date.fromisoformat(get_user_today(user_tz))
         cutoff_date = datetime.combine(today - timedelta(days=days), datetime.min.time())
 
         # Get workout logs with performance data
-        result = db.client.table("workout_logs") \
-            .select("completed_at, exercises_performance") \
-            .eq("user_id", user_id) \
-            .gte("completed_at", cutoff_date.isoformat()) \
-            .execute()
+        result = await _run_db(lambda: db.client.table("workout_logs")
+            .select("completed_at, exercises_performance")
+            .eq("user_id", user_id)
+            .gte("completed_at", cutoff_date.isoformat())
+            .execute())
 
         # Aggregate volume by date
         daily_volume: Dict[str, Dict[str, Any]] = {}
@@ -418,40 +438,76 @@ async def get_volume_progress(user_id: str, request: Request, days: int = 30,
 # ============================================
 
 async def _get_quick_stats(user_id: str, db, user_tz: str) -> QuickStatsResponse:
-    """Calculate quick overview statistics."""
+    """Calculate quick overview statistics.
 
-    # Total workouts
-    total_workouts_result = db.client.table("workout_logs") \
-        .select("id", count="exact") \
-        .eq("user_id", user_id) \
-        .execute()
-    total_workouts = total_workouts_result.count or 0
-
-    # Workouts this week
+    All 7 queries are independent — run them concurrently in the stats pool.
+    The count queries stay `count="exact"` (a collapsed row-fetch would be
+    silently capped by PostgREST's max-rows limit for heavy users).
+    """
     today = date.fromisoformat(get_user_today(user_tz))
     week_start = datetime.combine(today - timedelta(days=today.weekday()), datetime.min.time())
-    week_workouts_result = db.client.table("workout_logs") \
-        .select("id", count="exact") \
-        .eq("user_id", user_id) \
-        .gte("completed_at", week_start.isoformat()) \
-        .execute()
-    workouts_this_week = week_workouts_result.count or 0
-
-    # Workouts this month
     month_start = datetime.combine(today.replace(day=1), datetime.min.time())
-    month_workouts_result = db.client.table("workout_logs") \
-        .select("id", count="exact") \
-        .eq("user_id", user_id) \
-        .gte("completed_at", month_start.isoformat()) \
-        .execute()
-    workouts_this_month = month_workouts_result.count or 0
 
-    # Get streak data
-    streak_result = db.client.table("user_streaks") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .eq("streak_type", "workout") \
-        .execute()
+    def _q_total():
+        return db.client.table("workout_logs") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .execute()
+
+    def _q_week():
+        return db.client.table("workout_logs") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .gte("completed_at", week_start.isoformat()) \
+            .execute()
+
+    def _q_month():
+        return db.client.table("workout_logs") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .gte("completed_at", month_start.isoformat()) \
+            .execute()
+
+    def _q_streaks():
+        return db.client.table("user_streaks") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .eq("streak_type", "workout") \
+            .execute()
+
+    def _q_durations():
+        return db.client.table("workout_logs") \
+            .select("duration_minutes") \
+            .eq("user_id", user_id) \
+            .execute()
+
+    def _q_achievements_count():
+        return db.client.table("user_achievements") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .execute()
+
+    def _q_prs_count():
+        return db.client.table("personal_records") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .execute()
+
+    (total_workouts_result, week_workouts_result, month_workouts_result,
+     streak_result, duration_result, achievements_result, prs_result) = \
+        await asyncio.gather(
+            _run_db(_q_total),
+            _run_db(_q_week),
+            _run_db(_q_month),
+            _run_db(_q_streaks),
+            _run_db(_q_durations),
+            _run_db(_q_achievements_count),
+            _run_db(_q_prs_count),
+        )
+
+    total_workouts = total_workouts_result.count or 0
+    workouts_this_week = week_workouts_result.count or 0
+    workouts_this_month = month_workouts_result.count or 0
 
     current_streak = 0
     longest_streak = 0
@@ -459,27 +515,12 @@ async def _get_quick_stats(user_id: str, db, user_tz: str) -> QuickStatsResponse
         current_streak = streak_result.data[0].get("current_streak", 0)
         longest_streak = streak_result.data[0].get("longest_streak", 0)
 
-    # Total time and average duration
-    duration_result = db.client.table("workout_logs") \
-        .select("duration_minutes") \
-        .eq("user_id", user_id) \
-        .execute()
-
-    total_time = sum(log.get("duration_minutes", 0) for log in duration_result.data)
+    # `or 0` (not a .get default): a NULL duration_minutes column comes back
+    # as an explicit None and would TypeError the sum.
+    total_time = sum((log.get("duration_minutes") or 0) for log in duration_result.data)
     avg_duration = int(total_time / total_workouts) if total_workouts > 0 else 0
 
-    # Total achievements
-    achievements_result = db.client.table("user_achievements") \
-        .select("id", count="exact") \
-        .eq("user_id", user_id) \
-        .execute()
     total_achievements = achievements_result.count or 0
-
-    # Total PRs
-    prs_result = db.client.table("personal_records") \
-        .select("id", count="exact") \
-        .eq("user_id", user_id) \
-        .execute()
     total_prs = prs_result.count or 0
 
     return QuickStatsResponse(
@@ -498,12 +539,12 @@ async def _get_quick_stats(user_id: str, db, user_tz: str) -> QuickStatsResponse
 async def _get_latest_body_measurements(user_id: str, db) -> Optional[BodyMeasurementsResponse]:
     """Get the most recent body measurements."""
 
-    result = db.client.table("body_measurements") \
-        .select("*") \
-        .eq("user_id", user_id) \
-        .order("measured_at", desc=True) \
-        .limit(1) \
-        .execute()
+    result = await _run_db(lambda: db.client.table("body_measurements")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("measured_at", desc=True)
+        .limit(1)
+        .execute())
 
     if not result.data:
         return None
