@@ -877,8 +877,13 @@ class DailyNutritionNotifier extends StateNotifier<DailyNutritionState> {
   Future<void> deleteLog(String userId, String logId) async {
     try {
       await _repository.deleteFoodLog(logId);
-      await load(userId, forceRefresh: true);
-      await loadLogs(userId, forceRefresh: true);
+      // The two reloads are independent (refreshAll runs them in a
+      // Future.wait too) — parallelize instead of paying two serial
+      // round-trips after the delete.
+      await Future.wait([
+        load(userId, forceRefresh: true),
+        loadLogs(userId, forceRefresh: true),
+      ]);
     } catch (e) {
       if (!mounted) return;
       state = state.copyWith(error: e.toString());
