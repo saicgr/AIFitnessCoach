@@ -220,15 +220,53 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
     }
   }
 
-  /// Load all scores data (overview)
-  Future<void> loadScoresOverview({String? userId}) async {
+  // In-flight + freshness guards for loadScoresOverview. Multiple home cards
+  // (readiness / body metrics / fitness score) each fire a load from their
+  // initState — without these guards a cold start made 3 identical network
+  // calls and churned isLoading across every scores watcher.
+  Future<void>? _overviewInFlight;
+  String? _overviewInFlightUid;
+  DateTime? _overviewLoadedAt;
+  static const _overviewFreshness = Duration(seconds: 30);
+
+  /// Load all scores data (overview).
+  ///
+  /// Concurrent callers for the same user share one in-flight request, and a
+  /// successful load is considered fresh for [_overviewFreshness] — repeat
+  /// calls inside that window are no-ops. Pass [force] to bypass freshness
+  /// (pull-to-refresh, post-workout, post-check-in).
+  Future<void> loadScoresOverview({String? userId, bool force = false}) {
     final uid = userId ?? _currentUserId;
     if (uid == null) {
       debugPrint('⚠️ [ScoresProvider] No user ID, skipping load');
-      return;
+      return Future.value();
+    }
+    // Same-user load already in flight — share it (a force call still
+    // benefits: the in-flight request returns data at least as fresh).
+    final inFlight = _overviewInFlight;
+    if (inFlight != null && _overviewInFlightUid == uid) {
+      debugPrint('⏳ [ScoresProvider] Overview load in flight — sharing');
+      return inFlight;
+    }
+    // Freshness short-circuit (skipped on force / user switch / no data yet).
+    if (!force &&
+        _currentUserId == uid &&
+        state.overview != null &&
+        _overviewLoadedAt != null &&
+        DateTime.now().difference(_overviewLoadedAt!) < _overviewFreshness) {
+      return Future.value();
     }
     _currentUserId = uid;
+    _overviewInFlightUid = uid;
+    final future = _doLoadScoresOverview(uid).whenComplete(() {
+      _overviewInFlight = null;
+      _overviewInFlightUid = null;
+    });
+    _overviewInFlight = future;
+    return future;
+  }
 
+  Future<void> _doLoadScoresOverview(String uid) async {
     state = state.copyWith(isLoading: true, clearError: true);
 
     try {
@@ -238,6 +276,7 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
         todayReadiness: overview.todayReadiness,
         isLoading: false,
       );
+      _overviewLoadedAt = DateTime.now();
       // Update in-memory cache for instant access on provider recreation
       _scoresInMemoryCache = state;
       // Write-through to disk so the next cold start paints instantly.
@@ -578,7 +617,7 @@ class ScoresNotifier extends StateNotifier<ScoresState> {
 
   /// Refresh all data
   Future<void> refresh({String? userId}) async {
-    await loadScoresOverview(userId: userId);
+    await loadScoresOverview(userId: userId, force: true);
   }
 
   /// Refresh all scores (detailed)

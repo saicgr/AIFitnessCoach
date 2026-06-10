@@ -27,7 +27,9 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
   Widget _buildScoresTab() {
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(scoresProvider.notifier).loadScoresOverview(userId: _userId);
+        await ref
+            .read(scoresProvider.notifier)
+            .loadScoresOverview(userId: _userId, force: true);
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -40,7 +42,9 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
               userId: _userId!,
               onCheckInComplete: () {
                 // Refresh overview after check-in
-                ref.read(scoresProvider.notifier).loadScoresOverview();
+                ref
+                    .read(scoresProvider.notifier)
+                    .loadScoresOverview(force: true);
               },
             ),
             const SizedBox(height: 16),

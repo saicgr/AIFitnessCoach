@@ -1055,7 +1055,12 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         }
       }
       await workoutsNotifier.silentRefresh();
-      scoresNotifier.loadScoresOverview(userId: await apiClient.getUserId());
+      // force: post-workout scores changed server-side — bypass the 30s
+      // freshness window so the new readiness/strength lands immediately.
+      scoresNotifier.loadScoresOverview(
+        userId: await apiClient.getUserId(),
+        force: true,
+      );
       debugPrint('✅ [Feedback] Background submission complete');
     } catch (e) {
       debugPrint('❌ [Feedback] Background submission failed (non-blocking): $e');
