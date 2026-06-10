@@ -251,6 +251,16 @@ EasyLocalAggregates computeEasyAggregates({
           });
         }
       }
+      // Match the Advanced sets_json contract (buildSetsJson in
+      // set_logging_mixin.dart): always emit target_reps/target_weight_kg
+      // (per-set AI target, plan-level fallback) and previous_*/rir when
+      // known — the summary screen's Previous/Target/RIR columns are
+      // adaptive and only appear when this data exists.
+      final setTarget = exercise.getTargetForSet(sIdx + 1);
+      final targetReps = s.targetReps > 0
+          ? s.targetReps
+          : (setTarget?.targetReps ?? exercise.reps);
+      final targetWeightKg = setTarget?.targetWeightKg ?? exercise.weight;
       setsJsonList.add(<String, dynamic>{
         'exercise_index': i,
         'exercise_name': exercise.name,
@@ -262,7 +272,12 @@ EasyLocalAggregates computeEasyAggregates({
         'is_completed': !isPlaceholder,
         'logging_mode': 'easy',
         if (gymProfileId != null) 'gym_profile_id': gymProfileId,
-        if (s.targetReps > 0) 'target_reps': s.targetReps,
+        if (targetReps != null) 'target_reps': targetReps,
+        if (targetWeightKg != null) 'target_weight_kg': targetWeightKg,
+        if (s.rir != null) 'rir': s.rir,
+        if (s.previousWeightKg != null) 'previous_weight_kg': s.previousWeightKg,
+        if (s.previousReps != null) 'previous_reps': s.previousReps,
+        'completed_at': s.completedAt.toIso8601String(),
         if (s.durationSeconds != null) 'set_duration_seconds': s.durationSeconds,
         if (s.restDurationSeconds != null)
           'rest_duration_seconds': s.restDurationSeconds,

@@ -11,7 +11,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/utils/muscle_aliases.dart' as muscle_util;
 import '../../data/models/exercise.dart';
 import '../../data/models/workout.dart';
+import '../../data/services/api_client.dart';
 import '../library/providers/library_providers.dart';
+import 'widgets/summary_floating_pill.dart';
 import '../../l10n/generated/app_localizations.dart';
 
 // TODO(i18n): _buildKpiTiles() and _PyramidExerciseCardState._modelLabel are
@@ -57,9 +59,13 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
     final heroSections = <Widget>[];
     int delay = 0;
 
-    // 1. Coach narrative hero card (punchy one-liner).
+    // 1. Coach narrative hero card (punchy one-liner). Legacy rows still
+    // carry hero_narrative/coach_summary from the old per-view generation;
+    // new workouts get the headline from the persisted /feedback/recap row
+    // (the card fetches it itself — instant read, no LLM call).
     heroSections.add(
       _CoachHeroCard(
+        workoutId: data?.workout['id'] as String?,
         heroNarrative: data?.heroNarrative,
         coachSummary: data?.coachSummary,
         isDark: isDark,
@@ -192,11 +198,9 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
         detailSections.add(
             _AIInteractionsSection(interactions: aiInteractions, isDark: isDark));
       }
-      final feedback = meta['subjective_feedback'] as Map<String, dynamic>?;
-      if (feedback != null && feedback.isNotEmpty) {
-        detailSections.add(
-            _SubjectiveFeedbackSection(feedback: feedback, isDark: isDark));
-      }
+      // subjective_feedback intentionally NOT rendered here — the Summary
+      // tab's Post-Workout Feedback section already shows it; Advanced
+      // stays analytics-only.
       final incrementSettings =
           meta['increment_settings'] as Map<String, dynamic>?;
       if (incrementSettings != null && incrementSettings.isNotEmpty) {
@@ -253,7 +257,8 @@ class WorkoutSummaryAdvanced extends StatelessWidget {
             ).animate().fadeIn(
                 duration: 400.ms, delay: Duration(milliseconds: delay)),
           ],
-          const SizedBox(height: 100),
+          // Clear the floating Detail/Summary/Advanced pill.
+          SizedBox(height: SummaryFloatingPill.clearanceOf(context)),
         ],
       ),
     );
@@ -1183,103 +1188,6 @@ class _AIStatItem {
   final String value;
   final IconData icon;
   const _AIStatItem({required this.label, required this.value, required this.icon});
-}
-
-// ═══════════════════════════════════════════════════════════════════
-// 6. Subjective Feedback
-// ═══════════════════════════════════════════════════════════════════
-
-class _SubjectiveFeedbackSection extends StatelessWidget {
-  final Map<String, dynamic> feedback;
-  final bool isDark;
-
-  const _SubjectiveFeedbackSection({required this.feedback, required this.isDark});
-
-  static const _moodEmojis = ['', '\uD83D\uDE29', '\uD83D\uDE1F', '\uD83D\uDE10', '\uD83D\uDE42', '\uD83D\uDE01'];
-  static const _energyEmojis = ['', '\uD83E\uDEAB', '\uD83D\uDD0B', '\u26A1', '\uD83D\uDD25', '\uD83D\uDCA5'];
-
-  @override
-  Widget build(BuildContext context) {
-    final l = AppLocalizations.of(context)!;
-    final mood = feedback['mood_after'] as int?;
-    final energy = feedback['energy_after'] as int?;
-    final confidence = feedback['confidence_level'] as int?;
-    final stronger = feedback['feeling_stronger'] as bool?;
-
-    return _SectionCard(
-      isDark: isDark,
-      icon: Icons.sentiment_satisfied_alt,
-      title: l.summaryHowYouFelt,
-      child: Column(
-        children: [
-          if (mood != null)
-            _FeedbackRow(
-              label: l.summaryFeedbackMood,
-              display: '${_safeEmoji(_moodEmojis, mood)} $mood/5',
-              isDark: isDark,
-            ),
-          if (energy != null)
-            _FeedbackRow(
-              label: l.summaryFeedbackEnergy,
-              display: '${_safeEmoji(_energyEmojis, energy)} $energy/5',
-              isDark: isDark,
-            ),
-          if (confidence != null)
-            _FeedbackRow(
-              label: l.summaryFeedbackConfidence,
-              display: '$confidence/5',
-              isDark: isDark,
-            ),
-          if (stronger != null)
-            _FeedbackRow(
-              label: l.summaryFeedbackFeelingStronger,
-              display: stronger ? 'Yes \u2705' : 'No',
-              isDark: isDark,
-            ),
-        ],
-      ),
-    );
-  }
-
-  String _safeEmoji(List<String> emojis, int index) {
-    if (index >= 0 && index < emojis.length) return emojis[index];
-    return '';
-  }
-}
-
-class _FeedbackRow extends StatelessWidget {
-  final String label;
-  final String display;
-  final bool isDark;
-
-  const _FeedbackRow({required this.label, required this.display, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-            ),
-          ),
-          Text(
-            display,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -2783,18 +2691,68 @@ class _InfoBanner extends StatelessWidget {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// Hero card — a single short narrative from the AI coach, anchored to real
-/// session deltas. Falls back to the first sentence of [coachSummary] when
-/// [heroNarrative] isn't available (old workouts, Gemini outage).
-class _CoachHeroCard extends StatelessWidget {
+/// session deltas. Sources, in order: [heroNarrative] (legacy rows generated
+/// by the old in-endpoint Gemini call), the first sentence of [coachSummary]
+/// (same era), then the persisted recap headline fetched from
+/// GET /feedback/recap/{workoutId} (current pipeline — written once by the
+/// recap card, instant to read). Renders nothing while no narrative exists —
+/// no canned filler.
+class _CoachHeroCard extends ConsumerStatefulWidget {
+  final String? workoutId;
   final String? heroNarrative;
   final String? coachSummary;
   final bool isDark;
 
   const _CoachHeroCard({
+    this.workoutId,
     required this.heroNarrative,
     required this.coachSummary,
     required this.isDark,
   });
+
+  @override
+  ConsumerState<_CoachHeroCard> createState() => _CoachHeroCardState();
+}
+
+class _CoachHeroCardState extends ConsumerState<_CoachHeroCard> {
+  String? _recapHeadline;
+
+  bool get isDark => widget.isDark;
+
+  @override
+  void initState() {
+    super.initState();
+    // Only hit the network when the summary payload didn't already carry a
+    // narrative (i.e. workouts completed after the in-endpoint generation
+    // was removed).
+    final hasInline = (widget.heroNarrative ?? '').trim().isNotEmpty ||
+        (widget.coachSummary ?? '').trim().isNotEmpty;
+    if (!hasInline && (widget.workoutId ?? '').isNotEmpty) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _fetchRecapHeadline());
+    }
+  }
+
+  Future<void> _fetchRecapHeadline() async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.get('/feedback/recap/${widget.workoutId}');
+      if (!mounted) return;
+      final data = res.data;
+      if (res.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['exists'] == true &&
+          data['recap'] is Map) {
+        final headline =
+            ((data['recap'] as Map)['headline'] as String?)?.trim();
+        if (headline != null && headline.isNotEmpty) {
+          setState(() => _recapHeadline = headline);
+        }
+      }
+    } catch (_) {
+      // No recap yet (or transient failure) — the card simply stays hidden.
+    }
+  }
 
   /// Extract the first sentence from long-form coach copy as a fallback
   /// headline. Trims quotes and limits to 140 chars for safety.
@@ -2811,9 +2769,11 @@ class _CoachHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final narrative = (heroNarrative != null && heroNarrative!.trim().isNotEmpty)
-        ? heroNarrative!.trim()
-        : _firstSentence(coachSummary);
+    final heroNarrative = widget.heroNarrative;
+    final narrative =
+        (heroNarrative != null && heroNarrative.trim().isNotEmpty)
+            ? heroNarrative.trim()
+            : (_firstSentence(widget.coachSummary) ?? _recapHeadline);
     if (narrative == null) return const SizedBox.shrink();
 
     final accent = isDark ? AppColors.purple : _darkenColor(AppColors.purple);
@@ -3319,7 +3279,10 @@ List<_KpiTileData> _buildKpiTiles({
     }
   }
 
-  // ── Volume tile ───────────────────────────────────────────────────
+  // ── Density tile (work rate) ──────────────────────────────────────
+  // Volume itself is Summary-tab territory now; the Advanced angle on the
+  // same data is lb moved per minute of tracked time. Needs both a real
+  // volume and a real duration — hidden behind a zero-state otherwise.
   final wc = data?.performanceComparison?.workoutComparison;
   final backendVolKg = wc?.currentTotalVolumeKg;
   // Prefer backend aggregate when present and non-zero; otherwise use
@@ -3329,27 +3292,24 @@ List<_KpiTileData> _buildKpiTiles({
       ? backendVolKg
       : (computedVolKg > 0 ? computedVolKg : null);
   final volLb = effectiveVolKg != null ? effectiveVolKg * 2.20462 : null;
-  final volDeltaKg = wc?.volumeDiffKg;
-  final volDeltaLb = volDeltaKg != null ? volDeltaKg * 2.20462 : null;
-  final prevVolKg = wc?.previousTotalVolumeKg;
-  final prevVolLb = prevVolKg != null ? prevVolKg * 2.20462 : null;
-  final volTile = _KpiTileData(
-    label: 'VOLUME',
-    value: volLb != null ? formatPounds(volLb) : '0',
-    unit: volLb != null ? 'lb' : null,
+  final durationSeconds = (data?.durationSeconds ?? 0) > 0
+      ? data!.durationSeconds
+      : ((metadata?['total_time_seconds'] as num?)?.toInt() ?? 0);
+  final densityLbPerMin = (volLb != null && durationSeconds >= 60)
+      ? volLb / (durationSeconds / 60.0)
+      : null;
+  final densityTile = _KpiTileData(
+    label: 'DENSITY',
+    value: densityLbPerMin != null ? formatPounds(densityLbPerMin) : '—',
+    unit: densityLbPerMin != null ? 'lb/min' : null,
     icon: Icons.bolt_rounded,
     accent: accent,
-    deltaSigned: volDeltaLb,
-    deltaLabel: volDeltaLb != null
-        ? '${volDeltaLb >= 0 ? '+' : '−'}${formatPounds(volDeltaLb.abs())} lb vs last'
+    deltaSigned: null,
+    deltaLabel: densityLbPerMin != null
+        ? '${formatPounds(volLb!)} lb in ${(durationSeconds / 60).round()} min'
         : null,
-    zeroStateCopy: volLb == null
-        ? 'No weighted sets logged'
-        : (prevVolLb == null
-            ? 'First session — log another to see growth'
-            : null),
-    trendSeries: (prevVolLb != null && volLb != null)
-        ? [prevVolLb, volLb]
+    zeroStateCopy: densityLbPerMin == null
+        ? 'Track time + weight to see work rate'
         : null,
   );
 
@@ -3374,25 +3334,30 @@ List<_KpiTileData> _buildKpiTiles({
         : null,
   );
 
-  // ── PRs hit tile ──────────────────────────────────────────────────
-  // Sourced from the `personal_records` table indexed by workout_id.
-  // Backend writes these at completion time when a working set beats
-  // the user's prior best 1RM for the same exercise. A genuine 0 here
-  // means no all-time PR was beaten this session — that's correct for
-  // accessory/maintenance sessions.
-  final prs = data?.personalRecords ?? const [];
-  final prTile = _KpiTileData(
-    label: 'PRs HIT',
-    value: '${prs.length}',
-    icon: Icons.emoji_events_rounded,
-    accent: prs.isEmpty
-        ? (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
-        : orange,
-    deltaSigned: prs.isEmpty ? null : prs.length.toDouble(),
-    deltaLabel: prs.isEmpty ? null : '${prs.length} new this session',
-    zeroStateCopy: prs.isEmpty
-        ? 'No new records today — grind builds them'
+  // ── Plan adherence tile ───────────────────────────────────────────
+  // PR count moved to the Summary tab's hero stats; the Advanced angle
+  // is execution quality — how much of the planned session was done.
+  // Mirrors the Session Score outer ring's computation.
+  final skippedCount = (metadata?['skipped_exercise_indices'] is List)
+      ? (metadata!['skipped_exercise_indices'] as List).length
+      : 0;
+  final plannedCount = (metadata?['exercise_order'] is List)
+      ? (metadata!['exercise_order'] as List).length
+      : 0;
+  final completedCount = plannedCount - skippedCount;
+  final adherence = plannedCount == 0 ? null : completedCount / plannedCount;
+  final adherenceTile = _KpiTileData(
+    label: 'PLAN ADHERENCE',
+    value: adherence != null ? '${(adherence * 100).round()}' : '—',
+    unit: adherence != null ? '%' : null,
+    icon: Icons.checklist_rounded,
+    accent: orange,
+    deltaSigned: null,
+    deltaLabel: adherence != null
+        ? '$completedCount of $plannedCount exercises'
         : null,
+    zeroStateCopy:
+        adherence == null ? 'No exercise order tracked' : null,
   );
 
   // Avg RIR across working sets. Prefer performance_logs (backend), fall
@@ -3446,7 +3411,7 @@ List<_KpiTileData> _buildKpiTiles({
   // second representation of the same concept. The computation logic
   // still lives further down in _buildSessionScoreData().
 
-  return [volTile, lift1RmTile, prTile, rirTile];
+  return [densityTile, adherenceTile, lift1RmTile, rirTile];
 }
 
 // Small helper used by the Session Score to compute rest-efficiency
@@ -5181,7 +5146,6 @@ class _PyramidExerciseCard extends StatefulWidget {
 }
 
 class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
-  bool _expanded = false;
 
   /// Canonicalise the progression_model string into a known shape key.
   String get _modelKey {
@@ -5342,18 +5306,6 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
                   ],
                 ),
               ),
-              IconButton(
-                iconSize: 20,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                onPressed: () => setState(() => _expanded = !_expanded),
-                icon: Icon(
-                  _expanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: textMuted,
-                ),
-              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -5361,16 +5313,15 @@ class _PyramidExerciseCardState extends State<_PyramidExerciseCard> {
           // the progression. For Pyramid Up the heaviest set is the LAST one,
           // so we render bottom→top (so the top bar is the lightest,
           // producing an actual pyramid silhouette).
+          // Raw per-set rows intentionally NOT rendered here — the Summary
+          // tab's exercise table owns those; the bars (with weight × reps ·
+          // RIR labels) are the analytics view of the same data.
           _PyramidShapeBars(
             sets: sorted,
             maxWeight: maxWeight,
             modelKey: _modelKey,
             isDark: widget.isDark,
           ),
-          if (_expanded) ...[
-            const SizedBox(height: 10),
-            _PyramidSetTable(sets: sorted, isDark: widget.isDark),
-          ],
         ],
       ),
     );
@@ -5525,90 +5476,6 @@ class _PyramidShapeBars extends StatelessWidget {
       children: [
         for (final s in ordered) buildBar(s),
       ],
-    );
-  }
-}
-
-/// Dense-detail disclosure: classic columnar table (Set / Prev / Target /
-/// Weight / Reps / RIR / RPE) used when the user taps to expand a card.
-class _PyramidSetTable extends StatelessWidget {
-  final List<Map<String, dynamic>> sets;
-  final bool isDark;
-
-  const _PyramidSetTable({required this.sets, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final headerStyle = TextStyle(
-      fontSize: 10,
-      fontWeight: FontWeight.w700,
-      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-      letterSpacing: 0.4,
-    );
-    final cellStyle = TextStyle(
-      fontSize: 11.5,
-      fontWeight: FontWeight.w600,
-      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-    );
-    String lb(double? kg) =>
-        kg == null || kg <= 0 ? '—' : (kg * 2.20462).toStringAsFixed(0);
-    final l = AppLocalizations.of(context)!;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 16,
-        dataRowMinHeight: 26,
-        dataRowMaxHeight: 32,
-        headingRowHeight: 26,
-        columns: [
-          DataColumn(label: Text(l.summaryColSet, style: headerStyle)),
-          DataColumn(label: Text(l.summaryColPrev, style: headerStyle)),
-          DataColumn(label: Text(l.summaryColTarget, style: headerStyle)),
-          DataColumn(label: Text(l.summaryColWeight, style: headerStyle)),
-          DataColumn(label: Text(l.summaryColReps, style: headerStyle)),
-          DataColumn(label: Text(l.summaryColRir, style: headerStyle)),
-          DataColumn(label: Text(l.summaryColRpe, style: headerStyle)),
-        ],
-        rows: [
-          for (final s in sets)
-            DataRow(cells: [
-              DataCell(Text('${(s['set_number'] as num?)?.toInt() ?? 0}',
-                  style: cellStyle)),
-              DataCell(Text(
-                  (() {
-                    final w = (s['previous_weight_kg'] as num?)?.toDouble();
-                    final r = (s['previous_reps'] as num?)?.toInt();
-                    return w != null && r != null
-                        ? '${lb(w)}×$r'
-                        : '—';
-                  })(),
-                  style: cellStyle)),
-              DataCell(Text(
-                  (() {
-                    final w = (s['target_weight_kg'] as num?)?.toDouble();
-                    final r = (s['target_reps'] as num?)?.toInt();
-                    return w != null && r != null
-                        ? '${lb(w)}×$r'
-                        : '—';
-                  })(),
-                  style: cellStyle)),
-              DataCell(Text(
-                  lb((s['weight_kg'] as num?)?.toDouble() ??
-                      (s['weight'] as num?)?.toDouble()),
-                  style: cellStyle)),
-              DataCell(Text('${(s['reps'] as num?)?.toInt() ?? 0}',
-                  style: cellStyle)),
-              DataCell(Text(
-                  (s['rir'] as num?) != null ? '${s['rir']}' : '—',
-                  style: cellStyle)),
-              DataCell(Text(
-                  (s['rpe'] as num?) != null
-                      ? (s['rpe'] as num).toStringAsFixed(1)
-                      : '—',
-                  style: cellStyle)),
-            ]),
-        ],
-      ),
     );
   }
 }

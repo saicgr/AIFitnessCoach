@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../core/utils/weight_utils.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -259,6 +260,20 @@ class _ExerciseSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Adaptive columns — only render Previous / Target / RIR when at least
+    // one set in THIS exercise actually carries that data. A freshly tracked
+    // workout collapses to Set / Weight / Reps instead of a wall of "—";
+    // the columns reappear automatically once the data exists. Header and
+    // rows share the same flags so cells stay aligned.
+    final sets = exercise.sets;
+    final showPrevious = sets.any((s) =>
+        (s.previousWeightKg ?? s.previousWeightLbs) != null ||
+        s.previousReps != null);
+    final showTarget = sets.any((s) =>
+        (s.targetWeightKg ?? s.targetWeightLbs) != null ||
+        s.targetReps != null);
+    final showRir = sets.any((s) => s.rir != null);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -272,10 +287,23 @@ class _ExerciseSection extends StatelessWidget {
 
         // Column headers + set rows (skip for skipped exercises)
         if (!exercise.isSkipped && exercise.sets.isNotEmpty) ...[
-          _SummaryTableHeader(useKg: useKg, isDark: isDark),
+          _SummaryTableHeader(
+            useKg: useKg,
+            isDark: isDark,
+            showPrevious: showPrevious,
+            showTarget: showTarget,
+            showRir: showRir,
+          ),
           for (final set in exercise.sets) ...[
-            _SummarySetRow(set: set, useKg: useKg, isDark: isDark),
-            if (set.durationSeconds != null)
+            _SummarySetRow(
+              set: set,
+              useKg: useKg,
+              isDark: isDark,
+              showPrevious: showPrevious,
+              showTarget: showTarget,
+              showRir: showRir,
+            ),
+            if (_SummaryTimingRow.hasMeaningfulTiming(set))
               _SummaryTimingRow(set: set, isDark: isDark),
           ],
         ],
@@ -409,8 +437,17 @@ class _ExerciseHeader extends StatelessWidget {
 class _SummaryTableHeader extends StatelessWidget {
   final bool useKg;
   final bool isDark;
+  final bool showPrevious;
+  final bool showTarget;
+  final bool showRir;
 
-  const _SummaryTableHeader({required this.useKg, required this.isDark});
+  const _SummaryTableHeader({
+    required this.useKg,
+    required this.isDark,
+    this.showPrevious = true,
+    this.showTarget = true,
+    this.showRir = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -439,25 +476,30 @@ class _SummaryTableHeader extends StatelessWidget {
             ),
           ),
           // Previous
-          Expanded(
-            flex: 3,
-            child: Text(
-              AppLocalizations.of(context).summaryExerciseTablePrevious,
-              style: WorkoutDesign.tableHeaderStyle
-                  .copyWith(color: headerColor),
-            ),
-          ),
-          // Target
-          Expanded(
-            flex: 3,
-            child: Text(
-              AppLocalizations.of(context).summaryExerciseTableTarget,
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: WorkoutDesign.accentBlue,
-                fontWeight: FontWeight.w600,
+          if (showPrevious)
+            Expanded(
+              flex: 3,
+              child: Text(
+                AppLocalizations.of(context).summaryExerciseTablePrevious,
+                style: WorkoutDesign.tableHeaderStyle
+                    .copyWith(color: headerColor),
               ),
             ),
-          ),
+          // Target
+          if (showTarget)
+            Expanded(
+              flex: 3,
+              child: Text(
+                AppLocalizations.of(context).summaryExerciseTableTarget,
+                style: WorkoutDesign.tableHeaderStyle.copyWith(
+                  color: WorkoutDesign.accentBlue,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          // Flexible filler keeps Weight/Reps anchored right when both
+          // optional leading columns are hidden.
+          if (!showPrevious && !showTarget) const Spacer(),
           // Weight
           SizedBox(
             width: 64,
@@ -479,19 +521,21 @@ class _SummaryTableHeader extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(width: 4),
-          // RIR
-          SizedBox(
-            width: 26,
-            child: Text(
-              'RIR',
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: headerColor,
-                fontSize: 9,
+          if (showRir) ...[
+            const SizedBox(width: 4),
+            // RIR
+            SizedBox(
+              width: 26,
+              child: Text(
+                'RIR',
+                style: WorkoutDesign.tableHeaderStyle.copyWith(
+                  color: headerColor,
+                  fontSize: 9,
+                ),
+                textAlign: TextAlign.center,
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -753,22 +797,42 @@ class _SummarySetRow extends StatelessWidget {
   final SummarySetData set;
   final bool useKg;
   final bool isDark;
+  final bool showPrevious;
+  final bool showTarget;
+  final bool showRir;
 
   const _SummarySetRow({
     required this.set,
     required this.useKg,
     required this.isDark,
+    this.showPrevious = true,
+    this.showTarget = true,
+    this.showRir = true,
   });
+
+  /// Gym-snapped display value (no unit). Prefers the canonical kg value so
+  /// lbs entries round-trip exactly (57 lb stays "57", never "56.9" —
+  /// see WeightUtils.formatWorkoutWeight); falls back to the pre-converted
+  /// lbs/kg field for legacy rows that only carry one of the two.
+  String? _displayWeight(double? weightKg, double? weightLbs) {
+    if (weightKg != null && weightKg > 0) {
+      return WeightUtils.formatWorkoutWeight(weightKg,
+          useKg: useKg, withUnit: false);
+    }
+    final weight = useKg ? weightKg : weightLbs;
+    if (weight == null || weight <= 0) return null;
+    return WeightUtils.formatWeightValue(weight);
+  }
 
   /// Format weight for display. Returns "BW" only when the exercise is
   /// genuinely bodyweight (set.isBodyweight=true); otherwise renders "—"
   /// for missing data so machine exercises don't get falsely BW-labeled.
   String _formatWeight(double? weightKg, double? weightLbs) {
-    final weight = useKg ? weightKg : weightLbs;
-    if (weight == null || weight == 0) {
+    final display = _displayWeight(weightKg, weightLbs);
+    if (display == null) {
       return set.isBodyweight ? 'BW' : '—';
     }
-    return weight.toStringAsFixed(0);
+    return display;
   }
 
   /// Format "weight x reps" for previous/target columns. Same BW gating
@@ -777,13 +841,13 @@ class _SummarySetRow extends StatelessWidget {
   String _formatWeightReps(double? weightKg, double? weightLbs, int? reps) {
     if (weightKg == null && weightLbs == null && reps == null) return '—';
 
-    final weight = useKg ? weightKg : weightLbs;
-    final unit = useKg ? 'kg' : 'lb';
+    final display = _displayWeight(weightKg, weightLbs);
+    final unit = WeightUtils.workoutUnitLabel(useKg);
 
-    if (weight != null && weight > 0 && reps != null) {
-      return '${weight.toStringAsFixed(0)} $unit x $reps';
-    } else if (weight != null && weight > 0) {
-      return '${weight.toStringAsFixed(0)} $unit';
+    if (display != null && reps != null) {
+      return '$display $unit x $reps';
+    } else if (display != null) {
+      return '$display $unit';
     } else if (reps != null) {
       // No weight logged. Bodyweight → "BW x N"; missing data → "— x N".
       return set.isBodyweight ? 'BW x $reps' : '— x $reps';
@@ -823,41 +887,46 @@ class _SummarySetRow extends StatelessWidget {
           ),
 
           // Previous column
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Text(
-                previousText,
-                style: WorkoutDesign.autoTargetStyle.copyWith(
-                  color:
-                      isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
-                  fontSize: 12,
+          if (showPrevious)
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  previousText,
+                  style: WorkoutDesign.autoTargetStyle.copyWith(
+                    color:
+                        isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
 
           // Target column
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: Text(
-                targetText,
-                style: WorkoutDesign.autoTargetStyle.copyWith(
-                  color: isDark
-                      ? WorkoutDesign.textSecondary
-                      : Colors.grey.shade700,
-                  fontSize: 12,
+          if (showTarget)
+            Expanded(
+              flex: 3,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Text(
+                  targetText,
+                  style: WorkoutDesign.autoTargetStyle.copyWith(
+                    color: isDark
+                        ? WorkoutDesign.textSecondary
+                        : Colors.grey.shade700,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
-          ),
+
+          // Mirror of the header's filler — keeps cells column-aligned.
+          if (!showPrevious && !showTarget) const Spacer(),
 
           // Actual weight
           SizedBox(
@@ -933,15 +1002,17 @@ class _SummarySetRow extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(width: 4),
+          if (showRir) ...[
+            const SizedBox(width: 4),
 
-          // RIR badge
-          SizedBox(
-            width: 26,
-            child: set.rir != null
-                ? _SummaryRirBadge(rir: set.rir!, isDark: isDark)
-                : const SizedBox.shrink(),
-          ),
+            // RIR badge
+            SizedBox(
+              width: 26,
+              child: set.rir != null
+                  ? _SummaryRirBadge(rir: set.rir!, isDark: isDark)
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ],
       ),
     );
@@ -957,6 +1028,23 @@ class _SummaryTimingRow extends StatelessWidget {
   final bool isDark;
 
   const _SummaryTimingRow({required this.set, required this.isDark});
+
+  /// Rest shorter than this is timer noise (the user tapped through), not a
+  /// real rest interval worth narrating.
+  static const int _minMeaningfulRestSeconds = 15;
+
+  /// Set durations under this are instant log-taps, not timed sets — showing
+  /// "set 1: 3s" reads like a bug, so they're suppressed entirely.
+  static const int _minMeaningfulSetSeconds = 30;
+
+  /// Whether this set has any timing worth a divider row. Used by the parent
+  /// section as the render gate so no empty rows are built.
+  static bool hasMeaningfulTiming(SummarySetData set) {
+    final rest = set.restSeconds;
+    final duration = set.durationSeconds;
+    return (rest != null && rest >= _minMeaningfulRestSeconds) ||
+        (duration != null && duration >= _minMeaningfulSetSeconds);
+  }
 
   String _formatDuration(int seconds) {
     if (seconds >= 60) {
@@ -975,18 +1063,16 @@ class _SummaryTimingRow extends StatelessWidget {
         ? Colors.white.withValues(alpha: 0.06)
         : Colors.black.withValues(alpha: 0.06);
 
-    final duration = _formatDuration(set.durationSeconds!);
-    final setLabel = 'set ${set.setNumber}';
-    String label = '$setLabel: $duration';
-
-    if (set.restSeconds != null) {
-      if (set.restSeconds! < 3) {
-        label = '$setLabel: $duration · skipped rest';
-      } else {
-        label =
-            '$setLabel: $duration · rested ${_formatDuration(set.restSeconds!)}';
-      }
+    final parts = <String>[];
+    final rest = set.restSeconds;
+    if (rest != null && rest >= _minMeaningfulRestSeconds) {
+      parts.add('Rest ${_formatDuration(rest)}');
     }
+    final duration = set.durationSeconds;
+    if (duration != null && duration >= _minMeaningfulSetSeconds) {
+      parts.add('${_formatDuration(duration)} set');
+    }
+    final label = parts.join(' · ');
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

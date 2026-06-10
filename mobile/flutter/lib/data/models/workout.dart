@@ -1100,6 +1100,19 @@ class WorkoutSummaryResponse {
   final String? completedAt;
   final List<SetLogInfo> setLogs;
 
+  /// Actual tracked time (workout_logs.total_time_seconds). 0 = no log row.
+  /// Distinct from workout['duration_minutes'], which is the PLANNED length.
+  final int durationSeconds;
+
+  /// Calories for the hero stats. Null = unknown (hide the chip).
+  /// [caloriesSource] is 'tracked' or 'planned_estimate' (render with '~').
+  final int? caloriesKcal;
+  final String? caloriesSource;
+
+  /// Previous-session sets keyed by lowercase exercise name:
+  /// {name: [{set_number, weight_kg, reps_completed, rir, recorded_at}]}.
+  final Map<String, List<Map<String, dynamic>>> previousSets;
+
   /// Cardio aggregates (Issue 14 follow-up). Populated for cardio sessions
   /// (synced or manually logged); null for strength/bodyweight sessions.
   final double? distanceMeters;
@@ -1117,6 +1130,10 @@ class WorkoutSummaryResponse {
     this.completionMethod,
     this.completedAt,
     this.setLogs = const [],
+    this.durationSeconds = 0,
+    this.caloriesKcal,
+    this.caloriesSource,
+    this.previousSets = const {},
     this.distanceMeters,
     this.avgHrBpm,
     this.maxHrBpm,
@@ -1145,12 +1162,36 @@ class WorkoutSummaryResponse {
       setLogs: setLogsData
           .map((sl) => SetLogInfo.fromJson(sl as Map<String, dynamic>))
           .toList(),
+      durationSeconds: (json['duration_seconds'] as num?)?.toInt() ?? 0,
+      caloriesKcal: (json['calories_kcal'] as num?)?.toInt(),
+      caloriesSource: json['calories_source'] as String?,
+      previousSets: _parsePreviousSets(json['previous_sets']),
       distanceMeters: (json['distance_meters'] as num?)?.toDouble(),
       avgHrBpm: (json['avg_hr_bpm'] as num?)?.toInt(),
       maxHrBpm: (json['max_hr_bpm'] as num?)?.toInt(),
       paceSecondsPerKm: (json['pace_seconds_per_km'] as num?)?.toDouble(),
       elevationGainMeters: (json['elevation_gain_meters'] as num?)?.toDouble(),
     );
+  }
+
+  static Map<String, List<Map<String, dynamic>>> _parsePreviousSets(
+      dynamic raw) {
+    if (raw is! Map) return const {};
+    final out = <String, List<Map<String, dynamic>>>{};
+    raw.forEach((key, value) {
+      if (key is! String || value is! List) return;
+      out[key.toLowerCase()] = value
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
+    });
+    return out;
+  }
+
+  /// Previous-session sets for [exerciseName] (case-insensitive), or null.
+  List<Map<String, dynamic>>? previousSetsFor(String exerciseName) {
+    final sets = previousSets[exerciseName.trim().toLowerCase()];
+    return (sets == null || sets.isEmpty) ? null : sets;
   }
 
   /// Group set logs by exercise name for display

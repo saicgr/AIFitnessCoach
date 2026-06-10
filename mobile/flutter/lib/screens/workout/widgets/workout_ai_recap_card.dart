@@ -78,6 +78,15 @@ class WorkoutAiRecapCard extends ConsumerStatefulWidget {
   /// celebration (merged in so it's one card, not a separate stacked card).
   final Set<String> trainedMuscles;
 
+  /// The always-visible Volume / vs-last / PRs pills. The Summary tab embeds
+  /// this card directly above its own hero stats grid, so it turns these off
+  /// to avoid showing the same numbers twice.
+  final bool showQuickPills;
+
+  /// Start with the full recap detail open (Summary tab) instead of the
+  /// collapsed headline-only default (complete screen).
+  final bool initiallyExpanded;
+
   const WorkoutAiRecapCard({
     super.key,
     required this.workoutId,
@@ -100,6 +109,8 @@ class WorkoutAiRecapCard extends ConsumerStatefulWidget {
     this.workoutExercises = const [],
     this.performanceComparison,
     this.trainedMuscles = const {},
+    this.showQuickPills = true,
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -111,7 +122,9 @@ enum _RecapStatus { loading, generating, ready, error }
 class _WorkoutAiRecapCardState extends ConsumerState<WorkoutAiRecapCard> {
   _RecapStatus _status = _RecapStatus.loading;
   Map<String, dynamic>? _recap;
-  bool _expanded = false; // Collapsed by default (2.2) — tap chevron to open.
+  // Collapsed by default (2.2) — tap chevron to open. The Summary tab opts
+  // into starting expanded via widget.initiallyExpanded.
+  late bool _expanded = widget.initiallyExpanded;
   String? _error;
 
   @override
@@ -276,16 +289,19 @@ class _WorkoutAiRecapCardState extends ConsumerState<WorkoutAiRecapCard> {
             _MergedMusclesStrip(muscles: muscles),
           ],
 
-          // Always-visible quick pills (Volume / vs-last / PRs).
-          const SizedBox(height: 12),
-          _MergedQuickPills(
-            totalSets: widget.totalSets,
-            totalVolumeKg: widget.totalVolumeKg,
-            durationSeconds: widget.totalTimeSeconds,
-            prCount: widget.earnedPRs.length,
-            performanceComparison: widget.performanceComparison,
-            useKg: widget.useKg,
-          ),
+          // Always-visible quick pills (Volume / vs-last / PRs). Hidden when
+          // the host screen already shows these numbers (Summary tab).
+          if (widget.showQuickPills) ...[
+            const SizedBox(height: 12),
+            _MergedQuickPills(
+              totalSets: widget.totalSets,
+              totalVolumeKg: widget.totalVolumeKg,
+              durationSeconds: widget.totalTimeSeconds,
+              prCount: widget.earnedPRs.length,
+              performanceComparison: widget.performanceComparison,
+              useKg: widget.useKg,
+            ),
+          ],
 
           // Expandable: the full recap detail (collapsed by default — 2.2).
           AnimatedSize(

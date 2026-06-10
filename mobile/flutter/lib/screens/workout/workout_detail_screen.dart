@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' show max;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../widgets/app_dialog.dart';
@@ -31,6 +32,7 @@ import '../../data/models/workout_studio_models.dart';
 import '../../data/providers/workout_studio_providers.dart';
 import 'customization_studio_sheet.dart';
 import 'widgets/save_to_library_sheet.dart';
+import 'widgets/summary_floating_pill.dart';
 import '../../data/services/image_url_cache.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'widgets/sauna_dialog.dart';
@@ -1043,9 +1045,15 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               ),
           ],
 
-          // Bottom padding for FAB and floating nav bar
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 140),
+          // Bottom padding for FAB and floating nav bar. In summary mode the
+          // Detail/Summary/Advanced pill floats over this list instead, so
+          // reserve at least its clearance.
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: widget.isSummaryMode
+                  ? max(140.0, SummaryFloatingPill.clearanceOf(context))
+                  : 140,
+            ),
           ),
         ],
       ),

@@ -12,15 +12,17 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/stat_typography.dart';
 import '../../core/providers/heart_rate_provider.dart';
-import '../../core/theme/theme_colors.dart';
 import '../../core/utils/muscle_aliases.dart' as muscle_util;
+import '../../core/utils/weight_utils.dart';
 import '../../data/models/workout.dart';
 import '../../widgets/heart_rate_chart.dart';
-import '../../widgets/metric_grid.dart';
 import '../library/providers/muscle_group_images_provider.dart';
+import 'widgets/hr_connect_chip.dart';
 import 'widgets/summary_exercise_table.dart';
+import 'widgets/summary_floating_pill.dart';
+import 'widgets/summary_hero_stats.dart';
+import 'widgets/workout_ai_recap_card.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -48,8 +50,6 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final summary = data!;
-    final comparison = summary.performanceComparison;
-    final wc = comparison?.workoutComparison;
 
     // Parse workout map fields
     final workoutName = summary.workout['name'] as String? ?? 'Workout';
@@ -65,10 +65,6 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
     // Heart rate
     final heartRateData = _parseHeartRate(metadata);
-
-    // Coach review
-    final coachReview = summary.parsedCoachReview;
-    final rawCoachSummary = summary.coachSummary;
 
     // Personal records
     final personalRecords = summary.personalRecords;
@@ -105,17 +101,32 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // 2. Hero Stats Grid — render even when wc is null so older
-          // workouts without a workout_performance_summary row still show
-          // duration/exercises/volume/sets/reps computed from set_logs.
-          // DISPLAY UPGRADE: always-visible 2×N MetricGrid (Gravl parity) now
-          // also shows Energy, Median rest, and Records (PR count).
-          _HeroStatsGrid(
-            workoutComparison: wc,
-            setLogs: summary.setLogs,
-            exercises: exercises,
+          // 2. AI coach recap — promoted to the top so it's the first thing
+          // the user reads. Self-contained: instant skeleton, then the
+          // persisted recap from GET/POST /feedback/recap (no per-view LLM
+          // call). Quick pills are off because the hero stats grid right
+          // below already shows those numbers; starts expanded so the full
+          // review is visible without a tap.
+          if (!summary.isMarkedDone && exerciseTableData.isNotEmpty)
+            _buildCoachRecapCard(summary, exerciseTableData, exercises)
+                .animate()
+                .fadeIn(
+                  duration: 400.ms,
+                  delay: Duration(milliseconds: 100 * sectionIndex++),
+                )
+                .slideY(begin: 0.05, end: 0),
+
+          if (!summary.isMarkedDone && exerciseTableData.isNotEmpty)
+            const SizedBox(height: 16),
+
+          // 3. Compact hero stats — only stats this session actually has;
+          // no '--' tiles. Renders even when wc is null so older workouts
+          // without a workout_performance_summary row still show
+          // volume/sets/reps computed from set_logs.
+          SummaryHeroStats(
+            summary: summary,
             metadata: metadata,
-            personalRecordCount: personalRecords.length,
+            exercises: exercises,
           )
               .animate()
               .fadeIn(
@@ -126,17 +137,21 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // 3. Heart Rate Section (always shown — placeholder when no data)
-          _HeartRateSection(heartRateData: heartRateData, isDark: isDark)
-              .animate()
-              .fadeIn(
-                duration: 400.ms,
-                delay: Duration(milliseconds: 100 * sectionIndex++),
-              )
-              .slideY(begin: 0.05, end: 0),
-          const SizedBox(height: 16),
+          // 4. Heart Rate chart — only when the session has readings. The
+          // no-monitor case is a slim hint chip near the bottom (section 8)
+          // instead of a full-height empty card up here.
+          if (heartRateData != null) ...[
+            _HeartRateSection(heartRateData: heartRateData, isDark: isDark)
+                .animate()
+                .fadeIn(
+                  duration: 400.ms,
+                  delay: Duration(milliseconds: 100 * sectionIndex++),
+                )
+                .slideY(begin: 0.05, end: 0),
+            const SizedBox(height: 16),
+          ],
 
-          // 4. Muscles Worked
+          // 5. Muscles Worked
           if (exercises.isNotEmpty)
             _MusclesWorkedSection(
               exercises: exercises,
@@ -182,27 +197,8 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
           if (personalRecords.isNotEmpty) const SizedBox(height: 16),
 
-          // 6. AI Coach Review
-          if (coachReview != null ||
-              (rawCoachSummary != null && rawCoachSummary.isNotEmpty))
-            _CoachReviewSection(
-              coachReview: coachReview,
-              rawSummary: rawCoachSummary,
-              isDark: isDark,
-            )
-                .animate()
-                .fadeIn(
-                  duration: 400.ms,
-                  delay: Duration(milliseconds: 100 * sectionIndex++),
-                )
-                .slideY(begin: 0.05, end: 0),
-
-          if (coachReview != null ||
-              (rawCoachSummary != null && rawCoachSummary.isNotEmpty))
-            const SizedBox(height: 16),
-
           // 7. Post-Workout Feedback
-          if (feedback != null)
+          if (feedback != null) ...[
             _PostWorkoutFeedbackSection(feedback: feedback, isDark: isDark)
                 .animate()
                 .fadeIn(
@@ -210,11 +206,108 @@ class WorkoutSummaryGeneral extends StatelessWidget {
                   delay: Duration(milliseconds: 100 * sectionIndex++),
                 )
                 .slideY(begin: 0.05, end: 0),
+            const SizedBox(height: 16),
+          ],
 
-          // 8. Bottom padding for floating pill clearance
-          const SizedBox(height: 100),
+          // 8. No HR data → slim connect hint instead of an empty chart card.
+          if (heartRateData == null)
+            HrConnectChip(isDark: isDark)
+                .animate()
+                .fadeIn(
+                  duration: 400.ms,
+                  delay: Duration(milliseconds: 100 * sectionIndex++),
+                ),
+
+          // 9. Bottom padding so the last section scrolls clear of the
+          // floating Detail/Summary/Advanced pill.
+          SizedBox(height: SummaryFloatingPill.clearanceOf(context)),
         ],
       ),
+    );
+  }
+
+  /// Builds the top-of-tab AI recap card from data this screen already has.
+  /// Mirrors the payload the complete screen sends so POST /feedback/recap
+  /// (first view of a pre-recap-era workout) generates an identical recap;
+  /// for anything completed since, the GET path returns instantly.
+  Widget _buildCoachRecapCard(
+    WorkoutSummaryResponse summary,
+    List<SummaryExerciseData> exerciseTableData,
+    List<Map<String, dynamic>> parsedExercises,
+  ) {
+    double totalVolumeKg = 0;
+    int totalSets = 0;
+    int totalReps = 0;
+    final recapExercises = <Map<String, dynamic>>[];
+    for (final e in exerciseTableData) {
+      if (e.isSkipped || e.sets.isEmpty) continue;
+      double maxWeightKg = 0;
+      int exerciseReps = 0;
+      int exerciseSets = 0;
+      for (final s in e.sets) {
+        final reps = s.actualReps ?? 0;
+        if (reps <= 0) continue;
+        exerciseSets += 1;
+        exerciseReps += reps;
+        final weightKg = s.actualWeightKg ?? 0;
+        totalVolumeKg += weightKg * reps;
+        if (weightKg > maxWeightKg) maxWeightKg = weightKg;
+      }
+      if (exerciseSets == 0) continue;
+      totalSets += exerciseSets;
+      totalReps += exerciseReps;
+      recapExercises.add(<String, dynamic>{
+        'name': e.name,
+        'sets': exerciseSets,
+        'reps': exerciseReps,
+        'weight_kg': maxWeightKg,
+        'time_seconds': 0,
+      });
+    }
+
+    final plannedExercises = parsedExercises
+        .map((ex) => <String, dynamic>{
+              'name': ex['name'] ?? '',
+              'sets': (ex['sets'] as num?)?.toInt() ?? 0,
+              'reps': (ex['reps'] as num?)?.toInt() ?? 0,
+              'weight_kg': (ex['weight'] as num?)?.toDouble() ?? 0,
+              'time_seconds': 0,
+            })
+        .toList();
+
+    final earnedPRs = summary.personalRecords
+        .map((pr) => <String, dynamic>{
+              'exercise_name': pr.exerciseName,
+              'detail':
+                  '${WeightUtils.formatWorkoutWeight(pr.weightKg, useKg: false)} x ${pr.reps}',
+            })
+        .toList();
+
+    final durationSeconds = summary.durationSeconds > 0
+        ? summary.durationSeconds
+        : ((metadata?['total_time_seconds'] as num?)?.toInt() ?? 0);
+
+    return WorkoutAiRecapCard(
+      workoutId: summary.workout['id'] as String? ?? '',
+      workoutLogId: metadata?['id'] as String?,
+      workoutName: summary.workout['name'] as String? ?? 'Workout',
+      workoutType: summary.workout['type'] as String? ?? 'strength',
+      exercises: recapExercises,
+      plannedExercises: plannedExercises,
+      totalTimeSeconds: durationSeconds,
+      caloriesBurned: summary.caloriesKcal ?? 0,
+      totalSets: totalSets,
+      totalReps: totalReps,
+      totalVolumeKg: totalVolumeKg,
+      earnedPRs: earnedPRs,
+      useKg: false,
+      // The Summary tab has its own Muscles Worked section and hero stats —
+      // suppress the card's duplicates and skip the level-up replay.
+      workoutExercises: const [],
+      trainedMuscles: const {},
+      performanceComparison: summary.performanceComparison,
+      showQuickPills: false,
+      initiallyExpanded: true,
     );
   }
 
@@ -251,7 +344,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
         return _buildFromSetsJson(
           setsJsonList,
           parsedExercises,
-          summary.personalRecords,
+          summary,
           metadata,
         );
       }
@@ -281,9 +374,10 @@ class WorkoutSummaryGeneral extends StatelessWidget {
   List<SummaryExerciseData> _buildFromSetsJson(
     List<Map<String, dynamic>> setsJson,
     List<Map<String, dynamic>> parsedExercises,
-    List<PersonalRecordInfo> personalRecords,
+    WorkoutSummaryResponse summary,
     Map<String, dynamic>? metadata,
   ) {
+    final personalRecords = summary.personalRecords;
     // Group sets by exercise_name (case-insensitive)
     final Map<String, List<Map<String, dynamic>>> grouped = {};
     final Map<String, int> exerciseIndexMap = {};
@@ -345,6 +439,14 @@ class WorkoutSummaryGeneral extends StatelessWidget {
       // Look up planned exercise data from exercises_json
       final planned = exerciseLookup[key];
 
+      // Previous-session sets for this exercise from the backend (keyed by
+      // set_number). Used to backfill the "Previous" column when the active
+      // client didn't embed previous_* into sets_json (Easy mode never did).
+      final backendPrevious = <int, Map<String, dynamic>>{
+        for (final p in summary.previousSetsFor(key) ?? const [])
+          if (p['set_number'] is int) p['set_number'] as int: p,
+      };
+
       // Build SummarySetData from each set map.
       //
       // Field-name contract must match `buildSetsJson()` in
@@ -357,12 +459,17 @@ class WorkoutSummaryGeneral extends StatelessWidget {
         final weightKg =
             (s['weight_kg'] as num?)?.toDouble() ?? (s['weight'] as num?)?.toDouble();
         final targetWeightKg = (s['target_weight_kg'] as num?)?.toDouble();
-        final previousWeightKg = (s['previous_weight_kg'] as num?)?.toDouble();
+        final setNumber = s['set_number'] as int? ?? 1;
+        final prevFromBackend = backendPrevious[setNumber];
+        final previousWeightKg = (s['previous_weight_kg'] as num?)?.toDouble() ??
+            (prevFromBackend?['weight_kg'] as num?)?.toDouble();
+        final previousReps = (s['previous_reps'] as int?) ??
+            (prevFromBackend?['reps_completed'] as num?)?.toInt();
         final durationSeconds = (s['set_duration_seconds'] as int?) ??
             (s['duration_seconds'] as int?);
 
         return SummarySetData(
-          setNumber: s['set_number'] as int? ?? 1,
+          setNumber: setNumber,
           targetReps: s['target_reps'] as int?,
           targetWeightKg: targetWeightKg,
           targetWeightLbs:
@@ -381,7 +488,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           previousWeightKg: previousWeightKg,
           previousWeightLbs:
               previousWeightKg != null ? previousWeightKg * 2.20462 : null,
-          previousReps: s['previous_reps'] as int?,
+          previousReps: previousReps,
           progressionModel: s['progression_model'] as String?,
           // Coerce list (new) or string (legacy) into the list shape.
           notes: SummarySetData.coerceNotes(s['notes']),
@@ -458,15 +565,42 @@ class WorkoutSummaryGeneral extends StatelessWidget {
       final exerciseName = entry.key;
       final logs = entry.value;
 
-      // Build sets from set logs
+      // Previous-session sets from the backend, keyed by set_number.
+      final backendPrevious = <int, Map<String, dynamic>>{
+        for (final p in summary.previousSetsFor(exerciseName) ?? const [])
+          if (p['set_number'] is int) p['set_number'] as int: p,
+      };
+
+      // Build sets from set logs — carry the rich per-set fields
+      // (targets, timing, notes) so this fallback renders the same table
+      // as the sets_json path instead of a bare weight × reps grid.
       final sets = logs.map((log) {
+        final prevFromBackend = backendPrevious[log.setNumber];
+        final previousWeightKg =
+            (prevFromBackend?['weight_kg'] as num?)?.toDouble();
+        final previousReps =
+            (prevFromBackend?['reps_completed'] as num?)?.toInt();
         return SummarySetData(
           setNumber: log.setNumber,
+          targetReps: log.targetReps,
+          targetWeightKg: log.targetWeightKg,
+          targetWeightLbs: log.targetWeightKg != null
+              ? log.targetWeightKg! * 2.20462
+              : null,
           actualReps: log.repsCompleted,
           actualWeightKg: log.weightKg,
           actualWeightLbs: log.weightKg * 2.20462,
           rir: log.rir,
           rpe: log.rpe,
+          durationSeconds: log.setDurationSeconds,
+          restSeconds: log.restDurationSeconds,
+          previousWeightKg: previousWeightKg,
+          previousWeightLbs:
+              previousWeightKg != null ? previousWeightKg * 2.20462 : null,
+          previousReps: previousReps,
+          notes: log.notes,
+          notesPhotoUrls: log.notesPhotoUrls,
+          completedAt: log.recordedAt,
         );
       }).toList();
 
@@ -692,222 +826,8 @@ class _HeaderSection extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SECTION 2: HERO STATS GRID (2x3)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _HeroStatsGrid extends StatelessWidget {
-  final WorkoutComparisonInfo? workoutComparison;
-  final List<SetLogInfo> setLogs;
-  final List<Map<String, dynamic>> exercises;
-  final Map<String, dynamic>? metadata;
-  final int personalRecordCount;
-
-  const _HeroStatsGrid({
-    required this.workoutComparison,
-    this.setLogs = const [],
-    this.exercises = const [],
-    this.metadata,
-    this.personalRecordCount = 0,
-  });
-
-  /// Median rest (seconds) across all logged rest intervals in
-  /// metadata['rest_intervals']. Sorted; average of the two middle values for
-  /// even counts. Returns null when there are no positive rest samples.
-  double? _medianRestSeconds() {
-    final raw = metadata?['rest_intervals'];
-    if (raw is! List || raw.isEmpty) return null;
-    final values = <int>[];
-    for (final e in raw) {
-      if (e is Map) {
-        final s = (e['rest_seconds'] as num?)?.toInt() ?? 0;
-        if (s > 0) values.add(s);
-      }
-    }
-    if (values.isEmpty) return null;
-    values.sort();
-    final mid = values.length ~/ 2;
-    if (values.length.isOdd) return values[mid].toDouble();
-    return (values[mid - 1] + values[mid]) / 2.0;
-  }
-
-  /// Format seconds as mm:ss (e.g. 95 → "1:35").
-  String _formatMmSs(num seconds) {
-    final total = seconds.round();
-    final m = total ~/ 60;
-    final s = total % 60;
-    return '$m:${s.toString().padLeft(2, '0')}';
-  }
-
-  /// Aggregate per-set logs into (volumeKg, sets, reps). Counts only sets
-  /// that were actually completed (or that recorded reps > 0 — older logs
-  /// don't carry the is_completed flag).
-  ({double volumeKg, int sets, int reps}) _aggregateSetLogs() {
-    double volume = 0;
-    int sets = 0;
-    int reps = 0;
-    for (final log in setLogs) {
-      final isCompleted = log.isCompleted ?? (log.repsCompleted > 0);
-      if (!isCompleted) continue;
-      sets += 1;
-      reps += log.repsCompleted;
-      volume += log.weightKg * log.repsCompleted;
-    }
-    return (volumeKg: volume, sets: sets, reps: reps);
-  }
-
-  /// Aggregate metadata['sets_json'] (richest source — written by the
-  /// active-workout client). Same shape as performance_logs but lives on
-  /// the workout_log row directly so it survives even if performance_logs
-  /// rows weren't written.
-  ({double volumeKg, int sets, int reps})? _aggregateSetsJson() {
-    final raw = metadata?['sets_json'];
-    if (raw == null) return null;
-    List<dynamic>? list;
-    if (raw is String) {
-      try {
-        final decoded = jsonDecode(raw);
-        if (decoded is List) list = decoded;
-      } catch (_) {}
-    } else if (raw is List) {
-      list = raw;
-    }
-    if (list == null || list.isEmpty) return null;
-    double volume = 0;
-    int sets = 0;
-    int reps = 0;
-    for (final item in list) {
-      if (item is! Map) continue;
-      final completedRaw = item['is_completed'];
-      final repsCompleted =
-          (item['reps_completed'] as num?)?.toInt() ?? 0;
-      final isCompleted = completedRaw is bool
-          ? completedRaw
-          : repsCompleted > 0;
-      if (!isCompleted) continue;
-      final weightKg = (item['weight_kg'] as num?)?.toDouble() ?? 0;
-      sets += 1;
-      reps += repsCompleted;
-      volume += weightKg * repsCompleted;
-    }
-    return (volumeKg: volume, sets: sets, reps: reps);
-  }
-
-  String _formatDuration(int seconds) {
-    if (seconds <= 0) return '0m';
-    final h = seconds ~/ 3600;
-    final m = (seconds % 3600) ~/ 60;
-    if (h > 0) return '${h}h ${m}m';
-    return '${m}m';
-  }
-
-  String _formatVolume(double kg) {
-    // Convert to lbs (user preference)
-    final lbs = kg * 2.20462;
-    if (lbs >= 1000) {
-      return '${(lbs / 1000).toStringAsFixed(1)}k';
-    }
-    return lbs.toStringAsFixed(0);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final wc = workoutComparison;
-
-    // Backend aggregates can be 0 (or wc itself null) for older workouts
-    // whose workout_performance_summary row was never written. Fall back
-    // to per-set data so the tiles always reflect what the user actually
-    // logged. Prefer metadata['sets_json'] (richest), then setLogs.
-    final fromSetsJson = _aggregateSetsJson();
-    final fromSetLogs = setLogs.isNotEmpty ? _aggregateSetLogs() : null;
-    final fallback = fromSetsJson ?? fromSetLogs;
-
-    final currentVolumeKg = (wc?.currentTotalVolumeKg ?? 0) > 0
-        ? wc!.currentTotalVolumeKg
-        : (fallback?.volumeKg ?? 0);
-    final currentSets = (wc?.currentTotalSets ?? 0) > 0
-        ? wc!.currentTotalSets
-        : (fallback?.sets ?? 0);
-    final currentReps = (wc?.currentTotalReps ?? 0) > 0
-        ? wc!.currentTotalReps
-        : (fallback?.reps ?? 0);
-    final currentDurationSeconds = wc?.currentDurationSeconds ?? 0;
-    final currentExercises =
-        (wc?.currentExercises ?? 0) > 0 ? wc!.currentExercises : exercises.length;
-    final currentCalories = wc?.currentCalories ?? 0;
-
-    final c = ThemeColors.of(context);
-    final accent = c.accent;
-
-    final medianRest = _medianRestSeconds();
-
-    // DISPLAY UPGRADE — always-visible Gravl 2×N grid (no toggle). Every
-    // metric glanceable: Duration · Energy · Volume · Exercises · Sets · Reps
-    // · Median rest · Records. Volume is shown in lb (user preference) via the
-    // existing _formatVolume helper.
-    final cells = <MetricCell>[
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
-        value: _formatDuration(currentDurationSeconds),
-        icon: Icons.timer_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-        value: currentCalories > 0 ? '$currentCalories' : '--',
-        unit: currentCalories > 0 ? 'kcal' : null,
-        icon: Icons.local_fire_department_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralVolumeLb,
-        value: _formatVolume(currentVolumeKg),
-        unit: 'lb',
-        icon: Icons.show_chart,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).authIntroExercises,
-        value: '$currentExercises',
-        icon: Icons.fitness_center,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralSets,
-        value: '$currentSets',
-        icon: Icons.layers_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralReps,
-        value: '$currentReps',
-        icon: Icons.repeat,
-        accent: accent,
-      ),
-      MetricCell(
-        label: 'Median rest',
-        value: medianRest != null ? _formatMmSs(medianRest) : '--',
-        icon: Icons.av_timer_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: 'Records',
-        value: '$personalRecordCount',
-        icon: Icons.emoji_events_outlined,
-        accent: personalRecordCount > 0 ? c.success : accent,
-      ),
-    ];
-
-    return MetricGrid(
-      items: cells,
-      columns: 2,
-      spacing: 10,
-      numberSize: StatType.secondary,
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SECTION 3: HEART RATE (always shown — placeholder when no data)
+// SECTION 3: HEART RATE (rendered only when the session has readings —
+// the no-monitor case is the slim HrConnectChip near the bottom of the tab)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class _HeartRateSection extends StatelessWidget {
@@ -965,34 +885,6 @@ class _HeartRateSection extends StatelessWidget {
               showTrainingEffect: false,
               showVO2Max: false,
               showFatBurnMetrics: false,
-            )
-          else
-            // Placeholder — no HR data
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.favorite_border,
-                    size: 36,
-                    color: isDark
-                        ? AppColors.textMuted.withOpacity(0.5)
-                        : Colors.grey.shade300,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    AppLocalizations.of(context).workoutSummaryGeneralConnectAHeartRate,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.4,
-                      color:
-                          isDark ? AppColors.textMuted : Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
             ),
         ],
       ),
@@ -1499,194 +1391,6 @@ class _PersonalRecordsSection extends StatelessWidget {
           }),
         ],
       ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// SECTION 6: AI COACH REVIEW
-// ═══════════════════════════════════════════════════════════════════════════════
-
-class _CoachReviewSection extends StatelessWidget {
-  final CoachReview? coachReview;
-  final String? rawSummary;
-  final bool isDark;
-
-  const _CoachReviewSection({
-    this.coachReview,
-    this.rawSummary,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.orange.withOpacity(isDark ? 0.08 : 0.06),
-            AppColors.purple.withOpacity(isDark ? 0.05 : 0.03),
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.orange.withOpacity(0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title row
-          Row(
-            children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.orange, AppColors.purple],
-                    begin: AlignmentDirectional.topStart,
-                    end: AlignmentDirectional.bottomEnd,
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.auto_awesome,
-                    size: 13, color: Colors.white),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context).workoutSummaryGeneralAiCoachReview,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.textPrimary : Colors.black87,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          if (coachReview != null) ...[
-            // Structured review
-            _buildStructuredReview(coachReview!),
-          ] else if (rawSummary != null) ...[
-            // Raw text fallback
-            Text(
-              rawSummary!,
-              style: TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: isDark ? AppColors.textSecondary : Colors.grey.shade700,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStructuredReview(CoachReview review) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Star rating
-        if (review.overallRating > 0) ...[
-          Row(
-            children: List.generate(10, (i) {
-              return Icon(
-                i < review.overallRating ? Icons.star : Icons.star_border,
-                size: 18,
-                color: i < review.overallRating
-                    ? AppColors.yellow
-                    : (isDark ? AppColors.textMuted : Colors.grey.shade300),
-              );
-            }),
-          ),
-          const SizedBox(height: 12),
-        ],
-
-        // Highlights
-        if (review.highlights.isNotEmpty) ...[
-          ...review.highlights.map((h) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.check_circle,
-                        size: 16, color: AppColors.green),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        h,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.4,
-                          color: isDark
-                              ? AppColors.textSecondary
-                              : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-          const SizedBox(height: 8),
-        ],
-
-        // Areas to improve
-        if (review.areasToImprove.isNotEmpty) ...[
-          ...review.areasToImprove.map((a) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Icons.warning_amber,
-                        size: 16, color: AppColors.orange),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        a,
-                        style: TextStyle(
-                          fontSize: 13,
-                          height: 1.4,
-                          color: isDark
-                              ? AppColors.textSecondary
-                              : Colors.grey.shade700,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-          const SizedBox(height: 8),
-        ],
-
-        // Summary
-        if (review.summary.isNotEmpty) ...[
-          Divider(
-            height: 16,
-            thickness: 0.5,
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.08),
-          ),
-          Text(
-            review.summary,
-            style: TextStyle(
-              fontSize: 13,
-              height: 1.5,
-              fontStyle: FontStyle.italic,
-              color: isDark ? AppColors.textMuted : Colors.grey.shade600,
-            ),
-          ),
-        ],
-      ],
     );
   }
 }

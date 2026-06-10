@@ -21,6 +21,13 @@ class SummaryFloatingPill extends StatelessWidget {
   static const double _pillHeight = 48;
   static const double _borderRadius = 25;
 
+  /// Bottom clearance a scrollable behind the pill must reserve so its last
+  /// content isn't covered: pill height + the 16px bottom margin + the
+  /// device's bottom safe-area inset (the pill sits inside SafeArea) + 12px
+  /// breathing room.
+  static double clearanceOf(BuildContext context) =>
+      _pillHeight + 16 + 12 + MediaQuery.of(context).padding.bottom;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
