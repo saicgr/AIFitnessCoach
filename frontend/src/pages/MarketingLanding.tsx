@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import KineticHero from '../components/landing/KineticHero';
+import InsideTheCoach from '../components/landing/InsideTheCoach';
+import ScrollProgress from '../components/landing/ScrollProgress';
+import VoltCursor from '../components/landing/VoltCursor';
 import StatMarquee from '../components/landing/StatMarquee';
 import FeatureStory from '../components/landing/FeatureStory';
 import FreeToolsShowcase from '../components/landing/FreeToolsShowcase';
@@ -96,10 +99,13 @@ export default function MarketingLanding() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
       />
+      <ScrollProgress />
+      <VoltCursor />
       <MarketingNav />
       <main>
         <KineticHero />
         <StatMarquee />
+        <InsideTheCoach />
         <FeatureStory />
         <FreeToolsShowcase />
         <ComparisonTeaser />

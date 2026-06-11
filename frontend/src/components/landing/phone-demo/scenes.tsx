@@ -582,29 +582,6 @@ export function NutritionScene({ t, isStatic }: { t: number; isStatic: boolean }
  * #E91E63) + health badge (Recommended green / OK yellow / Avoid red),
  * "Coach Recommends" highlight, and a "Log N items" CTA. */
 
-const MENU_DISHES = [
-  {
-    name: 'Grilled chicken bowl', portion: '1 bowl',
-    macros: [['52g Protein', '#9C27B0'], ['38g Carbs', '#FF9800'], ['14g Fat', '#E91E63']] as const,
-    badge: { label: 'Recommended', color: '#4CAF50' }, pick: true, at: 0.4,
-  },
-  {
-    name: 'Bistecca alla griglia', portion: '300 g',
-    macros: [['46g Protein', '#9C27B0'], ['2g Carbs', '#FF9800'], ['24g Fat', '#E91E63']] as const,
-    badge: { label: 'Recommended', color: '#4CAF50' }, pick: false, at: 0.5,
-  },
-  {
-    name: 'Caesar salad', portion: '1 plate',
-    macros: [['18g Protein', '#9C27B0'], ['22g Carbs', '#FF9800'], ['52g Fat', '#E91E63']] as const,
-    badge: { label: 'OK', color: '#FFC107' }, pick: false, at: 0.6,
-  },
-  {
-    name: 'Carbonara', portion: '1 plate',
-    macros: [['28g Protein', '#9C27B0'], ['96g Carbs', '#FF9800'], ['58g Fat', '#E91E63']] as const,
-    badge: { label: 'Avoid', color: '#F44336' }, pick: false, at: 0.7,
-  },
-];
-
 // Realistic menu "photo" shown while scanning (dotted price leaders, like
 // a real trattoria menu page) and as a thumbnail in the results header.
 const MENU_SECTIONS: Array<[string, Array<[string, string]>]> = [
@@ -653,27 +630,42 @@ function MenuPhoto({ small }: { small?: boolean }) {
   );
 }
 
+// All 8 dishes from the scanned menu, with macros driving two sort orders.
+const MENU_DISHES = [
+  { name: 'Grilled chicken bowl', p: 52, c: 38, badge: 'Recommended', color: '#4CAF50', pick: true },
+  { name: 'Bistecca alla griglia', p: 46, c: 2, badge: 'Recommended', color: '#4CAF50', pick: false },
+  { name: 'Carbonara', p: 28, c: 96, badge: 'Avoid', color: '#F44336', pick: false },
+  { name: 'Margherita', p: 24, c: 80, badge: 'OK', color: '#FFC107', pick: false },
+  { name: 'Caesar salad', p: 18, c: 22, badge: 'OK', color: '#FFC107', pick: false },
+  { name: 'Caprese', p: 14, c: 8, badge: 'OK', color: '#FFC107', pick: false },
+  { name: 'Risotto ai funghi', p: 12, c: 74, badge: 'OK', color: '#FFC107', pick: false },
+  { name: 'Panna cotta', p: 6, c: 32, badge: 'Avoid', color: '#F44336', pick: false },
+];
+
+const ROW_STEP = 51;
+
 export function MenuScanScene({ t, isStatic }: { t: number; isStatic: boolean }) {
-  const p = isStatic ? 1 : clamp01(t / 5800);
-  const scanning = !isStatic && p < 0.36;
-  const picked = p >= 0.82;
+  const p = isStatic ? 1 : clamp01(t / 7000);
+  const scanning = !isStatic && p < 0.24;
+  // Live re-sort: protein-first, then the carbs pill takes over mid-scene
+  const sortKey: 'p' | 'c' = !isStatic && t > 4200 ? 'c' : 'p';
+  const picked = p >= 0.85;
 
   /* Phase 1 — the camera is pointed at a REAL menu, scan sweep running */
   if (scanning) {
     return (
       <div className="flex h-full flex-col bg-[#101012] px-3 pt-12 pb-3 text-[10px]">
         <div className="absolute top-0 inset-x-0 z-[1] rounded-t-[2rem] bg-[#101012] px-3 pt-8 pb-2">
-          <p className="text-center text-[9px] font-medium text-zinc-300">📷 Scan Menu</p>
+          <p className="text-center text-[10px] font-medium text-zinc-300">📷 Scan Menu</p>
         </div>
         <div className="relative mt-2 flex-1">
-          {/* Viewfinder corners */}
           <div className="absolute -inset-1 rounded-[14px] border-2 border-white/20" />
           <div className="relative h-full overflow-hidden rounded-[12px]">
             <MenuPhoto />
             <div className="vl-scan-sweep absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-transparent via-[rgba(255,107,53,0.5)] to-transparent" />
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-center gap-2 text-[9px] text-zinc-400">
+        <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-zinc-400">
           <span className="vl-typing-dot inline-block h-1.5 w-1.5 rounded-full" style={{ background: '#FF6B35' }} />
           Analyzing menu…
         </div>
@@ -681,45 +673,64 @@ export function MenuScanScene({ t, isStatic }: { t: number; isStatic: boolean })
     );
   }
 
-  /* Phase 2 — the Menu Analysis results sheet */
+  /* Phase 2 — the Menu Analysis results sheet with live re-sorting */
+  const order = [...MENU_DISHES].sort((a, b) => (sortKey === 'p' ? b.p - a.p : b.c - a.c));
+  const indexOf = new Map(order.map((d, i) => [d.name, i]));
+
   return (
-    <div className="flex h-full flex-col bg-white px-3 pt-[6.8rem] pb-3 text-[10px]">
-      {/* Sheet header: title + icons + counts + photo thumb + sort pills */}
-      <div className="absolute top-0 inset-x-0 z-[1] rounded-t-[2rem] bg-white px-3 pt-8 pb-2 border-b border-zinc-100">
+    <div className="flex h-full flex-col bg-white px-3 pt-[7.6rem] pb-3 text-[11px]">
+      {/* Sheet header: title + icons + counts + sort pills */}
+      <div className="absolute top-0 inset-x-0 z-20 rounded-t-[2rem] bg-white px-3 pt-8 pb-2 border-b border-zinc-100">
         <div className="flex items-center justify-between">
-          <p className="text-[12px] font-extrabold text-zinc-900">Menu Analysis</p>
-          <span className="flex items-center gap-2 text-[10px] text-zinc-400">🔖 ⏱ ✕</span>
+          <p className="text-[14px] font-extrabold text-zinc-900">Menu Analysis</p>
+          <span className="flex items-center gap-2 text-[11px] text-zinc-400">🔖 ⏱ ✕</span>
         </div>
         <div className="mt-0.5 flex items-center gap-1.5">
           <span className="h-7 w-7 shrink-0 overflow-hidden rounded-[6px]"><MenuPhoto small /></span>
-          <p className="text-[7.5px] text-zinc-400">8 items · 2 sections · 2.4s</p>
+          <p className="text-[9px] text-zinc-400">8 items · 2 sections · 2.4s</p>
         </div>
         <div className="mt-1.5 flex items-center gap-1.5">
-          <span className="text-[7.5px] text-zinc-400">Sort:</span>
-          <span className="rounded-full px-2 py-0.5 text-[8px] font-medium" style={{ background: 'rgba(255,107,53,0.15)', border: '1px solid rgba(255,107,53,0.55)', color: '#FF6B35' }}>Protein ↓</span>
-          <span className="rounded-full bg-black/5 px-2 py-0.5 text-[8px] text-zinc-500">Carbs</span>
-          <span className="rounded-full bg-black/5 px-2 py-0.5 text-[8px] text-zinc-500">Inflammation</span>
+          <span className="text-[9px] text-zinc-400">Sort:</span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[9.5px] font-semibold transition-all duration-300"
+            style={sortKey === 'p'
+              ? { background: 'rgba(255,107,53,0.15)', border: '1px solid rgba(255,107,53,0.55)', color: '#FF6B35' }
+              : { background: 'rgba(0,0,0,0.05)', border: '1px solid transparent', color: '#71717a' }}
+          >
+            Protein {sortKey === 'p' ? '↓' : ''}
+          </span>
+          <span
+            className="rounded-full px-2 py-0.5 text-[9.5px] font-semibold transition-all duration-300"
+            style={sortKey === 'c'
+              ? { background: 'rgba(255,107,53,0.15)', border: '1px solid rgba(255,107,53,0.55)', color: '#FF6B35' }
+              : { background: 'rgba(0,0,0,0.05)', border: '1px solid transparent', color: '#71717a' }}
+          >
+            Carbs {sortKey === 'c' ? '↓' : ''}
+          </span>
+          <span className="rounded-full bg-black/5 px-2 py-0.5 text-[9.5px] text-zinc-500">Inflammation</span>
         </div>
       </div>
 
-      {/* Coach Recommends header */}
-      <p className={`text-[7.5px] font-bold uppercase tracking-[0.12em] text-zinc-500 transition-opacity duration-300 ${p >= 0.42 ? 'opacity-100' : 'opacity-0'}`}>
-        ✨ Coach Recommends
-      </p>
-
-      {/* Dish cards */}
-      <div className="mt-1 space-y-1.5">
-        {MENU_DISHES.map((d) => {
-          const on = p >= d.at;
+      {/* All 8 dishes — absolutely positioned rows so re-sorts ANIMATE */}
+      <div className="relative" style={{ height: MENU_DISHES.length * ROW_STEP }}>
+        {MENU_DISHES.map((d, i) => {
+          const idx = indexOf.get(d.name) ?? 0;
+          const on = isStatic || t > 1900 + i * 130;
           return (
             <div
               key={d.name}
-              className={`flex items-start gap-1.5 rounded-[12px] border p-2 transition-all duration-300 ${
-                on ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
-              } ${d.pick ? 'border-amber-200 bg-amber-50/60' : 'border-zinc-100 bg-[#F8F8FA]'}`}
+              className={`absolute inset-x-0 flex items-center gap-2 rounded-[12px] border px-2.5 transition-all duration-500 ${
+                on ? 'opacity-100' : 'opacity-0'
+              } ${d.pick ? 'border-amber-300 bg-[#FFF8E9]' : 'border-zinc-100 bg-[#F6F6F8]'}`}
+              style={{
+                height: ROW_STEP - 6,
+                transform: `translateY(${idx * ROW_STEP}px)`,
+                zIndex: d.pick ? 9 : 8 - idx,
+                transitionDelay: `${idx * 35}ms`,
+              }}
             >
               <span
-                className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border text-[8px] transition-colors duration-300 ${
+                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[9px] transition-colors duration-300 ${
                   d.pick && picked ? 'border-transparent text-white' : 'border-zinc-300 bg-white text-transparent'
                 }`}
                 style={d.pick && picked ? { background: '#FF6B35' } : undefined}
@@ -728,39 +739,31 @@ export function MenuScanScene({ t, isStatic }: { t: number; isStatic: boolean })
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="truncate text-[9px] font-semibold text-zinc-800">{d.name}</span>
-                  <span className="rounded px-1 py-0.5 text-[6.5px] font-bold text-white" style={{ background: d.badge.color }}>{d.badge.label}</span>
+                  <span className="truncate text-[11px] font-semibold text-zinc-900">{d.name}</span>
+                  <span className="shrink-0 rounded px-1 py-0.5 text-[7.5px] font-bold text-white" style={{ background: d.color }}>{d.badge}</span>
                 </div>
-                <p className="text-[7px] text-zinc-400">{d.portion}</p>
-                <div className="mt-1 flex gap-1">
-                  {d.macros.map(([label, color]) => (
-                    <span key={label} className="rounded px-1 py-0.5 text-[6.5px] font-semibold" style={{ color, background: `${color}26` }}>
-                      {label}
-                    </span>
-                  ))}
+                <div className="mt-0.5 flex gap-1.5">
+                  <span className="vl-tabular rounded px-1 text-[8.5px] font-semibold" style={{ color: '#9C27B0', background: '#9C27B01f' }}>{d.p}g P</span>
+                  <span className="vl-tabular rounded px-1 text-[8.5px] font-semibold" style={{ color: '#FF9800', background: '#FF98001f' }}>{d.c}g C</span>
                 </div>
               </div>
             </div>
           );
         })}
-        <p className={`px-1 text-[7.5px] text-zinc-400 transition-opacity duration-300 ${p >= 0.78 ? 'opacity-100' : 'opacity-0'}`}>
-          + 4 more items ⌄
-        </p>
       </div>
 
-      {/* Bottom bar: selected totals + CTA */}
+      {/* Bottom: selected totals + CTA */}
       <div className="mt-auto space-y-1.5">
         <div className={`flex items-center justify-between rounded-[10px] bg-[#F8F8FA] px-2.5 py-1.5 transition-opacity duration-300 ${picked ? 'opacity-100' : 'opacity-0'}`}>
-          <span className="text-[7.5px] text-zinc-500">Selected</span>
-          <span className="flex gap-1.5 text-[7px] font-semibold">
+          <span className="text-[9px] text-zinc-500">Selected</span>
+          <span className="flex gap-1.5 text-[8.5px] font-semibold">
             <span style={{ color: '#9C27B0' }}>52g P</span>
             <span style={{ color: '#FF9800' }}>38g C</span>
-            <span style={{ color: '#E91E63' }}>14g F</span>
             <span className="text-zinc-600">640 cal</span>
           </span>
         </div>
         <div
-          className={`rounded-[14px] py-2.5 text-center text-[10px] font-semibold text-white transition-opacity duration-300 ${picked ? 'opacity-100' : 'opacity-40'}`}
+          className={`rounded-[14px] py-2.5 text-center text-[11px] font-semibold text-white transition-opacity duration-300 ${picked ? 'opacity-100' : 'opacity-40'}`}
           style={{ background: '#FF6B35' }}
         >
           Log 1 item

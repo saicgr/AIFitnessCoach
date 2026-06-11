@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Drives the auto-playing phone demo with a single rAF clock.
@@ -18,11 +18,18 @@ export interface DemoClock {
 
 // chat, program build, log set, PR, photo nutrition, menu scan,
 // photo comparison, settings
-export const SCENE_DURATIONS = [8600, 7000, 6400, 4200, 6400, 6400, 5200, 5200];
+export const SCENE_DURATIONS = [8600, 7000, 6400, 4200, 6400, 7400, 5200, 5200];
 
-export function useDemoClock(active: boolean): DemoClock {
+export function useDemoClock(active: boolean): DemoClock & { jumpTo: (scene: number) => void } {
   const [state, setState] = useState<DemoClock>({ scene: 0, t: 0 });
   const elapsedRef = useRef(0);
+
+  // Tappable scene pills: jump the clock to the start of a scene.
+  const jumpTo = useCallback((scene: number) => {
+    const idx = Math.max(0, Math.min(scene, SCENE_DURATIONS.length - 1));
+    elapsedRef.current = SCENE_DURATIONS.slice(0, idx).reduce((a, b) => a + b, 0);
+    setState({ scene: idx, t: 0 });
+  }, []);
 
   useEffect(() => {
     if (!active) return;
@@ -60,5 +67,5 @@ export function useDemoClock(active: boolean): DemoClock {
     return () => cancelAnimationFrame(raf);
   }, [active]);
 
-  return state;
+  return { ...state, jumpTo };
 }

@@ -123,6 +123,124 @@
   will-change: transform;
 }
 
+/* === PRODUCT STAGE (Apple-keynote style staging for the phone) === */
+.vl-stage {
+  position: relative;
+}
+
+/* Overhead spotlight cone */
+.vl-stage::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -14%;
+  width: 185%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 205, 160, 0.14),
+    rgba(255, 140, 60, 0.05) 42%,
+    transparent 68%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Warm light pooling on the floor beneath the device */
+.vl-stage::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -10%;
+  width: 150%;
+  height: 18%;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 100% at 50% 0%, rgba(255, 122, 0, 0.16), transparent 70%);
+  filter: blur(8px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.vl-contact-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -5%;
+  width: 72%;
+  height: 5.5%;
+  transform: translateX(-50%);
+  background: radial-gradient(50% 100% at 50% 50%, rgba(0, 0, 0, 0.8), transparent 72%);
+  filter: blur(5px);
+  pointer-events: none;
+}
+
+/* Titanium edge for the phone frame */
+.vl-titanium {
+  background: linear-gradient(
+    150deg,
+    #6a6a72 0%,
+    #232327 20%,
+    #0c0c0e 48%,
+    #2e2e34 76%,
+    #585860 100%
+  );
+}
+
+/* Orbital rings around the AI core (teardown layer) */
+@keyframes vl-orbit-spin {
+  from { transform: rotateX(72deg) rotateZ(0deg); }
+  to   { transform: rotateX(72deg) rotateZ(360deg); }
+}
+
+.vl-orbit {
+  animation: vl-orbit-spin 9s linear infinite;
+}
+
+.vl-orbit-rev {
+  animation: vl-orbit-spin 14s linear infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-orbit,
+  .vl-orbit-rev {
+    animation: none !important;
+  }
+}
+
+/* Custom volt cursor (desktop hover devices; VoltCursor.tsx adds the class) */
+html.vl-cursor-on .vl-page,
+html.vl-cursor-on .vl-page a,
+html.vl-cursor-on .vl-page button,
+html.vl-cursor-on .vl-page summary {
+  cursor: none;
+}
+
+.vl-cursor-ring {
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  mix-blend-mode: difference;
+  transition: border-color 0.25s ease;
+}
+
+.vl-cursor-ring.vl-ring-hot {
+  border-color: rgba(255, 122, 0, 0.95);
+  mix-blend-mode: normal;
+}
+
+/* Cursor-following chrome sheen across the Anton headline. Children with
+ * their own color (the orange rolling line) are unaffected. Only applied
+ * by JS when motion is allowed — static render stays solid white. */
+.vl-sheen {
+  background-image: radial-gradient(
+    240px circle at var(--mx, 50%) var(--my, 50%),
+    #ffe6c7 0%,
+    rgba(255, 170, 80, 0.95) 22%,
+    #ffffff 55%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
 /* Rolling headline word (hero h1). The track holds every word as real,
  * crawlable text; only translateY moves (composited). */
 .vl-roller {
@@ -154,4 +272,11 @@
 .vl-outline-text {
   color: transparent;
   -webkit-text-stroke: 1px rgba(255, 122, 0, 0.14);
+}
+
+/* Teardown layer captions: hidden while the device is assembled (they
+ * overlap into garbage otherwise), fading in as the stack explodes. */
+.vl-layer-cap {
+  opacity: var(--capop, 1);
+  transition: opacity 0.25s ease;
 }
