@@ -23,7 +23,7 @@ function timeAgo(iso: string): string {
 }
 
 const FIELD =
-  'w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none';
+  'w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-[13px] text-white placeholder:text-white/35 focus:border-volt-500/60 focus:outline-none';
 
 interface ComposerProps {
   featureSlug: string;
@@ -105,14 +105,14 @@ function Composer({ featureSlug, parentId, onPosted, onCancel }: ComposerProps) 
         <button
           onClick={submit}
           disabled={posting}
-          className="flex-1 rounded-lg bg-[var(--color-text)] py-2 text-[13px] font-semibold text-[var(--color-surface)] transition-opacity hover:opacity-90 disabled:opacity-60"
+          className="btn-volt flex-1 rounded-lg py-2 text-[13px] disabled:opacity-60"
         >
           {posting ? 'Posting…' : isReply ? 'Post reply' : 'Post comment'}
         </button>
         {onCancel && (
           <button
             onClick={onCancel}
-            className="rounded-lg border border-[var(--color-border)] px-3 py-2 text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+            className="rounded-lg border border-white/10 px-3 py-2 text-[13px] font-medium text-white/60 hover:text-white"
           >
             Cancel
           </button>
@@ -172,18 +172,18 @@ export default function CommentThread({ featureSlug, onCommentAdded }: CommentTh
     const canReply = c.depth < MAX_COMMENT_DEPTH;
     return (
       <div key={c.id}>
-        <div className="rounded-lg border border-[var(--color-border)] p-3">
+        <div className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[13px] font-semibold text-[var(--color-text)]">{c.author_name}</span>
-            <span className="text-[11px] text-[var(--color-text-muted)]">{timeAgo(c.created_at)}</span>
+            <span className="text-[13px] font-semibold text-white">{c.author_name}</span>
+            <span className="text-[11px] text-white/45">{timeAgo(c.created_at)}</span>
           </div>
-          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
+          <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-white/60">
             {c.body}
           </p>
           {canReply && (
             <button
               onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}
-              className="mt-2 text-[12px] font-semibold text-blue-500 hover:underline"
+              className="mt-2 text-[12px] font-semibold text-volt-400 hover:underline"
             >
               {replyTo === c.id ? 'Cancel' : 'Reply'}
             </button>
@@ -200,7 +200,7 @@ export default function CommentThread({ featureSlug, onCommentAdded }: CommentTh
           </div>
         )}
         {kids.length > 0 && (
-          <div className="ml-1 mt-2.5 space-y-2.5 border-l-2 border-[var(--color-border)] pl-2.5">
+          <div className="ml-1 mt-2.5 space-y-2.5 border-l-2 border-white/10 pl-2.5">
             {kids.map(renderNode)}
           </div>
         )}
@@ -212,14 +212,14 @@ export default function CommentThread({ featureSlug, onCommentAdded }: CommentTh
 
   return (
     <div className="mt-7">
-      <h3 className="text-sm font-bold text-[var(--color-text)]">
+      <h3 className="text-sm font-bold text-white">
         Comments {comments.length > 0 && `(${comments.length})`}
       </h3>
 
       <div className="mt-3 space-y-2.5">
-        {loading && <p className="text-[13px] text-[var(--color-text-muted)]">Loading comments…</p>}
+        {loading && <p className="text-[13px] text-white/45">Loading comments…</p>}
         {!loading && roots.length === 0 && (
-          <p className="text-[13px] text-[var(--color-text-muted)]">
+          <p className="text-[13px] text-white/45">
             No comments yet. Be the first to weigh in.
           </p>
         )}
@@ -229,7 +229,7 @@ export default function CommentThread({ featureSlug, onCommentAdded }: CommentTh
       <div className="mt-4">
         <Composer featureSlug={featureSlug} parentId="" onPosted={onPosted} />
       </div>
-      <p className="mt-2 text-[11px] leading-snug text-[var(--color-text-muted)]">
+      <p className="mt-2 text-[11px] leading-snug text-white/45">
         Your name shows on the comment. Your email never does — it's only used to keep
         comments accountable, the same email you vote with.
       </p>

@@ -211,7 +211,7 @@ export default function Lifetime() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-white">
       <MarketingNav />
 
       {/* Hero */}
@@ -222,7 +222,7 @@ export default function Lifetime() {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 text-amber-300 text-xs font-semibold uppercase tracking-wider mb-6"
+            className="condensed-kicker inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-amber-400/30 bg-amber-400/10 text-amber-300 text-xs mb-6"
           >
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             {seats?.checkout_enabled ? 'Now Available — Web Only' : 'Coming Soon — Web Only'}
@@ -232,20 +232,20 @@ export default function Lifetime() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="text-4xl md:text-6xl font-bold tracking-tight mb-6"
+            className="display-heading text-5xl md:text-7xl mb-6"
           >
             <span className="bg-gradient-to-r from-amber-300 via-amber-200 to-amber-400 bg-clip-text text-transparent">
               Founding 500
             </span>
             <br />
-            <span className="text-[var(--color-text)]">Lifetime Access</span>
+            <span className="text-white">Lifetime Access</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-lg md:text-xl text-[var(--color-text-secondary)] max-w-2xl mx-auto mb-2"
+            className="text-lg md:text-xl text-white/65 max-w-2xl mx-auto mb-2"
           >
             Pay once. Use {BRANDING.appName} forever. Help build the AI coach you want — and own it for life.
           </motion.p>
@@ -254,7 +254,7 @@ export default function Lifetime() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="text-sm text-[var(--color-text-muted)] mb-10"
+            className="text-sm text-white/45 mb-10"
           >
             Only 500 seats. Then it closes. Available exclusively on {BRANDING.marketingDomain}.
           </motion.p>
@@ -266,9 +266,9 @@ export default function Lifetime() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="max-w-md mx-auto mb-10"
           >
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm p-6">
+            <div className="rounded-2xl border border-white/10 bg-[#0D0D0D] p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs uppercase tracking-wider text-[var(--color-text-muted)]">Founder seats</span>
+                <span className="condensed-kicker text-xs text-white/45">Founder seats</span>
                 <span className={`text-xs font-bold uppercase tracking-wider ${availability.tone}`}>
                   {availability.text}
                 </span>
@@ -278,10 +278,10 @@ export default function Lifetime() {
                 <span className="text-5xl font-bold tabular-nums">
                   {seats ? formatNumber(seats.seats_claimed) : '—'}
                 </span>
-                <span className="text-2xl text-[var(--color-text-muted)] tabular-nums">
+                <span className="text-2xl text-white/45 tabular-nums">
                   / {seats ? formatNumber(seats.seats_total) : '500'}
                 </span>
-                <span className="text-sm text-[var(--color-text-muted)] ml-auto">reserved</span>
+                <span className="text-sm text-white/45 ml-auto">reserved</span>
               </div>
 
               {/* Progress bar */}
@@ -293,12 +293,12 @@ export default function Lifetime() {
                   transition={{ duration: 0.8, ease: 'easeOut' }}
                 />
               </div>
-              <div className="mt-2 text-xs text-[var(--color-text-muted)] text-right tabular-nums">
+              <div className="mt-2 text-xs text-white/45 text-right tabular-nums">
                 {seats ? formatNumber(seats.seats_remaining) : '500'} remaining
               </div>
             </div>
             {seatsError && (
-              <p className="mt-2 text-xs text-[var(--color-text-muted)]">{seatsError} — counter will update on retry.</p>
+              <p className="mt-2 text-xs text-white/45">{seatsError} — counter will update on retry.</p>
             )}
           </motion.div>
 
@@ -313,8 +313,8 @@ export default function Lifetime() {
               <div className="text-5xl md:text-6xl font-bold tabular-nums">
                 ${PRICE_USD.toFixed(2)}
               </div>
-              <div className="text-sm text-[var(--color-text-muted)] mt-1">one-time, no renewals</div>
-              <div className="text-xs text-[var(--color-text-muted)] mt-1">
+              <div className="text-sm text-white/45 mt-1">one-time, no renewals</div>
+              <div className="text-xs text-white/45 mt-1">
                 vs. ${(7.99 * 12 * 5).toFixed(0)} over 5 years on monthly · ${(59.99 * 5).toFixed(2)} on yearly
               </div>
             </div>
@@ -333,7 +333,7 @@ export default function Lifetime() {
                   <h3 className="font-semibold text-lg mb-2">
                     {waitlistResult.already_on_waitlist ? "You're already on the list" : "You're on the list!"}
                   </h3>
-                  <p className="text-sm text-[var(--color-text-secondary)]">
+                  <p className="text-sm text-white/65">
                     {waitlistResult.position && !waitlistResult.already_on_waitlist
                       ? `Approximately #${waitlistResult.position} in line. `
                       : ''}
@@ -348,7 +348,7 @@ export default function Lifetime() {
                   className="rounded-xl border border-red-400/30 bg-red-400/5 p-6 text-center"
                 >
                   <h3 className="font-semibold text-lg mb-2">All 500 founder seats are claimed</h3>
-                  <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+                  <p className="text-sm text-white/65 mb-4">
                     Thank you to the Founding 500. Lifetime is now closed — Premium subscriptions are still available in the app.
                   </p>
                   <Link
@@ -373,7 +373,7 @@ export default function Lifetime() {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"
                     autoComplete="email"
-                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-[var(--color-text)] placeholder-[var(--color-text-muted)] outline-none focus:border-amber-400/50 focus:bg-white/[0.07] transition"
+                    className="w-full px-4 py-3.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/35 outline-none focus:border-amber-400/50 focus:bg-white/[0.07] transition"
                   />
                   <button
                     type="submit"
@@ -386,7 +386,7 @@ export default function Lifetime() {
                         ? `Buy Founding Lifetime — $${PRICE_USD}`
                         : 'Reserve my spot on the waitlist'}
                   </button>
-                  <p className="text-xs text-[var(--color-text-muted)] text-center">
+                  <p className="text-xs text-white/45 text-center">
                     {seats?.checkout_enabled
                       ? 'Secure checkout via Stripe. 30-day money-back guarantee.'
                       : 'No payment yet — just join the waitlist for early access. Cancel anytime.'}
@@ -405,8 +405,8 @@ export default function Lifetime() {
       <section className="px-6 pb-16">
         <div className="max-w-[1100px] mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-3xl md:text-4xl font-bold mb-3">What Founding 500 gets you</h2>
-            <p className="text-[var(--color-text-secondary)]">Premium for life, plus six perks no future {BRANDING.appName} member can ever buy.</p>
+            <h2 className="display-heading text-3xl md:text-5xl mb-3">What Founding 500 gets you</h2>
+            <p className="text-white/65">Premium for life, plus six perks no future {BRANDING.appName} member can ever buy.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {FOUNDER_BENEFITS.map((b, i) => (
@@ -416,11 +416,11 @@ export default function Lifetime() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 hover:bg-white/[0.04] transition"
+                className="rounded-2xl border border-white/10 bg-[#0D0D0D] p-6 hover:border-amber-400/30 transition-colors"
               >
                 <div className="text-3xl mb-3">{b.icon}</div>
-                <h3 className="font-semibold mb-2">{b.title}</h3>
-                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">{b.body}</p>
+                <h3 className="font-semibold text-white mb-2">{b.title}</h3>
+                <p className="text-sm text-white/65 leading-relaxed">{b.body}</p>
               </motion.div>
             ))}
           </div>
@@ -429,27 +429,27 @@ export default function Lifetime() {
 
       {/* Math comparison — why $149.99 is a steal */}
       <section className="px-6 pb-16">
-        <div className="max-w-[820px] mx-auto rounded-3xl border border-white/10 bg-white/[0.02] p-8 md:p-12">
-          <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">The math (you might want to sit down)</h2>
+        <div className="max-w-[820px] mx-auto rounded-3xl border border-white/10 bg-[#0D0D0D] p-8 md:p-12">
+          <h2 className="display-heading text-2xl md:text-4xl mb-6 text-center">The math (you might want to sit down)</h2>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-3 border-b border-white/5">
-              <span className="text-[var(--color-text-secondary)]">{BRANDING.appName} Premium Yearly × 5 years</span>
+              <span className="text-white/65">{BRANDING.appName} Premium Yearly × 5 years</span>
               <span className="font-semibold tabular-nums">${(59.99 * 5).toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-white/5">
-              <span className="text-[var(--color-text-secondary)]">{BRANDING.appName} Premium Monthly × 5 years</span>
+              <span className="text-white/65">{BRANDING.appName} Premium Monthly × 5 years</span>
               <span className="font-semibold tabular-nums">${(7.99 * 60).toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-white/5">
-              <span className="text-[var(--color-text-secondary)]">5 personal training sessions</span>
+              <span className="text-white/65">5 personal training sessions</span>
               <span className="font-semibold tabular-nums">$375.00</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-white/5">
-              <span className="text-[var(--color-text-secondary)]">1 year of MacroFactor + Workouts</span>
+              <span className="text-white/65">1 year of MacroFactor + Workouts</span>
               <span className="font-semibold tabular-nums">$89.99</span>
             </div>
             <div className="flex items-center justify-between py-3 border-b border-white/5">
-              <span className="text-[var(--color-text-secondary)]">5 years of Netflix Standard</span>
+              <span className="text-white/65">5 years of Netflix Standard</span>
               <span className="font-semibold tabular-nums">${(19.99 * 60).toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between pt-5">
@@ -463,12 +463,12 @@ export default function Lifetime() {
       {/* FAQ */}
       <section className="px-6 pb-20">
         <div className="max-w-[820px] mx-auto">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Common questions</h2>
+          <h2 className="display-heading text-2xl md:text-4xl mb-8 text-center">Common questions</h2>
           <div className="space-y-2">
             {FAQS.map((faq, i) => (
               <div
                 key={faq.q}
-                className="rounded-xl border border-white/10 bg-white/[0.02] overflow-hidden"
+                className="rounded-xl border border-white/10 bg-[#0D0D0D] overflow-hidden"
               >
                 <button
                   type="button"
@@ -488,7 +488,7 @@ export default function Lifetime() {
                       transition={{ duration: 0.2 }}
                       className="overflow-hidden"
                     >
-                      <div className="px-5 pb-4 text-sm text-[var(--color-text-secondary)] leading-relaxed">
+                      <div className="px-5 pb-4 text-sm text-white/65 leading-relaxed">
                         {faq.a}
                       </div>
                     </motion.div>

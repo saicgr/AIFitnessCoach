@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
@@ -10,22 +11,38 @@ import { BRANDING } from '../lib/branding';
  * the April 2026 privacy audit.
  */
 export default function PrivacyPolicy() {
+  useEffect(() => {
+    document.title = 'Privacy Policy | Zealova';
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta(
+      'description',
+      'How Zealova collects, uses, and protects your personal and health data.'
+    );
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-zinc-100">
       <MarketingNav />
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: April 21, 2026</p>
+          <p className="condensed-kicker text-volt-500 text-[13px] mb-3">Legal</p>
+          <p className="text-[13px] text-zinc-500 mb-4">Last updated: April 21, 2026</p>
 
-          <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <h1 className="display-heading text-4xl sm:text-5xl text-white mb-8">
             Privacy Policy
           </h1>
 
-          <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+          <div className="space-y-8 text-[15px] text-zinc-300 leading-relaxed">
             <div>
               <p>
                 {BRANDING.appName} ("we", "our", or "us") operates the {BRANDING.appName} mobile application and the
@@ -38,14 +55,11 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 1. Information We Collect
               </h2>
 
-              <h3 className="text-[17px] font-semibold text-[var(--color-text)] mb-2">Personal Information</h3>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Personal Information</h3>
               <p className="mb-4">When you create an account, we collect:</p>
               <ul className="list-disc pl-6 space-y-1 mb-4">
                 <li>Name and email address</li>
@@ -54,7 +68,7 @@ export default function PrivacyPolicy() {
                 <li>Profile photo (optional)</li>
               </ul>
 
-              <h3 className="text-[17px] font-semibold text-[var(--color-text)] mb-2">Health &amp; Fitness Data (Special Category)</h3>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Health &amp; Fitness Data (Special Category)</h3>
               <p className="mb-4">To provide personalized coaching, we collect:</p>
               <ul className="list-disc pl-6 space-y-1 mb-4">
                 <li>Workout history and exercise logs (sets, reps, weights, RPE)</li>
@@ -66,11 +80,11 @@ export default function PrivacyPolicy() {
                 <li>Menstrual cycle and hormonal health logs (optional)</li>
                 <li>Exercise form videos you upload for technique feedback</li>
               </ul>
-              <p className="mb-4 text-sm text-[var(--color-text-secondary)]">
+              <p className="mb-4 text-sm text-zinc-300">
                 Effective May 2026, we no longer read distance, floors climbed, elevation gained, speed, power, heart rate variability (HRV), respiratory rate, basal metabolic rate, oxygen saturation, or body temperature from Health Connect / HealthKit. Those data types were removed because they were not used by any user-facing feature.
               </p>
 
-              <h3 className="text-[17px] font-semibold text-[var(--color-text)] mb-2">Usage &amp; Device Data</h3>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Usage &amp; Device Data</h3>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Device type, operating system, app version</li>
                 <li>Feature usage, screens visited, session duration</li>
@@ -80,10 +94,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 2. How We Use Your Information
               </h2>
               <ul className="list-disc pl-6 space-y-1">
@@ -102,10 +113,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 3. Model-Powered Features &amp; Zero Data Retention
               </h2>
               <p className="mb-4">
@@ -137,10 +145,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 4. Health Data &mdash; Explicit Consent (GDPR Art. 9)
               </h2>
               <p className="mb-4">
@@ -166,10 +171,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 5. Sub-Processors (GDPR Art. 28)
               </h2>
               <p className="mb-4">
@@ -180,30 +182,27 @@ export default function PrivacyPolicy() {
                 Framework.
               </p>
               <ul className="list-disc pl-6 space-y-2">
-                <li><strong className="text-[var(--color-text)]">Supabase Inc.</strong> &mdash; database, authentication, and user data storage.</li>
-                <li><strong className="text-[var(--color-text)]">Google Cloud (Vertex AI)</strong> &mdash; model hosting for coach chat, workout generation, food photo analysis, and form video analysis. Zero-retention configuration; no model training on your data.</li>
-                <li><strong className="text-[var(--color-text)]">Render Services Inc.</strong> &mdash; backend API hosting (all request traffic passes through Render infrastructure).</li>
-                <li><strong className="text-[var(--color-text)]">Vercel Inc.</strong> &mdash; hosts this website ({BRANDING.marketingDomain}).</li>
-                <li><strong className="text-[var(--color-text)]">Amazon Web Services (S3)</strong> &mdash; storage for food photos and form videos you upload.</li>
-                <li><strong className="text-[var(--color-text)]">RevenueCat Inc.</strong> &mdash; subscription and in-app purchase management.</li>
-                <li><strong className="text-[var(--color-text)]">Resend, Inc.</strong> &mdash; transactional and lifecycle email delivery.</li>
-                <li><strong className="text-[var(--color-text)]">Firebase Cloud Messaging</strong> (Google LLC) &mdash; push notification delivery.</li>
-                <li><strong className="text-[var(--color-text)]">Firebase Crashlytics</strong> (Google LLC) &mdash; mobile app crash reporting (90-day retention).</li>
-                <li><strong className="text-[var(--color-text)]">Sentry (Functional Software Inc.)</strong> &mdash; backend and mobile error monitoring (90-day retention).</li>
-                <li><strong className="text-[var(--color-text)]">PostHog Inc.</strong> (us.i.posthog.com) &mdash; product analytics and feature-flag experiments. Does not receive chat content or health data.</li>
-                <li><strong className="text-[var(--color-text)]">ChromaDB Inc.</strong> &mdash; vector database for exercise and workout search.</li>
+                <li><strong className="text-white">Supabase Inc.</strong> &mdash; database, authentication, and user data storage.</li>
+                <li><strong className="text-white">Google Cloud (Vertex AI)</strong> &mdash; model hosting for coach chat, workout generation, food photo analysis, and form video analysis. Zero-retention configuration; no model training on your data.</li>
+                <li><strong className="text-white">Render Services Inc.</strong> &mdash; backend API hosting (all request traffic passes through Render infrastructure).</li>
+                <li><strong className="text-white">Vercel Inc.</strong> &mdash; hosts this website ({BRANDING.marketingDomain}).</li>
+                <li><strong className="text-white">Amazon Web Services (S3)</strong> &mdash; storage for food photos and form videos you upload.</li>
+                <li><strong className="text-white">RevenueCat Inc.</strong> &mdash; subscription and in-app purchase management.</li>
+                <li><strong className="text-white">Resend, Inc.</strong> &mdash; transactional and lifecycle email delivery.</li>
+                <li><strong className="text-white">Firebase Cloud Messaging</strong> (Google LLC) &mdash; push notification delivery.</li>
+                <li><strong className="text-white">Firebase Crashlytics</strong> (Google LLC) &mdash; mobile app crash reporting (90-day retention).</li>
+                <li><strong className="text-white">Sentry (Functional Software Inc.)</strong> &mdash; backend and mobile error monitoring (90-day retention).</li>
+                <li><strong className="text-white">PostHog Inc.</strong> (us.i.posthog.com) &mdash; product analytics and feature-flag experiments. Does not receive chat content or health data.</li>
+                <li><strong className="text-white">ChromaDB Inc.</strong> &mdash; vector database for exercise and workout search.</li>
               </ul>
-              <p className="mt-4 text-[13px] text-[var(--color-text-muted)]">
+              <p className="mt-4 text-[13px] text-zinc-500">
                 You can request a copy of the Standard Contractual Clauses in force with any of
-                these sub-processors by emailing <a className="text-emerald-400 hover:underline" href={`mailto:privacy@${BRANDING.marketingDomain}`}>privacy@{BRANDING.marketingDomain}</a>.
+                these sub-processors by emailing <a className="text-volt-400 hover:text-volt-300 hover:underline" href={`mailto:privacy@${BRANDING.marketingDomain}`}>privacy@{BRANDING.marketingDomain}</a>.
               </p>
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 6. Data Security
               </h2>
               <p>
@@ -217,19 +216,16 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 7. Data Retention
               </h2>
               <ul className="list-disc pl-6 space-y-1">
-                <li><strong className="text-[var(--color-text)]">Account &amp; fitness data:</strong> kept while your account is active, deleted on request.</li>
-                <li><strong className="text-[var(--color-text)]">Chat history:</strong> up to 12 months, after which a scheduled job automatically deletes transcripts. Turn off "Save chat history" to stop new messages being persisted at all.</li>
-                <li><strong className="text-[var(--color-text)]">Health Connect / HealthKit data:</strong> retained only while your account is active.</li>
-                <li><strong className="text-[var(--color-text)]">Analytics events (PostHog):</strong> 24 months. Aggregated, non-identifying counts may be retained indefinitely.</li>
-                <li><strong className="text-[var(--color-text)]">Crash / error logs (Sentry, Crashlytics):</strong> 90 days.</li>
-                <li><strong className="text-[var(--color-text)]">Data-request archives (S3):</strong> auto-deleted 8 days after generation.</li>
+                <li><strong className="text-white">Account &amp; fitness data:</strong> kept while your account is active, deleted on request.</li>
+                <li><strong className="text-white">Chat history:</strong> up to 12 months, after which a scheduled job automatically deletes transcripts. Turn off "Save chat history" to stop new messages being persisted at all.</li>
+                <li><strong className="text-white">Health Connect / HealthKit data:</strong> retained only while your account is active.</li>
+                <li><strong className="text-white">Analytics events (PostHog):</strong> 24 months. Aggregated, non-identifying counts may be retained indefinitely.</li>
+                <li><strong className="text-white">Crash / error logs (Sentry, Crashlytics):</strong> 90 days.</li>
+                <li><strong className="text-white">Data-request archives (S3):</strong> auto-deleted 8 days after generation.</li>
               </ul>
               <p className="mt-4">
                 When you delete your account, we remove or anonymize personal data within 30
@@ -238,10 +234,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 8. Your Rights
               </h2>
               <p className="mb-4">Wherever you live, you have the right to:</p>
@@ -258,38 +251,35 @@ export default function PrivacyPolicy() {
               <p className="mb-4">You can exercise these rights three ways:</p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>
-                  <strong className="text-[var(--color-text)]">In the app:</strong>{' '}
+                  <strong className="text-white">In the app:</strong>{' '}
                   Settings → Privacy &amp; Data → Export / Delete.
                 </li>
                 <li>
-                  <strong className="text-[var(--color-text)]">Out-of-app (no login required):</strong>{' '}
-                  <a href="/data-request" className="text-emerald-400 hover:underline">{BRANDING.marketingDomain}/data-request</a> — use
+                  <strong className="text-white">Out-of-app (no login required):</strong>{' '}
+                  <a href="/data-request" className="text-volt-400 hover:text-volt-300 hover:underline">{BRANDING.marketingDomain}/data-request</a> — use
                   this if you cannot sign in. We verify email ownership with a one-time link, then
                   deliver the export or confirm deletion.
                 </li>
                 <li>
-                  <strong className="text-[var(--color-text)]">By email:</strong>{' '}
-                  <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>.
+                  <strong className="text-white">By email:</strong>{' '}
+                  <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">privacy@{BRANDING.marketingDomain}</a>.
                 </li>
               </ul>
               <p className="mt-4">We respond within 30 days as required by GDPR Art. 12(3) and CCPA &sect; 1798.130.</p>
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 9. GDPR: DPO and EU / UK Representative
               </h2>
               <p className="mb-4">
                 If you are in the EEA, UK, or Switzerland, our designated Data Protection Officer
                 can be reached at{' '}
-                <a href={`mailto:dpo@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">dpo@{BRANDING.marketingDomain}</a>.
+                <a href={`mailto:dpo@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">dpo@{BRANDING.marketingDomain}</a>.
                 Our Art. 27 representatives are reachable at{' '}
-                <a href={`mailto:eu-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">eu-rep@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:eu-rep@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">eu-rep@{BRANDING.marketingDomain}</a>{' '}
                 (EU) and{' '}
-                <a href={`mailto:uk-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">uk-rep@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:uk-rep@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">uk-rep@{BRANDING.marketingDomain}</a>{' '}
                 (UK).
               </p>
               <p>
@@ -301,10 +291,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 10. CCPA / CPRA (California)
               </h2>
               <p className="mb-4">
@@ -321,10 +308,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 11. Children &amp; Age Requirements
               </h2>
               <p className="mb-4">
@@ -337,16 +321,13 @@ export default function PrivacyPolicy() {
               </p>
               <p>
                 If you believe a child under 16 has provided us with personal data, contact{' '}
-                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">privacy@{BRANDING.marketingDomain}</a>{' '}
                 and we will delete it and the associated account.
               </p>
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 12. International Data Transfers
               </h2>
               <p>
@@ -358,10 +339,7 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 13. Changes to This Policy
               </h2>
               <p>
@@ -372,26 +350,23 @@ export default function PrivacyPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 14. Contact
               </h2>
               <p className="mb-2"><strong>Data controller:</strong> {BRANDING.appName}, Inc. (Delaware, USA)</p>
               <p className="mb-2"><strong>Privacy inquiries:</strong>{' '}
-                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>
+                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">privacy@{BRANDING.marketingDomain}</a>
               </p>
               <p className="mb-2"><strong>Data Protection Officer:</strong>{' '}
-                <a href={`mailto:dpo@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">dpo@{BRANDING.marketingDomain}</a>
+                <a href={`mailto:dpo@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">dpo@{BRANDING.marketingDomain}</a>
               </p>
               <p className="mb-2"><strong>EU / UK Art. 27 Representatives:</strong>{' '}
-                <a href={`mailto:eu-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">eu-rep@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:eu-rep@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">eu-rep@{BRANDING.marketingDomain}</a>{' '}
                 &middot;{' '}
-                <a href={`mailto:uk-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">uk-rep@{BRANDING.marketingDomain}</a>
+                <a href={`mailto:uk-rep@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">uk-rep@{BRANDING.marketingDomain}</a>
               </p>
               <p><strong>General support:</strong>{' '}
-                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">support@{BRANDING.marketingDomain}</a>
               </p>
             </div>
           </div>

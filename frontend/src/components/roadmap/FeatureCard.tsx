@@ -51,8 +51,8 @@ function BadgeSlot({
       aria-label={voted ? `Voted for ${feature.title}` : `Vote for ${feature.title}`}
       className={`group/vote flex flex-col items-center justify-center w-12 h-12 rounded-xl shrink-0 border transition-all ${
         voted
-          ? 'bg-blue-500 border-blue-500 text-white shadow-sm shadow-blue-500/30'
-          : 'bg-[var(--color-surface-muted)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-blue-400 hover:text-blue-500'
+          ? 'bg-volt-500 border-volt-500 text-black shadow-sm shadow-volt-500/30'
+          : 'bg-white/5 border-white/10 text-white/60 hover:border-volt-400 hover:text-volt-400'
       }`}
     >
       <svg
@@ -89,16 +89,16 @@ export default function FeatureCard({
           onOpen(feature);
         }
       }}
-      className="group cursor-pointer rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 transition-all hover:border-[var(--color-text-muted)] hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+      className="group cursor-pointer rounded-xl border border-white/10 bg-[#0D0D0D] p-4 transition-all hover:border-volt-500/40 hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-volt-500/50"
     >
       <div className="flex gap-3.5">
         <BadgeSlot feature={feature} voteCount={voteCount} voted={voted} onVote={onVote} />
 
         <div className="min-w-0 flex-1">
-          <h3 className="text-[15px] font-semibold leading-snug text-[var(--color-text)] group-hover:text-blue-500 transition-colors">
+          <h3 className="text-[15px] font-semibold leading-snug text-white group-hover:text-volt-300 transition-colors">
             {feature.title}
           </h3>
-          <p className="mt-1 text-[13px] leading-relaxed text-[var(--color-text-secondary)] line-clamp-2">
+          <p className="mt-1 text-[13px] leading-relaxed text-white/55 line-clamp-2">
             {feature.description}
           </p>
 
@@ -114,13 +114,13 @@ export default function FeatureCard({
             ))}
 
             {feature.eta && (
-              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]">
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide bg-white/10 text-white/45">
                 {feature.eta}
               </span>
             )}
 
             {commentCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-[var(--color-text-muted)] ml-auto">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-white/45 ml-auto">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h8M8 8h8m-8 8h5m4-13H5a2 2 0 00-2 2v14l4-4h12a2 2 0 002-2V5a2 2 0 00-2-2z" />
                 </svg>

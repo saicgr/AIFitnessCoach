@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
@@ -9,22 +10,38 @@ import { BRANDING } from '../lib/branding';
  * §3 (Subscriptions & Payments).
  */
 export default function RefundPolicy() {
+  useEffect(() => {
+    document.title = 'Refund Policy | Zealova';
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta(
+      'description',
+      'How refunds, cancellations, and billing disputes work for Zealova subscriptions.'
+    );
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-zinc-100">
       <MarketingNav />
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: April 21, 2026</p>
+          <p className="condensed-kicker text-volt-500 text-[13px] mb-3">Legal</p>
+          <p className="text-[13px] text-zinc-500 mb-4">Last updated: April 21, 2026</p>
 
-          <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <h1 className="display-heading text-4xl sm:text-5xl text-white mb-8">
             Refund Policy
           </h1>
 
-          <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+          <div className="space-y-8 text-[15px] text-zinc-300 leading-relaxed">
             <div>
               <p>
                 We want you to be satisfied with {BRANDING.appName}. This Refund Policy explains how refunds
@@ -36,10 +53,7 @@ export default function RefundPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 1. Free Trial
               </h2>
               <p>
@@ -52,10 +66,7 @@ export default function RefundPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 2. App Store &amp; Google Play Purchases
               </h2>
               <p className="mb-4">
@@ -63,14 +74,14 @@ export default function RefundPolicy() {
                 Google. Refund decisions for those purchases follow each platform's policy:
               </p>
 
-              <h3 className="text-[17px] font-semibold text-[var(--color-text)] mb-2">Google Play</h3>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Google Play</h3>
               <p className="mb-4">
                 Request a refund at{' '}
                 <a
                   href="https://support.google.com/googleplay/answer/2479637"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-emerald-400 hover:underline"
+                  className="text-volt-400 hover:text-volt-300 hover:underline"
                 >
                   Google Play's refund page
                 </a>
@@ -78,14 +89,14 @@ export default function RefundPolicy() {
                 later requests case-by-case.
               </p>
 
-              <h3 className="text-[17px] font-semibold text-[var(--color-text)] mb-2">Apple App Store</h3>
+              <h3 className="text-[17px] font-semibold text-white mb-2">Apple App Store</h3>
               <p>
                 Request a refund at{' '}
                 <a
                   href="https://reportaproblem.apple.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-emerald-400 hover:underline"
+                  className="text-volt-400 hover:text-volt-300 hover:underline"
                 >
                   reportaproblem.apple.com
                 </a>
@@ -94,10 +105,7 @@ export default function RefundPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 3. In-App Store Items
               </h2>
               <p className="mb-4">
@@ -114,17 +122,14 @@ export default function RefundPolicy() {
               </ul>
               <p className="mt-4">
                 Email{' '}
-                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
                 with your order ID and a brief description and we will open a refund case with
                 the relevant store on your behalf.
               </p>
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 4. EU / UK / Swiss Statutory Rights (Consumer Rights Directive)
               </h2>
               <p className="mb-4">
@@ -139,21 +144,18 @@ export default function RefundPolicy() {
                 remedy for defective digital content, are not affected by this policy. If a
                 store declines a refund you believe you are statutorily entitled to, contact us
                 at{' '}
-                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
                 and we will advocate on your behalf.
               </p>
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 5. Double-Billing &amp; Accidental Charges
               </h2>
               <p>
                 If you believe you have been billed twice for the same period, email{' '}
-                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
                 with both receipts. We reconcile against RevenueCat, Apple, and Google billing
                 records and will help you recover the overlap through the original store. We
                 do not charge administrative fees for our own mistakes.
@@ -161,10 +163,7 @@ export default function RefundPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 6. How to Cancel Your Subscription
               </h2>
               <p className="mb-4">
@@ -172,17 +171,14 @@ export default function RefundPolicy() {
                 continues through the end of the current billing period.
               </p>
               <ul className="list-disc pl-6 space-y-1">
-                <li><strong className="text-[var(--color-text)]">Android:</strong> Google Play Store &gt; Menu &gt; Subscriptions &gt; {BRANDING.appName} &gt; Cancel.</li>
-                <li><strong className="text-[var(--color-text)]">iOS:</strong> Settings &gt; Apple ID &gt; Subscriptions &gt; {BRANDING.appName} &gt; Cancel.</li>
-                <li><strong className="text-[var(--color-text)]">In-app shortcut:</strong> Settings &gt; Subscription &gt; Manage (deep-links into the relevant store).</li>
+                <li><strong className="text-white">Android:</strong> Google Play Store &gt; Menu &gt; Subscriptions &gt; {BRANDING.appName} &gt; Cancel.</li>
+                <li><strong className="text-white">iOS:</strong> Settings &gt; Apple ID &gt; Subscriptions &gt; {BRANDING.appName} &gt; Cancel.</li>
+                <li><strong className="text-white">In-app shortcut:</strong> Settings &gt; Subscription &gt; Manage (deep-links into the relevant store).</li>
               </ul>
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 7. Chargebacks &amp; Disputes
               </h2>
               <p>
@@ -193,19 +189,16 @@ export default function RefundPolicy() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 8. Contact
               </h2>
               <p className="mb-2">
                 <strong>Refund or billing questions:</strong>{' '}
-                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">support@{BRANDING.marketingDomain}</a>
               </p>
               <p className="mb-2">
                 <strong>Privacy or data questions:</strong>{' '}
-                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>
+                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">privacy@{BRANDING.marketingDomain}</a>
               </p>
               <p>We aim to respond within 2 business days.</p>
             </div>

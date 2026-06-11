@@ -111,16 +111,17 @@ export default function GlossaryIndex() {
         </nav>
 
         <header className="mb-10">
-          <p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-3">
+          <p className="condensed-kicker text-sm text-emerald-400 mb-3">
             Fitness Glossary
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight mb-4">
+          <h1 className="display-heading text-4xl sm:text-6xl text-white mb-5">
             Every fitness term, defined plainly.
           </h1>
           <p className="text-base sm:text-lg text-zinc-400 leading-relaxed">
             Fifteen entries. Each one answers what the term means, how it is calculated, and which
             free Zealova calculator puts it to work. Citations included.
           </p>
+          <div className="kinetic-rule mt-8" />
         </header>
 
         <div className="grid sm:grid-cols-2 gap-4">
@@ -128,16 +129,16 @@ export default function GlossaryIndex() {
             <Link
               key={e.slug}
               to={`/glossary/${e.slug}`}
-              className="block rounded-2xl border border-zinc-800 bg-zinc-900 p-5 hover:border-emerald-500/40 hover:bg-zinc-900/80 transition"
+              className="group block rounded-2xl border border-zinc-800 bg-zinc-900 p-5 hover:border-emerald-500/40 hover:bg-zinc-900/80 transition-colors"
             >
-              <h2 className="text-base font-bold text-white mb-1">{e.term}</h2>
+              <h2 className="text-base font-bold text-white group-hover:text-emerald-400 transition-colors mb-1">{e.term}</h2>
               <p className="text-sm text-zinc-400 leading-relaxed">{e.blurb}</p>
             </Link>
           ))}
         </div>
 
         <div className="mt-12 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 to-zinc-900 p-6">
-          <p className="text-sm uppercase tracking-widest text-emerald-400 font-semibold mb-2">
+          <p className="condensed-kicker text-sm text-emerald-400 mb-2">
             Want the calculators directly?
           </p>
           <Link

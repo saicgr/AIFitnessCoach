@@ -1,24 +1,41 @@
+import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
 
 export default function TermsOfService() {
+  useEffect(() => {
+    document.title = 'Terms of Service | Zealova';
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta(
+      'description',
+      'The terms that govern your use of the Zealova app and website.'
+    );
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-zinc-100">
       <MarketingNav />
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: February 26, 2026</p>
+          <p className="condensed-kicker text-volt-500 text-[13px] mb-3">Legal</p>
+          <p className="text-[13px] text-zinc-500 mb-4">Last updated: February 26, 2026</p>
 
-          <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <h1 className="display-heading text-4xl sm:text-5xl text-white mb-8">
             Terms of Service
           </h1>
 
-          <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+          <div className="space-y-8 text-[15px] text-zinc-300 leading-relaxed">
             <div>
               <p>
                 Welcome to {BRANDING.appName}. By accessing or using the {BRANDING.appName} mobile application and website (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
@@ -26,10 +43,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 1. Eligibility
               </h2>
               <p>
@@ -38,10 +52,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 2. Account Registration
               </h2>
               <p>
@@ -50,10 +61,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 3. Subscriptions & Payments
               </h2>
               <p className="mb-4">
@@ -68,13 +76,10 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 4. Health Disclaimer
               </h2>
-              <p className="mb-4 font-semibold text-[var(--color-text)]">
+              <p className="mb-4 font-semibold text-white">
                 {BRANDING.appName} is not a substitute for professional medical advice, diagnosis, or treatment.
               </p>
               <ul className="list-disc pl-6 space-y-1">
@@ -86,10 +91,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 5. Acceptable Use
               </h2>
               <p className="mb-4">You agree not to:</p>
@@ -104,10 +106,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 6. Intellectual Property
               </h2>
               <p>
@@ -116,10 +115,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 7. User-Generated Content
               </h2>
               <p>
@@ -128,10 +124,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 8. Termination
               </h2>
               <p>
@@ -140,10 +133,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 9. Limitation of Liability
               </h2>
               <p>
@@ -152,10 +142,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 10. Disclaimer of Warranties
               </h2>
               <p>
@@ -164,10 +151,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 11. Changes to These Terms
               </h2>
               <p>
@@ -176,10 +160,7 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 12. Governing Law
               </h2>
               <p>
@@ -188,15 +169,12 @@ export default function TermsOfService() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 13. Contact Us
               </h2>
               <p>
                 If you have questions about these Terms, please contact us at{' '}
-                <a href={`mailto:legal@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                <a href={`mailto:legal@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">
                   legal@{BRANDING.marketingDomain}
                 </a>.
               </p>

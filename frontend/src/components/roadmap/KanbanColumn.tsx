@@ -25,16 +25,16 @@ export default function KanbanColumn({
       {/* Column header */}
       <div className="mb-3">
         <div className="flex items-center gap-2">
-          <h2 className="text-[15px] font-bold text-[var(--color-text)]">
+          <h2 className="text-[15px] font-bold text-white">
             <span className="mr-1.5">{column.emoji}</span>
             {column.label}
           </h2>
-          <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[var(--color-surface-muted)] px-1.5 text-[11px] font-bold text-[var(--color-text-secondary)]">
+          <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-white/10 px-1.5 text-[11px] font-bold text-white/60">
             {features.length}
           </span>
         </div>
         <div className="mt-1.5 h-[3px] w-full rounded-full" style={{ backgroundColor: column.accent }} />
-        <p className="mt-2 text-[11.5px] leading-snug text-[var(--color-text-muted)]">
+        <p className="mt-2 text-[11.5px] leading-snug text-white/40">
           {column.blurb}
         </p>
       </div>
@@ -59,7 +59,7 @@ export default function KanbanColumn({
         </AnimatePresence>
 
         {features.length === 0 && (
-          <p className="rounded-xl border border-dashed border-[var(--color-border)] px-3 py-6 text-center text-[12px] text-[var(--color-text-muted)]">
+          <p className="rounded-xl border border-dashed border-white/10 px-3 py-6 text-center text-[12px] text-white/40">
             Nothing here matches your filters.
           </p>
         )}

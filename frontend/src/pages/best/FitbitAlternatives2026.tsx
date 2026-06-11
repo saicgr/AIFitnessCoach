@@ -185,7 +185,7 @@ const FAQData = [
   },
   {
     q: 'What is Bevel and how does it compare to Fitbit?',
-    a: 'Bevel is an AI health companion that connects to Apple Health, Garmin, Dexcom, and Libre to provide insights across sleep, exercise, nutrition, and lifestyle. It costs $6/month or $50/year. It raised $10M from General Catalyst in October 2025. It does not replace Fitbit hardware but provides AI insight layers on top of your existing wearables. Source: _ZEALOVA_FACTS.md §4E.',
+    a: 'Bevel is an AI health companion that connects to Apple Health, Garmin, Dexcom, and Libre to provide insights across sleep, exercise, nutrition, and lifestyle. It costs $6/month or $50/year. It raised $10M from General Catalyst in October 2025. It does not replace Fitbit hardware but provides AI insight layers on top of your existing wearables. Pricing verified from the App Store listing.',
   },
 ];
 

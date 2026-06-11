@@ -432,8 +432,8 @@ export default function GoogleHealthVs() {
                 are sourced from the Google Health launch blog (blog.google, published 2026-05-07),
                 the Google Health Coach post (blog.google, 2026-05), TechCrunch (published 2026-05-07),
                 and the Fitbit Help Center (support.google.com/fitbit, checked 2026-05-14). Zealova
-                features and pricing are sourced from internal app router audit and
-                _ZEALOVA_FACTS.md v1.3 (audited 2026-05-14). Research citations: Shcherbina A et al.
+                features and pricing are first-party data from our own product audit
+                (verified 2026-05-14), so treat them as self-reported. Research citations: Shcherbina A et al.
                 (2017, J Pers Med, doi:10.3390/jpm7020003) for wearable energy expenditure accuracy;
                 Schoenfeld BJ, Ogborn D, Krieger JW (2017, J Sports Sci 35:11) for training volume
                 dose-response; Burke LE, Wang J, Sevick MA (2011, J Am Diet Assoc 111:1) and
@@ -1026,8 +1026,8 @@ export default function GoogleHealthVs() {
               (published 2026-05-07), Fitbit Help Center (support.google.com/fitbit, checked
               2026-05-14), 9to5Google (published 2026-05-07), ghacks.net (published 2026-05-10), and
               piunikaweb.com (published 2026-05-14). Zealova pricing and features current as of
-              2026-05-14 per internal product documentation and app router audit
-              (_ZEALOVA_FACTS.md v1.3). Research citations: Shcherbina A et al. (2017, Journal of
+              2026-05-14 per our own first-party product audit; as the maker, these numbers are
+              self-reported. Research citations: Shcherbina A et al. (2017, Journal of
               Personalized Medicine, doi:10.3390/jpm7020003); Schoenfeld BJ, Ogborn D, Krieger JW
               (2017, Journal of Sports Science 35:11, doi:10.1080/02640414.2016.1210197); Burke LE,
               Wang J, Sevick MA (2011, Journal of the American Dietetic Association 111:1);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
@@ -20,12 +20,12 @@ const faqData: FAQCategory[] = [
       {
         question: `What exactly is ${BRANDING.appName}?`,
         answer:
-          `Think of it as a personal trainer, nutritionist, and workout tracker rolled into one app. ${BRANDING.appName} uses AI to build workouts around your goals, track what you eat, and coach you in real time — whether you train at home or in a gym.`,
+          `Think of it as a personal trainer, nutritionist, and workout tracker rolled into one app. ${BRANDING.appName} uses AI to build workouts around your goals, track what you eat, and coach you in real time, whether you train at home or in a gym.`,
       },
       {
         question: 'How much does it cost?',
         answer:
-          `${BRANDING.appName} is $7.99/month or $5/month billed yearly ($59.99/year — that's 38% off). Every new user gets a 7-day free trial with full access to all features — no credit card required to start.`,
+          `${BRANDING.appName} is $7.99/month or $5/month billed yearly ($59.99/year, that's 37% off). Every new user gets a 7-day free trial with full access to all features, no credit card required to start.`,
       },
       {
         question: 'Which devices does it work on?',
@@ -35,7 +35,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'What if I don\'t have gym equipment?',
         answer:
-          `No problem. During onboarding you tell ${BRANDING.appName} what you have access to — even if that's nothing — and every workout is built around that. Bodyweight-only plans work great.`,
+          `No problem. During onboarding you tell ${BRANDING.appName} what you have access to, even if that's nothing, and every workout is built around that. Bodyweight-only plans work great.`,
       },
     ],
   },
@@ -60,7 +60,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'Can I adjust things during a workout?',
         answer:
-          'Yes — just ask your AI coach to swap, add, or drop exercises while you\'re training. It\'ll suggest alternatives that fit the rest of your session.',
+          'Yes, just ask your AI coach to swap, add, or drop exercises while you\'re training. It\'ll suggest alternatives that fit the rest of your session.',
       },
     ],
   },
@@ -70,7 +70,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'How does the food photo scanner work?',
         answer:
-          'Point your camera at a meal and tap. The AI identifies each food on your plate and gives you a full calorie and macro breakdown in seconds — no searching through databases.',
+          'Point your camera at a meal and tap. The AI identifies each food on your plate and gives you a full calorie and macro breakdown in seconds, no searching through databases.',
       },
       {
         question: 'Does it support barcode scanning?',
@@ -90,7 +90,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'What kind of things can I ask the coach?',
         answer:
-          'Pretty much anything fitness-related — exercise form tips, meal ideas, injury modifications, workout swaps, hydration advice, and more. Behind the scenes, specialized AI agents handle each topic so you get genuinely useful answers.',
+          'Pretty much anything fitness-related: exercise form tips, meal ideas, injury modifications, workout swaps, hydration advice, and more. Behind the scenes, specialized AI agents handle each topic so you get genuinely useful answers.',
       },
       {
         question: 'Does the AI actually know my history?',
@@ -110,7 +110,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'What\'s included in my subscription?',
         answer:
-          'Everything — unlimited AI-generated workouts, unlimited AI coach chat, photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, 1,722 exercises with video demos, skill progressions, injury tracking, coach personas, and more. There are no feature tiers — you get it all.',
+          'Everything: unlimited AI-generated workouts, unlimited AI coach chat, photo food logging, full macro tracking, advanced progress charts, muscle heatmaps, 1,722 exercises with video demos, skill progressions, injury tracking, coach personas, and more. There are no feature tiers, you get it all.',
       },
       {
         question: 'Can I cancel whenever I want?',
@@ -120,7 +120,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'How does the 7-day free trial work?',
         answer:
-          'New users get 7 days of full access to every feature. No payment required to start — you only get charged if you decide to keep it after the trial ends.',
+          'New users get 7 days of full access to every feature. No payment required to start, you only get charged if you decide to keep it after the trial ends.',
       },
     ],
   },
@@ -130,12 +130,12 @@ const faqData: FAQCategory[] = [
       {
         question: 'How do I delete my account?',
         answer:
-          'Head to Settings > Privacy & Data > Delete Account in the app, or visit {BRANDING.marketingDomain}/delete-account. All your data is permanently removed within 30 days.',
+          `Head to Settings > Privacy & Data > Delete Account in the app, or visit ${BRANDING.marketingDomain}/delete-account. All your data is permanently removed within 30 days.`,
       },
       {
         question: 'Can I download a copy of my data?',
         answer:
-          'Yes — go to Settings > Privacy & Data > Export Data. You\'ll get a download of your workout history, nutrition logs, and fitness data.',
+          'Yes, go to Settings > Privacy & Data > Export Data. You\'ll get a download of your workout history, nutrition logs, and fitness data.',
       },
       {
         question: 'How do I update my email address?',
@@ -146,67 +146,85 @@ const faqData: FAQCategory[] = [
   },
 ];
 
-function AccordionItem({ question, answer }: FAQItem) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="border-b border-[var(--color-border)]">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between py-4 text-left cursor-pointer"
-      >
-        <span className="text-[15px] font-medium text-[var(--color-text)] pr-4">{question}</span>
-        <svg
-          className={`w-5 h-5 text-[var(--color-text-muted)] flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          strokeWidth={2}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      {isOpen && (
-        <p className="pb-4 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
-          {answer}
-        </p>
-      )}
-    </div>
-  );
-}
-
 export default function FAQ() {
+  const canonical = `https://${BRANDING.marketingDomain}/faq`;
+
+  useEffect(() => {
+    document.title = `FAQ | ${BRANDING.appName}`;
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    const description = `Answers to common questions about ${BRANDING.appName}: pricing ($7.99/mo or $59.99/yr), the 7-day free trial, AI workouts, food photo logging, the AI coach, subscriptions, and your account.`;
+    setMeta('description', description);
+    setMeta('og:title', `FAQ | ${BRANDING.appName}`, true);
+    setMeta('og:description', description, true);
+    setMeta('og:url', canonical, true);
+    setMeta('og:type', 'website', true);
+
+    let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonicalLink) {
+      canonicalLink = document.createElement('link');
+      canonicalLink.rel = 'canonical';
+      document.head.appendChild(canonicalLink);
+    }
+    canonicalLink.href = canonical;
+  }, [canonical]);
+
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqData.flatMap((category) =>
+      category.items.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    ),
+  };
+
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-white">
       <MarketingNav />
 
-      <section className="pt-28 pb-20 px-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+
+      <section className="relative pt-28 sm:pt-32 pb-20 px-4 sm:px-6 bg-[radial-gradient(60%_40%_at_50%_0%,rgba(255,122,0,0.07),transparent)]">
         <div className="max-w-[800px] mx-auto">
-          <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <p className="condensed-kicker text-xs text-volt-500 mb-4">Help Center</p>
+          <h1 className="display-heading text-5xl sm:text-7xl text-white mb-5">
             Frequently Asked Questions
           </h1>
-          <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-12">
+          <p className="text-[15px] text-zinc-400 leading-relaxed mb-6">
             Everything you need to know about {BRANDING.appName}. Can't find an answer? Reach out to us at{' '}
-            <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+            <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">
               support@{BRANDING.marketingDomain}
             </a>.
           </p>
+          <div className="kinetic-rule mb-12" />
 
-          <div className="space-y-10">
+          <div className="space-y-12">
             {faqData.map((category) => (
               <div key={category.title}>
-                <h2
-                  className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                  style={{ fontFamily: 'var(--font-heading)' }}
-                >
-                  {category.title}
-                </h2>
-                <div>
+                <h2 className="condensed-kicker text-sm text-volt-500 mb-4">{category.title}</h2>
+                <div className="space-y-3">
                   {category.items.map((item) => (
-                    <AccordionItem key={item.question} question={item.question} answer={item.answer} />
+                    <details
+                      key={item.question}
+                      className="group rounded-xl border border-white/10 bg-[#0D0D0D] px-5 py-4"
+                    >
+                      <summary className="cursor-pointer list-none flex items-center justify-between gap-3 font-medium text-white text-sm sm:text-base">
+                        <span>{item.question}</span>
+                        <span className="ml-3 text-volt-500 group-open:rotate-45 transition-transform flex-shrink-0">+</span>
+                      </summary>
+                      <p className="mt-3 text-sm text-zinc-400 leading-relaxed">{item.answer}</p>
+                    </details>
                   ))}
                 </div>
               </div>

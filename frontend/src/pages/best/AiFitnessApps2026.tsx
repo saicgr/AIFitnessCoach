@@ -374,7 +374,7 @@ export default function BestAiFitnessApps2026() {
                 </tbody>
               </table>
             </motion.div>
-            <p className="text-xs text-zinc-500 mt-2">Pricing verified 2026-05-15. Sources: arvo.guru/vs/fitbod, aichief.com, _ZEALOVA_FACTS.md.</p>
+            <p className="text-xs text-zinc-500 mt-2">Pricing verified 2026-05-15. Sources: arvo.guru/vs/fitbod, aichief.com; Zealova pricing is first-party (self-reported).</p>
           </motion.section>
 
           {/* App cards */}

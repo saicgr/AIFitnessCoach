@@ -219,11 +219,11 @@ export default function ToolsIndex() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-20">
         {/* Compact hero */}
         <header className="mb-6 text-center max-w-3xl mx-auto">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <p className="condensed-kicker inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             Free forever · No sign-up
           </p>
-          <h1 className="mt-4 text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
+          <h1 className="display-heading mt-4 text-4xl sm:text-6xl text-white">
             Every fitness tool you need.{' '}
             <span className="text-emerald-400">Free.</span>
           </h1>
@@ -370,7 +370,7 @@ export default function ToolsIndex() {
             {!isFiltering && (
               <section className="mb-10">
                 <div className="mb-4">
-                  <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+                  <h2 className="condensed-kicker text-base sm:text-lg text-white flex items-center gap-2">
                     <span>⭐</span> Start Here: The Tools Everyone Uses First
                   </h2>
                   <p className="text-sm text-zinc-400 mt-1.5">
@@ -407,7 +407,7 @@ export default function ToolsIndex() {
                   <section key={cat.key} id={`cat-${cat.key}`} className="mb-10 scroll-mt-24">
                     <div className="border-b border-zinc-800 pb-2.5 mb-4 flex items-center gap-2.5">
                       <span className="text-xl shrink-0">{iconFor(cat.key)}</span>
-                      <h2 className="text-lg font-bold text-white">{cat.name}</h2>
+                      <h2 className="condensed-kicker text-base text-white">{cat.name}</h2>
                       <span className="ml-auto text-xs text-zinc-500 shrink-0">{calcs.length} tools</span>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -431,10 +431,10 @@ export default function ToolsIndex() {
                 hex colors so it renders identically in light and dark. */}
             <section className="mt-16 rounded-3xl border border-emerald-500/40 bg-[#0b1f17] p-8 sm:p-12">
               <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#34d399] mb-3">
+                <p className="condensed-kicker text-xs text-[#34d399] mb-3">
                   Loved a tool? Run them on autopilot.
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-bold text-[#fafafa] mb-3 tracking-tight">
+                <h2 className="display-heading text-3xl sm:text-4xl text-[#fafafa] mb-3">
                   Want every calculation applied automatically?
                 </h2>
                 <p className="text-[#a1a1aa] leading-relaxed mb-5 text-sm sm:text-base">
@@ -498,7 +498,7 @@ function CalcCard({
   return (
     <Link
       to={`/free-tools/${calc.slug}`}
-      className={`group relative block rounded-2xl border bg-zinc-900 p-5 transition hover:border-emerald-500/40 hover:bg-zinc-900/70 hover:-translate-y-0.5 ${
+      className={`group relative block rounded-2xl border bg-zinc-900 p-5 transition-colors hover:border-emerald-500/40 hover:bg-zinc-900/70 ${
         featured ? 'border-emerald-500/20' : 'border-zinc-800'
       }`}
     >

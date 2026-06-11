@@ -1,24 +1,41 @@
+import { useEffect } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
 
 export default function HealthDisclaimer() {
+  useEffect(() => {
+    document.title = 'Health & Safety Disclaimer | Zealova';
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta(
+      'description',
+      'Important health and safety information to read before using Zealova.'
+    );
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-zinc-100">
       <MarketingNav />
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <p className="text-[13px] text-[var(--color-text-muted)] mb-4">Last updated: March 7, 2026</p>
+          <p className="condensed-kicker text-volt-500 text-[13px] mb-3">Legal</p>
+          <p className="text-[13px] text-zinc-500 mb-4">Last updated: March 7, 2026</p>
 
-          <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <h1 className="display-heading text-4xl sm:text-5xl text-white mb-8">
             Health & Safety Disclaimer
           </h1>
 
-          <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+          <div className="space-y-8 text-[15px] text-zinc-300 leading-relaxed">
             <div>
               <p>
                 Please read this Health & Safety Disclaimer carefully before using the {BRANDING.appName} mobile application and website (the "Service"). By using {BRANDING.appName}, you acknowledge that you have read, understood, and agree to be bound by this disclaimer.
@@ -26,10 +43,7 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 1. Not a Medical Device
               </h2>
               <p>
@@ -38,10 +52,7 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 2. Not Medical Advice
               </h2>
               <p>
@@ -50,10 +61,7 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 3. Consult Your Doctor
               </h2>
               <p className="mb-4">
@@ -70,10 +78,7 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 4. Listen to Your Body
               </h2>
               <p className="mb-4">
@@ -93,10 +98,7 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 5. AI Limitations
               </h2>
               <p>
@@ -105,10 +107,7 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 6. Assumption of Risk
               </h2>
               <p>
@@ -117,15 +116,12 @@ export default function HealthDisclaimer() {
             </div>
 
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 7. Contact Us
               </h2>
               <p>
                 If you have questions about this Health & Safety Disclaimer, please contact us at{' '}
-                <a href={`mailto:legal@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                <a href={`mailto:legal@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">
                   legal@{BRANDING.marketingDomain}
                 </a>.
               </p>

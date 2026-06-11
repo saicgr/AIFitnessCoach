@@ -73,7 +73,7 @@ export default function KanbanBoard({ state, votedSlugs, onOpen, onVote }: Kanba
           {/* Search */}
           <div className="relative sm:w-72">
             <svg
-              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]"
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -86,20 +86,20 @@ export default function KanbanBoard({ state, votedSlugs, onOpen, onVote }: Kanba
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search the roadmap"
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2.5 pl-9 pr-3 text-sm text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
+              className="w-full rounded-xl border border-white/10 bg-[#0D0D0D] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-white/35 focus:border-volt-500/60 focus:outline-none"
             />
           </div>
 
           {/* Sort toggle */}
-          <div className="flex items-center gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 sm:ml-auto">
+          <div className="flex items-center gap-1 rounded-xl border border-white/10 bg-[#0D0D0D] p-1 sm:ml-auto">
             {(['votes', 'newest'] as SortMode[]).map((mode) => (
               <button
                 key={mode}
                 onClick={() => setSortMode(mode)}
                 className={`rounded-lg px-3 py-1.5 text-[12.5px] font-semibold transition-colors ${
                   sortMode === mode
-                    ? 'bg-[var(--color-text)] text-[var(--color-surface)]'
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+                    ? 'bg-volt-500 text-black'
+                    : 'text-white/55 hover:text-white'
                 }`}
               >
                 {mode === 'votes' ? 'Most voted' : 'Newest'}
@@ -114,8 +114,8 @@ export default function KanbanBoard({ state, votedSlugs, onOpen, onVote }: Kanba
             onClick={() => setSelectedTags(new Set())}
             className={`rounded-full px-3 py-1 text-[12px] font-semibold transition-colors ${
               selectedTags.size === 0
-                ? 'bg-[var(--color-text)] text-[var(--color-surface)]'
-                : 'bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+                ? 'bg-volt-500 text-black'
+                : 'bg-white/5 text-white/55 hover:text-white'
             }`}
           >
             All
@@ -166,8 +166,8 @@ export default function KanbanBoard({ state, votedSlugs, onOpen, onVote }: Kanba
                 onClick={() => setMobileColumn(column.id)}
                 className={`flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-[12.5px] font-semibold transition-colors ${
                   active
-                    ? 'border-transparent text-[var(--color-surface)]'
-                    : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]'
+                    ? 'border-transparent text-black'
+                    : 'border-white/10 bg-[#0D0D0D] text-white/55'
                 }`}
                 style={active ? { backgroundColor: column.accent } : undefined}
               >
@@ -175,7 +175,7 @@ export default function KanbanBoard({ state, votedSlugs, onOpen, onVote }: Kanba
                 <span>{column.label}</span>
                 <span
                   className={`inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[10px] font-bold ${
-                    active ? 'bg-white/25' : 'bg-[var(--color-surface-muted)]'
+                    active ? 'bg-black/20' : 'bg-white/10'
                   }`}
                 >
                   {byColumn[column.id].length}

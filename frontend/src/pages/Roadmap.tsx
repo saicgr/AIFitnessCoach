@@ -118,19 +118,17 @@ export default function Roadmap() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-white">
       <MarketingNav />
 
       <main className="mx-auto max-w-[1800px] px-5 pt-28 pb-20 sm:px-8">
         {/* Header */}
         <div className="max-w-2xl">
-          <h1
-            className="text-[34px] font-semibold tracking-[-0.02em] sm:text-[44px]"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <p className="condensed-kicker text-sm text-volt-500">Public Roadmap</p>
+          <h1 className="display-heading mt-3 text-5xl sm:text-6xl text-white">
             Roadmap
           </h1>
-          <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
+          <p className="mt-4 text-[15px] leading-relaxed text-white/60">
             What we have shipped, what we are building, and what is up for debate. Vote on the
             ideas you want next — every vote is read, and we email you the day a feature you
             backed goes live.
@@ -146,7 +144,7 @@ export default function Roadmap() {
           </div>
           <button
             onClick={() => setSuggestOpen(true)}
-            className="ml-auto inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400"
+            className="btn-volt ml-auto inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -202,8 +200,8 @@ export default function Roadmap() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div>
-      <div className="text-[22px] font-bold leading-none text-[var(--color-text)]">{value}</div>
-      <div className="mt-1 text-[12px] font-medium text-[var(--color-text-muted)]">{label}</div>
+      <div className="text-[22px] font-bold leading-none text-white">{value}</div>
+      <div className="mt-1 text-[12px] font-medium text-white/45">{label}</div>
     </div>
   );
 }

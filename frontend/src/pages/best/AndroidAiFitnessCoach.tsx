@@ -402,7 +402,7 @@ export default function AndroidAiFitnessCoach() {
               2026-05-07; Droid Life, published 2026-05-19). Apple Health+ details from Wareable reporting
               on Apple's Quartz health project (published 2026-04) and MacRumors WWDC roundup (checked
               2026-05-20). Fitbod pricing from arvo.guru/vs/fitbod (checked 2026-05-15). Zealova features
-              and pricing from internal product documentation (_ZEALOVA_FACTS.md v1.4, audited 2026-05-18).
+              and pricing are first-party data from our own product audit (verified 2026-05-18), so treat them as self-reported.
               I am the founder of Zealova and not a neutral party. I have tried to concede every honest
               competitor advantage below. Research citations: Shcherbina A et al. (2017, Journal of
               Personalized Medicine) for wearable energy expenditure accuracy; Burke LE, Wang J, Sevick MA
@@ -854,7 +854,7 @@ export default function AndroidAiFitnessCoach() {
             Wareable reporting on Apple Quartz project (2026-04) and MacRumors WWDC roundup
             (checked 2026-05-20); not yet launched, rows marked accordingly. Fitbod pricing
             verified arvo.guru/vs/fitbod (2026-05-15). Zealova pricing and features current as of
-            2026-05-14 per _ZEALOVA_FACTS.md v1.4. Research: Shcherbina A et al. (2017, Journal
+            2026-05-14, first-party and self-reported. Research: Shcherbina A et al. (2017, Journal
             of Personalized Medicine, doi:10.3390/jpm7020003); Burke LE, Wang J, Sevick MA (2011,
             Journal of the American Dietetic Association 111:1); Schoenfeld BJ, Ogborn D, Krieger
             JW (2017, Journal of Sports Science 35:11, doi:10.1080/02640414.2016.1210197).

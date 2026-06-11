@@ -57,7 +57,7 @@ export default function FeatureDrawer({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
       <motion.aside
-        className={`relative flex h-full w-full flex-col bg-[var(--color-surface)] shadow-2xl transition-[max-width] duration-300 ${
+        className={`relative flex h-full w-full flex-col border-l border-white/10 bg-[#0D0D0D] text-white shadow-2xl transition-[max-width] duration-300 ${
           expanded ? 'max-w-full' : 'max-w-md'
         }`}
         initial={{ x: '100%' }}
@@ -67,7 +67,7 @@ export default function FeatureDrawer({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="border-b border-[var(--color-border)] p-5">
+        <div className="border-b border-white/10 p-5">
           <div className={`flex items-start justify-between gap-3 ${inner}`}>
             <div className="min-w-0">
               <span
@@ -76,7 +76,7 @@ export default function FeatureDrawer({
               >
                 {column.emoji} {column.label}
               </span>
-              <h2 className="mt-2.5 text-xl font-bold leading-snug text-[var(--color-text)]">
+              <h2 className="mt-2.5 text-xl font-bold leading-snug text-white">
                 {feature.title}
               </h2>
             </div>
@@ -84,7 +84,7 @@ export default function FeatureDrawer({
               <button
                 onClick={() => setExpanded((v) => !v)}
                 aria-label={expanded ? 'Exit full screen' : 'Full screen'}
-                className="hidden h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-colors sm:flex"
+                className="hidden h-9 w-9 items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-white transition-colors sm:flex"
               >
                 {expanded ? (
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -99,7 +99,7 @@ export default function FeatureDrawer({
               <button
                 onClick={onClose}
                 aria-label="Close"
-                className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-colors"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-white transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -112,7 +112,7 @@ export default function FeatureDrawer({
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto p-5">
           <div className={inner}>
-            <p className="text-sm leading-relaxed text-[var(--color-text-secondary)]">
+            <p className="text-sm leading-relaxed text-white/65">
               {feature.description}
             </p>
 
@@ -127,7 +127,7 @@ export default function FeatureDrawer({
                 </span>
               ))}
               {feature.eta && (
-                <span className="inline-flex items-center rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-semibold text-[var(--color-text-muted)]">
+                <span className="inline-flex items-center rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/45">
                   {feature.eta}
                 </span>
               )}
@@ -147,8 +147,8 @@ export default function FeatureDrawer({
                   onClick={() => onVote(feature)}
                   className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
                     voted
-                      ? 'bg-blue-500 text-white'
-                      : 'border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] hover:border-blue-400 hover:text-blue-500'
+                      ? 'bg-volt-500 text-black'
+                      : 'border border-white/10 bg-white/5 text-white hover:border-volt-400 hover:text-volt-400'
                   }`}
                 >
                   <svg
@@ -165,7 +165,7 @@ export default function FeatureDrawer({
               )}
               <button
                 onClick={share}
-                className="flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:text-blue-500"
+                className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:text-volt-400"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />

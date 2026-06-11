@@ -82,7 +82,7 @@ function ArticleCard({ entry }: { entry: Entry }) {
   return (
     <Link
       to={entry.to}
-      className="group block rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-emerald-500/40 hover:bg-zinc-900/70 hover:-translate-y-0.5"
+      className="group block rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition-colors hover:border-emerald-500/40 hover:bg-zinc-900/70"
     >
       <span className="inline-block text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-3">
         {entry.tag}
@@ -151,21 +151,22 @@ export default function Blog() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-20">
         <header className="mb-12 max-w-2xl">
-          <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <p className="condensed-kicker text-sm text-emerald-400">
             Zealova Blog
           </p>
-          <h1 className="mt-5 text-4xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
+          <h1 className="display-heading mt-4 text-5xl sm:text-6xl text-white">
             Honest comparisons. No affiliate spin.
           </h1>
-          <p className="mt-4 text-lg text-zinc-400 leading-relaxed">
+          <p className="mt-5 text-lg text-zinc-400 leading-relaxed">
             Research-backed breakdowns of the AI fitness apps, calorie
             trackers, and workout generators worth your time. We name where
             competitors win, and where Zealova does.
           </p>
+          <div className="kinetic-rule mt-8" />
         </header>
 
         <section className="mb-12">
-          <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
+          <h2 className="condensed-kicker text-base text-zinc-300 mb-5 flex items-center gap-2">
             <span>📰</span> Articles
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -176,7 +177,7 @@ export default function Blog() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
+          <h2 className="condensed-kicker text-base text-zinc-300 mb-5 flex items-center gap-2">
             <span>📊</span> Best-of roundups
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -187,7 +188,7 @@ export default function Blog() {
         </section>
 
         <section className="mb-12">
-          <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
+          <h2 className="condensed-kicker text-base text-zinc-300 mb-5 flex items-center gap-2">
             <span>⚖️</span> App comparisons
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

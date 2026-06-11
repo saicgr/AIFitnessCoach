@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
@@ -14,6 +14,24 @@ export default function DeleteAccount() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    document.title = 'Delete Your Account | Zealova';
+    const setMeta = (key: string, value: string, isProperty = false) => {
+      const attr = isProperty ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta(
+      'description',
+      'Request permanent deletion of your Zealova account and all associated data.'
+    );
+  }, []);
 
   const handleDelete = async () => {
     if (!isLoggedIn || !user) return;
@@ -38,19 +56,17 @@ export default function DeleteAccount() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-[#050505] text-zinc-100">
       <MarketingNav />
 
       <section className="pt-28 pb-20 px-6">
         <div className="max-w-[800px] mx-auto">
-          <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-8"
-            style={{ fontFamily: 'var(--font-heading)' }}
-          >
+          <p className="condensed-kicker text-volt-500 text-[13px] mb-3">Account</p>
+          <h1 className="display-heading text-4xl sm:text-5xl text-white mb-8">
             Delete Your Account
           </h1>
 
-          <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
+          <div className="space-y-8 text-[15px] text-zinc-300 leading-relaxed">
             {/* Warning */}
             <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-6">
               <p className="text-red-400 font-semibold text-[17px] mb-2">Warning</p>
@@ -62,7 +78,7 @@ export default function DeleteAccount() {
 
             {/* Success state */}
             {deleteStatus === 'success' && (
-              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-emerald-400">
+              <div className="rounded-xl border border-volt-500/30 bg-volt-500/10 p-6 text-volt-300">
                 Your account deletion request has been submitted. Your data will be removed within
                 30 days.
               </div>
@@ -77,10 +93,7 @@ export default function DeleteAccount() {
 
             {/* What gets deleted */}
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 What Gets Deleted
               </h2>
               <p className="mb-4">
@@ -97,10 +110,7 @@ export default function DeleteAccount() {
 
             {/* How to delete */}
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 How to Delete Your Account
               </h2>
               <ol className="list-decimal pl-6 space-y-2">
@@ -113,15 +123,12 @@ export default function DeleteAccount() {
 
             {/* Alternative */}
             <div>
-              <h2
-                className="text-[24px] font-semibold text-[var(--color-text)] mb-4"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
+              <h2 className="text-[24px] font-semibold text-white mb-4">
                 Alternative
               </h2>
               <p>
                 You can also email{' '}
-                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-volt-400 hover:text-volt-300 hover:underline">
                   support@{BRANDING.marketingDomain}
                 </a>{' '}
                 to request account deletion.
@@ -132,7 +139,7 @@ export default function DeleteAccount() {
             <div>
               <p>
                 For more information about how we handle your data, please read our{' '}
-                <Link to="/privacy" className="text-emerald-400 hover:underline">
+                <Link to="/privacy" className="text-volt-400 hover:text-volt-300 hover:underline">
                   Privacy Policy
                 </Link>
                 .
@@ -141,11 +148,11 @@ export default function DeleteAccount() {
 
             {/* Delete button for logged-in users */}
             {isLoggedIn && deleteStatus !== 'success' && (
-              <div className="pt-4 border-t border-[var(--color-border)]">
+              <div className="pt-4 border-t border-white/10">
                 {!showConfirm ? (
                   <button
                     onClick={() => setShowConfirm(true)}
-                    className="inline-flex items-center justify-center rounded-lg bg-red-500 px-6 py-2.5 text-[15px] font-medium text-white hover:bg-red-600 transition-colors"
+                    className="inline-flex items-center justify-center rounded-full bg-red-600 px-6 py-3 text-[15px] font-semibold text-white hover:bg-red-500 transition-colors"
                   >
                     Delete My Account
                   </button>
@@ -154,18 +161,18 @@ export default function DeleteAccount() {
                     <p className="text-red-400 font-semibold mb-4">
                       Are you sure? This action cannot be undone.
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={handleDelete}
                         disabled={isDeleting}
-                        className="inline-flex items-center justify-center rounded-lg bg-red-500 px-6 py-2.5 text-[15px] font-medium text-white hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="inline-flex items-center justify-center rounded-full bg-red-600 px-6 py-3 text-[15px] font-semibold text-white hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
                         {isDeleting ? 'Deleting...' : 'Yes, Delete My Account'}
                       </button>
                       <button
                         onClick={() => setShowConfirm(false)}
                         disabled={isDeleting}
-                        className="inline-flex items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2.5 text-[15px] font-medium text-[var(--color-text)] hover:bg-[var(--color-border)] disabled:opacity-50 transition-colors"
+                        className="inline-flex items-center justify-center rounded-full border border-white/10 bg-[#0D0D0D] px-6 py-3 text-[15px] font-medium text-zinc-200 hover:bg-white/5 disabled:opacity-50 transition-colors"
                       >
                         Cancel
                       </button>
