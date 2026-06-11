@@ -37,6 +37,9 @@ export default function GlossaryShell({
 }: GlossaryShellProps) {
   const canonical = `https://${BRANDING.marketingDomain}/glossary/${slug}`;
   const title = `What is ${term}? Definition, Formula, and Use`;
+  // Per-term OG card, generated at build time by scripts/generate-og.mjs
+  // into public/og/glossary/<slug>.png (same pipeline as the tool cards).
+  const ogImage = `https://${BRANDING.marketingDomain}/og/glossary/${slug}.png`;
 
   useEffect(() => {
     document.title = `${term} | Zealova Glossary`;
@@ -55,9 +58,13 @@ export default function GlossaryShell({
     setMeta('og:description', metaDescription, true);
     setMeta('og:url', canonical, true);
     setMeta('og:type', 'article', true);
+    setMeta('og:image', ogImage, true);
+    setMeta('og:image:width', '1200', true);
+    setMeta('og:image:height', '630', true);
     setMeta('twitter:card', 'summary_large_image');
     setMeta('twitter:title', title);
     setMeta('twitter:description', metaDescription);
+    setMeta('twitter:image', ogImage);
 
     let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!canonicalLink) {
@@ -66,7 +73,7 @@ export default function GlossaryShell({
       document.head.appendChild(canonicalLink);
     }
     canonicalLink.href = canonical;
-  }, [slug, term, title, metaDescription, canonical]);
+  }, [slug, term, title, metaDescription, canonical, ogImage]);
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -152,10 +159,10 @@ export default function GlossaryShell({
         </nav>
 
         <header className="mb-8">
-          <p className="text-xs uppercase tracking-widest text-emerald-400 font-semibold mb-3">
+          <p className="condensed-kicker text-xs text-emerald-400 mb-3">
             Fitness Glossary
           </p>
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
+          <h1 className="display-heading text-4xl sm:text-5xl text-white">
             What is {term}?
           </h1>
         </header>
@@ -186,7 +193,7 @@ export default function GlossaryShell({
             <p className="text-sm text-zinc-300 mb-3">Ready to put this into practice?</p>
             <Link
               to={`/free-tools/${relatedCalcSlug}`}
-              className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-black font-semibold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
             >
               Open the free {relatedCalcName}
             </Link>

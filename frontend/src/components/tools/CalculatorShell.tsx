@@ -25,6 +25,30 @@ interface FaqEntry {
   a: string;
 }
 
+// Tool -> matching glossary entry. Spreads authority from high-traffic
+// calculators to the "what is X" definition pages and captures users who
+// land on the tool before they understand the concept.
+const GLOSSARY_LINKS: Record<string, { slug: string; term: string }> = {
+  'tdee-calculator': { slug: 'tdee', term: 'TDEE' },
+  'adaptive-calorie-calculator': { slug: 'tdee', term: 'TDEE' },
+  '1rm-calculator': { slug: '1rm', term: 'a one-rep max (1RM)' },
+  'bmr-calculator': { slug: 'bmr', term: 'BMR' },
+  'macro-calculator': { slug: 'macros', term: 'macros' },
+  'adaptive-macro-calculator': { slug: 'macros', term: 'macros' },
+  'protein-per-meal-calculator': { slug: 'macros', term: 'macros' },
+  'body-fat-calculator': { slug: 'body-fat-percentage', term: 'body fat percentage' },
+  'lean-body-mass-calculator': { slug: 'body-fat-percentage', term: 'body fat percentage' },
+  'wilks-calculator': { slug: 'wilks-score', term: 'a Wilks score' },
+  'vo2-max-calculator': { slug: 'vo2-max', term: 'VO2 max' },
+  'sleep-cycle-calculator': { slug: 'sleep-cycles', term: 'sleep cycles' },
+  'rir-rpe-converter': { slug: 'rir-rpe', term: 'RIR and RPE' },
+  'deload-week-calculator': { slug: 'deload', term: 'a deload' },
+  'cut-bulk-duration-calculator': { slug: 'cut-bulk', term: 'cutting and bulking' },
+  'mesocycle-volume-calculator': { slug: 'mesocycle', term: 'a mesocycle' },
+  'fasting-timer': { slug: 'intermittent-fasting', term: 'intermittent fasting' },
+  'target-heart-rate-calculator': { slug: 'zone-2-cardio', term: 'Zone 2 cardio' },
+};
+
 interface CalculatorShellProps {
   slug: string;
   title: string;            // <title> + h1
@@ -191,15 +215,27 @@ export default function CalculatorShell({
 
         {/* Hero */}
         <header className="mb-10">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{title}</h1>
+          <p className="condensed-kicker text-xs text-emerald-400 mb-3">Free Tool</p>
+          <h1 className="display-heading text-4xl sm:text-5xl md:text-6xl text-white">{title}</h1>
           {calc?.paidElsewhere && (
-            <p className="mt-3 inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-emerald-500 text-[#06281a] font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#06281a]" />
+            <p className="mt-4 inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-emerald-500 text-black font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-black" />
               Free here • Paid in {calc.competitor}
             </p>
           )}
           {intro && (
             <p className="mt-4 text-base sm:text-lg text-zinc-400 leading-relaxed">{intro}</p>
+          )}
+          {GLOSSARY_LINKS[slug] && (
+            <p className="mt-3 text-sm text-zinc-500">
+              New to {GLOSSARY_LINKS[slug].term}?{' '}
+              <Link
+                to={`/glossary/${GLOSSARY_LINKS[slug].slug}`}
+                className="text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                Read the plain-English definition &rarr;
+              </Link>
+            </p>
           )}
         </header>
 
@@ -250,7 +286,7 @@ export default function CalculatorShell({
         {/* FAQ */}
         {faqs.length > 0 && (
           <section className="mt-16 border-t border-zinc-800 pt-12">
-            <h2 className="text-xl font-bold text-white mb-6">Frequently asked questions</h2>
+            <h2 className="display-heading text-2xl sm:text-3xl text-white mb-6">Frequently asked questions</h2>
             <div className="space-y-3">
               {faqs.map((f, i) => (
                 <details

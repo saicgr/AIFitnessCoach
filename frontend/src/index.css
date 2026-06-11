@@ -1,5 +1,22 @@
 @import "tailwindcss";
 
+/* === SELF-HOSTED FONTS (replaces render-blocking Google Fonts CDN) ===
+ * Anton — huge condensed display headings (brand "dark kinetic volt" voice)
+ * Barlow Condensed — eyebrows / stats / subheads
+ * Inter Variable — body (one variable woff2 covers 400-700)
+ * Space Grotesk — legacy --font-heading, still used by the authed app pages
+ */
+@import "@fontsource/anton/400.css";
+@import "@fontsource/barlow-condensed/500.css";
+@import "@fontsource/barlow-condensed/600.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource-variable/inter";
+@import "@fontsource/space-grotesk/500.css";
+@import "@fontsource/space-grotesk/600.css";
+@import "@fontsource/space-grotesk/700.css";
+
+@plugin "@tailwindcss/typography";
+
 /* ===== CLEAN SaaS DESIGN SYSTEM ===== */
 /* spur.fit-inspired Light-first + Dark mode toggle */
 
@@ -61,7 +78,31 @@
 
   /* === FONT TOKENS === */
   --font-heading: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-body: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Anton', 'Arial Narrow', 'Impact', sans-serif;
+  --font-condensed: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+
+  /* === KINETIC ACCENT PALETTE (marketing surface) ===
+   * "volt" is the brand-accent scale NAME used by all marketing utilities
+   * (text-volt-400 etc). Values = the app icon's orange gradient so the
+   * site, favicon, and Play Store icon read as one brand. */
+  --color-volt-300: #FFB266;   /* bright text accent on near-black    */
+  --color-volt-400: #FF9A3C;   /* hover state, links                  */
+  --color-volt-500: #FF7A00;   /* THE brand orange — buttons, accents */
+  --color-volt-600: #EA580C;   /* pressed, borders on accent surfaces */
+  --color-volt-700: #C2410C;   /* dark accent (light reading mode)    */
+  --color-volt-900: #3A1D06;   /* orange-tinted dark highlight bg     */
+  --color-volt-950: #221103;   /* deep orange-tinted card bg          */
+
+  /* === INK SURFACE SCALE (marketing dark canvas) === */
+  --color-ink-950: #050505;    /* page canvas                       */
+  --color-ink-900: #0D0D0D;    /* cards / surfaces                  */
+  --color-ink-800: #161616;    /* elevated surfaces                 */
+  --color-ink-700: #232323;    /* strong borders                    */
+
+  /* === ACCENT GLOW SHADOWS === */
+  --shadow-volt: 0 0 24px rgba(255, 122, 0, 0.25), 0 0 64px rgba(255, 122, 0, 0.10);
+  --shadow-volt-strong: 0 0 32px rgba(255, 122, 0, 0.45), 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* === DARK MODE OVERRIDES === */
@@ -129,9 +170,9 @@ html.tool-route:not(.dark-mode) {
    * highlight BACKGROUNDS so they lighten. Verified no inverse usage
    * (no bg-emerald-300, no text-emerald-950) before remapping. emerald
    * 400/500/600 are left alone so buttons + bright accents stay vivid. */
-  --color-emerald-300: #047857;  /* accent text -> emerald-700 (dark)   */
-  --color-emerald-900: #a7f3d0;  /* gradient bg -> emerald-200 (light)  */
-  --color-emerald-950: #d1fae5;  /* highlight bg -> emerald-100 (light) */
+  --color-emerald-300: #C2410C;  /* accent text -> dark orange (readable on white) */
+  --color-emerald-900: #FFE4CB;  /* gradient bg -> pale orange wash                */
+  --color-emerald-950: #FFF3E6;  /* highlight bg -> palest orange wash             */
 
   /* Blue is the "competitor / other app" accent on comparison pages and
    * is used identically to emerald: blue-400 is always accent TEXT (light
@@ -142,6 +183,52 @@ html.tool-route:not(.dark-mode) {
   --color-blue-400: #1d4ed8;  /* accent text -> blue-700 (dark)         */
   --color-blue-900: #bfdbfe;  /* border       -> blue-200 (light)       */
   --color-blue-950: #dbeafe;  /* highlight bg  -> blue-100 (light)      */
+}
+
+/* === TOOL-ROUTE DARK-MODE VOLT REMAP ===
+ *
+ * Same zero-page-edit trick as the light remap above, but for the default
+ * dark theme: the ~90 content pages were written with emerald accents;
+ * remapping the emerald variables to the volt scale puts them on-brand
+ * with the "dark kinetic volt" marketing identity instantly.
+ *
+ * Safe because usage is one-directional across all tool/glossary/article
+ * pages (verified): emerald-300/400 only ever accent TEXT on dark
+ * surfaces; emerald-900/950 only ever translucent highlight BACKGROUNDS;
+ * emerald-500/600 solid buttons always pair with dark text — and
+ * black-on-volt has ~16:1 contrast. Scoped to tool-route so the authed
+ * app's --color-primary emerald is untouched.
+ */
+html.tool-route.dark-mode {
+  --color-emerald-300: #FFB266;  /* accent text -> volt-300            */
+  --color-emerald-400: #FF9A3C;  /* accent text -> volt-400            */
+  --color-emerald-500: #FF7A00;  /* solid buttons / accents -> brand   */
+  --color-emerald-600: #EA580C;  /* hover / borders -> volt-600        */
+  --color-emerald-900: #3A1D06;  /* gradient bg -> orange-tinted dark  */
+  --color-emerald-950: #221103;  /* highlight bg -> deep orange tint   */
+}
+
+/* The marketing nav + footer are ALWAYS dark chrome, even when a
+ * tool-route page is in light reading mode. They're built with zinc/white
+ * utilities, so the light remap above would flip their text dark-on-dark.
+ * Re-pin the true Tailwind values inside them (CSS vars inherit, so this
+ * wins for all their descendants). */
+html.tool-route:not(.dark-mode) .nav-glass,
+html.tool-route:not(.dark-mode) .vl-dark-chrome {
+  --color-zinc-950: #09090b;
+  --color-zinc-900: #18181b;
+  --color-zinc-800: #27272a;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-600: #52525b;
+  --color-zinc-500: #71717a;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-100: #f4f4f5;
+  --color-white: #ffffff;
+  --color-emerald-300: #FFB266;
+  --color-emerald-400: #FF9A3C;
+  --color-emerald-500: #FF7A00;
 }
 
 /* === BASE STYLES === */
@@ -248,24 +335,17 @@ html.dark-mode .glass-card {
   box-shadow: none;
 }
 
+/* The marketing nav is dark regardless of the app theme — the whole
+   marketing surface is dark-first "kinetic volt". */
 .nav-glass.is-scrolled {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 1px 2px rgba(0, 0, 0, 0.04),
-    0 4px 16px rgba(0, 0, 0, 0.04);
-}
-
-html.dark-mode .nav-glass.is-scrolled {
-  background: rgba(10, 10, 10, 0.65);
+  background: rgba(5, 5, 5, 0.72);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 1px 2px rgba(0, 0, 0, 0.4),
-    0 4px 20px rgba(0, 0, 0, 0.25);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(255, 122, 0, 0.06),
+    0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
 /* Legacy alias — keep so other callers don't break */
@@ -646,6 +726,54 @@ html.dark-mode .glow-primary {
 
 .safe-area-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+/* === VOLT KINETIC MARKETING UTILITIES === */
+/* Additive only — nothing app-side references these. */
+.display-heading {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 0.92;
+  text-wrap: balance;
+}
+
+.condensed-kicker {
+  font-family: var(--font-condensed);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+}
+
+.btn-volt {
+  background: var(--color-volt-500);
+  color: #050505;
+  font-family: var(--font-condensed);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.btn-volt:hover {
+  background: var(--color-volt-400);
+  box-shadow: var(--shadow-volt);
+  transform: translateY(-1px);
+}
+
+.btn-volt:active {
+  transform: scale(0.98);
+}
+
+.volt-ring {
+  border: 1px solid rgba(255, 122, 0, 0.3);
+}
+
+.kinetic-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 122, 0, 0.5), transparent);
 }
 
 /* === NOISE TEXTURE OVERLAY === */

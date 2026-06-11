@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '../../store';
 import { BRANDING } from '../../lib/branding';
+import { FREE_TOOL_COUNT } from '../../lib/toolStats';
 
 function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
   useEffect(() => {
@@ -76,12 +77,19 @@ const socialLinks = [
   },
 ];
 
+// Routes that support the optional "light reading mode" (the zinc-variable
+// remap in index.css). The theme toggle only renders on these — every other
+// marketing page is dark-only by design, so a toggle would do nothing there.
+const READING_MODE_ROUTES = /^(\/free-tools|\/glossary|\/best-|\/vs\/|\/blog)/;
+
 export default function MarketingNav() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const location = useLocation();
   const { theme, toggleTheme } = useAppStore();
+
+  const showThemeToggle = READING_MODE_ROUTES.test(location.pathname);
 
   const toolsRef = useRef<HTMLDivElement>(null);
   const articlesRef = useRef<HTMLDivElement>(null);
@@ -91,10 +99,10 @@ export default function MarketingNav() {
   useClickOutside(articlesRef, () => { if (openDropdown === 'articles') setOpenDropdown(null); });
   useClickOutside(resourcesRef, () => { if (openDropdown === 'resources') setOpenDropdown(null); });
 
-  // The landing page has a cinematic hero the nav floats transparently over
-  // until the user scrolls past it. Every other page has content starting
-  // right under the nav, so the nav must be frosted-glass from the start —
-  // otherwise page content scrolls *under* a transparent bar and overlaps it.
+  // The landing page has a full-viewport hero the nav floats transparently
+  // over until the user scrolls past it. Every other page has content
+  // starting right under the nav, so the nav must be frosted-glass from the
+  // start — otherwise page content scrolls *under* a transparent bar.
   useEffect(() => {
     const isLanding = location.pathname === '/';
 
@@ -104,7 +112,8 @@ export default function MarketingNav() {
       return;
     }
 
-    const computeThreshold = () => Math.max(2400, window.innerHeight * 4);
+    // New hero is a single viewport — frost the nav once ~70% of it scrolls by.
+    const computeThreshold = () => window.innerHeight * 0.7;
     let threshold = computeThreshold();
     const handleScroll = () => setIsScrolled(window.scrollY > threshold);
     const handleResize = () => {
@@ -127,11 +136,11 @@ export default function MarketingNav() {
   const dropdownBtnClass = (key: string) =>
     `text-sm font-medium transition-colors flex items-center gap-1 ${
       openDropdown === key
-        ? 'text-emerald-500'
-        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+        ? 'text-volt-400'
+        : 'text-zinc-400 hover:text-white'
     }`;
 
-  const dropdownItemClass = "flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors";
+  const dropdownItemClass = "flex items-center gap-3 px-4 py-2.5 text-sm text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors";
 
   const chevron = (key: string) => (
     <svg className={`w-3.5 h-3.5 transition-transform ${openDropdown === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -141,7 +150,7 @@ export default function MarketingNav() {
 
   const dropdownPanel = (children: React.ReactNode, width = "w-52") => (
     <motion.div
-      className={`absolute top-full mt-2 right-0 ${width} bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden p-1.5`}
+      className={`absolute top-full mt-2 right-0 ${width} bg-[#0D0D0D] border border-white/10 rounded-xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] overflow-hidden p-1.5`}
       initial={{ opacity: 0, y: -8, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -8, scale: 0.96 }}
@@ -159,7 +168,7 @@ export default function MarketingNav() {
   ];
 
   const toolsLinks = [
-    { label: 'All Free Tools', to: '/free-tools', desc: '52 calculators and AI tools' },
+    { label: 'All Free Tools', to: '/free-tools', desc: `${FREE_TOOL_COUNT} calculators and AI tools` },
     { label: 'Glossary', to: '/glossary', desc: '15 fitness concepts explained' },
   ];
 
@@ -197,6 +206,16 @@ export default function MarketingNav() {
     { label: 'Refund Policy', to: '/refunds' },
   ];
 
+  const themeToggleIcon = theme === 'light' ? (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+    </svg>
+  ) : (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+    </svg>
+  );
+
   return (
     <motion.nav
       className={`fixed top-0 left-0 right-0 z-50 nav-glass transition-all duration-300 ${
@@ -211,11 +230,11 @@ export default function MarketingNav() {
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2 text-[22px] font-bold tracking-[-0.02em] text-[var(--color-text)] hover:text-emerald-500 transition-colors"
-            style={{ fontFamily: 'var(--font-heading)' }}
+            className="flex items-center gap-2.5 text-[22px] tracking-wide text-white hover:text-volt-400 transition-colors"
+            style={{ fontFamily: 'var(--font-display)' }}
           >
-            <img src="/zealova-logo.png" alt={BRANDING.appName} className="w-8 h-8 object-contain" />
-            {BRANDING.appName}
+            <img src="/zealova-logo.png" alt={BRANDING.appName} className="w-8 h-8 object-contain rounded-lg" />
+            <span className="uppercase">{BRANDING.appName}</span>
           </Link>
 
           {/* Desktop Nav — Tools · Articles · Features · Roadmap · Resources */}
@@ -232,10 +251,10 @@ export default function MarketingNav() {
                       key={link.to}
                       to={link.to}
                       onClick={() => setOpenDropdown(null)}
-                      className="flex flex-col gap-0.5 px-4 py-2.5 text-sm hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+                      className="flex flex-col gap-0.5 px-4 py-2.5 text-sm hover:bg-white/5 rounded-lg transition-colors"
                     >
-                      <span className="text-[var(--color-text)] font-medium">{link.label}</span>
-                      <span className="text-[11px] text-[var(--color-text-muted)]">{link.desc}</span>
+                      <span className="text-white font-medium">{link.label}</span>
+                      <span className="text-[11px] text-zinc-500">{link.desc}</span>
                     </Link>
                   )),
                   "w-64"
@@ -252,8 +271,8 @@ export default function MarketingNav() {
                 {openDropdown === 'articles' && dropdownPanel(
                   articleGroups.map((group, gi) => (
                     <div key={group.heading}>
-                      {gi > 0 && <div className="h-px bg-[var(--color-border)] my-1.5 mx-2" />}
-                      <p className="px-4 py-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">
+                      {gi > 0 && <div className="h-px bg-white/10 my-1.5 mx-2" />}
+                      <p className="px-4 py-1 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">
                         {group.heading}
                       </p>
                       {group.links.map((link) => (
@@ -280,8 +299,8 @@ export default function MarketingNav() {
                 to={link.to}
                 className={`text-sm font-medium transition-colors ${
                   isActive(link.to)
-                    ? 'text-emerald-500'
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)]'
+                    ? 'text-volt-400'
+                    : 'text-zinc-400 hover:text-white'
                 }`}
               >
                 {link.label}
@@ -306,8 +325,8 @@ export default function MarketingNav() {
                         {link.label}
                       </Link>
                     ))}
-                    <div className="h-px bg-[var(--color-border)] my-1.5 mx-2" />
-                    <p className="px-4 py-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Community</p>
+                    <div className="h-px bg-white/10 my-1.5 mx-2" />
+                    <p className="px-4 py-1 text-[10px] uppercase tracking-wider text-zinc-500 font-semibold">Community</p>
                     <div className="grid grid-cols-3 gap-1 px-2 pb-2 pt-1">
                       {socialLinks.map((social) => (
                         <a
@@ -317,7 +336,7 @@ export default function MarketingNav() {
                           rel="noopener noreferrer"
                           aria-label={social.label}
                           onClick={() => setOpenDropdown(null)}
-                          className="flex items-center justify-center py-2 text-[var(--color-text-secondary)] hover:text-emerald-500 hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+                          className="flex items-center justify-center py-2 text-zinc-400 hover:text-volt-400 hover:bg-white/5 rounded-lg transition-colors"
                         >
                           {social.icon}
                         </a>
@@ -331,55 +350,43 @@ export default function MarketingNav() {
 
           </div>
 
-          {/* Right side: Theme toggle + Pricing CTA */}
+          {/* Right side: optional reading-mode toggle + Waitlist CTA */}
           <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-all"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                </svg>
-              )}
-            </button>
+            {showThemeToggle && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-all"
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} reading mode`}
+              >
+                {themeToggleIcon}
+              </button>
+            )}
 
             <Link
               to="/waitlist"
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#ffffff] rounded-full transition-all text-sm font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
+              className="condensed-kicker flex items-center gap-2 rounded-full bg-white px-5 py-2 text-sm font-bold text-black transition-colors hover:bg-zinc-200"
             >
               <span className="relative flex w-2 h-2">
-                <span className="absolute inline-flex w-full h-full rounded-full bg-[#ffffff] opacity-75 animate-ping" />
-                <span className="relative inline-flex w-2 h-2 rounded-full bg-[#ffffff]" />
+                <span className="absolute inline-flex w-full h-full rounded-full bg-volt-500 opacity-60 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-volt-500" />
               </span>
               Join Waitlist
             </Link>
           </div>
 
-          {/* Mobile: theme toggle + hamburger */}
+          {/* Mobile: optional toggle + hamburger */}
           <div className="md:hidden flex items-center gap-2">
+            {showThemeToggle && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-zinc-400 hover:text-white transition-all"
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} reading mode`}
+              >
+                {themeToggleIcon}
+              </button>
+            )}
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] transition-all"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-                </svg>
-              )}
-            </button>
-            <button
-              className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] p-2"
+              className="text-zinc-400 hover:text-white p-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Menu"
             >
@@ -399,7 +406,7 @@ export default function MarketingNav() {
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            className="md:hidden absolute top-16 left-0 right-0 bg-[var(--color-surface-glass)] backdrop-blur-xl border-b border-[var(--color-border)]"
+            className="md:hidden absolute top-16 left-0 right-0 bg-[#050505]/95 backdrop-blur-xl border-b border-white/10 max-h-[calc(100dvh-4rem)] overflow-y-auto"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -407,34 +414,34 @@ export default function MarketingNav() {
           >
             <div className="max-w-[1200px] mx-auto px-6 py-4 flex flex-col gap-1">
               {/* Tools group */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-1 pb-1">Tools</p>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 pt-1 pb-1">Tools</p>
               {toolsLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex flex-col py-2.5 px-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors"
+                  className="flex flex-col py-2.5 px-4 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                 >
                   <span className="text-sm font-medium">{link.label}</span>
-                  <span className="text-[11px] text-[var(--color-text-muted)]">{link.desc}</span>
+                  <span className="text-[11px] text-zinc-500">{link.desc}</span>
                 </Link>
               ))}
 
               {/* Articles group */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Articles</p>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 pt-3 pb-1">Articles</p>
               {articleLinksFlat.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-medium py-2.5 px-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors"
+                  className="text-sm font-medium py-2.5 px-4 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                 >
                   {link.label}
                 </Link>
               ))}
 
               {/* Product group */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Product</p>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 pt-3 pb-1">Product</p>
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
@@ -442,8 +449,8 @@ export default function MarketingNav() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`text-sm font-medium py-2.5 px-4 rounded-lg transition-colors ${
                     isActive(link.to)
-                      ? 'text-emerald-500 bg-emerald-50/50'
-                      : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
+                      ? 'text-volt-400 bg-volt-500/10'
+                      : 'text-zinc-400 hover:text-white hover:bg-white/5'
                   }`}
                 >
                   {link.label}
@@ -451,22 +458,22 @@ export default function MarketingNav() {
               ))}
 
               {/* Resources group */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Resources</p>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 pt-3 pb-1">Resources</p>
               {resourceLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-medium py-2.5 px-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors"
+                  className="text-sm font-medium py-2.5 px-4 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
                 >
                   {link.label}
                 </Link>
               ))}
 
-              <hr className="border-[var(--color-border)] my-2" />
+              <hr className="border-white/10 my-2" />
 
               {/* Community */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-1 pb-2">Community</p>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider px-4 pt-1 pb-2">Community</p>
               <div className="grid grid-cols-3 gap-2 px-2">
                 {socialLinks.map((social) => (
                   <a
@@ -475,7 +482,7 @@ export default function MarketingNav() {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex flex-col items-center gap-1.5 py-3 px-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+                    className="flex flex-col items-center gap-1.5 py-3 px-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                   >
                     {social.icon}
                     <span className="text-[11px] font-medium">{social.label}</span>
@@ -483,13 +490,13 @@ export default function MarketingNav() {
                 ))}
               </div>
 
-              <hr className="border-[var(--color-border)] my-2" />
+              <hr className="border-white/10 my-2" />
 
               {/* Contact */}
               <a
                 href={`mailto:${BRANDING.supportEmail}`}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-sm font-medium py-3 px-4 text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+                className="flex items-center gap-3 text-sm font-medium py-3 px-4 text-zinc-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
@@ -497,19 +504,19 @@ export default function MarketingNav() {
                 {BRANDING.supportEmail}
               </a>
 
-              <hr className="border-[var(--color-border)] my-2" />
+              <hr className="border-white/10 my-2" />
 
               {/* CTA */}
               <Link
                 to="/waitlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-emerald-500 text-[#ffffff] rounded-full mt-1 shadow-lg shadow-emerald-500/20"
+                className="condensed-kicker mt-1 flex items-center justify-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-bold text-black transition-colors hover:bg-zinc-200"
               >
                 <span className="relative flex w-2 h-2">
-                  <span className="absolute inline-flex w-full h-full rounded-full bg-[#ffffff] opacity-75 animate-ping" />
-                  <span className="relative inline-flex w-2 h-2 rounded-full bg-[#ffffff]" />
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-volt-500 opacity-60 animate-ping" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-volt-500" />
                 </span>
-                Join Waitlist — iOS + Android
+                Join Waitlist
               </Link>
             </div>
           </motion.div>
