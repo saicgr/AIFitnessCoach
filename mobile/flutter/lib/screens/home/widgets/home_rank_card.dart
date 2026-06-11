@@ -43,7 +43,7 @@ class HomeRankCard extends ConsumerWidget {
         return GestureDetector(
           onTap: () {
             HapticService.light();
-            context.go('/discover');
+            context.push('/leaderboard');
           },
           child: Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),

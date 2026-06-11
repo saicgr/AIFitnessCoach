@@ -172,9 +172,9 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     // Get dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    // Compact nav bar dimensions
-    const navBarHeight = 56.0;
-    const fadeHeight = 36.0;
+    // Compact nav bar dimensions (single source: chrome_constants.dart)
+    const navBarHeight = kMainNavBarHeight;
+    const fadeHeight = kMainNavFadeHeight;
 
     // Clean pill bar colors
     final pillBarColor = isDark
@@ -218,7 +218,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
           Positioned(
             left: 28,
             right: 28,
-            bottom: bottomPadding + 10,
+            bottom: bottomPadding + kMainNavBottomGap,
             child: Container(
               height: navBarHeight,
               padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -233,12 +233,16 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                   ),
                 ],
               ),
+              // Tab order (2026-06 redesign, Change 1): Home · Workout ·
+              // Coach (center — the product's differentiator) · Nutrition ·
+              // You. The leaderboard moved to You › Stats & Rewards; selected
+              // icons unified to the plain filled family.
               child: Row(
                 children: [
                   Expanded(
                     child: _ExpandableNavItem(
                       icon: Icons.home_outlined,
-                      selectedIcon: Icons.home_rounded,
+                      selectedIcon: Icons.home,
                       label: AppLocalizations.of(context).navHome,
                       isSelected: selectedIndex == 0,
                       onTap: () => onItemTapped(0),
@@ -269,31 +273,12 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     ),
                   ),
                   Expanded(
-                    child: KeyedSubtree(
-                      key: AppTourKeys.nutritionNavKey,
-                      child: _ExpandableNavItem(
-                        icon: Icons.restaurant_outlined,
-                        selectedIcon: Icons.restaurant,
-                        label: AppLocalizations.of(context).navNutrition,
-                        isSelected: selectedIndex == 2,
-                        onTap: () => onItemTapped(2),
-                        accentColor: accentColor,
-                        mutedColor: iconMuted,
-                        isDark: isDark,
-                      ),
-                    ),
-                  ),
-                  // Leaderboard tab — globe icon retained (the icon is less
-                  // ambiguous than the renamed label, and the screen is the
-                  // same percentile leaderboard surface; route key stays
-                  // `/discover` to avoid breaking deep links).
-                  Expanded(
                     child: _ExpandableNavItem(
-                      icon: Icons.public_outlined,
-                      selectedIcon: Icons.public,
-                      label: AppLocalizations.of(context).bottomNavLeaderboard,
-                      isSelected: selectedIndex == 3,
-                      onTap: () => onItemTapped(3),
+                      icon: Icons.chat_bubble_outline_rounded,
+                      selectedIcon: Icons.chat_bubble_rounded,
+                      label: AppLocalizations.of(context).navCoach,
+                      isSelected: selectedIndex == 2,
+                      onTap: () => onItemTapped(2),
                       accentColor: accentColor,
                       mutedColor: iconMuted,
                       isDark: isDark,
@@ -301,16 +286,30 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                   ),
                   Expanded(
                     child: KeyedSubtree(
+                      key: AppTourKeys.nutritionNavKey,
+                      child: _ExpandableNavItem(
+                        icon: Icons.restaurant_outlined,
+                        selectedIcon: Icons.restaurant,
+                        label: AppLocalizations.of(context).navNutrition,
+                        isSelected: selectedIndex == 3,
+                        onTap: () => onItemTapped(3),
+                        accentColor: accentColor,
+                        mutedColor: iconMuted,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: KeyedSubtree(
                       key: AppTourKeys.profileNavKey,
                       // "You" hub — Strava/Nike pattern. Profile + all
                       // gamification surfaces (trophies, XP, achievements,
-                      // skills, wrapped, rewards, inventory) collapse into
-                      // this single tab's top-tabs. Research (Material 3)
-                      // caps bottom nav at 5; we preserved that by renaming
-                      // rather than adding a 6th tab.
+                      // skills, wrapped, rewards, inventory, leaderboard)
+                      // collapse into this single tab's top-tabs. Research
+                      // (Material 3) caps bottom nav at 5.
                       child: _ExpandableNavItem(
                         icon: Icons.stars_outlined,
-                        selectedIcon: Icons.stars_rounded,
+                        selectedIcon: Icons.stars,
                         label: AppLocalizations.of(context).navYou,
                         isSelected: selectedIndex == 4,
                         onTap: () => onItemTapped(4),
@@ -369,8 +368,8 @@ class _ExpandableNavItem extends StatelessWidget {
       child: Align(
         alignment: Alignment.center,
         child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
+        duration: kMotionStandard,
+        curve: kMotionCurve,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
@@ -398,7 +397,9 @@ class _ExpandableNavItem extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: color,
-                fontSize: 9.5,
+                // Caption step of the type ramp — 9.5px was below the app's
+                // legibility floor (2026-06 review, Change 4).
+                fontSize: kTypeCaptionSize,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                 height: 1.0,
               ),
@@ -439,7 +440,7 @@ class _IconSpinPopState extends State<_IconSpinPop>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 450),
+      duration: kMotionExpressive,
     );
     // Full 360° spin, eased out so it decelerates into rest.
     _rotation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -465,6 +466,8 @@ class _IconSpinPopState extends State<_IconSpinPop>
   void didUpdateWidget(covariant _IconSpinPop oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isSelected && widget.isSelected) {
+      // Expressive motion respects the OS reduce-motion setting.
+      if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return;
       _controller.forward(from: 0);
     }
   }

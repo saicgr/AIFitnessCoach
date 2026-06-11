@@ -22591,6 +22591,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navYou => '我';
 
   @override
+  String get navCoach => '教练';
+
+  @override
   String get neatAchievementCardNew => '新！';
 
   @override

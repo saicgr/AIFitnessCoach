@@ -23804,6 +23804,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get navYou => 'Sen';
 
   @override
+  String get navCoach => 'Koç';
+
+  @override
   String get neatAchievementCardNew => 'YENİ!';
 
   @override

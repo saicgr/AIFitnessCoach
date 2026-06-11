@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/discover_snapshot.dart';
@@ -18,8 +19,8 @@ import '../../data/providers/fitness_profile_provider.dart';
 import '../../data/providers/fitness_shape_history_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/floating_tab_bar.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/top_segmented_control.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'widgets/leaderboard_row_adornments.dart';
@@ -176,32 +177,47 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
-            // Minimal top spacer. The bottom nav already labels this screen
-            // "Discover", so we skip a redundant title. The safe-area pad is
-            // kept via MediaQuery so the hero card doesn't clip the notch.
+            // Header row. Since the 2026-06 redesign this screen is PUSHED
+            // (from You › Stats & Rewards or /leaderboard deep links), not a
+            // bottom-nav tab — so it needs a visible back button + title.
             // When a silent refetch is in-flight, a tiny progress dot appears
             // top-right so the user knows data is updating.
             SliverToBoxAdapter(
               child: SafeArea(
                 bottom: false,
-                child: SizedBox(
-                  height: 12,
-                  child: isReloading
-                      ? Align(
-                          alignment: Alignment.centerRight,
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: 20),
-                            child: SizedBox(
-                              width: 10,
-                              height: 10,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1.5,
-                                valueColor: AlwaysStoppedAnimation(accent),
-                              ),
-                            ),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
+                  child: Row(
+                    children: [
+                      if (Navigator.of(context).canPop())
+                        IconButton(
+                          icon: Icon(Icons.arrow_back_rounded,
+                              color: textColor, size: 22),
+                          tooltip: MaterialLocalizations.of(context)
+                              .backButtonTooltip,
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                      const SizedBox(width: 4),
+                      Text(
+                        AppLocalizations.of(context).bottomNavLeaderboard,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: textColor,
+                        ),
+                      ),
+                      const Spacer(),
+                      if (isReloading)
+                        SizedBox(
+                          width: 10,
+                          height: 10,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            valueColor: AlwaysStoppedAnimation(accent),
                           ),
-                        )
-                      : const SizedBox.shrink(),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -209,6 +225,40 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // Board switcher — top segmented control (chrome
+                  // consolidation Variant A, 2026-06). Replaces the floating
+                  // Liquid Glass bar that used to stack above the MainShell
+                  // nav. Keeps the discover_v1 step-3 tour anchor.
+                  KeyedSubtree(
+                    key: TooltipAnchors.discoverBoardTabs,
+                    child: Builder(builder: (context) {
+                      final board = ref.watch(discoverBoardProvider);
+                      final selectedIndex = DiscoverScreen._boardOptions
+                          .indexWhere((opt) => opt.$1 == board);
+                      return TopSegmentedControl(
+                        accentColor: accent,
+                        selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+                        onSelected: (i) {
+                          ref.read(discoverBoardProvider.notifier).state =
+                              DiscoverScreen._boardOptions[i].$1;
+                        },
+                        items: [
+                          for (final opt in DiscoverScreen._boardOptions)
+                            TopSegmentItem(
+                              label: opt.$2,
+                              icon: switch (opt.$1) {
+                                'xp' => Icons.bolt_outlined,
+                                'volume' => Icons.fitness_center_outlined,
+                                'streaks' =>
+                                  Icons.local_fire_department_outlined,
+                                _ => Icons.tune_rounded,
+                              },
+                            ),
+                        ],
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
                   // Instant-load: cache-first render. On a true cold install
                   // (no disk snapshot ever) a layout-matched skeleton shows;
                   // every later open paints the cached snapshot immediately
@@ -242,9 +292,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       );
                     },
                   ),
-                  // Clear the floating MainShell nav AND the Liquid Glass
-                  // board-tab bar stacked above it.
-                  const SizedBox(height: 180),
+                  // Clear the floating MainShell nav (the board switcher
+                  // moved to the top, so only one floating bar remains).
+                  SizedBox(
+                    height: MediaQuery.of(context).viewPadding.bottom +
+                        kMainNavClearance +
+                        16,
+                  ),
                 ]),
               ),
             ),
@@ -266,49 +320,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           // tour only after the skeleton is replaced means steps 1-2 get
           // a real spotlight on the first frame instead of a blank dim.
           if (!_isFirstEver) DiscoverTour.overlay(),
-
-          // Floating iOS 26 Liquid Glass board-tab bar. Keeps the
-          // XP/Volume/Streaks tabs in the thumb zone above the
-          // MainShell nav, matching the Nutrition tab bar treatment.
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: MediaQuery.of(context).viewPadding.bottom + 68,
-            child: Center(
-              child: Builder(builder: (context) {
-              final board = ref.watch(discoverBoardProvider);
-              final selectedIndex = DiscoverScreen._boardOptions
-                  .indexWhere((opt) => opt.$1 == board);
-              // Tour anchor for `discover_v1` step 3 — keyed on the real
-              // floating board switcher so the spotlight has a visible
-              // target (the old anchor was a 0x0 SizedBox placeholder).
-              return KeyedSubtree(
-                key: TooltipAnchors.discoverBoardTabs,
-                child: FloatingTabBar(
-                mode: FloatingTabBarMode.viewSwitcher,
-                accentColor: accent,
-                selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
-                onTap: (i) {
-                  ref.read(discoverBoardProvider.notifier).state =
-                      DiscoverScreen._boardOptions[i].$1;
-                },
-                items: [
-                  for (final opt in DiscoverScreen._boardOptions)
-                    FloatingTabItem(
-                      label: opt.$2,
-                      icon: switch (opt.$1) {
-                        'xp' => Icons.bolt_outlined,
-                        'volume' => Icons.fitness_center_outlined,
-                        'streaks' => Icons.local_fire_department_outlined,
-                        _ => Icons.tune_rounded,
-                      },
-                    ),
-                ],
-                ),
-              );
-            }),
-            ),
-          ),
         ],
       ),
     );

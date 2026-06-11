@@ -23580,6 +23580,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navYou => 'أنت';
 
   @override
+  String get navCoach => 'المدرب';
+
+  @override
   String get neatAchievementCardNew => 'جديد!';
 
   @override

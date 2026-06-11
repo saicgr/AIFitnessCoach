@@ -24197,6 +24197,9 @@ class AppLocalizationsMl extends AppLocalizations {
   String get navYou => 'നിങ്ങൾ';
 
   @override
+  String get navCoach => 'കോച്ച്';
+
+  @override
   String get neatAchievementCardNew => 'പുതിയത്!';
 
   @override

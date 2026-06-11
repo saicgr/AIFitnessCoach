@@ -267,7 +267,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         break;
       case 'rank_percentile':
         // The leaderboard percentile banner — its tap target is Discover.
-        context.go('/discover');
+        context.push('/leaderboard');
         break;
       case 'renewal':
         context.push('/settings/subscription');

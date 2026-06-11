@@ -364,7 +364,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           accentColor: AppColors.purple,
           onTap: () {
             HapticService.light();
-            context.go('/discover');
+            context.push('/leaderboard');
           },
         ));
       }

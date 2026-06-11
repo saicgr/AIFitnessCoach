@@ -24007,6 +24007,9 @@ class AppLocalizationsTe extends AppLocalizations {
   String get navYou => 'మీరు';
 
   @override
+  String get navCoach => 'కోచ్';
+
+  @override
   String get neatAchievementCardNew => 'కొత్తది!';
 
   @override

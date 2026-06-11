@@ -23762,6 +23762,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get navYou => 'คุณ';
 
   @override
+  String get navCoach => 'โค้ช';
+
+  @override
   String get neatAchievementCardNew => 'ใหม่!';
 
   @override

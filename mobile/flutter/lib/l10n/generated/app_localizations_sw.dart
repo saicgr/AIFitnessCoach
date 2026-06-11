@@ -23898,6 +23898,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get navYou => 'Wewe';
 
   @override
+  String get navCoach => 'Kocha';
+
+  @override
   String get neatAchievementCardNew => 'MPYA!';
 
   @override

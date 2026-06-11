@@ -23766,6 +23766,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get navYou => 'Du';
 
   @override
+  String get navCoach => 'Coach';
+
+  @override
   String get neatAchievementCardNew => 'NY!';
 
   @override

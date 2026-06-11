@@ -23831,6 +23831,9 @@ class AppLocalizationsUr extends AppLocalizations {
   String get navYou => 'آپ';
 
   @override
+  String get navCoach => 'کوچ';
+
+  @override
   String get neatAchievementCardNew => 'نیا!';
 
   @override

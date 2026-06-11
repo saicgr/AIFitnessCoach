@@ -23833,6 +23833,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get navYou => 'Kamu';
 
   @override
+  String get navCoach => 'Pelatih';
+
+  @override
   String get neatAchievementCardNew => 'BARU!';
 
   @override

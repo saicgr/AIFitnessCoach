@@ -129,6 +129,12 @@ class ChatScreen extends ConsumerStatefulWidget {
   /// first turn when chat was reached via an X / Reddit / web share.
   final String? sourceUrl;
 
+  /// True when chat is hosted as the Coach BOTTOM-NAV TAB (2026-06 redesign)
+  /// rather than pushed as an overlay route. Embedded mode hides the header
+  /// back button (the main nav handles leaving) — every pushed /chat deep
+  /// link keeps the overlay behavior unchanged.
+  final bool embedded;
+
   const ChatScreen({
     super.key,
     this.initialMessage,
@@ -140,6 +146,7 @@ class ChatScreen extends ConsumerStatefulWidget {
     this.initialAttachmentS3Keys,
     this.initialIntent,
     this.sourceUrl,
+    this.embedded = false,
   });
 
   @override
@@ -1387,28 +1394,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         child: Row(
           children: [
             // Back button circle
-            GestureDetector(
-              onTap: () {
-                HapticService.light();
-                _exitToHistory();
-              },
-              child: Container(
-                height: 44,
-                width: 44,
-                decoration: BoxDecoration(
-                  color: topBarColor,
-                  borderRadius: BorderRadius.circular(22),
-                  border: topBarBorder,
-                  boxShadow: [topBarShadow],
-                ),
-                child: Icon(
-                  Icons.arrow_back_rounded,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                  size: 22,
+            // Embedded (Coach tab) mode has no back button — the main nav is
+            // the way out, and a dead arrow would just confuse.
+            if (!widget.embedded) ...[
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  _exitToHistory();
+                },
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: topBarColor,
+                    borderRadius: BorderRadius.circular(22),
+                    border: topBarBorder,
+                    boxShadow: [topBarShadow],
+                  ),
+                  child: Icon(
+                    Icons.arrow_back_rounded,
+                    color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                    size: 22,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             // Coach name + status — expanded pill. #22 — tapping it opens the
             // coach switcher (same route the 3-dot "Change coach" entry uses),
             // so the header avatar/name is a discoverable shortcut to swap

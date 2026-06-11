@@ -24015,6 +24015,9 @@ class AppLocalizationsKn extends AppLocalizations {
   String get navYou => 'ನೀವು';
 
   @override
+  String get navCoach => 'ಕೋಚ್';
+
+  @override
   String get neatAchievementCardNew => 'ಹೊಸದು!';
 
   @override

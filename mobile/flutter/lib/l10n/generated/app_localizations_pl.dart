@@ -23907,6 +23907,9 @@ class AppLocalizationsPl extends AppLocalizations {
   String get navYou => 'Ty';
 
   @override
+  String get navCoach => 'Trener';
+
+  @override
   String get neatAchievementCardNew => 'NOWOŚĆ!';
 
   @override

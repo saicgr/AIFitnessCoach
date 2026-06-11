@@ -23940,6 +23940,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navYou => 'Você';
 
   @override
+  String get navCoach => 'Coach';
+
+  @override
   String get neatAchievementCardNew => 'NOVO!';
 
   @override

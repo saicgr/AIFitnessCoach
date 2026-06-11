@@ -23810,6 +23810,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get navYou => 'आप';
 
   @override
+  String get navCoach => 'कोच';
+
+  @override
   String get neatAchievementCardNew => 'नया!';
 
   @override

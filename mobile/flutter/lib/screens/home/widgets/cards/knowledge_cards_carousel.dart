@@ -118,7 +118,7 @@ class _KnowledgeTile extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: () {
         HapticService.light();
-        context.push('/discover?card=${card.id}');
+        context.push('/leaderboard?card=${card.id}');
       },
       child: Container(
         width: 200,

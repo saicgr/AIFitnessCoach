@@ -23989,6 +23989,9 @@ class AppLocalizationsIt extends AppLocalizations {
   String get navYou => 'Tu';
 
   @override
+  String get navCoach => 'Coach';
+
+  @override
   String get neatAchievementCardNew => 'NUOVO!';
 
   @override

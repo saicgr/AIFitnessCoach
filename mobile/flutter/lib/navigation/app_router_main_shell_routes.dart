@@ -32,7 +32,19 @@ List<RouteBase> _mainShellRoutes() => [
               },
             ),
           ]),
-          // Branch 2: Nutrition (includes Fasting as a secondary page)
+          // Branch 2: Coach (2026-06 redesign, Change 1) — the AI coach gets
+          // the center tab; the scroll-collapsing Home FAB is retired. Hosts
+          // the existing ChatScreen in embedded mode. Pushed /chat deep links
+          // (insight prefill, ?workout_id…) still open the overlay chat.
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/coach',
+              pageBuilder: (context, state) => const NoTransitionPage(
+                child: CoachTabScreen(),
+              ),
+            ),
+          ]),
+          // Branch 3: Nutrition (includes Fasting as a secondary page)
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/nutrition',
@@ -96,15 +108,6 @@ List<RouteBase> _mainShellRoutes() => [
               ),
             ),
           ]),
-          // Branch 3: Discover (W2) — percentile leaderboard + Rising Stars
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/discover',
-              pageBuilder: (context, state) => const NoTransitionPage(
-                child: DiscoverScreen(),
-              ),
-            ),
-          ]),
           // Branch 4: You (formerly Profile) — hub screen wrapping the
           // existing ProfileScreen as one of three top-tabs plus an
           // Overview aggregation and a Stats & Rewards deep-link grid.
@@ -152,6 +155,21 @@ List<RouteBase> _mainShellRoutes() => [
             ),
           ]),
         ],
+      ),
+
+      // Leaderboard (formerly the Discover tab; 2026-06 redesign, Change 1).
+      // The percentile-leaderboard screen is unchanged — it just opens as a
+      // pushed full screen from You › Stats & Rewards › Social instead of
+      // holding a bottom-nav slot.
+      GoRoute(
+        path: '/leaderboard',
+        builder: (context, state) => const DiscoverScreen(),
+      ),
+      // Old /discover deep links (widgets, notifications, tour resumes) land
+      // on the relocated leaderboard entry inside the You hub.
+      GoRoute(
+        path: '/discover',
+        redirect: (context, state) => '/profile?tab=rewards',
       ),
 
       // Stats (full screen, no bottom nav)

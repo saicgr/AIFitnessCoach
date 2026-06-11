@@ -334,7 +334,7 @@ Future<void> dispatchContextualNudgeAction(
       case ContextualNudgeActionKind.openDailyLesson:
         if (!context.mounted) return;
         // Lesson rotation is content-managed; route to /discover for now.
-        context.push('/discover?source=daily_lesson');
+        context.push('/leaderboard?source=daily_lesson');
       case ContextualNudgeActionKind.openAiSettings:
         if (!context.mounted) return;
         context.push('/ai-settings');

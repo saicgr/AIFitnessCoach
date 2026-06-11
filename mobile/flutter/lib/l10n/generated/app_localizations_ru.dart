@@ -23923,6 +23923,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get navYou => 'Вы';
 
   @override
+  String get navCoach => 'Тренер';
+
+  @override
   String get neatAchievementCardNew => 'НОВИНКА!';
 
   @override

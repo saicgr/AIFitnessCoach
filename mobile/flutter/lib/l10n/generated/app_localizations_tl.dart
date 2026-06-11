@@ -24045,6 +24045,9 @@ class AppLocalizationsTl extends AppLocalizations {
   String get navYou => 'Ikaw';
 
   @override
+  String get navCoach => 'Coach';
+
+  @override
   String get neatAchievementCardNew => 'BAGO!';
 
   @override

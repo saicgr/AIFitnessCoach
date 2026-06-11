@@ -39953,6 +39953,12 @@ abstract class AppLocalizations {
   /// **'You'**
   String get navYou;
 
+  /// No description provided for @navCoach.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach'**
+  String get navCoach;
+
   /// No description provided for @neatAchievementCardNew.
   ///
   /// In en, this message translates to:

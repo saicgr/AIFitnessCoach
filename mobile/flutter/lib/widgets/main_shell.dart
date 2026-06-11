@@ -7,6 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/constants/app_colors.dart';
+import '../core/constants/chrome_constants.dart';
+import '../core/constants/motion_tokens.dart';
+import '../core/constants/type_scale.dart';
 import '../core/providers/serious_mode_provider.dart';
 import '../core/providers/subscription_provider.dart';
 import '../data/services/recipe_notification_router.dart';
@@ -28,7 +31,6 @@ import '../screens/nutrition/quick_log_overlay.dart';
 import 'coach_avatar.dart';
 import 'app_tour/app_tour_controller.dart';
 import 'floating_chat/floating_chat_bubble.dart';
-import 'coach_floating_button.dart';
 import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
 import 'offline_banner.dart';
@@ -187,10 +189,12 @@ class MainShell extends ConsumerWidget {
   int _calculateSelectedIndex(BuildContext context) {
     if (navigationShell != null) return navigationShell!.currentIndex;
     final location = GoRouterState.of(context).matchedLocation;
+    // Branch order (2026-06 redesign): Home · Workout · Coach · Nutrition · You.
     if (location.startsWith('/home')) return 0;
     if (location.startsWith('/workouts')) return 1;
-    if (location.startsWith('/nutrition')) return 2;
-    if (location.startsWith('/profile')) return 3;
+    if (location.startsWith('/coach')) return 2;
+    if (location.startsWith('/nutrition')) return 3;
+    if (location.startsWith('/profile')) return 4;
     return 0;
   }
 
@@ -211,12 +215,6 @@ class MainShell extends ConsumerWidget {
     if (tourState.isVisible) {
       ref.read(appTourControllerProvider.notifier).abort();
     }
-    // Surface 1.8 — FAB defaults to collapsed; the idle-at-top expansion
-    // timer in `_CoachFabScrollListener` re-extends after 800ms when the
-    // user lands on Home at scroll position 0. Reset to collapsed on every
-    // tab switch so the previous tab's expanded state doesn't leak.
-    final fab = ref.read(coachFabExpandedProvider.notifier);
-    if (fab.state) fab.state = false;
     if (navigationShell != null) {
       navigationShell!.goBranch(index, initialLocation: index == navigationShell!.currentIndex);
       return;
@@ -229,9 +227,12 @@ class MainShell extends ConsumerWidget {
         context.go('/workouts');
         break;
       case 2:
-        context.go('/nutrition');
+        context.go('/coach');
         break;
       case 3:
+        context.go('/nutrition');
+        break;
+      case 4:
         context.go('/profile');
         break;
     }
@@ -257,7 +258,13 @@ class MainShell extends ConsumerWidget {
         .routerDelegate.currentConfiguration.uri.path;
     final pathWantsHidden = currentPath.startsWith('/fasting');
     final providerWantsHidden = !ref.watch(floatingNavBarVisibleProvider);
-    final isNavBarVisible = !(pathWantsHidden || providerWantsHidden);
+    // Coach tab: hide the nav while the keyboard is up so the chat composer
+    // (which sits above the nav clearance — see CoachTabScreen) docks to the
+    // keyboard like a normal chat app instead of floating above two bars.
+    final keyboardWantsHidden = _calculateSelectedIndex(context) == 2 &&
+        MediaQuery.viewInsetsOf(context).bottom > 0;
+    final isNavBarVisible =
+        !(pathWantsHidden || providerWantsHidden || keyboardWantsHidden);
     final isGuestMode = ref.watch(isGuestModeProvider);
 
     // ── Tab prewarm (staggered, active-tab-first) ─────────────────────
@@ -503,33 +510,14 @@ class MainShell extends ConsumerWidget {
                 // Verify-your-email nudge (auto-shows/hides; non-blocking)
                 const EmailVerificationBanner(),
                 // Main content fills remaining space. Wrapped in a
-                // NotificationListener that drives the Coach FAB's
-                // expand/collapse: when the active tab's scroll view
-                // is at the top, the FAB stays extended; once it
-                // scrolls past 24pt the FAB collapses to icon-only.
-                // Drives the Coach FAB's pill-vs-icon morph on the Home
-                // tab — extended at scroll top, collapses to icon past
-                // 24pt. Other tabs ignore this state (always icon).
-                // setState only on threshold-cross, not per frame.
-                Expanded(
-                  // Surface 1.8 — scroll-aware FAB driver. Any scroll
-                  // collapses the FAB immediately; the FAB re-expands to
-                  // the "Ask coach" pill only after the user has been
-                  // idle at scroll position 0 for 800ms.
-                  child: _CoachFabScrollListener(child: _child),
-                ),
+                Expanded(child: _child),
               ],
             ),
           ),
-          // "Ask coach" FAB above the nav — Home tab only. On Home
-          // there's no sub-tab strip, so the pill+icon morph lives
-          // standalone above the nav. On every other tab, the AI sparkle
-          // action is integrated INTO that tab's `FloatingTabBar` strip
-          // (see `_FloatingTabBarCoachSlot`), so the standalone FAB
-          // would just double up. Hides when the nav hides
-          // (e.g. `/fasting`).
-          if (isNavBarVisible && selectedIndex == 0)
-            const CoachFloatingButton(isHomeTab: true),
+          // "Ask coach" FAB retired (2026-06 redesign, Change 1): the Coach
+          // bottom-nav tab supersedes it — always reachable, never collapses
+          // on scroll. Contextual chat deep links (coach hero card, active
+          // workout, food tips) still push the /chat overlay unchanged.
           // Nav bar at bottom — wrapped in Material so it participates in
           // Flutter's elevation/z-index system. This ensures OS-level
           // Tooltips (which use the root overlay) render UNDER the nav,
@@ -644,7 +632,12 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
       ref.read(workoutScreenSummaryProvider);
       ref.read(syncedWorkoutsProvider);
       break;
-    case 2: // Nutrition — daily summary + preferences gate the first paint;
+    case 2: // Coach — the daily insight feeds the briefing/greeting open
+      // ladder, so it's the chat tab's first-paint dependency.
+      ref.read(dailyCoachInsightProvider);
+      ref.read(contextualNudgeProvider);
+      break;
+    case 3: // Nutrition — daily summary + preferences gate the first paint;
       // batch-cook events + upcoming schedules feed the Daily tab.
       ref.read(dailyNutritionProvider(todayNutritionKey()));
       ref.read(nutritionMetaProvider);
@@ -654,7 +647,7 @@ void _warmActiveTab(WidgetRef ref, int index, String? userId) {
         ref.read(upcomingSchedulesProvider(userId));
       }
       break;
-    case 3: // You / Profile — XP state + unclaimed-crates badge.
+    case 4: // You / Profile — XP state + unclaimed-crates badge.
       ref.read(xpProvider);
       ref.read(unclaimedCratesCountProvider);
       break;
@@ -710,70 +703,6 @@ Color _getContrastColor(Color background) {
   return luminance > 0.5 ? Colors.black : Colors.white;
 }
 
-/// Surface 1.8 — scroll-aware driver for the Coach FAB's pill ↔ icon morph.
-///
-/// Default state: collapsed (icon-only). The FAB expands to "Ask coach"
-/// only after the user idles at scroll position 0 for 800ms; any scroll
-/// motion collapses it instantly. Implements the
-/// `coachFabExpandedProvider` writes on behalf of the parent shell.
-class _CoachFabScrollListener extends ConsumerStatefulWidget {
-  final Widget child;
-  const _CoachFabScrollListener({required this.child});
-
-  @override
-  ConsumerState<_CoachFabScrollListener> createState() =>
-      _CoachFabScrollListenerState();
-}
-
-class _CoachFabScrollListenerState
-    extends ConsumerState<_CoachFabScrollListener> {
-  Timer? _idleTimer;
-
-  @override
-  void dispose() {
-    _idleTimer?.cancel();
-    super.dispose();
-  }
-
-  void _scheduleExpand() {
-    _idleTimer?.cancel();
-    _idleTimer = Timer(const Duration(milliseconds: 800), () {
-      if (!mounted) return;
-      final notifier = ref.read(coachFabExpandedProvider.notifier);
-      if (!notifier.state) notifier.state = true;
-    });
-  }
-
-  void _collapseImmediate() {
-    _idleTimer?.cancel();
-    final notifier = ref.read(coachFabExpandedProvider.notifier);
-    if (notifier.state) notifier.state = false;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification.depth != 0) return false;
-        final pixels = notification.metrics.pixels;
-        final atTop = pixels < 24;
-        if (notification is ScrollEndNotification) {
-          if (atTop) {
-            _scheduleExpand();
-          } else {
-            _collapseImmediate();
-          }
-        } else if (notification is ScrollUpdateNotification ||
-            notification is ScrollStartNotification ||
-            notification is UserScrollNotification) {
-          // Any scroll motion: collapse immediately and cancel any
-          // pending re-expand timer. The expand only fires after the
-          // user has STOPPED scrolling at the top for 800ms.
-          _collapseImmediate();
-        }
-        return false;
-      },
-      child: widget.child,
-    );
-  }
-}
+// _CoachFabScrollListener removed with the Coach FAB (2026-06 redesign,
+// Change 1) — the Coach bottom-nav tab replaced the scroll-aware FAB, so the
+// pill↔icon morph driver had nothing left to drive.

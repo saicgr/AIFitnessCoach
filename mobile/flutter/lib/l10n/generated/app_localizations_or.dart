@@ -23946,6 +23946,9 @@ class AppLocalizationsOr extends AppLocalizations {
   String get navYou => 'ଆପଣ';
 
   @override
+  String get navCoach => 'କୋଚ୍';
+
+  @override
   String get neatAchievementCardNew => 'ନୂଆ!';
 
   @override

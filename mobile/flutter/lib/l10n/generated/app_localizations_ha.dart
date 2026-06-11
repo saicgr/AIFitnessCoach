@@ -23909,6 +23909,9 @@ class AppLocalizationsHa extends AppLocalizations {
   String get navYou => 'Kai';
 
   @override
+  String get navCoach => 'Koci';
+
+  @override
   String get neatAchievementCardNew => 'SABO!';
 
   @override

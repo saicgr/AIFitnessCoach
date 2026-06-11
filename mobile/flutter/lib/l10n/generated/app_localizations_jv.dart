@@ -23825,6 +23825,9 @@ class AppLocalizationsJv extends AppLocalizations {
   String get navYou => 'Sampean';
 
   @override
+  String get navCoach => 'Pelatih';
+
+  @override
   String get neatAchievementCardNew => 'ANYAR!';
 
   @override

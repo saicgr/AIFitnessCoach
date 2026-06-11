@@ -23847,6 +23847,9 @@ class AppLocalizationsVi extends AppLocalizations {
   String get navYou => 'Bạn';
 
   @override
+  String get navCoach => 'HLV';
+
+  @override
   String get neatAchievementCardNew => 'MỚI!';
 
   @override

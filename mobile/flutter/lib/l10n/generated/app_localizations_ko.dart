@@ -22897,6 +22897,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get navYou => '내 정보';
 
   @override
+  String get navCoach => '코치';
+
+  @override
   String get neatAchievementCardNew => '새로운 기능!';
 
   @override

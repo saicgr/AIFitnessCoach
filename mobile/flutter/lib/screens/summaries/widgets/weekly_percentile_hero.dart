@@ -34,7 +34,7 @@ class WeeklyPercentileHero extends ConsumerWidget {
           child: GestureDetector(
             onTap: () {
               HapticService.light();
-              context.go('/discover');
+              context.push('/leaderboard');
             },
             child: Container(
               padding: const EdgeInsets.all(16),

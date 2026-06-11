@@ -23882,6 +23882,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get navYou => 'আপনি';
 
   @override
+  String get navCoach => 'কোচ';
+
+  @override
   String get neatAchievementCardNew => 'নতুন!';
 
   @override

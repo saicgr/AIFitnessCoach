@@ -516,7 +516,7 @@ class _SocialGroup extends StatelessWidget {
       fg: fg,
       accent: accent,
       isDark: isDark,
-      route: '/xp-leaderboard',
+      route: '/leaderboard',
       wide: true,
     );
   }

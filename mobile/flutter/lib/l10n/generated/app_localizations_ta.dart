@@ -24190,6 +24190,9 @@ class AppLocalizationsTa extends AppLocalizations {
   String get navYou => 'நீங்கள்';
 
   @override
+  String get navCoach => 'கோச்';
+
+  @override
   String get neatAchievementCardNew => 'புதியது!';
 
   @override

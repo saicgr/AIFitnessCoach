@@ -23861,6 +23861,9 @@ class AppLocalizationsFi extends AppLocalizations {
   String get navYou => 'Sinä';
 
   @override
+  String get navCoach => 'Valmentaja';
+
+  @override
   String get neatAchievementCardNew => 'UUSI!';
 
   @override

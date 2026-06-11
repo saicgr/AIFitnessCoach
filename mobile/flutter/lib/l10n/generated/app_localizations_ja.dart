@@ -22881,6 +22881,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navYou => 'あなた';
 
   @override
+  String get navCoach => 'コーチ';
+
+  @override
   String get neatAchievementCardNew => '新規！';
 
   @override

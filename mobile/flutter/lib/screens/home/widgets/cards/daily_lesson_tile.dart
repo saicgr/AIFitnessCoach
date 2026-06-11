@@ -72,7 +72,7 @@ class DailyLessonTile extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           HapticService.light();
-          context.push('/discover?source=daily_lesson');
+          context.push('/leaderboard?source=daily_lesson');
         },
         child: Container(
           padding: const EdgeInsets.all(14),

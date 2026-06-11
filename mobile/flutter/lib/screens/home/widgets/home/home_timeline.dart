@@ -757,7 +757,7 @@ class HomeTimeline extends ConsumerWidget {
   /// the tab) — `push` would stack a 2nd copy of a tab screen and its static
   /// tooltip GlobalKeys collide ("Multiple widgets used the same GlobalKey").
   static const _tabRoutes = {
-    '/home', '/workouts', '/nutrition', '/discover', '/profile',
+    '/home', '/workouts', '/coach', '/nutrition', '/profile',
   };
 
   /// Navigate to [route]: `go` for nav tabs, `push` for standalone screens.
