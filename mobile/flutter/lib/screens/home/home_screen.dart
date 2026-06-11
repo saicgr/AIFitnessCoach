@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/providers/subscription_provider.dart';
 import '../../core/providers/window_mode_provider.dart';
@@ -1134,18 +1135,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
                 // Bottom padding for the floating nav. Derived from the
                 // actual safe-area inset + the nav-bar intrinsic height
-                // (56pt — matches `main_shell_part_edge_panel_handle.dart`)
-                // + 16pt breathing room. The old hard-coded 120pt was
-                // short on devices with a tall bottom safe area, which
-                // bled content like the Cycle card under the nav.
+                // + breathing room (Surface 1.9: 32 so the last sliver
+                // clears the nav-shadow margin on every tested device,
+                // iPhone SE → 16 Pro Max). Heights now come from
+                // chrome_constants.dart so the nav and its consumers can't
+                // drift apart.
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    // Surface 1.9 — bumped breathing room +16 → +32 so the
-                    // last sliver clears the nav-shadow margin on every
-                    // tested device (iPhone SE → 16 Pro Max).
                     height: MediaQuery.viewPaddingOf(context).bottom +
-                        56.0 +
-                        32.0,
+                        kMainNavBarHeight +
+                        kHomeBottomBreathingRoom,
                   ),
                 ),
               ],

@@ -7,6 +7,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/providers/you_hub_tab_request_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
+import '../../../widgets/word_bounce.dart';
 import 'components/components.dart';
 import 'streak_explainer_sheet.dart';
 
@@ -193,23 +194,29 @@ class _Greeting extends ConsumerWidget {
                   showStreakExplainerSheet(context);
                 },
                 behavior: HitTestBehavior.opaque,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '· ${streakDays}d',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.70)
-                            : Colors.black.withValues(alpha: 0.55),
-                        height: 1.0,
+                // WordBounce: one playful bounce when the streak VALUE
+                // changes (12→13), per the 2026-06 motion spec. Never loops;
+                // no-op on first build and under reduce-motion.
+                child: WordBounce(
+                  trigger: streakDays,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '· ${streakDays}d',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.70)
+                              : Colors.black.withValues(alpha: 0.55),
+                          height: 1.0,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 3),
-                    const Text('🔥', style: TextStyle(fontSize: 13)),
-                  ],
+                      const SizedBox(width: 3),
+                      const Text('🔥', style: TextStyle(fontSize: 13)),
+                    ],
+                  ),
                 ),
               ),
             ],

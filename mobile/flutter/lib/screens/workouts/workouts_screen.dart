@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
@@ -261,7 +262,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // scroll view to the matching section.
             PositionedDirectional(start: 0,
               end: 0,
-              bottom: MediaQuery.of(context).viewPadding.bottom + 68,
+              bottom: MediaQuery.of(context).viewPadding.bottom +
+                  kMainNavClearance,
               child: Center(
                 child: WorkoutsFloatingOptionsBar(
                   accentColor: accentColor,
@@ -633,12 +635,18 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             children: [
               Icon(icon, size: 16, color: tint),
               const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: tint,
+              // Long localized labels (e.g. fi/de) must ellipsize instead of
+              // overflowing the pill.
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: tint,
+                  ),
                 ),
               ),
             ],
