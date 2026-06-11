@@ -47,7 +47,14 @@ class InflammationChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = inflammationColor(score);
-    return Material(
+    // "Infl 7" is too cryptic for screen readers — announce the full score,
+    // the severity grade the color conveys, and that details are available.
+    return Semantics(
+      button: true,
+      label:
+          'Inflammation score $score out of 10, ${inflammationLabel(score)}. Tap for details.',
+      excludeSemantics: true,
+      child: Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
@@ -81,6 +88,7 @@ class InflammationChip extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }

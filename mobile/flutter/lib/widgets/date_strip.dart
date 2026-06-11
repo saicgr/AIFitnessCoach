@@ -218,6 +218,7 @@ class _WeekRow extends StatelessWidget {
         final hasLog = loggedDateKeys.contains(dateKey);
 
         return _DayCell(
+          date: date,
           dayLabel: weekConfig.dayLabels[displayIndex],
           dateNumber: date.day,
           isToday: isToday,
@@ -239,6 +240,7 @@ class _WeekRow extends StatelessWidget {
 }
 
 class _DayCell extends StatelessWidget {
+  final DateTime date;
   final String dayLabel;
   final int dateNumber;
   final bool isToday;
@@ -250,6 +252,7 @@ class _DayCell extends StatelessWidget {
   final VoidCallback? onTap;
 
   const _DayCell({
+    required this.date,
     required this.dayLabel,
     required this.dateNumber,
     required this.isToday,
@@ -261,12 +264,36 @@ class _DayCell extends StatelessWidget {
     required this.onTap,
   });
 
+  /// Screen-reader label: full weekday + date (locale-formatted) plus the
+  /// state the dot/pill conveys only visually.
+  String _semanticLabel(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
+    final dateText = DateFormat('EEEE, MMMM d', locale).format(date);
+    final parts = <String>[
+      dateText,
+      if (isToday) 'today',
+      if (isFuture) 'unavailable' else (hasLog ? 'logged' : 'no entries'),
+    ];
+    return parts.join(', ');
+  }
+
+  Widget _wrapSemantics(BuildContext context, {required Widget child}) {
+    return Semantics(
+      button: true,
+      selected: isSelected,
+      enabled: !isFuture,
+      label: _semanticLabel(context),
+      excludeSemantics: true,
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Today (selected or not) → filled accent pill with white text.
     // Everything else keeps label-above + circle-below layout.
     if (isToday) {
-      return _buildTodayPill();
+      return _buildTodayPill(context);
     }
 
     final Color dateColor;
@@ -276,7 +303,9 @@ class _DayCell extends StatelessWidget {
     Border? cellBorder;
 
     if (isFuture) {
-      dateColor = isDark ? Colors.white24 : Colors.black26;
+      // white38/black45 (not 24/26) — the dimmer values fall below WCAG
+      // contrast even for a disabled affordance.
+      dateColor = isDark ? Colors.white38 : Colors.black45;
       labelColor = dateColor;
       dateWeight = FontWeight.w400;
     } else if (isSelected) {
@@ -292,7 +321,9 @@ class _DayCell extends StatelessWidget {
     }
 
     return Expanded(
-      child: GestureDetector(
+      child: _wrapSemantics(
+        context,
+        child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
@@ -346,6 +377,7 @@ class _DayCell extends StatelessWidget {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -355,9 +387,11 @@ class _DayCell extends StatelessWidget {
   /// slot → 4 → dot) so all day letters stay on one baseline. The pill is
   /// slightly wider than the 32 sibling circles (minWidth 36) to mark "today"
   /// without ever protruding above the row.
-  Widget _buildTodayPill() {
+  Widget _buildTodayPill(BuildContext context) {
     return Expanded(
-      child: GestureDetector(
+      child: _wrapSemantics(
+        context,
+        child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
@@ -410,6 +444,7 @@ class _DayCell extends StatelessWidget {
             ],
           ),
         ),
+      ),
       ),
     );
   }
