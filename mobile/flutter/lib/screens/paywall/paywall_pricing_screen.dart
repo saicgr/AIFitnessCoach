@@ -76,6 +76,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   int _currentPage = 0;
   static const int _totalPages = 3;
 
+  // v7 first-run redesign: page 0 leads with founder-note proof instead of
+  // the phone-mock hero. Kill switch `onboarding_v7_paywall_founder_page`
+  // (default ON, fail-open) restores the hero without a redeploy.
+  bool _founderPageEnabled = true;
+
   @override
   void initState() {
     super.initState();
@@ -95,7 +100,33 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         surface: 'soft_paywall',
       );
       if (mounted) setState(() => _experiments = exp);
+      final founderOn = await OnboardingExperiments.isEnabled(
+        posthog,
+        OnboardingExperiments.flagPaywallFounderPageV7,
+      );
+      if (mounted && !founderOn) {
+        setState(() => _founderPageEnabled = false);
+      }
     });
+  }
+
+  /// Page 1's "Remind me 🔔" CTA fires the OS notification prompt — the
+  /// day-5 trial promise is impossible without permission, and this is the
+  /// one moment the user actively WANTS notifications. Sets the same
+  /// `notification_prime_shown` pref the standalone prime screen uses, so
+  /// the post-onboarding /notifications-prime chain auto-skips.
+  Future<void> _requestNotificationPermissionFromReminderPage() async {
+    try {
+      await ref
+          .read(notificationServiceProvider)
+          .requestPermissionWhenReady();
+    } catch (e) {
+      debugPrint('🔔 [Paywall] notification permission request failed: $e');
+    }
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('notification_prime_shown', true);
+    } catch (_) {}
   }
 
   @override
@@ -756,9 +787,24 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 child: PageView(
                   controller: _pageController,
                   physics: const ClampingScrollPhysics(),
-                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  onPageChanged: (i) {
+                    setState(() => _currentPage = i);
+                    // v7: per-page funnel visibility (which beat loses
+                    // people: proof → reminder → offer).
+                    ref.read(posthogServiceProvider).capture(
+                      eventName: 'paywall_intro_page_viewed',
+                      properties: {
+                        'page': i,
+                        'variant':
+                            _founderPageEnabled ? 'v7_founder' : 'hero',
+                      },
+                    );
+                  },
                   children: [
-                    _buildIntroPageHero(colors),
+                    if (_founderPageEnabled)
+                      _buildIntroPageFounder(colors)
+                    else
+                      _buildIntroPageHero(colors),
                     _buildIntroPageReminder(colors),
                     _buildIntroPageTimeline(colors, subscriptionState),
                   ],
@@ -826,7 +872,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     final isLast = _currentPage == _totalPages - 1;
     final label = switch (_currentPage) {
       0 => 'Try for \$0.00',
-      1 => 'Continue for FREE',
+      // v7: page 1 IS the notification primer — the CTA asks for the
+      // reminder, and tapping it fires the OS permission prompt.
+      1 => AppLocalizations.of(context).paywallRemindMeCta,
       _ => _selectedPlan.contains('yearly')
           ? 'Start My 7-Day Free Trial'
           : 'Subscribe Now',
@@ -867,6 +915,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         _handleAction(
                             context, ref, false, currentTier);
                       } else {
+                        // Page 1 → request notification permission so the
+                        // day-5 reminder promise can actually be kept.
+                        // Fire-and-forget: page advance never blocks on
+                        // the OS prompt.
+                        if (_currentPage == 1) {
+                          unawaited(
+                              _requestNotificationPermissionFromReminderPage());
+                        }
                         _goToNextPage();
                       }
                     },
@@ -945,7 +1001,158 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
   }
 
-  // ── Page 1: hero ─────────────────────────────────────────────────
+  // ── Page 1 (v7): founder proof ───────────────────────────────────
+  // Honest social proof: no fabricated ratings (we have none, and fake
+  // proof is an App Store 2.3.1 risk). The founder's why reframes the
+  // price against a $400/mo trainer before any number appears.
+  Widget _buildIntroPageFounder(ThemeColors colors) {
+    final l10n = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 14),
+          Text(
+            l10n.paywallFounderKicker,
+            style: const TextStyle(
+              fontFamily: 'Barlow Condensed',
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2.5,
+              color: _paywallAccent,
+            ),
+          ).animate().fadeIn(),
+          const SizedBox(height: 8),
+          Text(
+            l10n.paywallFounderHeadline,
+            style: TextStyle(
+              fontFamily: 'Anton',
+              fontSize: 30,
+              height: 1.05,
+              color: colors.textPrimary,
+            ),
+          ).animate().fadeIn(delay: 80.ms).slideY(begin: 0.06),
+          const SizedBox(height: 18),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: colors.textMuted.withValues(alpha: 0.15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.paywallFounderQuote,
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    height: 1.55,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Color(0xFFFFB366), _paywallAccent],
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        'C',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.paywallFounderName,
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          l10n.paywallFounderSub,
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 180.ms).slideY(begin: 0.08),
+          const SizedBox(height: 10),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: colors.textMuted.withValues(alpha: 0.15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  // TODO(user): replace with Keertan's real words.
+                  l10n.paywallTesterQuote,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    height: 1.5,
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  l10n.paywallTesterName,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: colors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ).animate().fadeIn(delay: 280.ms).slideY(begin: 0.08),
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              l10n.paywallEarlyAccess,
+              style: TextStyle(
+                fontSize: 11,
+                color: colors.textMuted,
+              ),
+            ),
+          ).animate().fadeIn(delay: 380.ms),
+          const SizedBox(height: 12),
+        ],
+      ),
+    );
+  }
+
+  // ── Page 1 (legacy): hero ────────────────────────────────────────
   Widget _buildIntroPageHero(ThemeColors colors) {
     final headline = _heroHeadline();
     return Padding(
@@ -1220,6 +1427,59 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
             colors: colors,
           ),
           const SizedBox(height: 18),
+
+          // v7: Cal AI's signature trial TOGGLE, with compliant copy —
+          // auto-renewal + the REAL billed price stated right in the row.
+          // ON = yearly + 7-day trial (default); OFF = monthly, no trial.
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: colors.textMuted.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context).paywallTrialToggleTitle,
+                        style: TextStyle(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        _selectedBillingCycle == 'yearly'
+                            ? AppLocalizations.of(context)
+                                .paywallTrialToggleOn(yearlyTotal)
+                            : AppLocalizations.of(context)
+                                .paywallTrialToggleOff,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Switch.adaptive(
+                  value: _selectedBillingCycle == 'yearly',
+                  activeThumbColor: Colors.white,
+                  activeTrackColor: _paywallAccent,
+                  onChanged: (on) => _selectBillingCycle(
+                      on ? 'yearly' : 'monthly'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -1228,20 +1488,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   price: monthlyPrice,
                   unit: '/mo',
                   isSelected: _selectedBillingCycle == 'monthly',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      _selectedBillingCycle = 'monthly';
-                      _selectedPlan = 'premium_monthly';
-                    });
-                    ref.read(posthogServiceProvider).capture(
-                      eventName: 'paywall_plan_selected',
-                      properties: {
-                        'plan_name': 'premium_monthly',
-                        'billing_cycle': 'monthly',
-                      },
-                    );
-                  },
+                  onTap: () => _selectBillingCycle('monthly'),
                   colors: colors,
                   ribbon: null,
                   anchorPrice: null,
@@ -1251,26 +1498,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               Expanded(
                 child: _PlanTile(
                   title: AppLocalizations.of(context).paywallPricingYearly,
-                  price: yearlyMonthly,
-                  unit: '/mo',
-                  anchorPrice: monthlyPrice,
+                  // COMPLIANCE (Apple pulled Cal AI for the inverse, Apr
+                  // 2026): the headline price on the plan card is the REAL
+                  // billed amount per year; the per-month math is the
+                  // small subtitle, never the other way around.
+                  price: yearlyTotal,
+                  unit: '/yr',
+                  anchorPrice: null,
                   isSelected: _selectedBillingCycle == 'yearly',
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() {
-                      _selectedBillingCycle = 'yearly';
-                      _selectedPlan = 'premium_yearly';
-                    });
-                    ref.read(posthogServiceProvider).capture(
-                      eventName: 'paywall_plan_selected',
-                      properties: {
-                        'plan_name': 'premium_yearly',
-                        'billing_cycle': 'yearly',
-                      },
-                    );
-                  },
+                  onTap: () => _selectBillingCycle('yearly'),
                   ribbon: '7 DAYS FREE · SAVE $savings%',
-                  subtitle: '$yearlyTotal/year',
+                  subtitle: '= $yearlyMonthly/mo',
                   colors: colors,
                 ),
               ),
@@ -1321,6 +1559,24 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
   }
 
+  /// Single chokepoint for plan selection — used by both the trial toggle
+  /// and the plan tiles so the analytics event fires identically.
+  void _selectBillingCycle(String cycle) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectedBillingCycle = cycle;
+      _selectedPlan =
+          cycle == 'yearly' ? 'premium_yearly' : 'premium_monthly';
+    });
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'paywall_plan_selected',
+      properties: {
+        'plan_name': _selectedPlan,
+        'billing_cycle': cycle,
+      },
+    );
+  }
+
   void _handleMaybeLater(BuildContext context, WidgetRef ref) async {
     ref.read(posthogServiceProvider).capture(
       eventName: 'paywall_skip_tapped',
@@ -1346,9 +1602,30 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           eventName: 'paywall_discount_accepted',
           properties: {'discount_percent': 25},
         );
-        // User accepted the 25% discount — purchase discounted yearly
-        final success = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly_25off');
+        // User accepted the 25% discount — purchase discounted yearly.
+        // GUARD: if the `premium_yearly_25off` SKU isn't in the current
+        // RevenueCat offering (it must be created in Play Console first),
+        // fall back to the standard yearly product instead of crashing
+        // with "Product not found".
+        final offerings = ref.read(subscriptionProvider).offerings;
+        final discountSkuAvailable = offerings?.current?.availablePackages
+                .any((p) =>
+                    p.storeProduct.identifier == 'premium_yearly_25off') ??
+            false;
+        final discountSku = discountSkuAvailable
+            ? 'premium_yearly_25off'
+            : SubscriptionNotifier.premiumYearlyId;
+        if (!discountSkuAvailable) {
+          debugPrint(
+              '⚠️ [Paywall] premium_yearly_25off missing from offerings — '
+              'falling back to premium_yearly');
+        }
+        final success = await ref.read(subscriptionProvider.notifier).purchase(discountSku);
         if (success && context.mounted) {
+          // Trial started — keep the day-5 reminder promise.
+          unawaited(ref
+              .read(notificationServiceProvider)
+              .scheduleTrialEndReminder());
           final isReturning = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
           if (isReturning) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -1493,6 +1770,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
 
     if (success && context.mounted) {
+      // v7: yearly purchases start a 7-day trial — schedule the promised
+      // day-5 reminder (one-off local notification, exact-ID replaceable).
+      if (_selectedPlan.contains('yearly')) {
+        unawaited(ref
+            .read(notificationServiceProvider)
+            .scheduleTrialEndReminder());
+      }
       if (isSubscribed || isReturningUser) {
         // Existing user upgrading — snackbar + go home
         ScaffoldMessenger.of(context).showSnackBar(

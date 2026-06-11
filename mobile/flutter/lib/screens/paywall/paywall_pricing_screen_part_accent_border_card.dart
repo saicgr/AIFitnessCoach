@@ -782,22 +782,24 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
           ),
         ),
 
-        // Fire emoji and title
-        Text(AppLocalizations.of(context).habitsCardU1f525, style: TextStyle(fontSize: 40)),
-        const SizedBox(height: 8),
+        // v7: loss framing — the user is abandoning a plan that was built
+        // for them, not missing a deal.
         Text(
-          AppLocalizations.of(context).paywallPricingScreenWaitSpecialOffer,
+          AppLocalizations.of(context).paywallV7DownsellHeadline,
+          textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
+            fontFamily: 'Anton',
+            fontSize: 26,
+            height: 1.05,
             color: colors.textPrimary,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Text(
-          AppLocalizations.of(context).paywallPricingScreenExclusiveYearlyDiscountJust,
+          AppLocalizations.of(context).paywallV7DownsellSub,
           style: TextStyle(
             fontSize: 13,
+            height: 1.45,
             color: colors.textSecondary,
           ),
           textAlign: TextAlign.center,

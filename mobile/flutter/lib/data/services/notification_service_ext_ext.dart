@@ -25,6 +25,11 @@ extension NotificationServiceScheduled on NotificationService {
   static const int _afternoonNudgeId = 8002;
   static const int _eveningBundleId = 8003;
 
+  /// Trial-end reminder (8200) — the day-5 "we'll remind you before your
+  /// trial ends" promise made on paywall page 2 (v7 redesign). One fixed
+  /// ID so re-scheduling replaces, and cancellation is exact.
+  static const int _trialEndReminderId = 8200;
+
   /// Cycle tracking reminder IDs (8100-8199). One fixed ID per reminder type
   /// so a reschedule cleanly replaces the prior instance.
   static const int _cyclePeriodApproachingId = 8100;
@@ -34,6 +39,59 @@ extension NotificationServiceScheduled on NotificationService {
   static const int _cycleBbtReminderId = 8104;
   static const int _cycleSymptomCheckinId = 8105;
   static const int _cycleLatePeriodId = 8106;
+
+  // ─────────────────────────────────────────────────────────────────
+  // Trial-end reminder (one-off)
+  // ─────────────────────────────────────────────────────────────────
+
+  /// Schedule the day-5 trial reminder: a single notification 2 days
+  /// before the 7-day trial ends (i.e. [trialStartedAt] + 5 days) at
+  /// 10:00 local time. This is the promise made on the paywall's
+  /// reminder page — it MUST actually fire (App Store polices this).
+  Future<void> scheduleTrialEndReminder({DateTime? trialStartedAt}) async {
+    final start = trialStartedAt ?? DateTime.now();
+    final local = start.add(const Duration(days: 5));
+    var fireAt = tz.TZDateTime(
+        tz.local, local.year, local.month, local.day, 10);
+    if (fireAt.isBefore(tz.TZDateTime.now(tz.local))) {
+      fireAt = tz.TZDateTime.now(tz.local).add(const Duration(hours: 1));
+    }
+
+    final channelConfig = NotificationService._channelConfigs['streak_alert']!;
+    final androidDetails = AndroidNotificationDetails(
+      channelConfig.id,
+      channelConfig.name,
+      channelDescription: channelConfig.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@drawable/ic_launcher_monochrome',
+      color: channelConfig.color,
+    );
+
+    const title = 'Your free trial ends in 2 days';
+    const body =
+        'Heads up, as promised — your membership starts in 2 days. '
+        'Cancel anytime in Settings if it isn\'t for you.';
+
+    await _localNotifications.zonedSchedule(
+      _trialEndReminderId,
+      title,
+      body,
+      fireAt,
+      NotificationDetails(
+          android: androidDetails, iOS: const DarwinNotificationDetails()),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload('trial_reminder', title, body),
+    );
+    debugPrint('🔔 [Schedule] Trial-end reminder scheduled for $fireAt');
+  }
+
+  /// Cancel the day-5 trial reminder (subscription cancelled/changed).
+  Future<void> cancelTrialEndReminder() async {
+    await _localNotifications.cancel(_trialEndReminderId);
+  }
 
   // ─────────────────────────────────────────────────────────────────
   // Template Rotation
