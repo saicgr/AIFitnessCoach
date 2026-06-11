@@ -24,12 +24,64 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const OG_DIR = path.join(ROOT, 'public/og');
 const OUT_DIR = path.join(OG_DIR, 'tools');
+const GLOSSARY_OUT_DIR = path.join(OG_DIR, 'glossary');
 const FORCE = process.argv.includes('--force');
+
+// Anton (the brand display face) inlined as base64 so Puppeteer's
+// setContent page can use it without any network/file fetch.
+let antonFontFace = '';
+try {
+  const woff2 = await fs.readFile(
+    path.join(ROOT, 'node_modules/@fontsource/anton/files/anton-latin-400-normal.woff2'),
+  );
+  antonFontFace = `@font-face { font-family:'Anton'; src:url(data:font/woff2;base64,${woff2.toString('base64')}) format('woff2'); }`;
+} catch {
+  // Falls back to the condensed system stack below.
+}
+
+// The real app icon (orange Z), inlined for the card's brand chip so share
+// cards match the Play Store listing exactly.
+let appIconDataUri = '';
+try {
+  const icon = await fs.readFile(path.join(ROOT, 'public/zealova-logo.png'));
+  appIconDataUri = `data:image/png;base64,${icon.toString('base64')}`;
+} catch {
+  // Chip falls back to the lettered div.
+}
+
+// Glossary share cards — public/og/glossary/<slug>.png, referenced by
+// GlossaryShell's og:image meta.
+const GLOSSARY_CARDS = [
+  { slug: '1rm', term: 'One-Rep Max (1RM)' },
+  { slug: 'tdee', term: 'TDEE' },
+  { slug: 'bmr', term: 'BMR' },
+  { slug: 'macros', term: 'Macros' },
+  { slug: 'progressive-overload', term: 'Progressive Overload' },
+  { slug: 'rir-rpe', term: 'RIR & RPE' },
+  { slug: 'deload', term: 'Deload' },
+  { slug: 'cut-bulk', term: 'Cutting & Bulking' },
+  { slug: 'mesocycle', term: 'Mesocycle' },
+  { slug: 'wilks-score', term: 'Wilks Score' },
+  { slug: 'body-fat-percentage', term: 'Body Fat Percentage' },
+  { slug: 'sleep-cycles', term: 'Sleep Cycles' },
+  { slug: 'intermittent-fasting', term: 'Intermittent Fasting' },
+  { slug: 'vo2-max', term: 'VO2 Max' },
+  { slug: 'zone-2-cardio', term: 'Zone 2 Cardio' },
+];
 
 // Static (non-tool) marketing pages that need their own 1200x630 share card.
 // Rendered to public/og/<slug>.png. Add an entry + reference it from the
 // page's og:image meta tag.
 const STATIC_CARDS = [
+  {
+    slug: 'home',
+    kicker: 'AI workout + meal coach',
+    title: 'Your AI coach. Every rep. Every meal.',
+    tagline:
+      'Personalized training plans, real-time coaching mid-set, photo food logging, and a restaurant menu scanner. Live on Google Play.',
+    footLeft: '7-day free trial · no credit card',
+    footRight: 'zealova.com',
+  },
   {
     slug: 'roadmap',
     kicker: 'Product Roadmap',
@@ -83,35 +135,46 @@ function esc(s) {
     .replace(/>/g, '&gt;');
 }
 
-// Generic 1200x630 brand card. Used for both tool cards and static-page cards.
+// Generic 1200x630 brand card ("dark kinetic volt" identity). Used for
+// tool cards, glossary cards, and static-page cards.
 function cardHtml({ kicker, title, tagline, footLeft, footRight }) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
+  ${antonFontFace}
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:1200px; height:630px; }
   body {
     display:flex; flex-direction:column; justify-content:space-between;
     padding:72px;
-    background:linear-gradient(135deg,#052e16 0%,#09090b 62%);
+    background:
+      radial-gradient(80% 60% at 100% 0%, rgba(255,122,0,0.14), transparent 60%),
+      radial-gradient(60% 50% at 0% 100%, rgba(150,60,0,0.12), transparent 65%),
+      #050505;
     color:#fff;
     font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   }
-  .brand { display:flex; align-items:center; gap:14px; font-size:26px; font-weight:700; }
+  .brand { display:flex; align-items:center; gap:14px; font-size:28px;
+    font-family:'Anton','Arial Narrow',sans-serif; text-transform:uppercase;
+    letter-spacing:1px; }
   .logo {
-    width:42px; height:42px; border-radius:12px; background:#10b981;
+    width:42px; height:42px; border-radius:12px; background:#FF7A00;
     display:flex; align-items:center; justify-content:center;
-    color:#052e16; font-weight:900; font-size:26px;
+    color:#050505; font-weight:900; font-size:26px;
+    font-family:'Anton','Arial Narrow',sans-serif;
+    overflow:hidden;
   }
-  .kicker { font-size:22px; font-weight:600; color:#34d399;
-    text-transform:uppercase; letter-spacing:3px; margin-bottom:18px; }
-  .title { font-size:72px; font-weight:900; line-height:1.05;
-    letter-spacing:-2px; max-width:1056px; }
-  .tagline { margin-top:22px; font-size:27px; color:#a1a1aa;
+  .logo img { width:100%; height:100%; object-fit:cover; }
+  .kicker { font-size:22px; font-weight:600; color:#FF7A00;
+    text-transform:uppercase; letter-spacing:4px; margin-bottom:18px; }
+  .title { font-size:88px; line-height:0.98; text-transform:uppercase;
+    font-family:'Anton','Arial Narrow',sans-serif; font-weight:400;
+    letter-spacing:0; max-width:1056px; }
+  .tagline { margin-top:24px; font-size:27px; color:#a1a1aa;
     line-height:1.4; max-width:1000px; }
   .foot { display:flex; align-items:center; justify-content:space-between;
     font-size:22px; color:#a1a1aa; }
-  .accent { color:#34d399; font-weight:700; }
+  .accent { color:#FF7A00; font-weight:700; }
   </style></head><body>
-    <div class="brand"><div class="logo">Z</div><span>Zealova</span></div>
+    <div class="brand"><div class="logo">${appIconDataUri ? `<img src="${appIconDataUri}" alt="">` : 'Z'}</div><span>Zealova</span></div>
     <div>
       <div class="kicker">${esc(kicker)}</div>
       <div class="title">${esc(title)}</div>
@@ -122,6 +185,16 @@ function cardHtml({ kicker, title, tagline, footLeft, footRight }) {
       <span>${esc(footRight)}</span>
     </div>
   </body></html>`;
+}
+
+function glossaryCard(entry) {
+  return cardHtml({
+    kicker: 'Fitness Glossary',
+    title: `What is ${entry.term}?`,
+    tagline: 'Definition, formula, and how to use it in your training.',
+    footLeft: 'Plain-English fitness science',
+    footRight: 'zealova.com/glossary',
+  });
 }
 
 function toolCard(tool) {
@@ -139,6 +212,7 @@ function toolCard(tool) {
 async function main() {
   const tools = await parseRegistry();
   await fs.mkdir(OUT_DIR, { recursive: true });
+  await fs.mkdir(GLOSSARY_OUT_DIR, { recursive: true });
 
   const exists = async (p) => {
     try {
@@ -165,15 +239,23 @@ async function main() {
     }
   }
 
-  if (pendingTools.length === 0 && pendingStatic.length === 0) {
+  // Glossary cards still needing a PNG.
+  const pendingGlossary = [];
+  for (const g of GLOSSARY_CARDS) {
+    if (FORCE || !(await exists(path.join(GLOSSARY_OUT_DIR, `${g.slug}.png`)))) {
+      pendingGlossary.push(g);
+    }
+  }
+
+  if (pendingTools.length === 0 && pendingStatic.length === 0 && pendingGlossary.length === 0) {
     console.log(
-      `[og] all ${tools.length} tool + ${STATIC_CARDS.length} static cards already present, nothing to render`,
+      `[og] all ${tools.length} tool + ${GLOSSARY_CARDS.length} glossary + ${STATIC_CARDS.length} static cards already present, nothing to render`,
     );
     return;
   }
 
   console.log(
-    `[og] rendering ${pendingTools.length} tool + ${pendingStatic.length} static OG card(s)...`,
+    `[og] rendering ${pendingTools.length} tool + ${pendingGlossary.length} glossary + ${pendingStatic.length} static OG card(s)...`,
   );
   const browser = await puppeteer.launch({
     headless: 'new',
@@ -194,6 +276,15 @@ async function main() {
       console.error(`[og] FAIL tool ${t.slug}: ${err.message}`);
     }
   }
+  for (const g of pendingGlossary) {
+    try {
+      await page.setContent(glossaryCard(g), { waitUntil: 'load' });
+      await page.screenshot({ path: path.join(GLOSSARY_OUT_DIR, `${g.slug}.png`), type: 'png', clip });
+      ok++;
+    } catch (err) {
+      console.error(`[og] FAIL glossary ${g.slug}: ${err.message}`);
+    }
+  }
   for (const c of pendingStatic) {
     try {
       await page.setContent(cardHtml(c), { waitUntil: 'load' });
@@ -205,7 +296,7 @@ async function main() {
   }
 
   await browser.close();
-  console.log(`[og] done. ${ok}/${pendingTools.length + pendingStatic.length} cards rendered.`);
+  console.log(`[og] done. ${ok}/${pendingTools.length + pendingGlossary.length + pendingStatic.length} cards rendered.`);
 }
 
 main().catch((err) => {
