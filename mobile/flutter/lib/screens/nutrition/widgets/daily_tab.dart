@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/chrome_constants.dart';
 import '../../../core/theme/theme_colors.dart';
-import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
@@ -639,13 +639,13 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   const SizedBox(height: 12),
                 ],
 
-                // Clearance for the floating Daily / Recipes / Patterns
-                // glass tab bar (sits at viewPadding.bottom + 76, height 56)
-                // plus the MainShell nav below it.
+                // Clearance for the floating MainShell nav. The Daily /
+                // Recipes / Patterns selector moved to a top segmented
+                // control (chrome consolidation Variant A, 2026-06), so the
+                // old 76px sub-tab-bar clearance is gone.
                 SizedBox(
                   height: MediaQuery.of(context).viewPadding.bottom +
-                      76 +
-                      kLiquidGlassActionBarHeight +
+                      kMainNavClearance +
                       16,
                 ),
               ],

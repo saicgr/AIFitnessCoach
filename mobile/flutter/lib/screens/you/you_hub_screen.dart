@@ -36,8 +36,8 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/providers/you_hub_tab_request_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/minigame_unlock_service.dart';
-import '../../widgets/floating_tab_bar.dart';
-import '../../widgets/liquid_glass_action_bar.dart';
+import '../../core/constants/chrome_constants.dart';
+import '../../widgets/top_segmented_control.dart';
 import '../../widgets/minigame/nutrient_rush_game.dart';
 import '../profile/profile_screen.dart';
 import 'tabs/overview_tab.dart';
@@ -45,12 +45,13 @@ import 'tabs/stats_rewards_tab.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
-/// Bottom inset every You-hub sub-tab body must reserve so the stacked
-/// floating chrome (sub-tab pill + 12 px gap + main nav + 24 px breathing
-/// room) never clips the last row of content. Callers add this on top of
+/// Bottom inset every You-hub sub-tab body must reserve so the floating
+/// main nav (+ 24 px breathing room) never clips the last row of content.
+/// The sub-tab pill no longer stacks down here — it moved to a top
+/// segmented control (chrome consolidation Variant A, 2026-06) — so the
+/// inset shrank by the old pill height + gap. Callers add this on top of
 /// `MediaQuery.viewPadding.bottom`.
-const double kYouHubBodyBottomInset =
-    kFloatingTabBarHeight + 12 + kLiquidGlassActionBarHeight + 24;
+const double kYouHubBodyBottomInset = kMainNavClearance + 24;
 
 class YouHubScreen extends ConsumerStatefulWidget {
   /// Initial tab index (0 = Overview, 1 = Profile, 2 = Stats & Rewards).
@@ -294,6 +295,35 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                     ],
                   ),
                 ),
+                // Sub-tab switcher — top segmented control (chrome
+                // consolidation Variant A, 2026-06). Replaces the floating
+                // Liquid Glass bar that used to stack above the MainShell
+                // nav, so this tab has exactly one floating bar.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: AnimatedBuilder(
+                    animation: _tabController,
+                    builder: (_, __) => TopSegmentedControl(
+                      accentColor: accent,
+                      selectedIndex: _tabController.index,
+                      onSelected: (i) => _tabController.animateTo(i),
+                      items: [
+                        TopSegmentItem(
+                          label: AppLocalizations.of(context).youHubOverview,
+                          icon: Icons.home_outlined,
+                        ),
+                        TopSegmentItem(
+                          label: AppLocalizations.of(context).navProfile,
+                          icon: Icons.person_outline,
+                        ),
+                        TopSegmentItem(
+                          label: AppLocalizations.of(context).youHubStats,
+                          icon: Icons.emoji_events_outlined,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
@@ -305,39 +335,6 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                   ),
                 ),
               ],
-            ),
-            // Floating iOS 26 Liquid Glass tab bar — moves the
-            // Overview / Profile / Stats & Rewards tabs to the thumb-zone
-            // at the bottom, matching the Nutrition + Discover treatment.
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: MediaQuery.of(context).viewPadding.bottom + 68,
-              child: Center(
-                child: AnimatedBuilder(
-                  animation: _tabController,
-                  builder: (_, __) => FloatingTabBar(
-                    mode: FloatingTabBarMode.viewSwitcher,
-                    accentColor: accent,
-                    selectedIndex: _tabController.index,
-                    onTap: (i) => _tabController.animateTo(i),
-                    items: [
-                      FloatingTabItem(
-                        label: AppLocalizations.of(context).youHubOverview,
-                        icon: Icons.home_outlined,
-                      ),
-                      FloatingTabItem(
-                        label: AppLocalizations.of(context).navProfile,
-                        icon: Icons.person_outline,
-                      ),
-                      FloatingTabItem(
-                        label: AppLocalizations.of(context).youHubStats,
-                        icon: Icons.emoji_events_outlined,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ),
 
             // Unlock celebration confetti — fires from the top center when

@@ -20,7 +20,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/data_cache_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
-import 'widgets/glass_nutrition_tab_bar.dart';
+import '../../widgets/top_segmented_control.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/main_shell.dart';
@@ -811,10 +811,33 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 onDaySelected: _jumpToDate,
               ),
             ),
-            // Tab Bar moved to a floating glassmorphic pill bar docked just
-            // above the bottom nav (see Positioned widget below). Keeping
-            // this slot empty preserves the column rhythm while the actual
-            // selector lives where the user's thumb naturally rests.
+            // Sub-tab switcher — top segmented control (chrome consolidation
+            // Variant A, 2026-06). Replaces the floating glassmorphic pill
+            // that used to stack above the MainShell nav, so this tab has
+            // exactly one floating bar.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: AnimatedBuilder(
+                animation: _tabController,
+                builder: (_, __) => TopSegmentedControl(
+                  accentColor: accentColor,
+                  selectedIndex: _tabController.index,
+                  onSelected: (i) => _tabController.animateTo(i),
+                  items: [
+                    TopSegmentItem(
+                        label: AppLocalizations.of(context).nutritionDailyTab,
+                        icon: Icons.restaurant_menu_rounded),
+                    TopSegmentItem(
+                        label: AppLocalizations.of(context).nutritionRecipesTab,
+                        icon: Icons.menu_book_rounded),
+                    TopSegmentItem(
+                        label:
+                            AppLocalizations.of(context).nutritionPatternsTab,
+                        icon: Icons.insights_outlined),
+                  ],
+                ),
+              ),
+            ),
 
           // Tab Content.
           //
@@ -911,30 +934,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ],
         ),
       ),
-      ),
-      // Floating glassmorphic tab selector. Docked above MainShell's
-      // bottom nav so the four sub-screens are reachable from the thumb
-      // zone instead of the screen top. The Stack is bounded by the
-      // Scaffold so MediaQuery.viewPadding.bottom gives the safe-area
-      // inset; MainShell's nav adds another ~80px on top of that.
-      Positioned(
-        left: 0,
-        right: 0,
-        // Sit a small gap above the floating MainShell nav bar. The nav pill
-        // (52px tall) sits at viewPadding.bottom + 10, so its top edge is at
-        // viewPadding.bottom + 62 — +68 leaves a tidy 6px gap.
-        bottom: MediaQuery.of(context).viewPadding.bottom + 68,
-        child: Center(
-          child: GlassNutritionTabBar(
-            controller: _tabController,
-            accentColor: accentColor,
-            items: [
-              NutritionTabItem(label: AppLocalizations.of(context).nutritionDailyTab, icon: Icons.restaurant_menu_rounded),
-              NutritionTabItem(label: AppLocalizations.of(context).nutritionRecipesTab, icon: Icons.menu_book_rounded),
-              NutritionTabItem(label: AppLocalizations.of(context).nutritionPatternsTab, icon: Icons.insights_outlined),
-            ],
-          ),
-        ),
       ),
       // First-run spotlight tour. Anchors + copy live in
       // `widgets/tooltips/tours/nutrition_tour.dart`. Mounted only while the
