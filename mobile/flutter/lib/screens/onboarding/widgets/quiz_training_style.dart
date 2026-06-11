@@ -362,14 +362,14 @@ class _QuizTrainingStyleState extends State<QuizTrainingStyle> {
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              Icon(Icons.auto_fix_high_rounded, size: 18, color: t.textPrimary),
+                                              Icon(Icons.auto_fix_high_rounded, size: 18, color: t.buttonText),
                                               const SizedBox(width: 8),
                                               Text(
                                                 'Update to ${_getRecommendedDaysForSplit(widget.selectedSplit)} days/week',
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w600,
-                                                  color: t.textPrimary,
+                                                  color: t.buttonText,
                                                 ),
                                               ),
                                             ],

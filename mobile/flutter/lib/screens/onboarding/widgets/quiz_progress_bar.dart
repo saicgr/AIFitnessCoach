@@ -2,20 +2,66 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import 'onboarding_theme.dart';
 
-/// Glassmorphic animated progress bar for quiz screens.
+/// Animated progress bar for quiz screens.
+///
+/// v7 redesign: when [segments] + [currentStep] are provided the bar renders
+/// as discrete orange ticks (one per quiz step — the approved "System A"
+/// segmented progress). Without them it falls back to the continuous
+/// gradient bar, so any other consumer keeps working unchanged.
 class QuizProgressBar extends StatelessWidget {
   final double progress;
   final Duration duration;
+
+  /// Total number of discrete steps to render (e.g. 11 quiz questions).
+  final int? segments;
+
+  /// Zero-based index of the current step; ticks 0..currentStep light up.
+  final int? currentStep;
 
   const QuizProgressBar({
     super.key,
     required this.progress,
     this.duration = const Duration(milliseconds: 400),
+    this.segments,
+    this.currentStep,
   });
 
   @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
+
+    if (segments != null && currentStep != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: List.generate(segments!, (i) {
+            final on = i <= currentStep!;
+            return Expanded(
+              child: AnimatedContainer(
+                duration: duration,
+                curve: Curves.easeOutCubic,
+                height: 4,
+                margin: EdgeInsetsDirectional.only(
+                  end: i == segments! - 1 ? 0 : 5,
+                ),
+                decoration: BoxDecoration(
+                  color: on ? t.selectionAccent : t.cardFill,
+                  borderRadius: BorderRadius.circular(2),
+                  boxShadow: on
+                      ? [
+                          BoxShadow(
+                            color: t.selectionAccent.withValues(alpha: 0.5),
+                            blurRadius: 8,
+                          ),
+                        ]
+                      : null,
+                ),
+              ),
+            );
+          }),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),

@@ -445,7 +445,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                strokeWidth: 2, color: t.accent),
+                                strokeWidth: 2, color: t.buttonText),
                           ),
                         )
                       : Row(
@@ -457,13 +457,13 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
                                 color:
-                                    _isValid ? t.accent : t.textDisabled,
+                                    _isValid ? t.buttonText : t.textDisabled,
                               ),
                             ),
                             if (_isValid) ...[
                               const SizedBox(width: 8),
                               Icon(Icons.auto_awesome_rounded,
-                                  size: 20, color: t.accent),
+                                  size: 20, color: t.buttonText),
                             ],
                           ],
                         ),

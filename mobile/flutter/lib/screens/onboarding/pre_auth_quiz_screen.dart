@@ -650,7 +650,12 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             headerTitle: _getStepTitle(_currentQuestion),
             headerSubtitle: _getStepSubtitle(_currentQuestion),
             headerExtra: isFoldableOpen ? _getStepHeaderExtra(context, _currentQuestion) : null,
-            progressBar: QuizProgressBar(progress: _progress),
+            progressBar: QuizProgressBar(
+              progress: _progress,
+              // v7: discrete System-A ticks, one per quiz step.
+              segments: 11,
+              currentStep: _currentQuestion,
+            ),
             headerOverlay: QuizHeader(
               currentQuestion: _currentQuestion,
               totalQuestions: _totalQuestions,

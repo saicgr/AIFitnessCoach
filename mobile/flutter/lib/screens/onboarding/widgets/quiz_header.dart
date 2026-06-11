@@ -1,10 +1,17 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
+import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/glass_back_button.dart';
 import 'onboarding_theme.dart';
 
-/// Floating header for quiz screens with glassmorphic back button and counter.
+/// Floating header for quiz screens: back button + time-remaining label.
+///
+/// v7 redesign: the "Step X of 6" counter pill is replaced by a
+/// time-remaining estimate ("~2 min left") — completion anxiety research
+/// favors time over step counts, and the segmented progress bar below
+/// already communicates position.
 class QuizHeader extends StatelessWidget {
   final int currentQuestion;
   final int totalQuestions;
@@ -21,20 +28,17 @@ class QuizHeader extends StatelessWidget {
     this.onBackToWelcome,
   });
 
-  String _getProgressText() {
-    if (currentQuestion <= 5) {
-      return 'Step ${currentQuestion + 1} of 6';
-    } else if (currentQuestion >= 6 && currentQuestion <= 9) {
-      return 'Personalize your plan';
-    } else if (currentQuestion >= 10) {
-      return 'Nutrition setup';
-    }
-    return 'Step ${currentQuestion + 1} of $totalQuestions';
+  /// Rough per-question pace (~15s) → whole minutes, floored at 1 so the
+  /// label never promises "0 min" while questions remain.
+  int get _minutesLeft {
+    final remaining = math.max(1, totalQuestions - currentQuestion);
+    return math.max(1, (remaining * 15 / 60).ceil());
   }
 
   @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
+    final l10n = AppLocalizations.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -51,27 +55,16 @@ class QuizHeader extends StatelessWidget {
           else
             const SizedBox(width: 44),
 
-          // Glassmorphic counter pill
-          ClipRRect(
-            borderRadius: BorderRadius.circular(17),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: t.cardFill,
-                  borderRadius: BorderRadius.circular(17),
-                  border: Border.all(color: t.borderDefault, width: 0.5),
-                ),
-                child: Text(
-                  _getProgressText(),
-                  style: TextStyle(
-                    color: t.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.3,
-                  ),
-                ),
+          Padding(
+            padding: const EdgeInsetsDirectional.only(end: 4),
+            child: Text(
+              l10n.quizMinutesLeft(_minutesLeft),
+              style: TextStyle(
+                color: t.accent,
+                fontFamily: 'Barlow Condensed',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 2,
               ),
             ),
           ),

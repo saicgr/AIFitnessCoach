@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'onboarding_theme.dart';
@@ -49,46 +48,47 @@ class QuizContinueButton extends StatelessWidget {
             flex: onSkip != null ? 5 : 1,
             child: GestureDetector(
               onTap: canProceed ? onPressed : null,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: canProceed
-                          ? LinearGradient(
-                              colors: t.buttonGradient,
-                              begin: AlignmentDirectional.topStart,
-                              end: AlignmentDirectional.bottomEnd,
-                            )
-                          : null,
-                      color: canProceed ? null : t.cardFill,
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: canProceed ? t.buttonBorder : t.borderSubtle,
-                        width: 1,
+              // v7: solid brand-orange CTA (System A) — the glass blur is
+              // gone, so no BackdropFilter cost on every quiz step.
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: canProceed
+                      ? LinearGradient(
+                          colors: t.buttonGradient,
+                          begin: AlignmentDirectional.topStart,
+                          end: AlignmentDirectional.bottomEnd,
+                        )
+                      : null,
+                  color: canProceed ? null : t.cardFill,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: canProceed
+                      ? [
+                          BoxShadow(
+                            color: t.accent.withValues(alpha: 0.3),
+                            blurRadius: 18,
+                            offset: const Offset(0, 8),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      isLastQuestion ? AppLocalizations.of(context).quizContinueButtonSeeMyPlan : AppLocalizations.of(context).onboardingContinueButton,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: canProceed ? t.buttonText : t.textDisabled,
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isLastQuestion ? AppLocalizations.of(context).quizContinueButtonSeeMyPlan : AppLocalizations.of(context).onboardingContinueButton,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: canProceed ? t.accent : t.textDisabled,
-                          ),
-                        ),
-                        if (canProceed) ...[
-                          const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward_rounded, size: 20, color: t.accent),
-                        ],
-                      ],
-                    ),
-                  ),
+                    if (canProceed) ...[
+                      const SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, size: 20, color: t.buttonText),
+                    ],
+                  ],
                 ),
               ),
             ),

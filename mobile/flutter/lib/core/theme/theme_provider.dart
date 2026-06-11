@@ -13,7 +13,10 @@ final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((r
 class ThemeModeNotifier extends StateNotifier<ThemeMode> {
   static const _themeKey = 'theme_mode';
 
-  ThemeModeNotifier() : super(ThemeMode.system) {
+  // v7 first-run redesign: fresh installs default to DARK. A user's stored
+  // choice (including an explicit 'system') always wins — only the
+  // no-stored-value case changed.
+  ThemeModeNotifier() : super(ThemeMode.dark) {
     _loadTheme();
   }
 
@@ -23,7 +26,7 @@ class ThemeModeNotifier extends StateNotifier<ThemeMode> {
       final prefs = await SharedPreferences.getInstance();
       final themeString = prefs.getString(_themeKey);
       debugPrint('🎨 [Theme] Loaded theme string from prefs: "$themeString"');
-      state = _themeFromString(themeString ?? 'system');
+      state = _themeFromString(themeString ?? 'dark');
       debugPrint('🎨 [Theme] Set theme mode to: $state');
       _updateSystemUI();
     } catch (e) {
