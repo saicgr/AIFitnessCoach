@@ -20,12 +20,31 @@
 		Adding both unblocks `flutter run` on iOS 26 simulators without
 		changing runtime behaviour. Cleared once Apple fixes the sim regression.
 	-->
+	<!--
+		Explicit version keys: with GENERATE_INFOPLIST_FILE the merged appex
+		plist was shipping WITHOUT CFBundleVersion/CFBundleShortVersionString,
+		which the iOS 26 sim installer also rejects as "Invalid placeholder
+		attributes". LITERALS, not $(MARKETING_VERSION)/$(CURRENT_PROJECT_VERSION):
+		those resolve EMPTY for this target (Generated.xcconfig with
+		FLUTTER_BUILD_NAME/NUMBER is only included by the Runner target) and
+		Xcode silently drops empty-valued keys, reproducing the install failure.
+		App Store requires the appex CFBundleShortVersionString to match the
+		app's — bump these alongside pubspec.yaml `version:` before an iOS
+		release (durable fix = include Generated.xcconfig in the extension
+		target's build configs; do that in the iOS release pass).
+	-->
+	<key>CFBundleShortVersionString</key>
+	<string>1.2.67</string>
+	<key>CFBundleVersion</key>
+	<string>1140</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>
 		<dict/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
+		<key>NSExtensionPrincipalClass</key>
+		<string></string>
 	</dict>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
