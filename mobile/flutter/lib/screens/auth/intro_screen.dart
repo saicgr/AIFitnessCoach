@@ -1,51 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../onboarding/onboarding_experiments.dart';
+import 'intro_demo/demo_clock.dart';
+import 'intro_demo/demo_scenes.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
-/// Intro Screen — Onboarding v5
+/// Intro Screen — first-run redesign v7 ("V1b full-bleed demo").
 ///
-/// Single outcome-focused screen replacing the previous 7-slide feature
-/// carousel ("Log any Meal in any way", "Track Every REP", etc). The
-/// carousel violated the video's core principle — "don't list features,
-/// sell the outcome." Cal AI ($2M/mo, $2.50/dl) opens with a single hook
-/// framed as transformation, not a sequence of feature ads.
+/// The screen IS the product: a 10-second auto-playing loop of four real
+/// app surfaces (program builder → live logging → food scan → menu
+/// analysis with live re-sort), with the pitch rising out of a scrim:
+/// "YOUR COACH IS ALREADY {TYPING/SPOTTING/COUNTING/CHOOSING}."
 ///
-/// Two CTAs:
-///   - Primary: "Build My Plan" → /onboarding-why → /pre-auth-quiz (new
-///     user funnel; the why screen is the v6 emotional anchor)
-///   - Secondary: "I have an account" → /sign-in?returning=true
-class IntroScreen extends StatefulWidget {
+/// Navigation is byte-identical to v5/v6:
+///   - Primary CTA → /onboarding-why (the emotional-anchor funnel entry)
+///   - "I have an account" → /sign-in?returning=true
+/// Any tap on the demo itself acts as the primary CTA.
+///
+/// Kill switch: `onboarding_v7_intro_demo` (PostHog, default ON, fail-open)
+/// drops back to the v5 outcome-hero layout without a redeploy.
+class IntroScreen extends ConsumerStatefulWidget {
   const IntroScreen({super.key});
 
   @override
-  State<IntroScreen> createState() => _IntroScreenState();
+  ConsumerState<IntroScreen> createState() => _IntroScreenState();
 }
 
-class _IntroScreenState extends State<IntroScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
+class _IntroScreenState extends ConsumerState<IntroScreen>
+    with TickerProviderStateMixin {
+  late final AnimationController _clock;
+  late final AnimationController _pulseController; // legacy fallback only
+  bool _demoEnabled = true;
   String _appVersion = '';
 
   @override
   void initState() {
     super.initState();
+    _clock = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: DemoClock.loopMs),
+    )..repeat();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
-    )..repeat(reverse: true);
+    );
+    _maybeFallBack();
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_intro_viewed',
+      properties: {'variant': 'v7_demo'},
+    );
     PackageInfo.fromPlatform().then((info) {
       if (mounted) setState(() => _appVersion = info.version);
     });
   }
 
+  /// Remote kill switch: explicit off → legacy v5 hero layout.
+  Future<void> _maybeFallBack() async {
+    final enabled = await OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagIntroDemoV7,
+    );
+    if (!enabled && mounted) {
+      setState(() => _demoEnabled = false);
+      _clock.stop();
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
   @override
   void dispose() {
+    _clock.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -65,7 +97,273 @@ class _IntroScreenState extends State<IntroScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    if (!_demoEnabled) return _buildLegacy(context);
+
+    final l10n = AppLocalizations.of(context);
+
+    return AnimatedBuilder(
+      animation: _clock,
+      builder: (context, _) {
+        final tMs = DemoClock.timeMs(_clock.value);
+        final scene = DemoClock.sceneOf(tMs);
+        // Scenes 0 & 2 have light backgrounds at the top of the screen.
+        final lightScene = scene == 0 || scene == 2;
+
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: lightScene
+              ? SystemUiOverlayStyle.dark
+              : SystemUiOverlayStyle.light,
+          child: Scaffold(
+            backgroundColor: const Color(0xFF0B0B0C),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ── The demo (any tap = primary CTA) ─────────────────
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _onGetStarted,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      for (var i = 0; i < DemoClock.sceneCount; i++)
+                        _scene(i, tMs),
+                    ],
+                  ),
+                ),
+
+                // ── Scrim ────────────────────────────────────────────
+                IgnorePointer(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        stops: [0.42, 0.62, 0.78],
+                        colors: [
+                          Colors.transparent,
+                          Color(0xE0080502),
+                          Color(0xFF080502),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // (No brand top bar in the demo variant — the approved V1b
+                // mockup lets each scene's own header own the top edge;
+                // returning users use the "I have an account" ghost link.)
+
+                // ── Bottom overlay: dots + headline + CTAs ───────────
+                SafeArea(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(26, 0, 26, 14),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _dots(tMs, scene),
+                          const SizedBox(height: 12),
+                          Text(
+                            l10n.introV7HeadlineLine1,
+                            style: const TextStyle(
+                              fontFamily: 'Anton',
+                              fontSize: 42,
+                              height: 1.02,
+                              color: Color(0xFFFAFAFA),
+                            ),
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                '${l10n.introV7HeadlineAlready} ',
+                                style: const TextStyle(
+                                  fontFamily: 'Anton',
+                                  fontSize: 42,
+                                  height: 1.02,
+                                  color: Color(0xFFFAFAFA),
+                                ),
+                              ),
+                              Expanded(
+                                child: AnimatedSwitcher(
+                                  duration: const Duration(milliseconds: 320),
+                                  // Start-aligned: the default layoutBuilder
+                                  // centers the word, leaving a gap after
+                                  // "ALREADY".
+                                  layoutBuilder: (current, previous) => Stack(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    children: [
+                                      ...previous,
+                                      if (current != null) current,
+                                    ],
+                                  ),
+                                  transitionBuilder: (child, anim) =>
+                                      FadeTransition(
+                                    opacity: anim,
+                                    child: SlideTransition(
+                                      position: Tween<Offset>(
+                                        begin: const Offset(0, 0.5),
+                                        end: Offset.zero,
+                                      ).animate(anim),
+                                      child: child,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    _wordFor(scene, l10n),
+                                    key: ValueKey(scene),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontFamily: 'Anton',
+                                      fontSize: 42,
+                                      height: 1.02,
+                                      color: AppColors.orange,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          GestureDetector(
+                            onTap: _onGetStarted,
+                            child: Container(
+                              width: double.infinity,
+                              height: 58,
+                              decoration: BoxDecoration(
+                                color: AppColors.orange,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.orange
+                                        .withValues(alpha: 0.35),
+                                    blurRadius: 26,
+                                    offset: const Offset(0, 10),
+                                  ),
+                                ],
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                '${l10n.introV7BuildMyPlan.toUpperCase()}  →',
+                                style: const TextStyle(
+                                  fontFamily: 'Barlow Condensed',
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 2.5,
+                                  color: Color(0xFF160B03),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Center(
+                            child: GestureDetector(
+                              onTap: _onSignIn,
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 5),
+                                child: Text(
+                                  l10n.introIAlreadyHaveAnAccount
+                                      .toUpperCase(),
+                                  style: const TextStyle(
+                                    fontFamily: 'Barlow Condensed',
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 2.5,
+                                    color: Color(0xFF7C7C84),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _wordFor(int scene, AppLocalizations l10n) => switch (scene) {
+        0 => l10n.introV7WordTyping,
+        1 => l10n.introV7WordSpotting,
+        2 => l10n.introV7WordCounting,
+        _ => l10n.introV7WordChoosing,
+      };
+
+  Widget _scene(int i, int tMs) {
+    final opacity = DemoClock.opacityFor(i, tMs);
+    if (opacity <= 0) return const SizedBox.shrink();
+    final local = DemoClock.localMs(tMs);
+    final child = switch (i) {
+      0 => ProgramBuilderScene(localMs: local),
+      1 => LiveLoggingScene(localMs: local),
+      2 => FoodScanScene(localMs: local),
+      _ => MenuAnalysisScene(localMs: local),
+    };
+    return Opacity(opacity: opacity, child: child);
+  }
+
+  Widget _dots(int tMs, int scene) {
+    return Row(
+      children: List.generate(DemoClock.sceneCount, (i) {
+        final active = i == scene;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            _clock.value = DemoClock.valueForScene(i);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Padding(
+            padding: const EdgeInsetsDirectional.only(end: 7),
+            child: active
+                ? Container(
+                    width: 22,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6B3200),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: FractionallySizedBox(
+                        widthFactor: DemoClock.sceneFraction(tMs),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.orange,
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+          ),
+        );
+      }),
+    );
+  }
+
+  // ── Legacy v5 layout (kill-switch fallback) ─────────────────────────
+
+  Widget _buildLegacy(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -96,13 +394,11 @@ class _IntroScreenState extends State<IntroScreen>
             child: Column(
               children: [
                 const SizedBox(height: 16),
-                // ── Top bar: brand (logo + name + version) + sign-in
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        // Real app icon, not a generic gradient placeholder.
                         ClipRRect(
                           borderRadius: BorderRadius.circular(9),
                           child: Image.asset(
@@ -130,12 +426,11 @@ class _IntroScreenState extends State<IntroScreen>
                             if (_appVersion.isNotEmpty) ...[
                               const SizedBox(height: 2),
                               Text(
-                                AppLocalizations.of(context)!.introScreenV(_appVersion),
+                                l10n.introScreenV(_appVersion),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
-                                  color:
-                                      textSecondary.withValues(alpha: 0.7),
+                                  color: textSecondary.withValues(alpha: 0.7),
                                   height: 1.0,
                                 ),
                               ),
@@ -157,10 +452,7 @@ class _IntroScreenState extends State<IntroScreen>
                     ),
                   ],
                 ),
-
                 const Spacer(flex: 2),
-
-                // ── Hero — actual app logo with pulsing halo
                 AnimatedBuilder(
                   animation: _pulseController,
                   builder: (_, __) {
@@ -195,10 +487,7 @@ class _IntroScreenState extends State<IntroScreen>
                       duration: 700.ms,
                       curve: Curves.elasticOut,
                     ),
-
                 const SizedBox(height: 36),
-
-                // ── Outcome-focused headline
                 Text(
                   l10n.introYourBody,
                   style: TextStyle(
@@ -209,12 +498,10 @@ class _IntroScreenState extends State<IntroScreen>
                     height: 1.0,
                   ),
                 ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.15),
-
                 const SizedBox(height: 4),
-
                 Text(
                   l10n.introYourTimeline,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 42,
                     fontWeight: FontWeight.w900,
                     color: AppColors.orange,
@@ -222,9 +509,7 @@ class _IntroScreenState extends State<IntroScreen>
                     height: 1.0,
                   ),
                 ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.15),
-
                 const SizedBox(height: 18),
-
                 Text(
                   l10n.introTagline,
                   style: TextStyle(
@@ -234,13 +519,10 @@ class _IntroScreenState extends State<IntroScreen>
                   ),
                   textAlign: TextAlign.center,
                 ).animate().fadeIn(delay: 600.ms),
-
                 const Spacer(flex: 3),
-
-                // ── Capability strip — verifiable signals, not features
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
                     color: isDark
                         ? AppColors.glassSurface.withValues(alpha: 0.5)
@@ -275,10 +557,7 @@ class _IntroScreenState extends State<IntroScreen>
                     ],
                   ),
                 ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.1),
-
                 const SizedBox(height: 24),
-
-                // ── Primary CTA
                 GestureDetector(
                   onTap: _onGetStarted,
                   child: Container(
@@ -290,7 +569,7 @@ class _IntroScreenState extends State<IntroScreen>
                         end: AlignmentDirectional.bottomEnd,
                         colors: [
                           Color(0xFFFFB366), // orangeLight
-                          AppColors.orange,  // brand orange — clean warm gradient
+                          AppColors.orange,
                         ],
                       ),
                       borderRadius: BorderRadius.circular(18),
@@ -326,9 +605,7 @@ class _IntroScreenState extends State<IntroScreen>
                     ),
                   ),
                 ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.1),
-
                 const SizedBox(height: 14),
-
                 GestureDetector(
                   onTap: _onSignIn,
                   child: Padding(
@@ -343,7 +620,6 @@ class _IntroScreenState extends State<IntroScreen>
                     ),
                   ),
                 ).animate().fadeIn(delay: 1200.ms),
-
                 const SizedBox(height: 16),
               ],
             ),

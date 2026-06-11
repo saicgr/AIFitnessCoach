@@ -26,6 +26,12 @@ class OnboardingExperiments {
   static const String flagValue = 'onboarding_value_screen';
   static const String flagPlanPreview = 'onboarding_plan_preview';
 
+  /// v7 first-run redesign kill switches (same default-ON, fail-open
+  /// semantics): explicit off = legacy layout, absent = new design.
+  static const String flagIntroDemoV7 = 'onboarding_v7_intro_demo';
+  static const String flagPaywallFounderPageV7 =
+      'onboarding_v7_paywall_founder_page';
+
   /// Experiment: move name + DOB collection (`/personal-info`) to AFTER the
   /// paywall instead of before coach-selection. Removes the one piece of pure
   /// data-collection friction sitting between the pre-auth value peak (demo
