@@ -28217,5 +28217,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "~{minutes}분 남음",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "당신의 코치는",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "이미",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "입력 중.",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "보조 중.",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "세는 중.",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "고르는 중.",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "내 플랜 만들기",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "라이브 데모",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "프로그램 빌더",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "알렉스 코치",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "주 4일 프로그램 만들어 줘 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "푸시 데이 · 월",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 목표 달성 예상일: 8월 22일",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "가자 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "푸시 데이 · 운동 1/5",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "세트 {n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "휴식 중…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 새 PR · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "코치: “225 — 10 lb PR이에요. 다음 주엔 230 갑니다.”",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "사진 기록",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ 오늘에 기록 완료 — 사진 1장, 2초",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "단백질 38g",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "탄수화물 52g",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "지방 18g",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "메뉴 분석",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8개 항목 · 3개 섹션 · 2.4초",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "정렬:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "단백질",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "탄수화물",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "염증",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "추천",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "괜찮음",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "피하기",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "목표 검토 완료 — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "체형 매칭 완료 — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "스케줄 설정 완료 — 주 {days}일",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "~20초 · 코치가 모든 세트를 직접 고르고 있어요",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "잃어버리지 마세요.",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "이제 시작해 볼까요.",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "플랜이 완성됐어요",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 목표: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "퀴즈에서 확인된 정보",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "목표 {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "{coachName}와 함께 트레이닝하기",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "창업자의 메시지",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "제가 감당할 수 없었던 코치를 직접 만들었습니다.",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "“좋은 퍼스널 트레이너는 한 달에 $400입니다. 그 돈을 쓸 수 없어서 2년에 걸쳐 직접 만들었습니다. 1,722개의 운동, 진짜 점진적 과부하 로직, 당신의 한 주를 실제로 들여다보는 코치. 저는 매일 쓰고 있습니다.”",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · 창업자",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "첫날부터 Zealova와 함께 트레이닝 중",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "“제가 금요일 하체 운동을 늘 거른다는 걸 알아채더니 그냥… 토요일로 옮겨줬어요.”",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · 초기 테스터",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "얼리 액세스 · 첫 1,000명의 멤버가 되어 보세요",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "알림 받기 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "무료 체험 활성화됨",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7일 무료, 이후 {price}/년으로 자동 갱신",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "월간 플랜 — 오늘 시작, 체험 없음",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "플랜이 삭제된다고요?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "단 한 번뿐인 창립 멤버 가격, 동일한 7일 무료 체험. 이 혜택은 다시 오지 않습니다.",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

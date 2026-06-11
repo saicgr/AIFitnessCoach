@@ -28217,5 +28217,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "~{minutes} min lagi",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "JURULATIH ANDA",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "SUDAH",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "MENAIP.",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "MEMBANTU.",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "MENGIRA.",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "MEMILIH.",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "Bina pelan saya",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "DEMO LANGSUNG",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "PEMBINA PROGRAM",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "Coach Alex",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "Bina program 4 hari saya 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "HARI PUSH · ISN",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 Tarikh sasaran dijangka: 22 Ogos",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "Jom 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "HARI PUSH · SENAMAN 1 DARIPADA 5",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "Set {n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "berehat…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 PR BAHARU · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "Jurulatih: “225 — itu PR 10 lb. Minggu depan kita cuba 230.”",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "LOG FOTO",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ Dilog ke hari ini — 1 foto, 2 saat",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "38g protein",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "52g karbo",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "18g lemak",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "Analisis Menu",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8 item · 3 bahagian · 2.4s",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "Isih:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "Protein",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "Karbo",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "Keradangan",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "Disyorkan",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "OK",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "Elakkan",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "matlamat disemak — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "badan dipadankan — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "jadual ditetapkan — {days} hari/minggu",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "~20 saat · jurulatih anda sedang memilih setiap set",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "JANGAN HILANGKANNYA.",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "MARI MULAKAN.",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "Pelan anda sudah siap",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 Sasaran: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "DISAHKAN DARIPADA KUIZ ANDA",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "Matlamat {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "Berlatih dengan {coachName}",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "NOTA DARIPADA PENGASAS",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "SAYA BINA JURULATIH YANG SAYA TAK MAMPU BAYAR.",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "“Jurulatih peribadi yang bagus berharga $400/bulan. Saya tak mampu membayarnya, jadi saya luangkan dua tahun untuk membinanya: 1,722 senaman, logik progresi sebenar, jurulatih yang benar-benar melihat minggu anda. Saya menggunakannya setiap hari.”",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · pengasas",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "berlatih dengan Zealova sejak hari pertama",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "“Ia perasan saya selalu langkau hari kaki Jumaat dan terus… mengalihkannya ke Sabtu.”",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · penguji awal",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "Akses awal · jadilah antara 1,000 ahli pertama",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "Ingatkan saya 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "Percubaan percuma diaktifkan",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7 hari percuma, kemudian diperbaharui automatik pada {price}/tahun",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "Pelan bulanan — bermula hari ini, tiada percubaan",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "PELAN ANDA AKAN DIPADAM?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "Harga ahli pengasas sekali sahaja, percubaan percuma 7 hari yang sama. Tawaran ini takkan kembali.",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

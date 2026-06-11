@@ -28217,5 +28217,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "残り約{minutes}分",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "あなたのコーチは",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "もう",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "入力中。",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "サポート中。",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "カウント中。",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "選択中。",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "プランを作成",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "ライブデモ",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "プログラムビルダー",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "コーチ・アレックス",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "週4日のプログラムを作って 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "プッシュデー · 月",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 目標達成予測日: 8月22日",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "よし、やろう 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "プッシュデー · 種目 1/5",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "セット{n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "休憩中…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 新PR · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "コーチ:「225 — 10 lbのPR更新だ。来週は230でいこう。」",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "写真で記録",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ 今日の記録に追加 — 写真1枚、2秒",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "タンパク質38g",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "炭水化物52g",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "脂質18g",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "メニュー分析",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8品 · 3セクション · 2.4秒",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "並び替え:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "タンパク質",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "炭水化物",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "炎症",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "おすすめ",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "OK",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "避ける",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "目標を確認 — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "体型をマッチ — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "スケジュール設定 — 週{days}日",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "約20秒 · コーチがすべてのセットを選んでいます",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "手放さないで。",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "さあ、始めましょう。",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "あなたのプランが完成しました",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 目標: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "クイズの回答から確認済み",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "目標 {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "{coachName}とトレーニング",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "創業者からのメッセージ",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "手が届かなかったコーチを、自分で作った。",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "「優秀なパーソナルトレーナーは$400/月。とても払えなかったので、2年かけて自分で作りました。1,722種目、本物の漸進ロジック、あなたの1週間を実際に見てくれるコーチ。私自身、毎日使っています。」",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · 創業者",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "初日からZealovaでトレーニング中",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "「金曜の脚トレをいつもサボることに気づいて、さらっと…土曜に移してくれた。」",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · 初期テスター",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "早期アクセス · 最初の1,000人のメンバーに",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "リマインドして 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "無料トライアル有効",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7日間無料、その後{price}/年で自動更新",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "月額プラン — 今日から開始、トライアルなし",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "プランが削除されてもいい?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "一度きりの創業メンバー価格、同じ7日間無料トライアル付き。このオファーは二度と戻りません。",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

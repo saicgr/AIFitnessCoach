@@ -28216,5 +28216,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "~{minutes} min rimasti",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "IL TUO COACH STA",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "GIÀ",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "SCRIVENDO.",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "ASSISTENDO.",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "CONTANDO.",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "SCEGLIENDO.",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "Crea il mio piano",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "DEMO LIVE",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "CREAZIONE PROGRAMMA",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "Coach Alex",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "Crea il mio programma di 4 giorni 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "PUSH DAY · LUN",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 Data obiettivo prevista: 22 ago",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "Andiamo 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "PUSH DAY · ESERCIZIO 1 DI 5",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "Serie {n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "recupero…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 NUOVO PR · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "Coach: “225 — è un PR di 10 lb. La prossima settimana andiamo a 230.”",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "REGISTRAZIONE FOTO",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ Registrato per oggi — 1 foto, 2 secondi",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "38g proteine",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "52g carboidrati",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "18g grassi",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "Analisi del menu",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8 piatti · 3 sezioni · 2,4s",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "Ordina:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "Proteine",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "Carboidrati",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "Infiammazione",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "Consigliato",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "OK",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "Da evitare",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "obiettivi esaminati — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "fisico abbinato — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "programma impostato — {days} giorni/settimana",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "~20 secondi · il tuo coach sta scegliendo ogni serie",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "NON PERDERLO.",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "INIZIAMO.",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "Il tuo piano è pronto",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 Obiettivo: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "CONFERMATO DAL TUO QUIZ",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "Obiettivo {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "Allenati con {coachName}",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "UNA NOTA DAL FONDATORE",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "HO COSTRUITO IL COACH CHE NON POTEVO PERMETTERMI.",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "“Un buon personal trainer costa $400/mese. Non potevo giustificare quella spesa, così ho passato due anni a costruirne uno: 1.722 esercizi, una vera logica di progressione, un coach che guarda davvero la tua settimana. Lo uso ogni singolo giorno.”",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · fondatore",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "si allena con Zealova dal primo giorno",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "“Ha notato che salto sempre le gambe il venerdì e le ha semplicemente… spostate al sabato.”",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · primo tester",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "Accesso anticipato · entra tra i primi 1.000 membri",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "Ricordamelo 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "Prova gratuita attiva",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7 giorni gratis, poi si rinnova automaticamente a {price}/anno",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "Piano mensile — inizia oggi, senza prova",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "IL TUO PIANO VERRÀ ELIMINATO?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "Prezzo founding member una tantum, stessa prova gratuita di 7 giorni. Questa offerta non tornerà.",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

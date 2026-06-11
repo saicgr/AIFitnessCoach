@@ -44598,4 +44598,210 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes min kvar';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'DIN COACH HÅLLER';
+
+  @override
+  String get introV7HeadlineAlready => 'REDAN PÅ ATT';
+
+  @override
+  String get introV7WordTyping => 'SKRIVA.';
+
+  @override
+  String get introV7WordSpotting => 'PASSA.';
+
+  @override
+  String get introV7WordCounting => 'RÄKNA.';
+
+  @override
+  String get introV7WordChoosing => 'VÄLJA.';
+
+  @override
+  String get introV7BuildMyPlan => 'Skapa min plan';
+
+  @override
+  String get introDemoLiveBadge => 'LIVE-DEMO';
+
+  @override
+  String get introDemoProgramBuilder => 'PROGRAMBYGGARE';
+
+  @override
+  String get introDemoCoachName => 'Coach Alex';
+
+  @override
+  String get introDemoUserAsk => 'Bygg mitt 4-dagarsprogram 💪';
+
+  @override
+  String get introDemoPushDayMon => 'PUSH-DAG · MÅN';
+
+  @override
+  String get introDemoGoalChip => '📅 Beräknat måldatum: 22 aug';
+
+  @override
+  String get introDemoUserReply => 'Nu kör vi 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'PUSH-DAG · ÖVNING 1 AV 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Set $n';
+  }
+
+  @override
+  String get introDemoResting => 'vilar…';
+
+  @override
+  String get introDemoPrChip => '🏆 NYTT PB · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Coach: ”225 — det är ett PB med 10 lb. Nästa vecka kör vi 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'FOTOLOGGNING';
+
+  @override
+  String get introDemoLoggedLine => '✓ Loggat på idag — 1 foto, 2 sekunder';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g protein';
+
+  @override
+  String get introDemoCarbsChip => '52g kolhydrater';
+
+  @override
+  String get introDemoFatChip => '18g fett';
+
+  @override
+  String get introDemoMenuTitle => 'Menyanalys';
+
+  @override
+  String get introDemoMenuMeta => '8 rätter · 3 sektioner · 2,4s';
+
+  @override
+  String get introDemoSortLabel => 'Sortera:';
+
+  @override
+  String get introDemoSortProtein => 'Protein';
+
+  @override
+  String get introDemoSortCarbs => 'Kolhydrater';
+
+  @override
+  String get introDemoSortInflammation => 'Inflammation';
+
+  @override
+  String get introDemoBadgeRecommended => 'Rekommenderas';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Undvik';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'mål genomgångna — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'kropp matchad — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'schema satt — $days dagar/vecka';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 sekunder · din coach väljer varje set';
+
+  @override
+  String get signInV7DontLoseIt => 'TAPPA INTE BORT DEN.';
+
+  @override
+  String get signInV7LetsGetStarted => 'NU SÄTTER VI IGÅNG.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Din plan är klar';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Mål: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'BEKRÄFTAT FRÅN DITT QUIZ';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Mål $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Träna med $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'EN HÄLSNING FRÅN GRUNDAREN';
+
+  @override
+  String get paywallFounderHeadline =>
+      'JAG BYGGDE COACHEN JAG INTE HADE RÅD MED.';
+
+  @override
+  String get paywallFounderQuote =>
+      '”En bra personlig tränare kostar \$400/månad. Jag kunde inte motivera det, så jag la två år på att bygga en egen: 1 722 övningar, riktig progressionslogik, en coach som faktiskt tittar på din vecka. Jag använder den varenda dag.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · grundare';
+
+  @override
+  String get paywallFounderSub => 'tränar med Zealova sedan dag ett';
+
+  @override
+  String get paywallTesterQuote =>
+      '”Den fångade att jag alltid hoppar över fredagens benpass och bara… flyttade det till lördag.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · tidig testare';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Tidig åtkomst · bli en av de första 1 000 medlemmarna';
+
+  @override
+  String get paywallRemindMeCta => 'Påminn mig 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Gratis provperiod aktiverad';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 dagar gratis, förnyas sedan automatiskt för $price/år';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Månadsplan — börjar idag, ingen provperiod';
+
+  @override
+  String get paywallV7DownsellHeadline => 'SKA DIN PLAN RADERAS?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Engångspris för grundarmedlemmar, samma 7 dagars gratis provperiod. Det här erbjudandet kommer inte tillbaka.';
 }

@@ -44707,4 +44707,209 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes dk kaldı';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'KOÇUN';
+
+  @override
+  String get introV7HeadlineAlready => 'ŞİMDİDEN';
+
+  @override
+  String get introV7WordTyping => 'YAZIYOR.';
+
+  @override
+  String get introV7WordSpotting => 'KOLLUYOR.';
+
+  @override
+  String get introV7WordCounting => 'SAYIYOR.';
+
+  @override
+  String get introV7WordChoosing => 'SEÇİYOR.';
+
+  @override
+  String get introV7BuildMyPlan => 'Planımı oluştur';
+
+  @override
+  String get introDemoLiveBadge => 'CANLI DEMO';
+
+  @override
+  String get introDemoProgramBuilder => 'PROGRAM OLUŞTURUCU';
+
+  @override
+  String get introDemoCoachName => 'Koç Alex';
+
+  @override
+  String get introDemoUserAsk => '4 günlük programımı oluştur 💪';
+
+  @override
+  String get introDemoPushDayMon => 'İTİŞ GÜNÜ · PZT';
+
+  @override
+  String get introDemoGoalChip => '📅 Öngörülen hedef tarihi: 22 Ağu';
+
+  @override
+  String get introDemoUserReply => 'Hadi başlayalım 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'İTİŞ GÜNÜ · EGZERSİZ 1/5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Set $n';
+  }
+
+  @override
+  String get introDemoResting => 'dinleniyor…';
+
+  @override
+  String get introDemoPrChip => '🏆 YENİ PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Koç: “225 — bu 10 lb\'lik bir PR. Gelecek hafta 230\'a çıkıyoruz.”';
+
+  @override
+  String get introDemoPhotoLogging => 'FOTOĞRAFLA KAYIT';
+
+  @override
+  String get introDemoLoggedLine =>
+      '✓ Bugüne kaydedildi — 1 fotoğraf, 2 saniye';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g protein';
+
+  @override
+  String get introDemoCarbsChip => '52g karbonhidrat';
+
+  @override
+  String get introDemoFatChip => '18g yağ';
+
+  @override
+  String get introDemoMenuTitle => 'Menü Analizi';
+
+  @override
+  String get introDemoMenuMeta => '8 ürün · 3 bölüm · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'Sırala:';
+
+  @override
+  String get introDemoSortProtein => 'Protein';
+
+  @override
+  String get introDemoSortCarbs => 'Karbonhidrat';
+
+  @override
+  String get introDemoSortInflammation => 'İnflamasyon';
+
+  @override
+  String get introDemoBadgeRecommended => 'Önerilen';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Kaçın';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'hedefler incelendi — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'vücuda göre eşleştirildi — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'program ayarlandı — haftada $days gün';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 saniye · koçun her seti tek tek seçiyor';
+
+  @override
+  String get signInV7DontLoseIt => 'KAYBETME.';
+
+  @override
+  String get signInV7LetsGetStarted => 'HADİ BAŞLAYALIM.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Planın hazır';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Hedef: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'TESTİNDEN DOĞRULANDI';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Hedef $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return '$coachName ile antrenman yap';
+  }
+
+  @override
+  String get paywallFounderKicker => 'KURUCUDAN BİR NOT';
+
+  @override
+  String get paywallFounderHeadline => 'GÜCÜMÜN YETMEDİĞİ KOÇU KENDİM YAPTIM.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“İyi bir kişisel antrenör ayda \$400. Bunu karşılayamazdım, ben de iki yılımı bir tane geliştirmeye verdim: 1.722 egzersiz, gerçek ilerleme mantığı, haftana gerçekten bakan bir koç. Her gün kullanıyorum.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · kurucu';
+
+  @override
+  String get paywallFounderSub =>
+      'ilk günden beri Zealova ile antrenman yapıyor';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Cuma bacak antrenmanını hep atladığımı fark etti ve… onları öylece cumartesiye taşıdı.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · ilk test kullanıcısı';
+
+  @override
+  String get paywallEarlyAccess => 'Erken erişim · ilk 1.000 üyeden biri ol';
+
+  @override
+  String get paywallRemindMeCta => 'Bana hatırlat 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Ücretsiz deneme açık';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 gün ücretsiz, ardından $price/yıl olarak otomatik yenilenir';
+  }
+
+  @override
+  String get paywallTrialToggleOff => 'Aylık plan — bugün başlar, deneme yok';
+
+  @override
+  String get paywallV7DownsellHeadline => 'PLANIN SİLİNSİN Mİ?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Tek seferlik kurucu üye fiyatı, aynı 7 günlük ücretsiz deneme. Bu teklif bir daha gelmez.';
 }

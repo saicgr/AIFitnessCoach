@@ -28217,5 +28217,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "~{minutes} ମିନିଟ୍ ବାକି",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "ଆପଣଙ୍କ କୋଚ୍",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "ଆଗରୁ",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "ଟାଇପ୍ କରୁଛନ୍ତି।",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "ସ୍ପଟ୍ କରୁଛନ୍ତି।",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "ଗଣୁଛନ୍ତି।",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "ବାଛୁଛନ୍ତି।",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "ମୋ ଯୋଜନା ତିଆରି କରନ୍ତୁ",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "ଲାଇଭ୍ ଡେମୋ",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "ପ୍ରୋଗ୍ରାମ୍ ବିଲ୍ଡର୍",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "କୋଚ୍ ଆଲେକ୍ସ",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "ମୋର 4-ଦିନିଆ ପ୍ରୋଗ୍ରାମ୍ ତିଆରି କର 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "ପୁଶ୍ ଡେ · ସୋମ",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 ଲକ୍ଷ୍ୟ ତାରିଖ ଅନୁମାନ: ଅଗଷ୍ଟ 22",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "ଚାଲ 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "ପୁଶ୍ ଡେ · 5 ରୁ ବ୍ୟାୟାମ 1",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "ସେଟ୍ {n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "ବିଶ୍ରାମ ଚାଲିଛି…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 ନୂଆ PR · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "କୋଚ୍: “225 — ଏହା 10 lb ର PR। ଆସନ୍ତା ସପ୍ତାହ ଆମେ 230 କୁ ଯିବା।”",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "ଫଟୋ ଲଗିଂ",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ ଆଜିରେ ଲଗ୍ ହେଲା — 1 ଫଟୋ, 2 ସେକେଣ୍ଡ",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "38g ପ୍ରୋଟିନ୍",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "52g କାର୍ବ",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "18g ଫ୍ୟାଟ୍",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "ମେନୁ ବିଶ୍ଳେଷଣ",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8 ଆଇଟମ୍ · 3 ବିଭାଗ · 2.4s",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "ସଜାନ୍ତୁ:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "ପ୍ରୋଟିନ୍",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "କାର୍ବ",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "ପ୍ରଦାହ",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "ସୁପାରିଶ କରାଯାଇଛି",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "ଠିକ୍ ଅଛି",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "ଏଡ଼ାନ୍ତୁ",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "ଲକ୍ଷ୍ୟ ସମୀକ୍ଷା ହେଲା — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "ଶରୀର ମେଳ ଖାଇଲା — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "କାର୍ଯ୍ୟସୂଚୀ ସେଟ୍ ହେଲା — {days} ଦିନ/ସପ୍ତାହ",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "~20 ସେକେଣ୍ଡ · ଆପଣଙ୍କ କୋଚ୍ ପ୍ରତ୍ୟେକ ସେଟ୍ ବାଛୁଛନ୍ତି",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "ଏହାକୁ ହରାନ୍ତୁ ନାହିଁ।",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "ଆସନ୍ତୁ ଆରମ୍ଭ କରିବା।",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "ଆପଣଙ୍କ ଯୋଜନା ପ୍ରସ୍ତୁତ",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 ଲକ୍ଷ୍ୟ: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "ଆପଣଙ୍କ କୁଇଜ୍‌ରୁ ନିଶ୍ଚିତ କରାଯାଇଛି",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "ଲକ୍ଷ୍ୟ {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "{coachName} ଙ୍କ ସହ ତାଲିମ କରନ୍ତୁ",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "ପ୍ରତିଷ୍ଠାତାଙ୍କ ଠାରୁ ଏକ ନୋଟ୍",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "ମୁଁ ସେହି କୋଚ୍ ତିଆରି କଲି ଯାହାର ଖର୍ଚ୍ଚ ମୁଁ ଉଠାଇ ପାରୁ ନଥିଲି।",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "“ଜଣେ ଭଲ ପର୍ସନାଲ୍ ଟ୍ରେନରଙ୍କ ପାଇଁ $400/ମାସ ଲାଗେ। ମୁଁ ତାହା ଦେଇ ପାରୁ ନଥିଲି, ତେଣୁ ମୁଁ ଦୁଇ ବର୍ଷ ଲଗାଇ ନିଜେ ଗୋଟିଏ ତିଆରି କଲି: 1,722 ବ୍ୟାୟାମ, ପ୍ରକୃତ ପ୍ରଗତି ଲଜିକ୍, ଏବଂ ଏମିତି ଜଣେ କୋଚ୍ ଯିଏ ସତରେ ଆପଣଙ୍କ ସପ୍ତାହକୁ ଦେଖନ୍ତି। ମୁଁ ଏହାକୁ ପ୍ରତିଦିନ ବ୍ୟବହାର କରେ।”",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · ପ୍ରତିଷ୍ଠାତା",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "ପ୍ରଥମ ଦିନରୁ Zealova ସହ ତାଲିମ କରୁଛନ୍ତି",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "“ମୁଁ ସବୁବେଳେ ଶୁକ୍ରବାରର ଗୋଡ଼ ଦିନ ଛାଡ଼ିଦିଏ ବୋଲି ଏହା ଜାଣିଗଲା ଏବଂ ସେଗୁଡ଼ିକୁ… ଶନିବାରକୁ ଘୁଞ୍ଚାଇଦେଲା।”",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · ପ୍ରାରମ୍ଭିକ ପରୀକ୍ଷକ",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "ପ୍ରାରମ୍ଭିକ ପ୍ରବେଶ · ପ୍ରଥମ 1,000 ସଦସ୍ୟଙ୍କ ମଧ୍ୟରୁ ଜଣେ ହୁଅନ୍ତୁ",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "ମୋତେ ମନେ ପକାନ୍ତୁ 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "ମାଗଣା ଟ୍ରାଏଲ୍ ସକ୍ଷମ ଅଛି",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7 ଦିନ ମାଗଣା, ତା'ପରେ {price}/ବର୍ଷରେ ସ୍ୱତଃ ନବୀକରଣ ହୁଏ",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "ମାସିକ ଯୋଜନା — ଆଜିଠାରୁ ଆରମ୍ଭ, କୌଣସି ଟ୍ରାଏଲ୍ ନାହିଁ",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "ଆପଣଙ୍କ ଯୋଜନା ଡିଲିଟ୍ ହୋଇଯିବ?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "ଗୋଟିଏ-ଥରର ପ୍ରତିଷ୍ଠାତା-ସଦସ୍ୟ ମୂଲ୍ୟ, ସେହି ସମାନ 7-ଦିନିଆ ମାଗଣା ଟ୍ରାଏଲ୍। ଏହି ଅଫର୍ ଆଉ ଫେରିବ ନାହିଁ।",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

@@ -44689,4 +44689,211 @@ class AppLocalizationsCs extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return 'zbývá ~$minutes min';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'VÁŠ KOUČ';
+
+  @override
+  String get introV7HeadlineAlready => 'UŽ';
+
+  @override
+  String get introV7WordTyping => 'PÍŠE.';
+
+  @override
+  String get introV7WordSpotting => 'JISTÍ.';
+
+  @override
+  String get introV7WordCounting => 'POČÍTÁ.';
+
+  @override
+  String get introV7WordChoosing => 'VYBÍRÁ.';
+
+  @override
+  String get introV7BuildMyPlan => 'Sestavit můj plán';
+
+  @override
+  String get introDemoLiveBadge => 'ŽIVÁ UKÁZKA';
+
+  @override
+  String get introDemoProgramBuilder => 'TVORBA PROGRAMU';
+
+  @override
+  String get introDemoCoachName => 'Kouč Alex';
+
+  @override
+  String get introDemoUserAsk => 'Sestavte mi program na 4 dny 💪';
+
+  @override
+  String get introDemoPushDayMon => 'PUSH DEN · PO';
+
+  @override
+  String get introDemoGoalChip => '📅 Odhadované datum cíle: 22. srpna';
+
+  @override
+  String get introDemoUserReply => 'Jdeme na to 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'PUSH DEN · CVIK 1 Z 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Série $n';
+  }
+
+  @override
+  String get introDemoResting => 'odpočinek…';
+
+  @override
+  String get introDemoPrChip => '🏆 NOVÝ REKORD · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Kouč: “225 — to je rekord o 10 lb víc. Příští týden jdeme na 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'ZÁZNAM FOTKOU';
+
+  @override
+  String get introDemoLoggedLine =>
+      '✓ Zaznamenáno na dnešek — 1 fotka, 2 sekundy';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g bílkovin';
+
+  @override
+  String get introDemoCarbsChip => '52g sacharidů';
+
+  @override
+  String get introDemoFatChip => '18g tuků';
+
+  @override
+  String get introDemoMenuTitle => 'Analýza menu';
+
+  @override
+  String get introDemoMenuMeta => '8 položek · 3 sekce · 2,4s';
+
+  @override
+  String get introDemoSortLabel => 'Řadit:';
+
+  @override
+  String get introDemoSortProtein => 'Bílkoviny';
+
+  @override
+  String get introDemoSortCarbs => 'Sacharidy';
+
+  @override
+  String get introDemoSortInflammation => 'Zánětlivost';
+
+  @override
+  String get introDemoBadgeRecommended => 'Doporučeno';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Vyhnout se';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'cíle zkontrolovány — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'tělo zohledněno — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'rozvrh nastaven — $days dní/týden';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 sekund · váš kouč vybírá každou sérii';
+
+  @override
+  String get signInV7DontLoseIt => 'NEPŘIJĎTE O NĚJ.';
+
+  @override
+  String get signInV7LetsGetStarted => 'POJĎME NA TO.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Váš plán je hotový';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Cíl: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'POTVRZENO Z VAŠEHO KVÍZU';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Cíl $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Trénujte s koučem $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'VZKAZ OD ZAKLADATELE';
+
+  @override
+  String get paywallFounderHeadline =>
+      'POSTAVIL JSEM KOUČE, KTERÉHO JSEM SI NEMOHL DOVOLIT.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Dobrý osobní trenér stojí \$400/měsíc. To jsem si nemohl obhájit, tak jsem dva roky stavěl vlastního: 1 722 cviků, skutečná logika progrese, kouč, který se opravdu dívá na váš týden. Používám ho každý den.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · zakladatel';
+
+  @override
+  String get paywallFounderSub => 'trénuje se Zealova od prvního dne';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Všimlo si, že v pátek vždycky vynechávám nohy, a prostě… je přesunulo na sobotu.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · první tester';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Předběžný přístup · buďte mezi prvními 1 000 členy';
+
+  @override
+  String get paywallRemindMeCta => 'Připomenout 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Bezplatná zkušební doba zapnuta';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 dní zdarma, poté automatické obnovení za $price/rok';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Měsíční plán — začíná dnes, bez zkušební doby';
+
+  @override
+  String get paywallV7DownsellHeadline => 'VÁŠ PLÁN SE SMAŽE?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Jednorázová cena pro zakládající členy, stejná 7denní zkušební doba zdarma. Tato nabídka se už nevrátí.';
 }

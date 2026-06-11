@@ -44772,4 +44772,210 @@ class AppLocalizationsVi extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return 'Còn ~$minutes phút';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'HLV CỦA BẠN';
+
+  @override
+  String get introV7HeadlineAlready => 'ĐÃ BẮT ĐẦU';
+
+  @override
+  String get introV7WordTyping => 'SOẠN TIN.';
+
+  @override
+  String get introV7WordSpotting => 'ĐỠ TẠ.';
+
+  @override
+  String get introV7WordCounting => 'ĐẾM REP.';
+
+  @override
+  String get introV7WordChoosing => 'CHỌN BÀI.';
+
+  @override
+  String get introV7BuildMyPlan => 'Tạo kế hoạch cho tôi';
+
+  @override
+  String get introDemoLiveBadge => 'DEMO TRỰC TIẾP';
+
+  @override
+  String get introDemoProgramBuilder => 'TRÌNH TẠO GIÁO ÁN';
+
+  @override
+  String get introDemoCoachName => 'HLV Alex';
+
+  @override
+  String get introDemoUserAsk => 'Tạo giáo án 4 ngày cho tôi 💪';
+
+  @override
+  String get introDemoPushDayMon => 'NGÀY ĐẨY · THỨ 2';
+
+  @override
+  String get introDemoGoalChip => '📅 Ngày đạt mục tiêu dự kiến: 22/8';
+
+  @override
+  String get introDemoUserReply => 'Chiến thôi 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'NGÀY ĐẨY · BÀI 1/5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Hiệp $n';
+  }
+
+  @override
+  String get introDemoResting => 'đang nghỉ…';
+
+  @override
+  String get introDemoPrChip => '🏆 PR MỚI · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'HLV: “225 — PR mới, hơn hẳn 10 lb. Tuần sau ta lên 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'GHI NHẬT KÝ BẰNG ẢNH';
+
+  @override
+  String get introDemoLoggedLine => '✓ Đã ghi vào hôm nay — 1 tấm ảnh, 2 giây';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g protein';
+
+  @override
+  String get introDemoCarbsChip => '52g carb';
+
+  @override
+  String get introDemoFatChip => '18g chất béo';
+
+  @override
+  String get introDemoMenuTitle => 'Phân tích thực đơn';
+
+  @override
+  String get introDemoMenuMeta => '8 món · 3 mục · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'Sắp xếp:';
+
+  @override
+  String get introDemoSortProtein => 'Protein';
+
+  @override
+  String get introDemoSortCarbs => 'Carb';
+
+  @override
+  String get introDemoSortInflammation => 'Gây viêm';
+
+  @override
+  String get introDemoBadgeRecommended => 'Nên chọn';
+
+  @override
+  String get introDemoBadgeOk => 'Ổn';
+
+  @override
+  String get introDemoBadgeAvoid => 'Nên tránh';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'đã xem mục tiêu — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'đã khớp thể trạng — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'đã chốt lịch — $days ngày/tuần';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 giây · HLV của bạn đang chọn từng hiệp một';
+
+  @override
+  String get signInV7DontLoseIt => 'ĐỪNG ĐỂ MẤT NÓ.';
+
+  @override
+  String get signInV7LetsGetStarted => 'BẮT ĐẦU THÔI.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Kế hoạch của bạn đã sẵn sàng';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Mục tiêu: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'ĐÃ XÁC NHẬN TỪ BÀI QUIZ CỦA BẠN';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Mục tiêu $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Tập cùng $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'ĐÔI LỜI TỪ NHÀ SÁNG LẬP';
+
+  @override
+  String get paywallFounderHeadline =>
+      'TÔI ĐÃ TẠO RA NGƯỜI HLV MÀ TÔI KHÔNG ĐỦ TIỀN THUÊ.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Một HLV cá nhân giỏi tốn \$400/tháng. Tôi không kham nổi, nên đã dành hai năm để tự xây một người: 1.722 bài tập, logic tăng tiến thực thụ, một HLV thực sự nhìn vào cả tuần của bạn. Tôi dùng nó mỗi ngày.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · nhà sáng lập';
+
+  @override
+  String get paywallFounderSub => 'tập cùng Zealova từ ngày đầu tiên';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Nó phát hiện tôi luôn bỏ buổi chân thứ Sáu và cứ thế… dời sang thứ Bảy.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · người dùng thử đầu tiên';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Truy cập sớm · trở thành một trong 1.000 thành viên đầu tiên';
+
+  @override
+  String get paywallRemindMeCta => 'Nhắc tôi 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Đã bật dùng thử miễn phí';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return 'Miễn phí 7 ngày, sau đó tự động gia hạn $price/năm';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Gói tháng — bắt đầu hôm nay, không dùng thử';
+
+  @override
+  String get paywallV7DownsellHeadline => 'KẾ HOẠCH CỦA BẠN SẼ BỊ XÓA?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Giá thành viên sáng lập chỉ một lần, vẫn 7 ngày dùng thử miễn phí. Ưu đãi này sẽ không quay lại.';
 }

@@ -44862,4 +44862,212 @@ class AppLocalizationsSw extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes dk zimebaki';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'KOCHA WAKO';
+
+  @override
+  String get introV7HeadlineAlready => 'TAYARI';
+
+  @override
+  String get introV7WordTyping => 'ANAANDIKA.';
+
+  @override
+  String get introV7WordSpotting => 'ANAKULINDA.';
+
+  @override
+  String get introV7WordCounting => 'ANAHESABU.';
+
+  @override
+  String get introV7WordChoosing => 'ANACHAGUA.';
+
+  @override
+  String get introV7BuildMyPlan => 'Tengeneza mpango wangu';
+
+  @override
+  String get introDemoLiveBadge => 'DEMO MUBASHARA';
+
+  @override
+  String get introDemoProgramBuilder => 'MJENZI WA PROGRAMU';
+
+  @override
+  String get introDemoCoachName => 'Kocha Alex';
+
+  @override
+  String get introDemoUserAsk => 'Niundie programu ya siku 4 💪';
+
+  @override
+  String get introDemoPushDayMon => 'SIKU YA PUSH · JTATU';
+
+  @override
+  String get introDemoGoalChip => '📅 Tarehe ya lengo inakadiriwa: Ago 22';
+
+  @override
+  String get introDemoUserReply => 'Twende 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'SIKU YA PUSH · ZOEZI 1 KATI YA 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Seti $n';
+  }
+
+  @override
+  String get introDemoResting => 'kupumzika…';
+
+  @override
+  String get introDemoPrChip => '🏆 REKODI MPYA · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Kocha: “225 — hiyo ni rekodi mpya, lb 10 zaidi. Wiki ijayo tunaenda 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'KUREKODI KWA PICHA';
+
+  @override
+  String get introDemoLoggedLine => '✓ Imerekodiwa leo — picha 1, sekunde 2';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g protini';
+
+  @override
+  String get introDemoCarbsChip => '52g wanga';
+
+  @override
+  String get introDemoFatChip => '18g mafuta';
+
+  @override
+  String get introDemoMenuTitle => 'Uchambuzi wa Menyu';
+
+  @override
+  String get introDemoMenuMeta => 'vipengee 8 · sehemu 3 · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'Panga:';
+
+  @override
+  String get introDemoSortProtein => 'Protini';
+
+  @override
+  String get introDemoSortCarbs => 'Wanga';
+
+  @override
+  String get introDemoSortInflammation => 'Uvimbe';
+
+  @override
+  String get introDemoBadgeRecommended => 'Inapendekezwa';
+
+  @override
+  String get introDemoBadgeOk => 'Sawa';
+
+  @override
+  String get introDemoBadgeAvoid => 'Epuka';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'malengo yamekaguliwa — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'mwili umelinganishwa — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'ratiba imewekwa — siku $days/wiki';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~sekunde 20 · kocha wako anachagua kila seti';
+
+  @override
+  String get signInV7DontLoseIt => 'USIIPOTEZE.';
+
+  @override
+  String get signInV7LetsGetStarted => 'TUANZE.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Mpango wako uko tayari';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Lengo: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz =>
+      'IMETHIBITISHWA KUTOKA KWENYE MASWALI YAKO';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Lengo $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Fanya mazoezi na $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'UJUMBE KUTOKA KWA MWANZILISHI';
+
+  @override
+  String get paywallFounderHeadline =>
+      'NILIJENGA KOCHA AMBAYE SIKUWEZA KUMLIPIA.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Kocha mzuri wa binafsi ni \$400/mwezi. Sikuweza kulipia hilo, kwa hiyo nilitumia miaka miwili kujenga wangu mwenyewe: mazoezi 1,722, mantiki halisi ya maendeleo, kocha anayeangalia wiki yako kwa kweli. Ninamtumia kila siku.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · mwanzilishi';
+
+  @override
+  String get paywallFounderSub =>
+      'anafanya mazoezi na Zealova tangu siku ya kwanza';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Iligundua kwamba huwa naruka mazoezi ya miguu ya Ijumaa na tu… ikayahamishia Jumamosi.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · mjaribu wa awali';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Ufikiaji wa mapema · kuwa mmoja wa wanachama 1,000 wa kwanza';
+
+  @override
+  String get paywallRemindMeCta => 'Nikumbushe 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Jaribio la bure limewashwa';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return 'Siku 7 bure, kisha hujisasisha kiotomatiki kwa $price/mwaka';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Mpango wa mwezi — unaanza leo, bila jaribio';
+
+  @override
+  String get paywallV7DownsellHeadline => 'MPANGO WAKO UFUTWE?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Bei ya mara moja ya mwanachama-mwanzilishi, jaribio lile lile la bure la siku 7. Ofa hii hairudi tena.';
 }

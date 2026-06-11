@@ -45046,4 +45046,210 @@ class AppLocalizationsIt extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes min rimasti';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'IL TUO COACH STA';
+
+  @override
+  String get introV7HeadlineAlready => 'GIÀ';
+
+  @override
+  String get introV7WordTyping => 'SCRIVENDO.';
+
+  @override
+  String get introV7WordSpotting => 'ASSISTENDO.';
+
+  @override
+  String get introV7WordCounting => 'CONTANDO.';
+
+  @override
+  String get introV7WordChoosing => 'SCEGLIENDO.';
+
+  @override
+  String get introV7BuildMyPlan => 'Crea il mio piano';
+
+  @override
+  String get introDemoLiveBadge => 'DEMO LIVE';
+
+  @override
+  String get introDemoProgramBuilder => 'CREAZIONE PROGRAMMA';
+
+  @override
+  String get introDemoCoachName => 'Coach Alex';
+
+  @override
+  String get introDemoUserAsk => 'Crea il mio programma di 4 giorni 💪';
+
+  @override
+  String get introDemoPushDayMon => 'PUSH DAY · LUN';
+
+  @override
+  String get introDemoGoalChip => '📅 Data obiettivo prevista: 22 ago';
+
+  @override
+  String get introDemoUserReply => 'Andiamo 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'PUSH DAY · ESERCIZIO 1 DI 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Serie $n';
+  }
+
+  @override
+  String get introDemoResting => 'recupero…';
+
+  @override
+  String get introDemoPrChip => '🏆 NUOVO PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Coach: “225 — è un PR di 10 lb. La prossima settimana andiamo a 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'REGISTRAZIONE FOTO';
+
+  @override
+  String get introDemoLoggedLine => '✓ Registrato per oggi — 1 foto, 2 secondi';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g proteine';
+
+  @override
+  String get introDemoCarbsChip => '52g carboidrati';
+
+  @override
+  String get introDemoFatChip => '18g grassi';
+
+  @override
+  String get introDemoMenuTitle => 'Analisi del menu';
+
+  @override
+  String get introDemoMenuMeta => '8 piatti · 3 sezioni · 2,4s';
+
+  @override
+  String get introDemoSortLabel => 'Ordina:';
+
+  @override
+  String get introDemoSortProtein => 'Proteine';
+
+  @override
+  String get introDemoSortCarbs => 'Carboidrati';
+
+  @override
+  String get introDemoSortInflammation => 'Infiammazione';
+
+  @override
+  String get introDemoBadgeRecommended => 'Consigliato';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Da evitare';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'obiettivi esaminati — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'fisico abbinato — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'programma impostato — $days giorni/settimana';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 secondi · il tuo coach sta scegliendo ogni serie';
+
+  @override
+  String get signInV7DontLoseIt => 'NON PERDERLO.';
+
+  @override
+  String get signInV7LetsGetStarted => 'INIZIAMO.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Il tuo piano è pronto';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Obiettivo: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'CONFERMATO DAL TUO QUIZ';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Obiettivo $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Allenati con $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'UNA NOTA DAL FONDATORE';
+
+  @override
+  String get paywallFounderHeadline =>
+      'HO COSTRUITO IL COACH CHE NON POTEVO PERMETTERMI.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Un buon personal trainer costa \$400/mese. Non potevo giustificare quella spesa, così ho passato due anni a costruirne uno: 1.722 esercizi, una vera logica di progressione, un coach che guarda davvero la tua settimana. Lo uso ogni singolo giorno.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · fondatore';
+
+  @override
+  String get paywallFounderSub => 'si allena con Zealova dal primo giorno';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Ha notato che salto sempre le gambe il venerdì e le ha semplicemente… spostate al sabato.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · primo tester';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Accesso anticipato · entra tra i primi 1.000 membri';
+
+  @override
+  String get paywallRemindMeCta => 'Ricordamelo 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Prova gratuita attiva';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 giorni gratis, poi si rinnova automaticamente a $price/anno';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Piano mensile — inizia oggi, senza prova';
+
+  @override
+  String get paywallV7DownsellHeadline => 'IL TUO PIANO VERRÀ ELIMINATO?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Prezzo founding member una tantum, stessa prova gratuita di 7 giorni. Questa offerta non tornerà.';
 }

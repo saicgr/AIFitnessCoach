@@ -42470,4 +42470,203 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '约剩 $minutes 分钟';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => '你的教练';
+
+  @override
+  String get introV7HeadlineAlready => '已经';
+
+  @override
+  String get introV7WordTyping => '在输入。';
+
+  @override
+  String get introV7WordSpotting => '在护杠。';
+
+  @override
+  String get introV7WordCounting => '在计数。';
+
+  @override
+  String get introV7WordChoosing => '在挑选。';
+
+  @override
+  String get introV7BuildMyPlan => '生成我的计划';
+
+  @override
+  String get introDemoLiveBadge => '实时演示';
+
+  @override
+  String get introDemoProgramBuilder => '训练计划生成器';
+
+  @override
+  String get introDemoCoachName => 'Alex 教练';
+
+  @override
+  String get introDemoUserAsk => '帮我安排每周 4 天的训练计划 💪';
+
+  @override
+  String get introDemoPushDayMon => '推力日 · 周一';
+
+  @override
+  String get introDemoGoalChip => '📅 预计达成目标：8月22日';
+
+  @override
+  String get introDemoUserReply => '开练 🔥';
+
+  @override
+  String get introDemoExerciseKicker => '推力日 · 第 1/5 个动作';
+
+  @override
+  String introDemoSetRow(int n) {
+    return '第 $n 组';
+  }
+
+  @override
+  String get introDemoResting => '休息中…';
+
+  @override
+  String get introDemoPrChip => '🏆 新 PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine => '教练：“225——比之前多了 10 lb，刷新 PR。下周我们冲 230。”';
+
+  @override
+  String get introDemoPhotoLogging => '拍照记录';
+
+  @override
+  String get introDemoLoggedLine => '✓ 已记录到今天——1 张照片，2 秒搞定';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g 蛋白质';
+
+  @override
+  String get introDemoCarbsChip => '52g 碳水';
+
+  @override
+  String get introDemoFatChip => '18g 脂肪';
+
+  @override
+  String get introDemoMenuTitle => '菜单分析';
+
+  @override
+  String get introDemoMenuMeta => '8 道菜 · 3 个分区 · 2.4s';
+
+  @override
+  String get introDemoSortLabel => '排序：';
+
+  @override
+  String get introDemoSortProtein => '蛋白质';
+
+  @override
+  String get introDemoSortCarbs => '碳水';
+
+  @override
+  String get introDemoSortInflammation => '炎症';
+
+  @override
+  String get introDemoBadgeRecommended => '推荐';
+
+  @override
+  String get introDemoBadgeOk => '还行';
+
+  @override
+  String get introDemoBadgeAvoid => '避开';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return '目标已确认——$goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return '体型已匹配——$body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return '日程已设定——每周 $days 天';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 => '约 20 秒 · 你的教练正在敲定每一组';
+
+  @override
+  String get signInV7DontLoseIt => '别弄丢了。';
+
+  @override
+  String get signInV7LetsGetStarted => '开始吧。';
+
+  @override
+  String get signInV7KickerPlanBuilt => '你的计划已生成';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 目标：$date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => '已根据问卷确认';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return '目标 $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return '和 $coachName 一起训练';
+  }
+
+  @override
+  String get paywallFounderKicker => '创始人的一封信';
+
+  @override
+  String get paywallFounderHeadline => '我打造了那个我请不起的教练。';
+
+  @override
+  String get paywallFounderQuote =>
+      '“一位好的私人教练每月要 \$400。我实在负担不起，于是花了两年时间自己做了一个：1,722 个动作、真实的渐进负荷逻辑、一个真正会查看你这一周的教练。我自己每天都在用。”';
+
+  @override
+  String get paywallFounderName => 'Chetan · 创始人';
+
+  @override
+  String get paywallFounderSub => '从第一天起就在用 Zealova 训练';
+
+  @override
+  String get paywallTesterQuote => '“它发现我总是跳过周五的练腿日，然后就……直接把它挪到了周六。”';
+
+  @override
+  String get paywallTesterName => 'Keertan · 早期测试者';
+
+  @override
+  String get paywallEarlyAccess => '抢先体验 · 成为首批 1,000 名会员之一';
+
+  @override
+  String get paywallRemindMeCta => '提醒我 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => '已开启免费试用';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '免费 7 天，之后按 $price/年自动续订';
+  }
+
+  @override
+  String get paywallTrialToggleOff => '月度方案——今天开始，无试用期';
+
+  @override
+  String get paywallV7DownsellHeadline => '你的计划要被删除了？';
+
+  @override
+  String get paywallV7DownsellSub => '一次性创始会员价，同样享 7 天免费试用。此优惠不会再出现。';
 }

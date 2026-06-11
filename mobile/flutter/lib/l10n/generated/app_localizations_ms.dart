@@ -44803,4 +44803,210 @@ class AppLocalizationsMs extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes min lagi';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'JURULATIH ANDA';
+
+  @override
+  String get introV7HeadlineAlready => 'SUDAH';
+
+  @override
+  String get introV7WordTyping => 'MENAIP.';
+
+  @override
+  String get introV7WordSpotting => 'MEMBANTU.';
+
+  @override
+  String get introV7WordCounting => 'MENGIRA.';
+
+  @override
+  String get introV7WordChoosing => 'MEMILIH.';
+
+  @override
+  String get introV7BuildMyPlan => 'Bina pelan saya';
+
+  @override
+  String get introDemoLiveBadge => 'DEMO LANGSUNG';
+
+  @override
+  String get introDemoProgramBuilder => 'PEMBINA PROGRAM';
+
+  @override
+  String get introDemoCoachName => 'Coach Alex';
+
+  @override
+  String get introDemoUserAsk => 'Bina program 4 hari saya 💪';
+
+  @override
+  String get introDemoPushDayMon => 'HARI PUSH · ISN';
+
+  @override
+  String get introDemoGoalChip => '📅 Tarikh sasaran dijangka: 22 Ogos';
+
+  @override
+  String get introDemoUserReply => 'Jom 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'HARI PUSH · SENAMAN 1 DARIPADA 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Set $n';
+  }
+
+  @override
+  String get introDemoResting => 'berehat…';
+
+  @override
+  String get introDemoPrChip => '🏆 PR BAHARU · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Jurulatih: “225 — itu PR 10 lb. Minggu depan kita cuba 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'LOG FOTO';
+
+  @override
+  String get introDemoLoggedLine => '✓ Dilog ke hari ini — 1 foto, 2 saat';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g protein';
+
+  @override
+  String get introDemoCarbsChip => '52g karbo';
+
+  @override
+  String get introDemoFatChip => '18g lemak';
+
+  @override
+  String get introDemoMenuTitle => 'Analisis Menu';
+
+  @override
+  String get introDemoMenuMeta => '8 item · 3 bahagian · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'Isih:';
+
+  @override
+  String get introDemoSortProtein => 'Protein';
+
+  @override
+  String get introDemoSortCarbs => 'Karbo';
+
+  @override
+  String get introDemoSortInflammation => 'Keradangan';
+
+  @override
+  String get introDemoBadgeRecommended => 'Disyorkan';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Elakkan';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'matlamat disemak — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'badan dipadankan — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'jadual ditetapkan — $days hari/minggu';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 saat · jurulatih anda sedang memilih setiap set';
+
+  @override
+  String get signInV7DontLoseIt => 'JANGAN HILANGKANNYA.';
+
+  @override
+  String get signInV7LetsGetStarted => 'MARI MULAKAN.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Pelan anda sudah siap';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Sasaran: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'DISAHKAN DARIPADA KUIZ ANDA';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Matlamat $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Berlatih dengan $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'NOTA DARIPADA PENGASAS';
+
+  @override
+  String get paywallFounderHeadline =>
+      'SAYA BINA JURULATIH YANG SAYA TAK MAMPU BAYAR.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Jurulatih peribadi yang bagus berharga \$400/bulan. Saya tak mampu membayarnya, jadi saya luangkan dua tahun untuk membinanya: 1,722 senaman, logik progresi sebenar, jurulatih yang benar-benar melihat minggu anda. Saya menggunakannya setiap hari.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · pengasas';
+
+  @override
+  String get paywallFounderSub => 'berlatih dengan Zealova sejak hari pertama';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Ia perasan saya selalu langkau hari kaki Jumaat dan terus… mengalihkannya ke Sabtu.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · penguji awal';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Akses awal · jadilah antara 1,000 ahli pertama';
+
+  @override
+  String get paywallRemindMeCta => 'Ingatkan saya 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Percubaan percuma diaktifkan';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 hari percuma, kemudian diperbaharui automatik pada $price/tahun';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Pelan bulanan — bermula hari ini, tiada percubaan';
+
+  @override
+  String get paywallV7DownsellHeadline => 'PELAN ANDA AKAN DIPADAM?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Harga ahli pengasas sekali sahaja, percubaan percuma 7 hari yang sama. Tawaran ini takkan kembali.';
 }

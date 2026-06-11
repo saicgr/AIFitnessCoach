@@ -44782,4 +44782,213 @@ class AppLocalizationsFi extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes min jäljellä';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'VALMENTAJASI';
+
+  @override
+  String get introV7HeadlineAlready => 'JO';
+
+  @override
+  String get introV7WordTyping => 'KIRJOITTAA.';
+
+  @override
+  String get introV7WordSpotting => 'VARMISTAA.';
+
+  @override
+  String get introV7WordCounting => 'LASKEE.';
+
+  @override
+  String get introV7WordChoosing => 'VALITSEE.';
+
+  @override
+  String get introV7BuildMyPlan => 'Luo suunnitelmani';
+
+  @override
+  String get introDemoLiveBadge => 'LIVE-DEMO';
+
+  @override
+  String get introDemoProgramBuilder => 'OHJELMAN RAKENTAJA';
+
+  @override
+  String get introDemoCoachName => 'Valmentaja Alex';
+
+  @override
+  String get introDemoUserAsk => 'Rakenna minulle 4 päivän ohjelma 💪';
+
+  @override
+  String get introDemoPushDayMon => 'PUSH-PÄIVÄ · MA';
+
+  @override
+  String get introDemoGoalChip => '📅 Tavoitepäivä arviolta: 22.8.';
+
+  @override
+  String get introDemoUserReply => 'Mennään 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'PUSH-PÄIVÄ · LIIKE 1/5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Sarja $n';
+  }
+
+  @override
+  String get introDemoResting => 'lepo…';
+
+  @override
+  String get introDemoPrChip => '🏆 UUSI ENNÄTYS · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Valmentaja: “225 — se on 10 lb:n ennätysparannus. Ensi viikolla mennään 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'KUVAKIRJAUS';
+
+  @override
+  String get introDemoLoggedLine =>
+      '✓ Kirjattu tälle päivälle — 1 kuva, 2 sekuntia';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g proteiinia';
+
+  @override
+  String get introDemoCarbsChip => '52g hiilihydraatteja';
+
+  @override
+  String get introDemoFatChip => '18g rasvaa';
+
+  @override
+  String get introDemoMenuTitle => 'Ruokalistan analyysi';
+
+  @override
+  String get introDemoMenuMeta => '8 annosta · 3 osiota · 2,4s';
+
+  @override
+  String get introDemoSortLabel => 'Järjestä:';
+
+  @override
+  String get introDemoSortProtein => 'Proteiini';
+
+  @override
+  String get introDemoSortCarbs => 'Hiilihydraatit';
+
+  @override
+  String get introDemoSortInflammation => 'Tulehdus';
+
+  @override
+  String get introDemoBadgeRecommended => 'Suositeltu';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Vältä';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'tavoitteet käyty läpi — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'keho huomioitu — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'aikataulu asetettu — $days päivää/viikko';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 sekuntia · valmentajasi valitsee jokaisen sarjan';
+
+  @override
+  String get signInV7DontLoseIt => 'ÄLÄ MENETÄ SITÄ.';
+
+  @override
+  String get signInV7LetsGetStarted => 'ALOITETAAN.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Suunnitelmasi on valmis';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Tavoite: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz =>
+      'VAHVISTETTU KYSELYSI PERUSTEELLA';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Tavoite $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Treenaa valmentajanasi $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'VIESTI PERUSTAJALTA';
+
+  @override
+  String get paywallFounderHeadline =>
+      'RAKENSIN VALMENTAJAN, JOHON MINULLA EI OLLUT VARAA.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Hyvä personal trainer maksaa \$400/kk. En voinut perustella sitä, joten käytin kaksi vuotta sellaisen rakentamiseen: 1 722 liikettä, aitoa progressiologiikkaa ja valmentaja, joka oikeasti katsoo viikkoasi. Käytän sitä joka ikinen päivä.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · perustaja';
+
+  @override
+  String get paywallFounderSub =>
+      'treenannut Zealovan kanssa ensimmäisestä päivästä asti';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Se huomasi, että jätän perjantain jalkatreenin aina väliin, ja vain… siirsi sen lauantaille.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · varhainen testaaja';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Varhainen pääsy · ole yksi ensimmäisistä 1 000 jäsenestä';
+
+  @override
+  String get paywallRemindMeCta => 'Muistuta minua 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Ilmainen kokeilu käytössä';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 päivää ilmaiseksi, sen jälkeen uusiutuu automaattisesti hintaan $price/v';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Kuukausitilaus — alkaa tänään, ei kokeilua';
+
+  @override
+  String get paywallV7DownsellHeadline => 'SUUNNITELMASI POISTETAAN?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Kertaluonteinen perustajajäsenen hinta, sama 7 päivän ilmainen kokeilu. Tämä tarjous ei palaa.';
 }

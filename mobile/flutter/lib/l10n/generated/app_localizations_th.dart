@@ -44609,4 +44609,208 @@ class AppLocalizationsTh extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return 'เหลืออีก ~$minutes นาที';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'โค้ชของคุณ';
+
+  @override
+  String get introV7HeadlineAlready => 'เริ่ม';
+
+  @override
+  String get introV7WordTyping => 'พิมพ์แล้ว.';
+
+  @override
+  String get introV7WordSpotting => 'สปอตแล้ว.';
+
+  @override
+  String get introV7WordCounting => 'นับแล้ว.';
+
+  @override
+  String get introV7WordChoosing => 'เลือกแล้ว.';
+
+  @override
+  String get introV7BuildMyPlan => 'สร้างแผนของฉัน';
+
+  @override
+  String get introDemoLiveBadge => 'เดโมสด';
+
+  @override
+  String get introDemoProgramBuilder => 'ตัวสร้างโปรแกรม';
+
+  @override
+  String get introDemoCoachName => 'โค้ชอเล็กซ์';
+
+  @override
+  String get introDemoUserAsk => 'สร้างโปรแกรม 4 วันให้หน่อย 💪';
+
+  @override
+  String get introDemoPushDayMon => 'PUSH DAY · จ.';
+
+  @override
+  String get introDemoGoalChip => '📅 คาดว่าถึงเป้าหมาย: 22 ส.ค.';
+
+  @override
+  String get introDemoUserReply => 'ลุยเลย 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'PUSH DAY · ท่าที่ 1 จาก 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'เซ็ต $n';
+  }
+
+  @override
+  String get introDemoResting => 'กำลังพัก…';
+
+  @override
+  String get introDemoPrChip => '🏆 PR ใหม่ · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'โค้ช: “225 — นั่นคือ PR เพิ่มขึ้น 10 lb สัปดาห์หน้าไป 230 กัน”';
+
+  @override
+  String get introDemoPhotoLogging => 'บันทึกด้วยรูปถ่าย';
+
+  @override
+  String get introDemoLoggedLine => '✓ บันทึกลงวันนี้แล้ว — 1 รูป, 2 วินาที';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => 'โปรตีน 38g';
+
+  @override
+  String get introDemoCarbsChip => 'คาร์บ 52g';
+
+  @override
+  String get introDemoFatChip => 'ไขมัน 18g';
+
+  @override
+  String get introDemoMenuTitle => 'วิเคราะห์เมนู';
+
+  @override
+  String get introDemoMenuMeta => '8 รายการ · 3 หมวด · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'เรียงตาม:';
+
+  @override
+  String get introDemoSortProtein => 'โปรตีน';
+
+  @override
+  String get introDemoSortCarbs => 'คาร์บ';
+
+  @override
+  String get introDemoSortInflammation => 'การอักเสบ';
+
+  @override
+  String get introDemoBadgeRecommended => 'แนะนำ';
+
+  @override
+  String get introDemoBadgeOk => 'พอได้';
+
+  @override
+  String get introDemoBadgeAvoid => 'ควรเลี่ยง';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'ตรวจสอบเป้าหมายแล้ว — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'จับคู่กับร่างกายแล้ว — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'ตั้งตารางแล้ว — $days วัน/สัปดาห์';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 วินาที · โค้ชของคุณกำลังเลือกทุกเซ็ต';
+
+  @override
+  String get signInV7DontLoseIt => 'อย่าปล่อยให้หายไป';
+
+  @override
+  String get signInV7LetsGetStarted => 'มาเริ่มกันเลย';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'แผนของคุณพร้อมแล้ว';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 เป้าหมาย: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'ยืนยันจากแบบทดสอบของคุณ';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'เป้าหมาย $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'ฝึกกับ $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'ข้อความจากผู้ก่อตั้ง';
+
+  @override
+  String get paywallFounderHeadline => 'ผมสร้างโค้ชที่ผมเคยจ่ายไม่ไหว';
+
+  @override
+  String get paywallFounderQuote =>
+      '“เทรนเนอร์ส่วนตัวดี ๆ ราคา \$400/เดือน ผมจ่ายไม่ไหว เลยใช้เวลาสองปีสร้างขึ้นมาเอง: ท่าออกกำลังกาย 1,722 ท่า ตรรกะการพัฒนาที่ใช้ได้จริง โค้ชที่ดูสัปดาห์ของคุณจริง ๆ ผมใช้มันทุกวัน”';
+
+  @override
+  String get paywallFounderName => 'Chetan · ผู้ก่อตั้ง';
+
+  @override
+  String get paywallFounderSub => 'ฝึกกับ Zealova มาตั้งแต่วันแรก';
+
+  @override
+  String get paywallTesterQuote =>
+      '“มันจับได้ว่าฉันชอบโดดเล่นขาวันศุกร์ แล้วก็… ย้ายไปวันเสาร์ให้เลย”';
+
+  @override
+  String get paywallTesterName => 'Keertan · ผู้ทดสอบรุ่นแรก';
+
+  @override
+  String get paywallEarlyAccess =>
+      'สิทธิ์ก่อนใคร · เป็นหนึ่งใน 1,000 สมาชิกแรก';
+
+  @override
+  String get paywallRemindMeCta => 'เตือนฉัน 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'เปิดทดลองใช้ฟรีแล้ว';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return 'ฟรี 7 วัน จากนั้นต่ออายุอัตโนมัติที่ $price/ปี';
+  }
+
+  @override
+  String get paywallTrialToggleOff => 'แผนรายเดือน — เริ่มวันนี้ ไม่มีทดลองใช้';
+
+  @override
+  String get paywallV7DownsellHeadline => 'จะปล่อยให้แผนของคุณถูกลบเหรอ?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'ราคาสมาชิกผู้ก่อตั้งครั้งเดียว พร้อมทดลองฟรี 7 วันเหมือนเดิม ข้อเสนอนี้จะไม่กลับมาอีก';
 }

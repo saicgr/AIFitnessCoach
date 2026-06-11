@@ -28217,5 +28217,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "~{minutes} ನಿಮಿಷ ಬಾಕಿ",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "ನಿಮ್ಮ ಕೋಚ್",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "ಈಗಾಗಲೇ",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "ಟೈಪ್ ಮಾಡುತ್ತಿದ್ದಾರೆ.",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "ಸ್ಪಾಟ್ ಮಾಡುತ್ತಿದ್ದಾರೆ.",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "ಎಣಿಸುತ್ತಿದ್ದಾರೆ.",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "ಆಯ್ಕೆ ಮಾಡುತ್ತಿದ್ದಾರೆ.",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "ನನ್ನ ಪ್ಲಾನ್ ರಚಿಸಿ",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "ಲೈವ್ ಡೆಮೋ",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "ಪ್ರೋಗ್ರಾಂ ಬಿಲ್ಡರ್",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "ಕೋಚ್ ಅಲೆಕ್ಸ್",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "ನನ್ನ 4-ದಿನದ ಪ್ರೋಗ್ರಾಂ ರಚಿಸು 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "ಪುಶ್ ಡೇ · ಸೋಮ",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 ಗುರಿ ದಿನಾಂಕ ಅಂದಾಜು: ಆಗ 22",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "ಹೋಗೋಣ 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "ಪುಶ್ ಡೇ · ವ್ಯಾಯಾಮ 5ರಲ್ಲಿ 1",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "ಸೆಟ್ {n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "ವಿಶ್ರಾಂತಿ…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 ಹೊಸ PR · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "ಕೋಚ್: “225 — ಅದು 10 lb PR. ಮುಂದಿನ ವಾರ ನಾವು 230ಕ್ಕೆ ಹೋಗೋಣ.”",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "ಫೋಟೋ ಲಾಗಿಂಗ್",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ ಇಂದಿಗೆ ಲಾಗ್ ಆಗಿದೆ — 1 ಫೋಟೋ, 2 ಸೆಕೆಂಡು",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "38g ಪ್ರೋಟೀನ್",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "52g ಕಾರ್ಬ್ಸ್",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "18g ಕೊಬ್ಬು",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "ಮೆನು ವಿಶ್ಲೇಷಣೆ",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8 ಐಟಂ · 3 ವಿಭಾಗ · 2.4 ಸೆ",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "ವಿಂಗಡಿಸಿ:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "ಪ್ರೋಟೀನ್",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "ಕಾರ್ಬ್ಸ್",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "ಉರಿಯೂತ",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "ಶಿಫಾರಸು ಮಾಡಲಾಗಿದೆ",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "ಸರಿ",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "ತಪ್ಪಿಸಿ",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "ಗುರಿಗಳ ಪರಿಶೀಲನೆ ಆಯಿತು — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "ದೇಹ ಹೊಂದಾಣಿಕೆ ಆಯಿತು — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "ವೇಳಾಪಟ್ಟಿ ಹೊಂದಿಸಲಾಗಿದೆ — ವಾರಕ್ಕೆ {days} ದಿನ",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "~20 ಸೆಕೆಂಡು · ನಿಮ್ಮ ಕೋಚ್ ಪ್ರತಿ ಸೆಟ್ ಆಯ್ಕೆ ಮಾಡುತ್ತಿದ್ದಾರೆ",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "ಇದನ್ನು ಕಳೆದುಕೊಳ್ಳಬೇಡಿ.",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "ಪ್ರಾರಂಭಿಸೋಣ.",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "ನಿಮ್ಮ ಪ್ಲಾನ್ ಸಿದ್ಧವಾಗಿದೆ",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 ಗುರಿ: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "ನಿಮ್ಮ ಕ್ವಿಜ್‌ನಿಂದ ದೃಢೀಕರಿಸಲಾಗಿದೆ",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "ಗುರಿ {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "{coachName} ಜೊತೆ ತರಬೇತಿ ಪಡೆಯಿರಿ",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "ಸಂಸ್ಥಾಪಕರ ಟಿಪ್ಪಣಿ",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "ನನಗೆ ಭರಿಸಲಾಗದ ಕೋಚ್ ಅನ್ನು ನಾನೇ ನಿರ್ಮಿಸಿದೆ.",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "“ಒಳ್ಳೆಯ ಪರ್ಸನಲ್ ಟ್ರೈನರ್‌ಗೆ $400/ತಿಂಗಳು ಬೇಕು. ಅದನ್ನು ಭರಿಸಲು ನನಗೆ ಆಗಲಿಲ್ಲ, ಹಾಗಾಗಿ ಎರಡು ವರ್ಷ ಕಳೆದು ಒಂದನ್ನು ನಿರ್ಮಿಸಿದೆ: 1,722 ವ್ಯಾಯಾಮಗಳು, ನಿಜವಾದ ಪ್ರೋಗ್ರೆಶನ್ ಲಾಜಿಕ್, ನಿಮ್ಮ ವಾರವನ್ನು ನಿಜವಾಗಿ ನೋಡುವ ಕೋಚ್. ನಾನು ಇದನ್ನು ಪ್ರತಿದಿನವೂ ಬಳಸುತ್ತೇನೆ.”",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · ಸಂಸ್ಥಾಪಕ",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "ಮೊದಲ ದಿನದಿಂದಲೇ Zealova ಜೊತೆ ತರಬೇತಿ",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "“ನಾನು ಯಾವಾಗಲೂ ಶುಕ್ರವಾರದ ಲೆಗ್ಸ್ ಬಿಡುತ್ತೇನೆ ಎಂದು ಇದು ಗಮನಿಸಿ, ಸುಮ್ಮನೆ… ಅದನ್ನು ಶನಿವಾರಕ್ಕೆ ಸರಿಸಿತು.”",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · ಆರಂಭಿಕ ಟೆಸ್ಟರ್",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "ಆರಂಭಿಕ ಪ್ರವೇಶ · ಮೊದಲ 1,000 ಸದಸ್ಯರಲ್ಲಿ ಒಬ್ಬರಾಗಿ",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "ನನಗೆ ನೆನಪಿಸಿ 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "ಉಚಿತ ಟ್ರಯಲ್ ಸಕ್ರಿಯವಾಗಿದೆ",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7 ದಿನ ಉಚಿತ, ನಂತರ {price}/ವರ್ಷಕ್ಕೆ ಸ್ವಯಂ-ನವೀಕರಣ",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "ಮಾಸಿಕ ಪ್ಲಾನ್ — ಇಂದೇ ಪ್ರಾರಂಭ, ಟ್ರಯಲ್ ಇಲ್ಲ",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "ನಿಮ್ಮ ಪ್ಲಾನ್ ಅಳಿಸಿಹೋಗಬೇಕೆ?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "ಒಮ್ಮೆ ಮಾತ್ರದ ಫೌಂಡಿಂಗ್-ಮೆಂಬರ್ ಬೆಲೆ, ಅದೇ 7-ದಿನದ ಉಚಿತ ಟ್ರಯಲ್. ಈ ಆಫರ್ ಮತ್ತೆ ಬರುವುದಿಲ್ಲ.",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

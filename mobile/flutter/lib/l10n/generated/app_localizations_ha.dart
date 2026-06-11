@@ -44843,4 +44843,209 @@ class AppLocalizationsHa extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes min ya rage';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'KOCINKA';
+
+  @override
+  String get introV7HeadlineAlready => 'TUNI';
+
+  @override
+  String get introV7WordTyping => 'YANA RUBUTAWA.';
+
+  @override
+  String get introV7WordSpotting => 'YANA KULAWA.';
+
+  @override
+  String get introV7WordCounting => 'YANA ƘIRGAWA.';
+
+  @override
+  String get introV7WordChoosing => 'YANA ZAƁA.';
+
+  @override
+  String get introV7BuildMyPlan => 'Gina shirina';
+
+  @override
+  String get introDemoLiveBadge => 'DEMO KAI TSAYE';
+
+  @override
+  String get introDemoProgramBuilder => 'MAI GINA SHIRI';
+
+  @override
+  String get introDemoCoachName => 'Koci Alex';
+
+  @override
+  String get introDemoUserAsk => 'Gina min shirin kwana 4 💪';
+
+  @override
+  String get introDemoPushDayMon => 'PUSH DAY · LIT';
+
+  @override
+  String get introDemoGoalChip => '📅 Hasashen ranar cimma buri: 22 Agusta';
+
+  @override
+  String get introDemoUserReply => 'Mu je 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'PUSH DAY · MOTSA JIKI 1 CIKIN 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Set $n';
+  }
+
+  @override
+  String get introDemoResting => 'hutawa…';
+
+  @override
+  String get introDemoPrChip => '🏆 SABON PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Koci: “225 — wannan PR ne na 10 lb. Mako mai zuwa za mu yi 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'RIKODI TA HOTO';
+
+  @override
+  String get introDemoLoggedLine => '✓ An shigar a yau — hoto 1, daƙiƙa 2';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g furotin';
+
+  @override
+  String get introDemoCarbsChip => '52g carbs';
+
+  @override
+  String get introDemoFatChip => '18g mai';
+
+  @override
+  String get introDemoMenuTitle => 'Nazarin Menu';
+
+  @override
+  String get introDemoMenuMeta => 'abu 8 · sashe 3 · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'Tsara:';
+
+  @override
+  String get introDemoSortProtein => 'Furotin';
+
+  @override
+  String get introDemoSortCarbs => 'Carbs';
+
+  @override
+  String get introDemoSortInflammation => 'Kumburi';
+
+  @override
+  String get introDemoBadgeRecommended => 'An ba da shawara';
+
+  @override
+  String get introDemoBadgeOk => 'OK';
+
+  @override
+  String get introDemoBadgeAvoid => 'Guji';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'an duba buri — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'an daidaita jiki — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'an saita jadawali — kwana $days/mako';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~daƙiƙa 20 · kocinka yana zaɓen kowane set';
+
+  @override
+  String get signInV7DontLoseIt => 'KADA KA RASA SHI.';
+
+  @override
+  String get signInV7LetsGetStarted => 'MU FARA.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'An gina shirinka';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Buri: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'AN TABBATAR DAGA QUIZ DINKA';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Buri $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Yi horo da $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'SAƘO DAGA WANDA YA KAFA';
+
+  @override
+  String get paywallFounderHeadline => 'NA GINA KOCIN DA BAN IYA BIYA BA.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“Kyakkyawan mai horarwa na sirri yana kashe \$400/wata. Ban iya ɗaukar hakan ba, don haka na shafe shekara biyu ina gina guda: motsa jiki 1,722, ainihin dabarar ci gaba, koci da ke duban makonka da gaske. Ina amfani da shi kowace rana.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · wanda ya kafa';
+
+  @override
+  String get paywallFounderSub => 'yana horo da Zealova tun rana ta farko';
+
+  @override
+  String get paywallTesterQuote =>
+      '“Ya gane cewa kullum ina tsallake motsa ƙafa na Juma\'a sai kawai ya… matsar da su zuwa Asabar.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · mai gwaji na farko';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Shiga da wuri · kasance cikin membobi 1,000 na farko';
+
+  @override
+  String get paywallRemindMeCta => 'Tunatar da ni 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'An kunna gwaji kyauta';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return 'Kwana 7 kyauta, sai a sabunta kai tsaye a $price/shekara';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Shirin wata-wata — yana farawa yau, babu gwaji';
+
+  @override
+  String get paywallV7DownsellHeadline => 'A GOGE SHIRINKA?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Farashin memba na farko na sau ɗaya, gwaji kyauta na kwana 7 iri ɗaya. Wannan tayin ba zai dawo ba.';
 }

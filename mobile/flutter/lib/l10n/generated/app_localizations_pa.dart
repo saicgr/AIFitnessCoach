@@ -44688,4 +44688,211 @@ class AppLocalizationsPa extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes ਮਿੰਟ ਬਾਕੀ';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'ਤੁਹਾਡਾ ਕੋਚ';
+
+  @override
+  String get introV7HeadlineAlready => 'ਪਹਿਲਾਂ ਹੀ';
+
+  @override
+  String get introV7WordTyping => 'ਟਾਈਪ ਕਰ ਰਿਹਾ ਹੈ।';
+
+  @override
+  String get introV7WordSpotting => 'ਸਪੌਟ ਕਰ ਰਿਹਾ ਹੈ।';
+
+  @override
+  String get introV7WordCounting => 'ਗਿਣ ਰਿਹਾ ਹੈ।';
+
+  @override
+  String get introV7WordChoosing => 'ਚੁਣ ਰਿਹਾ ਹੈ।';
+
+  @override
+  String get introV7BuildMyPlan => 'ਮੇਰਾ ਪਲਾਨ ਬਣਾਓ';
+
+  @override
+  String get introDemoLiveBadge => 'ਲਾਈਵ ਡੈਮੋ';
+
+  @override
+  String get introDemoProgramBuilder => 'ਪ੍ਰੋਗਰਾਮ ਬਿਲਡਰ';
+
+  @override
+  String get introDemoCoachName => 'ਕੋਚ ਐਲੈਕਸ';
+
+  @override
+  String get introDemoUserAsk => 'ਮੇਰਾ 4-ਦਿਨਾਂ ਦਾ ਪ੍ਰੋਗਰਾਮ ਬਣਾਓ 💪';
+
+  @override
+  String get introDemoPushDayMon => 'ਪੁਸ਼ ਡੇ · ਸੋਮ';
+
+  @override
+  String get introDemoGoalChip => '📅 ਟੀਚੇ ਦੀ ਅਨੁਮਾਨਿਤ ਤਾਰੀਖ: 22 ਅਗਸਤ';
+
+  @override
+  String get introDemoUserReply => 'ਚੱਲੋ ਫਿਰ 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'ਪੁਸ਼ ਡੇ · ਕਸਰਤ 5 ਵਿੱਚੋਂ 1';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'ਸੈੱਟ $n';
+  }
+
+  @override
+  String get introDemoResting => 'ਆਰਾਮ ਚੱਲ ਰਿਹਾ ਹੈ…';
+
+  @override
+  String get introDemoPrChip => '🏆 ਨਵਾਂ PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'ਕੋਚ: “225 — ਇਹ 10 lb ਦਾ ਨਵਾਂ PR ਹੈ। ਅਗਲੇ ਹਫ਼ਤੇ ਅਸੀਂ 230 \'ਤੇ ਜਾਵਾਂਗੇ।”';
+
+  @override
+  String get introDemoPhotoLogging => 'ਫੋਟੋ ਲੌਗਿੰਗ';
+
+  @override
+  String get introDemoLoggedLine => '✓ ਅੱਜ ਵਿੱਚ ਲੌਗ ਹੋ ਗਿਆ — 1 ਫੋਟੋ, 2 ਸਕਿੰਟ';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g ਪ੍ਰੋਟੀਨ';
+
+  @override
+  String get introDemoCarbsChip => '52g ਕਾਰਬਸ';
+
+  @override
+  String get introDemoFatChip => '18g ਫੈਟ';
+
+  @override
+  String get introDemoMenuTitle => 'ਮੀਨੂ ਵਿਸ਼ਲੇਸ਼ਣ';
+
+  @override
+  String get introDemoMenuMeta => '8 ਆਈਟਮਾਂ · 3 ਸੈਕਸ਼ਨ · 2.4s';
+
+  @override
+  String get introDemoSortLabel => 'ਕ੍ਰਮਬੱਧ ਕਰੋ:';
+
+  @override
+  String get introDemoSortProtein => 'ਪ੍ਰੋਟੀਨ';
+
+  @override
+  String get introDemoSortCarbs => 'ਕਾਰਬਸ';
+
+  @override
+  String get introDemoSortInflammation => 'ਸੋਜ';
+
+  @override
+  String get introDemoBadgeRecommended => 'ਸਿਫ਼ਾਰਸ਼ੀ';
+
+  @override
+  String get introDemoBadgeOk => 'ਠੀਕ';
+
+  @override
+  String get introDemoBadgeAvoid => 'ਪਰਹੇਜ਼ ਕਰੋ';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'ਟੀਚਿਆਂ ਦੀ ਸਮੀਖਿਆ ਹੋਈ — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'ਸਰੀਰ ਮਿਲਾਇਆ ਗਿਆ — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'ਸ਼ਡਿਊਲ ਸੈੱਟ ਹੋਇਆ — $days ਦਿਨ/ਹਫ਼ਤਾ';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 ਸਕਿੰਟ · ਤੁਹਾਡਾ ਕੋਚ ਹਰ ਸੈੱਟ ਚੁਣ ਰਿਹਾ ਹੈ';
+
+  @override
+  String get signInV7DontLoseIt => 'ਇਸਨੂੰ ਗੁਆਓ ਨਾ।';
+
+  @override
+  String get signInV7LetsGetStarted => 'ਆਓ ਸ਼ੁਰੂ ਕਰੀਏ।';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'ਤੁਹਾਡਾ ਪਲਾਨ ਤਿਆਰ ਹੈ';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 ਟੀਚਾ: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'ਤੁਹਾਡੇ ਕਵਿਜ਼ ਤੋਂ ਪੁਸ਼ਟੀ ਹੋਈ';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'ਟੀਚਾ $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return '$coachName ਨਾਲ ਟ੍ਰੇਨ ਕਰੋ';
+  }
+
+  @override
+  String get paywallFounderKicker => 'ਸੰਸਥਾਪਕ ਵੱਲੋਂ ਇੱਕ ਸੁਨੇਹਾ';
+
+  @override
+  String get paywallFounderHeadline =>
+      'ਮੈਂ ਉਹ ਕੋਚ ਬਣਾਇਆ ਜੋ ਮੈਂ ਖਰੀਦ ਨਹੀਂ ਸਕਦਾ ਸੀ।';
+
+  @override
+  String get paywallFounderQuote =>
+      '“ਇੱਕ ਚੰਗਾ ਪਰਸਨਲ ਟ੍ਰੇਨਰ \$400/ਮਹੀਨਾ ਲੈਂਦਾ ਹੈ। ਮੈਂ ਇਹ ਖਰਚ ਨਹੀਂ ਚੁੱਕ ਸਕਦਾ ਸੀ, ਇਸ ਲਈ ਮੈਂ ਦੋ ਸਾਲ ਲਗਾ ਕੇ ਆਪਣਾ ਬਣਾਇਆ: 1,722 ਕਸਰਤਾਂ, ਅਸਲੀ ਪ੍ਰੋਗ੍ਰੈਸ਼ਨ ਲੌਜਿਕ, ਇੱਕ ਅਜਿਹਾ ਕੋਚ ਜੋ ਸੱਚਮੁੱਚ ਤੁਹਾਡੇ ਹਫ਼ਤੇ ਨੂੰ ਦੇਖਦਾ ਹੈ। ਮੈਂ ਇਸਨੂੰ ਹਰ ਰੋਜ਼ ਵਰਤਦਾ ਹਾਂ।”';
+
+  @override
+  String get paywallFounderName => 'Chetan · ਸੰਸਥਾਪਕ';
+
+  @override
+  String get paywallFounderSub =>
+      'ਪਹਿਲੇ ਦਿਨ ਤੋਂ Zealova ਨਾਲ ਟ੍ਰੇਨਿੰਗ ਕਰ ਰਿਹਾ ਹੈ';
+
+  @override
+  String get paywallTesterQuote =>
+      '“ਇਸਨੇ ਫੜ ਲਿਆ ਕਿ ਮੈਂ ਹਮੇਸ਼ਾ ਸ਼ੁੱਕਰਵਾਰ ਦੀ ਲੈੱਗ ਕਸਰਤ ਛੱਡ ਦਿੰਦਾ ਹਾਂ ਅਤੇ ਬੱਸ… ਉਸਨੂੰ ਸ਼ਨੀਵਾਰ \'ਤੇ ਲੈ ਗਿਆ।”';
+
+  @override
+  String get paywallTesterName => 'Keertan · ਸ਼ੁਰੂਆਤੀ ਟੈਸਟਰ';
+
+  @override
+  String get paywallEarlyAccess =>
+      'ਅਰਲੀ ਐਕਸੈਸ · ਪਹਿਲੇ 1,000 ਮੈਂਬਰਾਂ ਵਿੱਚੋਂ ਇੱਕ ਬਣੋ';
+
+  @override
+  String get paywallRemindMeCta => 'ਮੈਨੂੰ ਯਾਦ ਕਰਵਾਓ 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'ਮੁਫ਼ਤ ਟ੍ਰਾਇਲ ਚਾਲੂ ਹੈ';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 ਦਿਨ ਮੁਫ਼ਤ, ਫਿਰ $price/ਸਾਲ \'ਤੇ ਆਪਣੇ ਆਪ ਰੀਨਿਊ ਹੁੰਦਾ ਹੈ';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'ਮਹੀਨਾਵਾਰ ਪਲਾਨ — ਅੱਜ ਤੋਂ ਸ਼ੁਰੂ, ਕੋਈ ਟ੍ਰਾਇਲ ਨਹੀਂ';
+
+  @override
+  String get paywallV7DownsellHeadline => 'ਤੁਹਾਡਾ ਪਲਾਨ ਮਿਟ ਜਾਵੇ?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'ਇੱਕ ਵਾਰ ਦੀ ਫਾਊਂਡਿੰਗ-ਮੈਂਬਰ ਕੀਮਤ, ਉਹੀ 7-ਦਿਨਾਂ ਦਾ ਮੁਫ਼ਤ ਟ੍ਰਾਇਲ। ਇਹ ਪੇਸ਼ਕਸ਼ ਵਾਪਸ ਨਹੀਂ ਆਉਂਦੀ।';
 }

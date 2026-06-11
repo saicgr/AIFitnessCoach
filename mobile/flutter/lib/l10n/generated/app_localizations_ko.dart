@@ -43002,4 +43002,205 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes분 남음';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => '당신의 코치는';
+
+  @override
+  String get introV7HeadlineAlready => '이미';
+
+  @override
+  String get introV7WordTyping => '입력 중.';
+
+  @override
+  String get introV7WordSpotting => '보조 중.';
+
+  @override
+  String get introV7WordCounting => '세는 중.';
+
+  @override
+  String get introV7WordChoosing => '고르는 중.';
+
+  @override
+  String get introV7BuildMyPlan => '내 플랜 만들기';
+
+  @override
+  String get introDemoLiveBadge => '라이브 데모';
+
+  @override
+  String get introDemoProgramBuilder => '프로그램 빌더';
+
+  @override
+  String get introDemoCoachName => '알렉스 코치';
+
+  @override
+  String get introDemoUserAsk => '주 4일 프로그램 만들어 줘 💪';
+
+  @override
+  String get introDemoPushDayMon => '푸시 데이 · 월';
+
+  @override
+  String get introDemoGoalChip => '📅 목표 달성 예상일: 8월 22일';
+
+  @override
+  String get introDemoUserReply => '가자 🔥';
+
+  @override
+  String get introDemoExerciseKicker => '푸시 데이 · 운동 1/5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return '세트 $n';
+  }
+
+  @override
+  String get introDemoResting => '휴식 중…';
+
+  @override
+  String get introDemoPrChip => '🏆 새 PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine => '코치: “225 — 10 lb PR이에요. 다음 주엔 230 갑니다.”';
+
+  @override
+  String get introDemoPhotoLogging => '사진 기록';
+
+  @override
+  String get introDemoLoggedLine => '✓ 오늘에 기록 완료 — 사진 1장, 2초';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '단백질 38g';
+
+  @override
+  String get introDemoCarbsChip => '탄수화물 52g';
+
+  @override
+  String get introDemoFatChip => '지방 18g';
+
+  @override
+  String get introDemoMenuTitle => '메뉴 분석';
+
+  @override
+  String get introDemoMenuMeta => '8개 항목 · 3개 섹션 · 2.4초';
+
+  @override
+  String get introDemoSortLabel => '정렬:';
+
+  @override
+  String get introDemoSortProtein => '단백질';
+
+  @override
+  String get introDemoSortCarbs => '탄수화물';
+
+  @override
+  String get introDemoSortInflammation => '염증';
+
+  @override
+  String get introDemoBadgeRecommended => '추천';
+
+  @override
+  String get introDemoBadgeOk => '괜찮음';
+
+  @override
+  String get introDemoBadgeAvoid => '피하기';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return '목표 검토 완료 — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return '체형 매칭 완료 — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return '스케줄 설정 완료 — 주 $days일';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 => '~20초 · 코치가 모든 세트를 직접 고르고 있어요';
+
+  @override
+  String get signInV7DontLoseIt => '잃어버리지 마세요.';
+
+  @override
+  String get signInV7LetsGetStarted => '이제 시작해 볼까요.';
+
+  @override
+  String get signInV7KickerPlanBuilt => '플랜이 완성됐어요';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 목표: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => '퀴즈에서 확인된 정보';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return '목표 $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return '$coachName와 함께 트레이닝하기';
+  }
+
+  @override
+  String get paywallFounderKicker => '창업자의 메시지';
+
+  @override
+  String get paywallFounderHeadline => '제가 감당할 수 없었던 코치를 직접 만들었습니다.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“좋은 퍼스널 트레이너는 한 달에 \$400입니다. 그 돈을 쓸 수 없어서 2년에 걸쳐 직접 만들었습니다. 1,722개의 운동, 진짜 점진적 과부하 로직, 당신의 한 주를 실제로 들여다보는 코치. 저는 매일 쓰고 있습니다.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · 창업자';
+
+  @override
+  String get paywallFounderSub => '첫날부터 Zealova와 함께 트레이닝 중';
+
+  @override
+  String get paywallTesterQuote =>
+      '“제가 금요일 하체 운동을 늘 거른다는 걸 알아채더니 그냥… 토요일로 옮겨줬어요.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · 초기 테스터';
+
+  @override
+  String get paywallEarlyAccess => '얼리 액세스 · 첫 1,000명의 멤버가 되어 보세요';
+
+  @override
+  String get paywallRemindMeCta => '알림 받기 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => '무료 체험 활성화됨';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7일 무료, 이후 $price/년으로 자동 갱신';
+  }
+
+  @override
+  String get paywallTrialToggleOff => '월간 플랜 — 오늘 시작, 체험 없음';
+
+  @override
+  String get paywallV7DownsellHeadline => '플랜이 삭제된다고요?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      '단 한 번뿐인 창립 멤버 가격, 동일한 7일 무료 체험. 이 혜택은 다시 오지 않습니다.';
 }

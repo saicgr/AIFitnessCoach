@@ -45414,4 +45414,212 @@ class AppLocalizationsMl extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes മിനിറ്റ് ബാക്കി';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'നിങ്ങളുടെ കോച്ച്';
+
+  @override
+  String get introV7HeadlineAlready => 'ഇതിനകം';
+
+  @override
+  String get introV7WordTyping => 'ടൈപ്പ് ചെയ്യുന്നു.';
+
+  @override
+  String get introV7WordSpotting => 'സ്പോട്ട് ചെയ്യുന്നു.';
+
+  @override
+  String get introV7WordCounting => 'എണ്ണുന്നു.';
+
+  @override
+  String get introV7WordChoosing => 'തിരഞ്ഞെടുക്കുന്നു.';
+
+  @override
+  String get introV7BuildMyPlan => 'എന്റെ പ്ലാൻ ഉണ്ടാക്കൂ';
+
+  @override
+  String get introDemoLiveBadge => 'ലൈവ് ഡെമോ';
+
+  @override
+  String get introDemoProgramBuilder => 'പ്രോഗ്രാം ബിൽഡർ';
+
+  @override
+  String get introDemoCoachName => 'കോച്ച് അലക്സ്';
+
+  @override
+  String get introDemoUserAsk => 'എനിക്ക് 4 ദിവസത്തെ പ്രോഗ്രാം ഉണ്ടാക്കൂ 💪';
+
+  @override
+  String get introDemoPushDayMon => 'പുഷ് ഡേ · തിങ്കൾ';
+
+  @override
+  String get introDemoGoalChip =>
+      '📅 ലക്ഷ്യ തീയതി പ്രതീക്ഷിക്കുന്നത്: ഓഗസ്റ്റ് 22';
+
+  @override
+  String get introDemoUserReply => 'പോകാം 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'പുഷ് ഡേ · വ്യായാമം 5-ൽ 1';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'സെറ്റ് $n';
+  }
+
+  @override
+  String get introDemoResting => 'വിശ്രമത്തിൽ…';
+
+  @override
+  String get introDemoPrChip => '🏆 പുതിയ PR · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'കോച്ച്: “225 — അത് 10 lb PR ആണ്. അടുത്ത ആഴ്ച 230-ലേക്ക് പോകാം.”';
+
+  @override
+  String get introDemoPhotoLogging => 'ഫോട്ടോ ലോഗിംഗ്';
+
+  @override
+  String get introDemoLoggedLine =>
+      '✓ ഇന്നത്തേക്ക് ലോഗ് ചെയ്തു — 1 ഫോട്ടോ, 2 സെക്കൻഡ്';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g പ്രോട്ടീൻ';
+
+  @override
+  String get introDemoCarbsChip => '52g കാർബ്സ്';
+
+  @override
+  String get introDemoFatChip => '18g കൊഴുപ്പ്';
+
+  @override
+  String get introDemoMenuTitle => 'മെനു വിശകലനം';
+
+  @override
+  String get introDemoMenuMeta => '8 ഇനങ്ങൾ · 3 വിഭാഗങ്ങൾ · 2.4 സെ.';
+
+  @override
+  String get introDemoSortLabel => 'അടുക്കുക:';
+
+  @override
+  String get introDemoSortProtein => 'പ്രോട്ടീൻ';
+
+  @override
+  String get introDemoSortCarbs => 'കാർബ്സ്';
+
+  @override
+  String get introDemoSortInflammation => 'നീർവീക്കം';
+
+  @override
+  String get introDemoBadgeRecommended => 'ശുപാർശ ചെയ്തത്';
+
+  @override
+  String get introDemoBadgeOk => 'ഓകെ';
+
+  @override
+  String get introDemoBadgeAvoid => 'ഒഴിവാക്കുക';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'ലക്ഷ്യങ്ങൾ പരിശോധിച്ചു — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'ശരീരം പൊരുത്തപ്പെടുത്തി — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'ഷെഡ്യൂൾ സജ്ജമാക്കി — ആഴ്ചയിൽ $days ദിവസം';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 സെക്കൻഡ് · നിങ്ങളുടെ കോച്ച് ഓരോ സെറ്റും തിരഞ്ഞെടുക്കുകയാണ്';
+
+  @override
+  String get signInV7DontLoseIt => 'അത് നഷ്ടപ്പെടുത്തരുത്.';
+
+  @override
+  String get signInV7LetsGetStarted => 'നമുക്ക് തുടങ്ങാം.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'നിങ്ങളുടെ പ്ലാൻ തയ്യാർ';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 ലക്ഷ്യം: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz =>
+      'നിങ്ങളുടെ ക്വിസിൽ നിന്ന് സ്ഥിരീകരിച്ചത്';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'ലക്ഷ്യം $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return '$coachName-നൊപ്പം പരിശീലിക്കൂ';
+  }
+
+  @override
+  String get paywallFounderKicker => 'സ്ഥാപകന്റെ കുറിപ്പ്';
+
+  @override
+  String get paywallFounderHeadline =>
+      'എനിക്ക് താങ്ങാനാവാത്ത കോച്ചിനെ ഞാൻ തന്നെ ഉണ്ടാക്കി.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“ഒരു നല്ല പേഴ്സണൽ ട്രെയിനർക്ക് മാസം \$400 ആണ്. അത് എനിക്ക് താങ്ങാനായില്ല, അതിനാൽ രണ്ട് വർഷം ചെലവഴിച്ച് ഒന്ന് സ്വയം ഉണ്ടാക്കി: 1,722 വ്യായാമങ്ങൾ, യഥാർത്ഥ പ്രോഗ്രഷൻ ലോജിക്, നിങ്ങളുടെ ആഴ്ച ശരിക്കും നോക്കുന്ന ഒരു കോച്ച്. ഞാൻ എല്ലാ ദിവസവും ഇത് ഉപയോഗിക്കുന്നു.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · സ്ഥാപകൻ';
+
+  @override
+  String get paywallFounderSub => 'ആദ്യ ദിവസം മുതൽ Zealova-യിൽ പരിശീലിക്കുന്നു';
+
+  @override
+  String get paywallTesterQuote =>
+      '“ഞാൻ എപ്പോഴും വെള്ളിയാഴ്ച ലെഗ്സ് ഒഴിവാക്കുന്നത് അത് കണ്ടുപിടിച്ചു, എന്നിട്ട് വെറുതെ… അവ ശനിയാഴ്ചയിലേക്ക് മാറ്റി.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · ആദ്യകാല ടെസ്റ്റർ';
+
+  @override
+  String get paywallEarlyAccess => 'ഏർലി ആക്സസ് · ആദ്യ 1,000 അംഗങ്ങളിൽ ഒരാളാകൂ';
+
+  @override
+  String get paywallRemindMeCta => 'എന്നെ ഓർമ്മിപ്പിക്കൂ 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'സൗജന്യ ട്രയൽ പ്രവർത്തനക്ഷമമാക്കി';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 ദിവസം സൗജന്യം, പിന്നീട് $price/വർഷം നിരക്കിൽ സ്വയം പുതുക്കും';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'മാസ പ്ലാൻ — ഇന്ന് തുടങ്ങുന്നു, ട്രയൽ ഇല്ല';
+
+  @override
+  String get paywallV7DownsellHeadline => 'നിങ്ങളുടെ പ്ലാൻ ഡിലീറ്റ് ആകുമോ?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'ഒറ്റത്തവണ ഫൗണ്ടിംഗ്-മെംബർ വില, അതേ 7 ദിവസത്തെ സൗജന്യ ട്രയൽ. ഈ ഓഫർ തിരികെ വരില്ല.';
 }

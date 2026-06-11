@@ -28217,5 +28217,290 @@
   "metricsDashboardOfGoal": "of {goal}",
   "metricsDashboardHrRangeExplainer": "Normal resting heart rate is {low}–{high} bpm. Below {low} or above {high} bpm is flagged for awareness.",
   "metricsDashboardGetStartedTitle": "Start tracking",
-  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics."
+  "metricsDashboardGetStartedCta": "Connect a wearable or log a meal to see your metrics.",
+  "quizMinutesLeft": "~{minutes} മിനിറ്റ് ബാക്കി",
+  "@quizMinutesLeft": {
+    "description": "Time-remaining estimate shown in the quiz header (v7 onboarding redesign)",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "introV7HeadlineLine1": "നിങ്ങളുടെ കോച്ച്",
+  "@introV7HeadlineLine1": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7HeadlineAlready": "ഇതിനകം",
+  "@introV7HeadlineAlready": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordTyping": "ടൈപ്പ് ചെയ്യുന്നു.",
+  "@introV7WordTyping": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordSpotting": "സ്പോട്ട് ചെയ്യുന്നു.",
+  "@introV7WordSpotting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordCounting": "എണ്ണുന്നു.",
+  "@introV7WordCounting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7WordChoosing": "തിരഞ്ഞെടുക്കുന്നു.",
+  "@introV7WordChoosing": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introV7BuildMyPlan": "എന്റെ പ്ലാൻ ഉണ്ടാക്കൂ",
+  "@introV7BuildMyPlan": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLiveBadge": "ലൈവ് ഡെമോ",
+  "@introDemoLiveBadge": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProgramBuilder": "പ്രോഗ്രാം ബിൽഡർ",
+  "@introDemoProgramBuilder": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachName": "കോച്ച് അലക്സ്",
+  "@introDemoCoachName": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserAsk": "എനിക്ക് 4 ദിവസത്തെ പ്രോഗ്രാം ഉണ്ടാക്കൂ 💪",
+  "@introDemoUserAsk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPushDayMon": "പുഷ് ഡേ · തിങ്കൾ",
+  "@introDemoPushDayMon": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoGoalChip": "📅 ലക്ഷ്യ തീയതി പ്രതീക്ഷിക്കുന്നത്: ഓഗസ്റ്റ് 22",
+  "@introDemoGoalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoUserReply": "പോകാം 🔥",
+  "@introDemoUserReply": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoExerciseKicker": "പുഷ് ഡേ · വ്യായാമം 5-ൽ 1",
+  "@introDemoExerciseKicker": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSetRow": "സെറ്റ് {n}",
+  "@introDemoSetRow": {
+    "description": "Demo set row label (v7 intro demo)",
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "introDemoResting": "വിശ്രമത്തിൽ…",
+  "@introDemoResting": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPrChip": "🏆 പുതിയ PR · 225 lb",
+  "@introDemoPrChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCoachPrLine": "കോച്ച്: “225 — അത് 10 lb PR ആണ്. അടുത്ത ആഴ്ച 230-ലേക്ക് പോകാം.”",
+  "@introDemoCoachPrLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoPhotoLogging": "ഫോട്ടോ ലോഗിംഗ്",
+  "@introDemoPhotoLogging": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoLoggedLine": "✓ ഇന്നത്തേക്ക് ലോഗ് ചെയ്തു — 1 ഫോട്ടോ, 2 സെക്കൻഡ്",
+  "@introDemoLoggedLine": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoKcalChip": "540 kcal",
+  "@introDemoKcalChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoProteinChip": "38g പ്രോട്ടീൻ",
+  "@introDemoProteinChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoCarbsChip": "52g കാർബ്സ്",
+  "@introDemoCarbsChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoFatChip": "18g കൊഴുപ്പ്",
+  "@introDemoFatChip": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuTitle": "മെനു വിശകലനം",
+  "@introDemoMenuTitle": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoMenuMeta": "8 ഇനങ്ങൾ · 3 വിഭാഗങ്ങൾ · 2.4 സെ.",
+  "@introDemoMenuMeta": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortLabel": "അടുക്കുക:",
+  "@introDemoSortLabel": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortProtein": "പ്രോട്ടീൻ",
+  "@introDemoSortProtein": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortCarbs": "കാർബ്സ്",
+  "@introDemoSortCarbs": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoSortInflammation": "നീർവീക്കം",
+  "@introDemoSortInflammation": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeRecommended": "ശുപാർശ ചെയ്തത്",
+  "@introDemoBadgeRecommended": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeOk": "ഓകെ",
+  "@introDemoBadgeOk": {
+    "description": "v7 intro demo / first screen"
+  },
+  "introDemoBadgeAvoid": "ഒഴിവാക്കുക",
+  "@introDemoBadgeAvoid": {
+    "description": "v7 intro demo / first screen"
+  },
+  "planAnalyzingReceiptGoals": "ലക്ഷ്യങ്ങൾ പരിശോധിച്ചു — {goal}",
+  "@planAnalyzingReceiptGoals": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "goal": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptBody": "ശരീരം പൊരുത്തപ്പെടുത്തി — {body}",
+  "@planAnalyzingReceiptBody": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "body": {
+        "type": "String"
+      }
+    }
+  },
+  "planAnalyzingReceiptSchedule": "ഷെഡ്യൂൾ സജ്ജമാക്കി — ആഴ്ചയിൽ {days} ദിവസം",
+  "@planAnalyzingReceiptSchedule": {
+    "description": "v7 plan-analyzing receipt line",
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "planAnalyzingSubtitleV7": "~20 സെക്കൻഡ് · നിങ്ങളുടെ കോച്ച് ഓരോ സെറ്റും തിരഞ്ഞെടുക്കുകയാണ്",
+  "@planAnalyzingSubtitleV7": {
+    "description": "v7 plan-analyzing receipt line"
+  },
+  "signInV7DontLoseIt": "അത് നഷ്ടപ്പെടുത്തരുത്.",
+  "@signInV7DontLoseIt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7LetsGetStarted": "നമുക്ക് തുടങ്ങാം.",
+  "@signInV7LetsGetStarted": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7KickerPlanBuilt": "നിങ്ങളുടെ പ്ലാൻ തയ്യാർ",
+  "@signInV7KickerPlanBuilt": {
+    "description": "v7 sign-in redesign"
+  },
+  "signInV7GoalDateChip": "📅 ലക്ഷ്യം: {date}",
+  "@signInV7GoalDateChip": {
+    "description": "v7 sign-in redesign",
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoConfirmedFromQuiz": "നിങ്ങളുടെ ക്വിസിൽ നിന്ന് സ്ഥിരീകരിച്ചത്",
+  "@personalInfoConfirmedFromQuiz": {
+    "description": "v7 personal-info confirm chips"
+  },
+  "personalInfoGoalChip": "ലക്ഷ്യം {value}",
+  "@personalInfoGoalChip": {
+    "description": "v7 personal-info confirm chips",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "coachSelectionTrainWith": "{coachName}-നൊപ്പം പരിശീലിക്കൂ",
+  "@coachSelectionTrainWith": {
+    "description": "v7 coach-selection CTA, bound to the currently selected/renamed coach",
+    "placeholders": {
+      "coachName": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallFounderKicker": "സ്ഥാപകന്റെ കുറിപ്പ്",
+  "@paywallFounderKicker": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderHeadline": "എനിക്ക് താങ്ങാനാവാത്ത കോച്ചിനെ ഞാൻ തന്നെ ഉണ്ടാക്കി.",
+  "@paywallFounderHeadline": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderQuote": "“ഒരു നല്ല പേഴ്സണൽ ട്രെയിനർക്ക് മാസം $400 ആണ്. അത് എനിക്ക് താങ്ങാനായില്ല, അതിനാൽ രണ്ട് വർഷം ചെലവഴിച്ച് ഒന്ന് സ്വയം ഉണ്ടാക്കി: 1,722 വ്യായാമങ്ങൾ, യഥാർത്ഥ പ്രോഗ്രഷൻ ലോജിക്, നിങ്ങളുടെ ആഴ്ച ശരിക്കും നോക്കുന്ന ഒരു കോച്ച്. ഞാൻ എല്ലാ ദിവസവും ഇത് ഉപയോഗിക്കുന്നു.”",
+  "@paywallFounderQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderName": "Chetan · സ്ഥാപകൻ",
+  "@paywallFounderName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallFounderSub": "ആദ്യ ദിവസം മുതൽ Zealova-യിൽ പരിശീലിക്കുന്നു",
+  "@paywallFounderSub": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterQuote": "“ഞാൻ എപ്പോഴും വെള്ളിയാഴ്ച ലെഗ്സ് ഒഴിവാക്കുന്നത് അത് കണ്ടുപിടിച്ചു, എന്നിട്ട് വെറുതെ… അവ ശനിയാഴ്ചയിലേക്ക് മാറ്റി.”",
+  "@paywallTesterQuote": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTesterName": "Keertan · ആദ്യകാല ടെസ്റ്റർ",
+  "@paywallTesterName": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallEarlyAccess": "ഏർലി ആക്സസ് · ആദ്യ 1,000 അംഗങ്ങളിൽ ഒരാളാകൂ",
+  "@paywallEarlyAccess": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallRemindMeCta": "എന്നെ ഓർമ്മിപ്പിക്കൂ 🔔",
+  "@paywallRemindMeCta": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleTitle": "സൗജന്യ ട്രയൽ പ്രവർത്തനക്ഷമമാക്കി",
+  "@paywallTrialToggleTitle": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallTrialToggleOn": "7 ദിവസം സൗജന്യം, പിന്നീട് {price}/വർഷം നിരക്കിൽ സ്വയം പുതുക്കും",
+  "@paywallTrialToggleOn": {
+    "description": "v7 paywall sequence",
+    "placeholders": {
+      "price": {
+        "type": "String"
+      }
+    }
+  },
+  "paywallTrialToggleOff": "മാസ പ്ലാൻ — ഇന്ന് തുടങ്ങുന്നു, ട്രയൽ ഇല്ല",
+  "@paywallTrialToggleOff": {
+    "description": "v7 paywall sequence"
+  },
+  "paywallV7DownsellHeadline": "നിങ്ങളുടെ പ്ലാൻ ഡിലീറ്റ് ആകുമോ?",
+  "@paywallV7DownsellHeadline": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  },
+  "paywallV7DownsellSub": "ഒറ്റത്തവണ ഫൗണ്ടിംഗ്-മെംബർ വില, അതേ 7 ദിവസത്തെ സൗജന്യ ട്രയൽ. ഈ ഓഫർ തിരികെ വരില്ല.",
+  "@paywallV7DownsellSub": {
+    "description": "v7 paywall exit-intent downsell (loss framing)"
+  }
 }

@@ -44907,4 +44907,210 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return 'Осталось ~$minutes мин';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'ВАШ ТРЕНЕР';
+
+  @override
+  String get introV7HeadlineAlready => 'УЖЕ';
+
+  @override
+  String get introV7WordTyping => 'ПЕЧАТАЕТ.';
+
+  @override
+  String get introV7WordSpotting => 'ПОДСТРАХОВЫВАЕТ.';
+
+  @override
+  String get introV7WordCounting => 'СЧИТАЕТ.';
+
+  @override
+  String get introV7WordChoosing => 'ВЫБИРАЕТ.';
+
+  @override
+  String get introV7BuildMyPlan => 'Создать мой план';
+
+  @override
+  String get introDemoLiveBadge => 'ЖИВОЕ ДЕМО';
+
+  @override
+  String get introDemoProgramBuilder => 'КОНСТРУКТОР ПРОГРАММ';
+
+  @override
+  String get introDemoCoachName => 'Тренер Алекс';
+
+  @override
+  String get introDemoUserAsk => 'Составь мою программу на 4 дня 💪';
+
+  @override
+  String get introDemoPushDayMon => 'ПУШ-ДЕНЬ · ПН';
+
+  @override
+  String get introDemoGoalChip => '📅 Прогноз даты цели: 22 авг';
+
+  @override
+  String get introDemoUserReply => 'Поехали 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'ПУШ-ДЕНЬ · УПРАЖНЕНИЕ 1 ИЗ 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'Подход $n';
+  }
+
+  @override
+  String get introDemoResting => 'отдых…';
+
+  @override
+  String get introDemoPrChip => '🏆 НОВЫЙ РЕКОРД · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'Тренер: «225 — это личный рекорд, +10 lb. На следующей неделе идём на 230.»';
+
+  @override
+  String get introDemoPhotoLogging => 'УЧЁТ ПО ФОТО';
+
+  @override
+  String get introDemoLoggedLine => '✓ Записано на сегодня — 1 фото, 2 секунды';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g белка';
+
+  @override
+  String get introDemoCarbsChip => '52g углеводов';
+
+  @override
+  String get introDemoFatChip => '18g жиров';
+
+  @override
+  String get introDemoMenuTitle => 'Анализ меню';
+
+  @override
+  String get introDemoMenuMeta => '8 позиций · 3 раздела · 2,4 с';
+
+  @override
+  String get introDemoSortLabel => 'Сортировка:';
+
+  @override
+  String get introDemoSortProtein => 'Белок';
+
+  @override
+  String get introDemoSortCarbs => 'Углеводы';
+
+  @override
+  String get introDemoSortInflammation => 'Воспаление';
+
+  @override
+  String get introDemoBadgeRecommended => 'Рекомендуем';
+
+  @override
+  String get introDemoBadgeOk => 'ОК';
+
+  @override
+  String get introDemoBadgeAvoid => 'Избегать';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'цели учтены — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'телосложение учтено — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'график настроен — $days дн./нед.';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 =>
+      '~20 секунд · ваш тренер подбирает каждый подход';
+
+  @override
+  String get signInV7DontLoseIt => 'НЕ ПОТЕРЯЙТЕ ЕГО.';
+
+  @override
+  String get signInV7LetsGetStarted => 'НАЧНЁМ.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'Ваш план готов';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 Цель: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'ПОДТВЕРЖДЕНО ИЗ ВАШЕГО ОПРОСА';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'Цель $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'Тренироваться с $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'ЗАМЕТКА ОТ ОСНОВАТЕЛЯ';
+
+  @override
+  String get paywallFounderHeadline =>
+      'Я СОЗДАЛ ТРЕНЕРА, КОТОРОГО НЕ МОГ СЕБЕ ПОЗВОЛИТЬ.';
+
+  @override
+  String get paywallFounderQuote =>
+      '«Хороший персональный тренер стоит \$400/месяц. Я не мог себе этого позволить, поэтому два года строил своего: 1722 упражнения, настоящая логика прогрессии, тренер, который действительно смотрит на вашу неделю. Я пользуюсь им каждый день.»';
+
+  @override
+  String get paywallFounderName => 'Chetan · основатель';
+
+  @override
+  String get paywallFounderSub => 'тренируется с Zealova с первого дня';
+
+  @override
+  String get paywallTesterQuote =>
+      '«Он заметил, что я всегда пропускаю ноги по пятницам, и просто… перенёс их на субботу.»';
+
+  @override
+  String get paywallTesterName => 'Keertan · ранний тестировщик';
+
+  @override
+  String get paywallEarlyAccess =>
+      'Ранний доступ · станьте одним из первых 1000 участников';
+
+  @override
+  String get paywallRemindMeCta => 'Напомнить мне 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'Пробный период включён';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 дней бесплатно, затем автопродление за $price/год';
+  }
+
+  @override
+  String get paywallTrialToggleOff =>
+      'Месячный план — начинается сегодня, без пробного периода';
+
+  @override
+  String get paywallV7DownsellHeadline => 'ВАШ ПЛАН БУДЕТ УДАЛЁН?';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'Разовая цена для участников-основателей, тот же 7-дневный бесплатный пробный период. Это предложение больше не вернётся.';
 }

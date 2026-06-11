@@ -44257,4 +44257,207 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get metricsDashboardGetStartedCta =>
       'Connect a wearable or log a meal to see your metrics.';
+
+  @override
+  String quizMinutesLeft(int minutes) {
+    return '~$minutes دقيقة متبقية';
+  }
+
+  @override
+  String get introV7HeadlineLine1 => 'مدربك';
+
+  @override
+  String get introV7HeadlineAlready => 'بالفعل';
+
+  @override
+  String get introV7WordTyping => 'يكتب.';
+
+  @override
+  String get introV7WordSpotting => 'يساندك.';
+
+  @override
+  String get introV7WordCounting => 'يعدّ.';
+
+  @override
+  String get introV7WordChoosing => 'يختار.';
+
+  @override
+  String get introV7BuildMyPlan => 'أنشئ خطتي';
+
+  @override
+  String get introDemoLiveBadge => 'عرض مباشر';
+
+  @override
+  String get introDemoProgramBuilder => 'منشئ البرنامج';
+
+  @override
+  String get introDemoCoachName => 'المدرب أليكس';
+
+  @override
+  String get introDemoUserAsk => 'أنشئ لي برنامجًا من 4 أيام 💪';
+
+  @override
+  String get introDemoPushDayMon => 'يوم الدفع · الاثنين';
+
+  @override
+  String get introDemoGoalChip => '📅 تاريخ الهدف المتوقع: 22 أغسطس';
+
+  @override
+  String get introDemoUserReply => 'هيا بنا 🔥';
+
+  @override
+  String get introDemoExerciseKicker => 'يوم الدفع · تمرين 1 من 5';
+
+  @override
+  String introDemoSetRow(int n) {
+    return 'المجموعة $n';
+  }
+
+  @override
+  String get introDemoResting => 'استراحة…';
+
+  @override
+  String get introDemoPrChip => '🏆 رقم قياسي جديد · 225 lb';
+
+  @override
+  String get introDemoCoachPrLine =>
+      'المدرب: “225 — هذا رقم قياسي بزيادة 10 lb. الأسبوع القادم نرفع 230.”';
+
+  @override
+  String get introDemoPhotoLogging => 'تسجيل بالصور';
+
+  @override
+  String get introDemoLoggedLine => '✓ سُجّل لليوم — صورة واحدة، خلال ثانيتين';
+
+  @override
+  String get introDemoKcalChip => '540 kcal';
+
+  @override
+  String get introDemoProteinChip => '38g بروتين';
+
+  @override
+  String get introDemoCarbsChip => '52g كربوهيدرات';
+
+  @override
+  String get introDemoFatChip => '18g دهون';
+
+  @override
+  String get introDemoMenuTitle => 'تحليل قائمة الطعام';
+
+  @override
+  String get introDemoMenuMeta => '8 أصناف · 3 أقسام · 2.4 ث';
+
+  @override
+  String get introDemoSortLabel => 'ترتيب:';
+
+  @override
+  String get introDemoSortProtein => 'بروتين';
+
+  @override
+  String get introDemoSortCarbs => 'كربوهيدرات';
+
+  @override
+  String get introDemoSortInflammation => 'الالتهاب';
+
+  @override
+  String get introDemoBadgeRecommended => 'موصى به';
+
+  @override
+  String get introDemoBadgeOk => 'مقبول';
+
+  @override
+  String get introDemoBadgeAvoid => 'تجنّب';
+
+  @override
+  String planAnalyzingReceiptGoals(String goal) {
+    return 'تمت مراجعة الأهداف — $goal';
+  }
+
+  @override
+  String planAnalyzingReceiptBody(String body) {
+    return 'تمت مطابقة الجسم — $body';
+  }
+
+  @override
+  String planAnalyzingReceiptSchedule(int days) {
+    return 'تم ضبط الجدول — $days أيام/أسبوع';
+  }
+
+  @override
+  String get planAnalyzingSubtitleV7 => '~20 ثانية · مدربك يختار كل مجموعة';
+
+  @override
+  String get signInV7DontLoseIt => 'لا تفقدها.';
+
+  @override
+  String get signInV7LetsGetStarted => 'لنبدأ.';
+
+  @override
+  String get signInV7KickerPlanBuilt => 'خطتك جاهزة';
+
+  @override
+  String signInV7GoalDateChip(String date) {
+    return '📅 الهدف: $date';
+  }
+
+  @override
+  String get personalInfoConfirmedFromQuiz => 'تم التأكيد من اختبارك';
+
+  @override
+  String personalInfoGoalChip(String value) {
+    return 'الهدف $value';
+  }
+
+  @override
+  String coachSelectionTrainWith(String coachName) {
+    return 'تدرّب مع $coachName';
+  }
+
+  @override
+  String get paywallFounderKicker => 'رسالة من المؤسس';
+
+  @override
+  String get paywallFounderHeadline =>
+      'صنعت المدرب الذي لم أستطع تحمّل تكلفته.';
+
+  @override
+  String get paywallFounderQuote =>
+      '“المدرب الشخصي الجيد يكلف \$400/شهر. لم أستطع تبرير ذلك، فقضيت سنتين في بناء مدرب خاص بي: 1,722 تمرينًا، ومنطق تقدّم حقيقي، ومدرب ينظر فعلًا إلى أسبوعك. أستخدمه كل يوم.”';
+
+  @override
+  String get paywallFounderName => 'Chetan · المؤسس';
+
+  @override
+  String get paywallFounderSub => 'يتدرب مع Zealova منذ اليوم الأول';
+
+  @override
+  String get paywallTesterQuote =>
+      '“لاحظ أنني أتخطى دائمًا تمرين الأرجل يوم الجمعة، فقام ببساطة… بنقله إلى السبت.”';
+
+  @override
+  String get paywallTesterName => 'Keertan · من أوائل المجرّبين';
+
+  @override
+  String get paywallEarlyAccess => 'وصول مبكر · كن من أول 1,000 عضو';
+
+  @override
+  String get paywallRemindMeCta => 'ذكّرني 🔔';
+
+  @override
+  String get paywallTrialToggleTitle => 'التجربة المجانية مفعّلة';
+
+  @override
+  String paywallTrialToggleOn(String price) {
+    return '7 أيام مجانًا، ثم يتجدد تلقائيًا بسعر $price/سنة';
+  }
+
+  @override
+  String get paywallTrialToggleOff => 'خطة شهرية — تبدأ اليوم، بدون تجربة';
+
+  @override
+  String get paywallV7DownsellHeadline => 'هل ستُحذف خطتك؟';
+
+  @override
+  String get paywallV7DownsellSub =>
+      'سعر العضو المؤسس لمرة واحدة، مع نفس التجربة المجانية لمدة 7 أيام. هذا العرض لن يعود.';
 }

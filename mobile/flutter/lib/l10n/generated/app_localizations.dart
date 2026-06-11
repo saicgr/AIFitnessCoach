@@ -75276,6 +75276,366 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Connect a wearable or log a meal to see your metrics.'**
   String get metricsDashboardGetStartedCta;
+
+  /// Time-remaining estimate shown in the quiz header (v7 onboarding redesign)
+  ///
+  /// In en, this message translates to:
+  /// **'~{minutes} min left'**
+  String quizMinutesLeft(int minutes);
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR COACH IS'**
+  String get introV7HeadlineLine1;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'ALREADY'**
+  String get introV7HeadlineAlready;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'TYPING.'**
+  String get introV7WordTyping;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'SPOTTING.'**
+  String get introV7WordSpotting;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'COUNTING.'**
+  String get introV7WordCounting;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSING.'**
+  String get introV7WordChoosing;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Build my plan'**
+  String get introV7BuildMyPlan;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'LIVE DEMO'**
+  String get introDemoLiveBadge;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'PROGRAM BUILDER'**
+  String get introDemoProgramBuilder;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Coach Alex'**
+  String get introDemoCoachName;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Build my 4-day program 💪'**
+  String get introDemoUserAsk;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'PUSH DAY · MON'**
+  String get introDemoPushDayMon;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'📅 Goal date projected: Aug 22'**
+  String get introDemoGoalChip;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Let\'s go 🔥'**
+  String get introDemoUserReply;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'PUSH DAY · EXERCISE 1 OF 5'**
+  String get introDemoExerciseKicker;
+
+  /// Demo set row label (v7 intro demo)
+  ///
+  /// In en, this message translates to:
+  /// **'Set {n}'**
+  String introDemoSetRow(int n);
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'resting…'**
+  String get introDemoResting;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'🏆 NEW PR · 225 lb'**
+  String get introDemoPrChip;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Coach: “225 — that\'s a 10 lb PR. Next week we go 230.”'**
+  String get introDemoCoachPrLine;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'PHOTO LOGGING'**
+  String get introDemoPhotoLogging;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Logged to today — 1 photo, 2 seconds'**
+  String get introDemoLoggedLine;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'540 kcal'**
+  String get introDemoKcalChip;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'38g protein'**
+  String get introDemoProteinChip;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'52g carbs'**
+  String get introDemoCarbsChip;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'18g fat'**
+  String get introDemoFatChip;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Menu Analysis'**
+  String get introDemoMenuTitle;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'8 items · 3 sections · 2.4s'**
+  String get introDemoMenuMeta;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Sort:'**
+  String get introDemoSortLabel;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Protein'**
+  String get introDemoSortProtein;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Carbs'**
+  String get introDemoSortCarbs;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Inflammation'**
+  String get introDemoSortInflammation;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get introDemoBadgeRecommended;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get introDemoBadgeOk;
+
+  /// v7 intro demo / first screen
+  ///
+  /// In en, this message translates to:
+  /// **'Avoid'**
+  String get introDemoBadgeAvoid;
+
+  /// v7 plan-analyzing receipt line
+  ///
+  /// In en, this message translates to:
+  /// **'goals reviewed — {goal}'**
+  String planAnalyzingReceiptGoals(String goal);
+
+  /// v7 plan-analyzing receipt line
+  ///
+  /// In en, this message translates to:
+  /// **'body matched — {body}'**
+  String planAnalyzingReceiptBody(String body);
+
+  /// v7 plan-analyzing receipt line
+  ///
+  /// In en, this message translates to:
+  /// **'schedule set — {days} days/week'**
+  String planAnalyzingReceiptSchedule(int days);
+
+  /// v7 plan-analyzing receipt line
+  ///
+  /// In en, this message translates to:
+  /// **'~20 seconds · your coach is choosing every set'**
+  String get planAnalyzingSubtitleV7;
+
+  /// v7 sign-in redesign
+  ///
+  /// In en, this message translates to:
+  /// **'DON\'T LOSE IT.'**
+  String get signInV7DontLoseIt;
+
+  /// v7 sign-in redesign
+  ///
+  /// In en, this message translates to:
+  /// **'LET\'S GET STARTED.'**
+  String get signInV7LetsGetStarted;
+
+  /// v7 sign-in redesign
+  ///
+  /// In en, this message translates to:
+  /// **'Your plan is built'**
+  String get signInV7KickerPlanBuilt;
+
+  /// v7 sign-in redesign
+  ///
+  /// In en, this message translates to:
+  /// **'📅 Goal: {date}'**
+  String signInV7GoalDateChip(String date);
+
+  /// v7 personal-info confirm chips
+  ///
+  /// In en, this message translates to:
+  /// **'CONFIRMED FROM YOUR QUIZ'**
+  String get personalInfoConfirmedFromQuiz;
+
+  /// v7 personal-info confirm chips
+  ///
+  /// In en, this message translates to:
+  /// **'Goal {value}'**
+  String personalInfoGoalChip(String value);
+
+  /// v7 coach-selection CTA, bound to the currently selected/renamed coach
+  ///
+  /// In en, this message translates to:
+  /// **'Train with {coachName}'**
+  String coachSelectionTrainWith(String coachName);
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'A NOTE FROM THE FOUNDER'**
+  String get paywallFounderKicker;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'I BUILT THE COACH I COULDN\'T AFFORD.'**
+  String get paywallFounderHeadline;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'“A good personal trainer is \$400/month. I couldn\'t justify that, so I spent two years building one: 1,722 exercises, real progression logic, a coach that actually looks at your week. I use it every single day.”'**
+  String get paywallFounderQuote;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Chetan · founder'**
+  String get paywallFounderName;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'training with Zealova since day one'**
+  String get paywallFounderSub;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'“It caught that I always skip Friday legs and just… moved them to Saturday.”'**
+  String get paywallTesterQuote;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Keertan · early tester'**
+  String get paywallTesterName;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Early access · be one of the first 1,000 members'**
+  String get paywallEarlyAccess;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me 🔔'**
+  String get paywallRemindMeCta;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Free trial enabled'**
+  String get paywallTrialToggleTitle;
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'7 days free, then auto-renews at {price}/yr'**
+  String paywallTrialToggleOn(String price);
+
+  /// v7 paywall sequence
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly plan — starts today, no trial'**
+  String get paywallTrialToggleOff;
+
+  /// v7 paywall exit-intent downsell (loss framing)
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR PLAN GETS DELETED?'**
+  String get paywallV7DownsellHeadline;
+
+  /// v7 paywall exit-intent downsell (loss framing)
+  ///
+  /// In en, this message translates to:
+  /// **'One-time founding-member price, same 7-day free trial. This offer doesn\'t come back.'**
+  String get paywallV7DownsellSub;
 }
 
 class _AppLocalizationsDelegate
