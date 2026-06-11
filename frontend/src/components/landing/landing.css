@@ -1,0 +1,157 @@
+/* Landing-page-scoped styles for the "dark kinetic volt" homepage.
+ * The homepage is hardcoded dark and ignores the app light/dark toggle.
+ * Everything here is namespaced under .vl- (volt landing) to avoid
+ * collisions with app styles. */
+
+.vl-page {
+  --volt: #FF7A00;
+  --volt-soft: rgba(255, 122, 0, 0.12);
+  --landing-bg: #080605;
+  background-color: var(--landing-bg);
+  color: #fafafa;
+}
+
+.vl-page ::selection {
+  background: rgba(255, 122, 0, 0.3);
+  color: #ffffff;
+}
+
+/* Static hero base — also the prerender / reduced-motion / no-WebGL
+ * fallback that sits underneath the lazy WebGL canvas. */
+.vl-hero-base {
+  background:
+    radial-gradient(90% 70% at 70% 10%, rgba(255, 122, 0, 0.10), transparent 60%),
+    radial-gradient(60% 50% at 10% 90%, rgba(150, 60, 0, 0.12), transparent 65%),
+    radial-gradient(120% 90% at 50% 50%, #0d0a07 0%, #080605 70%);
+}
+
+/* Cheap film grain (single static SVG noise tile, no animation). */
+.vl-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Marquee — pure CSS transform loop. Paused by default; .vl-marquee-on
+ * (added when on screen + motion allowed) runs it. */
+@keyframes vl-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.vl-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: vl-marquee 36s linear infinite;
+  animation-play-state: paused;
+}
+
+.vl-marquee-on .vl-marquee-track {
+  animation-play-state: running;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-marquee-track {
+    animation: none !important;
+  }
+}
+
+/* Phone demo helpers */
+.vl-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chat-style message entrance: elements are conditionally RENDERED (not
+ * opacity-reserved) so the conversation stays genuinely bottom-anchored. */
+@keyframes vl-pop-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.vl-pop-in {
+  animation: vl-pop-in 0.3s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-pop-in { animation: none !important; }
+}
+
+@keyframes vl-typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+.vl-typing-dot {
+  animation: vl-typing-dot 1.1s ease-in-out infinite;
+}
+
+.vl-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.vl-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+/* Scan sweep traverses the FULL height of its container (animating `top`
+ * in container-relative %, not translateY which is element-relative). */
+@keyframes vl-scan-sweep {
+  0% { top: -12%; }
+  100% { top: 104%; }
+}
+
+.vl-scan-sweep {
+  position: absolute;
+  animation: vl-scan-sweep 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-typing-dot,
+  .vl-scan-sweep {
+    animation: none !important;
+  }
+}
+
+/* Hero headline line-reveal wrappers (GSAP animates the inner span;
+ * initial CSS state is fully visible so prerender captures real text). */
+.vl-line {
+  display: block;
+  overflow: hidden;
+}
+
+.vl-line > span {
+  display: block;
+  will-change: transform;
+}
+
+/* Rolling headline word (hero h1). The track holds every word as real,
+ * crawlable text; only translateY moves (composited). */
+.vl-roller {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.vl-roller-track {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.55s cubic-bezier(0.76, 0, 0.24, 1);
+  will-change: transform;
+}
+
+.vl-roller-word {
+  display: block;
+  height: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vl-roller-track {
+    transition: none !important;
+  }
+}
+
+/* Volt outline text for the kinetic background words */
+.vl-outline-text {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(255, 122, 0, 0.14);
+}
