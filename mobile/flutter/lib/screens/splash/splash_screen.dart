@@ -1,9 +1,17 @@
-import 'dart:math';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
+
 import '../../core/constants/app_colors.dart';
 
 /// Animated splash screen shown while app initializes and checks auth state.
 /// This prevents the login screen flash when user is already authenticated.
+///
+/// v7 first-run redesign ("S3 pulse line"): an orange effort-spike line
+/// draws itself across the screen (~900ms), the app icon ignites at
+/// completion, then a soft glow breathes while the auth check finishes.
+/// The stale pre-rebrand blue (#3B9BD6) is gone — splash is brand orange.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -13,58 +21,59 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
-  late final AnimationController _logoController;
+  late final AnimationController _lineController;
+  late final AnimationController _iconController;
   late final AnimationController _pulseController;
-  late final AnimationController _shimmerController;
-  late final Animation<double> _scaleAnimation;
-  late final Animation<double> _fadeAnimation;
-  late final Animation<double> _pulseAnimation;
+  late final Animation<double> _iconScale;
+  late final Animation<double> _iconFade;
+  late final Animation<double> _pulse;
 
   @override
   void initState() {
     super.initState();
 
-    // Logo entrance: scale up + fade in
-    _logoController = AnimationController(
+    // The pulse line draws itself left → right.
+    _lineController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 900),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _logoController, curve: Curves.easeOutBack),
+    // Icon ignites as the line completes.
+    _iconController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 420),
     );
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _logoController, curve: Curves.easeOut),
+    _iconScale = Tween<double>(begin: 0.6, end: 1.0).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.easeOutBack),
     );
 
-    // Glow pulse: continuous breathing effect
+    _iconFade = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _iconController, curve: Curves.easeOut),
+    );
+
+    // Soft breathing glow while the auth check finishes.
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1800),
     );
 
-    _pulseAnimation = Tween<double>(begin: 0.15, end: 0.45).animate(
+    _pulse = Tween<double>(begin: 0.25, end: 0.55).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Shimmer ring rotation
-    _shimmerController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 3000),
-    );
-
-    // Start animations
-    _logoController.forward();
-    _pulseController.repeat(reverse: true);
-    _shimmerController.repeat();
+    _lineController.forward().whenComplete(() {
+      if (!mounted) return;
+      _iconController.forward();
+      _pulseController.repeat(reverse: true);
+    });
   }
 
   @override
   void dispose() {
-    _logoController.dispose();
+    _lineController.dispose();
+    _iconController.dispose();
     _pulseController.dispose();
-    _shimmerController.dispose();
     super.dispose();
   }
 
@@ -73,105 +82,80 @@ class _SplashScreenState extends State<SplashScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    // Use the Zealova brand blue from the icon
-    const brandBlue = Color(0xFF3B9BD6);
 
     return Scaffold(
       backgroundColor: backgroundColor,
       body: Center(
         child: AnimatedBuilder(
           animation: Listenable.merge(
-              [_logoController, _pulseController, _shimmerController]),
+              [_lineController, _iconController, _pulseController]),
           builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Animated logo with glow + shimmer ring
-                  SizedBox(
-                    width: 160,
-                    height: 160,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Rotating shimmer ring
-                        Transform.rotate(
-                          angle: _shimmerController.value * 2 * pi,
-                          child: CustomPaint(
-                            size: const Size(140, 140),
-                            painter: _ShimmerRingPainter(
-                              progress: _shimmerController.value,
-                              color: brandBlue,
-                              opacity: _pulseAnimation.value * 0.6,
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // App icon — ignites when the pulse line arrives.
+                FadeTransition(
+                  opacity: _iconFade,
+                  child: ScaleTransition(
+                    scale: _iconScale,
+                    child: Container(
+                      width: 84,
+                      height: 84,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(21),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.orange.withValues(
+                              alpha: _pulseController.isAnimating
+                                  ? _pulse.value
+                                  : 0.35,
                             ),
+                            blurRadius: 44,
+                            spreadRadius: 6,
                           ),
-                        ),
-
-                        // Glow behind logo
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: brandBlue
-                                    .withValues(alpha: _pulseAnimation.value),
-                                blurRadius: 40,
-                                spreadRadius: 8,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // Logo icon with scale
-                        ScaleTransition(
-                          scale: _scaleAnimation,
-                          child: Container(
-                            width: 88,
-                            height: 88,
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(21),
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: brandBlue.withValues(alpha: 0.3),
-                                  blurRadius: 16,
-                                  spreadRadius: 1,
-                                ),
-                              ],
+                              color: AppColors.orange,
+                              borderRadius: BorderRadius.circular(21),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(22),
-                              child: Image.asset(
-                                'assets/images/app_icon.png',
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                  decoration: BoxDecoration(
-                                    color: brandBlue,
-                                    borderRadius: BorderRadius.circular(22),
-                                  ),
-                                  child: const Icon(
-                                    Icons.fitness_center,
-                                    size: 44,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
+                            child: const Icon(
+                              Icons.fitness_center,
+                              size: 42,
+                              color: Colors.white,
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
+                ),
 
-                  const SizedBox(height: 32),
+                const SizedBox(height: 36),
 
-                  // Animated dots loading indicator
-                  _LoadingDots(color: brandBlue),
-                ],
-              ),
+                // The pulse line.
+                SizedBox(
+                  width: math.min(
+                      320, MediaQuery.of(context).size.width - 70),
+                  height: 60,
+                  child: CustomPaint(
+                    painter: _PulseLinePainter(
+                      progress: Curves.easeInOutCubic
+                          .transform(_lineController.value),
+                      glow: _pulseController.isAnimating
+                          ? 0.6 + _pulse.value * 0.5
+                          : 1.0,
+                    ),
+                  ),
+                ),
+              ],
             );
           },
         ),
@@ -180,117 +164,76 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-/// Three bouncing dots loading indicator
-class _LoadingDots extends StatefulWidget {
-  final Color color;
-
-  const _LoadingDots({required this.color});
-
-  @override
-  State<_LoadingDots> createState() => _LoadingDotsState();
-}
-
-class _LoadingDotsState extends State<_LoadingDots>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, _) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(3, (index) {
-            // Stagger each dot by 0.2
-            final delay = index * 0.2;
-            final t = (_controller.value - delay) % 1.0;
-            // Bounce curve: peak at t=0.3, settle by t=0.6
-            final bounce = t < 0.3
-                ? Curves.easeOut.transform(t / 0.3)
-                : t < 0.6
-                    ? Curves.easeIn.transform(1.0 - (t - 0.3) / 0.3)
-                    : 0.0;
-
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Transform.translate(
-                offset: Offset(0, -8 * bounce),
-                child: Opacity(
-                  opacity: 0.4 + 0.6 * bounce,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: widget.color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }),
-        );
-      },
-    );
-  }
-}
-
-/// Draws a partial arc ring with gradient opacity for shimmer effect
-class _ShimmerRingPainter extends CustomPainter {
+/// Draws the 3-beat effort-spike line, revealed by [progress] (0..1).
+class _PulseLinePainter extends CustomPainter {
   final double progress;
-  final Color color;
-  final double opacity;
+  final double glow;
 
-  _ShimmerRingPainter({
-    required this.progress,
-    required this.color,
-    required this.opacity,
-  });
+  _PulseLinePainter({required this.progress, required this.glow});
+
+  // Normalized to a 320×60 design box (the approved mockup waveform):
+  // flat lead-in, small beat, big center spike, medium trailing beat.
+  static const List<Offset> _pts = [
+    Offset(0, 30),
+    Offset(38, 30),
+    Offset(46, 21),
+    Offset(54, 38),
+    Offset(61, 30),
+    Offset(112, 30),
+    Offset(124, 4),
+    Offset(138, 56),
+    Offset(152, 12),
+    Offset(162, 30),
+    Offset(210, 30),
+    Offset(219, 17),
+    Offset(228, 44),
+    Offset(236, 26),
+    Offset(243, 30),
+    Offset(320, 30),
+  ];
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
+    if (progress <= 0) return;
 
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5
-      ..strokeCap = StrokeCap.round;
+    final sx = size.width / 320.0;
+    final sy = size.height / 60.0;
 
-    // Draw a partial arc (120 degrees) with fading edges
-    const sweepAngle = 2 * pi / 3; // 120 degrees
-    const steps = 40;
-
-    for (int i = 0; i < steps; i++) {
-      final t = i / steps;
-      // Fade from full opacity in middle to 0 at edges
-      final edgeFade = sin(t * pi);
-      paint.color = color.withValues(alpha: opacity * edgeFade);
-
-      final angle = progress * 2 * pi + t * sweepAngle;
-      final dx = center.dx + radius * cos(angle);
-      final dy = center.dy + radius * sin(angle);
-      canvas.drawCircle(Offset(dx, dy), 1.2, paint);
+    final path = Path()..moveTo(_pts.first.dx * sx, _pts.first.dy * sy);
+    for (final p in _pts.skip(1)) {
+      path.lineTo(p.dx * sx, p.dy * sy);
     }
+
+    // Reveal the path up to `progress` of its total length.
+    final revealed = Path();
+    for (final metric in path.computeMetrics()) {
+      revealed.addPath(
+        metric.extractPath(0, metric.length * progress),
+        Offset.zero,
+      );
+    }
+
+    // Wide blurred under-stroke = glow; crisp core stroke on top.
+    final glowPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 7
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = AppColors.orange.withValues(alpha: 0.45 * glow)
+      ..maskFilter = const ui.MaskFilter.blur(ui.BlurStyle.normal, 7);
+
+    final corePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..color = AppColors.orange;
+
+    canvas.drawPath(revealed, glowPaint);
+    canvas.drawPath(revealed, corePaint);
   }
 
   @override
-  bool shouldRepaint(_ShimmerRingPainter oldDelegate) =>
-      progress != oldDelegate.progress || opacity != oldDelegate.opacity;
+  bool shouldRepaint(_PulseLinePainter oldDelegate) =>
+      progress != oldDelegate.progress || glow != oldDelegate.glow;
 }
