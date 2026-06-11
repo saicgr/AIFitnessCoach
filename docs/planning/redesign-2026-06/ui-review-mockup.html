@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova UI Review — 4 Redesign Mockups (Before / After)</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #111113;
+    --ink: #FAFAFA;
+    --ink2: #A1A1AA;
+    --ink3: #71717A;
+    --line: #262626;
+    --accent: #14B8A6;
+    --accent-soft: rgba(20,184,166,.15);
+    --protein: #A78BFA;
+    --carbs: #22D3EE;
+    --fat: #FB923C;
+    --error: #F87171;
+    --phone-bg: #000;
+    --card: #141414;
+    --card-border: #262626;
+    --nav-bg: rgba(28,28,30,.94);
+  }
+  body.light {
+    --bg: #f4f4f5;
+    --panel: #ffffff;
+    --ink: #18181B;
+    --ink2: #52525B;
+    --ink3: #71717A;
+    --line: #E4E4E7;
+    --accent-soft: rgba(20,184,166,.12);
+    --phone-bg: #FFFFFF;
+    --card: #F4F4F5;
+    --card-border: #E4E4E7;
+    --nav-bg: rgba(244,244,245,.96);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: 32px 24px 96px; transition: background .25s, color .25s;
+  }
+  header.page { max-width: 1280px; margin: 0 auto 40px; display:flex; align-items:flex-start; justify-content:space-between; gap:24px; flex-wrap:wrap; }
+  header.page h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  header.page p { color: var(--ink2); font-size: 14px; margin-top: 8px; max-width: 720px; line-height: 1.5; }
+  .toggle {
+    border: 1px solid var(--line); background: var(--panel); color: var(--ink);
+    padding: 10px 18px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .toc { max-width:1280px; margin:0 auto 48px; display:flex; gap:10px; flex-wrap:wrap; }
+  .toc a { color: var(--ink2); text-decoration:none; border:1px solid var(--line); padding:8px 14px; border-radius:999px; font-size:12.5px; font-weight:600; }
+  .toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+  section.change { max-width: 1280px; margin: 0 auto 88px; }
+  .change-head { margin-bottom: 24px; }
+  .change-head .num { display:inline-block; background: var(--accent-soft); color: var(--accent); font-weight:800; font-size:12px; padding: 4px 12px; border-radius:999px; letter-spacing:.06em; margin-bottom:10px; }
+  .change-head h2 { font-size: 21px; font-weight: 800; letter-spacing:-0.01em; }
+  .change-head p { color: var(--ink2); font-size: 13.5px; margin-top: 8px; max-width: 860px; line-height: 1.55; }
+
+  .frames { display:flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+  .frame-col { display:flex; flex-direction:column; gap:10px; }
+  .frame-label { font-size: 12px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+  .frame-label.before { color: var(--ink3); }
+  .frame-label.after { color: var(--accent); }
+  .frame-note { font-size: 11.5px; color: var(--ink3); max-width: 300px; line-height: 1.5; }
+  .pick { border:1px dashed var(--accent); color:var(--accent); font-size:11px; font-weight:700; padding:6px 10px; border-radius:8px; max-width:300px; }
+
+  /* ---------- phone frame ---------- */
+  .phone {
+    width: 300px; height: 632px; border-radius: 44px;
+    border: 7px solid #1c1c1e; background: var(--phone-bg);
+    overflow: hidden; position: relative; flex-shrink: 0;
+    box-shadow: 0 24px 64px rgba(0,0,0,.45);
+  }
+  body.light .phone { box-shadow: 0 24px 64px rgba(0,0,0,.14); border-color:#2c2c2e; }
+  .notch { position:absolute; top:8px; left:50%; transform:translateX(-50%); width:88px; height:22px; background:#1c1c1e; border-radius:12px; z-index:30; }
+  .screen { position:absolute; inset:0; overflow:hidden; padding: 44px 14px 0; }
+  .screen.scrolly { overflow-y:auto; padding-bottom: 110px; scrollbar-width:none; }
+  .screen.scrolly::-webkit-scrollbar { display:none; }
+
+  /* ---------- shared app pieces ---------- */
+  .app-greet { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .app-greet .gname { font-size:16px; font-weight:800; }
+  .app-greet .gsub { font-size:10.5px; color:var(--ink3); margin-top:2px; }
+  .app-greet .gicons { display:flex; gap:8px; color:var(--ink2); font-size:14px; }
+  .gicons span { width:30px; height:30px; border:1px solid var(--card-border); border-radius:10px; display:flex; align-items:center; justify-content:center; }
+
+  .banner { background:var(--card); border:1px solid var(--card-border); border-radius:14px; padding:10px 12px; font-size:11px; color:var(--ink2); display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .banner b { color:var(--ink); font-weight:700; }
+  .banner .x { margin-left:auto; color:var(--ink3); }
+  .more-pill { display:inline-flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; color:var(--ink3); border:1px solid var(--card-border); padding:5px 10px; border-radius:999px; margin-bottom:10px; }
+  .banner-actions { display:flex; align-items:center; gap:10px; margin:-2px 2px 10px; }
+  .banner-actions .dismiss-all { font-size:10.5px; font-weight:700; color:var(--ink3); }
+  /* iOS-notification-style stacked banner panel (matches the app's StackedBannerPanel) */
+  .banner-stack { position:relative; margin-bottom:14px; }
+  .banner-stack .layer { position:absolute; left:0; right:0; background:var(--card); border:1px solid var(--card-border); border-radius:14px; height:38px; }
+  .banner-stack .layer.l2 { top:6px; transform:scale(.96); opacity:.7; z-index:1; }
+  .banner-stack .layer.l3 { top:12px; transform:scale(.92); opacity:.4; z-index:0; }
+  .banner-stack .banner.top { position:relative; z-index:2; margin-bottom:0; }
+  .banner-stack .count { position:absolute; top:-6px; right:-4px; z-index:3; background:var(--accent); color:#04201c; font-size:9px; font-weight:800; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+
+  .qa-row { display:flex; gap:5px; margin-bottom:12px; }
+  .qa { flex:1; background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:7px 2px; text-align:center; }
+  .qa .qi { font-size:13px; }
+  .qa .ql { font-size:7.5px; color:var(--ink2); font-weight:600; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+  .week { display:flex; justify-content:space-between; margin-bottom:12px; padding:0 2px; }
+  .day { text-align:center; font-size:8.5px; color:var(--ink3); font-weight:600; }
+  .day .dn { width:24px; height:24px; border-radius:9px; display:flex; align-items:center; justify-content:center; margin:3px auto 0; font-size:9.5px; color:var(--ink2); border:1px solid transparent; }
+  .day.done .dn { border-color:var(--accent); color:var(--accent); }
+  .day.today .dn { background:var(--accent); color:#04201c; font-weight:800; }
+
+  .card { background:var(--card); border:1px solid var(--card-border); border-radius:18px; padding:14px; margin-bottom:10px; }
+  .card .ttl { font-size:10px; font-weight:800; letter-spacing:.08em; color:var(--ink3); text-transform:uppercase; margin-bottom:6px; }
+  .card .big { font-size:15px; font-weight:800; }
+  .card .sub { font-size:10.5px; color:var(--ink2); margin-top:3px; }
+  .btn { display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#04201c; font-size:11px; font-weight:800; padding:8px 16px; border-radius:999px; margin-top:10px; }
+  .btn.ghost { background:transparent; border:1px solid var(--card-border); color:var(--ink); }
+  .chip { display:inline-block; font-size:8.5px; font-weight:700; padding:3px 8px; border-radius:999px; background:var(--accent-soft); color:var(--accent); }
+
+  .macros { display:flex; gap:6px; margin-top:10px; }
+  .macro { flex:1; border-radius:10px; padding:6px 8px; font-size:8.5px; font-weight:800; }
+  .macro .mv { font-size:12px; margin-top:2px; }
+  .macro.p { background:rgba(167,139,250,.14); color:var(--protein); }
+  .macro.c { background:rgba(34,211,238,.12); color:var(--carbs); }
+  .macro.f { background:rgba(251,146,60,.13); color:var(--fat); }
+
+  /* ---------- bottom nav ---------- */
+  .nav {
+    position:absolute; left:22px; right:22px; bottom:12px; height:56px;
+    background:var(--nav-bg); border-radius:28px; display:flex; align-items:center;
+    padding:0 6px; box-shadow:0 3px 10px rgba(0,0,0,.25); z-index:20;
+    backdrop-filter: blur(8px);
+  }
+  .nav .item { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; color:var(--ink3); }
+  .nav .item svg { width:19px; height:19px; fill:currentColor; }
+  .nav .item .lbl { font-size:8px; font-weight:600; }
+  .nav .item.on { color:var(--accent); }
+  .nav .item.on .wrap { background:var(--accent-soft); border-radius:12px; padding:3px 9px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .nav .item .wrap { padding:3px 9px; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .nav.bigger .item .lbl { font-size:9px; font-weight:700; }
+
+  .coach-fab {
+    position:absolute; right:22px; bottom:80px; background:var(--card); border:1px solid var(--card-border);
+    border-radius:999px; padding:9px 14px; font-size:10.5px; font-weight:700; color:var(--ink);
+    display:flex; align-items:center; gap:6px; z-index:21; box-shadow:0 4px 14px rgba(0,0,0,.35);
+  }
+  .coach-fab .spark { color:var(--accent); }
+
+  .subtab {
+    position:absolute; left:46px; right:46px; bottom:80px; height:42px;
+    background:var(--nav-bg); border:1px solid var(--card-border); border-radius:21px;
+    display:flex; align-items:center; padding:4px; z-index:19;
+  }
+  .subtab .st { flex:1; text-align:center; font-size:9.5px; font-weight:700; color:var(--ink3); padding:7px 0; border-radius:16px; }
+  .subtab .st.on { background:var(--accent-soft); color:var(--accent); }
+
+  .seg { display:flex; background:var(--card); border:1px solid var(--card-border); border-radius:12px; padding:3px; margin-bottom:12px; }
+  .seg .sg { flex:1; text-align:center; font-size:10px; font-weight:700; color:var(--ink3); padding:6px 0; border-radius:9px; }
+  .seg .sg.on { background:var(--accent-soft); color:var(--accent); }
+
+  /* nutrition bits */
+  .ring-row { display:flex; gap:12px; align-items:center; }
+  .ring { width:96px; height:96px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; position:relative;
+    background: conic-gradient(var(--accent) 0 62%, rgba(127,127,127,.12) 62% 100%); }
+  .ring::before { content:""; position:absolute; inset:9px; border-radius:50%; background:var(--card); }
+  .ring .rin { position:relative; text-align:center; }
+  .ring .rin .shark { font-size:15px; }
+  .ring .rin .kl { font-size:6.5px; font-weight:800; letter-spacing:.05em; color:var(--ink3); }
+  .ring .rin .kv { font-size:15px; font-weight:800; }
+  .pillstack { flex:1; display:flex; flex-direction:column; gap:6px; }
+  .mpill { display:flex; align-items:center; gap:7px; border-radius:10px; padding:6px 8px; font-size:8.5px; font-weight:800; }
+  .mpill .em { font-size:11px; }
+  .mpill .pv { margin-left:auto; font-size:11px; }
+  .mpill.p { background:rgba(167,139,250,.14); color:var(--protein); }
+  .mpill.c { background:rgba(34,211,238,.12); color:var(--carbs); }
+  .mpill.f { background:rgba(251,146,60,.13); color:var(--fat); }
+  .meal { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--card-border); }
+  .meal:last-child { border-bottom:none; }
+  .meal .mi { width:26px; height:26px; border-radius:8px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+  .meal .mn { font-size:10.5px; font-weight:700; }
+  .meal .ms { font-size:8.5px; color:var(--ink3); margin-top:1px; }
+  .meal .mc { margin-left:auto; text-align:right; font-size:10.5px; font-weight:700; }
+  .meal .mp { font-size:8px; color:var(--ink3); }
+
+  /* leaderboard card in You hub */
+  .lb-row { display:flex; align-items:center; gap:9px; padding:7px 0; font-size:10px; border-bottom:1px solid var(--card-border); }
+  .lb-row:last-child { border-bottom:none; }
+  .lb-rank { width:20px; color:var(--ink3); font-weight:800; }
+  .lb-av { width:20px; height:20px; border-radius:50%; background:var(--accent-soft); }
+  .lb-val { margin-left:auto; font-weight:700; color:var(--ink2); }
+  .sect-lbl { font-size:9px; font-weight:800; letter-spacing:.1em; color:var(--ink3); text-transform:uppercase; margin:12px 0 7px; }
+
+  /* annotations on type specimen */
+  .anno { font-size:8px; color:var(--error); font-weight:700; }
+  .anno.ok { color:var(--accent); }
+
+  /* type ramp + motion panel */
+  .panel { background:var(--panel); border:1px solid var(--line); border-radius:20px; padding:24px; flex:1; min-width:320px; }
+  .panel h3 { font-size:14px; font-weight:800; margin-bottom:14px; }
+  .ramp-row { display:flex; align-items:baseline; gap:16px; padding:9px 0; border-bottom:1px solid var(--line); }
+  .ramp-row:last-child { border:none; }
+  .ramp-meta { width:170px; flex-shrink:0; font-size:11px; color:var(--ink3); font-family:ui-monospace, monospace; }
+  .motion-row { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .motion-row:last-child { border:none; }
+  .motion-meta { width:230px; flex-shrink:0; }
+  .motion-meta .mn1 { font-size:12.5px; font-weight:700; }
+  .motion-meta .mn2 { font-size:10.5px; color:var(--ink3); font-family:ui-monospace, monospace; margin-top:2px; }
+  .demo-stage { display:flex; align-items:center; gap:12px; }
+  .demo-icon { width:36px; height:36px; border-radius:12px; background:var(--accent-soft); color:var(--accent); display:flex; align-items:center; justify-content:center; }
+  .demo-icon svg { width:18px; height:18px; fill:currentColor; }
+  .demo-card { width:120px; height:40px; border-radius:10px; background:var(--card); border:1px solid var(--card-border); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--ink2); position:relative; overflow:hidden; }
+  .replay { border:1px solid var(--line); background:transparent; color:var(--ink2); font-size:11px; font-weight:700; padding:6px 12px; border-radius:999px; cursor:pointer; }
+  .replay:hover { color:var(--accent); border-color:var(--accent); }
+
+  @keyframes spinpop { 0% { transform:rotate(0) scale(1);} 55% { transform:rotate(280deg) scale(1.3);} 100% { transform:rotate(360deg) scale(1);} }
+  .anim-spinpop { animation: spinpop 450ms cubic-bezier(0.215,0.61,0.355,1); }
+  @keyframes xfade { 0% { opacity:0; transform:translateY(6px);} 100% { opacity:1; transform:translateY(0);} }
+  .anim-xfade { animation: xfade 250ms cubic-bezier(0.215,0.61,0.355,1); }
+  @keyframes fastfade { 0% { opacity:.3; } 100% { opacity:1; } }
+  .anim-fast { animation: fastfade 150ms ease-out; }
+  @keyframes wordbounce {
+    0% { transform: translateY(0) scale(1); }
+    30% { transform: translateY(-5px) scale(1.06); }
+    55% { transform: translateY(1.5px) scale(.99); }
+    75% { transform: translateY(-1.5px) scale(1.01); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  .anim-wordbounce { animation: wordbounce 450ms cubic-bezier(0.215,0.61,0.355,1); display:inline-block; }
+  .demo-word { font-size:13px; font-weight:800; color:var(--accent); display:inline-block; min-width:90px; text-align:center; }
+
+  .legend { font-size:12px; color:var(--ink3); margin-top:14px; line-height:1.6; }
+  .vs { align-self:center; color:var(--ink3); font-weight:800; font-size:13px; padding:0 2px; }
+
+  /* decisions */
+  .decision { border:1px solid var(--accent); background:var(--accent-soft); color:var(--accent); font-size:12px; font-weight:800; padding:8px 14px; border-radius:10px; display:inline-block; margin-bottom:12px; }
+  .decision.no { border-color:var(--error); background:rgba(248,113,113,.08); color:var(--error); }
+  .frame-col.dim .phone { opacity:.35; }
+  .frame-label.rejected { color:var(--error); text-decoration:line-through; }
+
+  /* coach chat frame */
+  .bubble { background:var(--card); border:1px solid var(--card-border); border-radius:16px 16px 16px 4px; padding:10px 12px; font-size:10.5px; color:var(--ink); line-height:1.5; margin-bottom:8px; }
+  .bubble .bt { font-size:8.5px; font-weight:800; letter-spacing:.06em; color:var(--accent); margin-bottom:4px; }
+  .bubble.user { background:var(--accent-soft); border-color:transparent; border-radius:16px 16px 4px 16px; margin-left:48px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; }
+  .chips .ch { font-size:9px; font-weight:700; color:var(--accent); border:1px solid var(--accent); border-radius:999px; padding:5px 10px; opacity:.9; }
+  .inputbar { position:absolute; left:14px; right:14px; bottom:80px; height:42px; background:var(--card); border:1px solid var(--card-border); border-radius:21px; display:flex; align-items:center; gap:8px; padding:0 12px; font-size:10.5px; color:var(--ink3); z-index:18; }
+  .inputbar .send { margin-left:auto; width:28px; height:28px; border-radius:50%; background:var(--accent); color:#04201c; display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<header class="page">
+  <div>
+    <h1>Zealova UI Review — Redesign Mockups</h1>
+    <p>Four proposed changes from the June 2026 UI/UX review, each shown as BEFORE (current app, faithful to the shipped code) and AFTER (proposed). Validate, redline, or pick variants below. No Flutter code has been changed.</p>
+  </div>
+  <button class="toggle" onclick="document.body.classList.toggle('light'); this.textContent = document.body.classList.contains('light') ? '🌙 Dark mode' : '☀️ Light mode'">☀️ Light mode</button>
+</header>
+
+<nav class="toc">
+  <a href="#c1">1 · Coach tab promotion</a>
+  <a href="#c2">2 · Home hero simplification</a>
+  <a href="#c3">3 · Chrome consolidation</a>
+  <a href="#c4">4 · Type + motion tokens</a>
+</nav>
+
+<!-- ============ SVG defs ============ -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 3 3 10.5V21h6.5v-6h5v6H21V10.5L12 3z"/></symbol>
+    <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M20.57 14.86 22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29l-1.43-1.43z"/></symbol>
+    <symbol id="i-food" viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm6.93 6h-2.95a15.6 15.6 0 0 0-1.38-3.56A8.03 8.03 0 0 1 18.93 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.99 7.99 0 0 1 5.08 16zm2.95-8H5.08a7.99 7.99 0 0 1 4.33-3.56A15.6 15.6 0 0 0 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 0 1-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 17.27 6.18 3.73-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27z"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-9 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" transform="translate(-1.5,0)"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></symbol>
+  </defs>
+</svg>
+
+<!-- ===================================================================== -->
+<!-- CHANGE 1 — COACH TAB PROMOTION                                        -->
+<!-- ===================================================================== -->
+<section class="change" id="c1">
+  <div class="change-head">
+    <span class="num">CHANGE 1 OF 4</span>
+    <h2>Coach tab promotion — Ranks moves into the You hub</h2>
+    <p>The AI coach is the product's differentiator but lives behind a FAB that only shows on Home and collapses on scroll. The leaderboard holds a permanent tab with an ambiguous globe icon. After: Coach takes the center tab; the Coach FAB is removed; leaderboard relocates as a card inside You › Stats &amp; Rewards (the rest of gamification already lives there). Icons unify to one filled family; labels go from 9.5px to 11px.</p>
+  </div>
+  <div class="frames">
+
+    <!-- BEFORE -->
+    <div class="frame-col">
+      <span class="frame-label before">Before — current nav + Coach FAB</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="app-greet">
+            <div><div class="gname">Good morning, Chetan</div><div class="gsub">🔥 12-day streak · 2,140 XP</div></div>
+            <div class="gicons"><span>🔔</span><span>⋯</span></div>
+          </div>
+          <div class="banner">⭐ <b>Enjoying Zealova?</b> Rate us <span class="x">✕</span></div>
+          <div class="qa-row">
+            <div class="qa"><div class="qi">✨</div><div class="ql">Chat</div></div>
+            <div class="qa"><div class="qi">🍴</div><div class="ql">Log Food</div></div>
+            <div class="qa"><div class="qi">📋</div><div class="ql">Scan Menu</div></div>
+            <div class="qa"><div class="qi">💧</div><div class="ql">Water</div></div>
+            <div class="qa"><div class="qi">⚖️</div><div class="ql">Weight</div></div>
+            <div class="qa"><div class="qi">⋯</div><div class="ql">More</div></div>
+          </div>
+          <div class="card">
+            <div class="ttl">Today's Workout</div>
+            <div class="big">Push Day A</div>
+            <div class="sub">6 exercises · 45 min · <span class="chip">Moderate</span></div>
+            <span class="btn">▶ Start</span>
+          </div>
+          <div class="card">
+            <div class="ttl">Nutrition</div>
+            <div class="big">1,240 kcal left</div>
+            <div class="macros">
+              <div class="macro p">PROTEIN<div class="mv">82/160g</div></div>
+              <div class="macro c">CARBS<div class="mv">110/220g</div></div>
+              <div class="macro f">FAT<div class="mv">34/70g</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="coach-fab"><span class="spark">✦</span> Ask coach</div>
+        <div class="nav">
+          <div class="item on"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-globe"/></svg><span class="lbl">Ranks</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Globe icon reads "explore/web", not leaderboard. Coach is a FAB that disappears on scroll. Labels 9.5px, mixed icon families.</div>
+    </div>
+
+    <div class="vs">→</div>
+
+    <!-- AFTER -->
+    <div class="frame-col">
+      <span class="frame-label after">After — Coach is the center tab</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen">
+          <div class="app-greet">
+            <div><div class="gname">Good morning, Chetan</div><div class="gsub">🔥 12-day streak · 2,140 XP</div></div>
+            <div class="gicons"><span>🔔</span><span>⋯</span></div>
+          </div>
+          <div class="banner">⭐ <b>Enjoying Zealova?</b> Rate us <span class="x">✕</span></div>
+          <div class="qa-row">
+            <div class="qa"><div class="qi">🍴</div><div class="ql">Log Food</div></div>
+            <div class="qa"><div class="qi">📋</div><div class="ql">Scan Menu</div></div>
+            <div class="qa"><div class="qi">💧</div><div class="ql">Water</div></div>
+            <div class="qa"><div class="qi">⚖️</div><div class="ql">Weight</div></div>
+            <div class="qa"><div class="qi">⏱️</div><div class="ql">Fasting</div></div>
+            <div class="qa"><div class="qi">⋯</div><div class="ql">More</div></div>
+          </div>
+          <div class="card">
+            <div class="ttl">Today's Workout</div>
+            <div class="big">Push Day A</div>
+            <div class="sub">6 exercises · 45 min · <span class="chip">Moderate</span></div>
+            <span class="btn">▶ Start</span>
+          </div>
+          <div class="card">
+            <div class="ttl">Nutrition</div>
+            <div class="big">1,240 kcal left</div>
+            <div class="macros">
+              <div class="macro p">PROTEIN<div class="mv">82/160g</div></div>
+              <div class="macro c">CARBS<div class="mv">110/220g</div></div>
+              <div class="macro f">FAT<div class="mv">34/70g</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="nav bigger">
+          <div class="item on"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item" style="color:var(--accent)"><div class="wrap" style="background:var(--accent-soft);border-radius:12px;"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Coach is always one tap away on every tab (shown accent-tinted here to highlight the new slot; it only fills when selected). FAB removed; the freed quick-action slot promotes Fasting. Labels 11px, one filled icon family.</div>
+    </div>
+
+    <div class="vs">+</div>
+
+    <!-- AFTER 1b: what the Coach tab contains -->
+    <div class="frame-col">
+      <span class="frame-label after">After — inside the Coach tab</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen" style="padding-bottom:130px">
+          <div class="app-greet">
+            <div><div class="gname">Coach</div><div class="gsub">remembers your goals &amp; injuries</div></div>
+            <div class="gicons"><span title="Sessions">🗂️</span><span title="New chat">✎</span></div>
+          </div>
+          <div class="bubble">
+            <div class="bt">✦ DAILY BRIEFING · 6:54 AM</div>
+            Morning, Chetan. Sleep came in at 6h, so I'd keep today's Push Day A at moderate intensity. Protein landed 78g short yesterday — front-load it at breakfast. Ready when you are.
+          </div>
+          <div class="chips">
+            <span class="ch">Keep it moderate</span>
+            <span class="ch">Reschedule Push Day</span>
+            <span class="ch">Why does sleep matter?</span>
+          </div>
+          <div class="bubble user">Swap incline bench for dips today?</div>
+          <div class="bubble">
+            <div class="bt">✦ COACH</div>
+            Done — dips slot in for incline bench, 3×10 bodyweight. Same chest emphasis, easier on the shoulder you flagged last week.
+          </div>
+        </div>
+        <div class="inputbar">＋ &nbsp;📷 &nbsp;Ask anything… <span class="send">↑</span></div>
+        <div class="nav bigger">
+          <div class="item"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item on"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note"><b>"Access it literally anywhere" gets stronger, not weaker.</b> The tab is reachable from all 5 top-level sections (the FAB only lived on Home). Every contextual entry point stays exactly as shipped: coach insight card tap opens this thread prefilled, "Ask coach" inside the active workout, food-log tips, deep links (?prompt, ?workout_id, ?insight_id), and suggested-reply chips. The screen is the existing ChatScreen: daily briefing on open, session history under 🗂️, photo/video analysis from the input bar.</div>
+    </div>
+
+    <div class="vs">+</div>
+
+    <!-- AFTER 2: You hub with leaderboard -->
+    <div class="frame-col">
+      <span class="frame-label after">After — leaderboard lands in You › Stats &amp; Rewards</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">You</div></div>
+            <div class="gicons"><span>📊</span><span>⚙️</span></div>
+          </div>
+          <div class="seg"><div class="sg">Overview</div><div class="sg">Profile</div><div class="sg on">Stats ⭐</div></div>
+          <div class="sect-lbl">Progress</div>
+          <div class="card"><div class="ttl">Level 14</div><div class="big">2,140 XP</div><div class="sub">860 XP to level 15</div></div>
+          <div class="sect-lbl">Social</div>
+          <div class="card">
+            <div class="ttl">Leaderboard · resets Sun</div>
+            <div class="big">Top 18% this week</div>
+            <div style="margin-top:8px">
+              <div class="lb-row"><span class="lb-rank">41</span><span class="lb-av"></span>Maya K. <span class="lb-val">3,310 XP</span></div>
+              <div class="lb-row" style="color:var(--accent);font-weight:800"><span class="lb-rank">42</span><span class="lb-av"></span>You <span class="lb-val">2,140 XP</span></div>
+              <div class="lb-row"><span class="lb-rank">43</span><span class="lb-av"></span>Dev P. <span class="lb-val">2,080 XP</span></div>
+            </div>
+            <span class="btn ghost">View full leaderboard ›</span>
+          </div>
+          <div class="sect-lbl">Recognition</div>
+          <div class="card"><div class="big">🏆 Trophies · 12 earned</div><div class="sub">2 new this month</div></div>
+        </div>
+        <div class="nav bigger">
+          <div class="item"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item on"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Shown with the chosen Variant A chrome (sub-tabs as a top segmented control, main nav always visible). <b>You › Overview is untouched</b> — it stays the first sub-tab and keeps reading HealthKit / Health Connect (steps, last-night sleep, heart, active calories via HealthOverviewCard). The leaderboard simply joins the Social section of Stats &amp; Rewards. The old /discover deep link redirects here.</div>
+    </div>
+
+    <div class="vs">…</div>
+
+    <!-- FUTURE: where Social goes -->
+    <div class="frame-col">
+      <span class="frame-label after" style="color:var(--ink2)">Future — when Social ships</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">Community</div></div>
+            <div class="gicons"><span style="background:var(--accent-soft);border-color:transparent">🧑</span><span>🔔</span></div>
+          </div>
+          <div class="card">
+            <div class="ttl">Friends</div>
+            <div class="lb-row"><span class="lb-av"></span>Maya finished <b style="color:var(--ink)">Leg Day</b> <span class="lb-val">12m ago</span></div>
+            <div class="lb-row"><span class="lb-av"></span>Dev hit a <b style="color:var(--ink)">225 lb bench PR</b> 🎉 <span class="lb-val">1h ago</span></div>
+            <div class="lb-row"><span class="lb-av"></span>Sam logged a <b style="color:var(--ink)">14-day streak</b> <span class="lb-val">3h ago</span></div>
+          </div>
+          <div class="card">
+            <div class="ttl">Leaderboard · resets Sun</div>
+            <div class="big">Top 18% this week</div>
+            <span class="btn ghost">View full leaderboard ›</span>
+          </div>
+          <div class="card"><div class="ttl">Challenges</div><div class="big">June Squat Challenge</div><div class="sub">4 friends joined · 12 days left</div></div>
+        </div>
+        <div class="nav bigger">
+          <div class="item"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item on"><div class="wrap"><svg><use href="#i-people"/></svg><span class="lbl">Community</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note"><b>Where Social goes:</b> Stage 1 (launch): Social lives inside You › Stats &amp; Rewards › Social, right next to the leaderboard — friends, sharing, and ranks are natural neighbors. Stage 2 (only if engagement earns it): the You tab becomes <b>Community</b> (feed + leaderboard + challenges) and profile/settings move behind the header avatar — the Spotify/YouTube pattern. The Health Connect Overview snapshot is personal, not social, so in stage 2 it moves with the profile behind the avatar (or graduates into Home's metric deck — decide then). No tab ever needs to exceed 5.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- CHANGE 2 — HOME HERO SIMPLIFICATION                                   -->
+<!-- ===================================================================== -->
+<section class="change" id="c2">
+  <div class="change-head">
+    <span class="num">CHANGE 2 OF 4</span>
+    <h2>Home hero simplification — one time-aware answer to "what now?"</h2>
+    <span class="decision no">✕ REJECTED 2026-06-11 — Home stays as-is. You were right; the code re-review confirms it.</span>
+    <p><b>Why this was the wrong proposal</b> (verified in code): (1) <code>StackedBannerPanel</code> already collapses to one visible banner with the rest layered behind, has swipe-to-dismiss-reveal-next AND a dismiss-all (X badge → pill) — it uses <i>less</i> space than the proposed banner + actions row. (2) The coach hero card already IS the time-aware "what now" element: Gemini daily insight, whole-card tap opens chat prefilled, primary/secondary CTAs come from the API payload, long-press regenerates, minimize/dismiss-today. A client-side time-of-day hero would duplicate it with a dumber version. (3) The default order was deliberately tuned across v27–v34 — "deck glance → quick actions → coach framing → workout act" was an explicit user request in v34. Frames below kept dimmed for the record.</p>
+  </div>
+  <div class="frames">
+
+    <!-- BEFORE -->
+    <div class="frame-col">
+      <span class="frame-label before">Before — banner stack + flat sections</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">Good morning, Chetan</div><div class="gsub">🔥 12-day streak</div></div>
+            <div class="gicons"><span>🔔</span><span>⋯</span></div>
+          </div>
+          <div class="banner-stack">
+            <span class="count">4</span>
+            <div class="layer l3"></div>
+            <div class="layer l2"></div>
+            <div class="banner top">⭐ <b>Enjoying Zealova?</b> Rate us <span class="x">✕</span></div>
+            <div style="height:14px"></div>
+          </div>
+          <div class="qa-row">
+            <div class="qa"><div class="qi">✨</div><div class="ql">Chat</div></div>
+            <div class="qa"><div class="qi">🍴</div><div class="ql">Log Food</div></div>
+            <div class="qa"><div class="qi">📋</div><div class="ql">Scan Menu</div></div>
+            <div class="qa"><div class="qi">💧</div><div class="ql">Water</div></div>
+            <div class="qa"><div class="qi">⚖️</div><div class="ql">Weight</div></div>
+            <div class="qa"><div class="qi">⋯</div><div class="ql">More</div></div>
+          </div>
+          <div class="week">
+            <div class="day done">M<div class="dn">8</div></div><div class="day done">T<div class="dn">9</div></div>
+            <div class="day today">W<div class="dn">10</div></div><div class="day">T<div class="dn">11</div></div>
+            <div class="day">F<div class="dn">12</div></div><div class="day">S<div class="dn">13</div></div><div class="day">S<div class="dn">14</div></div>
+          </div>
+          <div class="card"><div class="ttl">Coach insight</div><div class="sub" style="margin-top:0">Your sleep dipped to 6h — consider keeping today's session moderate.</div></div>
+          <div class="card"><div class="ttl">Today's Workout</div><div class="big">Push Day A</div><div class="sub">6 exercises · 45 min</div><span class="btn">▶ Start</span></div>
+          <div class="card"><div class="ttl">Nutrition</div><div class="big">1,240 kcal left</div></div>
+          <div class="card"><div class="ttl">Today's Score</div><div class="big">72</div></div>
+          <div class="card"><div class="ttl">Reports · Recap</div><div class="sub" style="margin-top:0">Weekly report ready</div></div>
+        </div>
+        <div class="nav">
+          <div class="item on"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-globe"/></svg><span class="lbl">Ranks</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Current StackedBannerPanel: top banner visible with the others layered behind a count badge. Compact, but the stack gives no priority signal, there's no dismiss-all, and tapping in expands all four. Scroll the frame to feel the section sprawl below it.</div>
+    </div>
+
+    <div class="vs">→</div>
+
+    <!-- AFTER morning -->
+    <div class="frame-col dim">
+      <span class="frame-label rejected">Rejected — Morning (workout hero)</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">Good morning, Chetan</div><div class="gsub">🔥 12-day streak</div></div>
+            <div class="gicons"><span>🔔</span><span>⋯</span></div>
+          </div>
+          <div class="banner">✅ <b>Setup checklist</b> — 2 steps left <span class="x">✕</span></div>
+          <div class="banner-actions"><span class="more-pill" style="margin-bottom:0">＋3 more ▾</span><span class="dismiss-all">Dismiss all</span></div>
+          <div class="card" style="border-color:var(--accent);">
+            <div class="ttl" style="color:var(--accent)">Up next · 7:00 AM</div>
+            <div class="big" style="font-size:19px">Push Day A</div>
+            <div class="sub">6 exercises · 45 min · <span class="chip">Moderate intensity</span></div>
+            <div style="display:flex;gap:8px"><span class="btn">▶ Start workout</span><span class="btn ghost">Preview</span></div>
+          </div>
+          <div class="card"><div class="ttl">✦ Coach insight</div><div class="sub" style="margin-top:0">Your sleep dipped to 6h — consider keeping today's session moderate. Tap to adjust.</div></div>
+          <div class="week">
+            <div class="day done">M<div class="dn">8</div></div><div class="day done">T<div class="dn">9</div></div>
+            <div class="day today">W<div class="dn">10</div></div><div class="day">T<div class="dn">11</div></div>
+            <div class="day">F<div class="dn">12</div></div><div class="day">S<div class="dn">13</div></div><div class="day">S<div class="dn">14</div></div>
+          </div>
+          <div class="qa-row">
+            <div class="qa"><div class="qi">🍴</div><div class="ql">Log Food</div></div>
+            <div class="qa"><div class="qi">📋</div><div class="ql">Scan Menu</div></div>
+            <div class="qa"><div class="qi">💧</div><div class="ql">Water</div></div>
+            <div class="qa"><div class="qi">⚖️</div><div class="ql">Weight</div></div>
+            <div class="qa"><div class="qi">⏱️</div><div class="ql">Fasting</div></div>
+            <div class="qa"><div class="qi">⋯</div><div class="ql">More</div></div>
+          </div>
+          <div class="card"><div class="ttl">Nutrition</div><div class="big">1,240 kcal left</div></div>
+          <div class="card"><div class="ttl">Today's Score</div><div class="big">72</div></div>
+        </div>
+        <div class="nav bigger">
+          <div class="item on"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Workout leads before it's done. One highest-priority banner + "+3 more" expander + Dismiss all.</div>
+    </div>
+
+    <!-- AFTER midday -->
+    <div class="frame-col dim">
+      <span class="frame-label rejected">Rejected — Midday (nutrition hero)</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">Good afternoon, Chetan</div><div class="gsub">✅ Workout done · 🔥 13-day streak</div></div>
+            <div class="gicons"><span>🔔</span><span>⋯</span></div>
+          </div>
+          <div class="banner">✅ <b>Setup checklist</b> — 2 steps left <span class="x">✕</span></div>
+          <div class="banner-actions"><span class="more-pill" style="margin-bottom:0">＋3 more ▾</span><span class="dismiss-all">Dismiss all</span></div>
+          <div class="card" style="border-color:var(--accent);">
+            <div class="ttl" style="color:var(--accent)">Lunch window</div>
+            <div class="big" style="font-size:19px">1,240 kcal left</div>
+            <div class="macros">
+              <div class="macro p">PROTEIN<div class="mv">82/160g</div></div>
+              <div class="macro c">CARBS<div class="mv">110/220g</div></div>
+              <div class="macro f">FAT<div class="mv">34/70g</div></div>
+            </div>
+            <div style="display:flex;gap:8px"><span class="btn">＋ Log lunch</span><span class="btn ghost">📷 Snap</span></div>
+          </div>
+          <div class="card"><div class="ttl">✦ Coach insight</div><div class="sub" style="margin-top:0">Great push session. You're 78g short on protein — a chicken bowl at lunch closes most of it.</div></div>
+          <div class="card"><div class="ttl">Today's Workout</div><div class="big">Push Day A ✓</div><div class="sub">Completed 8:02 AM · 12,400 lb volume</div></div>
+          <div class="card"><div class="ttl">Today's Score</div><div class="big">81</div></div>
+        </div>
+        <div class="nav bigger">
+          <div class="item on"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Once the workout completes, nutrition takes the hero. Completed workout demotes to a receipt card.</div>
+    </div>
+
+    <!-- AFTER evening -->
+    <div class="frame-col dim">
+      <span class="frame-label rejected">Rejected — Evening (recap hero)</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">Good evening, Chetan</div><div class="gsub">🔥 13-day streak</div></div>
+            <div class="gicons"><span>🔔</span><span>⋯</span></div>
+          </div>
+          <div class="card" style="border-color:var(--accent);">
+            <div class="ttl" style="color:var(--accent)">Day recap</div>
+            <div class="big" style="font-size:19px">Score 84 · Strong day</div>
+            <div class="sub">Workout ✓ · Protein 92% · Sleep goal: in bed by 10:40</div>
+            <div style="display:flex;gap:8px"><span class="btn">Tomorrow: Pull Day ›</span><span class="btn ghost">Share</span></div>
+          </div>
+          <div class="card"><div class="ttl">✦ Coach insight</div><div class="sub" style="margin-top:0">You're 420 kcal under target — a casein shake tonight protects recovery without breaking the deficit.</div></div>
+          <div class="card"><div class="ttl">Nutrition</div><div class="big">420 kcal left</div></div>
+          <div class="card"><div class="ttl">Mindful minutes</div><div class="big">6 / 10 min</div></div>
+        </div>
+        <div class="nav bigger">
+          <div class="item on"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Evenings close the loop: score, what's left, and tomorrow's session as the forward hook.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- CHANGE 3 — CHROME CONSOLIDATION                                       -->
+<!-- ===================================================================== -->
+<section class="change" id="c3">
+  <div class="change-head">
+    <span class="num">CHANGE 3 OF 4</span>
+    <h2>Chrome consolidation — stop stacking two floating pill bars</h2>
+    <span class="decision">✓ DECIDED 2026-06-11 — Variant A: sub-tabs become a top segmented control; the main nav never disappears.</span>
+    <p>Nutrition, the Leaderboard surface, and You each float a sub-tab pill directly above the main nav pill: ~120pt of stacked glass, two near-identical shapes an inch apart. Variant A moves sub-tabs to a segmented control under each tab's header: one floating bar total, no hidden gestures, content reclaims ~70pt of bottom space.</p>
+  </div>
+  <div class="frames">
+
+    <!-- BEFORE -->
+    <div class="frame-col">
+      <span class="frame-label before">Before — stacked pills</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly" style="padding-bottom:150px">
+          <div class="app-greet">
+            <div><div class="gname">Today</div></div>
+            <div class="gicons"><span>📈</span><span>⚙️</span></div>
+          </div>
+          <div class="week">
+            <div class="day done">M<div class="dn">8</div></div><div class="day done">T<div class="dn">9</div></div>
+            <div class="day today">W<div class="dn">10</div></div><div class="day">T<div class="dn">11</div></div>
+            <div class="day">F<div class="dn">12</div></div><div class="day">S<div class="dn">13</div></div><div class="day">S<div class="dn">14</div></div>
+          </div>
+          <div class="card">
+            <div class="ring-row">
+              <div class="ring"><div class="rin"><div class="shark">🦈</div><div class="kl">KCAL LEFT</div><div class="kv">1,240</div></div></div>
+              <div class="pillstack">
+                <div class="mpill p"><span class="em">🍖</span>PROTEIN<span class="pv">82/160g</span></div>
+                <div class="mpill c"><span class="em">🍞</span>CARBS<span class="pv">110/220g</span></div>
+                <div class="mpill f"><span class="em">🧈</span>FAT<span class="pv">34/70g</span></div>
+              </div>
+            </div>
+            <span class="btn" style="width:100%;justify-content:center">＋ Log meal</span>
+          </div>
+          <div class="card">
+            <div class="ttl">Breakfast · 520 kcal</div>
+            <div class="meal"><span class="mi">🍳</span><div><div class="mn">3 Egg Omelette</div><div class="ms">via Photo · 7:40 AM</div></div><div class="mc">340<div class="mp">28g P</div></div></div>
+            <div class="meal"><span class="mi">🥣</span><div><div class="mn">Greek Yogurt</div><div class="ms">via Barcode · 7:45 AM</div></div><div class="mc">180<div class="mp">17g P</div></div></div>
+          </div>
+        </div>
+        <div class="subtab">
+          <div class="st on">Daily</div><div class="st">Recipes</div><div class="st">Patterns</div>
+        </div>
+        <div class="nav">
+          <div class="item"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item on"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-globe"/></svg><span class="lbl">Ranks</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Two floating pills stack: sub-tabs (Daily/Recipes/Patterns) hover above the main nav. Content needs ~150pt bottom clearance.</div>
+    </div>
+
+    <div class="vs">→</div>
+
+    <!-- VARIANT A -->
+    <div class="frame-col">
+      <span class="frame-label after">Variant A — CHOSEN — top segmented control</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly">
+          <div class="app-greet">
+            <div><div class="gname">Nutrition</div></div>
+            <div class="gicons"><span>📈</span><span>⚙️</span></div>
+          </div>
+          <div class="seg"><div class="sg on">Daily</div><div class="sg">Recipes</div><div class="sg">Patterns</div></div>
+          <div class="week">
+            <div class="day done">M<div class="dn">8</div></div><div class="day done">T<div class="dn">9</div></div>
+            <div class="day today">W<div class="dn">10</div></div><div class="day">T<div class="dn">11</div></div>
+            <div class="day">F<div class="dn">12</div></div><div class="day">S<div class="dn">13</div></div><div class="day">S<div class="dn">14</div></div>
+          </div>
+          <div class="card">
+            <div class="ring-row">
+              <div class="ring"><div class="rin"><div class="shark">🦈</div><div class="kl">KCAL LEFT</div><div class="kv">1,240</div></div></div>
+              <div class="pillstack">
+                <div class="mpill p"><span class="em">🍖</span>PROTEIN<span class="pv">82/160g</span></div>
+                <div class="mpill c"><span class="em">🍞</span>CARBS<span class="pv">110/220g</span></div>
+                <div class="mpill f"><span class="em">🧈</span>FAT<span class="pv">34/70g</span></div>
+              </div>
+            </div>
+            <span class="btn" style="width:100%;justify-content:center">＋ Log meal</span>
+          </div>
+          <div class="card">
+            <div class="ttl">Breakfast · 520 kcal</div>
+            <div class="meal"><span class="mi">🍳</span><div><div class="mn">3 Egg Omelette</div><div class="ms">via Photo · 7:40 AM</div></div><div class="mc">340<div class="mp">28g P</div></div></div>
+            <div class="meal"><span class="mi">🥣</span><div><div class="mn">Greek Yogurt</div><div class="ms">via Barcode · 7:45 AM</div></div><div class="mc">180<div class="mp">17g P</div></div></div>
+          </div>
+        </div>
+        <div class="nav bigger">
+          <div class="item"><div class="wrap"><svg><use href="#i-home"/></svg><span class="lbl">Home</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-dumbbell"/></svg><span class="lbl">Workout</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-chat"/></svg><span class="lbl">Coach</span></div></div>
+          <div class="item on"><div class="wrap"><svg><use href="#i-food"/></svg><span class="lbl">Nutrition</span></div></div>
+          <div class="item"><div class="wrap"><svg><use href="#i-star"/></svg><span class="lbl">You</span></div></div>
+        </div>
+      </div>
+      <div class="frame-note">Sub-tabs become a segmented control under the header. One floating bar total; content reclaims ~70pt of bottom space. Trade-off: sub-tabs leave the thumb zone.</div>
+      <div class="pick">DECIDED: Variant A — applies to Nutrition, Leaderboard, and You.</div>
+    </div>
+
+    <!-- VARIANT B -->
+    <div class="frame-col dim">
+      <span class="frame-label rejected">Variant B — not chosen</span>
+      <div class="phone"><div class="notch"></div>
+        <div class="screen scrolly" style="padding-bottom:90px">
+          <div class="app-greet">
+            <div><div class="gname">Today</div></div>
+            <div class="gicons"><span>📈</span><span>⚙️</span></div>
+          </div>
+          <div class="week">
+            <div class="day done">M<div class="dn">8</div></div><div class="day done">T<div class="dn">9</div></div>
+            <div class="day today">W<div class="dn">10</div></div><div class="day">T<div class="dn">11</div></div>
+            <div class="day">F<div class="dn">12</div></div><div class="day">S<div class="dn">13</div></div><div class="day">S<div class="dn">14</div></div>
+          </div>
+          <div class="card">
+            <div class="ring-row">
+              <div class="ring"><div class="rin"><div class="shark">🦈</div><div class="kl">KCAL LEFT</div><div class="kv">1,240</div></div></div>
+              <div class="pillstack">
+                <div class="mpill p"><span class="em">🍖</span>PROTEIN<span class="pv">82/160g</span></div>
+                <div class="mpill c"><span class="em">🍞</span>CARBS<span class="pv">110/220g</span></div>
+                <div class="mpill f"><span class="em">🧈</span>FAT<span class="pv">34/70g</span></div>
+              </div>
+            </div>
+            <span class="btn" style="width:100%;justify-content:center">＋ Log meal</span>
+          </div>
+          <div class="card">
+            <div class="ttl">Breakfast · 520 kcal</div>
+            <div class="meal"><span class="mi">🍳</span><div><div class="mn">3 Egg Omelette</div><div class="ms">via Photo · 7:40 AM</div></div><div class="mc">340<div class="mp">28g P</div></div></div>
+            <div class="meal"><span class="mi">🥣</span><div><div class="mn">Greek Yogurt</div><div class="ms">via Barcode · 7:45 AM</div></div><div class="mc">180<div class="mp">17g P</div></div></div>
+          </div>
+        </div>
+        <div class="subtab" style="bottom:14px; left:30px; right:30px;">
+          <div class="st on">Daily</div><div class="st">Recipes</div><div class="st">Patterns</div>
+          <div class="st" style="flex:0 0 38px; color:var(--accent)">⌂</div>
+        </div>
+      </div>
+      <div class="frame-note">Not chosen — reaching other main tabs required hidden gestures (⌂ chip / overscroll / swipe), an extra tap every time. Kept for the record.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================================================================== -->
+<!-- CHANGE 4 — TYPE + MOTION TOKENS                                       -->
+<!-- ===================================================================== -->
+<section class="change" id="c4">
+  <div class="change-head">
+    <span class="num">CHANGE 4 OF 4</span>
+    <h2>Type + motion tokens — one ramp, three durations</h2>
+    <p>The screens currently use 12+ ad-hoc font sizes (9.5, 10, 10.5, 11, 12.5, 13, 14, 15, 16, 17, 26, 28) and 7+ bespoke animation timings. After: a 6-step type ramp and 3 motion tokens, applied app-wide. Below: the workout hero card re-set on the ramp, the full specimen, and live motion demos.</p>
+  </div>
+  <div class="frames">
+
+    <!-- BEFORE card -->
+    <div class="frame-col">
+      <span class="frame-label before">Before — ad-hoc sizes</span>
+      <div class="phone" style="height:430px"><div class="notch"></div>
+        <div class="screen">
+          <div class="card" style="margin-top:6px">
+            <div style="font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--ink3)">TODAY'S WORKOUT <span class="anno">10px</span></div>
+            <div style="font-size:15px;font-weight:800;margin-top:5px">Push Day A <span class="anno">15px</span></div>
+            <div style="font-size:10.5px;color:var(--ink2);margin-top:3px">6 exercises · 45 min <span class="anno">10.5px</span></div>
+            <div style="font-size:8.5px;margin-top:6px"><span class="chip">MODERATE</span> <span class="anno">8.5px</span></div>
+            <div style="margin-top:10px"><span class="btn" style="font-size:11px">▶ Start</span> <span class="anno">11px</span></div>
+          </div>
+          <div class="card">
+            <div style="font-size:12.5px;font-weight:700">Quick action chip <span class="anno">12.5px</span></div>
+            <div style="font-size:9.5px;color:var(--ink3);margin-top:4px">Nav label <span class="anno">9.5px</span></div>
+            <div style="font-size:17px;font-weight:800;margin-top:4px">Macro count <span class="anno">17px</span></div>
+            <div style="font-size:26px;font-weight:800;margin-top:4px">Metric 26 <span class="anno">26px</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-note">Six different sizes inside one card; 12+ across the four tabs. Every widget was tuned independently.</div>
+    </div>
+
+    <div class="vs">→</div>
+
+    <!-- AFTER card -->
+    <div class="frame-col">
+      <span class="frame-label after">After — on the 6-step ramp</span>
+      <div class="phone" style="height:430px"><div class="notch"></div>
+        <div class="screen">
+          <div class="card" style="margin-top:6px">
+            <div style="font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--ink3)">TODAY'S WORKOUT <span class="anno ok">caption · 11</span></div>
+            <div style="font-size:16px;font-weight:800;margin-top:5px">Push Day A <span class="anno ok">title · 16</span></div>
+            <div style="font-size:12px;color:var(--ink2);margin-top:3px">6 exercises · 45 min <span class="anno ok">label · 12</span></div>
+            <div style="font-size:11px;margin-top:6px"><span class="chip" style="font-size:11px">MODERATE</span> <span class="anno ok">caption · 11</span></div>
+            <div style="margin-top:10px"><span class="btn" style="font-size:12px">▶ Start</span> <span class="anno ok">label · 12</span></div>
+          </div>
+          <div class="card">
+            <div style="font-size:14px;font-weight:700">Quick action chip <span class="anno ok">body · 14</span></div>
+            <div style="font-size:11px;color:var(--ink3);margin-top:4px">Nav label <span class="anno ok">caption · 11</span></div>
+            <div style="font-size:20px;font-weight:800;margin-top:4px">Macro count <span class="anno ok">headline · 20</span></div>
+            <div style="font-size:28px;font-weight:800;margin-top:4px">Metric 28 <span class="anno ok">display · 28</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="frame-note">Same card, three ramp steps instead of six ad-hoc sizes. Nothing below 11px anywhere in the app.</div>
+    </div>
+
+    <!-- specimen + motion -->
+    <div class="panel">
+      <h3>Type ramp — <code style="font-size:12px;color:var(--ink3)">type_scale.dart</code></h3>
+      <div class="ramp-row"><span class="ramp-meta">display · 28 / w800</span><span style="font-size:28px;font-weight:800">1,240 kcal</span></div>
+      <div class="ramp-row"><span class="ramp-meta">headline · 20 / w800</span><span style="font-size:20px;font-weight:800">Push Day A</span></div>
+      <div class="ramp-row"><span class="ramp-meta">title · 16 / w700</span><span style="font-size:16px;font-weight:700">Section title</span></div>
+      <div class="ramp-row"><span class="ramp-meta">body · 14 / w500</span><span style="font-size:14px;font-weight:500">Body and list rows</span></div>
+      <div class="ramp-row"><span class="ramp-meta">label · 12 / w600</span><span style="font-size:12px;font-weight:600">Buttons, chips, meta lines</span></div>
+      <div class="ramp-row"><span class="ramp-meta">caption · 11 / w600</span><span style="font-size:11px;font-weight:600;color:var(--ink3)">NAV LABELS · TIMESTAMPS · OVERLINES</span></div>
+
+      <h3 style="margin-top:28px">Motion tokens — <code style="font-size:12px;color:var(--ink3)">motion_tokens.dart</code></h3>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="mn1">fast · 150ms · easeOut</div><div class="mn2">state ticks, hover, toggles</div></div>
+        <div class="demo-stage"><div class="demo-card" id="d-fast">state change</div><button class="replay" onclick="replay('d-fast','anim-fast')">▶ Replay</button></div>
+      </div>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="mn1">standard · 250ms · easeOutCubic</div><div class="mn2">crossfades, container tints, tab switches (was 220/260/300)</div></div>
+        <div class="demo-stage"><div class="demo-card" id="d-std">card crossfade</div><button class="replay" onclick="replay('d-std','anim-xfade')">▶ Replay</button></div>
+      </div>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="mn1">expressive · 450ms · easeOutCubic + overshoot</div><div class="mn2">nav spin-pop, celebrations (kept as-is — it's good)</div></div>
+        <div class="demo-stage"><div class="demo-icon" id="d-exp"><svg><use href="#i-dumbbell"/></svg></div><button class="replay" onclick="replay('d-exp','anim-spinpop')">▶ Replay</button></div>
+      </div>
+      <div class="motion-row">
+        <div class="motion-meta"><div class="mn1">word bounce · 450ms · expressive</div><div class="mn2">selected nav label, streak/XP count changes — NEW, your idea</div></div>
+        <div class="demo-stage"><span class="demo-word" id="d-word">🔥 13 days</span><button class="replay" onclick="replay('d-word','anim-wordbounce')">▶ Replay</button></div>
+      </div>
+      <div class="legend">Entrance staggers (nutrition pills) compose from <b>standard</b> + per-item delay rather than a bespoke 1200ms controller. Count-up numbers keep their 900–1000ms tween (data, not chrome).<br><br><b>On the word bounce:</b> yes, but with two rules. (1) One element per event — when a nav tab is selected, either the icon spin-pops or the label bounces, never both at once; the bounce fits best on <i>value changes</i> (streak ticking 12→13, XP landing, kcal goal hit) where it draws the eye to what changed. (2) Single bounce, no loop, respects the reduced-motion accessibility setting. Used that way it adds life without becoming noise.</div>
+    </div>
+  </div>
+</section>
+
+<script>
+  function replay(id, cls) {
+    const el = document.getElementById(id);
+    el.classList.remove(cls);
+    void el.offsetWidth;
+    el.classList.add(cls);
+  }
+</script>
+</body>
+</html>
