@@ -1,0 +1,857 @@
+<style>
+.sg-step { display:inline-block; background:#F97316; color:#160b03; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:12px; letter-spacing:1.5px; padding:3px 9px; border-radius:6px; margin-right:8px; }
+.sg-arrow { flex:0 0 auto; align-self:center; color:#F97316; font-size:26px; padding-bottom:140px; }
+.sg-pick { border-color:rgba(249,115,22,.45); }
+
+/* multi-scene demo: 10s master loop, 4 scenes of 2.5s each — all four
+   proof points land inside the <10s install decision window */
+.ms-scene { position:absolute; inset:0; opacity:0; animation-duration:10s; animation-iteration-count:infinite; animation-timing-function:ease; }
+@keyframes msc1 { 0%,21%{opacity:1} 25%,96%{opacity:0} 100%{opacity:1} }
+@keyframes msc2 { 0%,25%{opacity:0} 27%,46%{opacity:1} 50%,100%{opacity:0} }
+@keyframes msc3 { 0%,50%{opacity:0} 52%,71%{opacity:1} 75%,100%{opacity:0} }
+@keyframes msc4 { 0%,75%{opacity:0} 77%,96%{opacity:1} 100%{opacity:0} }
+.ms-word { position:relative; display:inline-block; color:#F97316; }
+.ms-word span { position:absolute; left:0; top:0; opacity:0; animation-duration:10s; animation-iteration-count:infinite; white-space:nowrap; }
+.ms-word span:first-child { position:relative; }
+.ms-sweep { position:absolute; left:6%; right:6%; height:3px; border-radius:2px; background:linear-gradient(90deg,transparent,#F97316,transparent); box-shadow:0 0 14px rgba(249,115,22,.8); animation:ms-sweep 2.2s ease-in-out infinite; }
+@keyframes ms-sweep { 0%{top:4%} 50%{top:88%} 100%{top:4%} }
+.ms-dots { display:flex; gap:7px; align-items:center; margin-bottom:10px; }
+.ms-dots i { width:6px; height:6px; border-radius:3px; background:rgba(255,255,255,.25); animation-duration:10s; animation-iteration-count:infinite; }
+@keyframes msd1 { 0%,21%{background:#F97316;width:18px} 25%,96%{background:rgba(255,255,255,.25);width:6px} 100%{background:#F97316;width:18px} }
+@keyframes msd2 { 0%,25%{background:rgba(255,255,255,.25);width:6px} 27%,46%{background:#F97316;width:18px} 50%,100%{background:rgba(255,255,255,.25);width:6px} }
+@keyframes msd3 { 0%,50%{background:rgba(255,255,255,.25);width:6px} 52%,71%{background:#F97316;width:18px} 75%,100%{background:rgba(255,255,255,.25);width:6px} }
+@keyframes msd4 { 0%,75%{background:rgba(255,255,255,.25);width:6px} 77%,96%{background:#F97316;width:18px} 100%{background:rgba(255,255,255,.25);width:6px} }
+.ms-setrow { display:flex; align-items:center; gap:10px; padding:11px 13px; border-radius:11px; background:#141416; border:1px solid #232326; font-size:13px; }
+.ms-chip { display:inline-flex; align-items:center; gap:5px; padding:6px 10px; border-radius:9px; font-size:11.5px; font-weight:700; }
+@keyframes ms-prpulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+.ms-dish { display:flex; justify-content:space-between; align-items:center; padding:9px 11px; border-radius:10px; border:1px solid #ececef; font-size:12px; background:#fff; }
+
+/* Menu Analysis sheet (port of the website MenuScanScene): 8 absolute rows,
+   protein-sort → carbs-sort LIVE re-sort flips at 88% of the 10s loop
+   (i.e. mid-way through scene 4's visibility window). */
+.mn-row { position:absolute; left:0; right:0; height:44px; display:flex; align-items:center; gap:9px; border-radius:12px; border:1px solid #f0f0f2; background:#F6F6F8; padding:0 10px; transition:none; animation-duration:10s; animation-iteration-count:infinite; animation-timing-function:cubic-bezier(.5,0,.2,1); }
+.mn-row.pick { border-color:#fcd34d; background:#FFF8E9; z-index:9; }
+.mn-name { font-size:12px; font-weight:700; color:#18181b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.mn-badge { flex:0 0 auto; border-radius:4px; padding:2px 5px; font-size:8px; font-weight:800; color:#fff; }
+.mn-macros { display:flex; gap:6px; margin-top:2px; }
+.mn-macros span { border-radius:4px; padding:0 4px; font-size:9px; font-weight:700; font-variant-numeric:tabular-nums; }
+.mn-check { flex:0 0 16px; height:16px; border-radius:4px; border:1px solid #d4d4d8; background:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; color:transparent; }
+.mn-check.on { background:#F97316; border-color:#F97316; color:#fff; }
+@keyframes mr0 { 0%,87%{transform:translateY(0)} 90%,100%{transform:translateY(144px)} }
+@keyframes mr1 { 0%,87%{transform:translateY(48px)} 90%,100%{transform:translateY(336px)} }
+@keyframes mr2 { 0%,87%{transform:translateY(96px)} 90%,100%{transform:translateY(0)} }
+@keyframes mr3 { 0%,87%{transform:translateY(144px)} 90%,100%{transform:translateY(48px)} }
+@keyframes mr4 { 0%,87%{transform:translateY(192px)} 90%,100%{transform:translateY(240px)} }
+@keyframes mr5 { 0%,87%{transform:translateY(240px)} 90%,100%{transform:translateY(288px)} }
+@keyframes mr6 { 0%,87%{transform:translateY(288px)} 90%,100%{transform:translateY(96px)} }
+@keyframes mr7 { 0%,87%{transform:translateY(336px)} 90%,100%{transform:translateY(192px)} }
+.mn-pill { border-radius:99px; padding:3px 10px; font-size:10.5px; font-weight:700; border:1px solid transparent; background:rgba(0,0,0,.05); color:#71717a; animation-duration:10s; animation-iteration-count:infinite; }
+@keyframes mpillP { 0%,87%{background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.55);color:#F97316} 90%,100%{background:rgba(0,0,0,.05);border-color:transparent;color:#71717a} }
+@keyframes mpillC { 0%,87%{background:rgba(0,0,0,.05);border-color:transparent;color:#71717a} 90%,100%{background:rgba(249,115,22,.15);border-color:rgba(249,115,22,.55);color:#F97316} }
+/* mini trattoria "menu photo" (HTML, like the website's MenuPhoto) */
+.mn-photo { background:#faf6ec; color:#3a2f1d; border:1px solid #e4e4e7; border-radius:6px; overflow:hidden; padding:2px 3px; }
+.mn-photo .t { text-align:center; font-weight:700; letter-spacing:1px; color:#9c8a64; font-size:4px; }
+.mn-photo .l { display:flex; align-items:baseline; gap:2px; font-size:3.4px; }
+.mn-photo .l i { flex:1; border-bottom:1px dotted #cbb88e; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Section 4 · Suggested — the updated onboarding flow</div>
+  <div class="sec-title">RECOMMENDED MIX: V1b + SYSTEM A + S3</div>
+  <p class="sec-desc">My pick, shown in real funnel order. Why this combo: <b style="color:#fafafa;">V1b</b> gives screen-one product proof (your instinct) without the phone-in-phone doubt — the demo feels like the app already started. <b style="color:#fafafa;">System A</b> is the lowest-risk funnel that's fully on-brand (the conversational System B is the boldest, but 11 chat-styled steps is a big engineering+copy bet for round one — we can A/B it later). <b style="color:#fafafa;">S3</b> makes the first 1.5 seconds a signature instead of a loading state, and kills the blue bug. Two borrowed touches: A3's loss-aversion sign-in and A5's “receipts” loader that echoes your own answers back.<br><br>Alternative if you want maximum website-brand unity instead of product proof: <b style="color:#F97316;">V3 + System C + S2</b> (pure Anton editorial end to end).<br><br><b style="color:#fafafa;">All 16 steps, verified against the router</b> (app_router.dart + every screen's outgoing navigation): splash → intro → why → quiz ×11 → reflect (+blocker) → trust &amp; expectations → plan-building → weight projection → demo tasks → sign-in → email → personal info → coach selection → paywall → commitment pact → health sync → home. Previously missing from this row: reflect/blocker, trust, weight projection, demo tasks — all real wired screens. Excluded as orphaned code (no inbound route): fitness-assessment → capability-and-community → confidence → plan-preview → value chain.<br><br><b style="color:#fafafa;">“Mike” is a placeholder, never a hardcoded string.</b> Coach selection is step 13 — every screen after it (paywall 14a–c, commitment pact, health sync “Let {coach} see the whole picture”) binds to the user's chosen/renamed/custom coach via <code style="color:#F97316;">ai_coach_name</code>. Screens before step 13 (the first-screen demo, sign-in) show the default persona since none is chosen yet — except the demo, which is explicitly a demo. All copy ships as l10n strings with a {coachName} parameter.</p>
+</section>
+<div class="row">
+
+  <!-- STEP 1: S3 splash -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#000;">
+      <div class="notch"></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;">
+        <img src="assets/app_icon.png" style="width:84px;height:84px;border-radius:21px;animation:sp-iconpop 3.4s ease infinite;">
+        <svg width="320" height="60" viewBox="0 0 320 60" style="animation:sp-lineglow 3.4s ease infinite;">
+          <path d="M0,30 L38,30 L46,21 L54,38 L61,30 L112,30 L124,4 L138,56 L152,12 L162,30 L210,30 L219,17 L228,44 L236,26 L243,30 L320,30"
+                fill="none" stroke="#F97316" stroke-width="2.5" stroke-linecap="round"
+                stroke-dasharray="700" stroke-dashoffset="700"
+                style="animation:sp-line 3.4s cubic-bezier(.5,0,.2,1) infinite; filter:drop-shadow(0 0 8px rgba(249,115,22,.7));"/>
+        </svg>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 1</span>Splash — S3 pulse line</div>
+      <div class="cap-why">Blue bug dead. The effort-spike draws in orange and the icon ignites — a brand signature in the time the auth check takes anyway.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 2: V1b first screen — 4-scene rotating demo -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#0b0b0c;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+
+      <!-- SCENE 1: program builder (chat, light) -->
+      <div class="ms-scene" style="animation-name:msc1;background:#fff;color:#18181b;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 22px 0;">
+          <div style="display:flex;gap:10px;align-items:center;padding-bottom:12px;border-bottom:1px solid #ececef;">
+            <div class="v1-av" style="width:34px;height:34px;font-size:14px;">M</div>
+            <div><div style="font-size:15px;font-weight:700;">Coach Mike</div><div style="font-size:10px;letter-spacing:2px;color:#a1a1aa;font-weight:700;">PROGRAM BUILDER</div></div>
+            <div style="margin-left:auto;font-size:10px;font-weight:800;letter-spacing:2px;color:#F97316;border:1px solid #fed7aa;background:#fff7ed;padding:4px 9px;border-radius:99px;">LIVE DEMO</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:9px;padding-top:14px;">
+            <div class="v1-bub-u" style="font-size:14px;padding:10px 13px;">Build my 4-day program 💪</div>
+            <div class="v1-card" style="max-width:88%;">
+              <div class="v1-card-t" style="font-size:11px;">PUSH DAY · MON</div>
+              <div class="v1-prog-row" style="font-size:12.5px;"><b>Bench Press</b><span>4 × 8 · 185 lb</span></div>
+              <div class="v1-prog-row" style="font-size:12.5px;"><b>Incline DB Press</b><span>3 × 10</span></div>
+              <div class="v1-prog-row" style="font-size:12.5px;"><b>Cable Fly</b><span>3 × 12</span></div>
+            </div>
+            <div style="align-self:flex-start;background:#fff7ed;border:1px solid #fed7aa;color:#c2410c;font-size:12px;font-weight:700;padding:8px 11px;border-radius:10px;">📅 Goal date projected: AUG 22</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 2: live workout logging (faithful to the real active-workout screen) -->
+      <div class="ms-scene" style="animation-name:msc2;background:#0b0b0c;color:#fafafa;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 22px 0;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #1c1c1f;padding-bottom:11px;">
+            <div><div class="v-kick" style="font-size:11px;">Push day · exercise 1 of 5</div><div style="font-size:19px;font-weight:800;margin-top:3px;">Bench Press</div></div>
+            <div style="font-family:'Space Mono',monospace;font-size:17px;color:#F97316;">1:32</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:13px;">
+            <div class="ms-setrow"><span style="color:#2ECC71;">✓</span> <b>Set 1</b> <span style="color:#8a8a92;">185 lb × 8</span></div>
+            <div class="ms-setrow"><span style="color:#2ECC71;">✓</span> <b>Set 2</b> <span style="color:#8a8a92;">215 lb × 5</span></div>
+            <div class="ms-setrow" style="border-color:rgba(249,115,22,.55);background:rgba(249,115,22,.08);"><span style="color:#F97316;">▸</span> <b>Set 3</b> <span style="color:#fafafa;">225 lb × 3</span><span style="margin-left:auto;color:#8a8a92;font-size:11px;">resting…</span></div>
+            <div class="ms-chip" style="align-self:flex-start;margin-top:6px;background:linear-gradient(135deg,#2a2106,#1c1505);border:1px solid rgba(255,213,74,.5);color:#FFD54A;animation:ms-prpulse 1.6s ease-in-out infinite;">🏆 NEW PR · 225 lb</div>
+            <div style="color:#8a8a92;font-size:12px;margin-top:2px;">Coach: “225 — that's a 10 lb PR. Next week we go 230.”</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 3: food photo scan (light) -->
+      <div class="ms-scene" style="animation-name:msc3;background:#fff;color:#18181b;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 22px 0;">
+          <div class="v-kick" style="font-size:11px;">Photo logging</div>
+          <div style="position:relative;border-radius:16px;overflow:hidden;margin-top:10px;height:200px;">
+            <img src="assets/demo-food.webp" style="width:100%;height:100%;object-fit:cover;">
+            <div class="ms-sweep"></div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap;">
+            <span class="ms-chip" style="background:#18181b;color:#fff;">540 kcal</span>
+            <span class="ms-chip" style="background:#f3e8ff;color:#7c3aed;">38g protein</span>
+            <span class="ms-chip" style="background:#fff7ed;color:#c2410c;">52g carbs</span>
+            <span class="ms-chip" style="background:#fdf2f8;color:#db2777;">18g fat</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;margin-top:12px;font-size:13px;font-weight:700;color:#16a34a;">✓ Logged to today — 1 photo, 2 seconds</div>
+        </div>
+      </div>
+
+      <!-- SCENE 4: Menu Analysis sheet (port of the website MenuScanScene) — 8 dishes, LIVE protein→carbs re-sort -->
+      <div class="ms-scene" style="animation-name:msc4;background:#fff;color:#18181b;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:56px 14px 0;">
+          <!-- sheet header -->
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:17px;font-weight:800;">Menu Analysis</div>
+            <span style="color:#a1a1aa;font-size:13px;">🔖 ⏱ ✕</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;margin-top:4px;">
+            <div class="mn-photo" style="width:26px;height:32px;">
+              <div class="t">TRATTORIA</div>
+              <div class="l"><span>Carbonara</span><i></i><span>18</span></div>
+              <div class="l"><span>Chicken bowl</span><i></i><span>16</span></div>
+              <div class="l"><span>Bistecca</span><i></i><span>26</span></div>
+              <div class="l"><span>Margherita</span><i></i><span>15</span></div>
+              <div class="l"><span>Caesar</span><i></i><span>14</span></div>
+            </div>
+            <span style="font-size:11px;color:#a1a1aa;">8 items · 3 sections · 2.4s</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:7px;margin-top:8px;">
+            <span style="font-size:11px;color:#a1a1aa;">Sort:</span>
+            <span class="mn-pill" style="animation-name:mpillP;">Protein ↓</span>
+            <span class="mn-pill" style="animation-name:mpillC;">Carbs ↓</span>
+            <span class="mn-pill">Inflammation</span>
+          </div>
+          <!-- 8 absolute rows; re-sort animates at 88% of loop -->
+          <div style="position:relative;margin-top:12px;height:384px;">
+            <div class="mn-row pick" style="animation-name:mr0;">
+              <span class="mn-check on">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Grilled chicken bowl</span><span class="mn-badge" style="background:#4CAF50;">Recommended</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">52g P</span><span style="color:#FF9800;background:#FF98001f;">38g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr1;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Bistecca alla griglia</span><span class="mn-badge" style="background:#4CAF50;">Recommended</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">46g P</span><span style="color:#FF9800;background:#FF98001f;">2g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr2;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Carbonara</span><span class="mn-badge" style="background:#F44336;">Avoid</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">28g P</span><span style="color:#FF9800;background:#FF98001f;">96g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr3;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Margherita</span><span class="mn-badge" style="background:#FFC107;">OK</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">24g P</span><span style="color:#FF9800;background:#FF98001f;">80g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr4;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Caesar salad</span><span class="mn-badge" style="background:#FFC107;">OK</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">18g P</span><span style="color:#FF9800;background:#FF98001f;">22g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr5;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Caprese</span><span class="mn-badge" style="background:#FFC107;">OK</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">14g P</span><span style="color:#FF9800;background:#FF98001f;">8g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr6;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Risotto ai funghi</span><span class="mn-badge" style="background:#FFC107;">OK</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">12g P</span><span style="color:#FF9800;background:#FF98001f;">74g C</span></div></div>
+            </div>
+            <div class="mn-row" style="animation-name:mr7;">
+              <span class="mn-check">✓</span>
+              <div style="min-width:0;flex:1;"><div style="display:flex;gap:6px;align-items:center;"><span class="mn-name">Panna cotta</span><span class="mn-badge" style="background:#F44336;">Avoid</span></div>
+              <div class="mn-macros"><span style="color:#9C27B0;background:#9C27B01f;">6g P</span><span style="color:#FF9800;background:#FF98001f;">32g C</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- scrim + overlay (constant across scenes) -->
+      <div style="position:absolute;left:0;right:0;bottom:0;height:50%;background:linear-gradient(180deg,transparent,rgba(8,5,2,.9) 40%,#080502 72%);"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:0 26px 20px;color:#fafafa;">
+        <div class="ms-dots">
+          <i style="animation-name:msd1;"></i><i style="animation-name:msd2;"></i><i style="animation-name:msd3;"></i><i style="animation-name:msd4;"></i>
+        </div>
+        <div class="anton" style="font-size:42px;line-height:1.02;">YOUR COACH IS<br>ALREADY <span class="ms-word"><span style="animation-name:msc1;">TYPING.</span><span style="animation-name:msc2;">SPOTTING.</span><span style="animation-name:msc3;">COUNTING.</span><span style="animation-name:msc4;">CHOOSING.</span></span></div>
+        <div style="height:16px"></div>
+        <div class="v-cta-rect">Build my plan →</div>
+        <div style="height:12px"></div>
+        <div class="v-ghost-caps" style="padding-bottom:14px;">I have an account</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 2</span>First screen — V1b with the website's scenes</div>
+      <div class="cap-why">The scenes are now ports of the zealova.com hero demo — real app UI, not abstractions: program builder chat → live set logging (pyramid 185/215/225 + PR) → food photo scan with the real photo → the full <b style="color:#fafafa;">Menu Analysis sheet: 8 dishes with Recommended/OK/Avoid badges and purple/orange macro chips, live re-sorting from Protein↓ to Carbs↓ mid-scene</b> — the exact sorting animation from the website. 10s loop, headline word syncs: TYPING / SPOTTING / COUNTING / CHOOSING.</div>
+      <div class="cap-risk"><b>Risk:</b> the sort flip is the money shot but lands at second ~9 — in Flutter, a tap on the menu dot replays it instantly; dots stay tappable like the website hero.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 3: A1 why -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div><div class="v-signin" style="font-size:13px;">Skip</div></div>
+        <div style="height:20px"></div>
+        <div class="sy-seg"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div style="height:26px"></div>
+        <div class="sy-kick">First, the why</div>
+        <div class="sy-h">What's driving this?</div>
+        <div style="height:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="sy-card">🧘&nbsp; Feel confident in my body</div>
+          <div class="sy-card">👨‍👩‍👧&nbsp; Keep up with my family</div>
+          <div class="sy-card">🎉&nbsp; Get ready for an event</div>
+          <div class="sy-card sel">🫀&nbsp; A health wake-up call <span class="chk">✓</span></div>
+          <div class="sy-card">⚡&nbsp; Feel strong and capable</div>
+          <div class="sy-card">☀️&nbsp; More energy, less stress</div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 3</span>Why — System A</div>
+      <div class="cap-why">Same conversion psychology, now on-brand: solid cards, orange selection, 11-segment progress.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 4: A2 quiz -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div><div class="sy-kick" style="letter-spacing:2px;">2 min left</div></div>
+        <div style="height:20px"></div>
+        <div class="sy-seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div style="height:26px"></div>
+        <div class="sy-kick">Schedule</div>
+        <div class="sy-h">How many days per week can you train?</div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13.5px;">Be honest — the plan adapts to your real life.</div>
+        <div style="height:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="sy-card">2 days <span style="margin-left:auto;font-size:12px;color:#6c6c74;font-weight:500;">A solid start</span></div>
+          <div class="sy-card">3 days <span style="margin-left:auto;font-size:12px;color:#6c6c74;font-weight:500;">Full-body classic</span></div>
+          <div class="sy-card sel">4 days <span class="chk">✓</span></div>
+          <div class="sy-card">5+ days <span style="margin-left:auto;font-size:12px;color:#6c6c74;font-weight:500;">All in</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 4</span>Quiz ×11 — System A</div>
+      <div class="cap-why">“2 min left” replaces step-count anxiety; orange selection replaces iOS green; blue orbs gone.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 5: reflect (+ blocker, same layout) -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="flex:1"></div>
+        <div class="sy-kick">Remember this</div>
+        <div class="sy-h" style="font-size:25px;">You said this was about</div>
+        <div style="height:18px"></div>
+        <div style="border:1.5px solid rgba(249,115,22,.5);background:rgba(249,115,22,.08);border-radius:18px;padding:22px;text-align:center;">
+          <div style="font-size:34px;">🫀</div>
+          <div style="font-weight:800;font-size:19px;margin-top:8px;">A health wake-up call</div>
+          <div style="color:#8a8a92;font-size:13px;margin-top:6px;">— you, 90 seconds ago</div>
+        </div>
+        <div style="height:18px"></div>
+        <div style="color:#bdbdc4;font-size:14px;line-height:1.55;">Most people quit in week 3. People with a reason like yours don't. Your plan will reference this when it matters.</div>
+        <div style="flex:1.4"></div>
+        <div class="sy-btn">That's my reason →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 5</span>Reflect — echoes the why back</div>
+      <div class="cap-why">Real screen (/onboarding-reflect) that was missing from this row. The blocker screen (“what stopped you before?”) follows with the same layout — option cards like Step 3.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 6: trust & expectations -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="height:26px"></div>
+        <div class="sy-kick">Straight talk</div>
+        <div class="sy-h">What actually happens</div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13.5px;">No 30-day shreds. Here's the honest timeline for your stats.</div>
+        <div style="height:22px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="sy-card" style="align-items:flex-start;"><b style="color:#F97316;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;flex:0 0 58px;">WK 1–2</b><span style="font-weight:500;font-size:13.5px;color:#bdbdc4;">Energy up, sleep better. Strength climbs fast.</span></div>
+          <div class="sy-card" style="align-items:flex-start;"><b style="color:#F97316;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;flex:0 0 58px;">WK 3–4</b><span style="font-weight:500;font-size:13.5px;color:#bdbdc4;">Clothes fit different. The mirror starts agreeing.</span></div>
+          <div class="sy-card" style="align-items:flex-start;"><b style="color:#F97316;font-family:'Barlow Condensed',sans-serif;letter-spacing:1px;flex:0 0 58px;">WK 8+</b><span style="font-weight:500;font-size:13.5px;color:#bdbdc4;">Visible change others notice. PRs you'd have called impossible.</span></div>
+        </div>
+        <div style="height:16px"></div>
+        <div style="color:#5f5f66;font-size:12px;line-height:1.5;">Your part: show up 4 days a week. Mike's part: everything else.</div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">I can do that →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 6</span>Trust &amp; expectations</div>
+      <div class="cap-why">Real screen (/trust-and-expectations), was missing. Honest timeline builds trust right before the AI build + projection moment.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 7: A5 building -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:80px 26px 26px;">
+        <div style="display:flex;justify-content:center;"><img src="assets/app_icon.png" style="width:96px;height:96px;border-radius:24px;animation:pulseGlow 1.7s ease-in-out infinite;"></div>
+        <div style="height:24px"></div>
+        <div class="anton" style="text-align:center;font-size:34px;">BUILDING YOUR PLAN</div>
+        <div style="text-align:center;color:#8a8a92;font-size:13.5px;margin-top:6px;">~20 seconds · your coach is choosing every set</div>
+        <div style="height:30px"></div>
+        <div style="height:5px;border-radius:3px;background:#1a1a1d;overflow:hidden;"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#FFB366,#F97316);box-shadow:0 0 12px rgba(249,115,22,.5);animation:syc-build 10s ease infinite;"></div></div>
+        <div style="height:26px"></div>
+        <div style="font-family:'Space Mono',monospace;font-size:13px;line-height:2.2;color:#8a8a92;">
+          <div class="lp" style="animation-name:s0;"><span style="color:#2ECC71;">✓</span> goals reviewed — <span style="color:#fafafa;">muscle building</span></div>
+          <div class="lp" style="animation-name:s2;"><span style="color:#2ECC71;">✓</span> body matched — <span style="color:#fafafa;">5'10" · 168 lb</span></div>
+          <div class="lp" style="animation-name:s4;"><span style="color:#2ECC71;">✓</span> schedule set — <span style="color:#fafafa;">Mon/Tue/Thu/Sat</span></div>
+          <div class="lp" style="animation-name:s6;"><span style="color:#F97316;">▸</span> scanning 1,722 exercises…</div>
+          <div class="lp" style="animation-name:s8;"><span style="color:#F97316;">▸</span> projecting goal date…</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 7</span>Plan-building — A5 receipts</div>
+      <div class="cap-why">The loader proves the AI listened: every line echoes the user's own answers (their height, their days). Space Mono is already bundled.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 8: weight projection -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div class="sy-kick">Your projection</div>
+        <div class="anton" style="font-size:38px;line-height:1;margin-top:8px;">175 LB BY <span style="color:#F97316">AUG 22.</span></div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13px;">Based on your 11 answers · lean-gain pace</div>
+        <div style="height:20px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:18px 14px 12px;position:relative;">
+          <svg width="100%" height="150" viewBox="0 0 300 150" preserveAspectRatio="none">
+            <line x1="0" y1="120" x2="300" y2="120" stroke="#1d1d20"/>
+            <line x1="0" y1="70" x2="300" y2="70" stroke="#1d1d20"/>
+            <line x1="0" y1="20" x2="300" y2="20" stroke="#1d1d20"/>
+            <!-- area fill fades in after the line draws -->
+            <path d="M10,118 C80,112 150,84 230,42 L262,30 L262,150 L10,150 Z" fill="url(#wpfill)" style="animation:wp-fill 6s ease infinite;"/>
+            <defs><linearGradient id="wpfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(249,115,22,.28)"/><stop offset="100%" stop-color="rgba(249,115,22,0)"/></linearGradient></defs>
+            <!-- the line DRAWS itself -->
+            <path d="M10,118 C80,112 150,84 230,42 L262,30" fill="none" stroke="#F97316" stroke-width="3" stroke-linecap="round"
+                  stroke-dasharray="320" stroke-dashoffset="320"
+                  style="animation:wp-draw 6s cubic-bezier(.45,0,.2,1) infinite; filter:drop-shadow(0 0 6px rgba(249,115,22,.5));"/>
+            <circle cx="10" cy="118" r="5" fill="#fafafa"/>
+            <!-- goal dot ignites when the line arrives -->
+            <circle cx="262" cy="30" r="6" fill="#F97316" style="animation:wp-dot 6s ease infinite; filter:drop-shadow(0 0 10px rgba(249,115,22,.95));"/>
+            <circle cx="262" cy="30" r="6" fill="none" stroke="#F97316" stroke-width="2" style="animation:wp-ring 6s ease infinite;"/>
+          </svg>
+          <!-- goal-date chip pops at the end of the line -->
+          <div style="position:absolute;top:14px;right:10px;animation:wp-chip 6s ease infinite;" class="ms-chip"><span style="background:#F97316;color:#160b03;padding:5px 10px;border-radius:8px;font-size:11px;font-weight:800;box-shadow:0 6px 18px rgba(249,115,22,.45);">🎯 AUG 22</span></div>
+          <div style="display:flex;justify-content:space-between;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;color:#6c6c74;"><span>TODAY · 168 LB</span><span style="color:#F97316;">AUG 22 · 175 LB</span></div>
+          <style>
+            @keyframes wp-draw { 0%,8%{stroke-dashoffset:320} 55%,92%{stroke-dashoffset:0} 100%{stroke-dashoffset:0} }
+            @keyframes wp-fill { 0%,50%{opacity:0} 62%,92%{opacity:1} 100%{opacity:0} }
+            @keyframes wp-dot { 0%,52%{opacity:0;transform:scale(.3);transform-origin:262px 30px} 58%,100%{opacity:1;transform:scale(1)} }
+            @keyframes wp-ring { 0%,55%{opacity:0;transform:scale(1);transform-origin:262px 30px} 62%{opacity:.8;transform:scale(1)} 80%,100%{opacity:0;transform:scale(2.6)} }
+            @keyframes wp-chip { 0%,55%{opacity:0;transform:translateY(8px) scale(.85)} 62%,94%{opacity:1;transform:none} 100%{opacity:0} }
+          </style>
+        </div>
+        <div style="height:16px"></div>
+        <div class="sy-lbl">Pace</div>
+        <div style="display:flex;gap:8px;">
+          <span class="ms-chip" style="flex:1;justify-content:center;background:#141416;border:1px solid #26262a;color:#8a8a92;">Slow</span>
+          <span class="ms-chip" style="flex:1;justify-content:center;background:rgba(249,115,22,.14);border:1.5px solid #F97316;color:#F97316;">Lean · 0.5 lb/wk</span>
+          <span class="ms-chip" style="flex:1;justify-content:center;background:#141416;border:1px solid #26262a;color:#8a8a92;">Fast</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Lock it in →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 8</span>Weight projection — animated payoff</div>
+      <div class="cap-why">The curve now DRAWS itself (~3s), the area fill blooms under it, the goal dot ignites with a radar ring, and the 🎯 AUG 22 chip pops at the line's end. In Flutter: CustomPaint + TweenAnimationBuilder, fires once on screen entry. This date is the artifact the whole funnel anchors on.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 9: demo tasks (try the app before signup) -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div class="sy-kick">Optional · before you sign up</div>
+        <div class="sy-h">See it in action</div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13.5px;">Try one or both — no account needed.</div>
+        <div style="height:22px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:16px;display:flex;gap:13px;align-items:center;">
+          <div style="width:54px;height:54px;border-radius:12px;background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);display:flex;align-items:center;justify-content:center;font-size:24px;">🏋️</div>
+          <div style="flex:1;"><div style="font-weight:800;font-size:15px;">Try a 1-minute workout</div><div style="color:#8a8a92;font-size:12px;margin-top:3px;">Log 2 sets, feel the rest timer</div></div>
+          <span class="ms-chip" style="background:rgba(46,204,113,.14);color:#2ECC71;">✓ done</span>
+        </div>
+        <div style="height:11px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:16px;display:flex;gap:13px;align-items:center;">
+          <img src="assets/demo-food.webp" style="width:54px;height:54px;border-radius:12px;object-fit:cover;">
+          <div style="flex:1;"><div style="font-weight:800;font-size:15px;">Scan a plate of food</div><div style="color:#8a8a92;font-size:12px;margin-top:3px;">Photo → macros in 2 seconds</div></div>
+          <span class="ms-chip" style="background:#1a1a1d;color:#8a8a92;">~30s</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Build My Plan →</div>
+        <div style="height:12px"></div>
+        <div class="v-ghost-caps">Skip the demos</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 9</span>Demo tasks — your added screen</div>
+      <div class="cap-why">Real screen (/demo-tasks → workout + nutrition showcases), was missing from this row. Opt-in app-taste right before the signup ask; completion badge mirrors the real SharedPreferences tracking.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 10: A3 sign-in -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:radial-gradient(110% 60% at 50% 0%, #150b04, #050505 60%);">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="flex:1"></div>
+        <div class="sy-kick">Your plan is built</div>
+        <div class="anton" style="font-size:46px;line-height:1;margin-top:8px;">DON'T LOSE IT.</div>
+        <div style="height:18px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:800;font-size:16px;">Muscle Building · 4 days/wk</div>
+            <div style="background:rgba(249,115,22,.15);color:#F97316;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:4px 9px;border-radius:7px;">READY</div>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:12px;color:#8a8a92;font-size:12.5px;">
+            <span>📅 Goal: <b style="color:#fafafa;">Aug 22</b></span><span>🏋️ Push/Pull/Legs</span><span>🔥 2,140 kcal</span>
+          </div>
+        </div>
+        <div style="flex:1.2"></div>
+        <div class="sy-auth" style="background:#fff;color:#0b0b0c;"> Continue with Apple</div>
+        <div style="height:11px"></div>
+        <div class="sy-auth" style="background:#141416;border:1px solid #2c2c30;"><span style="font-weight:800;">G</span> Continue with Google</div>
+        <div style="height:11px"></div>
+        <div class="sy-auth" style="border:1px solid #2c2c30;color:#9b9ba3;">✉️&nbsp; Continue with email</div>
+        <div style="height:16px"></div>
+        <div style="text-align:center;font-size:11px;color:#5f5f66;line-height:1.45;">By continuing you agree to our <span style="color:#F97316">Terms</span> · <span style="color:#F97316">Privacy</span> · <span style="color:#F97316">Health Disclaimer</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 10</span>Sign-in — A3 loss aversion</div>
+      <div class="cap-why">“DON'T LOSE IT.” + the plan's own goal date and kcal. Auth is now protecting something, not a form gate.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 7: A4 email -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="height:28px"></div>
+        <div class="sy-kick">Save your plan</div>
+        <div class="sy-h">Create your account</div>
+        <div style="height:26px"></div>
+        <div class="sy-lbl">Email</div>
+        <div class="sy-input focus">✉️&nbsp; jordan@gmail.com<span style="margin-left:1px;border-left:2px solid #F97316;height:18px;"></span></div>
+        <div style="height:18px"></div>
+        <div class="sy-lbl">Password</div>
+        <div class="sy-input">🔒&nbsp; At least 8 characters <span style="margin-left:auto;">👁</span></div>
+        <div style="height:24px"></div>
+        <div class="sy-btn">Create account</div>
+        <div style="height:14px"></div>
+        <div style="text-align:center;font-size:13.5px;color:#8a8a92;">Already have an account? <b style="color:#F97316;">Sign in</b></div>
+        <div style="height:10px"></div>
+        <div style="text-align:center;font-size:12px;color:#5f5f66;">Have a referral code? <span style="color:#8a8a92;text-decoration:underline;">Enter it</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 11</span>Email — A4</div>
+      <div class="cap-why">Form on the canvas, orange focus, condensed labels.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 8: personal info (post-auth) -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="height:28px"></div>
+        <div class="sy-kick">Signed in ✓ · About you</div>
+        <div class="sy-h">A couple final details</div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13.5px;">Your coach uses these to tune recovery and calories.</div>
+        <div style="height:26px"></div>
+        <div class="sy-lbl">First name</div>
+        <div class="sy-input focus" style="color:#fafafa;">Jordan<span style="margin-left:1px;border-left:2px solid #F97316;height:18px;"></span></div>
+        <div style="height:18px"></div>
+        <div class="sy-lbl">Date of birth</div>
+        <div class="sy-input">📅&nbsp; 03/14/1996 &nbsp;<span style="color:#5f5f66;">· age 30</span><span style="margin-left:auto;">›</span></div>
+        <div style="height:18px"></div>
+        <div class="sy-lbl">Confirmed from your quiz</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <span class="ms-chip" style="background:#141416;border:1px solid #26262a;color:#bdbdc4;">Male</span>
+          <span class="ms-chip" style="background:#141416;border:1px solid #26262a;color:#bdbdc4;">5'10"</span>
+          <span class="ms-chip" style="background:#141416;border:1px solid #26262a;color:#bdbdc4;">168 lb</span>
+          <span class="ms-chip" style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.4);color:#F97316;">Goal 175 lb</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 12</span>Personal info — post-signup</div>
+      <div class="cap-why">Quiz answers shown as confirm-chips instead of re-asking; only name + DOB are new questions.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 9: coach selection -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 0 22px;">
+        <div style="padding:0 24px;">
+          <div class="sy-kick">Your coach</div>
+          <div class="sy-h">Who's in your corner?</div>
+        </div>
+        <div style="height:22px"></div>
+        <div style="display:flex;gap:12px;align-items:stretch;padding:0 0 0 0;overflow:hidden;">
+          <div style="flex:0 0 44px;border-radius:0 16px 16px 0;background:#101012;border:1px solid #1d1d20;border-left:none;"></div>
+          <div style="flex:1;border-radius:18px;background:#101012;border:1.5px solid rgba(249,115,22,.55);padding:20px;box-shadow:0 0 30px rgba(249,115,22,.12);">
+            <div style="display:flex;align-items:center;gap:13px;">
+              <div style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:24px;color:#fff;">M</div>
+              <div>
+                <div style="font-weight:800;font-size:19px;">Mike <span style="color:#5f5f66;font-size:13px;font-weight:500;">✎ rename</span></div>
+                <div style="color:#8a8a92;font-size:12.5px;">Supportive &amp; direct</div>
+              </div>
+            </div>
+            <div style="height:14px"></div>
+            <div style="color:#bdbdc4;font-size:13px;line-height:1.5;">“I'll push you on the days you can take it, and pull you back on the days you can't.”</div>
+            <div style="height:14px"></div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <span class="ms-chip" style="background:rgba(249,115,22,.12);color:#F97316;">Strength focus</span>
+              <span class="ms-chip" style="background:#1a1a1d;color:#bdbdc4;">Patient</span>
+              <span class="ms-chip" style="background:#1a1a1d;color:#bdbdc4;">Evidence-based</span>
+            </div>
+          </div>
+          <div style="flex:0 0 44px;border-radius:16px 0 0 16px;background:#101012;border:1px solid #1d1d20;border-right:none;"></div>
+        </div>
+        <div style="height:14px"></div>
+        <div style="display:flex;justify-content:center;gap:6px;"><i style="width:16px;height:6px;border-radius:3px;background:#F97316;"></i><i style="width:6px;height:6px;border-radius:3px;background:#2c2c30;"></i><i style="width:6px;height:6px;border-radius:3px;background:#2c2c30;"></i><i style="width:6px;height:6px;border-radius:3px;background:#2c2c30;"></i><i style="width:6px;height:6px;border-radius:3px;background:#2c2c30;"></i></div>
+        <div style="height:16px"></div>
+        <div style="text-align:center;font-size:13px;color:#8a8a92;">or <b style="color:#F97316;">build your own coach</b> — style, tone, intensity</div>
+        <div style="flex:1"></div>
+        <div style="padding:0 24px;"><div class="sy-btn">Train with Mike →</div></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 13</span>Coach selection</div>
+      <div class="cap-why">Swipeable persona cards, inline rename kept, custom-coach builder kept. CTA names the choice: “Train with Mike”.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 14: paywall sequence (Cal AI pattern, compliant) -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 26px 22px;">
+        <div style="flex:.7"></div>
+        <div class="sy-kick">A note from the founder</div>
+        <div class="anton" style="font-size:36px;line-height:1.05;margin-top:8px;">I BUILT THE COACH <span style="color:#F97316">I COULDN'T AFFORD.</span></div>
+        <div style="height:16px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:16px;animation:pw-card1 10s ease infinite;">
+          <div style="font-size:13px;color:#bdbdc4;line-height:1.6;">“A good personal trainer is $400/month. I couldn't justify that, so I spent two years building one: 1,722 exercises, real progression logic, a coach that actually looks at your week. I use it every single day.”</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:12px;">
+            <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#fff;">C</div>
+            <div><div style="font-weight:700;font-size:12.5px;">Chetan · founder</div><div style="color:#5f5f66;font-size:10.5px;">training with Zealova since day one</div></div>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:14px;padding:13px 15px;font-size:12.5px;color:#bdbdc4;line-height:1.5;animation:pw-card2 10s ease infinite;">“It caught that I always skip Friday legs and just… moved them to Saturday.”<div style="color:#5f5f66;font-size:11px;margin-top:5px;">Keertan · early tester</div></div>
+        <div style="height:14px"></div>
+        <div style="text-align:center;color:#5f5f66;font-size:11px;">Early access · be one of the first 1,000 members</div>
+        <div style="flex:1.1"></div>
+        <div class="sy-btn">Continue →</div>
+      </div>
+      <style>
+        @keyframes pw-card1 { 0%,2%{opacity:0;transform:translateY(10px)} 8%,96%{opacity:1;transform:none} 100%{opacity:0} }
+        @keyframes pw-card2 { 0%,8%{opacity:0;transform:translateY(10px)} 14%,96%{opacity:1;transform:none} 100%{opacity:0} }
+      </style>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 14a</span>Paywall 1/3 — honest proof (founder note)</div>
+      <div class="cap-why">No fabricated ratings (we have none — and fake social proof is an App Store 2.3.1 misleading-metadata rejection risk). Instead: the founder's why (“the coach I couldn't afford” reframes $59.99 against a $400/mo trainer), a real early-tester quote (Keertan), and honest scarcity (“first 1,000 members”). The app already has a founder-note sheet post-purchase — this front-loads that voice where it earns money. Swap in real App Store ratings the day we have them.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 26px 22px;">
+        <div style="flex:.7"></div>
+        <div style="display:flex;justify-content:center;"><div style="width:84px;height:84px;border-radius:50%;background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.35);display:flex;align-items:center;justify-content:center;font-size:38px;animation:pw-bell 2.8s ease-in-out infinite;transform-origin:top center;">🔔</div></div>
+        <div style="height:18px"></div>
+        <div class="anton" style="text-align:center;font-size:34px;line-height:1.05;">NO SURPRISE <span style="color:#F97316">CHARGES.</span></div>
+        <div style="height:8px"></div>
+        <div style="text-align:center;color:#8a8a92;font-size:13.5px;line-height:1.5;">We'll ping you before your trial ends.<br>Cancel in 2 taps from Settings.</div>
+        <div style="height:26px"></div>
+        <div style="position:relative;margin-left:10px;padding-left:20px;display:flex;flex-direction:column;gap:18px;">
+          <div style="position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:2px;background:#1d1d20;overflow:hidden;"><div style="width:100%;height:100%;background:linear-gradient(180deg,#FFB366,#F97316);transform-origin:top;animation:pw-tl 7s ease infinite;"></div></div>
+          <div style="position:relative;"><i style="position:absolute;left:-26px;top:3px;width:13px;height:13px;border-radius:50%;background:#F97316;box-shadow:0 0 10px rgba(249,115,22,.8);"></i><div style="font-weight:800;font-size:14.5px;">Today — everything unlocks</div><div style="color:#8a8a92;font-size:12px;margin-top:2px;">Your 4-day plan, scans, coach chat. Full app.</div></div>
+          <div style="position:relative;"><i style="position:absolute;left:-26px;top:3px;width:13px;height:13px;border-radius:50%;background:#2c2c30;"></i><div style="font-weight:800;font-size:14.5px;color:#bdbdc4;">Day 5 — reminder 🔔</div><div style="color:#8a8a92;font-size:12px;margin-top:2px;">Push + email before anything is charged.</div></div>
+          <div style="position:relative;"><i style="position:absolute;left:-26px;top:3px;width:13px;height:13px;border-radius:50%;background:#2c2c30;"></i><div style="font-weight:800;font-size:14.5px;color:#bdbdc4;">Day 7 — membership starts</div><div style="color:#8a8a92;font-size:12px;margin-top:2px;">$59.99/yr unless you've cancelled. That's it.</div></div>
+        </div>
+        <div style="flex:1.3"></div>
+        <div class="sy-btn">Remind me 🔔 →</div>
+      </div>
+      <style>
+        @keyframes pw-bell { 0%,12%,100%{transform:rotate(0)} 3%{transform:rotate(13deg)} 6%{transform:rotate(-11deg)} 9%{transform:rotate(6deg)} }
+        @keyframes pw-tl { 0%,5%{transform:scaleY(0)} 55%,95%{transform:scaleY(1)} 100%{transform:scaleY(1)} }
+      </style>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 14b</span>Paywall 2/3 — reminder promise + notification permission</div>
+      <div class="cap-why">Cal AI's highest-leverage screen: kill charge anxiety BEFORE showing price. Animated bell + the timeline drawing itself. Trial-explainer screens win 64.5% of head-to-head paywall tests (Adapty 2026 data). <b style="color:#fafafa;">“Remind me” fires the OS notification prompt right here</b> — the day-5 promise is impossible without it, and this is the one moment the user actively WANTS notifications (the orphaned notification_prime_screen gets absorbed into this step).</div>
+      <div class="cap-risk"><b>Build note:</b> if the user denies the OS prompt, fall back to email-only and say so on the next screen (“we'll email you instead”). The day-5 reminder must actually be wired — per Apple's Cal AI takedown, promises here are policed.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:radial-gradient(110% 50% at 50% 0%, #150b04, #050505 55%);">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:56px 24px 18px;">
+        <div style="text-align:right;color:#5f5f66;font-size:13px;">✕</div>
+        <div class="anton" style="font-size:33px;line-height:1.05;margin-top:4px;">WE WANT YOU TO TRY ZEALOVA <span style="color:#F97316">FREE.</span></div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13px;">Your Aug 22 plan is built and waiting.</div>
+        <div style="height:18px"></div>
+        <!-- trial toggle: the Cal AI signature, with compliant copy -->
+        <div style="border:1px solid #26262a;background:#101012;border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;">
+          <div><div style="font-weight:800;font-size:14.5px;">Free trial enabled</div><div style="color:#8a8a92;font-size:11.5px;margin-top:2px;">7 days free, then auto-renews at $59.99/yr</div></div>
+          <div style="width:46px;height:27px;border-radius:14px;background:#F97316;position:relative;box-shadow:0 0 14px rgba(249,115,22,.4);"><i style="position:absolute;top:2.5px;width:22px;height:22px;border-radius:50%;background:#fff;animation:pw-knob 6s ease infinite;"></i></div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- plans: trial lives ONLY on yearly -->
+        <div style="border:1.5px solid #F97316;background:rgba(249,115,22,.08);border-radius:14px;padding:13px 15px;position:relative;animation:pulseGlow 2.6s ease-in-out infinite;">
+          <span style="position:absolute;top:-9px;right:12px;" class="ms-chip"><span style="background:#F97316;color:#160b03;padding:3px 9px;border-radius:6px;font-size:9.5px;font-weight:800;letter-spacing:1px;">7-DAY FREE TRIAL</span></span>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div><div style="font-weight:800;font-size:15px;">Yearly — $59.99/yr</div><div style="color:#8a8a92;font-size:11.5px;margin-top:2px;">works out to $5.00/mo · save 37%</div></div>
+            <i style="width:19px;height:19px;border-radius:50%;background:#F97316;display:flex;align-items:center;justify-content:center;color:#160b03;font-size:11px;font-weight:800;">✓</i>
+          </div>
+        </div>
+        <div style="height:9px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-weight:700;font-size:14px;color:#bdbdc4;">Monthly — $7.99/mo <span style="color:#5f5f66;font-size:11px;font-weight:500;">· no trial</span></div>
+          <i style="width:19px;height:19px;border-radius:50%;border:1.5px solid #3a3a40;"></i>
+        </div>
+        <div style="height:14px"></div>
+        <div style="display:flex;justify-content:center;align-items:center;gap:7px;color:#2ECC71;font-size:12.5px;font-weight:700;">✓ No payment due now</div>
+        <div style="flex:1"></div>
+        <div class="sy-btn" style="position:relative;overflow:hidden;font-size:17px;">Try for $0.00<i style="position:absolute;top:0;bottom:0;width:50px;background:linear-gradient(105deg,transparent,rgba(255,255,255,.45),transparent);animation:pw-sheen 2.8s ease infinite;"></i></div>
+        <div style="height:7px"></div>
+        <div style="text-align:center;font-size:10.5px;color:#5f5f66;line-height:1.5;">7 days free, then $59.99/yr. Auto-renews until cancelled.<br><span style="text-decoration:underline;">Restore</span> · <span style="text-decoration:underline;">Terms</span> · <span style="text-decoration:underline;">Privacy</span></div>
+      </div>
+      <style>
+        @keyframes pw-knob { 0%,8%{left:2.5px} 16%,100%{left:21px} }
+        @keyframes pw-sheen { 0%{left:-60px} 55%,100%{left:110%} }
+      </style>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 14c</span>Paywall 3/3 — the offer (Cal AI pattern, made compliant)</div>
+      <div class="cap-why">The researched converters: trial TOGGLE (+31% install→trial, +64% revenue in RevenueCat's redesign studies — flicks ON as the screen enters), trial on the YEARLY plan only (shifts buyers to high-LTV plan), “Try for $0.00” CTA with sheen, “No payment due now” reassurance, 7-day not 3-day trial (55% of 3-day trialists cancel day 0 vs 31% on 7-day).</div>
+      <div class="cap-risk"><b>Compliance (this got Cal AI PULLED from the App Store, Apr 2026):</b> auto-renewal stated in plain sight twice, the real billed price ($59.99/yr) is the headline price — the $5/mo math is the footnote, never the other way around.</div>
+    </div>
+  </div>
+  <div class="sg-arrow" style="color:#5f5f66;">✕</div>
+
+  <!-- STEP 14d: decline downsell (only on ✕) -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 26px 22px;">
+        <div style="flex:.8"></div>
+        <div class="sy-kick">Before you go</div>
+        <div class="anton" style="font-size:40px;line-height:1.02;margin-top:8px;">YOUR PLAN GETS <span style="color:#F97316">DELETED?</span></div>
+        <div style="height:14px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:15px;opacity:.75;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:800;font-size:15px;text-decoration:line-through;color:#8a8a92;">Muscle Building · 4 days/wk</div>
+            <span class="ms-chip" style="background:rgba(239,68,68,.14);color:#EF4444;">UNSAVED</span>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:10px;color:#5f5f66;font-size:12.5px;"><span>📅 Aug 22</span><span>🏋️ Push/Pull/Legs</span><span>🔥 2,140 kcal</span></div>
+        </div>
+        <div style="height:18px"></div>
+        <div style="color:#bdbdc4;font-size:14px;line-height:1.55;">One-time founding-member price — <b style="color:#fafafa;">$47.99/yr</b> (instead of $59.99), same 7-day free trial. This offer doesn't come back.</div>
+        <div style="flex:1.2"></div>
+        <div class="sy-btn">Keep my plan — $47.99/yr</div>
+        <div style="height:12px"></div>
+        <div class="v-ghost-caps">Delete my plan and exit</div>
+        <div style="height:8px"></div>
+        <div style="text-align:center;font-size:10.5px;color:#5f5f66;">7 days free, then $47.99/yr. Auto-renews until cancelled.</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 14d</span>Decline downsell — shown ONLY on ✕</div>
+      <div class="cap-why">The $47.99 retention price already exists in the live Play Store config but the flow never surfaced it. Loss framing (“your plan gets deleted?”) + one-time founding price. Single-tier app = hard paywall (10.7% vs 2.1% median conversion), so the second decline is a real exit — which makes this screen the last shot.</div>
+      <div class="cap-risk"><b>Open product decision:</b> after a second decline — sign-out, or a frozen “plan preview” state with a persistent upgrade banner? Recommend frozen preview: the plan stays visible but locked, and the day-3 winback email references it.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 11: commitment pact -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="flex:1"></div>
+        <div class="sy-kick">Week 1 starts Monday</div>
+        <div class="anton" style="font-size:88px;line-height:.95;margin-top:8px;">I'M <span style="color:#F97316">IN.</span></div>
+        <div style="height:18px"></div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;border:1px solid #26262a;background:#101012;border-radius:12px;padding:10px 6px;text-align:center;"><div class="sy-kick" style="font-size:10px;">Mon</div><div style="font-size:12px;font-weight:700;margin-top:3px;">Push</div></div>
+          <div style="flex:1;border:1px solid #26262a;background:#101012;border-radius:12px;padding:10px 6px;text-align:center;"><div class="sy-kick" style="font-size:10px;">Tue</div><div style="font-size:12px;font-weight:700;margin-top:3px;">Pull</div></div>
+          <div style="flex:1;border:1px solid #26262a;background:#101012;border-radius:12px;padding:10px 6px;text-align:center;"><div class="sy-kick" style="font-size:10px;">Thu</div><div style="font-size:12px;font-weight:700;margin-top:3px;">Legs</div></div>
+          <div style="flex:1;border:1px solid #26262a;background:#101012;border-radius:12px;padding:10px 6px;text-align:center;"><div class="sy-kick" style="font-size:10px;">Sat</div><div style="font-size:12px;font-weight:700;margin-top:3px;">Upper</div></div>
+        </div>
+        <div style="height:16px"></div>
+        <div style="color:#8a8a92;font-size:13px;line-height:1.5;">Members who tap <b style="color:#fafafa;">I'm in</b> are 2× more likely to finish Week 1. Mike will hold you to it.</div>
+        <div style="flex:1.4"></div>
+        <div class="sy-btn">I'm in 🤝</div>
+        <div style="height:12px"></div>
+        <div class="v-ghost-caps">Maybe later</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 15</span>Commitment pact</div>
+      <div class="cap-why">Same Cialdini mechanic, now in Anton with their actual Week-1 schedule on screen. Skip-recovery modal kept.</div>
+    </div>
+  </div>
+  <div class="sg-arrow">→</div>
+
+  <!-- STEP 12: health sync + permissions -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="height:18px"></div>
+        <div class="sy-kick">Optional · 30 seconds</div>
+        <div class="sy-h">Let Mike see the whole picture</div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13.5px;">Sleep and steps make your plan smarter — bad night, lighter session.</div>
+        <div style="height:24px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="sy-card" style="font-weight:600;">😴&nbsp; Sleep <span style="margin-left:auto;font-size:12px;color:#6c6c74;">recovery-aware workouts</span></div>
+          <div class="sy-card" style="font-weight:600;">👟&nbsp; Steps &amp; activity <span style="margin-left:auto;font-size:12px;color:#6c6c74;">truer calorie targets</span></div>
+          <div class="sy-card" style="font-weight:600;">❤️&nbsp; Heart rate <span style="margin-left:auto;font-size:12px;color:#6c6c74;">effort tracking</span></div>
+        </div>
+        <div style="height:18px"></div>
+        <div style="font-size:11.5px;color:#5f5f66;line-height:1.5;">Health data stays on-device unless you say otherwise. Full consent text shown before connecting (GDPR Art. 9).</div>
+        <div style="flex:1"></div>
+        <div class="sy-btn"> Connect Apple Health</div>
+        <div style="height:12px"></div>
+        <div class="v-ghost-caps">Not now</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap sg-pick">
+      <div class="cap-name"><span class="sg-step">STEP 16</span>Health sync → then home</div>
+      <div class="cap-why">Benefit-first framing per permission (the camera/mic primer uses this same layout next). After this: /home, plan ready, zero spinners.</div>
+    </div>
+  </div>
+
+</div>
+
+<section class="sec" style="padding-bottom:70px;">
+  <div class="sec-kick">Why not the others (short version)</div>
+  <p class="sec-desc" style="margin-top:8px;">
+    <b style="color:#fafafa;">V1 framed mini-phone:</b> charming, but the bezel admits “this is a picture of the app” — V1b makes the same proof feel live.&nbsp;
+    <b style="color:#fafafa;">V2 / System B (conversational):</b> the boldest idea here and worth keeping — but 11 chat-styled steps means typing animations, reaction copy per answer, and l10n for all of it; ship A first, A/B the coach-asks variant on 2–3 steps later.&nbsp;
+    <b style="color:#fafafa;">V3 / System C (editorial):</b> gorgeous brand unity, but giant Anton with zero product proof asks a cold install to trust typography; better fit for the website, paywall and share cards.&nbsp;
+    <b style="color:#fafafa;">V4 / V5 / V6:</b> strong single ideas — V5's goal-date is folded into V1b's demo (the “AUG 22” chip) and A3's sign-in card, which is the best of it without the overpromise risk.
+  </p>
+</section>

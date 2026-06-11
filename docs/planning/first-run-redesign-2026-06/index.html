@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — First-Run Redesign Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<header class="hd">
+  <div class="hd-row">
+    <img src="assets/app_icon.png" class="hd-icon" alt="">
+    <div>
+      <div class="hd-title">FIRST-RUN REDESIGN</div>
+      <div class="hd-sub">splash → intro → quiz → sign-in &nbsp;·&nbsp; before + 7 creative directions &nbsp;·&nbsp; nothing implemented yet</div>
+    </div>
+  </div>
+  <nav class="hd-nav">
+    <a href="#sec-before">0 · Before</a>
+    <a href="#sec-first">1 · First screen ×7</a>
+    <a href="#sec-splash">2 · Splash ×3</a>
+    <a href="#sec-system">3 · The system ×3</a>
+    <a href="#sec-suggested" style="color:#fafafa;">★ 4 · Suggested flow</a>
+  </nav>
+  <div class="hd-note">All frames are 390×844 live HTML/CSS (animations loop — wait a few seconds on each). Captions note rationale + honest risks. Pick a direction (or mix parts) and I implement it in Flutter.</div>
+</header>
+
+<main>
+  <div id="sec-before" data-src="sections/0-before.html"></div>
+  <div id="sec-first" data-src="sections/1-first.html"></div>
+  <div id="sec-splash" data-src="sections/2-splash.html"></div>
+  <div id="sec-system" data-src="sections/3-system.html"></div>
+  <div id="sec-suggested" data-src="sections/4-suggested.html"></div>
+</main>
+
+<footer class="ft">Zealova internal design proofs · 2026-06 · not committed to app code</footer>
+
+<script>
+document.querySelectorAll('[data-src]').forEach(async (el) => {
+  const r = await fetch(el.dataset.src);
+  el.innerHTML = await r.text();
+});
+</script>
+</body>
+</html>

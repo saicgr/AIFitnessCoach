@@ -1,0 +1,483 @@
+<style>
+/* ---- system frames (sy-) ---- */
+.sy-sub { padding: 26px 48px 0; }
+.sy-sub h3 { font-family:'Barlow Condensed',sans-serif; font-weight:800; letter-spacing:2px; text-transform:uppercase; font-size:17px; }
+.sy-sub h3 b { color:#F97316; }
+.sy-sub p { color:#9b9ba3; font-size:13px; max-width:820px; margin-top:3px; }
+
+/* shared new-system bits */
+.sy-card { display:flex; align-items:center; gap:12px; padding:15px; border-radius:14px; background:#141416; border:1px solid #26262a; font-size:15px; font-weight:600; }
+.sy-card.sel { border-color:#F97316; background:linear-gradient(135deg,rgba(249,115,22,.16),rgba(249,115,22,.05)); box-shadow:0 0 24px rgba(249,115,22,.12); }
+.sy-card .chk { margin-left:auto; color:#F97316; font-size:17px; }
+.sy-seg { display:flex; gap:5px; }
+.sy-seg i { height:4px; flex:1; border-radius:2px; background:#222226; }
+.sy-seg i.on { background:#F97316; box-shadow:0 0 8px rgba(249,115,22,.5); }
+.sy-back { width:40px; height:40px; border-radius:12px; background:#141416; border:1px solid #26262a; display:flex; align-items:center; justify-content:center; font-size:16px; color:#9b9ba3; }
+.sy-kick { font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2.5px; font-size:12.5px; color:#F97316; text-transform:uppercase; }
+.sy-h { font-size:27px; font-weight:800; letter-spacing:-.5px; line-height:1.15; margin-top:7px; }
+.sy-btn { height:58px; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:9px; background:#F97316; color:#160b03; font-weight:800; font-size:16.5px; box-shadow:0 10px 26px rgba(249,115,22,.3); }
+.sy-auth { height:54px; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:10px; font-size:15px; font-weight:600; }
+.sy-input { background:#141416; border:1.5px solid #26262a; border-radius:13px; padding:14px 15px; font-size:14.5px; color:#8a8a92; display:flex; align-items:center; gap:9px; }
+.sy-input.focus { border-color:#F97316; box-shadow:0 0 0 3px rgba(249,115,22,.12); color:#fafafa; }
+.sy-lbl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12.5px; letter-spacing:2px; text-transform:uppercase; color:#8a8a92; margin-bottom:7px; }
+
+/* B conversational */
+.syb-chip { padding:12px 17px; border-radius:18px; border-bottom-left-radius:7px; background:#141416; border:1.5px solid #2c2c30; font-size:14.5px; font-weight:600; }
+.syb-chip.sel { border-color:#F97316; background:rgba(249,115,22,.13); color:#fff; }
+
+/* C editorial */
+.syc-num { font-family:Anton,sans-serif; font-size:120px; line-height:.85; color:#161618; position:absolute; right:18px; top:78px; letter-spacing:2px; z-index:0; }
+.syc-rowopt { display:flex; align-items:center; padding:17px 4px; border-bottom:1px solid #1d1d20; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:21px; letter-spacing:1.5px; text-transform:uppercase; color:#bdbdc4; position:relative; }
+.syc-rowopt.sel { color:#fff; }
+.syc-rowopt.sel::before { content:''; position:absolute; left:-24px; top:10px; bottom:10px; width:4px; background:#F97316; }
+.syc-rowopt .sub { margin-left:auto; font-size:13px; letter-spacing:1px; color:#6c6c74; font-weight:600; }
+.syc-rowopt.sel .sub { color:#F97316; }
+.syc-uin { border:none; border-bottom:1.5px solid #2c2c30; padding:12px 2px; font-size:16px; color:#8a8a92; display:flex; gap:8px; }
+.syc-uin.focus { border-bottom-color:#F97316; color:#fff; }
+@keyframes syc-build { 0%{width:6%} 55%{width:78%} 100%{width:96%} }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Section 3 · The System</div>
+  <div class="sec-title">ONE LANGUAGE FROM SPLASH TO PAYWALL</div>
+  <p class="sec-desc">Whichever first screen wins, the funnel behind it must stop flipping palettes. Each row carries one direction through: why → quiz → sign-in → email → plan-building. All three kill the blue-orb theme; selection accent becomes brand orange everywhere (today it's iOS green).</p>
+</section>
+
+<!-- ============ ROW A: PRODUCT MODERN (pairs V1 / V1b / V4 / V5) ============ -->
+<div class="sy-sub"><h3>3A · <b>Product Modern</b> — pairs with V1 / V1b / V4 / V5</h3>
+<p>Clean black, solid surfaces (no glass), orange selection, condensed micro-labels, segmented progress. The safest system: today's structure, fully on-brand.</p></div>
+<div class="row">
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div><div class="v-signin" style="font-size:13px;">Skip</div></div>
+        <div style="height:20px"></div>
+        <div class="sy-seg"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div style="height:26px"></div>
+        <div class="sy-kick">First, the why</div>
+        <div class="sy-h">What's driving this?</div>
+        <div style="height:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="sy-card">🧘&nbsp; Feel confident in my body</div>
+          <div class="sy-card">👨‍👩‍👧&nbsp; Keep up with my family</div>
+          <div class="sy-card">🎉&nbsp; Get ready for an event</div>
+          <div class="sy-card sel">🫀&nbsp; A health wake-up call <span class="chk">✓</span></div>
+          <div class="sy-card">⚡&nbsp; Feel strong and capable</div>
+          <div class="sy-card">☀️&nbsp; More energy, less stress</div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">A1</span>Why — solid cards, orange select</div>
+    <div class="cap-why">Same psychology, no blue glass; 11-segment progress replaces the vague “Step 2 of 6”.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div><div class="sy-kick" style="letter-spacing:2px;">2 min left</div></div>
+        <div style="height:20px"></div>
+        <div class="sy-seg"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div style="height:26px"></div>
+        <div class="sy-kick">Schedule</div>
+        <div class="sy-h">How many days per week can you train?</div>
+        <div style="margin-top:8px;color:#8a8a92;font-size:13.5px;">Be honest — the plan adapts to your real life.</div>
+        <div style="height:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="sy-card">2 days <span style="margin-left:auto;font-size:12px;color:#6c6c74;font-weight:500;">A solid start</span></div>
+          <div class="sy-card">3 days <span style="margin-left:auto;font-size:12px;color:#6c6c74;font-weight:500;">Full-body classic</span></div>
+          <div class="sy-card sel">4 days <span class="chk">✓</span></div>
+          <div class="sy-card">5+ days <span style="margin-left:auto;font-size:12px;color:#6c6c74;font-weight:500;">All in</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="sy-btn">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">A2</span>Quiz step + “2 min left”</div>
+    <div class="cap-why">Time-remaining beats step-count for completion anxiety; orange selection state.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:radial-gradient(110% 60% at 50% 0%, #150b04, #050505 60%);">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="flex:1"></div>
+        <div class="sy-kick">Your plan is built</div>
+        <div class="anton" style="font-size:46px;line-height:1;margin-top:8px;">DON'T LOSE IT.</div>
+        <div style="height:18px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:16px;padding:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-weight:800;font-size:16px;">Muscle Building · 4 days/wk</div>
+            <div style="background:rgba(249,115,22,.15);color:#F97316;font-size:10px;font-weight:800;letter-spacing:1.5px;padding:4px 9px;border-radius:7px;">READY</div>
+          </div>
+          <div style="display:flex;gap:14px;margin-top:12px;color:#8a8a92;font-size:12.5px;">
+            <span>📅 Goal: <b style="color:#fafafa;">Aug 22</b></span><span>🏋️ Push/Pull/Legs</span><span>🔥 2,140 kcal</span>
+          </div>
+        </div>
+        <div style="flex:1.2"></div>
+        <div class="sy-auth" style="background:#fff;color:#0b0b0c;"> Continue with Apple</div>
+        <div style="height:11px"></div>
+        <div class="sy-auth" style="background:#141416;border:1px solid #2c2c30;"><span style="font-weight:800;">G</span> Continue with Google</div>
+        <div style="height:11px"></div>
+        <div class="sy-auth" style="border:1px solid #2c2c30;color:#9b9ba3;">✉️&nbsp; Continue with email</div>
+        <div style="height:16px"></div>
+        <div style="text-align:center;font-size:11px;color:#5f5f66;line-height:1.45;">By continuing you agree to our <span style="color:#F97316">Terms</span> · <span style="color:#F97316">Privacy</span> · <span style="color:#F97316">Health Disclaimer</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">A3</span>Sign-in — “Don't lose it”</div>
+    <div class="cap-why">Loss aversion replaces “Almost There!”; plan summary card carries goal date + kcal so the account feels like protecting something real.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back">‹</div></div>
+        <div style="height:28px"></div>
+        <div class="sy-kick">Save your plan</div>
+        <div class="sy-h">Create your account</div>
+        <div style="height:26px"></div>
+        <div class="sy-lbl">Email</div>
+        <div class="sy-input focus">✉️&nbsp; jordan@gmail.com<span style="margin-left:1px;border-left:2px solid #F97316;height:18px;"></span></div>
+        <div style="height:18px"></div>
+        <div class="sy-lbl">Password</div>
+        <div class="sy-input">🔒&nbsp; At least 8 characters <span style="margin-left:auto;">👁</span></div>
+        <div style="height:24px"></div>
+        <div class="sy-btn">Create account</div>
+        <div style="height:18px"></div>
+        <div style="text-align:center;font-size:13.5px;color:#8a8a92;">Already have an account? <b style="color:#F97316;">Sign in</b></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">A4</span>Email — no floating glass card</div>
+    <div class="cap-why">Form sits on the canvas; orange focus ring; condensed caps labels match the system.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:80px 26px 26px;">
+        <div style="display:flex;justify-content:center;"><img src="assets/app_icon.png" style="width:96px;height:96px;border-radius:24px;animation:pulseGlow 1.7s ease-in-out infinite;"></div>
+        <div style="height:24px"></div>
+        <div class="anton" style="text-align:center;font-size:34px;">BUILDING YOUR PLAN</div>
+        <div style="text-align:center;color:#8a8a92;font-size:13.5px;margin-top:6px;">~20 seconds · your coach is choosing every set</div>
+        <div style="height:30px"></div>
+        <div style="height:5px;border-radius:3px;background:#1a1a1d;overflow:hidden;"><div style="height:100%;border-radius:3px;background:linear-gradient(90deg,#FFB366,#F97316);box-shadow:0 0 12px rgba(249,115,22,.5);animation:syc-build 10s ease infinite;"></div></div>
+        <div style="height:26px"></div>
+        <div style="font-family:'Space Mono',monospace;font-size:13px;line-height:2.2;color:#8a8a92;">
+          <div class="lp" style="animation-name:s0;"><span style="color:#2ECC71;">✓</span> goals reviewed — <span style="color:#fafafa;">muscle building</span></div>
+          <div class="lp" style="animation-name:s2;"><span style="color:#2ECC71;">✓</span> body matched — <span style="color:#fafafa;">5'10" · 168 lb</span></div>
+          <div class="lp" style="animation-name:s4;"><span style="color:#2ECC71;">✓</span> schedule set — <span style="color:#fafafa;">Mon/Tue/Thu/Sat</span></div>
+          <div class="lp" style="animation-name:s6;"><span style="color:#F97316;">▸</span> scanning 1,722 exercises…</div>
+          <div class="lp" style="animation-name:s8;"><span style="color:#F97316;">▸</span> projecting goal date…</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">A5</span>Plan-building — receipts, not chores</div>
+    <div class="cap-why">Each line echoes the user's own answers back (their height, their days) — proof the AI listened, not a generic checklist. Space Mono is already bundled.</div></div>
+  </div>
+</div>
+
+<!-- ============ ROW B: CONVERSATIONAL (pairs V2) ============ -->
+<div class="sy-sub"><h3>3B · <b>Conversational</b> — pairs with V2</h3>
+<p>The whole funnel is the coach talking. Questions are messages, answers are reply chips, sign-in is the coach asking to save your plan. Highest novelty, highest engineering care.</p></div>
+<div class="row">
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 22px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1d;padding-bottom:12px;">
+          <div class="sy-back" style="width:34px;height:34px;">‹</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">M</div>
+          <div style="font-weight:700;font-size:14.5px;">Coach Mike</div>
+          <div style="margin-left:auto;" class="sy-kick">1 / 11</div>
+        </div>
+        <div style="height:18px"></div>
+        <div class="bub bub-coach" style="font-size:15.5px;max-width:88%;">Before the sets and macros — <b style="color:#F97316;">why now?</b> What's really driving this?</div>
+        <div style="height:18px"></div>
+        <div style="display:flex;flex-wrap:wrap;gap:9px;">
+          <div class="syb-chip">🧘 Confidence</div>
+          <div class="syb-chip">👨‍👩‍👧 Keep up with family</div>
+          <div class="syb-chip">🎉 An event</div>
+          <div class="syb-chip sel">🫀 Health wake-up call</div>
+          <div class="syb-chip">⚡ Feel strong</div>
+          <div class="syb-chip">☀️ More energy</div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="bub bub-user lp" style="animation-name:s5;background:#F97316;color:#160b03;font-weight:700;">A health wake-up call 🫀</div>
+        <div style="height:14px"></div>
+        <div class="sy-btn" style="border-radius:24px;">Send →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">B1</span>Why — asked by the coach</div>
+    <div class="cap-why">Your answer becomes YOUR message bubble — commitment psychology literally in your own voice.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 22px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1d;padding-bottom:12px;">
+          <div class="sy-back" style="width:34px;height:34px;">‹</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">M</div>
+          <div style="font-weight:700;font-size:14.5px;">Coach Mike</div>
+          <div style="margin-left:auto;" class="sy-kick">4 / 11</div>
+        </div>
+        <div style="height:16px"></div>
+        <div class="bub bub-user" style="background:#1c1c1f;color:#bdbdc4;font-size:13px;">A health wake-up call 🫀</div>
+        <div style="height:10px"></div>
+        <div class="bub bub-coach" style="font-size:15.5px;max-width:88%;">Respect. That's the strongest reason there is. <b style="color:#F97316;">How many days a week</b> can you actually give me?</div>
+        <div style="height:10px"></div>
+        <div class="bub bub-coach lp" style="animation-name:s3;font-size:13.5px;color:#9b9ba3;">Be honest — I build around your real life, not your ideal one.</div>
+        <div style="flex:1"></div>
+        <div style="display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;">
+          <div class="syb-chip">2 days</div>
+          <div class="syb-chip">3 days</div>
+          <div class="syb-chip sel">4 days</div>
+          <div class="syb-chip">5+ days</div>
+        </div>
+        <div style="height:14px"></div>
+        <div class="sy-btn" style="border-radius:24px;">Send →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">B2</span>Quiz — coach reacts to YOUR answer</div>
+    <div class="cap-why">“Respect.” — the coach acknowledges the previous answer before asking the next. No form has ever done that.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 22px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1d;padding-bottom:12px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">M</div>
+          <div style="font-weight:700;font-size:14.5px;">Coach Mike</div>
+        </div>
+        <div style="height:16px"></div>
+        <div class="bub bub-coach" style="font-size:15.5px;max-width:90%;">Done. Your 4-day plan is built — <b style="color:#F97316;">goal date Aug 22.</b> 📅</div>
+        <div style="height:10px"></div>
+        <div style="border:1px solid #26262a;background:#101012;border-radius:14px;border-bottom-left-radius:6px;padding:13px 15px;max-width:90%;">
+          <div style="font-weight:800;font-size:14px;">Muscle Building · Push/Pull/Legs</div>
+          <div style="color:#8a8a92;font-size:12px;margin-top:4px;">Mon · Tue · Thu · Sat &nbsp;—&nbsp; 2,140 kcal/day</div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="bub bub-coach" style="font-size:15.5px;max-width:88%;">Sign in so I don't lose it. Takes 10 seconds.</div>
+        <div style="flex:1"></div>
+        <div class="sy-auth" style="background:#fff;color:#0b0b0c;"> Continue with Apple</div>
+        <div style="height:10px"></div>
+        <div class="sy-auth" style="background:#141416;border:1px solid #2c2c30;"><span style="font-weight:800;">G</span> Continue with Google</div>
+        <div style="height:10px"></div>
+        <div class="sy-auth" style="border:1px solid #2c2c30;color:#9b9ba3;">✉️&nbsp; Continue with email</div>
+        <div style="height:14px"></div>
+        <div style="text-align:center;font-size:11px;color:#5f5f66;">By continuing you agree to our <span style="color:#F97316">Terms</span> · <span style="color:#F97316">Privacy</span> · <span style="color:#F97316">Health Disclaimer</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">B3</span>Sign-in — the coach asks</div>
+    <div class="cap-why">“Sign in so I don't lose it” reframes auth as protecting the coach's work. Auth buttons unchanged functionally.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 22px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1d;padding-bottom:12px;">
+          <div class="sy-back" style="width:34px;height:34px;">‹</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">M</div>
+          <div style="font-weight:700;font-size:14.5px;">Coach Mike</div>
+        </div>
+        <div style="height:16px"></div>
+        <div class="bub bub-coach" style="font-size:15.5px;">Email it is. Where should I send your plan?</div>
+        <div style="flex:1"></div>
+        <div class="sy-lbl">Email</div>
+        <div class="sy-input focus" style="border-radius:22px;">✉️&nbsp; jordan@gmail.com<span style="border-left:2px solid #F97316;height:18px;"></span></div>
+        <div style="height:14px"></div>
+        <div class="sy-lbl">Password</div>
+        <div class="sy-input" style="border-radius:22px;">🔒&nbsp; At least 8 characters <span style="margin-left:auto;">👁</span></div>
+        <div style="height:20px"></div>
+        <div class="sy-btn" style="border-radius:24px;">Save my plan →</div>
+        <div style="height:14px"></div>
+        <div style="text-align:center;font-size:13px;color:#8a8a92;">Already have an account? <b style="color:#F97316;">Sign in</b></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">B4</span>Email — composer-style</div>
+    <div class="cap-why">Inputs rounded like message fields; submit copy is “Save my plan”, not “Create Account”.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:#050505;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 22px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;border-bottom:1px solid #1a1a1d;padding-bottom:12px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#FFB366,#F97316);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;">M</div>
+          <div><div style="font-weight:700;font-size:14.5px;">Coach Mike</div><div style="font-size:11px;color:#F97316;">building your plan…</div></div>
+        </div>
+        <div style="height:16px"></div>
+        <div style="display:flex;flex-direction:column;gap:9px;">
+          <div class="bub bub-coach lp" style="animation-name:s0;font-size:14.5px;">Reviewing your goals… <b style="color:#2ECC71;">done ✓</b></div>
+          <div class="bub bub-coach lp" style="animation-name:s2;font-size:14.5px;">5'10", 168 lb — matching your build ✓</div>
+          <div class="bub bub-coach lp" style="animation-name:s4;font-size:14.5px;">Mon / Tue / Thu / Sat locked in ✓</div>
+          <div class="bub bub-coach lp" style="animation-name:s6;font-size:14.5px;">Scanning <b style="color:#F97316;">1,722 exercises</b> for your equipment…</div>
+          <div class="tdots lp" style="animation-name:s8;"><i></i><i></i><i></i></div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="text-align:center;color:#5f5f66;font-size:12px;padding-bottom:8px;">~20 seconds</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">B5</span>Plan-building — coach narrates</div>
+    <div class="cap-why">The loader IS a conversation: progress arrives as messages. Waiting feels like watching him work.</div></div>
+  </div>
+</div>
+
+<!-- ============ ROW C: EDITORIAL (pairs V3 / V6) ============ -->
+<div class="sy-sub"><h3>3C · <b>Editorial</b> — pairs with V3 / V6</h3>
+<p>Giant Anton numerals, condensed caps questions, sharp list rows with an orange selection bar, underline inputs. The most distinctive system; matches zealova.com exactly.</p></div>
+<div class="row">
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#070503;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div class="syc-num">01</div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;z-index:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back" style="border-radius:6px;">‹</div><div class="v-signin" style="font-size:12px;">Skip</div></div>
+        <div style="height:46px"></div>
+        <div class="sy-kick">01 — The why</div>
+        <div class="anton" style="font-size:46px;line-height:1;margin-top:8px;">WHAT'S<br>DRIVING <span style="color:#F97316">THIS?</span></div>
+        <div style="height:24px"></div>
+        <div>
+          <div class="syc-rowopt">Confidence <span class="sub">body image</span></div>
+          <div class="syc-rowopt">Family <span class="sub">keep up</span></div>
+          <div class="syc-rowopt">An event <span class="sub">deadline</span></div>
+          <div class="syc-rowopt sel">Health wake-up <span class="sub">✓ selected</span></div>
+          <div class="syc-rowopt">Strength <span class="sub">capability</span></div>
+          <div class="syc-rowopt">Energy <span class="sub">less stress</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="v-cta-rect" style="height:54px;">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">C1</span>Why — editorial list</div>
+    <div class="cap-why">Numbered like magazine chapters; selection = orange spine bar, not a green check.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#070503;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div class="syc-num">04</div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;z-index:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back" style="border-radius:6px;">‹</div><div class="sy-kick">04 / 11</div></div>
+        <div style="height:46px"></div>
+        <div class="sy-kick">Schedule</div>
+        <div class="anton" style="font-size:46px;line-height:1;margin-top:8px;">DAYS PER<br><span style="color:#F97316">WEEK?</span></div>
+        <div style="margin-top:12px;color:#8a8a92;font-size:13.5px;">Be honest. The plan adapts to your real life.</div>
+        <div style="height:20px"></div>
+        <div>
+          <div class="syc-rowopt">2 days <span class="sub">solid start</span></div>
+          <div class="syc-rowopt">3 days <span class="sub">full-body</span></div>
+          <div class="syc-rowopt sel">4 days <span class="sub">✓ upper / lower</span></div>
+          <div class="syc-rowopt">5+ days <span class="sub">all in</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="v-cta-rect" style="height:54px;">Continue →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">C2</span>Quiz — Anton question</div>
+    <div class="cap-why">The question itself is the design. Sub-labels tell you what each answer buys.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#070503;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back" style="border-radius:6px;">‹</div></div>
+        <div style="flex:1"></div>
+        <div class="sy-kick">Plan built · Aug 22 projected</div>
+        <div class="anton" style="font-size:62px;line-height:.96;margin-top:8px;">SAVE<br>YOUR<br><span style="color:#F97316">PLAN.</span></div>
+        <div style="height:14px"></div>
+        <div style="color:#8a8a92;font-size:13.5px;">Muscle building · 4 days/wk · 2,140 kcal — built in the last 2 minutes.</div>
+        <div style="flex:1.4"></div>
+        <div class="sy-auth" style="background:#fff;color:#0b0b0c;border-radius:6px;"> Continue with Apple</div>
+        <div style="height:10px"></div>
+        <div class="sy-auth" style="background:#141416;border:1px solid #2c2c30;border-radius:6px;"><span style="font-weight:800;">G</span> Continue with Google</div>
+        <div style="height:10px"></div>
+        <div class="sy-auth" style="border:1px solid #2c2c30;color:#9b9ba3;border-radius:6px;">✉️&nbsp; Continue with email</div>
+        <div style="height:14px"></div>
+        <div style="text-align:center;font-size:11px;color:#5f5f66;">By continuing you agree to our <span style="color:#F97316">Terms</span> · <span style="color:#F97316">Privacy</span> · <span style="color:#F97316">Health Disclaimer</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">C3</span>Sign-in — three words</div>
+    <div class="cap-why">SAVE YOUR PLAN. in 62pt Anton does what “Almost There!” never could.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#070503;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><div class="sy-back" style="border-radius:6px;">‹</div></div>
+        <div style="height:40px"></div>
+        <div class="sy-kick">Last step</div>
+        <div class="anton" style="font-size:46px;line-height:1;margin-top:8px;">YOUR <span style="color:#F97316">EMAIL.</span></div>
+        <div style="height:34px"></div>
+        <div class="sy-lbl">Email</div>
+        <div class="syc-uin focus">jordan@gmail.com<span style="border-left:2px solid #F97316;height:20px;"></span></div>
+        <div style="height:26px"></div>
+        <div class="sy-lbl">Password</div>
+        <div class="syc-uin">at least 8 characters <span style="margin-left:auto;">👁</span></div>
+        <div style="height:36px"></div>
+        <div class="v-cta-rect" style="height:54px;">Create account →</div>
+        <div style="height:16px"></div>
+        <div style="text-align:center;font-size:13px;color:#8a8a92;">Already have an account? <b style="color:#F97316;">Sign in</b></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">C4</span>Email — underline inputs</div>
+    <div class="cap-why">No boxes at all — editorial underline fields, orange caret/focus.</div></div>
+  </div>
+
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#070503;">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:70px 24px 24px;">
+        <div class="anton" style="font-size:78px;line-height:.92;">BUILD<br>ING<span style="color:#F97316">.</span></div>
+        <div style="height:8px"></div>
+        <div style="color:#8a8a92;font-size:13px;">your coach is choosing every set — ~20s</div>
+        <div style="height:26px"></div>
+        <div style="height:5px;border-radius:3px;background:#1a1a1d;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#FFB366,#F97316);animation:syc-build 10s ease infinite;border-radius:3px;"></div></div>
+        <div style="height:30px"></div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;letter-spacing:1.5px;text-transform:uppercase;line-height:2.4;color:#6c6c74;">
+          <div class="lp" style="animation-name:s0;color:#bdbdc4;">Goals reviewed <span style="color:#F97316;">— muscle building</span></div>
+          <div class="lp" style="animation-name:s2;color:#bdbdc4;">Body matched <span style="color:#F97316;">— 5'10" · 168 lb</span></div>
+          <div class="lp" style="animation-name:s4;color:#bdbdc4;">Schedule locked <span style="color:#F97316;">— 4 days</span></div>
+          <div class="lp" style="animation-name:s6;color:#bdbdc4;">1,722 exercises scanned</div>
+          <div class="lp" style="animation-name:s8;color:#bdbdc4;">Goal date <span style="color:#F97316;">— projecting…</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="v3-marq"><div class="v3-marq-in"><span>push</span><b>★</b><span>pull</span><b>★</b><span>legs</span><b>★</b><span>2,140 kcal</span><b>★</b><span>aug 22</span><b>★</b><span>push</span><b>★</b><span>pull</span><b>★</b><span>legs</span><b>★</b><span>2,140 kcal</span><b>★</b><span>aug 22</span><b>★</b></div></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap"><div class="cap-name"><span class="tag">C5</span>Plan-building — BUILDING.</div>
+    <div class="cap-why">Editorial loader: giant gerund, condensed receipt lines, marquee of the plan's own contents.</div></div>
+  </div>
+</div>
+
+<section class="sec" style="padding-bottom:60px;">
+  <div class="sec-kick">How to decide</div>
+  <p class="sec-desc" style="margin-top:8px;">Mix and match is fine — e.g. <b style="color:#fafafa;">V1b first screen + System A funnel + S3 splash</b>, or <b style="color:#fafafa;">V3 + System C + S2</b> for full website-brand unity. Tell me the combination (or tweaks) and round 2 implements it in Flutter with a full backup first.</p>
+</section>

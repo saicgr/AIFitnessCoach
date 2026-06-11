@@ -1,0 +1,86 @@
+<style>
+/* ---- splash variations (sp-) ---- */
+@keyframes sp-breathe { 0%,100%{ box-shadow:0 0 44px 8px rgba(249,115,22,.22);} 50%{ box-shadow:0 0 64px 12px rgba(249,115,22,.55);} }
+@keyframes sp-ember { 0%{ transform:translateY(0) scale(1); opacity:0;} 12%{opacity:.8;} 100%{ transform:translateY(-130px) scale(.4); opacity:0;} }
+.sp-ember { position:absolute; width:4px; height:4px; border-radius:50%; background:#FF9A3C; animation: sp-ember 3.2s ease-out infinite; }
+@keyframes sp-letter { 0%,8%{ transform:translateY(110%);} 16%,86%{ transform:translateY(0);} 94%,100%{ transform:translateY(110%);} }
+.sp-l { display:inline-block; overflow:hidden; vertical-align:bottom; }
+.sp-l span { display:inline-block; animation: sp-letter 3.6s cubic-bezier(.2,.9,.3,1) infinite; }
+@keyframes sp-icondock { 0%,14%{ opacity:0; transform:translateY(10px) scale(.8);} 24%,86%{ opacity:1; transform:none;} 94%,100%{ opacity:0;} }
+@keyframes sp-line { 0%{ stroke-dashoffset: 700; } 42%,80%{ stroke-dashoffset: 0; } 100%{ stroke-dashoffset: 0; } }
+@keyframes sp-lineglow { 0%,30%{ opacity:.4; } 50%,80%{ opacity:1; } 100%{ opacity:.4; } }
+@keyframes sp-iconpop { 0%,38%{ opacity:0; transform:scale(.6);} 48%,88%{ opacity:1; transform:scale(1);} 100%{ opacity:1;} }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Section 2 · Splash (the literal first paint)</div>
+  <div class="sec-title">KILL THE BLUE. MAKE 1.5 SECONDS COUNT.</div>
+  <p class="sec-desc">Splash only lives for the auth check (~1–2s), so each is a tight loop. Any of these pairs with any Section 1 direction; S2 pairs best with V3's typographic identity.</p>
+</section>
+<div class="row">
+
+  <!-- S1 ember -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#000;">
+      <div class="notch"></div>
+      <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div style="position:relative;">
+          <span class="sp-ember" style="left:8px; bottom:90px; animation-delay:0s;"></span>
+          <span class="sp-ember" style="left:48px;bottom:96px; animation-delay:1.1s;"></span>
+          <span class="sp-ember" style="left:78px;bottom:88px; animation-delay:2s;"></span>
+          <span class="sp-ember" style="left:28px;bottom:100px;animation-delay:.6s; width:3px;height:3px;"></span>
+          <span class="sp-ember" style="left:64px;bottom:104px;animation-delay:1.6s; width:3px;height:3px;"></span>
+          <img src="assets/app_icon.png" style="width:92px;height:92px;border-radius:23px;animation:sp-breathe 1.8s ease-in-out infinite;">
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">S1</span>Ember — minimal fix</div>
+      <div class="cap-why">Current motion language, correct brand color, plus drifting embers + grain for warmth. Smallest possible change (one constant + particles).</div>
+      <div class="cap-risk"><b>Risk:</b> safe; still icon-on-black like everyone else.</div>
+    </div>
+  </div>
+
+  <!-- S2 wordmark -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#070503;">
+      <div class="notch"></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;">
+        <img src="assets/app_icon.png" style="width:54px;height:54px;border-radius:14px;animation:sp-icondock 3.6s ease infinite;">
+        <div class="anton" style="font-size:58px;letter-spacing:2px;display:flex;">
+          <span class="sp-l"><span style="animation-delay:0s">Z</span></span><span class="sp-l"><span style="animation-delay:.05s">E</span></span><span class="sp-l"><span style="animation-delay:.1s">A</span></span><span class="sp-l"><span style="animation-delay:.15s">L</span></span><span class="sp-l"><span style="animation-delay:.2s">O</span></span><span class="sp-l"><span style="animation-delay:.25s">V</span></span><span class="sp-l"><span style="animation-delay:.3s">A</span></span><span class="sp-l"><span style="animation-delay:.35s;color:#F97316">.</span></span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">S2</span>Wordmark snap — typographic</div>
+      <div class="cap-why">Anton letters snap up one-by-one, orange period lands last; icon docks above. Owns the brand name from second zero. Pairs with V3.</div>
+      <div class="cap-risk"><b>Risk:</b> needs the letter stagger tuned to finish before auth resolves (~900ms total).</div>
+    </div>
+  </div>
+
+  <!-- S3 pulse line -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen grain" style="background:#000;">
+      <div class="notch"></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:30px;">
+        <img src="assets/app_icon.png" style="width:84px;height:84px;border-radius:21px;animation:sp-iconpop 3.4s ease infinite;">
+        <svg width="320" height="60" viewBox="0 0 320 60" style="animation:sp-lineglow 3.4s ease infinite;">
+          <path d="M0,30 L38,30 L46,21 L54,38 L61,30 L112,30 L124,4 L138,56 L152,12 L162,30 L210,30 L219,17 L228,44 L236,26 L243,30 L320,30"
+                fill="none" stroke="#F97316" stroke-width="2.5" stroke-linecap="round"
+                stroke-dasharray="700" stroke-dashoffset="700"
+                style="animation:sp-line 3.4s cubic-bezier(.5,0,.2,1) infinite; filter:drop-shadow(0 0 8px rgba(249,115,22,.7));"/>
+        </svg>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">S3</span>Pulse line — signature moment</div>
+      <div class="cap-why">A heartbeat/effort spike draws across black in orange, icon ignites at center. Distinctive, fitness-literal, animatable in pure Flutter CustomPaint.</div>
+      <div class="cap-risk"><b>Risk:</b> heartbeat imagery skews “health monitor”; could swap the waveform for a barbell-path or rep-spike profile.</div>
+    </div>
+  </div>
+
+</div>

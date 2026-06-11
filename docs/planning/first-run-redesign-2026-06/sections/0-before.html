@@ -1,0 +1,270 @@
+<style>
+/* ---- before frames (b-) ---- */
+.b-orbs { background: linear-gradient(180deg,#1A1A2E,#16213E,#0F3460); }
+.b-orb { position:absolute; border-radius:50%; filter: blur(46px); }
+.b-glass { background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); }
+.b-pill { backdrop-filter: blur(8px); background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); border-radius: 20px; padding: 8px 14px; font-size: 13px; font-weight:600; }
+@keyframes b-bluepulse { 0%,100%{ box-shadow:0 0 40px 8px rgba(59,155,214,.15);} 50%{ box-shadow:0 0 48px 10px rgba(59,155,214,.45);} }
+@keyframes b-dot { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-8px);opacity:1} }
+@keyframes b-ring { to { transform: rotate(360deg); } }
+@keyframes b-orangepulse { 0%,100%{ box-shadow:0 16px 50px 6px rgba(249,115,22,.35);} 50%{ box-shadow:0 16px 70px 6px rgba(249,115,22,.6);} }
+.b-stat { text-align:center; }
+.b-stat b { display:block; font-size:18px; font-weight:800; letter-spacing:-.5px; }
+.b-stat span { font-size:11px; font-weight:600; color:#A1A1AA; }
+.b-why { display:flex; align-items:center; gap:12px; padding:14px; border-radius:14px; background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); font-size:14.5px; font-weight:600; }
+.b-why .ic { width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px; }
+.b-bugnote { position:absolute; top: 120px; left: 24px; right: 24px; z-index: 45; background: rgba(239,68,68,.14); border: 1px solid rgba(239,68,68,.5); color:#fca5a5; font-size: 11.5px; padding: 8px 11px; border-radius: 10px; }
+.b-step { display:flex; align-items:center; gap:12px; padding:13px 14px; border-radius:13px; margin-bottom:11px; border:1px solid transparent; font-size:14.5px; }
+.b-input { background:#ffffff10; border:1.5px solid rgba(255,255,255,.18); border-radius:12px; padding:13px 14px; font-size:14px; color:#9a9aa5; display:flex; align-items:center; gap:9px; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Section 0 · Before</div>
+  <div class="sec-title">WHAT A NEW USER SEES TODAY</div>
+  <p class="sec-desc">Faithful recreations from the Dart source. Three problems: (1) the splash glows <b style="color:#3B9BD6">stale brand blue</b> from before the orange rebrand, (2) the intro is the standard AI-app template (icon + headline + stat box + gradient pill — same skeleton as Cal AI), (3) sign-in and the quiz live on a third, blue-purple glassmorphic palette that matches neither the app nor zealova.com.</p>
+</section>
+<div class="row">
+
+  <!-- B1 SPLASH -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div class="b-bugnote">⚠ BUG: glow, ring + dots are #3B9BD6 — a stale “brand blue from the icon” constant. The icon is orange.</div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:32px;">
+        <div style="position:relative;width:160px;height:160px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;width:140px;height:140px;border-radius:50%;border:1.5px solid transparent;border-top-color:rgba(59,155,214,.55);animation:b-ring 3s linear infinite;"></div>
+          <img src="assets/app_icon.png" style="width:88px;height:88px;border-radius:22px;animation:b-bluepulse 2s ease-in-out infinite;">
+        </div>
+        <div style="display:flex;gap:8px;">
+          <i style="width:8px;height:8px;border-radius:50%;background:#3B9BD6;animation:b-dot 1.2s infinite"></i>
+          <i style="width:8px;height:8px;border-radius:50%;background:#3B9BD6;animation:b-dot 1.2s .2s infinite"></i>
+          <i style="width:8px;height:8px;border-radius:50%;background:#3B9BD6;animation:b-dot 1.2s .4s infinite"></i>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B1</span>/splash — first paint on install</div>
+      <div class="cap-why">App icon + glow + loading dots while auth initializes.</div>
+      <div class="cap-risk"><b>Problem:</b> everything glows blue (#3B9BD6) on an orange-brand app. Off-brand before the app even opens.</div>
+    </div>
+  </div>
+
+  <!-- B2 INTRO -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen" style="background:radial-gradient(120% 90% at 50% 18%, rgba(249,115,22,.15), #000 70%);">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 28px 16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <img src="assets/app_icon.png" style="width:36px;height:36px;border-radius:9px;">
+            <div><div style="font-size:16px;font-weight:800;letter-spacing:-.3px;">Zealova</div><div style="font-size:11px;color:#a1a1aa;font-weight:500;">v 2.4.1</div></div>
+          </div>
+          <div style="font-size:14px;font-weight:600;color:#A1A1AA;">Sign In</div>
+        </div>
+        <div style="flex:2"></div>
+        <div style="display:flex;justify-content:center;"><img src="assets/app_icon.png" style="width:132px;height:132px;border-radius:34px;animation:b-orangepulse 1.8s ease-in-out infinite;"></div>
+        <div style="height:36px"></div>
+        <div style="text-align:center;font-size:42px;font-weight:900;letter-spacing:-1.5px;line-height:1.05;">Your body.</div>
+        <div style="text-align:center;font-size:42px;font-weight:900;letter-spacing:-1.5px;line-height:1.05;color:#F97316;">Your timeline.</div>
+        <div style="height:18px"></div>
+        <div style="text-align:center;font-size:15.5px;color:#A1A1AA;line-height:1.45;padding:0 6px;">An AI coach that builds the plan, learns your body, and adjusts every week.</div>
+        <div style="flex:3"></div>
+        <div style="display:flex;justify-content:space-around;align-items:center;padding:12px 14px;border-radius:14px;background:rgba(26,26,26,.5);border:1px solid #262626;">
+          <div class="b-stat"><b style="color:#00BCD4">1,700+</b><span>exercises</span></div>
+          <div style="width:1px;height:28px;background:#262626"></div>
+          <div class="b-stat"><b style="color:#2ECC71">1M+</b><span>foods</span></div>
+          <div style="width:1px;height:28px;background:#262626"></div>
+          <div class="b-stat"><b style="color:#F97316">24/7</b><span>AI coach</span></div>
+        </div>
+        <div style="height:22px"></div>
+        <div class="cta">Build My Plan&nbsp; →</div>
+        <div style="height:14px"></div>
+        <div class="ghost-link">I have an account</div>
+        <div style="height:18px"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B2</span>/intro — the “generic” screen</div>
+      <div class="cap-why">Pulsing icon → system-font headline → tagline → boxed stat strip → gradient pill. Every element is competent.</div>
+      <div class="cap-risk"><b>Problem:</b> it’s the identical skeleton Cal AI and every 2025 AI app uses. Zero memorability, zero product proof. The bundled Anton/Barlow brand fonts are unused.</div>
+    </div>
+  </div>
+
+  <!-- B3 WHY -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen b-orbs">
+      <div class="b-orb" style="width:230px;height:230px;background:rgba(99,102,241,.25);top:-40px;left:-60px;"></div>
+      <div class="b-orb" style="width:200px;height:200px;background:rgba(14,165,233,.18);bottom:120px;right:-70px;"></div>
+      <div class="b-orb" style="width:170px;height:170px;background:rgba(139,92,246,.2);bottom:-40px;left:30px;"></div>
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 24px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="b-pill">‹&nbsp; Back</div><div style="font-size:14px;color:#ffffff80;font-weight:600;">Skip</div>
+        </div>
+        <div style="height:30px"></div>
+        <div style="font-size:12px;font-weight:700;letter-spacing:2px;color:#F97316;">FIRST, THE WHY</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:-.5px;margin-top:6px;">What's driving this?</div>
+        <div style="height:22px"></div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div class="b-why"><div class="ic" style="background:rgba(139,92,246,.18);color:#8B5CF6">🧘</div>Feel confident in my body</div>
+          <div class="b-why"><div class="ic" style="background:rgba(59,130,246,.18);color:#3B82F6">👨‍👩‍👧</div>Keep up with my family</div>
+          <div class="b-why"><div class="ic" style="background:rgba(255,107,107,.18);color:#FF6B6B">🎉</div>Get ready for an event</div>
+          <div class="b-why" style="border-color:rgba(52,199,89,.5);background:rgba(52,199,89,.12);">
+            <div class="ic" style="background:rgba(239,68,68,.18);color:#EF4444">🫀</div>A health wake-up call
+            <div style="margin-left:auto;color:#34C759;font-size:17px;">✓</div>
+          </div>
+          <div class="b-why"><div class="ic" style="background:rgba(245,158,11,.18);color:#F59E0B">⚡</div>Feel strong and capable</div>
+          <div class="b-why"><div class="ic" style="background:rgba(20,184,166,.18);color:#14B8A6">☀️</div>More energy, less stress</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="height:56px;border-radius:28px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.1));border:1px solid rgba(255,255,255,.35);">Continue&nbsp; →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B3</span>/onboarding-why — emotional anchor</div>
+      <div class="cap-why">Good conversion psychology (Cal AI playbook), kept in all redesigns.</div>
+      <div class="cap-risk"><b>Problem:</b> suddenly a blue-purple glass world — second visual language in two screens. Selection accent is iOS-green, not brand orange.</div>
+    </div>
+  </div>
+
+  <!-- B4 QUIZ -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen b-orbs">
+      <div class="b-orb" style="width:230px;height:230px;background:rgba(99,102,241,.25);top:-40px;right:-60px;"></div>
+      <div class="b-orb" style="width:190px;height:190px;background:rgba(20,184,166,.16);bottom:-30px;left:-50px;"></div>
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 24px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="b-pill">‹</div><div class="b-pill">Step 2 of 6</div><div style="width:40px"></div>
+        </div>
+        <div style="height:16px"></div>
+        <div style="height:6px;border-radius:3px;background:rgba(255,255,255,.10);overflow:hidden;">
+          <div style="width:33%;height:100%;border-radius:3px;background:linear-gradient(90deg,#FFB366,#F97316 55%,#FF6B00);box-shadow:0 0 10px rgba(249,115,22,.35);"></div>
+        </div>
+        <div style="height:30px"></div>
+        <div style="font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1.2;">How many days per week can you train?</div>
+        <div style="height:8px"></div>
+        <div style="font-size:14px;color:#ffffffb0;">Be honest — the plan adapts to your real life.</div>
+        <div style="height:24px"></div>
+        <div style="display:flex;flex-direction:column;gap:11px;">
+          <div class="b-why">2 days <span style="margin-left:auto;font-size:12px;color:#ffffff70;font-weight:500;">A solid start</span></div>
+          <div class="b-why">3 days <span style="margin-left:auto;font-size:12px;color:#ffffff70;font-weight:500;">Full-body classic</span></div>
+          <div class="b-why" style="border-color:rgba(52,199,89,.5);background:linear-gradient(180deg,rgba(52,199,89,.18),rgba(52,199,89,.08));">4 days <span style="margin-left:auto;color:#34C759;">✓</span></div>
+          <div class="b-why">5+ days <span style="margin-left:auto;font-size:12px;color:#ffffff70;font-weight:500;">All in</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="height:56px;border-radius:28px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.1));border:1px solid rgba(255,255,255,.35);">Continue&nbsp; →</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B4</span>/pre-auth-quiz — 11 steps like this</div>
+      <div class="cap-why">Structure is fine (single question, fat targets, progress bar).</div>
+      <div class="cap-risk"><b>Problem:</b> the blue orbs + white-glass + green checks read “template Figma kit.” Orange exists only in the progress bar.</div>
+    </div>
+  </div>
+
+  <!-- B5 SIGN-IN -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen b-orbs">
+      <div class="b-orb" style="width:230px;height:230px;background:rgba(139,92,246,.22);top:-50px;left:-50px;"></div>
+      <div class="b-orb" style="width:200px;height:200px;background:rgba(14,165,233,.18);bottom:-40px;right:-60px;"></div>
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 24px 24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="b-pill">‹&nbsp; Back</div><div class="b-pill">92%</div>
+        </div>
+        <div style="flex:1"></div>
+        <div style="display:flex;justify-content:center;"><div class="b-glass" style="width:100px;height:100px;border-radius:26px;display:flex;align-items:center;justify-content:center;"><img src="assets/app_icon.png" style="width:72px;height:72px;border-radius:18px;"></div></div>
+        <div style="height:22px"></div>
+        <div style="text-align:center;font-size:32px;font-weight:700;">Almost There!</div>
+        <div style="height:8px"></div>
+        <div style="text-align:center;font-size:15px;color:#ffffffb0;line-height:1.4;">Sign in or create an account to continue</div>
+        <div style="height:18px"></div>
+        <div class="b-glass" style="border-radius:14px;padding:13px 15px;display:flex;align-items:center;gap:10px;font-size:13.5px;">
+          <span style="font-size:16px;">💪</span> Your Muscle Building Plan · 4 days/week
+          <span style="margin-left:auto;background:rgba(52,199,89,.2);color:#34C759;font-size:10px;font-weight:800;letter-spacing:1px;padding:4px 8px;border-radius:7px;">READY</span>
+        </div>
+        <div style="flex:1"></div>
+        <div style="height:54px;border-radius:27px;background:#000;border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;gap:9px;font-size:15px;font-weight:600;"> Continue with Apple</div>
+        <div style="height:12px"></div>
+        <div style="height:54px;border-radius:27px;display:flex;align-items:center;justify-content:center;gap:9px;font-size:15px;font-weight:600;background:linear-gradient(180deg,rgba(255,255,255,.2),rgba(255,255,255,.1));border:1px solid rgba(255,255,255,.35);"><span style="font-weight:800;background:linear-gradient(90deg,#4285F4,#EA4335,#FBBC05,#34A853);-webkit-background-clip:text;background-clip:text;color:transparent;">G</span> Continue with Google</div>
+        <div style="height:18px"></div>
+        <div style="text-align:center;font-size:14px;color:#9a9aa5;text-decoration:underline;">Continue with email</div>
+        <div style="height:20px"></div>
+        <div style="text-align:center;font-size:11px;color:#ffffff66;line-height:1.45;">By signing in you agree to our <span style="color:#F97316">Terms</span> · <span style="color:#F97316">Privacy Policy</span> · <span style="color:#F97316">Health Disclaimer</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B5</span>/sign-in — “continue with email etc.”</div>
+      <div class="cap-why">The screen the user called generic. Auth options + plan-value reminder.</div>
+      <div class="cap-risk"><b>Problem:</b> “Almost There!” + glass buttons on blue orbs = stock onboarding kit. No moment of product desire at the highest-stakes screen.</div>
+    </div>
+  </div>
+
+  <!-- B6 EMAIL -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen b-orbs">
+      <div class="b-orb" style="width:210px;height:210px;background:rgba(99,102,241,.22);top:-50px;right:-50px;"></div>
+      <div class="b-orb" style="width:190px;height:190px;background:rgba(20,184,166,.15);bottom:-40px;left:-40px;"></div>
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 24px 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div class="b-pill" style="border-radius:22px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;padding:0;">‹</div>
+          <div style="font-size:18px;font-weight:600;">Create Account</div><div style="width:44px"></div>
+        </div>
+        <div style="height:26px"></div>
+        <div style="display:flex;justify-content:center;"><div class="b-glass" style="width:80px;height:80px;border-radius:20px;display:flex;align-items:center;justify-content:center;"><img src="assets/app_icon.png" style="width:58px;height:58px;border-radius:14px;"></div></div>
+        <div style="height:28px"></div>
+        <div class="b-glass" style="border-radius:20px;padding:24px;">
+          <div style="font-size:14px;font-weight:600;margin-bottom:8px;">Email</div>
+          <div class="b-input">✉️&nbsp; you@example.com</div>
+          <div style="height:18px"></div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:8px;">Password</div>
+          <div class="b-input">🔒&nbsp; At least 8 characters <span style="margin-left:auto;">👁</span></div>
+          <div style="height:22px"></div>
+          <div class="cta" style="height:54px;border-radius:16px;font-size:17px;">Create Account</div>
+        </div>
+        <div style="height:24px"></div>
+        <div style="text-align:center;font-size:14px;color:#9a9aa5;">Already have an account? <b style="color:#fff;">Sign In</b></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B6</span>/email-sign-in — the form</div>
+      <div class="cap-why">Functional glass card form, orange submit.</div>
+      <div class="cap-risk"><b>Problem:</b> a floating glass card on orbs — could be any app on earth. The brand disappears at the moment of commitment.</div>
+    </div>
+  </div>
+
+  <!-- B7 ANALYZING -->
+  <div class="cell">
+    <div class="fwrap"><div class="phone"><div class="screen">
+      <div class="notch"></div><div class="sbar"><span>9:41</span><span class="sigs">▮▮▮▮ ᯤ ▯</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:80px 28px 28px;">
+        <div style="display:flex;justify-content:center;"><img src="assets/app_icon.png" style="width:104px;height:104px;border-radius:26px;animation:b-orangepulse 1.6s ease-in-out infinite;"></div>
+        <div style="height:26px"></div>
+        <div style="text-align:center;font-size:24px;font-weight:700;">Building your plan</div>
+        <div style="height:6px"></div>
+        <div style="text-align:center;font-size:14px;color:#A1A1AA;">This will take a few seconds</div>
+        <div style="height:34px"></div>
+        <div class="b-step" style="background:#101010;border-color:#1d1d1f;"><span style="color:#2ECC71">✓</span> Reviewing your goals</div>
+        <div class="b-step" style="background:#101010;border-color:#1d1d1f;"><span style="color:#2ECC71">✓</span> Matching your body type</div>
+        <div class="b-step" style="background:#141414;border-color:rgba(249,115,22,.4);"><span style="display:inline-block;width:15px;height:15px;border:2px solid #333;border-top-color:#F97316;border-radius:50%;animation:spin 1s linear infinite;"></span> Calibrating your schedule</div>
+        <div class="b-step" style="color:#5a5a62;"><span>○</span> Pulling from 1,700+ templates</div>
+        <div class="b-step" style="color:#5a5a62;"><span>○</span> Calculating your goal date</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B7</span>/plan-analyzing — the AI loader</div>
+      <div class="cap-why">5-step performative build (~5s) while the goal date computes. Concept is good.</div>
+      <div class="cap-risk"><b>Problem:</b> back to black + orange — a third style flip in one funnel. Checklist rows feel utilitarian, not like an AI working.</div>
+    </div>
+  </div>
+
+</div>
