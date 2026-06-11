@@ -1,137 +1,197 @@
-import { useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, useParams, Link } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import { useAppStore } from './store';
 import { useAdminStore } from './store/adminStore';
 import { supabase } from './lib/supabase';
-import Landing from './pages/Landing';
+import { isPrerender } from './lib/runtimeEnv';
+// Homepage stays eager — it's the most-hit route and the LCP-critical path.
 import MarketingLanding from './pages/MarketingLanding';
-import Features from './pages/Features';
-import Pricing from './pages/Pricing';
-import Lifetime from './pages/Lifetime';
-import LifetimeSuccess from './pages/LifetimeSuccess';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import TermsOfService from './pages/TermsOfService';
-import HealthDisclaimer from './pages/HealthDisclaimer';
-import RefundPolicy from './pages/RefundPolicy';
-import FAQ from './pages/FAQ';
-import About from './pages/About';
-import Architecture from './pages/Architecture';
-import Contact from './pages/Contact';
-import Changelog from './pages/Changelog';
-import Roadmap from './pages/Roadmap';
-import Waitlist from './pages/Waitlist';
-import DeleteAccount from './pages/DeleteAccount';
-import Invite from './pages/Invite';
-import Onboarding from './pages/Onboarding';
-import OnboardingSelector from './pages/OnboardingSelector';
-import ConversationalOnboarding from './pages/ConversationalOnboarding';
-import Home from './pages/Home';
-import WorkoutDetails from './pages/WorkoutDetails';
-import ActiveWorkout from './pages/ActiveWorkout';
-import Chat from './pages/Chat';
-import Settings from './pages/Settings';
-// DemoLogin removed — all CTAs now link to Play Store
-import AuthCallback from './pages/AuthCallback';
-import Profile from './pages/Profile';
-import Metrics from './pages/Metrics';
-import Nutrition from './pages/Nutrition';
-import Library from './pages/Library';
-import Achievements from './pages/Achievements';
-import Share from './pages/Share';
-import PublicWorkout from './pages/PublicWorkout';
-import GoogleHealthVs from './pages/vs/GoogleHealth';
-import GoogleHealthHallucination from './pages/blog/GoogleHealthHallucination';
-import BevelVs from './pages/vs/Bevel';
-import BestAiFitnessApps2026 from './pages/best/AiFitnessApps2026';
-import BestCalorieTrackerApps2026 from './pages/best/CalorieTrackerApps2026';
-import BestWorkoutGeneratorApps2026 from './pages/best/WorkoutGeneratorApps2026';
-import BestFitbitAlternatives2026 from './pages/best/FitbitAlternatives2026';
-import BestMyFitnessPalAlternatives2026 from './pages/best/MyFitnessPalAlternatives2026';
-import AndroidAiFitnessCoach from './pages/best/AndroidAiFitnessCoach';
-import ToolsIndex from './pages/tools';
-import Blog from './pages/Blog';
-import OneRmCalculator from './pages/tools/OneRmCalculator';
-import TdeeCalculator from './pages/tools/TdeeCalculator';
-import BmrCalculator from './pages/tools/BmrCalculator';
-import BodyFatCalculator from './pages/tools/BodyFatCalculator';
-import LeanBodyMassCalculator from './pages/tools/LeanBodyMassCalculator';
-import BmiCalculator from './pages/tools/BmiCalculator';
-import IdealWeightCalculator from './pages/tools/IdealWeightCalculator';
-import HealthyWeightCalculator from './pages/tools/HealthyWeightCalculator';
-import MacroCalculator from './pages/tools/MacroCalculator';
-import AdaptiveMacroCalculator from './pages/tools/AdaptiveMacroCalculator';
-import AdaptiveCalorieCalculator from './pages/tools/AdaptiveCalorieCalculator';
-import ProteinPerMealCalculator from './pages/tools/ProteinPerMealCalculator';
-import CarbCyclingCalculator from './pages/tools/CarbCyclingCalculator';
-import CaloriesBurnedCalculator from './pages/tools/CaloriesBurnedCalculator';
-import WilksCalculator from './pages/tools/WilksCalculator';
-import DotsCalculator from './pages/tools/DotsCalculator';
-import IpfGlCalculator from './pages/tools/IpfGlCalculator';
-import SchwartzMaloneCalculator from './pages/tools/SchwartzMaloneCalculator';
-import StrengthLevel from './pages/tools/StrengthLevel';
-import PlateLoader from './pages/tools/PlateLoader';
-import RirRpeConverter from './pages/tools/RirRpeConverter';
-import Vo2MaxCalculator from './pages/tools/Vo2MaxCalculator';
-import SweatRateCalculator from './pages/tools/SweatRateCalculator';
-import PaceCalculator from './pages/tools/PaceCalculator';
-import TargetHeartRateCalculator from './pages/tools/TargetHeartRateCalculator';
-import WorkoutVolumeCalculator from './pages/tools/WorkoutVolumeCalculator';
-import MesocycleVolumeCalculator from './pages/tools/MesocycleVolumeCalculator';
-import DeloadWeekCalculator from './pages/tools/DeloadWeekCalculator';
-import CutBulkDurationCalculator from './pages/tools/CutBulkDurationCalculator';
-import TaperingCalculator from './pages/tools/TaperingCalculator';
-import PhotoComparison from './pages/tools/PhotoComparison';
-import PrCelebrationCard from './pages/tools/PrCelebrationCard';
-import StreakCertificate from './pages/tools/StreakCertificate';
-import WorkoutSummaryCard from './pages/tools/WorkoutSummaryCard';
-import YearInFitnessWrapped from './pages/tools/YearInFitnessWrapped';
-import LifterPersonalityQuiz from './pages/tools/LifterPersonalityQuiz';
-import FastingTimer from './pages/tools/FastingTimer';
-import WorkoutRestTimer from './pages/tools/WorkoutRestTimer';
-import HiitIntervalTimer from './pages/tools/HiitIntervalTimer';
-import SleepCycleCalculator from './pages/tools/SleepCycleCalculator';
-import AiFoodPhoto from './pages/tools/AiFoodPhoto';
-import AiWorkoutGenerator from './pages/tools/AiWorkoutGenerator';
-import AiRoastMyRoutine from './pages/tools/AiRoastMyRoutine';
-import AiPhysiqueAnalyzer from './pages/tools/AiPhysiqueAnalyzer';
-import AiFormCheck from './pages/tools/AiFormCheck';
-import FatLossProtocolCalculator from './pages/tools/FatLossProtocolCalculator';
-import HowToGetJacked from './pages/tools/HowToGetJacked';
-import HowToGetRipped from './pages/tools/HowToGetRipped';
-import HowToCutWithoutLosingMuscle from './pages/tools/HowToCutWithoutLosingMuscle';
-import AlcoholImpactCalculator from './pages/tools/AlcoholImpactCalculator';
-import WorkoutLogExporter from './pages/tools/WorkoutLogExporter';
-import WorkoutPlanBuilder from './pages/tools/WorkoutPlanBuilder';
-import CalorieDeficitTracker from './pages/tools/CalorieDeficitTracker';
-import SupplementStackAnalyzer from './pages/tools/SupplementStackAnalyzer';
-import GlossaryIndex from './pages/glossary';
-import GlossaryOneRm from './pages/glossary/OneRm';
-import GlossaryTdee from './pages/glossary/Tdee';
-import GlossaryBmr from './pages/glossary/Bmr';
-import GlossaryMacros from './pages/glossary/Macros';
-import GlossaryProgressiveOverload from './pages/glossary/ProgressiveOverload';
-import GlossaryRirRpe from './pages/glossary/RirRpe';
-import GlossaryDeload from './pages/glossary/Deload';
-import GlossaryCutBulk from './pages/glossary/CutBulk';
-import GlossaryMesocycle from './pages/glossary/Mesocycle';
-import GlossaryWilksScore from './pages/glossary/WilksScore';
-import GlossaryBodyFatPercentage from './pages/glossary/BodyFatPercentage';
-import GlossarySleepCycles from './pages/glossary/SleepCycles';
-import GlossaryIntermittentFasting from './pages/glossary/IntermittentFasting';
-import GlossaryVo2Max from './pages/glossary/Vo2Max';
-import GlossaryZone2Cardio from './pages/glossary/Zone2Cardio';
-import WorkoutVibeGenerator from './pages/tools/WorkoutVibeGenerator';
-import AestheticBodyTypeMatcher from './pages/tools/AestheticBodyTypeMatcher';
-import CostOfSkippingCalculator from './pages/tools/CostOfSkippingCalculator';
-import CaffeineCutoffCalculator from './pages/tools/CaffeineCutoffCalculator';
-import RecipeScaler from './pages/tools/RecipeScaler';
-import ShouldITrainToday from './pages/tools/ShouldITrainToday';
-import WorkoutBuddyCompatibility from './pages/tools/WorkoutBuddyCompatibility';
-import MarathonPlanGenerator from './pages/tools/MarathonPlanGenerator';
-import ChatWidget from './components/chat/ChatWidget';
-// Admin pages
-import { AdminLogin, AdminDashboard, LiveChatQueue } from './pages/admin';
+
+// Route-chunk loading state. MUST render null during prerender (the SSG
+// snapshot waits for #root children + 300ms; a visible fallback could get
+// baked into SEO HTML). For real users a blank screen while a lazy chunk
+// downloads reads as "the page is broken", so show a minimal boot pulse.
+function RouteFallback() {
+  if (isPrerender()) return null;
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#050505]">
+      <img
+        src="/zealova-logo.png"
+        alt=""
+        className="h-12 w-12 animate-pulse rounded-2xl"
+      />
+    </div>
+  );
+}
+
+// Every other page is route-split via React.lazy so the homepage bundle stays
+// lean. IMPORTANT: the Suspense fallback must remain `null` — the SSG
+// prerenderer (scripts/prerender.mjs) waits for `#root` to have children and
+// then snapshots after a 300ms settle; a visible fallback could be captured
+// into the SEO HTML. A null fallback means snapshots only ever contain real
+// page content.
+const Landing = lazy(() => import('./pages/Landing'));
+const Features = lazy(() => import('./pages/Features'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Lifetime = lazy(() => import('./pages/Lifetime'));
+const LifetimeSuccess = lazy(() => import('./pages/LifetimeSuccess'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const HealthDisclaimer = lazy(() => import('./pages/HealthDisclaimer'));
+const RefundPolicy = lazy(() => import('./pages/RefundPolicy'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const About = lazy(() => import('./pages/About'));
+const Architecture = lazy(() => import('./pages/Architecture'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Changelog = lazy(() => import('./pages/Changelog'));
+const Roadmap = lazy(() => import('./pages/Roadmap'));
+const Waitlist = lazy(() => import('./pages/Waitlist'));
+const DeleteAccount = lazy(() => import('./pages/DeleteAccount'));
+const Invite = lazy(() => import('./pages/Invite'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const OnboardingSelector = lazy(() => import('./pages/OnboardingSelector'));
+const ConversationalOnboarding = lazy(() => import('./pages/ConversationalOnboarding'));
+const Home = lazy(() => import('./pages/Home'));
+const WorkoutDetails = lazy(() => import('./pages/WorkoutDetails'));
+const ActiveWorkout = lazy(() => import('./pages/ActiveWorkout'));
+const Chat = lazy(() => import('./pages/Chat'));
+const Settings = lazy(() => import('./pages/Settings'));
+const AuthCallback = lazy(() => import('./pages/AuthCallback'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Metrics = lazy(() => import('./pages/Metrics'));
+const Nutrition = lazy(() => import('./pages/Nutrition'));
+const Library = lazy(() => import('./pages/Library'));
+const Achievements = lazy(() => import('./pages/Achievements'));
+const Share = lazy(() => import('./pages/Share'));
+const PublicWorkout = lazy(() => import('./pages/PublicWorkout'));
+const GoogleHealthVs = lazy(() => import('./pages/vs/GoogleHealth'));
+const GoogleHealthHallucination = lazy(() => import('./pages/blog/GoogleHealthHallucination'));
+const BevelVs = lazy(() => import('./pages/vs/Bevel'));
+const BestAiFitnessApps2026 = lazy(() => import('./pages/best/AiFitnessApps2026'));
+const BestCalorieTrackerApps2026 = lazy(() => import('./pages/best/CalorieTrackerApps2026'));
+const BestWorkoutGeneratorApps2026 = lazy(() => import('./pages/best/WorkoutGeneratorApps2026'));
+const BestFitbitAlternatives2026 = lazy(() => import('./pages/best/FitbitAlternatives2026'));
+const BestMyFitnessPalAlternatives2026 = lazy(() => import('./pages/best/MyFitnessPalAlternatives2026'));
+const AndroidAiFitnessCoach = lazy(() => import('./pages/best/AndroidAiFitnessCoach'));
+const ToolsIndex = lazy(() => import('./pages/tools'));
+const Blog = lazy(() => import('./pages/Blog'));
+const OneRmCalculator = lazy(() => import('./pages/tools/OneRmCalculator'));
+const TdeeCalculator = lazy(() => import('./pages/tools/TdeeCalculator'));
+const BmrCalculator = lazy(() => import('./pages/tools/BmrCalculator'));
+const BodyFatCalculator = lazy(() => import('./pages/tools/BodyFatCalculator'));
+const LeanBodyMassCalculator = lazy(() => import('./pages/tools/LeanBodyMassCalculator'));
+const BmiCalculator = lazy(() => import('./pages/tools/BmiCalculator'));
+const IdealWeightCalculator = lazy(() => import('./pages/tools/IdealWeightCalculator'));
+const HealthyWeightCalculator = lazy(() => import('./pages/tools/HealthyWeightCalculator'));
+const MacroCalculator = lazy(() => import('./pages/tools/MacroCalculator'));
+const AdaptiveMacroCalculator = lazy(() => import('./pages/tools/AdaptiveMacroCalculator'));
+const AdaptiveCalorieCalculator = lazy(() => import('./pages/tools/AdaptiveCalorieCalculator'));
+const ProteinPerMealCalculator = lazy(() => import('./pages/tools/ProteinPerMealCalculator'));
+const CarbCyclingCalculator = lazy(() => import('./pages/tools/CarbCyclingCalculator'));
+const CaloriesBurnedCalculator = lazy(() => import('./pages/tools/CaloriesBurnedCalculator'));
+const WilksCalculator = lazy(() => import('./pages/tools/WilksCalculator'));
+const DotsCalculator = lazy(() => import('./pages/tools/DotsCalculator'));
+const IpfGlCalculator = lazy(() => import('./pages/tools/IpfGlCalculator'));
+const SchwartzMaloneCalculator = lazy(() => import('./pages/tools/SchwartzMaloneCalculator'));
+const StrengthLevel = lazy(() => import('./pages/tools/StrengthLevel'));
+const PlateLoader = lazy(() => import('./pages/tools/PlateLoader'));
+const RirRpeConverter = lazy(() => import('./pages/tools/RirRpeConverter'));
+const Vo2MaxCalculator = lazy(() => import('./pages/tools/Vo2MaxCalculator'));
+const SweatRateCalculator = lazy(() => import('./pages/tools/SweatRateCalculator'));
+const PaceCalculator = lazy(() => import('./pages/tools/PaceCalculator'));
+const TargetHeartRateCalculator = lazy(() => import('./pages/tools/TargetHeartRateCalculator'));
+const WorkoutVolumeCalculator = lazy(() => import('./pages/tools/WorkoutVolumeCalculator'));
+const MesocycleVolumeCalculator = lazy(() => import('./pages/tools/MesocycleVolumeCalculator'));
+const DeloadWeekCalculator = lazy(() => import('./pages/tools/DeloadWeekCalculator'));
+const CutBulkDurationCalculator = lazy(() => import('./pages/tools/CutBulkDurationCalculator'));
+const TaperingCalculator = lazy(() => import('./pages/tools/TaperingCalculator'));
+const PhotoComparison = lazy(() => import('./pages/tools/PhotoComparison'));
+const PrCelebrationCard = lazy(() => import('./pages/tools/PrCelebrationCard'));
+const StreakCertificate = lazy(() => import('./pages/tools/StreakCertificate'));
+const WorkoutSummaryCard = lazy(() => import('./pages/tools/WorkoutSummaryCard'));
+const YearInFitnessWrapped = lazy(() => import('./pages/tools/YearInFitnessWrapped'));
+const LifterPersonalityQuiz = lazy(() => import('./pages/tools/LifterPersonalityQuiz'));
+const FastingTimer = lazy(() => import('./pages/tools/FastingTimer'));
+const WorkoutRestTimer = lazy(() => import('./pages/tools/WorkoutRestTimer'));
+const HiitIntervalTimer = lazy(() => import('./pages/tools/HiitIntervalTimer'));
+const SleepCycleCalculator = lazy(() => import('./pages/tools/SleepCycleCalculator'));
+const AiFoodPhoto = lazy(() => import('./pages/tools/AiFoodPhoto'));
+const AiWorkoutGenerator = lazy(() => import('./pages/tools/AiWorkoutGenerator'));
+const AiRoastMyRoutine = lazy(() => import('./pages/tools/AiRoastMyRoutine'));
+const AiPhysiqueAnalyzer = lazy(() => import('./pages/tools/AiPhysiqueAnalyzer'));
+const AiFormCheck = lazy(() => import('./pages/tools/AiFormCheck'));
+const FatLossProtocolCalculator = lazy(() => import('./pages/tools/FatLossProtocolCalculator'));
+const HowToGetJacked = lazy(() => import('./pages/tools/HowToGetJacked'));
+const HowToGetRipped = lazy(() => import('./pages/tools/HowToGetRipped'));
+const HowToCutWithoutLosingMuscle = lazy(() => import('./pages/tools/HowToCutWithoutLosingMuscle'));
+const AlcoholImpactCalculator = lazy(() => import('./pages/tools/AlcoholImpactCalculator'));
+const WorkoutLogExporter = lazy(() => import('./pages/tools/WorkoutLogExporter'));
+const WorkoutPlanBuilder = lazy(() => import('./pages/tools/WorkoutPlanBuilder'));
+const CalorieDeficitTracker = lazy(() => import('./pages/tools/CalorieDeficitTracker'));
+const SupplementStackAnalyzer = lazy(() => import('./pages/tools/SupplementStackAnalyzer'));
+const GlossaryIndex = lazy(() => import('./pages/glossary'));
+const GlossaryOneRm = lazy(() => import('./pages/glossary/OneRm'));
+const GlossaryTdee = lazy(() => import('./pages/glossary/Tdee'));
+const GlossaryBmr = lazy(() => import('./pages/glossary/Bmr'));
+const GlossaryMacros = lazy(() => import('./pages/glossary/Macros'));
+const GlossaryProgressiveOverload = lazy(() => import('./pages/glossary/ProgressiveOverload'));
+const GlossaryRirRpe = lazy(() => import('./pages/glossary/RirRpe'));
+const GlossaryDeload = lazy(() => import('./pages/glossary/Deload'));
+const GlossaryCutBulk = lazy(() => import('./pages/glossary/CutBulk'));
+const GlossaryMesocycle = lazy(() => import('./pages/glossary/Mesocycle'));
+const GlossaryWilksScore = lazy(() => import('./pages/glossary/WilksScore'));
+const GlossaryBodyFatPercentage = lazy(() => import('./pages/glossary/BodyFatPercentage'));
+const GlossarySleepCycles = lazy(() => import('./pages/glossary/SleepCycles'));
+const GlossaryIntermittentFasting = lazy(() => import('./pages/glossary/IntermittentFasting'));
+const GlossaryVo2Max = lazy(() => import('./pages/glossary/Vo2Max'));
+const GlossaryZone2Cardio = lazy(() => import('./pages/glossary/Zone2Cardio'));
+const WorkoutVibeGenerator = lazy(() => import('./pages/tools/WorkoutVibeGenerator'));
+const AestheticBodyTypeMatcher = lazy(() => import('./pages/tools/AestheticBodyTypeMatcher'));
+const CostOfSkippingCalculator = lazy(() => import('./pages/tools/CostOfSkippingCalculator'));
+const CaffeineCutoffCalculator = lazy(() => import('./pages/tools/CaffeineCutoffCalculator'));
+const RecipeScaler = lazy(() => import('./pages/tools/RecipeScaler'));
+const ShouldITrainToday = lazy(() => import('./pages/tools/ShouldITrainToday'));
+const WorkoutBuddyCompatibility = lazy(() => import('./pages/tools/WorkoutBuddyCompatibility'));
+const MarathonPlanGenerator = lazy(() => import('./pages/tools/MarathonPlanGenerator'));
+const ChatWidget = lazy(() => import('./components/chat/ChatWidget'));
+// Admin pages (named exports from the barrel)
+const AdminLogin = lazy(() => import('./pages/admin').then((m) => ({ default: m.AdminLogin })));
+const AdminDashboard = lazy(() => import('./pages/admin').then((m) => ({ default: m.AdminDashboard })));
+const LiveChatQueue = lazy(() => import('./pages/admin').then((m) => ({ default: m.LiveChatQueue })));
+
+// /tools/<slug> is the URL people naturally guess (and what at least one
+// reviewer typed) — the real path is /free-tools/<slug>. Param-preserving
+// redirect so guessed links land on the tool instead of a 404.
+function ToolsRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={slug ? `/free-tools/${slug}` : '/free-tools'} replace />;
+}
+
+// Branded 404 — previously unmatched URLs rendered NOTHING (blank page).
+function NotFound() {
+  useEffect(() => {
+    document.title = 'Page not found | Zealova';
+  }, []);
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-[#050505] px-6 text-center">
+      <p className="condensed-kicker text-xs text-volt-500">404</p>
+      <h1 className="display-heading text-5xl text-white sm:text-7xl">Lost the set.</h1>
+      <p className="max-w-md text-zinc-400">
+        That page doesn't exist. The bar is still loaded though, so pick your next move.
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-4">
+        <Link to="/" className="btn-volt rounded-full px-6 py-3 text-sm">Back home</Link>
+        <Link
+          to="/free-tools"
+          className="rounded-full border border-white/15 px-6 py-3 text-sm font-medium text-white transition-colors hover:border-volt-500/50 hover:text-volt-300"
+        >
+          Browse free tools
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 // Protected route component for admin pages
 function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -176,6 +236,7 @@ function App() {
   return (
     <>
       <ScrollToTop />
+      <Suspense fallback={<RouteFallback />}>
       <Routes>
         {/* Marketing pages - public */}
         <Route path="/" element={<MarketingLanding />} />
@@ -362,9 +423,15 @@ function App() {
         />
         {/* Redirect /admin to /admin/dashboard */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        {/* Guessed/legacy tool URLs → canonical /free-tools paths */}
+        <Route path="/tools" element={<Navigate to="/free-tools" replace />} />
+        <Route path="/tools/:slug" element={<ToolsRedirect />} />
+        {/* Catch-all: unmatched URLs used to render a BLANK page */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
       {/* Global Chat Widget - renders via portal, only for authenticated users */}
       {isValidUser && <ChatWidget />}
+      </Suspense>
     </>
   );
 }

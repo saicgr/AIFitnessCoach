@@ -158,7 +158,7 @@ const defaultOnboarding: OnboardingData = {
   activityLevel: 'lightly_active',
 };
 
-const STORAGE_VERSION = 9;  // v9: Light-first theme system
+const STORAGE_VERSION = 10;  // v10: Dark-first "kinetic volt" redesign (v9 was light-first)
 
 // Helper to apply theme class to document
 const applyThemeToDocument = (theme: 'dark' | 'light') => {
@@ -175,7 +175,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       // Theme
-      theme: 'light',
+      theme: 'dark',
       setTheme: (theme) => {
         applyThemeToDocument(theme);
         set({ theme });
@@ -354,13 +354,28 @@ export const useAppStore = create<AppState>()(
         notificationSettings: state.notificationSettings,
       }),
       migrate: (persistedState, version) => {
+        // v9 -> v10: dark-first redesign. Flip the theme to dark ONCE but
+        // preserve everything else (a full reset would log users out).
+        // Users can still switch back to light in Settings afterwards.
+        if (version === 9 && persistedState && typeof persistedState === 'object') {
+          return {
+            ...(persistedState as Record<string, unknown>),
+            theme: 'dark' as const,
+          } as {
+            user: User | null;
+            session: Session | null;
+            onboardingData: OnboardingData;
+            theme: 'dark' | 'light';
+            notificationSettings: AppState['notificationSettings'];
+          };
+        }
         // Clear old data if version mismatch
         if (version < STORAGE_VERSION) {
           return {
             user: null,
             session: null,
             onboardingData: defaultOnboarding,
-            theme: 'light' as const,
+            theme: 'dark' as const,
             notificationSettings: {
               emailEnabled: true,
               pushEnabled: false,
@@ -399,7 +414,7 @@ export const useAppStore = create<AppState>()(
 export const clearAppStorage = () => {
   localStorage.removeItem('fitness-coach-storage');
   useAppStore.setState({
-    theme: 'light',
+    theme: 'dark',
     notificationSettings: {
       emailEnabled: true,
       pushEnabled: false,

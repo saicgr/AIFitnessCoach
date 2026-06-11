@@ -5,9 +5,11 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts are self-hosted via @fontsource imports in src/index.css -->
+    <meta name="theme-color" content="#050505" />
+    <!-- iOS Safari smart banner — sitewide default; tool pages override
+         app-argument per-slug in CalculatorShell. -->
+    <meta name="apple-itunes-app" content="app-id=6745218419" />
     <title>%BRAND_FULL_TITLE%</title>
     <meta name="description" content="AI %BRAND_TAGLINE%" />
     <meta property="og:title" content="%BRAND_FULL_TITLE%" />
@@ -30,7 +32,7 @@
               stored = (parsed && parsed.state && parsed.state.theme) || null;
             }
           } catch (_) {}
-          var theme = stored || 'light';
+          var theme = stored || 'dark';
           if (theme === 'dark') document.documentElement.classList.add('dark-mode');
           if (isToolRoute) document.documentElement.classList.add('tool-route');
         } catch (_) {}

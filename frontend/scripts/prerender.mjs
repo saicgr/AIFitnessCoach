@@ -194,6 +194,15 @@ async function main() {
     page.on('pageerror', () => {});
     page.on('console', () => {});
 
+    // Flag the page as a prerender pass BEFORE any app code runs. The app
+    // checks window.__PRERENDER__ (src/lib/runtimeEnv.ts) to skip GSAP
+    // intro animations, the WebGL hero backdrop, and demo timers so the
+    // snapshot contains settled, fully-visible HTML and headless Chromium
+    // never spins up a GL context.
+    await page.evaluateOnNewDocument(() => {
+      window.__PRERENDER__ = true;
+    });
+
     // Block off-origin network (Supabase realtime, Google Fonts, etc.) so
     // the page doesn't hang on `networkidle`. Same-origin assets load.
     await page.setRequestInterception(true);
