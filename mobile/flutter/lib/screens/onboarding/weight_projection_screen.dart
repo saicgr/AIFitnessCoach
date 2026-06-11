@@ -397,6 +397,7 @@ class _WeightProjectionScreenState
                     textPrimary,
                     textSecondary,
                     isLosingWeight,
+                    goalDate,
                   ),
                 ),
 
@@ -494,6 +495,7 @@ class _WeightProjectionScreenState
     Color textPrimary,
     Color textSecondary,
     bool isLosingWeight,
+    DateTime goalDate,
   ) {
     final minWeight = isLosingWeight ? goalWeight : currentWeight;
     final maxWeight = isLosingWeight ? currentWeight : goalWeight;
@@ -528,7 +530,14 @@ class _WeightProjectionScreenState
             (_lineAnimation.value * data.length).ceil().clamp(1, data.length);
         final visibleData = data.sublist(0, visiblePointCount);
 
-        return Container(
+        // v7: the 🎯 goal-date chip pops in over the line's endpoint as the
+        // draw completes (last 15% of the animation).
+        final chipT = Curves.easeOutBack.transform(
+            ((_lineAnimation.value - 0.85) / 0.15).clamp(0.0, 1.0));
+
+        return Stack(
+          children: [
+            Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -712,6 +721,45 @@ class _WeightProjectionScreenState
               ),
             ),
           ),
+            ),
+            // 🎯 goal-date chip — lands where the line ends.
+            if (chipT > 0)
+              PositionedDirectional(
+                top: 6,
+                end: 6,
+                child: Transform.scale(
+                  scale: 0.6 + 0.4 * chipT,
+                  alignment: AlignmentDirectional.topEnd,
+                  child: Opacity(
+                    opacity: chipT.clamp(0.0, 1.0),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.orange,
+                        borderRadius: BorderRadius.circular(9),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                AppColors.orange.withValues(alpha: 0.45),
+                            blurRadius: 16,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        '🎯 ${DateFormat('MMM d').format(goalDate)}',
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF160B03),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         );
       },
     );

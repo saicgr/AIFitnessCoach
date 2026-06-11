@@ -118,24 +118,83 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
     super.dispose();
   }
 
+  /// Goal id → noun phrase (mirrors sign_in_screen's `_formatGoal`).
+  String _formatGoal(String goal) {
+    switch (goal) {
+      case 'build_muscle':
+        return 'Muscle Building';
+      case 'lose_weight':
+        return 'Weight Loss';
+      case 'increase_strength':
+        return 'Strength';
+      case 'improve_endurance':
+        return 'Endurance';
+      case 'stay_active':
+        return 'Active Lifestyle';
+      case 'athletic_performance':
+        return 'Performance';
+      default:
+        return 'Fitness';
+    }
+  }
+
+  /// "5'10" · 168 lb" or "178 cm · 76 kg" depending on the user's units.
+  String? _formatBody(PreAuthQuizData quiz) {
+    final h = quiz.heightCm;
+    final w = quiz.weightKg;
+    if (h == null || w == null) return null;
+    if (quiz.useMetricUnits) {
+      return '${h.round()} cm · ${w.round()} kg';
+    }
+    final totalIn = h / 2.54;
+    final ft = totalIn ~/ 12;
+    final inch = (totalIn % 12).round();
+    final lb = (w * 2.20462).round();
+    return "$ft'$inch\" · $lb lb";
+  }
+
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    // Build localised steps on first render (idiomatic: rebuild-safe because
-    // labels are constant English strings; locale changes recreate the widget).
+    // v7 "receipts": each step echoes the user's OWN quiz answers back —
+    // proof the AI listened, not a generic checklist. Missing data falls
+    // back to the original generic label (never invented values).
     if (_steps.isEmpty) {
+      final quiz = ref.read(preAuthQuizProvider);
+      final goal = quiz.goal;
+      final body = _formatBody(quiz);
+      final days = quiz.daysPerWeek;
       _steps = [
-        _AnalysisStep(icon: Icons.flag_rounded, label: l10n.planAnalyzingReviewingYourGoals),
-        _AnalysisStep(icon: Icons.accessibility_new_rounded, label: l10n.planAnalyzingMatchingYourBodyType),
-        _AnalysisStep(icon: Icons.calendar_today_rounded, label: l10n.planAnalyzingCalibratingYourSchedule),
-        _AnalysisStep(icon: Icons.fitness_center_rounded, label: l10n.planAnalyzingPullingFrom1700),
-        _AnalysisStep(icon: Icons.trending_up_rounded, label: l10n.planAnalyzingCalculatingYourGoalDate),
+        _AnalysisStep(
+          icon: Icons.flag_rounded,
+          label: goal != null
+              ? l10n.planAnalyzingReceiptGoals(_formatGoal(goal))
+              : l10n.planAnalyzingReviewingYourGoals,
+        ),
+        _AnalysisStep(
+          icon: Icons.accessibility_new_rounded,
+          label: body != null
+              ? l10n.planAnalyzingReceiptBody(body)
+              : l10n.planAnalyzingMatchingYourBodyType,
+        ),
+        _AnalysisStep(
+          icon: Icons.calendar_today_rounded,
+          label: days != null
+              ? l10n.planAnalyzingReceiptSchedule(days)
+              : l10n.planAnalyzingCalibratingYourSchedule,
+        ),
+        _AnalysisStep(
+            icon: Icons.fitness_center_rounded,
+            label: l10n.planAnalyzingPullingFrom1700),
+        _AnalysisStep(
+            icon: Icons.trending_up_rounded,
+            label: l10n.planAnalyzingCalculatingYourGoalDate),
       ];
     }
 
@@ -143,29 +202,65 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 26),
           child: Column(
             children: [
               const SizedBox(height: 40),
               // Animated AI icon
               _PulsingAiOrb(),
-              const SizedBox(height: 28),
+              const SizedBox(height: 26),
               Text(
-                l10n.planAnalyzingBuildingYourPlan,
+                l10n.planAnalyzingBuildingYourPlan.toUpperCase(),
+                textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Anton',
+                  fontSize: 30,
                   color: textPrimary,
-                  letterSpacing: -0.5,
+                  height: 1.05,
                 ),
               ).animate().fadeIn(),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               Text(
-                l10n.planAnalyzingThisWillTakeA,
-                style: TextStyle(fontSize: 14, color: textSecondary),
+                l10n.planAnalyzingSubtitleV7,
+                style: TextStyle(fontSize: 13.5, color: textSecondary),
               ).animate().fadeIn(delay: 200.ms),
 
-              const SizedBox(height: 36),
+              const SizedBox(height: 26),
+
+              // Slim progress bar tied to the step sequence.
+              ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: Container(
+                  height: 5,
+                  color: isDark
+                      ? const Color(0xFF1A1A1D)
+                      : AppColorsLight.elevated,
+                  child: AnimatedFractionallySizedBox(
+                    duration: const Duration(milliseconds: 700),
+                    curve: Curves.easeOutCubic,
+                    alignment: AlignmentDirectional.centerStart,
+                    widthFactor:
+                        ((_currentStep) / _steps.length).clamp(0.06, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [
+                          Color(0xFFFFB366),
+                          AppColors.orange,
+                        ]),
+                        borderRadius: BorderRadius.circular(3),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.orange.withValues(alpha: 0.5),
+                            blurRadius: 12,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 26),
 
               // Steps
               Expanded(
@@ -273,9 +368,12 @@ class _StepRow extends StatelessWidget {
           Expanded(
             child: Text(
               step.label,
+              // v7 receipts read as terminal output — Space Mono is already
+              // bundled for shareables.
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: isIdle ? FontWeight.w500 : FontWeight.w600,
+                fontFamily: 'Space Mono',
+                fontSize: 13,
+                fontWeight: isIdle ? FontWeight.w400 : FontWeight.w700,
                 color: isIdle ? textSecondary : textPrimary,
               ),
             ),

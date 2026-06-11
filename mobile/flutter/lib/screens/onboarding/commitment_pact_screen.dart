@@ -607,13 +607,14 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                 return FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
-                    title,
+                    // v7: Anton display caps — the pact reads like a vow.
+                    title.toUpperCase(),
                     maxLines: 1,
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontFamily: 'Anton',
+                      fontSize: 30,
                       color: textPrimary,
-                      letterSpacing: -0.5,
+                      height: 1.05,
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -266,6 +266,80 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
   }
 
+  /// v7: read-only chips confirming gender / height / weight / goal weight
+  /// from the pre-auth quiz so the user sees we already know them. Empty
+  /// when the quiz was skipped (returning users) — renders nothing.
+  List<Widget> _buildQuizConfirmChips(
+      Color textSecondary, Color fill, Color border) {
+    final quiz = ref.read(preAuthQuizProvider);
+    final l10n = AppLocalizations.of(context);
+
+    String formatWeight(double kg) => quiz.useMetricUnits
+        ? '${kg.round()} kg'
+        : '${(kg * 2.20462).round()} lb';
+
+    final chips = <Widget>[];
+    void addChip(String label, {bool accent = false}) {
+      chips.add(Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        decoration: BoxDecoration(
+          color: accent ? AppColors.orange.withValues(alpha: 0.12) : fill,
+          borderRadius: BorderRadius.circular(9),
+          border: Border.all(
+            color: accent
+                ? AppColors.orange.withValues(alpha: 0.4)
+                : border,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: accent ? AppColors.orange : textSecondary,
+          ),
+        ),
+      ));
+    }
+
+    final g = quiz.gender;
+    if (g != null && g.isNotEmpty) {
+      addChip('${g[0].toUpperCase()}${g.substring(1).replaceAll('_', ' ')}');
+    }
+    final h = quiz.heightCm;
+    if (h != null) {
+      if (quiz.useMetricUnits) {
+        addChip('${h.round()} cm');
+      } else {
+        final totalIn = h / 2.54;
+        addChip("${totalIn ~/ 12}'${(totalIn % 12).round()}\"");
+      }
+    }
+    if (quiz.weightKg != null) addChip(formatWeight(quiz.weightKg!));
+    if (quiz.goalWeightKg != null) {
+      addChip(l10n.personalInfoGoalChip(formatWeight(quiz.goalWeightKg!)),
+          accent: true);
+    }
+
+    if (chips.isEmpty) return const [];
+    return [
+      const SizedBox(height: 22),
+      Text(
+        l10n.personalInfoConfirmedFromQuiz,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+          color: textSecondary,
+        ),
+      ).animate().fadeIn(delay: 330.ms),
+      const SizedBox(height: 10),
+      Wrap(spacing: 8, runSpacing: 8, children: chips)
+          .animate()
+          .fadeIn(delay: 360.ms),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -416,6 +490,12 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   style: TextStyle(fontSize: 13, color: AppColors.error),
                 ),
               ],
+
+              // ── v7: quiz answers echoed as confirm-chips instead of
+              // re-asking. Display only — the values still come from the
+              // quiz provider and are written by _save exactly as before.
+              ..._buildQuizConfirmChips(textSecondary, fill, border),
+
                       // Bottom breathing room inside the scroll area so the
                       // last field doesn't sit flush against the pinned button.
                       const SizedBox(height: 24),

@@ -484,22 +484,14 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
 
                 const SizedBox(height: 32),
 
-                // Form card — glassmorphic
+                // Form — v7: sits directly on the canvas (the floating
+                // glass card is gone; fields carry their own fills).
                 ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
                     child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: t.buttonGradient,
-                          begin: AlignmentDirectional.topStart,
-                          end: AlignmentDirectional.bottomEnd,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: t.borderDefault),
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
                       child: Form(
                         key: _formKey,
                         child: Column(

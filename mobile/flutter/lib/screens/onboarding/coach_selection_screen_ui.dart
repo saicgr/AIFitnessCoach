@@ -641,7 +641,19 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          widget.fromSettings ? AppLocalizations.of(context).coachSelectionScreenSaveCoach : AppLocalizations.of(context).onboardingContinueButton,
+                          // v7: the CTA names the choice — "Train with Alex"
+                          // — live-bound to the selected (or renamed/custom)
+                          // coach. Settings mode keeps "Save Coach".
+                          widget.fromSettings
+                              ? AppLocalizations.of(context)
+                                  .coachSelectionScreenSaveCoach
+                              : (_selectedCoach != null && !_isCustomMode
+                                  ? AppLocalizations.of(context)
+                                      .coachSelectionTrainWith(
+                                          _renamedSelectedName ??
+                                              _selectedCoach!.name)
+                                  : AppLocalizations.of(context)
+                                      .onboardingContinueButton),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

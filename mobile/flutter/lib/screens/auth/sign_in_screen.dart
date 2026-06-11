@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
@@ -529,7 +530,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     // stays neutral; "Continue with Google/Email" below handles both
     // paths transparently (the backend upserts on first Google auth;
     // the email screen has its own Sign In / Sign Up toggle).
-    final title = quizStarted ? 'Almost There!' : "Let's get started";
+    // v7: loss aversion replaces "Almost There!" — the user just watched
+    // their plan get built; signing in is now about not losing it.
+    final title = quizStarted
+        ? AppLocalizations.of(context).signInV7DontLoseIt
+        : AppLocalizations.of(context).signInV7LetsGetStarted;
     final subtitle = quizStarted
         ? _buildPersonalizedSubtitle(quizData)
         : 'Sign in or create an account to continue';
@@ -584,14 +589,30 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           },
         ).animate().fadeIn(delay: 200.ms).scale(begin: const Offset(0.8, 0.8)),
 
-        const SizedBox(height: 32),
+        const SizedBox(height: 28),
+
+        // Kicker — only meaningful when a plan exists to protect.
+        if (quizStarted)
+          Text(
+            AppLocalizations.of(context).signInV7KickerPlanBuilt,
+            style: TextStyle(
+              fontFamily: 'Barlow Condensed',
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 2.5,
+              color: t.accent,
+            ),
+            textAlign: TextAlign.center,
+          ).animate().fadeIn(delay: 250.ms),
+        if (quizStarted) const SizedBox(height: 6),
 
         // Title
         Text(
           title,
           style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
+            fontFamily: 'Anton',
+            fontSize: 36,
+            height: 1.02,
             color: t.textPrimary,
           ),
           textAlign: TextAlign.center,
@@ -625,72 +646,71 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   Widget _buildValueReminderCard(PreAuthQuizData quizData, OnboardingTheme t) {
     String goalDisplay = _formatGoal(quizData.goal ?? 'build_muscle');
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: t.buttonGradient,
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: t.borderDefault),
-          ),
-          child: Row(
+    // v7: the card now carries the plan's own goal date (computed during
+    // /plan-analyzing) so the account ask reads as protecting something
+    // concrete. READY badge is brand orange, not green.
+    String? goalDateLabel;
+    final iso = quizData.goalTargetDate;
+    if (iso != null) {
+      final parsed = DateTime.tryParse(iso);
+      if (parsed != null) {
+        goalDateLabel = DateFormat('MMM d').format(parsed);
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: t.cardFill,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: t.cardFill,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.check_circle_outline,
-                  color: t.textPrimary.withValues(alpha: 0.9),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
               Expanded(
                 child: Text(
                   'Your $goalDisplay Plan · ${quizData.daysPerWeek ?? 3} days/week',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
                     color: t.textPrimary,
                   ),
                 ),
               ),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.success.withOpacity(0.4)),
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context).signInReady,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.success,
-                      ),
-                    ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: t.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(7),
+                ),
+                child: Text(
+                  AppLocalizations.of(context).signInReady,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.2,
+                    color: t.accent,
                   ),
                 ),
               ),
             ],
           ),
-        ),
+          if (goalDateLabel != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              AppLocalizations.of(context).signInV7GoalDateChip(goalDateLabel),
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: t.textSecondary,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -737,7 +757,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
           const SizedBox(height: 12),
         ],
-        // Google Sign In button — glassmorphic
+        // Google Sign In button — neutral card (NOT the orange CTA: auth
+        // providers stay visually unbranded so Apple-first ordering reads).
         GestureDetector(
           onTap: _isLoading ? null : _signInWithGoogle,
           child: ClipRRect(
@@ -748,13 +769,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 width: double.infinity,
                 height: 54,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: t.buttonGradient,
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: t.cardFill,
                   borderRadius: BorderRadius.circular(27),
-                  border: Border.all(color: t.buttonBorder),
+                  border: Border.all(color: t.borderDefault),
                 ),
                 child: _isLoading
                     ? Row(
