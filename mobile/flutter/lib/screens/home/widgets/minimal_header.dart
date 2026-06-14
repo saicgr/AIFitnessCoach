@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/xp_provider.dart';
-import '../../../data/providers/you_hub_tab_request_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../widgets/word_bounce.dart';
@@ -36,74 +34,136 @@ import '../../../l10n/generated/app_localizations.dart';
 class MinimalHeader extends ConsumerWidget {
   const MinimalHeader({super.key});
 
+  static const _weekdays = [
+    'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+  ];
+  static const _months = [
+    'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+    'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+  ];
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final c = ThemeColors.of(context);
+    final now = DateTime.now();
+    final weekday = _weekdays[now.weekday - 1];
+    final monthDay = '${_months[now.month - 1]} ${now.day}';
 
+    // SIGNATURE V2 masthead — brand + streak/bell/coach cluster, then the big
+    // Anton editorial date, then the Fraunces greeting. Replaces the prior
+    // avatar + inline-greeting row. Profile is reached via the You tab; the
+    // settings gear stays in the cluster so it's still one tap from Home.
     return Padding(
       key: AppTourKeys.topBarKey,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const _HomeAvatarButton(),
-          const SizedBox(width: 12),
-          const Expanded(child: _Greeting()),
-          NotificationBellButton(isDark: isDark),
-          _SettingsButton(isDark: isDark),
+          Row(
+            children: [
+              Text(
+                'ZEALOVA',
+                style: ZType.lbl(
+                  11,
+                  color: isDark ? Colors.white60 : Colors.black54,
+                  letterSpacing: 2.4,
+                ),
+              ),
+              const Spacer(),
+              const _StreakChip(),
+              const SizedBox(width: 2),
+              NotificationBellButton(isDark: isDark),
+              _CoachGlyphButton(isDark: isDark),
+              _SettingsButton(isDark: isDark),
+            ],
+          ),
+          const SizedBox(height: 2),
+          // Big editorial date — Anton display, gym-aware accent on the month.
+          RichText(
+            text: TextSpan(
+              text: weekday,
+              style: ZType.disp(30, color: c.textPrimary),
+              children: [
+                TextSpan(
+                  text: '  ·  $monthDay',
+                  style: ZType.disp(30, color: c.textMuted),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          const _Greeting(),
+          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
 
-/// 36pt circular avatar at the left of the header. Tap → `/profile` (the
-/// You hub). The avatar is the canonical "go to me" affordance — matches
-/// Google Health / Strava / Instagram header patterns. Falls back to a
-/// neutral person glyph when the user has no photo URL or the network
-/// image fails to load.
-class _HomeAvatarButton extends ConsumerWidget {
-  const _HomeAvatarButton();
+/// The ✦ ask-coach glyph in the home masthead — opens the coach chat.
+class _CoachGlyphButton extends StatelessWidget {
+  final bool isDark;
+  const _CoachGlyphButton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = isDark ? Colors.white70 : Colors.black54;
+    return IconButton(
+      icon: Icon(Icons.auto_awesome, size: 20, color: iconColor),
+      tooltip: 'Ask coach',
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      onPressed: () {
+        HapticService.light();
+        try {
+          context.push('/chat?source=home_masthead');
+        } catch (_) {
+          context.push('/chat');
+        }
+      },
+    );
+  }
+}
+
+/// Inline streak chip ("23 🔥") for the masthead cluster. Hidden in Serious
+/// Mode and when the streak is zero. Tap opens the streak explainer.
+class _StreakChip extends ConsumerWidget {
+  const _StreakChip();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final user = ref.watch(currentUserProvider).valueOrNull;
-    final photoUrl = user?.photoUrl;
-    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final muted = fg.withValues(alpha: 0.55);
-
+    final serious = ref.watch(seriousModeProvider);
+    final streakDays = ref.watch(xpCurrentStreakProvider);
+    if (serious || streakDays <= 0) return const SizedBox.shrink();
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        // Land on the Profile sub-tab inside the You hub, not the default
-        // Overview. The You branch is kept alive in the shell IndexedStack,
-        // so `initialTabIndex` (read once in initState) is ignored on a
-        // re-visit; the nonce-carrying request guarantees the switch fires
-        // every tap (even after the user manually swiped to Overview). The
-        // `?tab=profile` query is kept for URL clarity / shareable deep
-        // links; the route also seeds the same request.
-        ref.read(youHubTabRequestProvider.notifier).requestTab(1);
-        context.go('/profile?tab=profile');
+        showStreakExplainerSheet(context);
       },
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          color: ThemeColors.of(context).surface,
-          border: Border.all(color: AppColors.cardBorder),
+      behavior: HitTestBehavior.opaque,
+      child: WordBounce(
+        trigger: streakDays,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '$streakDays',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.70)
+                    : Colors.black.withValues(alpha: 0.55),
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(width: 3),
+            const Text('🔥', style: TextStyle(fontSize: 13)),
+          ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: photoUrl != null && photoUrl.isNotEmpty
-            ? Image.network(
-                photoUrl,
-                width: 36,
-                height: 36,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Icon(Icons.person_outline, color: muted, size: 20),
-              )
-            : Icon(Icons.person_outline, color: muted, size: 20),
       ),
     );
   }
@@ -146,86 +206,28 @@ class _Greeting extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final hour = DateTime.now().hour;
-    final greeting = hour < 12
-        ? 'Good morning,'
-        : hour < 17
-            ? 'Good afternoon,'
-            : 'Good evening,';
     final name = ref.watch(currentUserProvider).valueOrNull?.name;
     final firstName = (name != null && name.trim().isNotEmpty)
         ? name.trim().split(' ').first
         : 'there';
 
-    final serious = ref.watch(seriousModeProvider);
-    final streakDays = ref.watch(xpCurrentStreakProvider);
-    final showStreak = !serious && streakDays > 0;
+    // v2 greeting — short, human, Fraunces italic. "Evening, Chetan."
+    final shortGreeting = hour < 12
+        ? 'Morning'
+        : hour < 17
+            ? 'Afternoon'
+            : 'Evening';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          'ZEALOVA',
-          style: ZType.lbl(
-            10,
-            color: isDark ? Colors.white60 : Colors.black54,
-            letterSpacing: 2,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Flexible(
-              // The human/emotional line — Fraunces italic greeting + name.
-              child: Text(
-                '${greeting.replaceAll(',', '')}, $firstName',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: ZType.ser(
-                  19,
-                  color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-                ),
-              ),
-            ),
-            if (showStreak) ...[
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  showStreakExplainerSheet(context);
-                },
-                behavior: HitTestBehavior.opaque,
-                // WordBounce: one playful bounce when the streak VALUE
-                // changes (12→13), per the 2026-06 motion spec. Never loops;
-                // no-op on first build and under reduce-motion.
-                child: WordBounce(
-                  trigger: streakDays,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '· ${streakDays}d',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.70)
-                              : Colors.black.withValues(alpha: 0.55),
-                          height: 1.0,
-                        ),
-                      ),
-                      const SizedBox(width: 3),
-                      const Text('🔥', style: TextStyle(fontSize: 13)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ],
+    return Text(
+      '$shortGreeting, $firstName.',
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: ZType.ser(
+        15,
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.82)
+            : const Color(0xFF2A2A2A),
+      ),
     );
   }
 }
