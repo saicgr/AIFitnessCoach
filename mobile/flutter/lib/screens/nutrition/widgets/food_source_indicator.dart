@@ -55,8 +55,13 @@ class FoodSourceIndicator extends StatelessWidget {
         },
         child: Hero(
           tag: tag,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+          // Signature: hairline-outlined thumbnail.
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: mutedColor.withValues(alpha: 0.25)),
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Image.network(
               url,
               width: size,

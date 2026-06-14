@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../utils/tz.dart';
@@ -224,7 +225,9 @@ class _TrackerCard extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final over = limit > 0 && value > limit;
     final pct = limit > 0 ? (value / limit).clamp(0.0, 1.0) : 0.0;
     final accent = over ? AppColors.coral : color;
@@ -238,12 +241,10 @@ class _TrackerCard extends StatelessWidget {
       width: 150,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: over
-              ? AppColors.coral.withValues(alpha: 0.4)
-              : color.withValues(alpha: 0.18),
+          color: over ? AppColors.coral.withValues(alpha: 0.4) : cardBorder,
         ),
       ),
       child: Column(
@@ -255,12 +256,8 @@ class _TrackerCard extends StatelessWidget {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  label.toUpperCase(),
+                  style: ZType.lbl(11.5, color: textPrimary, letterSpacing: 1.2),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -271,13 +268,10 @@ class _TrackerCard extends StatelessWidget {
           RichText(
             text: TextSpan(
               children: [
+                // Anton display numeral for the day's total.
                 TextSpan(
                   text: '$valueStr$unit',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: accent,
-                  ),
+                  style: ZType.disp(20, color: accent, letterSpacing: 0),
                 ),
                 TextSpan(
                   text: '  / ${limit.round()}$unit',

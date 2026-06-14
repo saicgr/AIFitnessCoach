@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/models/recipe_suggestion.dart';
 import '../../data/providers/recipe_suggestion_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/pill_app_bar.dart';
-import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/recipe_suggestion_card.dart';
 import 'widgets/recipe_preferences_sheet.dart';
 
@@ -25,6 +25,7 @@ class RecipeSuggestionsScreen extends ConsumerStatefulWidget {
 class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  int _tabIndex = 0;
   MealType _selectedMealType = MealType.any;
   final TextEditingController _requirementsController = TextEditingController();
 
@@ -32,6 +33,11 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (mounted && _tabController.index != _tabIndex) {
+        setState(() => _tabIndex = _tabController.index);
+      }
+    });
 
     // Initialize data
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -86,34 +92,45 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
     final state = ref.watch(recipeSuggestionProvider);
-    final background = isDark ? AppColors.background : AppColorsLight.background;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final background = tc.background;
+    final surface = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final accent = tc.accent;
 
     return Scaffold(
       backgroundColor: background,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).recipeSuggestionsRecipeSuggestions,
+        titleSize: 26,
         actions: [
-          PillAppBarAction(
-            icon: Icons.tune,
-            onTap: _showPreferencesSheet,
+          IconButton(
+            icon: Icon(Icons.tune, color: textSecondary),
+            onPressed: _showPreferencesSheet,
           ),
         ],
       ),
       body: Column(
         children: [
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: [
-              SegmentedTabItem(label: AppLocalizations.of(context).unresolvedExercisesSuggestions),
-              SegmentedTabItem(label: AppLocalizations.of(context).savedHubSaved),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: ZealovaTextTabs(
+                tabs: [
+                  AppLocalizations.of(context).unresolvedExercisesSuggestions,
+                  AppLocalizations.of(context).savedHubSaved,
+                ],
+                activeIndex: _tabIndex,
+                onChanged: (i) {
+                  setState(() => _tabIndex = i);
+                  _tabController.animateTo(i);
+                },
+              ),
+            ),
           ),
           Expanded(
             child: TabBarView(
@@ -160,40 +177,23 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                ZealovaSectionKicker(
                   AppLocalizations.of(context).recipeSuggestionsWhatMealAreYou,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  fontSize: 12,
                 ),
                 const SizedBox(height: 12),
                 // Meal type chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: MealType.values.map((type) {
-                      final isSelected = type == _selectedMealType;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ChoiceChip(
-                          label: Text(type.displayName),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() => _selectedMealType = type);
-                            }
-                          },
-                          selectedColor: accent.withValues(alpha: 0.2),
-                          labelStyle: TextStyle(
-                            color: isSelected ? accent : textSecondary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: MealType.values.map((type) {
+                    final isSelected = type == _selectedMealType;
+                    return ZealovaChip(
+                      label: type.displayName,
+                      selected: isSelected,
+                      onTap: () => setState(() => _selectedMealType = type),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: 16),
                 // Additional requirements
@@ -202,12 +202,20 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                   style: TextStyle(color: textPrimary),
                   decoration: InputDecoration(
                     hintText: AppLocalizations.of(context).recipeSuggestionsAnySpecificRequirementsE,
-                    hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.7)),
+                    hintStyle: ZType.lbl(13, color: textSecondary, letterSpacing: 1.0),
                     filled: true,
                     fillColor: surface,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
+                      borderSide: const BorderSide(color: AppColors.cardBorder),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.cardBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: accent),
                     ),
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -219,29 +227,13 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                 ),
                 const SizedBox(height: 16),
                 // Generate button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: state.isGenerating ? null : _generateSuggestions,
-                    icon: state.isGenerating
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.auto_awesome),
-                    label: Text(
-                      state.isGenerating ? AppLocalizations.of(context).upcomingWorkoutsGenerating : AppLocalizations.of(context).recipeSuggestionsGenerateSuggestions,
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
+                ZealovaButton(
+                  label: state.isGenerating
+                      ? AppLocalizations.of(context).upcomingWorkoutsGenerating
+                      : AppLocalizations.of(context).recipeSuggestionsGenerateSuggestions,
+                  onTap: state.isGenerating ? null : _generateSuggestions,
+                  variant: ZealovaButtonVariant.primary,
+                  trailingIcon: state.isGenerating ? null : Icons.auto_awesome,
                 ),
               ],
             ),
@@ -255,21 +247,23 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: surface,
+                border: Border.all(
+                    color: ThemeColors.of(context).error.withValues(alpha: 0.5)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline, color: Colors.red),
+                  Icon(Icons.error_outline, color: ThemeColors.of(context).error),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       state.error!,
-                      style: const TextStyle(color: Colors.red),
+                      style: TextStyle(color: ThemeColors.of(context).error),
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.red),
+                    icon: Icon(Icons.close, color: ThemeColors.of(context).error),
                     onPressed: () {
                       ref.read(recipeSuggestionProvider.notifier).clearError();
                     },
@@ -297,17 +291,14 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
                     const SizedBox(height: 16),
                     Text(
                       AppLocalizations.of(context).regenerateWorkoutSheetNoSuggestionsYet,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
+                      textAlign: TextAlign.center,
+                      style: ZType.disp(22, color: textPrimary),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       AppLocalizations.of(context).recipeSuggestionsTapGenerateSuggestionsTo,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: textSecondary),
+                      style: TextStyle(color: textSecondary, height: 1.4),
                     ),
                   ],
                 ),
@@ -365,17 +356,14 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
               const SizedBox(height: 16),
               Text(
                 AppLocalizations.of(context).recipeSuggestionsNoSavedRecipes,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+                textAlign: TextAlign.center,
+                style: ZType.disp(22, color: textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context).recipeSuggestionsSaveRecipesYouLike,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: textSecondary),
+                style: TextStyle(color: textSecondary, height: 1.4),
               ),
             ],
           ),

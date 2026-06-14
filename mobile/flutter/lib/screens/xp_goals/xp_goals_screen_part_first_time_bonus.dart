@@ -121,14 +121,15 @@ class _AllLevelsSheet extends ConsumerWidget {
                   padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 12, 8),
                   child: Row(
                     children: [
-                      Icon(Icons.stairs, color: accentColor, size: 24),
+                      Icon(Icons.stairs, color: AppColors.gamGold, size: 22),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(AppLocalizations.of(context)!.xpGoalsScreenAllLevels, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColorStrong)),
-                            Text(AppLocalizations.of(context)!.xpGoalsScreenLevelCurrentTotal(currentLevel), style: TextStyle(fontSize: 12, color: textMutedStrong)),
+                            Text(AppLocalizations.of(context)!.xpGoalsScreenAllLevels.toUpperCase(), style: ZType.disp(18, color: textColorStrong, height: 0.96)),
+                            const SizedBox(height: 3),
+                            Text(AppLocalizations.of(context)!.xpGoalsScreenLevelCurrentTotal(currentLevel).toUpperCase(), style: ZType.lbl(9.5, color: textMutedStrong, letterSpacing: 1.5)),
                           ],
                         ),
                       ),

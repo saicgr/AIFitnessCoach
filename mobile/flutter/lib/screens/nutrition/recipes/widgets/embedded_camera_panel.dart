@@ -15,6 +15,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 enum _CameraState { initializing, ready, denied, error, unsupported }
@@ -269,7 +270,7 @@ class _EmbeddedCameraPanelState extends State<EmbeddedCameraPanel>
   Widget _buildStatusOverlay() {
     final text = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final bg = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final bg = widget.isDark ? AppColors.surface : AppColorsLight.surface;
 
     if (_state == _CameraState.initializing) {
       return Container(
@@ -306,23 +307,20 @@ class _EmbeddedCameraPanelState extends State<EmbeddedCameraPanel>
         children: [
           Icon(icon, size: 56, color: widget.accent),
           const SizedBox(height: 12),
-          Text(title,
-            style: TextStyle(color: text, fontSize: 15, fontWeight: FontWeight.w700),
+          Text(title.toUpperCase(),
+            style: ZType.disp(18, color: text),
             textAlign: TextAlign.center),
           const SizedBox(height: 6),
           Text(subtitle,
             style: TextStyle(color: muted, fontSize: 12),
             textAlign: TextAlign.center),
           const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _pickFromGallery,
-            icon: Icon(Icons.photo_library_outlined, color: widget.accent),
-            label: Text(AppLocalizations.of(context).mediaPickerHelperFromGallery, style: TextStyle(color: widget.accent)),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: widget.accent),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            ),
+          ZealovaButton(
+            label: AppLocalizations.of(context).mediaPickerHelperFromGallery,
+            variant: ZealovaButtonVariant.ghost,
+            expand: false,
+            trailingIcon: Icons.photo_library_outlined,
+            onTap: _pickFromGallery,
           ),
           if (_state == _CameraState.denied || _state == _CameraState.error) ...[
             const SizedBox(height: 8),
@@ -331,7 +329,8 @@ class _EmbeddedCameraPanelState extends State<EmbeddedCameraPanel>
                 setState(() => _state = _CameraState.initializing);
                 _initCamera();
               },
-              child: Text(AppLocalizations.of(context).workoutReviewTryAgain, style: TextStyle(color: widget.accent)),
+              child: Text(AppLocalizations.of(context).workoutReviewTryAgain.toUpperCase(),
+                  style: ZType.lbl(12, color: widget.accent, letterSpacing: 1.5)),
             ),
           ],
         ],

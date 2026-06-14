@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../data/models/progress_charts.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 /// Horizontal selector for choosing time range
 class TimeRangeSelector extends StatelessWidget {
@@ -14,11 +15,10 @@ class TimeRangeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
-      height: 50,
+      height: 44,
       padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.centerLeft,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: ProgressTimeRange.values.length,
@@ -27,24 +27,12 @@ class TimeRangeSelector extends StatelessWidget {
           final range = ProgressTimeRange.values[index];
           final isSelected = range == selectedRange;
 
-          return ChoiceChip(
-            label: Text(range.displayName),
-            selected: isSelected,
-            onSelected: (_) => onRangeSelected(range),
-            selectedColor: colorScheme.primary,
-            labelStyle: TextStyle(
-              color: isSelected
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+          return Center(
+            child: ZealovaChip(
+              label: range.displayName,
+              selected: isSelected,
+              onTap: () => onRangeSelected(range),
             ),
-            backgroundColor: colorScheme.surfaceContainerHighest,
-            side: BorderSide(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.outline.withOpacity(0.3),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
           );
         },
       ),

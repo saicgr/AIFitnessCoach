@@ -15,7 +15,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
@@ -60,7 +60,6 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final topPad = MediaQuery.of(context).padding.top;
 
     // Cache-first notifier: the last favorites grid paints instantly on a
     // cold start, then the network result silently revalidates it (SWR).
@@ -69,30 +68,13 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
 
     return Scaffold(
       backgroundColor: bg,
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).workoutsFavorites,
+        onBack: () => Navigator.of(context).pop(),
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
-          Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(8, topPad + 8, 16, 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GlassBackButton(onTap: () => Navigator.of(context).pop()),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    AppLocalizations.of(context).workoutsFavorites,
-                    style: TextStyle(
-                      color: text,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 4),
           Expanded(
             child: CacheFirstView<RecipesResponse>(
@@ -216,12 +198,9 @@ class _EmptyFavoritesView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).favoritesNoFavoritesYet,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: text,
-              ),
+              AppLocalizations.of(context).favoritesNoFavoritesYet.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(20, color: text),
             ),
             const SizedBox(height: 8),
             Text(
@@ -265,13 +244,9 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              message,
+              message.toUpperCase(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: text,
-              ),
+              style: ZType.disp(18, color: text),
             ),
             const SizedBox(height: 4),
             Text(
@@ -279,11 +254,12 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: muted),
             ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: onRetry,
-              style: TextButton.styleFrom(foregroundColor: accent),
-              child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
+            const SizedBox(height: 16),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutReviewTryAgain,
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              onTap: onRetry,
             ),
           ],
         ),

@@ -8,7 +8,9 @@ import '../../widgets/rating_prompt_sheet.dart';
 import 'package:intl/intl.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/models/recipe.dart';
@@ -20,7 +22,6 @@ import '../../data/services/api_client.dart';
 import '../../data/services/data_cache_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/top_segmented_control.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/main_shell.dart';
@@ -788,7 +789,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accentColor = ref.colors(context).accent;
     final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return Scaffold(
@@ -815,26 +815,20 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             // Variant A, 2026-06). Replaces the floating glassmorphic pill
             // that used to stack above the MainShell nav, so this tab has
             // exactly one floating bar.
+            // Signature text-tab bar (Barlow uppercase + accent underline)
+            // replaces the segmented pill control. Same controller wiring.
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
               child: AnimatedBuilder(
                 animation: _tabController,
-                builder: (_, __) => TopSegmentedControl(
-                  accentColor: accentColor,
-                  selectedIndex: _tabController.index,
-                  onSelected: (i) => _tabController.animateTo(i),
-                  items: [
-                    TopSegmentItem(
-                        label: AppLocalizations.of(context).nutritionDailyTab,
-                        icon: Icons.restaurant_menu_rounded),
-                    TopSegmentItem(
-                        label: AppLocalizations.of(context).nutritionRecipesTab,
-                        icon: Icons.menu_book_rounded),
-                    TopSegmentItem(
-                        label:
-                            AppLocalizations.of(context).nutritionPatternsTab,
-                        icon: Icons.insights_outlined),
+                builder: (_, __) => ZealovaTextTabs(
+                  tabs: [
+                    AppLocalizations.of(context).nutritionDailyTab,
+                    AppLocalizations.of(context).nutritionRecipesTab,
+                    AppLocalizations.of(context).nutritionPatternsTab,
                   ],
+                  activeIndex: _tabController.index,
+                  onChanged: (i) => _tabController.animateTo(i),
                 ),
               ),
             ),
@@ -966,14 +960,21 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                         HapticService.light();
                         _jumpToDate(DateTime.now());
                       },
-                child: Text(
-                  _dateLabel,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'NUTRITION',
+                      style: ZType.lbl(10,
+                          color: textMuted, letterSpacing: 2),
+                    ),
+                    Text(
+                      _dateLabel.toUpperCase(),
+                      style: ZType.disp(24, color: textPrimary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -987,11 +988,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             child: Tooltip(
               message: 'More',
               child: Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: glassSurface,
-                  borderRadius: BorderRadius.circular(16),
+                  color: ThemeColors.of(context).surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: Icon(Icons.more_vert_rounded, size: 18, color: textSecondary),
               ),
@@ -1008,11 +1010,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             child: Tooltip(
               message: 'Custom trends',
               child: Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: glassSurface,
-                  borderRadius: BorderRadius.circular(16),
+                  color: ThemeColors.of(context).surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: Icon(Icons.show_chart_rounded, size: 18, color: textSecondary),
               ),
@@ -1032,11 +1035,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               );
             },
             child: Container(
-              width: 32,
-              height: 32,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(16),
+                color: ThemeColors.of(context).surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: Icon(Icons.settings_outlined, size: 18, color: textSecondary),
             ),

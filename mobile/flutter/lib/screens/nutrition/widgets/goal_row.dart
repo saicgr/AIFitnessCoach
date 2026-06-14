@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 
 class GoalRow extends StatelessWidget {
   final IconData icon;
@@ -27,39 +28,33 @@ class GoalRow extends StatelessWidget {
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
+        border: Border(
+          bottom: BorderSide(color: cardBorder),
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 22),
+          Icon(icon, color: color, size: 18),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                color: textPrimary,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(12, color: textPrimary, letterSpacing: 1.5),
             ),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+            style: ZType.disp(20, color: color, letterSpacing: 0.5),
           ),
-          const SizedBox(width: 4),
-          Text(
-            unit,
-            style: TextStyle(
-              fontSize: 13,
-              color: color.withValues(alpha: 0.7),
+          const SizedBox(width: 5),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text(
+              unit.toUpperCase(),
+              style: ZType.lbl(10, color: color.withValues(alpha: 0.7), letterSpacing: 1.0),
             ),
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -91,13 +92,11 @@ class WrappedVolumeCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      AppLocalizations.of(context).volumeCardTotalVolumeLifted,
-                      style: TextStyle(
-                        color: Color(0xFF60A5FA),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 3,
-                      ),
+                      AppLocalizations.of(context).volumeCardTotalVolumeLifted.toUpperCase(),
+                      style: ZType.lbl(13,
+                          color: const Color(0xFF60A5FA),
+                          weight: FontWeight.w700,
+                          letterSpacing: 4),
                     ),
                   ),
 
@@ -108,24 +107,16 @@ class WrappedVolumeCard extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: Text(
                       NumberFormat('#,###').format(data.totalVolumeLbs.round()),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 96,
-                        fontWeight: FontWeight.w900,
-                        height: 1,
-                        letterSpacing: -2,
-                      ),
+                      style: ZType.disp(96, color: Colors.white, height: 0.86, letterSpacing: 0),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'lbs',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 28,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 6,
-                    ),
+                    'LBS',
+                    style: ZType.lbl(22,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        weight: FontWeight.w700,
+                        letterSpacing: 8),
                   ),
 
                   const Spacer(),

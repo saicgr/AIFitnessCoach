@@ -8,7 +8,9 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/models/consistency.dart';
@@ -197,7 +199,6 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     final searchQuery = ref.watch(exerciseSearchQueryProvider);
     final consistencyState = ref.watch(consistencyProvider);
     final currentStreak = consistencyState.currentStreak;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Stats from heatmap data (this endpoint always works)
     int completedCount = 0;
@@ -308,17 +309,10 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             // The blue volume heatmap, presented prominently in its own card.
             // It renders its own header + legend, so this surface just frames
             // it and hosts the expandable exercise search.
-            Container(
+            ZealovaCard(
+              variant: ZealovaCardVariant.outlined,
+              radius: AppRadius.lg,
               padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.cardBorder
-                      : AppColorsLight.cardBorder,
-                ),
-              ),
               child: Column(
                 children: [
                   ActivityHeatmap(
@@ -375,49 +369,36 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
 
             // Compact at-a-glance stats strip (total / week / streak / time).
             // Kept under the heatmap as a quick numeric summary before Trends.
-            Container(
+            ZealovaCard(
+              variant: ZealovaCardVariant.outlined,
+              radius: AppRadius.md,
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.md,
-                vertical: 12,
-              ),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(
-                  color: isDark
-                      ? AppColors.cardBorder
-                      : AppColorsLight.cardBorder,
-                ),
+                vertical: 14,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
+                  // Total is the one accent stat; the rest stay muted/telemetric.
                   _CompactStat(
-                    icon: Icons.fitness_center,
                     value: '$completedCount',
                     label: AppLocalizations.of(context).statsStreakFireTotal,
-                    color: AppColors.cyan,
+                    accent: true,
                   ),
-                  _StatDivider(),
+                  const _StatDivider(),
                   _CompactStat(
-                    icon: Icons.local_fire_department,
                     value: '$thisWeekCompleted/$thisWeekTotal',
                     label: AppLocalizations.of(context).overviewWeek,
-                    color: AppColors.orange,
                   ),
-                  _StatDivider(),
+                  const _StatDivider(),
                   _CompactStat(
-                    icon: Icons.trending_up,
                     value: currentStreak > 0 ? '$currentStreak' : '0',
                     label: AppLocalizations.of(context).xpProgressCardStreak,
-                    color: AppColors.success,
                   ),
-                  _StatDivider(),
+                  const _StatDivider(),
                   _CompactStat(
-                    icon: Icons.timer_outlined,
                     value: totalDurationStr,
                     label: AppLocalizations.of(context).workoutShowcaseTime,
-                    color: AppColors.purple,
                   ),
                 ],
               ),
@@ -553,20 +534,21 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Row(
       children: [
         Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+          title.toUpperCase(),
+          style: ZType.lbl(14, color: tc.textPrimary, letterSpacing: 1.5),
         ),
         const Spacer(),
         if (onViewAll != null)
           TextButton(
             onPressed: onViewAll,
-            child: Text(AppLocalizations.of(context).workoutHistoryImportViewAll),
+            child: Text(
+              AppLocalizations.of(context).workoutHistoryImportViewAll.toUpperCase(),
+              style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.2),
+            ),
           ),
       ],
     );
@@ -583,73 +565,54 @@ class _OverviewSectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = ThemeColors.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(left: AppSpacing.xs / 2),
-      child: Text(
-        label.toUpperCase(),
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          color: colors.textMuted,
-        ),
-      ),
-    );
+    return ZealovaSectionKicker(label, fontSize: 12);
   }
 }
 
-/// Compact stat widget for horizontal row display
+/// Compact stat widget for horizontal row display — Anton numeral over a
+/// Barlow uppercase label. Only the `accent` stat carries the accent color.
 class _CompactStat extends StatelessWidget {
-  final IconData icon;
   final String value;
   final String label;
-  final Color color;
+  final bool accent;
 
   const _CompactStat({
-    required this.icon,
     required this.value,
     required this.label,
-    required this.color,
+    this.accent = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(height: 4),
-        StatNumber(
-          value: value,
-          size: StatType.secondary,
-          color: color,
-          alignment: Alignment.center,
-        ),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: textMuted,
-          ),
+          value,
+          style: ZType.disp(24, color: accent ? tc.accent : tc.textPrimary),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
         ),
       ],
     );
   }
 }
 
-/// Vertical divider for compact stats row
+/// Hairline vertical divider for the compact stats row.
 class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: 1,
-      height: 40,
-      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+      height: 38,
+      color: AppColors.hairline,
     );
   }
 }
@@ -664,8 +627,7 @@ class _AchievementsPreview extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
     final milestonesState = ref.watch(milestonesProvider);
 
     // Source of truth: the live provider. Fall back to the disk snapshot so a
@@ -683,24 +645,24 @@ class _AchievementsPreview extends ConsumerWidget {
         diskFallback == null) {
       // Layout-matched skeleton: 4 badge slots mirroring the real badge row,
       // so the skeleton → content swap does not reflow the card.
-      return Container(
-        height: 120,
+      return ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
+        radius: 16,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
+        child: SizedBox(
+          height: 88,
+          child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(
-            4,
-            (_) => Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                SkeletonCircle(size: 48),
-                SizedBox(height: 8),
-                SkeletonBox(width: 48, height: 10),
-              ],
+            children: List.generate(
+              4,
+              (_) => Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  SkeletonCircle(size: 48),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 48, height: 10),
+                ],
+              ),
             ),
           ),
         ),
@@ -722,40 +684,37 @@ class _AchievementsPreview extends ConsumerWidget {
     }
 
     if (displayItems.isEmpty) {
-      return Container(
-        height: 120,
+      return ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
+        radius: 16,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.emoji_events_outlined,
-                  color: AppColors.textMuted, size: 32),
-              const SizedBox(height: 8),
-              Text(
-                AppLocalizations.of(context).overviewNoAchievementsYet,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textMuted,
+        child: SizedBox(
+          height: 88,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.emoji_events_outlined,
+                    color: tc.textMuted, size: 32),
+                const SizedBox(height: 8),
+                Text(
+                  AppLocalizations.of(context)
+                      .overviewNoAchievementsYet
+                      .toUpperCase(),
+                  style:
+                      ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.2),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       );
     }
 
-    return Container(
-      height: 120,
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      radius: 16,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: displayItems.map((mp) {
@@ -814,45 +773,38 @@ class _BadgeIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     return SizedBox(
       width: 72,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Badge container with glow effect for unlocked
+          // Hairline-framed glyph; tier identity color stays on the unlocked
+          // icon only — locked badges read fully desaturated.
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: unlocked
-                  ? color.withValues(alpha: 0.15)
-                  : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.08)),
+              color: tc.surface,
               border: Border.all(
-                color: unlocked ? color.withValues(alpha: 0.5) : Colors.grey.withValues(alpha: 0.15),
-                width: unlocked ? 2 : 1,
+                color: unlocked ? color.withValues(alpha: 0.5) : AppColors.cardBorder,
+                width: 1,
               ),
-              boxShadow: unlocked ? [
-                BoxShadow(
-                  color: color.withValues(alpha: 0.25),
-                  blurRadius: 8,
-                  spreadRadius: 1,
-                ),
-              ] : null,
             ),
             child: Icon(
               iconData,
-              size: 24,
-              color: unlocked ? color : Colors.grey.withValues(alpha: 0.3),
+              size: 22,
+              color: unlocked ? color : tc.textMuted,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              color: unlocked ? AppColors.textSecondary : AppColors.textMuted,
+            label.toUpperCase(),
+            style: ZType.lbl(
+              8.5,
+              color: unlocked ? tc.textSecondary : tc.textMuted,
+              letterSpacing: 0.8,
             ),
             textAlign: TextAlign.center,
             maxLines: 2,
@@ -878,45 +830,13 @@ class QuickActionButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = ref.watch(accentColorProvider);
-    final accentColor = accent.getColor(isDark);
-
-    return Material(
-      color: elevatedColor,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: () {
-          HapticService.light();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Icon(icon, color: accentColor),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: textPrimary,
-                ),
-              ),
-              const Spacer(),
-              Icon(
-                Icons.chevron_right,
-                color: textMuted,
-              ),
-            ],
-          ),
-        ),
-      ),
+    return ZealovaListRow(
+      icon: icon,
+      label: label,
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
     );
   }
 }

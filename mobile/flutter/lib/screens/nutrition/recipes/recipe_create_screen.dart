@@ -16,13 +16,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
-import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -95,8 +95,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
     final source = await showGlassSheet<ImageSource>(
       context: context,
       builder: (ctx) {
-        final isDark = widget.isDark;
-        final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+        final text = ThemeColors.of(ctx).textPrimary;
         return GlassSheet(
           opaque: true,
           padding: const EdgeInsets.symmetric(vertical: 16),
@@ -236,68 +235,59 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
 
   @override
   Widget build(BuildContext context) {
-    final accent = AccentColorScope.of(context).getColor(widget.isDark);
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
     final isDark = widget.isDark;
-    final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final bg = tc.background;
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
+    final surface = tc.surface;
     final totals = _liveTotals();
 
-    final topPad = MediaQuery.of(context).padding.top;
     return Scaffold(
       backgroundColor: bg,
-      body: Column(
-        children: [
-          SizedBox(height: topPad + 8),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GlassBackButton(onTap: () => Navigator.of(context).pop()),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(AppLocalizations.of(context).recipeCreateNewRecipe,
-                    style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
-                ),
-                TextButton(
-                  onPressed: _saving ? null : _save,
-                  child: Text(
-                    _saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).buttonSave,
-                    style: TextStyle(color: accent, fontWeight: FontWeight.w700, fontSize: 15),
-                  ),
-                ),
-              ],
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).recipeCreateNewRecipe,
+        onBack: () => Navigator.of(context).pop(),
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : _save,
+            child: Text(
+              (_saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).buttonSave).toUpperCase(),
+              style: ZType.lbl(13, color: accent, letterSpacing: 1.5),
             ),
           ),
+        ],
+      ),
+      body: Column(
+        children: [
           const SizedBox(height: 4),
           Expanded(
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           // Live totals header
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: accent.withValues(alpha: 0.2)),
-            ),
+          ZealovaCard(
+            padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _macroTile('kcal', totals['cal']!, accent, text, muted),
-                _macroTile('P g', totals['p']!, accent, text, muted),
-                _macroTile('C g', totals['c']!, accent, text, muted),
-                _macroTile('F g', totals['f']!, accent, text, muted),
+                ZealovaStatTile(
+                  value: totals['cal']!.toStringAsFixed(0),
+                  label: 'KCAL',
+                  align: CrossAxisAlignment.center,
+                ),
+                _macroStat(totals['p']!, 'PROTEIN', AppColors.macroProtein, muted),
+                _macroStat(totals['c']!, 'CARBS', AppColors.macroCarbs, muted),
+                _macroStat(totals['f']!, 'FAT', AppColors.macroFat, muted),
               ],
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Text(AppLocalizations.of(context).recipeCreatePerServing, style: TextStyle(fontSize: 11, color: muted)),
+            child: Text(AppLocalizations.of(context).recipeCreatePerServing.toUpperCase(),
+                style: ZType.lbl(10, color: muted, letterSpacing: 1.3)),
           ),
           const SizedBox(height: 16),
 
@@ -311,9 +301,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
                 color: surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: _photo != null
-                      ? accent.withValues(alpha: 0.4)
-                      : muted.withValues(alpha: 0.25),
+                  color: _photo != null ? accent : AppColors.cardBorder,
                   width: _photo != null ? 1.5 : 1,
                 ),
                 image: _photo != null
@@ -328,9 +316,9 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.add_a_photo_rounded, color: muted, size: 28),
-                        const SizedBox(height: 6),
-                        Text(AppLocalizations.of(context).recipeCreateAddPhotoOptional,
-                            style: TextStyle(color: muted, fontSize: 12)),
+                        const SizedBox(height: 8),
+                        Text(AppLocalizations.of(context).recipeCreateAddPhotoOptional.toUpperCase(),
+                            style: ZType.lbl(10, color: muted, letterSpacing: 1.5)),
                       ],
                     )
                   : Align(
@@ -367,7 +355,7 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
               color: muted,
               onPressed: _servings > 1 ? () => setState(() => _servings--) : null,
             ),
-            Text('$_servings', style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
+            Text('$_servings', style: ZType.disp(20, color: text)),
             IconButton(
               icon: const Icon(Icons.add_circle_outline_rounded),
               color: accent,
@@ -454,26 +442,48 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
     );
   }
 
-  Widget _macroTile(String label, double value, Color accent, Color text, Color muted) {
+  /// Macro stat tile with a semantic-colored Anton numeral.
+  Widget _macroStat(double value, String label, Color color, Color muted) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value.toStringAsFixed(label == 'kcal' ? 0 : 1),
-            style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
-        Text(label, style: TextStyle(color: muted, fontSize: 10)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(value.toStringAsFixed(1), style: ZType.disp(20, color: color)),
+            const SizedBox(width: 2),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Text('G', style: ZType.lbl(9, color: muted, letterSpacing: 1)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Text(label, style: ZType.lbl(9, color: muted, letterSpacing: 1.3)),
       ],
     );
   }
 
   Widget _label(String label, Color text) =>
-      Padding(padding: const EdgeInsets.only(bottom: 6),
-          child: Text(label, style: TextStyle(color: text, fontSize: 12, fontWeight: FontWeight.w700)));
+      Padding(padding: const EdgeInsets.only(bottom: 8),
+          child: Text(label.toUpperCase(),
+              style: ZType.lbl(11, color: text, letterSpacing: 2)));
 
   InputDecoration _inputDeco(String hint, Color muted, Color surface) => InputDecoration(
         hintText: hint,
         hintStyle: TextStyle(color: muted),
         filled: true,
         fillColor: surface,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.cardBorder)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.cardBorder)),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.cardBorder)),
       );
 }
 
@@ -547,11 +557,11 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final accent = widget.accent;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
+    final surface = tc.surface;
 
     if (_editing || widget.row.analyzing) {
       return Row(
@@ -571,9 +581,17 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
                 hintStyle: TextStyle(color: muted),
                 filled: true,
                 fillColor: surface,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
                 ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -611,49 +629,42 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
       NutritionSourceKind.aiEstimate => AppColors.yellow,
     };
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
+    return ZealovaCard(
+      radius: 12,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       onTap: () => setState(() => _editing = true),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: muted.withValues(alpha: 0.15)),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${a.amount.toStringAsFixed(a.amount == a.amount.toInt() ? 0 : 1)} ${a.unit} '
-                    '${a.brand != null ? "${a.brand} " : ""}${a.foodName}',
-                    style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6, runSpacing: 4,
-                    children: [
-                      _badge(a.nutritionSource.shortLabel, sourceColor),
-                      _badge('${a.calories.toStringAsFixed(0)} kcal', muted, bg: false),
-                      _badge('P ${a.proteinG.toStringAsFixed(0)}', muted, bg: false),
-                      _badge('C ${a.carbsG.toStringAsFixed(0)}', muted, bg: false),
-                      _badge('F ${a.fatG.toStringAsFixed(0)}', muted, bg: false),
-                      if (a.nutritionSource == NutritionSourceKind.aiEstimate)
-                        _badge('${a.nutritionConfidence}%', AppColors.yellow),
-                    ],
-                  ),
-                ],
-              ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${a.amount.toStringAsFixed(a.amount == a.amount.toInt() ? 0 : 1)} ${a.unit} '
+                  '${a.brand != null ? "${a.brand} " : ""}${a.foodName}',
+                  style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6, runSpacing: 4,
+                  children: [
+                    _badge(a.nutritionSource.shortLabel, sourceColor),
+                    _badge('${a.calories.toStringAsFixed(0)} KCAL', muted, bg: false),
+                    _badge('P ${a.proteinG.toStringAsFixed(0)}', AppColors.macroProtein),
+                    _badge('C ${a.carbsG.toStringAsFixed(0)}', AppColors.macroCarbs),
+                    _badge('F ${a.fatG.toStringAsFixed(0)}', AppColors.macroFat),
+                    if (a.nutritionSource == NutritionSourceKind.aiEstimate)
+                      _badge('${a.nutritionConfidence}%', AppColors.yellow),
+                  ],
+                ),
+              ],
             ),
-            IconButton(
-              icon: Icon(Icons.close_rounded, size: 18, color: muted),
-              onPressed: widget.onRemove,
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: Icon(Icons.close_rounded, size: 18, color: muted),
+            onPressed: widget.onRemove,
+          ),
+        ],
       ),
     );
   }
@@ -666,8 +677,8 @@ class _IngredientRowEditorState extends State<_IngredientRowEditor> {
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
-        label,
-        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: color),
+        label.toUpperCase(),
+        style: ZType.lbl(9, color: color, letterSpacing: 1),
       ),
     );
   }
@@ -801,14 +812,14 @@ class _CategoryChips extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         decoration: BoxDecoration(
-          color: isSelected ? accent.withValues(alpha: 0.16) : Colors.transparent,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
             color: isSelected
                 ? accent
                 : isDashed
                     ? accent.withValues(alpha: 0.6)
-                    : mutedColor.withValues(alpha: 0.35),
+                    : AppColors.cardBorder,
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -816,11 +827,11 @@ class _CategoryChips extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+              label.toUpperCase(),
+              style: ZType.lbl(
+                11,
                 color: isSelected ? accent : textColor,
+                letterSpacing: 1.2,
               ),
             ),
             if (showRemove && onRemove != null) ...[

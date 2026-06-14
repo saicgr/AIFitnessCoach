@@ -37,19 +37,11 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
   }
 
 
-  // --- Section label ---
+  // --- Section label (Signature Barlow group kicker) ---
   Widget _buildSectionLabel(String label, Color color) {
-    return Padding(
-      padding: const EdgeInsetsDirectional.only(start: 4),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: color,
-          letterSpacing: 0.5,
-        ),
-      ),
+    return ZealovaSectionKicker(
+      label,
+      padding: const EdgeInsetsDirectional.only(start: 2),
     );
   }
 
@@ -129,31 +121,17 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
 
     if (visibleRows.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (int i = 0; i < visibleRows.length; i++) ...[
-            _buildRow(visibleRows[i], isDark, textPrimary, textMuted, themeMode),
-            if (i < visibleRows.length - 1)
-              Divider(
-                height: 1,
-                indent: 52,
-                color: cardBorder,
-              ),
-          ],
-        ],
-      ),
+    // Signature hairline list — no boxed card; rows divided only by hairlines.
+    return Column(
+      children: [
+        for (int i = 0; i < visibleRows.length; i++)
+          _buildRow(visibleRows[i], isDark, textPrimary, textMuted, themeMode),
+      ],
     );
   }
 
 
-  // --- Single row ---
+  // --- Single row (Signature framed-glyph hairline row) ---
   Widget _buildRow(
     _SettingsRow row,
     bool isDark,
@@ -161,88 +139,50 @@ extension _SettingsScreenStateUI on _SettingsScreenState {
     Color textMuted,
     ThemeMode themeMode,
   ) {
-    final iconBg = (row.iconColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan))
-        .withValues(alpha: 0.15);
-    final iconFg = row.iconColor ?? (isDark ? AppColors.cyan : AppColorsLight.cyan);
+    void handleTap() {
+      HapticFeedback.lightImpact();
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'setting_changed',
+        properties: <String, Object>{
+          'setting_name': row.title,
+          'new_value': row.route,
+        },
+      );
+      if (row.onTap != null) {
+        row.onTap!();
+      } else {
+        context.push(row.route);
+      }
+    }
 
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        ref.read(posthogServiceProvider).capture(
-          eventName: 'setting_changed',
-          properties: <String, Object>{
-            'setting_name': row.title,
-            'new_value': row.route,
+    // Theme rows keep the inline theme segmented control as their trailing.
+    if (row.isThemeRow) {
+      return ZealovaListRow(
+        icon: row.icon,
+        label: row.title,
+        showChevron: false,
+        trailing: InlineThemeSelector(
+          currentMode: themeMode,
+          onChanged: (mode) {
+            HapticFeedback.selectionClick();
+            ref.read(themeModeProvider.notifier).setTheme(mode);
+            ref.read(posthogServiceProvider).capture(
+              eventName: 'theme_changed',
+              properties: <String, Object>{
+                'setting_name': 'theme',
+                'new_value': mode.name,
+              },
+            );
           },
-        );
-        if (row.onTap != null) {
-          row.onTap!();
-        } else {
-          context.push(row.route);
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            // Icon container
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(row.icon, color: iconFg, size: 18),
-            ),
-            const SizedBox(width: 12),
-            // Title
-            Expanded(
-              child: Text(
-                row.title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: textPrimary,
-                ),
-              ),
-            ),
-            // Theme selector or value text
-            if (row.isThemeRow)
-              InlineThemeSelector(
-                currentMode: themeMode,
-                onChanged: (mode) {
-                  HapticFeedback.selectionClick();
-                  ref.read(themeModeProvider.notifier).setTheme(mode);
-                  ref.read(posthogServiceProvider).capture(
-                    eventName: 'theme_changed',
-                    properties: <String, Object>{
-                      'setting_name': 'theme',
-                      'new_value': mode.name,
-                    },
-                  );
-                },
-              )
-            else if (row.value != null) ...[
-              Flexible(
-                child: Text(
-                  row.value!,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: textMuted,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                  textAlign: TextAlign.end,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(Icons.chevron_right, color: textMuted, size: 18),
-            ] else
-              Icon(Icons.chevron_right, color: textMuted, size: 18),
-          ],
         ),
-      ),
+      );
+    }
+
+    return ZealovaListRow(
+      icon: row.icon,
+      label: row.title,
+      value: row.value,
+      onTap: handleTap,
     );
   }
 

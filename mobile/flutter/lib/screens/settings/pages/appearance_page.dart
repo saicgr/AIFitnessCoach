@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
-import '../../../core/theme/accent_color_provider.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../sections/sections.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -15,19 +14,15 @@ class AppearancePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final accent = tc.accent;
 
     final serious = ref.watch(seriousModeProvider);
-    final accent =
-        AccentColorScope.of(context).getColor(isDark);
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: AppLocalizations.of(context).settingsAppearance),
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).settingsAppearance),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -45,17 +40,10 @@ class AppearancePage extends ConsumerWidget {
               // Serious Mode — dials gamification noise down without losing
               // any tracking. Profile becomes default tab in You hub,
               // streak strips hide, level card mutes its accent flood.
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: textPrimary.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: serious
-                        ? accent.withValues(alpha: 0.5)
-                        : textPrimary.withValues(alpha: 0.08),
-                  ),
-                ),
+              ZealovaCard(
+                variant: serious
+                    ? ZealovaCardVariant.hero
+                    : ZealovaCardVariant.outlined,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -77,12 +65,11 @@ class AppearancePage extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        Switch.adaptive(
+                        ZealovaToggle(
                           value: serious,
                           onChanged: (v) => ref
                               .read(seriousModeProvider.notifier)
                               .setEnabled(v),
-                          activeTrackColor: accent,
                         ),
                       ],
                     ),
@@ -127,13 +114,7 @@ class _WeekStartCard extends ConsumerWidget {
       ref.read(weekStartsSundayProvider.notifier).setStartsSunday(sunday);
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: textPrimary.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: textPrimary.withValues(alpha: 0.08)),
-      ),
+    return ZealovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

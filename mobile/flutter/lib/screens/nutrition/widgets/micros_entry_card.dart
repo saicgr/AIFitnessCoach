@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/haptic_service.dart';
 
@@ -41,7 +42,9 @@ class _MicrosEntryCardState extends State<MicrosEntryCard> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBg = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final summary = widget.micronutrients;
     // Prefer the backend-pinned nutrients; fall back to the first few across
@@ -59,9 +62,7 @@ class _MicrosEntryCardState extends State<MicrosEntryCard> {
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-        ),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
@@ -98,12 +99,9 @@ class _MicrosEntryCardState extends State<MicrosEntryCard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Vitamins & minerals',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
+                              'Vitamins & minerals'.toUpperCase(),
+                              style: ZType.lbl(14,
+                                  color: textPrimary, letterSpacing: 1.5),
                             ),
                             Text(
                               'Track 30+ nutrients vs your daily targets',

@@ -13,6 +13,8 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/recipe.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 
@@ -40,22 +42,23 @@ class RecipeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
+    final surface = tc.surface;
     final l10n = AppLocalizations.of(context);
 
     final badge = showSourceBadge ? _resolveSourceBadge(summary, l10n) : null;
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       onLongPress: onLongPress,
       child: Container(
         decoration: BoxDecoration(
           color: surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withValues(alpha: 0.18)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -67,7 +70,7 @@ class RecipeCard extends StatelessWidget {
                   Positioned.fill(
                     child: ClipRRect(
                       borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
+                          const BorderRadius.vertical(top: Radius.circular(14)),
                       child: summary.imageUrl != null
                           ? Image.network(
                               summary.imageUrl!,
@@ -117,34 +120,33 @@ class RecipeCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      if (summary.caloriesPerServing != null)
+                      if (summary.caloriesPerServing != null) ...[
                         Text(
-                          '${summary.caloriesPerServing} kcal',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: muted,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          '${summary.caloriesPerServing}',
+                          style: ZType.data(13, color: text),
                         ),
+                        const SizedBox(width: 3),
+                        Text(
+                          'KCAL',
+                          style: ZType.lbl(9, color: muted, letterSpacing: 1.3),
+                        ),
+                      ],
                       if (summary.timesLogged > 0) ...[
                         const Spacer(),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.cardBorder),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             '×${summary.timesLogged}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: accent,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: ZType.lbl(10,
+                                color: accent, letterSpacing: 0.5),
                           ),
                         ),
                       ],
@@ -160,10 +162,10 @@ class RecipeCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: accent.withValues(alpha: 0.08),
+        color: AppColors.elevated,
         child: Center(
           child: Icon(Icons.restaurant_menu,
-              size: 36, color: accent.withValues(alpha: 0.5)),
+              size: 36, color: AppColors.textMuted.withValues(alpha: 0.5)),
         ),
       );
 
@@ -252,13 +254,8 @@ class _SourcePill extends StatelessWidget {
           Icon(icon, size: 11, color: color),
           const SizedBox(width: 4),
           Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: 0.3,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(9, color: Colors.white, letterSpacing: 1.0),
           ),
         ],
       ),

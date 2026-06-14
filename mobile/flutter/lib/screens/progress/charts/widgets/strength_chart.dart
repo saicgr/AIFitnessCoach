@@ -1,8 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// Strength Trends — multi-series line chart of strength progression per
@@ -109,27 +112,21 @@ class StrengthChart extends ConsumerWidget {
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart, color: colors.accent),
+              Icon(Icons.show_chart, color: colors.accent, size: 18),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context).strengthChartStrengthTrends,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
+                AppLocalizations.of(context)
+                    .strengthChartStrengthTrends
+                    .toUpperCase(),
+                style: ZType.lbl(13,
+                    color: colors.textPrimary, letterSpacing: 1.5),
               ),
             ],
           ),
@@ -154,11 +151,10 @@ class StrengthChart extends ConsumerWidget {
                             muscleGroups[spot.barIndex % muscleGroups.length];
                         return LineTooltipItem(
                           '${_formatMuscleGroup(muscleGroup)}\n${spot.y.toStringAsFixed(0)} kg',
-                          TextStyle(
+                          ZType.data(
+                            11,
                             color: _muscleColors[
                                 spot.barIndex % _muscleColors.length],
-                            fontWeight: FontWeight.w500,
-                            fontSize: 12,
                           ),
                         );
                       }).toList();
@@ -169,8 +165,8 @@ class StrengthChart extends ConsumerWidget {
                   show: true,
                   drawVerticalLine: false,
                   horizontalInterval: yMax > 0 ? yMax / 4 : 1,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: colors.cardBorder.withValues(alpha: 0.5),
+                  getDrawingHorizontalLine: (value) => const FlLine(
+                    color: AppColors.hairline,
                     strokeWidth: 1,
                   ),
                 ),
@@ -192,11 +188,9 @@ class StrengthChart extends ConsumerWidget {
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
                           child: Text(
-                            _formatWeekLabel(sortedWeeks[index]),
-                            style: TextStyle(
-                              color: colors.textMuted,
-                              fontSize: 10,
-                            ),
+                            _formatWeekLabel(sortedWeeks[index]).toUpperCase(),
+                            style: ZType.lbl(10,
+                                color: colors.textMuted, letterSpacing: 0.5),
                           ),
                         );
                       },
@@ -214,10 +208,8 @@ class StrengthChart extends ConsumerWidget {
                           padding: const EdgeInsets.only(right: 8),
                           child: Text(
                             _formatYLabel(value),
-                            style: TextStyle(
-                              color: colors.textMuted,
-                              fontSize: 10,
-                            ),
+                            style: ZType.lbl(10,
+                                color: colors.textMuted, letterSpacing: 0.5),
                           ),
                         );
                       },
@@ -261,13 +253,11 @@ class StrengthChart extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
-                    _formatMuscleGroup(muscleGroups[index]),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colors.textSecondary,
-                    ),
+                    _formatMuscleGroup(muscleGroups[index]).toUpperCase(),
+                    style: ZType.lbl(10,
+                        color: colors.textSecondary, letterSpacing: 1),
                   ),
                 ],
               );

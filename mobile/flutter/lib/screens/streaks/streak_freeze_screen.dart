@@ -23,10 +23,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_spacing.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/streak_freeze_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/design_system/zealova.dart';
 
 class StreakFreezeScreen extends ConsumerWidget {
   const StreakFreezeScreen({super.key});
@@ -49,8 +51,9 @@ class StreakFreezeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: c.background,
-      appBar: AppBar(
-        title: const Text('Streak Freeze'),
+      appBar: const ZealovaAppBar(
+        title: 'Streak Freeze',
+        kicker: 'Protection',
       ),
       body: SafeArea(
         child: statusAsync.when(
@@ -343,12 +346,8 @@ class _RecentActivitySection extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(left: AppSpacing.xs, bottom: AppSpacing.sm),
           child: Text(
-            'Recent activity',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: c.textPrimary,
-            ),
+            'RECENT ACTIVITY',
+            style: ZType.disp(20, color: c.textPrimary),
           ),
         ),
         if (ledger.isEmpty)
@@ -529,12 +528,8 @@ class _CardHeader extends StatelessWidget {
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-              color: c.textPrimary,
-            ),
+            title.toUpperCase(),
+            style: ZType.lbl(13, color: c.textPrimary, letterSpacing: 1.5),
           ),
         ),
         Container(
@@ -548,12 +543,7 @@ class _CardHeader extends StatelessWidget {
           ),
           child: Text(
             trailing,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: ice,
-              fontFeatures: [FontFeature.tabularFigures()],
-            ),
+            style: ZType.data(13, color: ice),
           ),
         ),
       ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -179,7 +180,7 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: cardBorder),
-            color: fire.withValues(alpha: widget.isDark ? 0.08 : 0.06),
+            color: fire.withValues(alpha: widget.isDark ? 0.05 : 0.04),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,17 +204,12 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                       children: [
                         const Icon(
                           Icons.local_fire_department_rounded,
-                          size: 13,
+                          size: 12,
                           color: Colors.white,
                         ),
                         Text(
                           '$streakDays',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1.0,
-                          ),
+                          style: ZType.disp(12, color: Colors.white, letterSpacing: 0),
                         ),
                       ],
                     ),
@@ -224,15 +220,12 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '$streakDays-day streak',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: textPrimary,
-                          ),
+                          '$streakDays-DAY STREAK',
+                          style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        const SizedBox(height: 1),
                         Text(
                           'Best $best · Total $total days',
                           style: TextStyle(
@@ -414,13 +407,8 @@ class _WeeklyProgress extends StatelessWidget {
         Row(
           children: [
             Text(
-              AppLocalizations.of(context).nutritionStreakCardThisWeek,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: textMuted,
-                letterSpacing: 0.5,
-              ),
+              AppLocalizations.of(context).nutritionStreakCardThisWeek.toUpperCase(),
+              style: ZType.lbl(11, color: textMuted, letterSpacing: 1.5),
             ),
             const Spacer(),
             Text(
@@ -491,12 +479,8 @@ class _StreakDetailsSheet extends StatelessWidget {
                     color: fire, size: 22),
                 const SizedBox(width: 8),
                 Text(
-                  AppLocalizations.of(context).nutritionStreakCardYourStreak,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                  ),
+                  AppLocalizations.of(context).nutritionStreakCardYourStreak.toUpperCase(),
+                  style: ZType.disp(22, color: textPrimary, letterSpacing: 0.5),
                 ),
               ],
             ),
@@ -611,21 +595,13 @@ class _StatRow extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              color: textMuted,
-              fontWeight: FontWeight.w600,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(13, color: textMuted, letterSpacing: 1.2),
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 15,
-            color: textPrimary,
-            fontWeight: FontWeight.w800,
-          ),
+          style: ZType.disp(17, color: textPrimary, letterSpacing: 0.5),
         ),
       ],
     );

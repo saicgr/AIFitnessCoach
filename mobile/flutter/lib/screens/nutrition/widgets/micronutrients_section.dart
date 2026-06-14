@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -18,14 +19,14 @@ class _MicronutrientsSectionState extends State<MicronutrientsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = widget.isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cardBorder),
       ),
@@ -38,9 +39,9 @@ class _MicronutrientsSectionState extends State<MicronutrientsSection> {
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
-                  Icon(Icons.science_outlined, size: 20, color: AppColors.purple),
+                  Icon(Icons.science_outlined, size: 20, color: textMuted),
                   const SizedBox(width: 10),
-                  Expanded(child: Text(AppLocalizations.of(context).micronutrientsVitaminsMinerals, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary))),
+                  Expanded(child: Text(AppLocalizations.of(context).micronutrientsVitaminsMinerals.toUpperCase(), style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5))),
                   Icon(_isExpanded ? Icons.expand_less : Icons.expand_more, color: textMuted),
                 ],
               ),

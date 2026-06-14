@@ -65,12 +65,8 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).nutritionGoalsCardHowYourTargetsAre,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context).nutritionGoalsCardHowYourTargetsAre.toUpperCase(),
+            style: ZType.disp(20, color: textPrimary, letterSpacing: 0.5),
           ),
           const SizedBox(height: 16),
 
@@ -176,11 +172,7 @@ class _CalculationInfoSheetState extends ConsumerState<_CalculationInfoSheet> {
                 ),
                 Text(
                   '${fmt(targetCal)} cal',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: teal,
-                  ),
+                  style: ZType.disp(18, color: teal, letterSpacing: 0.5),
                 ),
               ],
             ),
@@ -478,11 +470,7 @@ class _MacroProgressRing extends StatelessWidget {
                 children: [
                   Text(
                     '${current.toInt()}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                    ),
+                    style: ZType.disp(14, color: textPrimary, letterSpacing: 0),
                   ),
                   if (showKcal)
                     Text(
@@ -500,12 +488,8 @@ class _MacroProgressRing extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(10, color: color, letterSpacing: 1.0),
           overflow: TextOverflow.ellipsis,
           maxLines: 1,
         ),
@@ -635,13 +619,13 @@ class _MacroChip extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              label,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: color),
+              label.toUpperCase(),
+              style: ZType.lbl(10, color: color, letterSpacing: 1.0),
             ),
             const SizedBox(height: 2),
             Text(
               '${grams}g',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: color),
+              style: ZType.disp(15, color: color, letterSpacing: 0.5),
             ),
             Text(
               '$pct%',
@@ -688,27 +672,20 @@ class _CompactMacroItem extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Text(
-          '$label: ',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: textMuted,
-          ),
-        ),
-        Text(
           '${current.toInt()}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
+          style: ZType.disp(14, color: textPrimary, letterSpacing: 0),
         ),
         Text(
-          '/${target.toInt()}g',
+          '/${target.toInt()}',
           style: TextStyle(
             fontSize: 11,
             color: textMuted,
           ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(10, color: textMuted, letterSpacing: 1.5),
         ),
       ],
     );

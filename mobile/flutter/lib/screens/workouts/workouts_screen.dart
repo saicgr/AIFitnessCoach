@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/chrome_constants.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
@@ -708,24 +709,16 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            title,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.0,
-              color: textColor,
-            ),
+            title.toUpperCase(),
+            style: ZType.lbl(11, color: textColor, letterSpacing: 2.0),
           ),
           if (actionText != null && onAction != null)
             GestureDetector(
               onTap: onAction,
               child: Text(
-                actionText,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: textColor,
-                ),
+                actionText.toUpperCase(),
+                style: ZType.lbl(11,
+                    color: AppColors.textMuted, letterSpacing: 1.5),
               ),
             ),
         ],
@@ -1347,30 +1340,19 @@ class _GlassmorphicButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Signature: matte hairline square (glass is reserved for sheets).
+    final tc = ThemeColors.of(context);
     return GestureDetector(
       onTap: onTap,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(size / 2),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(size / 2),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : Colors.black.withValues(alpha: 0.08),
-                width: 1,
-              ),
-            ),
-            child: Center(child: child),
-          ),
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
+        child: Center(child: child),
       ),
     );
   }

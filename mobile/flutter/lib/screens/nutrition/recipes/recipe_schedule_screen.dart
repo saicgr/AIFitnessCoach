@@ -11,6 +11,7 @@ import '../../../data/models/cook_event.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/models/scheduled_recipe.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class RecipeScheduleScreen extends ConsumerStatefulWidget {
@@ -46,19 +47,21 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
     final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg, elevation: 0,
-        title: Text(AppLocalizations.of(context).scheduleWorkoutSchedule, style: TextStyle(color: text)),
-        iconTheme: IconThemeData(color: text),
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).scheduleWorkoutSchedule,
+        titleSize: 26,
+        onBack: () => Navigator.of(context).maybePop(),
         actions: [
           TextButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).buttonSave,
-                style: TextStyle(color: accent, fontWeight: FontWeight.w700)),
+            child: Text(
+              (_saving ? AppLocalizations.of(context).sleepDetailSaving : AppLocalizations.of(context).buttonSave).toUpperCase(),
+              style: ZType.lbl(13, color: accent, letterSpacing: 1.5),
+            ),
           ),
         ],
       ),
@@ -68,7 +71,11 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
           // Recipe card
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.cardBorder, width: 1),
+            ),
             child: Row(children: [
               Icon(Icons.restaurant_menu, color: accent),
               const SizedBox(width: 10),
@@ -214,7 +221,7 @@ class _RecipeScheduleScreenState extends ConsumerState<RecipeScheduleScreen> {
 
   Widget _label(String l, Color text) =>
       Padding(padding: const EdgeInsets.only(bottom: 6),
-          child: Text(l, style: TextStyle(color: text, fontSize: 12, fontWeight: FontWeight.w700)));
+          child: Text(l.toUpperCase(), style: ZType.lbl(11, color: text, letterSpacing: 1.8)));
 
   Future<void> _save() async {
     setState(() => _saving = true);
@@ -273,7 +280,11 @@ class _BatchSlotRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
+      ),
       child: Row(children: [
         TextButton(
           onPressed: () async {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ai_split_preset.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
@@ -61,15 +62,8 @@ class _AllSplitsScreenState extends ConsumerState<AllSplitsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor =
-        isDark ? AppColors.orange : AppColorsLight.orange;
+    final tc = ThemeColors.of(context);
+    final backgroundColor = tc.background;
 
     final presets = _filteredPresets;
 
@@ -88,36 +82,13 @@ class _AllSplitsScreenState extends ConsumerState<AllSplitsScreen> {
                   final isSelected = _selectedCategory == entry.key;
                   return Padding(
                     padding: const EdgeInsetsDirectional.only(end: 8),
-                    child: GestureDetector(
+                    child: ZealovaChip(
+                      label: entry.value,
+                      selected: isSelected,
                       onTap: () {
                         HapticService.light();
                         setState(() => _selectedCategory = entry.key);
                       },
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected ? accentColor : elevated,
-                          borderRadius: BorderRadius.circular(20),
-                          border: isSelected
-                              ? null
-                              : Border.all(
-                                  color: textMuted.withValues(alpha: 0.2),
-                                ),
-                        ),
-                        child: Text(
-                          entry.value,
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : textSecondary,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.normal,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
                     ),
                   );
                 }).toList(),

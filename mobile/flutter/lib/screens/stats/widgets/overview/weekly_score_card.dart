@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/stat_typography.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../../data/models/scores.dart';
 import '../../../../data/providers/scores_provider.dart';
-import '../../../../widgets/glass_card.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 /// Overview-tab "Weekly Score" card (Gravl Image #5, top-right tile).
 ///
@@ -76,8 +76,9 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
 
     final hasAny = breakdown != null || overviewFitness != null;
 
-    return GlassCard(
-      borderRadius: AppRadius.lg,
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () {
         HapticService.instance.tap();
@@ -122,34 +123,32 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const ZealovaSectionKicker('Weekly Score'),
+        const SizedBox(height: AppSpacing.sm),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(arrow, size: 22, color: deltaColor),
-            const SizedBox(width: AppSpacing.xs),
+            // Anton delta numeral carries the hierarchy; the up/down semantic
+            // color is the single accent element on this card.
             Flexible(
-              child: StatNumber(
-                value: deltaText,
-                size: 40,
-                color: deltaColor,
-                alignment: Alignment.centerLeft,
+              child: Text(
+                deltaText,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.disp(48, color: deltaColor),
               ),
             ),
+            const SizedBox(width: AppSpacing.xs),
+            Icon(arrow, size: 22, color: deltaColor),
           ],
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Center(
-          child: Text(
-            'Weekly Score',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: colors.textMuted,
-            ),
-          ),
+        const SizedBox(height: 6),
+        ZealovaRule(margin: const EdgeInsets.only(bottom: AppSpacing.sm)),
+        Text(
+          'WEEK OVER WEEK',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5),
         ),
       ],
     );
@@ -158,13 +157,13 @@ class _WeeklyScoreCardState extends ConsumerState<WeeklyScoreCard> {
   Widget _buildSkeleton() {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        SizedBox(height: 6),
-        SkeletonBox(width: 64, height: 36),
-        SizedBox(height: AppSpacing.md),
         SkeletonBox(width: 90, height: 11),
-        SizedBox(height: 4),
+        SizedBox(height: AppSpacing.sm),
+        SkeletonBox(width: 64, height: 44),
+        SizedBox(height: AppSpacing.md),
+        SkeletonBox(width: 100, height: 11),
       ],
     );
   }

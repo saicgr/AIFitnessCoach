@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/stat_typography.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../../data/providers/consistency_provider.dart';
-import '../../../../widgets/glass_card.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 /// Overview-tab "Activity Streak" card (Gravl Image #5, bottom-left tile).
 ///
@@ -46,8 +46,9 @@ class ActivityStreakCard extends ConsumerWidget {
     final isInitialLoad = ref.watch(consistencyProvider
         .select((s) => s.isLoading && s.insights == null));
 
-    return GlassCard(
-      borderRadius: AppRadius.lg,
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () {
         HapticService.instance.tap();
@@ -68,16 +69,16 @@ class ActivityStreakCard extends ConsumerWidget {
     int completed,
     int scheduled,
   ) {
-    // "1 day streak" vs "N day streak" — "day streak" reads correct for both.
-    const unitLabel = 'day streak';
-
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const ZealovaSectionKicker('Day Streak'),
+        const SizedBox(height: AppSpacing.sm),
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // The flame is the single accent element; the numeral stays primary.
             Icon(
               Icons.local_fire_department_rounded,
               size: 26,
@@ -85,38 +86,26 @@ class ActivityStreakCard extends ConsumerWidget {
             ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
-              child: AnimatedStatNumber(
-                value: streak.toDouble(),
-                format: (v) => v.round().toString(),
-                size: 34,
-                color: colors.textPrimary,
-                alignment: Alignment.centerLeft,
+              child: Text(
+                '$streak',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.disp(44, color: colors.textPrimary),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 2),
-        Text(
-          unitLabel,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w500,
-            color: colors.textMuted,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: 6),
+        ZealovaRule(margin: const EdgeInsets.only(bottom: AppSpacing.sm)),
         Text(
           // Scheduled may be 0 early in a month → just show completed count.
-          scheduled > 0 ? '$completed/$scheduled days' : '$completed days',
+          (scheduled > 0
+                  ? '$completed/$scheduled days this month'
+                  : '$completed days this month')
+              .toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.w600,
-            color: colors.textSecondary,
-          ),
+          style: ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.3),
         ),
       ],
     );
@@ -127,11 +116,11 @@ class ActivityStreakCard extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        SkeletonBox(width: 100, height: 30),
-        SizedBox(height: 8),
-        SkeletonBox(width: 70, height: 11),
+        SkeletonBox(width: 80, height: 11),
         SizedBox(height: AppSpacing.sm),
-        SkeletonBox(width: 60, height: 12),
+        SkeletonBox(width: 100, height: 40),
+        SizedBox(height: AppSpacing.md),
+        SkeletonBox(width: 110, height: 11),
       ],
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/recipe_suggestion.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -21,210 +23,204 @@ class RecipeSuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final accent = tc.accent;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: InkWell(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
+        padding: const EdgeInsets.all(16),
         onTap: () => _showRecipeDetails(context),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header with match score
-              Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          recipe.recipeName,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            _buildChip(recipe.cuisine.toUpperCase(), textSecondary),
-                            const SizedBox(width: 8),
-                            _buildChip(recipe.category.toUpperCase(), textSecondary),
-                          ],
-                        ),
-                      ],
-                    ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with match score
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        recipe.recipeName,
+                        style: ZType.disp(20, color: textPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _buildChip(recipe.cuisine.toUpperCase(), textMuted),
+                          _buildChip(recipe.category.toUpperCase(), textMuted),
+                        ],
+                      ),
+                    ],
                   ),
-                  // Match score badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _getScoreColor(recipe.overallMatchScore).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(20),
+                ),
+                const SizedBox(width: 10),
+                // Match score badge
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: _getScoreColor(recipe.overallMatchScore).withValues(alpha: 0.5),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.stars,
-                          size: 16,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.stars,
+                        size: 14,
+                        color: _getScoreColor(recipe.overallMatchScore),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${recipe.overallMatchScore}%',
+                        style: ZType.data(
+                          13,
                           color: _getScoreColor(recipe.overallMatchScore),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${recipe.overallMatchScore}%',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: _getScoreColor(recipe.overallMatchScore),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Description
-              Text(
-                recipe.recipeDescription,
-                style: TextStyle(color: textSecondary, fontSize: 14),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
-              // Why this recipe
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.lightbulb_outline, size: 18, color: accent),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        recipe.suggestionReason,
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Description
+            Text(
+              recipe.recipeDescription,
+              style: TextStyle(color: textSecondary, fontSize: 14, height: 1.4),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
+            // Why this recipe
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: tc.surface,
+                border: const Border(
+                  left: BorderSide(color: AppColors.cardBorder, width: 3),
                 ),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(height: 12),
-              // Nutrition info
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Row(
                 children: [
-                  _buildNutrientInfo(
-                    'Calories',
-                    '${recipe.caloriesPerServing}',
-                    textPrimary,
-                    textSecondary,
-                  ),
-                  _buildNutrientInfo(
-                    'Protein',
-                    '${recipe.proteinPerServingG.round()}g',
-                    textPrimary,
-                    textSecondary,
-                  ),
-                  _buildNutrientInfo(
-                    'Carbs',
-                    '${recipe.carbsPerServingG.round()}g',
-                    textPrimary,
-                    textSecondary,
-                  ),
-                  _buildNutrientInfo(
-                    'Fat',
-                    '${recipe.fatPerServingG.round()}g',
-                    textPrimary,
-                    textSecondary,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Time and servings
-              Row(
-                children: [
-                  Icon(Icons.access_time, size: 16, color: textSecondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    recipe.formattedTotalTime,
-                    style: TextStyle(color: textSecondary, fontSize: 13),
-                  ),
-                  const SizedBox(width: 16),
-                  Icon(Icons.people_outline, size: 16, color: textSecondary),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${recipe.servings} servings',
-                    style: TextStyle(color: textSecondary, fontSize: 13),
-                  ),
-                  const Spacer(),
-                  // Rating
-                  if (recipe.userRating != null)
-                    Row(
-                      children: List.generate(5, (index) {
-                        return Icon(
-                          index < recipe.userRating! ? Icons.star : Icons.star_border,
-                          size: 16,
-                          color: Colors.amber,
-                        );
-                      }),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onSave,
-                      icon: Icon(
-                        recipe.userSaved ? Icons.bookmark : Icons.bookmark_border,
-                      ),
-                      label: Text(recipe.userSaved ? AppLocalizations.of(context).savedHubSaved : AppLocalizations.of(context).buttonSave),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: recipe.userSaved ? accent : textSecondary,
-                        side: BorderSide(
-                          color: recipe.userSaved ? accent : textSecondary.withValues(alpha: 0.3),
-                        ),
-                      ),
-                    ),
-                  ),
+                  Icon(Icons.lightbulb_outline, size: 18, color: accent),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: onCook,
-                      icon: const Icon(Icons.restaurant),
-                      label: Text(
-                        recipe.timesCooked > 0 ? AppLocalizations.of(context).recipeSuggestionCardCookAgain : AppLocalizations.of(context).recipeSuggestionCardIMadeThis,
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accent,
-                        foregroundColor: Colors.white,
+                    child: Text(
+                      recipe.suggestionReason,
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontSize: 13,
+                        height: 1.4,
                       ),
                     ),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            // Nutrition info
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildNutrientInfo(
+                  'Calories',
+                  '${recipe.caloriesPerServing}',
+                  textPrimary,
+                  textMuted,
+                ),
+                _buildNutrientInfo(
+                  'Protein',
+                  '${recipe.proteinPerServingG.round()}g',
+                  AppColors.macroProtein,
+                  textMuted,
+                ),
+                _buildNutrientInfo(
+                  'Carbs',
+                  '${recipe.carbsPerServingG.round()}g',
+                  AppColors.macroCarbs,
+                  textMuted,
+                ),
+                _buildNutrientInfo(
+                  'Fat',
+                  '${recipe.fatPerServingG.round()}g',
+                  AppColors.macroFat,
+                  textMuted,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const ZealovaRule(),
+            const SizedBox(height: 12),
+            // Time and servings
+            Row(
+              children: [
+                Icon(Icons.access_time, size: 15, color: textMuted),
+                const SizedBox(width: 4),
+                Text(
+                  recipe.formattedTotalTime.toUpperCase(),
+                  style: ZType.lbl(11, color: textMuted, letterSpacing: 1.0),
+                ),
+                const SizedBox(width: 16),
+                Icon(Icons.people_outline, size: 15, color: textMuted),
+                const SizedBox(width: 4),
+                Text(
+                  '${recipe.servings} SERVINGS',
+                  style: ZType.lbl(11, color: textMuted, letterSpacing: 1.0),
+                ),
+                const Spacer(),
+                // Rating
+                if (recipe.userRating != null)
+                  Row(
+                    children: List.generate(5, (index) {
+                      return Icon(
+                        index < recipe.userRating! ? Icons.star : Icons.star_border,
+                        size: 16,
+                        color: Colors.amber,
+                      );
+                    }),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: ZealovaButton(
+                    label: recipe.userSaved
+                        ? AppLocalizations.of(context).savedHubSaved
+                        : AppLocalizations.of(context).buttonSave,
+                    onTap: onSave,
+                    variant: ZealovaButtonVariant.ghost,
+                    trailingIcon: recipe.userSaved ? Icons.bookmark : Icons.bookmark_border,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ZealovaButton(
+                    label: recipe.timesCooked > 0
+                        ? AppLocalizations.of(context).recipeSuggestionCardCookAgain
+                        : AppLocalizations.of(context).recipeSuggestionCardIMadeThis,
+                    onTap: onCook,
+                    variant: ZealovaButtonVariant.primary,
+                    trailingIcon: Icons.restaurant,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -232,18 +228,14 @@ class RecipeSuggestionCard extends StatelessWidget {
 
   Widget _buildChip(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.cardBorder),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        style: ZType.lbl(9, color: color, letterSpacing: 1.3),
       ),
     );
   }
@@ -251,25 +243,20 @@ class RecipeSuggestionCard extends StatelessWidget {
   Widget _buildNutrientInfo(
     String label,
     String value,
-    Color textPrimary,
-    Color textSecondary,
+    Color valueColor,
+    Color labelColor,
   ) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
-          ),
+          style: ZType.disp(18, color: valueColor),
         ),
+        const SizedBox(height: 2),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: textSecondary,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: labelColor, letterSpacing: 1.3),
         ),
       ],
     );
@@ -283,12 +270,11 @@ class RecipeSuggestionCard extends StatelessWidget {
   }
 
   void _showRecipeDetails(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.background : AppColorsLight.background;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final surface = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final accent = tc.accent;
 
     showGlassSheet(
       context: context,
@@ -312,16 +298,12 @@ class RecipeSuggestionCard extends StatelessWidget {
                   // Header
                   Text(
                     recipe.recipeName,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
+                    style: ZType.disp(26, color: textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     recipe.recipeDescription,
-                    style: TextStyle(color: textSecondary),
+                    style: TextStyle(color: textSecondary, height: 1.4),
                   ),
                   const SizedBox(height: 16),
                   // Match scores
@@ -329,17 +311,14 @@ class RecipeSuggestionCard extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: surface,
+                      border: Border.all(color: AppColors.cardBorder),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        ZealovaSectionKicker(
                           AppLocalizations.of(context).recipeSuggestionCardMatchAnalysis,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
                         ),
                         const SizedBox(height: 12),
                         _buildScoreRow('Goal Alignment', recipe.goalAlignmentScore, textPrimary),
@@ -352,13 +331,9 @@ class RecipeSuggestionCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   // Ingredients
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).recipeSuggestionCardIngredients,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
+                    fontSize: 13,
                   ),
                   const SizedBox(height: 12),
                   ...recipe.ingredients.map((ing) => Padding(
@@ -390,13 +365,9 @@ class RecipeSuggestionCard extends StatelessWidget {
                   )),
                   const SizedBox(height: 20),
                   // Instructions
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).workoutShowcaseInstructions,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
+                    fontSize: 13,
                   ),
                   const SizedBox(height: 12),
                   ...recipe.instructions.asMap().entries.map((entry) => Padding(
@@ -433,13 +404,9 @@ class RecipeSuggestionCard extends StatelessWidget {
                   )),
                   const SizedBox(height: 20),
                   // Rate this recipe
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).recipeSuggestionCardRateThisRecipe,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
+                    fontSize: 13,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -466,34 +433,29 @@ class RecipeSuggestionCard extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {
+                        child: ZealovaButton(
+                          label: recipe.userSaved
+                              ? AppLocalizations.of(context).savedHubSaved
+                              : AppLocalizations.of(context).recipeSuggestionCardSaveRecipe,
+                          onTap: () {
                             onSave();
                             Navigator.pop(context);
                           },
-                          icon: Icon(
-                            recipe.userSaved ? Icons.bookmark : Icons.bookmark_border,
-                          ),
-                          label: Text(recipe.userSaved ? AppLocalizations.of(context).savedHubSaved : AppLocalizations.of(context).recipeSuggestionCardSaveRecipe),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                          variant: ZealovaButtonVariant.ghost,
+                          trailingIcon:
+                              recipe.userSaved ? Icons.bookmark : Icons.bookmark_border,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () {
+                        child: ZealovaButton(
+                          label: AppLocalizations.of(context).recipeSuggestionCardIMadeThis,
+                          onTap: () {
                             onCook();
                             Navigator.pop(context);
                           },
-                          icon: const Icon(Icons.restaurant),
-                          label: Text(AppLocalizations.of(context).recipeSuggestionCardIMadeThis),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                          ),
+                          variant: ZealovaButtonVariant.primary,
+                          trailingIcon: Icons.restaurant,
                         ),
                       ),
                     ],

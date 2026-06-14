@@ -13,7 +13,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/recipe_repository.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'recipe_create_screen.dart';
@@ -161,28 +161,16 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
     final isDark = widget.isDark;
     final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final topPad = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       backgroundColor: bg,
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).recipeImportImportRecipe,
+        titleSize: 26,
+        onBack: () => Navigator.of(context).pop(),
+      ),
       body: Column(
         children: [
-          SizedBox(height: topPad + 8),
-          // Header row: back button + title
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 0, 16, 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GlassBackButton(onTap: () => Navigator.of(context).pop()),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(AppLocalizations.of(context).recipeImportImportRecipe,
-                    style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 4),
           SegmentedTabBar(
             controller: _tab,
@@ -218,50 +206,70 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
     );
   }
 
-  Widget _urlTab(Color accent, Color text, bool isDark) => Padding(
-    padding: const EdgeInsets.all(20),
-    child: Column(children: [
-      TextField(
-        controller: _urlCtrl, style: TextStyle(color: text),
-        decoration: InputDecoration(
-          hintText: 'https://blog.example.com/recipes/...',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+  InputDecoration _hairlineDecoration(String hint, Color accent, Color muted) =>
+      InputDecoration(
+        hintText: hint,
+        hintStyle: TextStyle(color: muted, fontSize: 14),
+        filled: true,
+        fillColor: AppColors.surface,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.cardBorder),
         ),
-      ),
-      const SizedBox(height: 16),
-      ElevatedButton.icon(
-        onPressed: _running ? null : () => _runImport('url', url: _urlCtrl.text.trim()),
-        icon: const Icon(Icons.download_rounded), label: Text(AppLocalizations.of(context).recipeImportImportFromUrl),
-        style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
-      ),
-    ]),
-  );
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: accent),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: AppColors.cardBorder),
+        ),
+      );
 
-  Widget _textTab(Color accent, Color text, bool isDark) => Padding(
-    padding: const EdgeInsets.all(20),
-    child: Column(children: [
-      Expanded(
-        child: TextField(
-          controller: _textCtrl, style: TextStyle(color: text),
-          maxLines: null, expands: true, textAlignVertical: TextAlignVertical.top,
-          decoration: InputDecoration(
-            hintText: AppLocalizations.of(context).recipeImportPasteARecipeTitle,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+  Widget _urlTab(Color accent, Color text, bool isDark) {
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(children: [
+        TextField(
+          controller: _urlCtrl, style: TextStyle(color: text),
+          decoration: _hairlineDecoration('https://blog.example.com/recipes/...', accent, muted),
+        ),
+        const SizedBox(height: 16),
+        ZealovaButton(
+          label: AppLocalizations.of(context).recipeImportImportFromUrl,
+          trailingIcon: Icons.download_rounded,
+          onTap: _running ? null : () => _runImport('url', url: _urlCtrl.text.trim()),
+        ),
+      ]),
+    );
+  }
+
+  Widget _textTab(Color accent, Color text, bool isDark) {
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(children: [
+        Expanded(
+          child: TextField(
+            controller: _textCtrl, style: TextStyle(color: text),
+            maxLines: null, expands: true, textAlignVertical: TextAlignVertical.top,
+            decoration: _hairlineDecoration(
+                AppLocalizations.of(context).recipeImportPasteARecipeTitle, accent, muted),
           ),
         ),
-      ),
-      const SizedBox(height: 12),
-      ElevatedButton.icon(
-        onPressed: _running ? null : () => _runImport('text', text: _textCtrl.text.trim()),
-        icon: const Icon(Icons.text_snippet_outlined), label: Text(AppLocalizations.of(context).recipeImportParseText),
-        style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
-      ),
-    ]),
-  );
+        const SizedBox(height: 12),
+        ZealovaButton(
+          label: AppLocalizations.of(context).recipeImportParseText,
+          trailingIcon: Icons.text_snippet_outlined,
+          onTap: _running ? null : () => _runImport('text', text: _textCtrl.text.trim()),
+        ),
+      ]),
+    );
+  }
 
   Widget _photoTab(Color accent, Color text, bool isDark) {
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       child: Column(
@@ -272,9 +280,9 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.08),
+              color: AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: accent.withValues(alpha: 0.25)),
+              border: Border.all(color: AppColors.cardBorder, width: 1),
             ),
             child: Row(
               children: [
@@ -335,24 +343,11 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
 
           // Alt action: gallery picker. The camera panel already has a gallery
           // icon but it's small and easily missed, so offer a bigger affordance.
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: _running ? null : _pickFromGallery,
-              icon: Icon(Icons.photo_library_outlined, color: accent),
-              label: Text(
-                AppLocalizations.of(context).recipeImportChooseFromGalleryInstead,
-                style: TextStyle(color: accent, fontWeight: FontWeight.w600),
-              ),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: accent.withValues(alpha: 0.5)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                backgroundColor: surface,
-              ),
-            ),
+          ZealovaButton(
+            label: AppLocalizations.of(context).recipeImportChooseFromGalleryInstead,
+            variant: ZealovaButtonVariant.ghost,
+            trailingIcon: Icons.photo_library_outlined,
+            onTap: _running ? null : _pickFromGallery,
           ),
           const SizedBox(height: 6),
           Text(
@@ -443,9 +438,10 @@ class _ProgressFooter extends StatelessWidget {
     final last = events.last;
     final hasError = last.step == 'error';
     return Container(
-      decoration: BoxDecoration(color: surface, boxShadow: [
-        BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10, offset: const Offset(0, -2)),
-      ]),
+      decoration: BoxDecoration(
+        color: surface,
+        border: Border(top: BorderSide(color: AppColors.cardBorder, width: 1)),
+      ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: SafeArea(
         top: false,
@@ -455,11 +451,8 @@ class _ProgressFooter extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hasError ? AppLocalizations.of(context).recipeImportFailed : last.step.toUpperCase(),
-                  style: TextStyle(
-                    color: hasError ? AppColors.error : accent,
-                    fontWeight: FontWeight.w800, fontSize: 11, letterSpacing: 0.5,
-                  ),
+                  hasError ? AppLocalizations.of(context).recipeImportFailed.toUpperCase() : last.step.toUpperCase(),
+                  style: ZType.lbl(11, color: hasError ? AppColors.error : accent, letterSpacing: 1.5),
                 ),
                 Text(last.message, style: TextStyle(color: text, fontSize: 13)),
                 if (last.confidence != null)
@@ -468,10 +461,10 @@ class _ProgressFooter extends StatelessWidget {
             ),
           ),
           if (onSave != null)
-            ElevatedButton(
-              onPressed: onSave,
-              style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
-              child: Text(AppLocalizations.of(context).recipeImportReviewSave),
+            ZealovaButton(
+              label: AppLocalizations.of(context).recipeImportReviewSave,
+              expand: false,
+              onTap: onSave,
             ),
         ]),
       ),

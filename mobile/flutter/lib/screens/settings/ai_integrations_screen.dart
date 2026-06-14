@@ -5,10 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/theme/accent_color_provider.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/mcp_integration.dart';
 import '../../data/providers/mcp_integrations_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -31,16 +34,16 @@ class AiIntegrationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(mcpIntegrationsProvider);
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final accent = AccentColorScope.of(context).getColor(isDark);
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
+    final accent = tc.accent;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).aiIntegrationsAiIntegrations),
-        centerTitle: false,
-        elevation: 0,
+      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+      appBar: ZealovaAppBar(
+        kicker: 'CONNECT',
+        title: AppLocalizations.of(context).aiIntegrationsAiIntegrations,
+        titleSize: 26,
       ),
       floatingActionButton: state.hasLoadedOnce && !state.isEmpty
           ? FloatingActionButton.extended(
@@ -48,7 +51,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
               icon: const Icon(Icons.add_link),
               label: Text(AppLocalizations.of(context).aiIntegrationsCreateConnection),
               backgroundColor: accent,
-              foregroundColor: Colors.white,
+              foregroundColor: tc.accentContrast,
             )
           : null,
       body: RefreshIndicator(
@@ -77,7 +80,6 @@ class AiIntegrationsScreen extends ConsumerWidget {
     if (state.error != null && !state.hasLoadedOnce) {
       return _ErrorView(
         message: state.error!,
-        accent: accent,
         onRetry: () => ref.read(mcpIntegrationsProvider.notifier).load(),
       );
     }
@@ -86,7 +88,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        _HeaderCard(accent: accent, isDark: isDark, onOpenDocs: _openDocs),
+        _HeaderCard(accent: accent, onOpenDocs: _openDocs),
         const SizedBox(height: 24),
 
         if (state.error != null && state.hasLoadedOnce) ...[
@@ -98,9 +100,9 @@ class AiIntegrationsScreen extends ConsumerWidget {
           const SizedBox(height: 16),
         ],
 
-        _SectionLabel(
+        const ZealovaSectionKicker(
           'CONNECTED ASSISTANTS',
-          color: Theme.of(context).hintColor,
+          padding: EdgeInsets.only(left: 4),
         ),
         const SizedBox(height: 8),
 
@@ -416,71 +418,40 @@ class _CreateConnectionSheetState extends State<_CreateConnectionSheet> {
                 children: [
                   if (!_showCustom) ...[
                     Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => setState(() => _showCustom = true),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(
-                            color: accent.withValues(alpha: 0.4),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context).workoutsCustom,
-                          style: TextStyle(
-                            color: accent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+                      child: ZealovaButton(
+                        label: AppLocalizations.of(context).workoutsCustom,
+                        onTap: () => setState(() => _showCustom = true),
+                        variant: ZealovaButtonVariant.ghost,
+                        height: 48,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: FilledButton(
-                        onPressed: () => _submit(quickSetup: true),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: accent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context).aiIntegrationsQuickSetup,
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                      child: ZealovaButton(
+                        label: AppLocalizations.of(context).aiIntegrationsQuickSetup,
+                        onTap: () => _submit(quickSetup: true),
+                        height: 48,
                       ),
                     ),
                   ] else ...[
                     Expanded(
-                      child: TextButton(
-                        onPressed: () => setState(() => _showCustom = false),
-                        child: Text(AppLocalizations.of(context).commonBack),
+                      child: ZealovaButton(
+                        label: AppLocalizations.of(context).commonBack,
+                        onTap: () => setState(() => _showCustom = false),
+                        variant: ZealovaButtonVariant.ghost,
+                        height: 48,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
-                      child: FilledButton(
-                        onPressed: _selected.isEmpty
+                      child: ZealovaButton(
+                        label: AppLocalizations.of(context).aiIntegrationsGenerate,
+                        onTap: _selected.isEmpty
                             ? null
                             : () => _submit(quickSetup: false),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: accent,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context).aiIntegrationsGenerate,
-                          style: TextStyle(fontWeight: FontWeight.w700),
-                        ),
+                        height: 48,
                       ),
                     ),
                   ],
@@ -821,65 +792,26 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
 }
 
 // ============================================
-// SECTION LABEL
-// ============================================
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _SectionLabel(this.text, {required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-          color: color,
-          letterSpacing: 0.5,
-        ),
-      ),
-    );
-  }
-}
-
-// ============================================
 // HEADER CARD
 // ============================================
 
 class _HeaderCard extends StatelessWidget {
   final Color accent;
-  final bool isDark;
   final VoidCallback onOpenDocs;
   const _HeaderCard({
     required this.accent,
-    required this.isDark,
     required this.onOpenDocs,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textPrimary = theme.colorScheme.onSurface;
-    final textMuted = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            accent.withValues(alpha: 0.15),
-            accent.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.3), width: 1),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -888,8 +820,9 @@ class _HeaderCard extends StatelessWidget {
               Container(
                 width: 40,
                 height: 40,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.2),
+                  border: Border.all(color: AppColors.cardBorder),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(Icons.hub_outlined, color: accent, size: 22),
@@ -898,11 +831,7 @@ class _HeaderCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Connect ${Branding.appName} anywhere',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
+                  style: ZType.lbl(15, color: textPrimary, letterSpacing: 0.8),
                 ),
               ),
             ],
@@ -965,24 +894,13 @@ class _IntegrationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textPrimary = theme.colorScheme.onSurface;
-    final textMuted = theme.colorScheme.onSurface.withValues(alpha: 0.65);
-    final cardColor = isDark
-        ? theme.colorScheme.surfaceContainerHighest
-        : theme.colorScheme.surface;
-    final borderColor = theme.dividerColor.withValues(alpha: 0.5);
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return ZealovaCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
@@ -992,17 +910,13 @@ class _IntegrationCard extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.18),
+                    border: Border.all(color: AppColors.cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     _initialFor(integration.name),
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: accent,
-                    ),
+                    style: ZType.disp(18, color: accent),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1110,7 +1024,6 @@ class _IntegrationCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -1167,22 +1080,23 @@ class _ScopeChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final label = _labels[scope] ?? scope;
-    final color = _isWriteScope ? accent : accent.withValues(alpha: 0.85);
+    // Write/export/chat scopes spend the accent; read scopes stay muted.
+    final color = _isWriteScope ? accent : tc.textMuted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: _isWriteScope
+              ? accent.withValues(alpha: 0.5)
+              : AppColors.cardBorder,
+        ),
       ),
       child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        label.toUpperCase(),
+        style: ZType.lbl(10, color: color, letterSpacing: 1.2),
       ),
     );
   }
@@ -1204,25 +1118,18 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textMuted = theme.colorScheme.onSurface.withValues(alpha: 0.7);
-    return Container(
+    final tc = ThemeColors.of(context);
+    final textMuted = tc.textMuted;
+    return ZealovaCard(
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.5),
-        ),
-      ),
       child: Column(
         children: [
           Container(
             width: 56,
             height: 56,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
+              border: Border.all(color: AppColors.cardBorder),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(Icons.power_outlined, color: accent, size: 28),
@@ -1231,11 +1138,7 @@ class _EmptyState extends StatelessWidget {
           Text(
             AppLocalizations.of(context).aiIntegrationsNoConnectionsYet,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface,
-            ),
+            style: ZType.lbl(15, color: tc.textPrimary, letterSpacing: 0.8),
           ),
           const SizedBox(height: 6),
           Text(
@@ -1243,23 +1146,13 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: onCreate,
-            icon: const Icon(Icons.add_link, size: 18),
-            label: Text(
-              AppLocalizations.of(context).aiIntegrationsCreateConnection,
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+          const SizedBox(height: 18),
+          ZealovaButton(
+            label: AppLocalizations.of(context).aiIntegrationsCreateConnection,
+            onTap: onCreate,
+            trailingIcon: Icons.add_link,
+            expand: false,
+            height: 48,
           ),
           const SizedBox(height: 8),
           TextButton.icon(
@@ -1282,17 +1175,15 @@ class _EmptyState extends StatelessWidget {
 
 class _ErrorView extends StatelessWidget {
   final String message;
-  final Color accent;
   final VoidCallback onRetry;
   const _ErrorView({
     required this.message,
-    required this.accent,
     required this.onRetry,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
     return ListView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
@@ -1301,17 +1192,13 @@ class _ErrorView extends StatelessWidget {
         Icon(
           Icons.cloud_off_outlined,
           size: 56,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          color: tc.textMuted,
         ),
         const SizedBox(height: 16),
         Text(
           AppLocalizations.of(context).aiIntegrationsCouldNotLoadIntegrations,
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: theme.colorScheme.onSurface,
-          ),
+          style: ZType.lbl(15, color: tc.textPrimary, letterSpacing: 0.8),
         ),
         const SizedBox(height: 8),
         Text(
@@ -1319,19 +1206,17 @@ class _ErrorView extends StatelessWidget {
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 14,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            color: tc.textSecondary,
           ),
         ),
         const SizedBox(height: 20),
         Center(
-          child: FilledButton.icon(
-            onPressed: onRetry,
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text(AppLocalizations.of(context).workoutReviewTryAgain),
-            style: FilledButton.styleFrom(
-              backgroundColor: accent,
-              foregroundColor: Colors.white,
-            ),
+          child: ZealovaButton(
+            label: AppLocalizations.of(context).workoutReviewTryAgain,
+            onTap: onRetry,
+            trailingIcon: Icons.refresh,
+            expand: false,
+            height: 48,
           ),
         ),
       ],

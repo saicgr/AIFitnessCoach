@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import 'score_explain_sheet.dart';
 
 /// Color grade for an inflammation score on the canonical 0-10 scale.
@@ -67,23 +68,20 @@ class InflammationChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: color.withValues(alpha: 0.35)),
+            // Signature: hairline-outlined chip, severity carried by the
+            // label color (red→green band) not a heavy fill.
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color.withValues(alpha: 0.45)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 // Label-led so a high score never reads as a reward. Compact
-                // ("Infl 7") for tight rows; full ("Inflammation 7/10") on the
+                // ("INFL 7") for tight rows; full ("INFLAMMATION 7/10") on the
                 // roomier daily stats card.
-                compact ? 'Infl $score' : 'Inflammation $score/10',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: color,
-                ),
+                (compact ? 'Infl $score' : 'Inflammation $score/10').toUpperCase(),
+                style: ZType.lbl(9.5, color: color, letterSpacing: 1.2),
               ),
             ],
           ),

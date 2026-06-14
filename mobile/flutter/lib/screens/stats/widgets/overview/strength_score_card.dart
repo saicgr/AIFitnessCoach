@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../../data/models/scores.dart';
 import '../../../../data/providers/scores_provider.dart';
-import '../../../../widgets/glass_card.dart';
-import '../../../../widgets/hexagon_badge.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 /// Overview-tab "Strength Score" card (Gravl Image #5, top-left tile).
 ///
@@ -64,8 +64,9 @@ class StrengthScoreCard extends ConsumerWidget {
 
     final hasData = overview != null;
 
-    return GlassCard(
-      borderRadius: AppRadius.lg,
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () {
         HapticService.instance.tap();
@@ -93,40 +94,22 @@ class StrengthScoreCard extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Center(
-          child: HexagonBadge(
-            value: badgeValue,
-            color: accent,
-            size: 56,
-            glow: true,
-          ),
-        ),
+        const ZealovaSectionKicker('Strength Score'),
         const SizedBox(height: AppSpacing.sm),
-        Center(
-          child: Text(
-            _levelLabel(level),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: colors.textPrimary,
-              letterSpacing: -0.2,
-            ),
-          ),
+        // Big Anton numeral carries the score (accent = the one accent element).
+        Text(
+          badgeValue,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ZType.disp(48, color: accent),
         ),
-        const SizedBox(height: 2),
-        Center(
-          child: Text(
-            'Strength Score',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: colors.textMuted,
-            ),
-          ),
+        const SizedBox(height: 6),
+        ZealovaRule(margin: const EdgeInsets.only(bottom: AppSpacing.sm)),
+        Text(
+          _levelLabel(level).toUpperCase(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ZType.lbl(12, color: colors.textSecondary, letterSpacing: 1.5),
         ),
       ],
     );
@@ -135,13 +118,13 @@ class StrengthScoreCard extends ConsumerWidget {
   Widget _buildSkeleton(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        SkeletonCircle(size: 56),
-        SizedBox(height: AppSpacing.sm),
-        SkeletonBox(width: 70, height: 14),
-        SizedBox(height: 6),
         SkeletonBox(width: 90, height: 11),
+        SizedBox(height: AppSpacing.sm),
+        SkeletonBox(width: 70, height: 44),
+        SizedBox(height: AppSpacing.md),
+        SkeletonBox(width: 100, height: 12),
       ],
     );
   }

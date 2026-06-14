@@ -3,13 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/stat_typography.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/skeleton/skeleton_box.dart';
 import '../../../../data/models/consistency.dart';
 import '../../../../data/providers/consistency_provider.dart';
-import '../../../../widgets/glass_card.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 /// Overview-tab "Month Highlight" card (Gravl Image #5, bottom-right tile).
 ///
@@ -64,12 +64,10 @@ class MonthHighlightCard extends ConsumerWidget {
 
     final hasData = count != null;
 
-    return GlassCard(
-      borderRadius: AppRadius.lg,
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
+      radius: AppRadius.lg,
       padding: EdgeInsets.zero,
-      // Accent-tinted "highlight" treatment vs the plain glass siblings.
-      glowColor: accent,
-      backgroundOpacity: 0.0,
       onTap: () {
         HapticService.instance.tap();
         context.push('/stats');
@@ -95,77 +93,50 @@ class MonthHighlightCard extends ConsumerWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              accent.withValues(alpha: 0.28),
-              accent.withValues(alpha: 0.10),
-            ],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Big faded month-number watermark (Gravl-style).
-            Positioned(
-              right: -8,
-              bottom: -18,
-              child: IgnorePointer(
-                child: Text(
-                  monthNumber,
-                  style: TextStyle(
-                    fontSize: 92,
-                    height: 1.0,
-                    fontWeight: FontWeight.w800,
-                    color: accent.withValues(alpha: 0.12),
-                    letterSpacing: -4,
-                  ),
+      child: Stack(
+        children: [
+          // Big faded month-number watermark — Anton numeral, desaturated.
+          Positioned(
+            right: -8,
+            bottom: -22,
+            child: IgnorePointer(
+              child: Text(
+                monthNumber,
+                style: ZType.disp(
+                  104,
+                  color: colors.textMuted.withValues(alpha: 0.10),
+                  letterSpacing: -2,
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    monthName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  AnimatedStatNumber(
-                    value: count.toDouble(),
-                    format: (v) => v.round().toString(),
-                    size: 40,
-                    color: accent,
-                    alignment: Alignment.centerLeft,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    count == 1 ? 'workout' : 'workouts',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: colors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ZealovaSectionKicker(monthName, accent: true),
+                const SizedBox(height: AppSpacing.sm),
+                // Anton hero numeral — the one accent element on this card.
+                Text(
+                  '$count',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.disp(48, color: accent),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  (count == 1 ? 'workout' : 'workouts').toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      ZType.lbl(11, color: colors.textMuted, letterSpacing: 1.5),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -175,10 +146,10 @@ class MonthHighlightCard extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: const [
-        SkeletonBox(width: 80, height: 12),
+        SkeletonBox(width: 80, height: 11),
         SizedBox(height: AppSpacing.sm),
-        SkeletonBox(width: 56, height: 36),
-        SizedBox(height: 6),
+        SkeletonBox(width: 56, height: 44),
+        SizedBox(height: AppSpacing.md),
         SkeletonBox(width: 64, height: 11),
       ],
     );

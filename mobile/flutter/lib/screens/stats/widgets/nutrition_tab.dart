@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
@@ -189,12 +192,10 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final tc = ThemeColors.of(context);
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: weeklyNutrition.when(
         loading: () => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,7 +209,7 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
           height: 60,
           child: Center(
             child: Text(AppLocalizations.of(context).nutritionCouldNotLoadCycle,
-                style: TextStyle(color: textMuted)),
+                style: ZType.lbl(12, color: tc.textMuted)),
           ),
         ),
         data: (data) {
@@ -234,17 +235,15 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.calendar_today,
-                      size: 16, color: Color(0xFF64B5F6)),
+                  Icon(Icons.calendar_today,
+                      size: 14, color: tc.textMuted),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context).nutritionCaloriesByCyclePhase,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary,
-                      ),
+                      AppLocalizations.of(context)
+                          .nutritionCaloriesByCyclePhase
+                          .toUpperCase(),
+                      style: ZType.lbl(13, color: tc.textPrimary),
                     ),
                   ),
                   if (phase != null)
@@ -252,26 +251,29 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: cyclePhaseOverlayColor(phase)
-                            .withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: cyclePhaseOverlayColor(phase)
+                              .withValues(alpha: 0.5),
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        phase.displayName,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
+                        phase.displayName.toUpperCase(),
+                        style: ZType.lbl(
+                          10,
                           color: cyclePhaseOverlayColor(phase),
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 'Shaded columns mark your cycle phase — read intake swings '
                 'against where you are in your cycle.',
-                style: TextStyle(fontSize: 12, color: textMuted),
+                style: TextStyle(
+                    fontSize: 12, color: tc.textMuted, height: 1.35),
               ),
               const SizedBox(height: 16),
               if (entries.length < 2)
@@ -279,7 +281,7 @@ class _CycleCalorieOverlayCard extends StatelessWidget {
                   height: 60,
                   child: Center(
                     child: Text(AppLocalizations.of(context).nutritionLogAFewDays,
-                        style: TextStyle(color: textMuted, fontSize: 13)),
+                        style: ZType.lbl(12, color: tc.textMuted)),
                   ),
                 )
               else
@@ -327,6 +329,7 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final rangeStart = entries.first.date;
     final rangeEnd = entries.last.date;
     final totalDays = rangeEnd.difference(rangeStart).inDays;
@@ -336,9 +339,8 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
         0, (m, e) => e.calories > m ? e.calories.toDouble() : m);
     final chartMax = maxCal > 0 ? (maxCal * 1.2).ceilToDouble() : 2000.0;
 
-    final barColor =
-        isDark ? const Color(0xFF4FC3F7) : const Color(0xFF1E88E5);
-    final labelColor = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final barColor = tc.accent;
+    final labelColor = tc.textMuted;
 
     // Bar chart x is the day-offset from rangeStart so it lines up 1:1 with
     // the overlay's date-keyed columns.
@@ -350,9 +352,9 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
             BarChartRodData(
               toY: e.calories > 0 ? e.calories.toDouble() : 0,
               color: e.calories > 0 ? barColor : Colors.transparent,
-              width: 16,
+              width: 14,
               borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(5)),
+                  const BorderRadius.vertical(top: Radius.circular(2)),
             ),
           ],
         ),
@@ -377,8 +379,7 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
             alignment: BarChartAlignment.spaceAround,
             barTouchData: BarTouchData(
               touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) =>
-                    isDark ? const Color(0xFF2A2A2A) : Colors.white,
+                getTooltipColor: (_) => tc.surface,
                 getTooltipItem: (group, gi, rod, ri) {
                   final dayOffset = group.x;
                   final entry = entries.firstWhere(
@@ -388,11 +389,7 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
                   );
                   return BarTooltipItem(
                     '${entry.calories} cal',
-                    TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    ZType.data(11, color: tc.textPrimary),
                   );
                 },
               ),
@@ -419,9 +416,8 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
                     return Padding(
                       padding: const EdgeInsets.only(top: 6),
                       child: Text(
-                        days[date.weekday - 1],
-                        style:
-                            TextStyle(fontSize: 10, color: labelColor),
+                        days[date.weekday - 1].toUpperCase(),
+                        style: ZType.lbl(9, color: labelColor),
                       ),
                     );
                   },
@@ -437,7 +433,7 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
                     }
                     return Text(
                       '${value.toInt()}',
-                      style: TextStyle(fontSize: 9, color: labelColor),
+                      style: ZType.data(9, color: labelColor),
                     );
                   },
                 ),
@@ -448,9 +444,7 @@ class _CyclePhaseCalorieChart extends StatelessWidget {
               drawVerticalLine: false,
               horizontalInterval: chartMax / 4,
               getDrawingHorizontalLine: (value) => FlLine(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
-                    : Colors.black.withValues(alpha: 0.05),
+                color: isDark ? AppColors.hairline : tc.cardBorder,
                 strokeWidth: 1,
               ),
             ),

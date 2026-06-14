@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/nutrition_preferences.dart';
@@ -143,22 +144,10 @@ class NutritionGoalsCard extends ConsumerWidget {
         color: elevated,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
-        boxShadow: [
-          BoxShadow(
-            color: teal.withValues(alpha: 0.10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.06),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Row(
         children: [
-          // Green accent bar
+          // Accent left edge — reserved accent marks this as the active card.
           Container(width: 3, color: green),
           // Card content
           Expanded(
@@ -171,14 +160,10 @@ class NutritionGoalsCard extends ConsumerWidget {
           Row(
             children: [
               Icon(Icons.track_changes, color: teal, size: 16),
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
               Text(
-                AppLocalizations.of(context).nutritionGoalsCardDailyGoals,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
+                AppLocalizations.of(context).nutritionGoalsCardDailyGoals.toUpperCase(),
+                style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5),
               ),
               if (isTrainingDay) ...[
                 const SizedBox(width: 6),

@@ -13,282 +13,152 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
+    final surface = tc.surface;
+    final hairBorder = tc.cardBorder;
+    final textSecondary = tc.textSecondary;
     final currentLevel = userXp?.currentLevel ?? 1;
     // Ensure XP values are never negative (data corruption safeguard)
     final xpInCurrentLevel = (userXp?.xpInCurrentLevel ?? 0).clamp(0, 999999);
     final xpToNextLevel = (userXp?.xpToNextLevel ?? 50).clamp(1, 100000);
     final progressFraction = (userXp?.progressFraction ?? 0.0).clamp(0.0, 1.0);
     final xpTitle = userXp?.xpTitle ?? XPTitle.novice;
-    final titleColor = Color(xpTitle.colorValue);
 
-    final progressBgColor = isDark
-        ? textMuted.withValues(alpha: 0.2)
-        : Colors.grey.shade300;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Header row with title, total XP, and info button
-          Row(
-            children: [
-              Text(
-                AppLocalizations.of(context).xpGoalsScreenLevelProgress,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: textMuted,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Spacer(),
-              // Total XP badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: isDark ? 0.15 : 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.stars_rounded,
-                      size: 14,
-                      color: accentColor,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${userXp?.formattedTotalXp ?? "0"} XP',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Info button
-              GestureDetector(
-                onTap: () => _showXPInfoDialog(context, isDark),
-                child: Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.info_outline_rounded,
-                    size: 16,
-                    color: textMuted,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Level badges with circular progress
-          Row(
-            children: [
-              // Current level with circular progress
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SimpleCircularProgressBar(
-                    size: 64,
-                    progressStrokeWidth: 5,
-                    backStrokeWidth: 4,
-                    valueNotifier: ValueNotifier(progressFraction * 100),
-                    progressColors: [
-                      accentColor.withValues(alpha: 0.7),
-                      accentColor,
-                      accentColor.withValues(alpha: 0.9),
-                    ],
-                    backColor: progressBgColor,
-                    mergeMode: true,
-                    animationDuration: 1,
-                    startAngle: -90,
-                  ),
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          titleColor,
-                          titleColor.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: titleColor.withValues(alpha: 0.4),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        currentLevel.toString(),
-                        style: TextStyle(
-                          fontSize: currentLevel >= 100 ? 14 : 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(width: 16),
-
-              // XP Progress info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: titleColor.withValues(alpha: isDark ? 0.15 : 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: titleColor.withValues(alpha: isDark ? 0.3 : 0.4),
-                            ),
-                          ),
-                          child: Text(
-                            xpTitle.displayName,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: isDark ? titleColor : titleColor.withValues(alpha: 0.9),
-                            ),
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          '${(progressFraction * 100).round()}%',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: accentColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    // Progress bar
-                    Container(
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: progressBgColor,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(5),
-                        child: LinearProgressIndicator(
-                          value: progressFraction,
-                          minHeight: 10,
-                          backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation(accentColor),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$xpInCurrentLevel / $xpToNextLevel XP',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: isDark ? textColor : Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          'Lvl ${currentLevel + 1}',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: isDark ? textMuted : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          // View All Levels button
-          GestureDetector(
-            onTap: () => _showAllLevelsSheet(context, currentLevel, accentColor),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // LEVEL header — gold radial-ring badge + Anton level number,
+        // Barlow title, Space Mono XP total, plus the info affordance.
+        Row(
+          children: [
+            // Level Badge — gold rarity ring, no solid gradient fill
+            Container(
+              width: 54,
+              height: 54,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: isDark ? 0.15 : 0.12),
-                borderRadius: BorderRadius.circular(10),
+                shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  colors: [Color(0x38FBBF24), Colors.transparent],
+                  stops: [0.0, 0.7],
+                  center: Alignment(-0.3, -0.4),
+                ),
                 border: Border.all(
-                  color: accentColor.withValues(alpha: isDark ? 0.3 : 0.4),
+                  color: AppColors.gamGold.withValues(alpha: 0.55),
                   width: 1.5,
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Text(
+                '$currentLevel',
+                style: ZType.disp(currentLevel >= 100 ? 18 : 24,
+                    color: AppColors.gamGold),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(
-                    Icons.stairs,
-                    color: accentColor,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context).xpGoalsScreenViewAllLevelsRewards,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: accentColor,
-                    ),
+                    xpTitle.displayName.toUpperCase(),
+                    style: ZType.disp(19, color: textColor, height: 0.96),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.chevron_right,
-                    color: accentColor,
-                    size: 20,
+                  const SizedBox(height: 5),
+                  Text(
+                    '${userXp?.formattedTotalXp ?? "0"} XP TOTAL',
+                    style: ZType.data(11, color: textMuted),
                   ),
                 ],
               ),
             ),
+            // Info button
+            GestureDetector(
+              onTap: () => _showXPInfoDialog(context, isDark),
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: 20,
+                color: textMuted,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // LEVEL PROGRESS — pure hairline bar, no ring (the number leads)
+        Row(
+          children: [
+            Expanded(
+              child: ZealovaSectionKicker(
+                '${AppLocalizations.of(context).xpGoalsScreenLevelProgress} · ${xpTitle.displayName}',
+              ),
+            ),
+            Text(
+              '${(progressFraction * 100).round()}%',
+              style: ZType.data(11, color: AppColors.gamGold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: progressFraction,
+            minHeight: 6,
+            backgroundColor: AppColors.hairlineStrong,
+            valueColor: const AlwaysStoppedAnimation(AppColors.gamGold),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 7),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '$xpInCurrentLevel / $xpToNextLevel XP',
+              style: ZType.lbl(9.5, color: textMuted, letterSpacing: 1),
+            ),
+            Text(
+              'LVL ${currentLevel + 1}',
+              style: ZType.lbl(9.5, color: textMuted, letterSpacing: 1),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // View All Levels — hairline row affordance
+        GestureDetector(
+          onTap: () => _showAllLevelsSheet(context, currentLevel, accentColor),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: hairBorder),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.stairs,
+                  color: AppColors.gamGold,
+                  size: 17,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(context).xpGoalsScreenViewAllLevelsRewards.toUpperCase(),
+                  style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right,
+                  color: textMuted,
+                  size: 18,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -377,64 +247,71 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     final totalXPEarned = dailyGoals
         .where((g) => g.isComplete)
         .fold(0, (sum, g) => sum + g.xp);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Summary meta line — Anton hero counts + Barlow labels on a hairline
+        Container(
+          padding: const EdgeInsets.only(bottom: 12),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.hairline)),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Summary row
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: isDark ? 0.08 : 0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatColumn(
-                  '$completedCount/${dailyGoals.length}',
-                  'Goals',
-                  isDark ? textColor : Colors.black87,
-                  isDark ? textMuted : Colors.black54,
-                ),
-                Container(
-                  width: 1,
-                  height: 28,
-                  color: isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade400,
-                ),
-                _buildStatColumn(
-                  '+$totalXPEarned',
-                  'XP Today',
-                  isDark ? textColor : Colors.black87,
-                  isDark ? textMuted : Colors.black54,
-                ),
-              ],
-            ),
+          child: Row(
+            children: [
+              _buildXpStatColumn(
+                '$completedCount/${dailyGoals.length}',
+                'Goals',
+                textColor,
+                textMuted,
+              ),
+              const SizedBox(width: 28),
+              _buildXpStatColumn(
+                '+$totalXPEarned',
+                'XP Today',
+                textColor,
+                textMuted,
+                heroColor: AppColors.gamGold,
+              ),
+            ],
           ),
+        ),
 
-          // Goals list
-          ...dailyGoals.map((goal) => _buildGoalRow(
-                goal,
-                isDark ? textColor : Colors.black87,
-                isDark ? textMuted : Colors.black54,
-                multiplier,
-                accentColor,
-                isDark,
-              )),
-        ],
-      ),
+        // Goals list
+        ...dailyGoals.map((goal) => _buildGoalRow(
+              goal,
+              isDark ? textColor : Colors.black87,
+              isDark ? textMuted : Colors.black54,
+              multiplier,
+              accentColor,
+              isDark,
+            )),
+      ],
+    );
+  }
+
+  /// Anton hero numeral + Barlow uppercase label, used in the daily/bonus
+  /// summary meta lines.
+  Widget _buildXpStatColumn(
+    String value,
+    String label,
+    Color textColor,
+    Color textMuted, {
+    Color? heroColor,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: ZType.disp(24, color: heroColor ?? textColor, height: 0.9),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: textMuted, letterSpacing: 1.5),
+        ),
+      ],
     );
   }
 
@@ -449,24 +326,18 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final hairBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final extendedProgress = ref.watch(extendedWeeklyProgressProvider);
-
-    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
-    final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
 
     return extendedProgress.when(
       // Layout-matched skeleton instead of a blocking spinner: the weekly
       // progress card is a single fixed-height surface, so a same-sized
       // SkeletonBox keeps the swap reflow-free.
       loading: () => const SkeletonBox(height: 100, radius: 16),
-      error: (e, _) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 1.5),
-        ),
-        child: Text(AppLocalizations.of(context).xpGoalsScreenErrorLoadingWeeklyProgress, style: TextStyle(color: textMuted)),
+      error: (e, _) => Text(
+        AppLocalizations.of(context).xpGoalsScreenErrorLoadingWeeklyProgress,
+        style: TextStyle(color: textMuted),
       ),
       data: (progress) {
         final earnedXP = progress.totalXpEarned;
@@ -474,149 +345,111 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
         final percentage = maxXP > 0 ? (earnedXP / maxXP).clamp(0.0, 1.0) : 0.0;
         final checkpoints = progress.checkpoints;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor, width: 1.5),
-            boxShadow: isDark ? null : [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // XP Progress header — hero earned XP + hairline gold bar
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '$earnedXP',
+                  style: ZType.disp(30, color: AppColors.gamGold, height: 0.9),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '/ $maxXP XP',
+                  style: ZType.data(12, color: textMuted),
+                ),
+              ],
+            ),
+            const SizedBox(height: 9),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: percentage,
+                minHeight: 6,
+                backgroundColor: AppColors.hairlineStrong,
+                valueColor: const AlwaysStoppedAnimation(AppColors.gamGold),
               ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // XP Progress header
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${progress.completedCount}/${checkpoints.length} checkpoints complete'.toUpperCase(),
+              style: ZType.lbl(9, color: textMuted, letterSpacing: 1.3),
+            ),
+            const SizedBox(height: 6),
+
+            // Checkpoints list — hairline rows
+            ...checkpoints.map((cp) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: AppColors.hairline),
+                  ),
+                ),
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '$earnedXP XP',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? textColor : Colors.black87,
-                          ),
-                        ),
-                        Text(
-                          '/ $maxXP XP',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: isDark ? textMuted : Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
+                    // Status glyph
                     Container(
-                      height: 8,
+                      width: 28,
+                      height: 28,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: progressBgColor,
-                        borderRadius: BorderRadius.circular(4),
+                        color: cp.completed
+                            ? AppColors.green
+                            : surface,
+                        shape: BoxShape.circle,
+                        border: cp.completed
+                            ? null
+                            : Border.all(color: hairBorder),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: percentage,
-                          minHeight: 8,
-                          backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation(accentColor),
-                        ),
+                      child: cp.completed
+                          ? const Icon(Icons.check, size: 15, color: Colors.black)
+                          : Text(
+                              cp.icon.isNotEmpty ? cp.icon : '📋',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                    ),
+                    const SizedBox(width: 11),
+                    // Name and progress
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cp.name,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: cp.completed ? textMuted : textColor,
+                              decoration: cp.completed ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                          if (!cp.completed) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              '${cp.current}/${cp.target}',
+                              style: ZType.data(9.5, color: textMuted),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    // XP reward
                     Text(
-                      '${progress.completedCount}/${checkpoints.length} checkpoints complete',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? textMuted : Colors.black54,
-                      ),
+                      '+${cp.xpReward}',
+                      style: ZType.lbl(11,
+                          color: cp.completed ? AppColors.green : AppColors.gamGold,
+                          weight: FontWeight.w800,
+                          letterSpacing: 0.5),
                     ),
                   ],
                 ),
-              ),
-
-              // Checkpoints list
-              ...checkpoints.map((cp) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: dividerColor),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      // Icon
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: cp.completed
-                              ? AppColors.green.withValues(alpha: isDark ? 0.15 : 0.12)
-                              : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: cp.completed
-                              ? Icon(Icons.check, size: 14, color: AppColors.green)
-                              : Text(
-                                  cp.icon.isNotEmpty ? cp.icon : '📋',
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Name and progress
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              cp.name,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: cp.completed
-                                    ? (isDark ? textMuted : Colors.black45)
-                                    : (isDark ? textColor : Colors.black87),
-                                decoration: cp.completed ? TextDecoration.lineThrough : null,
-                              ),
-                            ),
-                            if (!cp.completed)
-                              Text(
-                                '${cp.current}/${cp.target}',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: isDark ? textMuted : Colors.black54,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      // XP reward
-                      Text(
-                        '+${cp.xpReward} XP',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: cp.completed ? AppColors.green : accentColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
+              );
+            }),
+          ],
         );
       },
     );
@@ -633,23 +466,17 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final hairBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final monthlyProgress = ref.watch(monthlyAchievementsProgressProvider);
-
-    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
-    final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
 
     return monthlyProgress.when(
       // Layout-matched skeleton instead of a blocking spinner — see the
       // weekly card above for rationale.
       loading: () => const SkeletonBox(height: 100, radius: 16),
-      error: (e, _) => Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 1.5),
-        ),
-        child: Text(AppLocalizations.of(context).xpGoalsScreenErrorLoadingMonthlyAchievem, style: TextStyle(color: textMuted)),
+      error: (e, _) => Text(
+        AppLocalizations.of(context).xpGoalsScreenErrorLoadingMonthlyAchievem,
+        style: TextStyle(color: textMuted),
       ),
       data: (progress) {
         final earnedXP = progress.totalXpEarned;
@@ -657,206 +484,148 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
         final percentage = maxXP > 0 ? (earnedXP / maxXP).clamp(0.0, 1.0) : 0.0;
         final achievements = progress.achievements;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor, width: 1.5),
-            boxShadow: isDark ? null : [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // Month header with XP progress
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: Colors.purple.withValues(alpha: isDark ? 0.08 : 0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                ),
-                child: Column(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Month header with XP progress — hairline-led
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              progress.monthName.isNotEmpty ? progress.monthName : 'This Month',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isDark ? textColor : Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              '${progress.daysRemaining} days remaining',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? textMuted : Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              '$earnedXP / $maxXP XP',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: isDark ? textColor : Colors.black87,
-                              ),
-                            ),
-                            Text(
-                              '${progress.completedCount}/${achievements.length} complete',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? textMuted : Colors.black54,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    Text(
+                      (progress.monthName.isNotEmpty ? progress.monthName : 'This Month').toUpperCase(),
+                      style: ZType.disp(19, color: textColor, height: 0.96),
                     ),
-                    const SizedBox(height: 10),
-                    Container(
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: progressBgColor,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: percentage,
-                          minHeight: 8,
-                          backgroundColor: Colors.transparent,
-                          valueColor: const AlwaysStoppedAnimation(Colors.purple),
-                        ),
-                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${progress.daysRemaining} days remaining'.toUpperCase(),
+                      style: ZType.lbl(9, color: textMuted, letterSpacing: 1.3),
                     ),
                   ],
                 ),
-              ),
-
-              // Achievements list
-              ...achievements.map((achievement) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      top: BorderSide(color: dividerColor),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$earnedXP / $maxXP XP',
+                      style: ZType.data(12, color: AppColors.gamGold),
                     ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '${progress.completedCount}/${achievements.length} complete'.toUpperCase(),
+                      style: ZType.lbl(9, color: textMuted, letterSpacing: 1.3),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: percentage,
+                minHeight: 6,
+                backgroundColor: AppColors.hairlineStrong,
+                valueColor: const AlwaysStoppedAnimation(AppColors.gamGold),
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Achievements list — hairline rows
+            ...achievements.map((achievement) {
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: AppColors.hairline),
                   ),
-                  child: Row(
-                    children: [
-                      // Icon
-                      Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          color: achievement.completed
-                              ? Colors.purple.withValues(alpha: isDark ? 0.15 : 0.12)
-                              : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Center(
-                          child: achievement.completed
-                              ? const Icon(Icons.check, size: 14, color: Colors.purple)
-                              : Icon(
-                                  _monthlyIcon(achievement.icon),
-                                  size: 14,
-                                  color: isDark ? textMuted : Colors.grey.shade600,
-                                ),
-                        ),
+                ),
+                child: Row(
+                  children: [
+                    // Status glyph
+                    Container(
+                      width: 28,
+                      height: 28,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: achievement.completed ? AppColors.green : surface,
+                        shape: BoxShape.circle,
+                        border: achievement.completed
+                            ? null
+                            : Border.all(color: hairBorder),
                       ),
-                      const SizedBox(width: 10),
-                      // Name and progress
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              achievement.name,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: achievement.completed
-                                    ? (isDark ? textMuted : Colors.black45)
-                                    : (isDark ? textColor : Colors.black87),
-                                decoration: achievement.completed ? TextDecoration.lineThrough : null,
-                              ),
+                      child: achievement.completed
+                          ? const Icon(Icons.check, size: 15, color: Colors.black)
+                          : Icon(
+                              _monthlyIcon(achievement.icon),
+                              size: 14,
+                              color: textMuted,
                             ),
-                            if (!achievement.completed)
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      height: 3,
-                                      margin: const EdgeInsets.only(top: 4),
-                                      decoration: BoxDecoration(
-                                        color: progressBgColor,
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                      child: FractionallySizedBox(
-                                        widthFactor: achievement.progress,
-                                        alignment: Alignment.centerLeft,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: Colors.purple,
-                                            borderRadius: BorderRadius.circular(2),
-                                          ),
+                    ),
+                    const SizedBox(width: 11),
+                    // Name and progress
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            achievement.name,
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: achievement.completed ? textMuted : textColor,
+                              decoration: achievement.completed ? TextDecoration.lineThrough : null,
+                            ),
+                          ),
+                          if (!achievement.completed)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    height: 3,
+                                    margin: const EdgeInsets.only(top: 5),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.hairlineStrong,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    child: FractionallySizedBox(
+                                      widthFactor: achievement.progress,
+                                      alignment: Alignment.centerLeft,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: AppColors.gamGold,
+                                          borderRadius: BorderRadius.circular(2),
                                         ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '${achievement.currentInt}/${achievement.target}',
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      color: isDark ? textMuted : Colors.black54,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '${achievement.currentInt}/${achievement.target}',
+                                  style: ZType.data(9, color: textMuted),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      // XP reward
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: achievement.completed
-                              ? Colors.purple.withValues(alpha: isDark ? 0.15 : 0.12)
-                              : Colors.purple.withValues(alpha: isDark ? 0.1 : 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          '+${achievement.xpReward} XP',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: achievement.completed ? Colors.purple.shade700 : Colors.purple.shade600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
+                    ),
+                    const SizedBox(width: 8),
+                    // XP reward
+                    Text(
+                      '+${achievement.xpReward}',
+                      style: ZType.lbl(11,
+                          color: achievement.completed ? AppColors.green : AppColors.gamGold,
+                          weight: FontWeight.w800,
+                          letterSpacing: 0.5),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
         );
       },
     );
@@ -873,16 +642,14 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final hairBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final consumables = ref.watch(consumablesProvider);
     final totalItems = (consumables?.streakShield ?? 0) +
         (consumables?.xpToken2x ?? 0) +
         (consumables?.fitnessCrate ?? 0) +
         (consumables?.premiumCrate ?? 0);
-
-    const purpleAccent = Color(0xFF9C27B0);
-    final strongBorder = isDark
-        ? purpleAccent.withValues(alpha: 0.3)
-        : purpleAccent.withValues(alpha: 0.5);
 
     return GestureDetector(
       onTap: () {
@@ -892,59 +659,46 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: strongBorder, width: 1.5),
-          boxShadow: isDark ? null : [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: hairBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.inventory_2,
-              color: purpleAccent,
-              size: 18,
+            Icon(
+              Icons.inventory_2_outlined,
+              color: AppColors.gamGold,
+              size: 17,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 7),
             Flexible(
               child: Text(
-                AppLocalizations.of(context).xpGoalsScreenInventory,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? textColor : Colors.black87,
-                ),
+                AppLocalizations.of(context).xpGoalsScreenInventory.toUpperCase(),
+                style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.3),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             if (totalItems > 0) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: purpleAccent,
-                  borderRadius: BorderRadius.circular(10),
+                width: 20,
+                height: 20,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.gamGold,
+                  shape: BoxShape.circle,
                 ),
                 child: Text(
                   '$totalItems',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: ZType.data(10, color: Colors.black),
                 ),
               ),
             ],
             const SizedBox(width: 4),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: purpleAccent,
+              color: textMuted,
               size: 16,
             ),
           ],

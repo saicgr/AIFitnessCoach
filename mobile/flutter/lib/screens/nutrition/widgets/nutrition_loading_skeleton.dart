@@ -23,7 +23,7 @@ class NutritionLoadingSkeleton extends StatelessWidget {
           // Energy card skeleton with shimmer
           ShimmerContainer(
             height: 140,
-            borderRadius: 20,
+            borderRadius: 16,
             baseColor: shimmerBase,
             highlightColor: shimmerHighlight,
           ),

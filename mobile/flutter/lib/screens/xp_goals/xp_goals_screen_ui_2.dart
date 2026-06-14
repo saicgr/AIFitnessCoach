@@ -13,9 +13,8 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final awardedBonuses = ref.watch(awardedBonusesProvider);
-
-    final dividerColor = isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade300;
 
     // First-time bonuses list
     final bonuses = [
@@ -70,119 +69,84 @@ extension _XPGoalsScreenStateUI2 on _XPGoalsScreenState {
     final totalXPEarned = bonuses.where((b) => b.isAwarded).fold(0, (sum, b) => sum + b.xp);
     final totalXPAvailable = bonuses.fold(0, (sum, b) => sum + b.xp);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Summary meta line — Anton hero counts + Barlow labels on a hairline
+        Container(
+          padding: const EdgeInsets.only(bottom: 12),
+          decoration: const BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.hairline)),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Summary row
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.amber.withValues(alpha: isDark ? 0.08 : 0.1),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatColumn(
-                  '$earnedCount/${bonuses.length}',
-                  'Bonuses',
-                  isDark ? textColor : Colors.black87,
-                  isDark ? textMuted : Colors.black54,
-                ),
-                Container(
-                  width: 1,
-                  height: 28,
-                  color: isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade400,
-                ),
-                _buildStatColumn(
-                  '+$totalXPEarned',
-                  'of $totalXPAvailable XP',
-                  isDark ? textColor : Colors.black87,
-                  isDark ? textMuted : Colors.black54,
-                ),
-              ],
-            ),
+          child: Row(
+            children: [
+              _buildXpStatColumn(
+                '$earnedCount/${bonuses.length}',
+                'Bonuses',
+                textColor,
+                textMuted,
+              ),
+              const SizedBox(width: 28),
+              _buildXpStatColumn(
+                '+$totalXPEarned',
+                'of $totalXPAvailable XP',
+                textColor,
+                textMuted,
+                heroColor: AppColors.gamGold,
+              ),
+            ],
           ),
+        ),
 
-          // Bonuses list
-          ...bonuses.map((bonus) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                decoration: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(color: dividerColor),
+        // Bonuses list — hairline rows; gold open / green awarded
+        ...bonuses.map((bonus) => Container(
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: AppColors.hairline),
+                ),
+              ),
+              child: Row(
+                children: [
+                  // Status circle — green filled when awarded, gold hairline when open
+                  Container(
+                    width: 22,
+                    height: 22,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: bonus.isAwarded ? AppColors.green : surface,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: bonus.isAwarded ? AppColors.green : AppColors.gamGold,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: bonus.isAwarded
+                        ? const Icon(Icons.check, size: 12, color: Colors.black)
+                        : Icon(bonus.icon, size: 11, color: AppColors.gamGold),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: bonus.isAwarded
-                            ? Colors.amber.withValues(alpha: isDark ? 0.15 : 0.12)
-                            : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        bonus.isAwarded ? Icons.check : bonus.icon,
-                        size: 15,
-                        color: bonus.isAwarded ? Colors.amber : (isDark ? textMuted : Colors.grey.shade600),
+                  const SizedBox(width: 11),
+                  Expanded(
+                    child: Text(
+                      bonus.title,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: bonus.isAwarded ? textMuted : textColor,
+                        decoration: bonus.isAwarded ? TextDecoration.lineThrough : null,
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        bonus.title,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: bonus.isAwarded ? textMuted : textColor,
-                          decoration: bonus.isAwarded ? TextDecoration.lineThrough : null,
-                        ),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: bonus.isAwarded
-                            ? Colors.amber.withValues(alpha: isDark ? 0.15 : 0.12)
-                            : Colors.amber.withValues(alpha: isDark ? 0.1 : 0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (!bonus.isAwarded)
-                            const Icon(Icons.star, size: 11, color: Colors.amber),
-                          if (!bonus.isAwarded) const SizedBox(width: 3),
-                          Text(
-                            '+${bonus.xp} XP',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: bonus.isAwarded ? Colors.amber.shade700 : Colors.amber.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              )),
-        ],
-      ),
+                  ),
+                  Text(
+                    '+${bonus.xp}',
+                    style: ZType.lbl(11,
+                        color: bonus.isAwarded ? AppColors.green : AppColors.gamGold,
+                        weight: FontWeight.w800,
+                        letterSpacing: 0.5),
+                  ),
+                ],
+              ),
+            )),
+      ],
     );
   }
 

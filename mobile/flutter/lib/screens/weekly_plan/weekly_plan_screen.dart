@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/providers/week_start_provider.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/models/workout.dart';
@@ -76,18 +79,15 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Share your plan',
-                style: Theme.of(sheetContext)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w800),
+                'Share your plan'.toUpperCase(),
+                style: ZType.disp(22,
+                    color: ThemeColors.of(sheetContext).textPrimary),
               ),
               const SizedBox(height: 12),
               _ShareOptionTile(
                 label: 'Share as image',
                 subtitle: 'A polished card for stories and feeds',
                 icon: Icons.image_rounded,
-                color: AppColors.purple,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   SharePlanPeriodSheet.show(
@@ -102,7 +102,6 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
                 label: 'Share link',
                 subtitle: 'A web link anyone can open',
                 icon: Icons.link_rounded,
-                color: AppColors.info,
                 onTap: () {
                   Navigator.of(sheetContext).pop();
                   SharePlanPeriodSheet.show(context);
@@ -240,8 +239,9 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                AppLocalizations.of(context).weeklyPlanErrorLoadingPlan,
-                style: Theme.of(context).textTheme.headlineSmall,
+                AppLocalizations.of(context).weeklyPlanErrorLoadingPlan.toUpperCase(),
+                textAlign: TextAlign.center,
+                style: ZType.disp(22, color: ThemeColors.of(context).textPrimary),
               ),
               const SizedBox(height: 8),
               Text(
@@ -250,12 +250,14 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
                 style: TextStyle(color: colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 24),
-              FilledButton.icon(
-                onPressed: () {
+              ZealovaButton(
+                label: AppLocalizations.of(context).buttonRetry,
+                variant: ZealovaButtonVariant.ghost,
+                expand: false,
+                trailingIcon: Icons.refresh,
+                onTap: () {
                   ref.read(weeklyPlanProvider.notifier).loadCurrentPlan();
                 },
-                icon: const Icon(Icons.refresh),
-                label: Text(AppLocalizations.of(context).buttonRetry),
               ),
             ],
           ),
@@ -280,42 +282,35 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.3),
+                color: ThemeColors.of(context).surface,
                 shape: BoxShape.circle,
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: Icon(
                 Icons.calendar_month,
-                size: 64,
-                color: colorScheme.primary,
+                size: 56,
+                color: ThemeColors.of(context).accent,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              AppLocalizations.of(context).weeklyPlanNoWeeklyPlanYet,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              AppLocalizations.of(context).weeklyPlanNoWeeklyPlanYet.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(26, color: ThemeColors.of(context).textPrimary),
             ),
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context).weeklyPlanCreateAHolisticPlan,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 16,
-              ),
+              style: ZType.ser(16, color: ThemeColors.of(context).textSecondary),
             ),
             const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: _showGeneratePlanSheet,
-              icon: const Icon(Icons.auto_awesome),
-              label: Text(AppLocalizations.of(context).weeklyPlanGenerateMyPlan),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
-                ),
-              ),
+            ZealovaButton(
+              label: AppLocalizations.of(context).weeklyPlanGenerateMyPlan,
+              variant: ZealovaButtonVariant.primary,
+              expand: false,
+              trailingIcon: Icons.auto_awesome,
+              onTap: _showGeneratePlanSheet,
             ),
           ],
         ),
@@ -379,28 +374,27 @@ class _ShareOptionTile extends StatelessWidget {
   final String label;
   final String subtitle;
   final IconData icon;
-  final Color color;
   final VoidCallback onTap;
 
   const _ShareOptionTile({
     required this.label,
     required this.subtitle,
     required this.icon,
-    required this.color,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.18)),
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
           children: [
@@ -408,11 +402,11 @@ class _ShareOptionTile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.18),
-                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 20, color: color),
+              child: Icon(icon, size: 20, color: tc.accent),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -421,7 +415,10 @@ class _ShareOptionTile extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: tc.textPrimary,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
@@ -429,15 +426,14 @@ class _ShareOptionTile extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: tc.textSecondary,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right,
-                size: 18, color: color.withValues(alpha: 0.7)),
+            Icon(Icons.chevron_right, size: 18, color: tc.textMuted),
           ],
         ),
       ),

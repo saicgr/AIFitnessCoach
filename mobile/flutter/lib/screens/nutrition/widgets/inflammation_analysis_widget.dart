@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/inflammation_analysis.dart';
 import '../../../data/providers/inflammation_analysis_provider.dart';
 
@@ -88,9 +89,9 @@ class _InflammationAnalysisWidgetState
     final textMuted =
         widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated =
-        widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+        widget.isDark ? AppColors.surface : AppColorsLight.surface;
     final cardBorder =
-        widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        widget.isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;
 
     // Loading state
     if (state.isLoading) {
@@ -121,7 +122,7 @@ class _InflammationAnalysisWidgetState
     return Container(
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cardBorder),
       ),
       child: Column(
@@ -187,8 +188,8 @@ class _InflammationLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
@@ -196,7 +197,7 @@ class _InflammationLoadingCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cardBorder),
       ),
       child: Row(
@@ -252,15 +253,15 @@ class _InflammationErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = isDark ? AppColors.surface : AppColorsLight.surface;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder),
       ),
       child: Column(
         children: [
@@ -317,18 +318,13 @@ class _InflammationScoreHeader extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: scoreColor.withValues(alpha: 0.15),
               shape: BoxShape.circle,
               border: Border.all(color: scoreColor, width: 2),
             ),
             child: Center(
               child: Text(
                 '$score',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: scoreColor,
-                ),
+                style: ZType.data(22, color: scoreColor),
               ),
             ),
           ),
@@ -338,11 +334,11 @@ class _InflammationScoreHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).loggedMealsInflammationScore,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                  AppLocalizations.of(context).loggedMealsInflammationScore.toUpperCase(),
+                  style: ZType.lbl(
+                    10.5,
                     color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
+                    letterSpacing: 1.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -435,9 +431,8 @@ class _CountChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.40)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -446,11 +441,7 @@ class _CountChip extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               '$count',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+              style: ZType.data(15, color: color),
             ),
           ],
         ),
@@ -585,9 +576,8 @@ class _IngredientChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.4)),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: color.withValues(alpha: 0.40)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -635,9 +625,8 @@ class _RecommendationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: teal.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: teal.withValues(alpha: 0.3)),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: teal.withValues(alpha: 0.40)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

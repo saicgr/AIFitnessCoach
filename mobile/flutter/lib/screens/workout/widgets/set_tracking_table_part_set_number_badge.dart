@@ -19,39 +19,22 @@ class _SetNumberBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Signature set number (.ra-c1): a bare Barlow Condensed numeral — no
+    // circular chip. Active = full text color, done = full color, upcoming
+    // = faint, matching the hairline-led cockpit table.
+    final Color color = isActive
+        ? (isDark ? AppColors.textPrimary : Colors.grey.shade900)
+        : isCompleted
+            ? (isDark ? AppColors.textPrimary : Colors.grey.shade800)
+            : (isDark ? AppColors.textMuted : Colors.grey.shade500);
     return Container(
       width: 32,
       height: 32,
       margin: const EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        color: isActive
-            ? WorkoutDesign.accentBlue.withOpacity(0.2)
-            : isCompleted
-                ? (isDark ? WorkoutDesign.textMuted.withOpacity(0.15) : Colors.grey.shade200)
-                : (isDark ? WorkoutDesign.surface : Colors.grey.shade50),
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isActive
-              ? WorkoutDesign.accentBlue
-              : isCompleted
-                  ? (isDark ? WorkoutDesign.textMuted.withOpacity(0.3) : Colors.grey.shade400)
-                  : (isDark ? WorkoutDesign.border : Colors.grey.shade300),
-          width: isActive ? 2 : 1,
-        ),
-      ),
-      child: Center(
-        child: Text(
-          isWarmup ? 'W' : (number?.toString() ?? ''),
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isActive
-                ? WorkoutDesign.accentBlue
-                : isCompleted
-                    ? (isDark ? WorkoutDesign.textMuted : Colors.grey.shade500)
-                    : (isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800),
-          ),
-        ),
+      alignment: AlignmentDirectional.centerStart,
+      child: Text(
+        isWarmup ? 'W' : (number?.toString() ?? ''),
+        style: ZType.lbl(15, color: color, letterSpacing: 0.5),
       ),
     );
   }
@@ -528,12 +511,15 @@ class _AutoTargetCell extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Target weight x reps
+            // Target weight x reps — Signature .ra-tg cell: monospaced
+            // telemetry numerals, tinted muted/rust so the AI target reads as
+            // guidance distinct from the user-logged values.
             Text(
               targetString,
-              style: WorkoutDesign.autoTargetStyle.copyWith(
-                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700,
-                fontSize: 12,
+              style: ZType.data(
+                11.5,
+                color: isDark ? AppColors.textSecondary : Colors.grey.shade700,
+                weight: FontWeight.w400,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -656,8 +642,10 @@ class _PreviousCell extends StatelessWidget {
         padding: const EdgeInsets.only(right: 8),
         child: Text(
           '—',
-          style: WorkoutDesign.autoTargetStyle.copyWith(
-            color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
+          style: ZType.data(
+            11.5,
+            color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+            weight: FontWeight.w400,
           ),
         ),
       );
@@ -679,12 +667,13 @@ class _PreviousCell extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Previous weight x reps
+            // Previous weight x reps — monospaced telemetry, muted.
             Text(
               previousString,
-              style: WorkoutDesign.autoTargetStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade500,
-                fontSize: 12,
+              style: ZType.data(
+                11.5,
+                color: isDark ? AppColors.textMuted : Colors.grey.shade500,
+                weight: FontWeight.w400,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -914,12 +903,13 @@ class _PreviousCellWithRir extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Previous weight x reps
+            // Previous weight x reps — monospaced telemetry, muted.
             Text(
               previousString,
-              style: WorkoutDesign.autoTargetStyle.copyWith(
-                color: isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600,
-                fontSize: 12,
+              style: ZType.data(
+                11.5,
+                color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                weight: FontWeight.w400,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -1005,33 +995,44 @@ class _DarkInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accent = ThemeColors.of(context).accent;
     return SizedBox(
       height: WorkoutDesign.inputFieldHeight,
       child: TextField(
         controller: controller,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         textAlign: TextAlign.center,
-        style: WorkoutDesign.inputStyle.copyWith(
-          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
+        // Signature telemetry numerals (Space Mono) for the editable value.
+        style: ZType.data(
+          16,
+          color: isDark ? AppColors.textPrimary : Colors.grey.shade900,
         ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: isDark ? WorkoutDesign.inputField : Colors.grey.shade100,
+          fillColor: isDark
+              ? AppColors.elevated.withValues(alpha: 0.6)
+              : Colors.grey.shade100,
           hintText: hintText,
-          hintStyle: WorkoutDesign.inputStyle.copyWith(
-            color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
+          hintStyle: ZType.data(
+            16,
+            color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+            weight: FontWeight.w400,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
-            borderSide: isDark ? BorderSide.none : BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(
+              color: isDark ? AppColors.hairlineStrong : Colors.grey.shade300,
+            ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
-            borderSide: isDark ? BorderSide.none : BorderSide(color: Colors.grey.shade300),
+            borderSide: BorderSide(
+              color: isDark ? AppColors.hairlineStrong : Colors.grey.shade300,
+            ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
-            borderSide: const BorderSide(color: WorkoutDesign.accentBlue, width: 2),
+            borderSide: BorderSide(color: accent, width: 2),
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 8,
@@ -1062,30 +1063,28 @@ class _CompletedValueCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // Signature done-cell (.ra-c4/.ra-c5): bare monospaced numeral, no boxed
+    // fill — done rows read at full text color, the rest stay muted.
+    return SizedBox(
       height: WorkoutDesign.inputFieldHeight,
-      decoration: BoxDecoration(
-        color: isDark
-            ? WorkoutDesign.inputField.withOpacity(isCompleted ? 0.5 : 0.3)
-            : (isCompleted ? Colors.grey.shade200 : Colors.grey.shade100),
-        borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
-        border: isDark ? null : Border.all(color: Colors.grey.shade300),
-      ),
       child: Center(
         child: label != null && value.isEmpty
             ? Text(
                 label!,
-                style: WorkoutDesign.inputStyle.copyWith(
-                  color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
-                  fontSize: 12,
+                style: ZType.lbl(
+                  11,
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+                  letterSpacing: 1,
                 ),
               )
             : Text(
                 value.isEmpty ? '—' : value,
-                style: WorkoutDesign.inputStyle.copyWith(
+                style: ZType.data(
+                  15,
                   color: isDark
-                      ? (isCompleted ? WorkoutDesign.textSecondary : WorkoutDesign.textMuted)
-                      : (isCompleted ? Colors.grey.shade700 : Colors.grey.shade500),
+                      ? (isCompleted ? AppColors.textPrimary : AppColors.textMuted)
+                      : (isCompleted ? Colors.grey.shade800 : Colors.grey.shade500),
+                  weight: FontWeight.w400,
                 ),
               ),
       ),
@@ -1110,22 +1109,22 @@ class _CompletionCheckbox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Signature done-check uses the green status color (.ck #5BE49B).
+    const doneGreen = Color(0xFF5BE49B);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: isCompleted
-              ? WorkoutDesign.success
-              : Colors.transparent,
+          color: isCompleted ? doneGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: isCompleted
-                ? WorkoutDesign.success
+                ? doneGreen
                 : isActive
-                    ? (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade600)
-                    : (isDark ? WorkoutDesign.border : Colors.grey.shade400),
+                    ? (isDark ? AppColors.textSecondary : Colors.grey.shade600)
+                    : (isDark ? AppColors.hairlineStrong : Colors.grey.shade400),
             width: 2,
           ),
         ),
@@ -1133,7 +1132,7 @@ class _CompletionCheckbox extends StatelessWidget {
             ? const Icon(
                 Icons.check,
                 size: 16,
-                color: Colors.white,
+                color: Color(0xFF0A0A0A),
               )
             : null,
       ),
@@ -1188,20 +1187,15 @@ class _DashCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    return SizedBox(
       height: WorkoutDesign.inputFieldHeight,
-      decoration: BoxDecoration(
-        color: isDark
-            ? WorkoutDesign.inputField.withOpacity(0.15)
-            : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
-        border: isDark ? null : Border.all(color: Colors.grey.shade300),
-      ),
       child: Center(
         child: Text(
           '—',
-          style: WorkoutDesign.inputStyle.copyWith(
-            color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade400,
+          style: ZType.data(
+            15,
+            color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+            weight: FontWeight.w400,
           ),
         ),
       ),
@@ -1250,22 +1244,18 @@ class _TimedTargetCell extends StatelessWidget {
         isDark: isDark,
       );
     }
-    // Active set — show the target prominently with a subtle pulse background.
+    // Active set — show the target prominently. Hairline-led: no boxed fill,
+    // just the reserved accent on the icon + monospaced time readout.
+    final accent = ThemeColors.of(context).accent;
     final target = (targetHoldSeconds != null && targetHoldSeconds! > 0)
         ? targetHoldSeconds!
         : (targetDurationSeconds ?? 0);
     final label = _fmt(target);
-    return Container(
+    final Color valueColor = isActive
+        ? accent
+        : (isDark ? AppColors.textSecondary : Colors.grey.shade700);
+    return SizedBox(
       height: WorkoutDesign.inputFieldHeight,
-      decoration: BoxDecoration(
-        color: isActive
-            ? WorkoutDesign.accentBlue.withOpacity(0.15)
-            : (isDark
-                ? WorkoutDesign.inputField.withOpacity(0.3)
-                : Colors.grey.shade100),
-        borderRadius: BorderRadius.circular(WorkoutDesign.radiusSmall),
-        border: isDark ? null : Border.all(color: Colors.grey.shade300),
-      ),
       child: Center(
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -1275,18 +1265,13 @@ class _TimedTargetCell extends StatelessWidget {
               Icons.timer_outlined,
               size: 12,
               color: isActive
-                  ? WorkoutDesign.accentBlue
-                  : (isDark ? WorkoutDesign.textMuted : Colors.grey.shade500),
+                  ? accent
+                  : (isDark ? AppColors.textMuted : Colors.grey.shade500),
             ),
             const SizedBox(width: 3),
             Text(
               label,
-              style: WorkoutDesign.inputStyle.copyWith(
-                fontSize: 13,
-                color: isActive
-                    ? WorkoutDesign.accentBlue
-                    : (isDark ? WorkoutDesign.textSecondary : Colors.grey.shade700),
-              ),
+              style: ZType.data(13, color: valueColor, weight: FontWeight.w400),
             ),
           ],
         ),

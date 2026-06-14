@@ -12,6 +12,8 @@ import '../onboarding/founder_note_sheet.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/theme/app_typography.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/providers/training_preferences_provider.dart';
@@ -1078,14 +1080,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
 
-          // Top navigation bar — pill row matching workout detail style
+          // Top masthead — Signature Anton title + back chevron + help action.
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
             right: 16,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Back button circle
+                // Back chevron
                 GestureDetector(
                   onTap: () {
                     HapticService.light();
@@ -1099,93 +1102,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       context.go('/home');
                     }
                   },
-                  child: Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : elevated,
-                      borderRadius: BorderRadius.circular(22),
-                      border: isDark
-                          ? null
-                          : Border.all(color: cardBorder.withValues(alpha: 0.3)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.4)
-                              : Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
                     child: Icon(
                       Icons.arrow_back_rounded,
-                      color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                      size: 22,
+                      color: textPrimary,
+                      size: 24,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                // Title pill
+                // Anton masthead title
                 Expanded(
-                  child: Container(
-                    height: 44,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : elevated,
-                      borderRadius: BorderRadius.circular(22),
-                      border: isDark
-                          ? null
-                          : Border.all(color: cardBorder.withValues(alpha: 0.3)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.4)
-                              : Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Text(
-                        AppLocalizations.of(context).settingsTitle,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                        ),
-                      ),
-                    ),
+                  child: Text(
+                    AppLocalizations.of(context).settingsTitle.toUpperCase(),
+                    style: ZType.disp(30, color: textPrimary),
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Help button circle — opens email support directly
+                // Help action — opens email support directly
                 GestureDetector(
                   onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Help'),
-                  child: Container(
-                    height: 44,
-                    width: 44,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1C1C1E) : elevated,
-                      borderRadius: BorderRadius.circular(22),
-                      border: isDark
-                          ? null
-                          : Border.all(color: cardBorder.withValues(alpha: 0.3)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isDark
-                              ? Colors.black.withValues(alpha: 0.4)
-                              : Colors.black.withValues(alpha: 0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
                     child: Icon(
                       Icons.help_outline_rounded,
-                      color: AppColors.error,
-                      size: 20,
+                      color: textMuted,
+                      size: 22,
                     ),
                   ),
                 ),

@@ -17,6 +17,7 @@ import 'cards/trophies_card.dart';
 import '../../shareables/shareable_sheet.dart';
 import '../../shareables/shareable_catalog.dart';
 import '../../shareables/adapters/wrapped_adapter.dart';
+import '../../core/theme/app_typography.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Full-screen story viewer for Fitness Wrapped.
@@ -283,11 +284,12 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
             child: GestureDetector(
               onTap: () => _showShareSheet(data),
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 26),
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.white.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: Colors.white.withValues(alpha: 0.2),
                   ),
@@ -295,19 +297,18 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.share_rounded,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      size: 18,
+                    const Icon(
+                      Icons.ios_share_rounded,
+                      color: Colors.white,
+                      size: 17,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 9),
                     Text(
-                      AppLocalizations.of(context).commonShare,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      AppLocalizations.of(context).commonShare.toUpperCase(),
+                      style: ZType.lbl(13,
+                          color: Colors.white,
+                          weight: FontWeight.w800,
+                          letterSpacing: 2.5),
                     ),
                   ],
                 ),

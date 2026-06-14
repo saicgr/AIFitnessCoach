@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/trend_series_provider.dart';
@@ -230,13 +232,9 @@ class HabitsScreen extends ConsumerWidget {
                 ),
                 Expanded(
                   child: Text(
-                    AppLocalizations.of(context).habitsYourHabits,
+                    AppLocalizations.of(context).habitsYourHabits.toUpperCase(),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
+                    style: ZType.disp(20, color: textPrimary, letterSpacing: 0.5),
                   ),
                 ),
                 // Custom Trends entry — sized to match the back button so
@@ -275,17 +273,10 @@ class HabitsScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: accentColor,
                   shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: accentColor.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Icon(
                   Icons.add,
-                  color: isDark ? Colors.black : Colors.white,
+                  color: ThemeColors.of(context).accentContrast,
                   size: 28,
                 ),
               ),
@@ -391,12 +382,12 @@ class HabitsScreen extends ConsumerWidget {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: cardBg,
+                color: ThemeColors.of(context).surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
                   color: habit.todayCompleted
                       ? effectiveColor.withValues(alpha: 0.5)
-                      : cardBorder,
+                      : AppColors.cardBorder,
                   width: habit.todayCompleted ? 2 : 1,
                 ),
               ),
@@ -447,12 +438,8 @@ class HabitsScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  habit.isAutoTracked ? AppLocalizations.of(context).habitsLog : AppLocalizations.of(context).recipeDetailLog,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: effectiveColor,
-                                  ),
+                                  (habit.isAutoTracked ? AppLocalizations.of(context).habitsLog : AppLocalizations.of(context).recipeDetailLog).toUpperCase(),
+                                  style: ZType.lbl(10, color: effectiveColor, letterSpacing: 1.2),
                                 ),
                               ),
                       ),
@@ -477,13 +464,14 @@ class HabitsScreen extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    habit.name,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
+                                    habit.name.toUpperCase(),
+                                    style: ZType.lbl(
+                                      14,
                                       color: habit.todayCompleted
                                           ? textSecondary
                                           : textPrimary,
+                                      letterSpacing: 1.0,
+                                    ).copyWith(
                                       decoration: habit.todayCompleted && !habit.isAutoTracked
                                           ? TextDecoration.lineThrough
                                           : null,
@@ -502,12 +490,7 @@ class HabitsScreen extends ConsumerWidget {
                                     ),
                                     child: Text(
                                       'AUTO',
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: textSecondary,
-                                        letterSpacing: 0.5,
-                                      ),
+                                      style: ZType.lbl(9, color: textSecondary, letterSpacing: 1.4),
                                     ),
                                   ),
                               ],
@@ -549,11 +532,7 @@ class HabitsScreen extends ConsumerWidget {
                               const SizedBox(width: 2),
                               Text(
                                 '${habit.currentStreak}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: effectiveColor,
-                                ),
+                                style: ZType.disp(14, color: effectiveColor, letterSpacing: 0),
                               ),
                             ],
                           ),
@@ -614,20 +593,16 @@ class HabitsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: cardBg,
+        color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).habitsTodaySProgress,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context).habitsTodaySProgress.toUpperCase(),
+            style: ZType.lbl(12, color: textSecondary, letterSpacing: 2.0),
           ),
           const SizedBox(height: 16),
           Row(
@@ -679,23 +654,16 @@ class HabitsScreen extends ConsumerWidget {
   }) {
     return Column(
       children: [
-        Icon(icon, size: 24, color: accentColor),
+        Icon(icon, size: 22, color: accentColor),
         const SizedBox(height: 8),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: textPrimary,
-          ),
+          style: ZType.disp(22, color: textPrimary, letterSpacing: 0),
         ),
         const SizedBox(height: 4),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: textSecondary,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: textSecondary, letterSpacing: 1.2),
           textAlign: TextAlign.center,
         ),
       ],

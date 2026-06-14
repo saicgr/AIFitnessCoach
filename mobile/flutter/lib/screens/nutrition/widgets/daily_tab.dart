@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/chrome_constants.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
@@ -309,15 +310,11 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.track_changes, color: teal, size: 24),
+                          Icon(Icons.track_changes, color: teal, size: 22),
                           const SizedBox(width: 12),
                           Text(
-                            AppLocalizations.of(context).dailyYourDailyGoals,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
+                            AppLocalizations.of(context).dailyYourDailyGoals.toUpperCase(),
+                            style: ZType.disp(22, color: textPrimary, letterSpacing: 0.5),
                           ),
                         ],
                       ),
@@ -687,8 +684,8 @@ class _LeftoversCarousel extends ConsumerWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 8),
                 child: Text(
-                  AppLocalizations.of(context).dailyLeftoversReadyToLog,
-                  style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+                  AppLocalizations.of(context).dailyLeftoversReadyToLog.toUpperCase(),
+                  style: ZType.lbl(11, color: muted, letterSpacing: 2.0),
                 ),
               ),
               SizedBox(
@@ -840,14 +837,10 @@ class _LogWaterButton extends ConsumerWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'Log Water',
+                    'LOG WATER',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+                    style: ZType.lbl(13, color: colors.textPrimary, letterSpacing: 1.5),
                   ),
                 ),
                 Icon(Icons.arrow_forward_rounded,
@@ -892,12 +885,8 @@ class _FastingActiveBar extends ConsumerWidget {
                       size: 16, color: colors.textSecondary),
                   const SizedBox(width: 10),
                   Text(
-                    'Start a fast',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+                    'START A FAST',
+                    style: ZType.lbl(13, color: colors.textPrimary, letterSpacing: 1.5),
                   ),
                   const Spacer(),
                   Icon(Icons.arrow_forward_rounded,

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 
 /// Recipe detail screen reachable from the AI chat's "View recipe" button via
 /// `context.push('/recipe-detail', extra: recipeMap)`.
@@ -219,15 +221,13 @@ class RecipeDetailScreen extends StatelessWidget {
                 if (title != null) ...[
                   Text(
                     title,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: ZType.disp(30, color: ThemeColors.of(context).textPrimary),
                   ),
                   const SizedBox(height: 12),
                 ],
                 _buildMetaRow(prepTime, cookTime, servings),
-                _buildMacroRow(calories, protein, carbs, fat),
+                _buildMacroRow(calories, protein, carbs, fat,
+                    caloriesColor: ThemeColors.of(context).textPrimary),
                 if (description != null) ...[
                   const SizedBox(height: 20),
                   Text(
@@ -259,21 +259,11 @@ class RecipeDetailScreen extends StatelessWidget {
                       ),
                 ],
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push('/recipe-suggestions'),
-                    icon: const Icon(Icons.restaurant_menu),
-                    label: const Text('Browse more recipes'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.green,
-                      side: const BorderSide(color: AppColors.green),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
+                ZealovaButton(
+                  label: 'Browse more recipes',
+                  onTap: () => context.push('/recipe-suggestions'),
+                  variant: ZealovaButtonVariant.primary,
+                  trailingIcon: Icons.restaurant_menu,
                 ),
               ]),
             ),
@@ -292,12 +282,13 @@ class RecipeDetailScreen extends StatelessWidget {
     String? title,
     String? imageUrl,
   ) {
+    final tc = ThemeColors.of(context);
     final hasImage = imageUrl != null;
     return SliverAppBar(
       pinned: true,
       expandedHeight: hasImage ? 260 : kToolbarHeight,
-      backgroundColor: AppColors.surface,
-      foregroundColor: AppColors.textPrimary,
+      backgroundColor: tc.background,
+      foregroundColor: tc.textPrimary,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back),
         tooltip: 'Back',
@@ -321,14 +312,15 @@ class RecipeDetailScreen extends StatelessWidget {
     double? calories,
     double? protein,
     double? carbs,
-    double? fat,
-  ) {
+    double? fat, {
+    required Color caloriesColor,
+  }) {
     final chips = <Widget>[];
     if (calories != null) {
       chips.add(_MacroChip(
         label: 'Calories',
         value: '${calories.round()}',
-        color: AppColors.orange,
+        color: caloriesColor,
       ));
     }
     if (protein != null) {
@@ -386,23 +378,18 @@ class RecipeDetailScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: 'Back',
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/nutrition');
-            }
-          },
-        ),
-        title: const Text('Recipe'),
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(
+        title: 'Recipe',
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/nutrition');
+          }
+        },
       ),
       body: Center(
         child: Padding(
@@ -413,38 +400,27 @@ class RecipeDetailScreen extends StatelessWidget {
               Icon(
                 Icons.no_meals_outlined,
                 size: 64,
-                color: AppColors.textMuted,
+                color: tc.textMuted,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 "We couldn't load this recipe",
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: ZType.disp(22, color: tc.textPrimary),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'The recipe details are missing or could not be read. Try browsing fresh suggestions instead.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, height: 1.5),
+                style: TextStyle(color: tc.textSecondary, height: 1.5),
               ),
               const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: () => context.push('/recipe-suggestions'),
-                icon: const Icon(Icons.restaurant_menu),
-                label: const Text('Browse more recipes'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.green,
-                  side: const BorderSide(color: AppColors.green),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
+              ZealovaButton(
+                label: 'Browse more recipes',
+                onTap: () => context.push('/recipe-suggestions'),
+                variant: ZealovaButtonVariant.primary,
+                trailingIcon: Icons.restaurant_menu,
+                expand: false,
               ),
             ],
           ),
@@ -522,12 +498,13 @@ class _MacroChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: tc.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -535,19 +512,12 @@ class _MacroChip extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+            style: ZType.disp(18, color: color),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 11,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.3),
           ),
         ],
       ),
@@ -568,22 +538,19 @@ class _MetaItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
+        Icon(icon, size: 16, color: tc.textMuted),
         const SizedBox(width: 6),
         Text(
-          '$label ',
-          style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+          '${label.toUpperCase()} ',
+          style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.0),
         ),
         Text(
-          value,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
+          value.toUpperCase(),
+          style: ZType.lbl(11, color: tc.textSecondary, letterSpacing: 1.0),
         ),
       ],
     );
@@ -598,18 +565,12 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Row(
       children: [
-        Icon(icon, size: 20, color: AppColors.green),
+        Icon(icon, size: 18, color: tc.textSecondary),
         const SizedBox(width: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        ZealovaSectionKicker(label, fontSize: 13),
       ],
     );
   }
@@ -622,6 +583,7 @@ class _BulletItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -632,8 +594,8 @@ class _BulletItem extends StatelessWidget {
             child: Container(
               width: 6,
               height: 6,
-              decoration: const BoxDecoration(
-                color: AppColors.green,
+              decoration: BoxDecoration(
+                color: tc.accent,
                 shape: BoxShape.circle,
               ),
             ),
@@ -641,8 +603,8 @@ class _BulletItem extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                color: AppColors.textPrimary,
+              style: TextStyle(
+                color: tc.textPrimary,
                 fontSize: 15,
                 height: 1.4,
               ),
@@ -662,6 +624,7 @@ class _NumberedItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Row(
@@ -672,16 +635,12 @@ class _NumberedItem extends StatelessWidget {
             height: 26,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.green.withValues(alpha: 0.15),
+              border: Border.all(color: AppColors.cardBorder),
               shape: BoxShape.circle,
             ),
             child: Text(
               '$index',
-              style: const TextStyle(
-                color: AppColors.green,
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-              ),
+              style: ZType.data(12, color: tc.accent),
             ),
           ),
           const SizedBox(width: 12),
@@ -690,8 +649,8 @@ class _NumberedItem extends StatelessWidget {
               padding: const EdgeInsets.only(top: 3),
               child: Text(
                 text,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: tc.textPrimary,
                   fontSize: 15,
                   height: 1.5,
                 ),

@@ -13,6 +13,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
@@ -625,13 +627,17 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
   Widget _buildTableHeader(BuildContext context, WorkoutDesignTheme theme) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = ThemeColors.of(context);
+    // Signature column-header: Barlow Condensed, uppercase, tiny + letter-spaced.
+    final headerColor = isDark ? AppColors.textMuted : Colors.grey.shade600;
+    final TextStyle headerStyle = ZType.lbl(9.5, color: headerColor, letterSpacing: 1.5);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: isDark ? WorkoutDesign.borderSubtle : Colors.grey.shade200,
+            color: isDark ? AppColors.hairline : Colors.grey.shade200,
             width: 1,
           ),
         ),
@@ -642,10 +648,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           SizedBox(
             width: 32,
             child: Text(
-              AppLocalizations.of(context).workoutSummaryAdvancedSet,
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-              ),
+              AppLocalizations.of(context).workoutSummaryAdvancedSet.toUpperCase(),
+              style: headerStyle,
             ),
           ),
 
@@ -653,10 +657,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           Expanded(
             flex: 3,
             child: Text(
-              AppLocalizations.of(context).summaryExerciseTablePrevious,
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-              ),
+              AppLocalizations.of(context).summaryExerciseTablePrevious.toUpperCase(),
+              style: headerStyle,
             ),
           ),
 
@@ -664,11 +666,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           Expanded(
             flex: 3,
             child: Text(
-              AppLocalizations.of(context).summaryExerciseTableTarget,
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: WorkoutDesign.accentBlue,
-                fontWeight: FontWeight.w600,
-              ),
+              AppLocalizations.of(context).summaryExerciseTableTarget.toUpperCase(),
+              style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.5),
             ),
           ),
 
@@ -685,15 +684,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                     Icon(
                       Icons.swap_horiz,
                       size: 14,
-                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
+                      color: headerColor,
                     ),
                   if (widget.onToggleUnit != null)
                     const SizedBox(width: 2),
                   Text(
-                    _unit,
-                    style: WorkoutDesign.tableHeaderStyle.copyWith(
-                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-                    ),
+                    _unit.toUpperCase(),
+                    style: headerStyle,
                   ),
                 ],
               ),
@@ -711,11 +708,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    AppLocalizations.of(context).setTrackingTableLeft,
-                    style: WorkoutDesign.tableHeaderStyle.copyWith(
-                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-                      fontSize: 11,
-                    ),
+                    AppLocalizations.of(context).setTrackingTableLeft.toUpperCase(),
+                    style: ZType.lbl(10, color: headerColor, letterSpacing: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -729,11 +723,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    AppLocalizations.of(context).setTrackingTableRight,
-                    style: WorkoutDesign.tableHeaderStyle.copyWith(
-                      color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-                      fontSize: 11,
-                    ),
+                    AppLocalizations.of(context).setTrackingTableRight.toUpperCase(),
+                    style: ZType.lbl(10, color: headerColor, letterSpacing: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -745,10 +736,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               child: Text(
                 // Swap label to "Time" for timed exercises so the rep input
                 // column doesn't mislead (planks, walking, hollow holds).
-                _isTimedExercise ? 'Time' : 'Reps',
-                style: WorkoutDesign.tableHeaderStyle.copyWith(
-                  color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-                ),
+                (_isTimedExercise ? 'Time' : 'Reps').toUpperCase(),
+                style: headerStyle,
                 textAlign: TextAlign.center,
               ),
             ),
@@ -760,10 +749,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
             width: 26,
             child: Text(
               'RIR',
-              style: WorkoutDesign.tableHeaderStyle.copyWith(
-                color: isDark ? WorkoutDesign.textMuted : Colors.grey.shade600,
-                fontSize: 9,
-              ),
+              style: ZType.lbl(9, color: headerColor, letterSpacing: 1.2),
               textAlign: TextAlign.center,
             ),
           ),
@@ -781,8 +767,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                     : Icons.check_box_outline_blank,
                 size: 20,
                 color: widget.allSetsCompleted
-                    ? WorkoutDesign.success
-                    : (isDark ? WorkoutDesign.textMuted : Colors.grey.shade500),
+                    ? const Color(0xFF5BE49B)
+                    : headerColor,
               ),
             ),
           ),
@@ -949,11 +935,20 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           : null,
       child: Container(
         height: WorkoutDesign.setRowHeight,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        // Active row gets a 3px accent LEFT border; the 9px left padding (vs
+        // 12px) compensates so cell content keeps its alignment. Every row
+        // sits on a 1px bottom hairline — no boxed/tinted cards.
+        padding: EdgeInsets.only(left: isActive ? 9 : 12, right: 12),
         decoration: BoxDecoration(
-          color: isActive
-              ? WorkoutDesign.accentBlue.withOpacity(isDark ? 0.08 : 0.06)
-              : Colors.transparent,
+          border: Border(
+            left: isActive
+                ? BorderSide(color: ThemeColors.of(context).accent, width: 3)
+                : BorderSide.none,
+            bottom: BorderSide(
+              color: isDark ? AppColors.hairline : Colors.grey.shade200,
+              width: 1,
+            ),
+          ),
         ),
         child: Row(
           children: [
@@ -1194,15 +1189,17 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
         HapticFeedback.mediumImpact();
         widget.onAddSet();
       },
+      // Signature "+ ADD SET" affordance — a hairline-led row, no boxed card.
+      // Barlow Condensed uppercase, letter-spaced, in the reserved accent.
       child: Container(
-        height: 48,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: accentColor.withValues(alpha: isDark ? 0.15 : 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: accentColor.withValues(alpha: 0.4),
-            width: 1.5,
+          border: Border(
+            bottom: BorderSide(
+              color: isDark ? AppColors.hairline : Colors.grey.shade200,
+              width: 1,
+            ),
           ),
         ),
         child: Row(
@@ -1210,17 +1207,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           children: [
             Icon(
               Icons.add_rounded,
-              size: 22,
+              size: 18,
               color: accentColor,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 7),
             Text(
-              AppLocalizations.of(context).setTrackingTableAddSet,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: accentColor,
-              ),
+              AppLocalizations.of(context).setTrackingTableAddSet.toUpperCase(),
+              style: ZType.lbl(11, color: accentColor, letterSpacing: 2),
             ),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
@@ -34,10 +35,9 @@ class InflammationTagsSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: _inflammationColor(inflammationScore!).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: _inflammationColor(inflammationScore!).withValues(alpha: 0.3),
+                color: _inflammationColor(inflammationScore!).withValues(alpha: 0.40),
               ),
             ),
             child: Row(
@@ -47,16 +47,14 @@ class InflammationTagsSection extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _inflammationColor(inflammationScore!).withValues(alpha: 0.2),
+                    border: Border.all(
+                      color: _inflammationColor(inflammationScore!).withValues(alpha: 0.45),
+                    ),
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     '${inflammationScore!}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: _inflammationColor(inflammationScore!),
-                    ),
+                    style: ZType.data(15, color: _inflammationColor(inflammationScore!)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -67,12 +65,8 @@ class InflammationTagsSection extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            AppLocalizations.of(context).loggedMealsInflammationScore,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
+                            AppLocalizations.of(context).loggedMealsInflammationScore.toUpperCase(),
+                            style: ZType.lbl(10.5, color: textPrimary, letterSpacing: 1.5),
                           ),
                           const SizedBox(width: 4),
                           GestureDetector(
@@ -114,9 +108,8 @@ class InflammationTagsSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.red.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.red.withValues(alpha: 0.40)),
             ),
             child: Row(
               children: [

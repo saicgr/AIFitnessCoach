@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Phase 4 — per-exercise contribution to a muscle's strength score.
@@ -73,12 +76,10 @@ class _MuscleScoreBreakdownSheetState
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = Theme.of(context).colorScheme.surface;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
+    final bg = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
 
     return Container(
       constraints: BoxConstraints(
@@ -87,6 +88,9 @@ class _MuscleScoreBreakdownSheetState
       decoration: BoxDecoration(
         color: bg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: const Border(
+          top: BorderSide(color: AppColors.hairlineStrong, width: 1),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -96,35 +100,40 @@ class _MuscleScoreBreakdownSheetState
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.white24,
+              color: AppColors.hairlineStrong,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  _humanMuscle(widget.muscleGroup),
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const ZealovaSectionKicker('Strength Breakdown'),
+                      const SizedBox(height: 4),
+                      Text(
+                        _humanMuscle(widget.muscleGroup).toUpperCase(),
+                        style: ZType.disp(24, color: textPrimary),
+                      ),
+                    ],
                   ),
                 ),
-                const Spacer(),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded),
+                  icon: Icon(Icons.close_rounded, color: tc.textMuted),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
           ),
           if (_loading)
-            const Padding(
-              padding: EdgeInsets.all(40),
-              child: CircularProgressIndicator(),
+            Padding(
+              padding: const EdgeInsets.all(40),
+              child: CircularProgressIndicator(color: tc.accent),
             )
           else if (_error != null)
             Padding(
@@ -133,13 +142,13 @@ class _MuscleScoreBreakdownSheetState
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: textSecondary,
+                    color: tc.textMuted,
                     size: 36,
                   ),
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: TextStyle(color: textSecondary),
+                    style: ZType.lbl(13, color: textSecondary, letterSpacing: 0.5),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -156,30 +165,26 @@ class _MuscleScoreBreakdownSheetState
     final header = (_data?['header'] as Map?) ?? {};
     final exercises = (_data?['exercises'] as List?) ?? const [];
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 32),
       children: [
-        _headerCard(header, textPrimary, textSecondary),
-        const SizedBox(height: 16),
+        _headerCard(context, header, textPrimary, textSecondary),
+        const SizedBox(height: 20),
         if (exercises.isEmpty)
           Padding(
             padding: const EdgeInsets.all(20),
             child: Text(
               _data?['note']?.toString() ??
                   AppLocalizations.of(context).muscleScoreBreakdownNoExerciseDataIn,
-              style: TextStyle(color: textSecondary),
+              style: ZType.lbl(13, color: textSecondary, letterSpacing: 0.5),
             ),
           )
         else ...[
-          Text(
+          ZealovaSectionKicker(
             AppLocalizations.of(context).strengthContributionToScore,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-              color: textSecondary,
-            ),
+            accent: true,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
+          const ZealovaRule(),
           for (final raw in exercises)
             _ExerciseRow(
               data: Map<String, dynamic>.from(raw as Map),
@@ -192,74 +197,84 @@ class _MuscleScoreBreakdownSheetState
   }
 
   Widget _headerCard(
+    BuildContext context,
     Map header,
     Color textPrimary,
     Color textSecondary,
   ) {
+    final tc = ThemeColors.of(context);
     final score = header['strength_score'];
     final level = header['strength_level'];
     final best = header['best_exercise_name'];
     final best1rm = header['best_estimated_1rm_kg'];
     final trend = header['trend'];
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white12),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '$score',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                  color: textPrimary,
-                  height: 1.0,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  level?.toString() ?? '',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: textSecondary,
-                  ),
-                ),
+              ZealovaStatTile(
+                value: '$score',
+                label: level?.toString() ?? 'Score',
+                valueSize: 40,
+                accentValue: true,
               ),
               const Spacer(),
               if (trend != null)
-                _trendBadge(trend.toString(), textPrimary, textSecondary),
+                _trendBadge(context, trend.toString(), textSecondary),
             ],
           ),
           if (best != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Best lift: $best${best1rm != null ? "  ·  1RM ${best1rm}kg" : ''}',
-              style: TextStyle(fontSize: 12, color: textSecondary),
+            const SizedBox(height: 12),
+            const ZealovaRule(),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ZealovaSectionKicker('Best Lift', fontSize: 10),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '$best',
+                    style: ZType.lbl(13,
+                        color: textPrimary, letterSpacing: 0.5),
+                    textAlign: TextAlign.right,
+                  ),
+                ),
+              ],
             ),
+            if (best1rm != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    '1RM ${best1rm}kg',
+                    style: ZType.data(11, color: tc.textMuted),
+                  ),
+                ],
+              ),
+            ],
           ],
         ],
       ),
     );
   }
 
-  Widget _trendBadge(String trend, Color textPrimary, Color textSecondary) {
+  Widget _trendBadge(BuildContext context, String trend, Color textSecondary) {
+    final tc = ThemeColors.of(context);
     final isUp = trend.toLowerCase().contains('up') ||
         trend.toLowerCase().contains('improving');
     final isDown = trend.toLowerCase().contains('down') ||
         trend.toLowerCase().contains('declin');
     final color = isUp
-        ? const Color(0xFF22C55E)
-        : (isDown ? const Color(0xFFEF4444) : textSecondary);
+        ? tc.success
+        : (isDown ? tc.error : textSecondary);
     final icon = isUp
         ? Icons.trending_up_rounded
         : (isDown ? Icons.trending_down_rounded : Icons.trending_flat_rounded);
@@ -267,7 +282,8 @@ class _MuscleScoreBreakdownSheetState
       children: [
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 4),
-        Text(trend, style: TextStyle(fontSize: 12, color: color)),
+        Text(trend.toUpperCase(),
+            style: ZType.lbl(11, color: color, letterSpacing: 0.8)),
       ],
     );
   }
@@ -292,58 +308,73 @@ class _ExerciseRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final name = data['exercise_name']?.toString() ?? '—';
     final pct = (data['contribution_pct'] as num?)?.toDouble() ?? 0;
     final e1rm = (data['e1rm'] as num?)?.toDouble();
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      name,
+                      style: ZType.lbl(14,
+                          color: textPrimary, letterSpacing: 0.4),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  Text(
+                    AppLocalizations.of(context)!.muscleScoreBreakdownSheetValue(pct.toStringAsFixed(1)),
+                    style: ZType.data(13, color: tc.accent),
+                  ),
+                ],
               ),
-              Text(
-                AppLocalizations.of(context)!.muscleScoreBreakdownSheetValue(pct.toStringAsFixed(1)),
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
+              const SizedBox(height: 8),
+              // Thin hairline-style bar with a single accent fill element.
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final frac = (pct / 100).clamp(0.0, 1.0);
+                  return Stack(
+                    children: [
+                      Container(
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: AppColors.hairlineStrong,
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
+                      Container(
+                        height: 2,
+                        width: constraints.maxWidth * frac,
+                        decoration: BoxDecoration(
+                          color: tc.accent,
+                          borderRadius: BorderRadius.circular(1),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
+              if (e1rm != null) ...[
+                const SizedBox(height: 6),
+                Text(
+                  AppLocalizations.of(context)!.muscleScoreBreakdownSheetEstimatedRmKg(e1rm.toStringAsFixed(1)),
+                  style: ZType.data(11, color: tc.textMuted),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: (pct / 100).clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: Colors.white.withOpacity(0.06),
-            ),
-          ),
-          if (e1rm != null) ...[
-            const SizedBox(height: 2),
-            Text(
-              AppLocalizations.of(context)!.muscleScoreBreakdownSheetEstimatedRmKg(e1rm.toStringAsFixed(1)),
-              style: TextStyle(
-                fontSize: 11,
-                color: textSecondary,
-              ),
-            ),
-          ],
-        ],
-      ),
+        ),
+        const ZealovaRule(),
+      ],
     );
   }
 }

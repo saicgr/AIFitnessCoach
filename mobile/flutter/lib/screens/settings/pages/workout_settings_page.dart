@@ -7,9 +7,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
-import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
-import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 import '../widgets/widgets.dart';
 
@@ -49,15 +49,12 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AccentColorScope.of(context).getColor(isDark);
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).workoutSettingsWorkoutSettings,
       ),
       body: SingleChildScrollView(
@@ -175,15 +172,13 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     onTap: () {
                       ref.read(fatigueAlertsEnabledProvider.notifier).toggle();
                     },
-                    trailing: Switch.adaptive(
+                    trailing: ZealovaToggle(
                       value: ref.watch(fatigueAlertsEnabledProvider),
                       onChanged: (val) {
                         ref.read(fatigueAlertsEnabledProvider.notifier).setEnabled(val);
                       },
-                      activeThumbColor: accent,
-                      activeTrackColor: accent.withValues(alpha: 0.45),
                     ),
-                    iconColor: accent,
+                    iconColor: ThemeColors.of(context).accent,
                   ),
                   SettingItemData(
                     icon: Icons.auto_awesome_outlined,
@@ -194,17 +189,15 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     onTap: () {
                       ref.read(preSetInsightEnabledProvider.notifier).toggle();
                     },
-                    trailing: Switch.adaptive(
+                    trailing: ZealovaToggle(
                       value: ref.watch(preSetInsightEnabledProvider),
                       onChanged: (val) {
                         ref
                             .read(preSetInsightEnabledProvider.notifier)
                             .setEnabled(val);
                       },
-                      activeThumbColor: accent,
-                      activeTrackColor: accent.withValues(alpha: 0.45),
                     ),
-                    iconColor: accent,
+                    iconColor: ThemeColors.of(context).accent,
                   ),
                   SettingItemData(
                     icon: Icons.checklist_rounded,
@@ -213,13 +206,11 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                         ? 'ON — Warns before finishing with unlogged sets'
                         : 'OFF — No warning on incomplete logs',
                     onTap: () => _toggleSkipWarning(_skipWarningDismissed),
-                    trailing: Switch.adaptive(
+                    trailing: ZealovaToggle(
                       value: !_skipWarningDismissed,
                       onChanged: _toggleSkipWarning,
-                      activeThumbColor: accent,
-                      activeTrackColor: accent.withValues(alpha: 0.45),
                     ),
-                    iconColor: accent,
+                    iconColor: ThemeColors.of(context).accent,
                   ),
                 ],
               ),

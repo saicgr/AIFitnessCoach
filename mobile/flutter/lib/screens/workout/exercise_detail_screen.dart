@@ -8,7 +8,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/utils/exercise_name_format.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../core/providers/favorites_provider.dart';
@@ -448,56 +450,26 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Exercise name (C5: title-cased for display).
+                  // Exercise name (C5: title-cased for display) — Anton masthead.
                   Text(
-                    exercise.name.titleCaseExercise,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    exercise.name.titleCaseExercise.toUpperCase(),
+                    style: ZType.disp(30, color: textPrimary),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
-                  // Target muscle
+                  // Target muscle + equipment — Barlow uppercase hairline chips.
                   if (exercise.primaryMuscle != null || exercise.muscleGroup != null)
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accentColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            exercise.primaryMuscle ?? exercise.muscleGroup ?? '',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
-                            ),
-                          ),
+                        ZealovaChip(
+                          label: exercise.primaryMuscle ?? exercise.muscleGroup ?? '',
+                          selected: true,
                         ),
                         if (exercise.equipment != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: glassSurface,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              exercise.equipment!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textSecondary,
-                              ),
-                            ),
+                          ZealovaChip(
+                            label: exercise.equipment!,
                           ),
                       ],
                     ),
@@ -519,16 +491,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                     _buildRestTimerCard(restSeconds, elevated, textMuted, textPrimary),
                     const SizedBox(height: 24),
 
-                    // Set table header
-                    Text(
-                      'SETS',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textMuted,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
+                    // Set table header — Barlow uppercase kicker.
+                    const ZealovaSectionKicker('Sets'),
                     const SizedBox(height: 12),
 
                     // Set table
@@ -852,40 +816,22 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   }
 
   Widget _buildInstructionsSection(String instructions, Color elevated, Color textSecondary) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
+    // Hairline section (no boxed card): Barlow kicker + Fraunces coaching line.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(
-                Icons.lightbulb_outline,
-                size: 18,
-                color: textSecondary,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).workoutShowcaseInstructions,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ],
+          ZealovaSectionKicker(
+            AppLocalizations.of(context).workoutShowcaseInstructions,
           ),
           const SizedBox(height: 12),
           Text(
             instructions,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: textSecondary,
-                  height: 1.5,
-                ),
+            style: ZType.ser(15, color: textSecondary, height: 1.5),
           ),
+          const SizedBox(height: 4),
+          const ZealovaRule(margin: EdgeInsets.only(top: 16)),
         ],
       ),
     );
@@ -899,25 +845,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
 
     return GestureDetector(
       onTap: _isResting ? _stopRestTimer : _startRestTimer,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: _isResting
-              ? LinearGradient(
-                  colors: [
-                    accentColor.withValues(alpha: 0.2),
-                    accentColor.withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
-          color: _isResting ? null : elevated,
-          borderRadius: BorderRadius.circular(12),
-          border: _isResting
-              ? Border.all(color: accentColor.withValues(alpha: 0.5))
-              : null,
-        ),
+      child: ZealovaCard(
+        // While resting, the timer is the one accent-tinted focus on screen.
+        variant: _isResting
+            ? ZealovaCardVariant.hero
+            : ZealovaCardVariant.outlined,
         child: Row(
           children: [
             Icon(
@@ -931,42 +863,30 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context).exerciseDetailRestTimer,
-                    style: TextStyle(
-                      fontSize: 12,
+                    AppLocalizations.of(context).exerciseDetailRestTimer.toUpperCase(),
+                    style: ZType.lbl(
+                      11,
                       color: _isResting ? accentColor : textMuted,
-                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.6,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
+                  // Telemetry numeral — Space Mono.
                   Text(
                     _isResting
                         ? _formatTime(_restSeconds)
                         : '${mins}m ${secs}s',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                    style: ZType.data(
+                      26,
                       color: _isResting ? accentColor : textPrimary,
-                      fontFamily: 'monospace',
                     ),
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                _isResting ? 'SKIP' : 'START',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: accentColor,
-                ),
-              ),
+            Text(
+              _isResting ? 'SKIP' : 'START',
+              style: ZType.lbl(13, color: accentColor, letterSpacing: 2.0),
             ),
           ],
         ),
@@ -1022,31 +942,27 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     final exercise = widget.exercise;
     final setTargets = exercise.setTargets ?? [];
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+    return Column(
         children: [
           // Header - matches active workout screen: Set | Previous | Target (weight × reps + RIR)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: BoxDecoration(
-              color: glassSurface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            padding: const EdgeInsets.only(bottom: 10),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: AppColors.hairlineStrong),
+              ),
             ),
             child: Row(
               children: [
-                SizedBox(width: 36, child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3))),
+                SizedBox(width: 36, child: Text(AppLocalizations.of(context).workoutSummaryAdvancedSet.toUpperCase(), style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2))),
                 const SizedBox(width: 12),
                 Expanded(
                   flex: 2,
-                  child: Text(AppLocalizations.of(context).summaryExerciseTablePrevious, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
+                  child: Text(AppLocalizations.of(context).summaryExerciseTablePrevious.toUpperCase(), style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2)),
                 ),
                 Expanded(
                   flex: 2,
-                  child: Text(AppLocalizations.of(context).workoutSummaryAdvancedTarget, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3)),
+                  child: Text(AppLocalizations.of(context).workoutSummaryAdvancedTarget.toUpperCase(), style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2)),
                 ),
               ],
             ),
@@ -1075,7 +991,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             );
           }),
         ],
-      ),
     );
   }
 }

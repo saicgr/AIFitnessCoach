@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/line_icon.dart';
 import '../../../data/providers/fasting_provider.dart';
@@ -31,7 +32,7 @@ class FastingPanel extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: c.elevated,
+            color: c.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: c.cardBorder),
           ),
@@ -51,11 +52,11 @@ class FastingPanel extends ConsumerWidget {
           children: [
             LineIcon('fasting', color: c.accent, size: 22),
             const SizedBox(width: 9),
-            Text(AppLocalizations.of(context).nutritionFastingIntermittentFasting,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: c.textPrimary)),
+            Text(
+                AppLocalizations.of(context)
+                    .nutritionFastingIntermittentFasting
+                    .toUpperCase(),
+                style: ZType.lbl(15, color: c.textPrimary, letterSpacing: 1.5)),
           ],
         ),
         const SizedBox(height: 8),
@@ -82,28 +83,21 @@ class FastingPanel extends ConsumerWidget {
           children: [
             LineIcon('fasting', color: c.accent, size: 22),
             const SizedBox(width: 9),
-            Text(AppLocalizations.of(context).unifiedHomeWidgetsFasting,
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: c.textMuted)),
+            Text(
+                AppLocalizations.of(context)
+                    .unifiedHomeWidgetsFasting
+                    .toUpperCase(),
+                style: ZType.lbl(12, color: c.textMuted, letterSpacing: 1.8)),
             const Spacer(),
             Text(fast.protocolType?.toString() ?? '',
-                style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: c.textMuted)),
+                style: ZType.lbl(11, color: c.textMuted, letterSpacing: 1.5)),
           ],
         ),
         const SizedBox(height: 10),
+        // Anton display numeral for the live elapsed time.
         Text(
           fast.elapsedTimeString?.toString() ?? '--:--',
-          style: TextStyle(
-              fontSize: 38,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -1,
-              color: c.textPrimary),
+          style: ZType.disp(40, color: c.textPrimary, letterSpacing: 0),
         ),
         const SizedBox(height: 2),
         Text(

@@ -6,10 +6,11 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/services/data_cache_service.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/pill_app_bar.dart';
 import '../../core/services/posthog_service.dart';
-import '../../widgets/segmented_tab_bar.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../widgets/design_system/zealova.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -297,77 +298,52 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
     return Scaffold(
       backgroundColor: c.background,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).statsRewardsRewards,
+        kicker: 'XP & rewards',
       ),
       body: Column(
         children: [
-          // XP Summary Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: c.elevated,
-              border: Border(
-                bottom: BorderSide(
-                  color: c.cardBorder,
-                ),
-              ),
-            ),
+          // LEVEL header — gold-ringed badge + Anton level + Space Mono XP
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
             child: Row(
               children: [
-                // Level Badge
+                // Level Badge — gold rarity ring, no solid gradient fill
                 Container(
-                  width: 56,
-                  height: 56,
+                  width: 54,
+                  height: 54,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFFFFD700),
-                        const Color(0xFFFFD700).withValues(alpha: 0.7),
-                      ],
-                      begin: AlignmentDirectional.topStart,
-                      end: AlignmentDirectional.bottomEnd,
+                    gradient: const RadialGradient(
+                      colors: [Color(0x38FBBF24), Colors.transparent],
+                      stops: [0.0, 0.7],
+                      center: Alignment(-0.3, -0.4),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                        blurRadius: 12,
-                        spreadRadius: 2,
-                      ),
-                    ],
+                    border: Border.all(
+                      color: AppColors.gamGold.withValues(alpha: 0.55),
+                      width: 1.5,
+                    ),
                   ),
-                  child: Center(
-                    child: Text(
-                      '${xpState.currentLevel}',
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
+                  child: Text(
+                    '${xpState.currentLevel}',
+                    style: ZType.disp(24, color: AppColors.gamGold),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        xpState.title,
-                        style: TextStyle(
-                          color: c.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        xpState.title.toUpperCase(),
+                        style: ZType.disp(19, color: c.textPrimary, height: 0.96),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       Text(
-                        AppLocalizations.of(context).rewardsScreenTotalXp(xpState.totalXp),
-                        style: TextStyle(
-                          color: c.textSecondary,
-                          fontSize: 14,
-                        ),
+                        AppLocalizations.of(context).rewardsScreenTotalXp(xpState.totalXp).toUpperCase(),
+                        style: ZType.data(11, color: c.textMuted),
                       ),
                     ],
                   ),
@@ -375,35 +351,39 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
                 // Trophy count
                 Column(
                   children: [
-                    Icon(
-                      Icons.emoji_events,
-                      color: Colors.amber.shade400,
-                      size: 28,
-                    ),
-                    const SizedBox(height: 4),
+                    const Text('🏆', style: TextStyle(fontSize: 21)),
+                    const SizedBox(height: 2),
                     Text(
                       '${xpState.earnedCount}',
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: ZType.disp(16, color: AppColors.gamGold),
                     ),
                   ],
                 ),
               ],
             ),
           ),
+          const ZealovaRule(margin: EdgeInsets.symmetric(horizontal: 20)),
+          const SizedBox(height: 14),
 
-          // Tab Bar
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: [
-              SegmentedTabItem(label: AppLocalizations.of(context).rewardsAvailable),
-              SegmentedTabItem(label: AppLocalizations.of(context).rewardsClaimed),
-            ],
+          // Tab Bar — Signature text tabs
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: AnimatedBuilder(
+                animation: _tabController,
+                builder: (_, __) => ZealovaTextTabs(
+                  tabs: [
+                    AppLocalizations.of(context).rewardsAvailable,
+                    AppLocalizations.of(context).rewardsClaimed,
+                  ],
+                  activeIndex: _tabController.index,
+                  onChanged: (i) => _tabController.animateTo(i),
+                ),
+              ),
+            ),
           ),
+          const SizedBox(height: 12),
 
           // Tab Content
           Expanded(
@@ -595,34 +575,25 @@ class _RewardCard extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: c.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isAvailable
-              ? iconColor.withValues(alpha: 0.3)
-              : c.cardBorder,
-        ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hairline)),
       ),
       child: Row(
         children: [
-          // Icon
+          // Framed glyph
           Container(
-            width: 56,
-            height: 56,
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              color: c.surface,
+              border: Border.all(color: c.cardBorder),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(
-              icon,
-              color: iconColor,
-              size: 28,
-            ),
+            child: Icon(icon, color: iconColor, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
 
           // Content
           Expanded(
@@ -633,81 +604,69 @@ class _RewardCard extends StatelessWidget {
                   title,
                   style: TextStyle(
                     color: c.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.1,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: c.textSecondary,
-                    fontSize: 13,
-                  ),
+                  subtitle.toUpperCase(),
+                  style: ZType.lbl(9, color: c.textMuted, letterSpacing: 1.3),
                 ),
                 if (!isAvailable && claimedAt != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    'Claimed ${_formatDate(claimedAt)}',
-                    style: TextStyle(
-                      color: c.textMuted,
-                      fontSize: 12,
-                    ),
+                    'Claimed ${_formatDate(claimedAt)}'.toUpperCase(),
+                    style: ZType.lbl(8.5, color: c.textMuted, letterSpacing: 1.2),
                   ),
                 ],
               ],
             ),
           ),
+          const SizedBox(width: 10),
 
-          // Action
+          // Action — the ONE reserved-accent CLAIM
           if (isAvailable)
-            ElevatedButton(
-              onPressed: onClaim,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: iconColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onClaim,
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  height: 30,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context).rewardsClaim.toUpperCase(),
+                    style: ZType.lbl(11,
+                        color: c.accentContrast,
+                        weight: FontWeight.w800,
+                        letterSpacing: 1.8),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                AppLocalizations.of(context).rewardsClaim,
-                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             )
           else
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 6,
-              ),
-              decoration: BoxDecoration(
-                color: _statusColor(displayStatus).withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _statusIcon(displayStatus),
-                    color: _statusColor(displayStatus),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _statusLabel(displayStatus),
-                    style: TextStyle(
-                      color: _statusColor(displayStatus),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _statusIcon(displayStatus),
+                  color: _statusColor(displayStatus),
+                  size: 14,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  _statusLabel(displayStatus).toUpperCase(),
+                  style: ZType.lbl(9.5,
+                      color: _statusColor(displayStatus), letterSpacing: 1.2),
+                ),
+              ],
             ),
         ],
       ),

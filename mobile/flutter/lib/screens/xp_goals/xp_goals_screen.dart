@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
@@ -17,6 +16,8 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/level_up_catch_up_banner.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 
 part 'xp_goals_screen_part_first_time_bonus.dart';
 
@@ -136,12 +137,8 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            l10n.xpGoalsXpGoals,
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
+                            l10n.xpGoalsXpGoals.toUpperCase(),
+                            style: ZType.disp(22, color: textColor),
                           ),
                           if (hasDoubleXP)
                             Row(
@@ -593,33 +590,6 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     );
   }
 
-  Widget _buildStatColumn(
-    String value,
-    String label,
-    Color textColor,
-    Color textMuted,
-  ) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: textMuted,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildGoalRow(
     _DailyGoal goal,
     Color textColor,
@@ -640,27 +610,29 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
       ),
       child: Row(
         children: [
+          // Round status check — green filled when done, gold hairline when open
           Container(
-            width: 30,
-            height: 30,
+            width: 20,
+            height: 20,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: goal.isComplete
-                  ? AppColors.green.withValues(alpha: isDark ? 0.15 : 0.12)
-                  : (isDark ? textMuted.withValues(alpha: 0.1) : Colors.grey.shade200),
+              color: goal.isComplete ? AppColors.success : Colors.transparent,
               shape: BoxShape.circle,
+              border: Border.all(
+                color: goal.isComplete ? AppColors.success : AppColors.gamGold,
+                width: 1.5,
+              ),
             ),
-            child: Icon(
-              goal.isComplete ? Icons.check : goal.icon,
-              size: 15,
-              color: goal.isComplete ? AppColors.green : (isDark ? textMuted : Colors.grey.shade600),
-            ),
+            child: goal.isComplete
+                ? const Icon(Icons.check, size: 12, color: Colors.black)
+                : Icon(goal.icon, size: 10, color: AppColors.gamGold),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 11),
           Expanded(
             child: Text(
               goal.title,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: goal.isComplete ? textMuted : textColor,
                 decoration: goal.isComplete ? TextDecoration.lineThrough : null,
@@ -668,12 +640,11 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
             ),
           ),
           Text(
-            '+$effectiveXP XP',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: goal.isComplete ? AppColors.green : accentColor,
-            ),
+            '+$effectiveXP',
+            style: ZType.lbl(11,
+                color: goal.isComplete ? AppColors.success : AppColors.gamGold,
+                weight: FontWeight.w800,
+                letterSpacing: 0.5),
           ),
         ],
       ),

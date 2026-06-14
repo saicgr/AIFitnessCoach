@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/hydration_repository.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -31,7 +32,7 @@ class HydrationSummaryBlock extends ConsumerWidget {
     final percentage = goalMl > 0 ? (currentMl / goalMl).clamp(0.0, 1.0) : 0.0;
     final percentageInt = (percentage * 100).round();
 
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final electricBlue = isDark
         ? AppColors.waterBlue
         : AppColorsLight.waterBlue;
@@ -56,7 +57,7 @@ class HydrationSummaryBlock extends ConsumerWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: elevated,
+          color: surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cardBorder),
         ),
@@ -82,22 +83,16 @@ class HydrationSummaryBlock extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  AppLocalizations.of(context).workoutSummaryAdvancedHydration,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  AppLocalizations.of(context)
+                      .workoutSummaryAdvancedHydration
+                      .toUpperCase(),
+                  style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5),
                 ),
                 const Spacer(),
-                // Values
+                // Values — bold tabular ledger value.
                 Text(
                   '$currentMl / $goalMl ml',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  style: ZType.data(13, color: textPrimary),
                 ),
                 const SizedBox(width: 8),
                 Container(

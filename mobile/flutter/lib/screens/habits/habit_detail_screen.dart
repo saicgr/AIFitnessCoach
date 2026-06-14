@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/habit.dart';
 import '../../data/providers/habits_provider.dart';
@@ -669,8 +670,8 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
                   children: [
                     Icon(Icons.error_outline, size: 48, color: textSecondary),
                     const SizedBox(height: 16),
-                    Text(AppLocalizations.of(context).habitDetailFailedToLoadHabit,
-                        style: TextStyle(color: textSecondary)),
+                    Text(AppLocalizations.of(context).habitDetailFailedToLoadHabit.toUpperCase(),
+                        style: ZType.lbl(13, color: textSecondary, letterSpacing: 1.4)),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () =>
@@ -690,8 +691,8 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
               }
               // Resolved to null → the habit genuinely doesn't exist.
               return Center(
-                child: Text(AppLocalizations.of(context).habitDetailHabitNotFound,
-                    style: TextStyle(color: textSecondary)),
+                child: Text(AppLocalizations.of(context).habitDetailHabitNotFound.toUpperCase(),
+                    style: ZType.lbl(13, color: textSecondary, letterSpacing: 1.4)),
               );
             }
 

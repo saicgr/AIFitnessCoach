@@ -14,6 +14,9 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'measurements_tab_ui.dart';
@@ -197,12 +200,15 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
+    final elevated = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final cardBorder = AppColors.cardBorder;
+    // Signature accent (gym-override aware). Kept under the legacy `cyan` name
+    // since it threads through every helper's params; ≤1 accent element/section.
+    final cyan = tc.accent;
 
     final state = ref.watch(measurementsProvider);
     final summary = state.summary;
@@ -447,36 +453,16 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     required Color textMuted,
     required Color cardBorder,
   }) {
+    final activeIndex =
+        _periods.indexWhere((p) => p['value'] == _selectedPeriod);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: _periods.map((period) {
-          final isSelected = _selectedPeriod == period['value'];
-          return GestureDetector(
-            onTap: () =>
-                setState(() => _selectedPeriod = period['value'] as String),
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: isSelected ? cyan : cardBorder),
-              ),
-              child: Text(
-                period['label'] as String,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? cyan : textMuted,
-                ),
-              ),
-            ),
-          );
-        }).toList(),
+      child: ZealovaTextTabs(
+        tabs: _periods.map((p) => p['label'] as String).toList(),
+        activeIndex: activeIndex < 0 ? 0 : activeIndex,
+        onChanged: (i) => setState(
+            () => _selectedPeriod = _periods[i]['value'] as String),
       ),
     );
   }
@@ -594,7 +580,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               reservedSize: 40,
               getTitlesWidget: (value, meta) => Text(
                 _formatValue(value),
-                style: TextStyle(fontSize: 10, color: textMuted),
+                style: ZType.lbl(9, color: textMuted, letterSpacing: 0.5),
               ),
             ),
           ),
@@ -610,7 +596,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       DateFormat('M/d').format(data[index].recordedAt),
-                      style: TextStyle(fontSize: 9, color: textMuted),
+                      style: ZType.lbl(8, color: textMuted, letterSpacing: 0.5),
                     ),
                   );
                 }
@@ -746,7 +732,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               : BorderSide.none,
           bottom: isLast
               ? BorderSide.none
-              : BorderSide(color: cardBorder, width: 0.5),
+              : const BorderSide(color: AppColors.hairline, width: 1),
         ),
       ),
       child: Column(
@@ -773,11 +759,11 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          type.displayName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
+                          type.displayName.toUpperCase(),
+                          style: ZType.lbl(
+                            12.5,
                             color: hasData ? textPrimary : textMuted,
+                            letterSpacing: 1.0,
                           ),
                         ),
                         if (hasData && change != null && change.abs() >= 0.1)
@@ -804,15 +790,12 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                   hasData
                       ? Text(
                           '${_formatValue(entry.value)} ${entry.unit}',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
+                          style: ZType.data(14, color: textPrimary),
                         )
                       : Text(
                           AppLocalizations.of(context)!.measurementsTabValue(unit),
-                          style: TextStyle(fontSize: 14, color: textMuted.withValues(alpha: 0.5)),
+                          style: ZType.data(13,
+                              color: textMuted.withValues(alpha: 0.5)),
                         ),
                   const SizedBox(width: 4),
                   GestureDetector(
@@ -851,30 +834,18 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     required Color cyan,
     required Color cardBorder,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (int gi = 0; gi < _measurementGroups.length; gi++) ...[
-            // Group header
-            Padding(
-              padding: EdgeInsetsDirectional.only(start: 16, end: 16,
-                top: gi == 0 ? 16 : 20,
-                bottom: 4,
-              ),
-              child: Text(
-                (_measurementGroups[gi]['title'] as String).toUpperCase(),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: textMuted,
-                  letterSpacing: 0.8,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (int gi = 0; gi < _measurementGroups.length; gi++) ...[
+            // Group header — Signature Barlow kicker
+            ZealovaSectionKicker(
+              _measurementGroups[gi]['title'] as String,
+              padding: EdgeInsetsDirectional.only(
+                start: 4,
+                end: 4,
+                top: gi == 0 ? 4 : 22,
+                bottom: 6,
               ),
             ),
             // Group rows - get types for this group, filtered to user order
@@ -940,9 +911,8 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               );
             }),
           ],
-          const SizedBox(height: 8),
-        ],
-      ),
+        const SizedBox(height: 8),
+      ],
     );
   }
 

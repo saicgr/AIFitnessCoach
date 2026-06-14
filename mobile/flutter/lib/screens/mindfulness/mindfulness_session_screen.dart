@@ -23,9 +23,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/theme_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../data/providers/mindfulness_provider.dart';
 import '../../data/services/mindfulness_service.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/design_system/zealova.dart';
 
 /// Minimum elapsed seconds before an early exit counts as a logged session.
 const int _kMinLoggableSeconds = 60;
@@ -248,22 +250,22 @@ class _MindfulnessSessionScreenState
             children: [
               const Spacer(),
               Text(
-                widget.title,
+                widget.title.toUpperCase(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: c.textPrimary,
-                ),
+                style: ZType.disp(28, color: c.textPrimary),
               ),
-              const SizedBox(height: 6),
-              Text(
-                isBreathwork
-                    ? 'Breathe in… and out. Follow the circle.'
-                    : '${widget.durationMinutes} min · guided',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13, color: c.textSecondary),
-              ),
+              const SizedBox(height: 8),
+              isBreathwork
+                  ? Text(
+                      'Breathe in… and out. Follow the circle.',
+                      textAlign: TextAlign.center,
+                      style: ZType.ser(15, color: c.textSecondary),
+                    )
+                  : Text(
+                      '${widget.durationMinutes} MIN · GUIDED',
+                      textAlign: TextAlign.center,
+                      style: ZType.lbl(11, color: c.textMuted, letterSpacing: 2),
+                    ),
               const SizedBox(height: 40),
               // Breathing ring — pulses while running, shows time + progress.
               AnimatedBuilder(
@@ -300,19 +302,13 @@ class _MindfulnessSessionScreenState
                           children: [
                             Text(
                               _fmt(_remaining),
-                              style: TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w800,
-                                color: c.textPrimary,
-                                fontFeatures: const [
-                                  FontFeature.tabularFigures()
-                                ],
-                              ),
+                              style: ZType.data(40, color: c.textPrimary),
                             ),
+                            const SizedBox(height: 4),
                             Text(
-                              _completed ? 'Done' : 'remaining',
-                              style: TextStyle(
-                                  fontSize: 12, color: c.textMuted),
+                              _completed ? 'DONE' : 'REMAINING',
+                              style: ZType.lbl(10,
+                                  color: c.textMuted, letterSpacing: 2.5),
                             ),
                           ],
                         ),
@@ -323,40 +319,18 @@ class _MindfulnessSessionScreenState
               ),
               const Spacer(),
               if (!_completed) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _running ? _pause : _start,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: c.accent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: Text(
-                      _running
-                          ? 'Pause'
-                          : (_elapsed > 0 ? 'Resume' : 'Begin'),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                ZealovaButton(
+                  label: _running
+                      ? 'Pause'
+                      : (_elapsed > 0 ? 'Resume' : 'Begin'),
+                  variant: ZealovaButtonVariant.primary,
+                  onTap: _running ? _pause : _start,
                 ),
-                const SizedBox(height: 10),
-                TextButton(
-                  onPressed: _elapsed > 0 ? _endEarly : () => context.pop(),
-                  child: Text(
-                    _canLogEarly ? 'End & log' : 'End',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: c.textSecondary,
-                    ),
-                  ),
+                const SizedBox(height: 12),
+                ZealovaButton(
+                  label: _canLogEarly ? 'End & log' : 'End',
+                  variant: ZealovaButtonVariant.ghost,
+                  onTap: _elapsed > 0 ? _endEarly : () => context.pop(),
                 ),
               ],
               const SizedBox(height: 16),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/mood_history_provider.dart';
@@ -10,6 +9,8 @@ import '../../mood/widgets/mood_weekly_chart.dart';
 import '../../mood/widgets/mood_streak_card.dart';
 import '../../mood/widgets/mood_analytics_card.dart';
 import '../../mood/widgets/mood_calendar_heatmap.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 
 class MoodTab extends ConsumerStatefulWidget {
   const MoodTab({super.key});
@@ -30,8 +31,8 @@ class _MoodTabState extends ConsumerState<MoodTab> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final state = ref.watch(moodHistoryProvider);
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     if (state.isLoading) {
       // Layout-matched skeleton instead of a blocking spinner: weekly chart
@@ -88,7 +89,10 @@ class _MoodTabState extends ConsumerState<MoodTab> {
               Center(
                 child: TextButton(
                   onPressed: () => context.push('/mood-history'),
-                  child: Text('View Full History', style: TextStyle(color: teal)),
+                  child: Text(
+                    'VIEW FULL HISTORY',
+                    style: ZType.lbl(12, color: tc.textSecondary),
+                  ),
                 ),
               ),
 

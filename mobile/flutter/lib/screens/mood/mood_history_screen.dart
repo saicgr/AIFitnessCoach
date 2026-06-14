@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -121,20 +124,13 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppLocalizations.of(context).moodHistoryYourMoodInsights,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: textPrimary,
-                              ),
+                              AppLocalizations.of(context).moodHistoryYourMoodInsights.toUpperCase(),
+                              style: ZType.disp(24, color: textPrimary),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               AppLocalizations.of(context)!.moodHistoryScreenLastDays(state.analytics!.summary.daysTracked),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
-                              ),
+                              style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
                             ),
                           ],
                         ),
@@ -170,21 +166,15 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                       padding: const EdgeInsets.all(16),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
+                          ZealovaSectionKicker(
                             AppLocalizations.of(context).moodHistoryCheckInHistory,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: textPrimary,
-                            ),
+                            fontSize: 12,
                           ),
                           Text(
                             AppLocalizations.of(context)!.moodHistoryScreenTotal(state.totalCount),
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: textSecondary,
-                            ),
+                            style: ZType.lbl(11, color: textSecondary, letterSpacing: 1),
                           ),
                         ],
                       ),
@@ -294,12 +284,8 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: textSecondary,
-        ),
+        label.toUpperCase(),
+        style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
       ),
     );
   }
@@ -318,18 +304,15 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).moodHistoryNoMoodCheckIns,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).moodHistoryNoMoodCheckIns.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(20, color: textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context).moodHistoryStartTrackingYourMood,
               textAlign: TextAlign.center,
-              style: TextStyle(color: textSecondary),
+              style: ZType.ser(15, color: textSecondary),
             ),
           ],
         ),
@@ -338,31 +321,24 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
   }
 
   Widget _buildRecommendations(List<String> recommendations, bool isDark) {
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final textPrimary = tc.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accent.withValues(alpha: 0.3)),
-        ),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.hero,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(Icons.lightbulb_outline, color: accent, size: 20),
+                Icon(Icons.lightbulb_outline, color: accent, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  AppLocalizations.of(context).moodHistoryInsightsSuggestions,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: accent,
-                  ),
+                  AppLocalizations.of(context).moodHistoryInsightsSuggestions.toUpperCase(),
+                  style: ZType.lbl(12, color: accent, letterSpacing: 1.5),
                 ),
               ],
             ),

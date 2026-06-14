@@ -8,8 +8,10 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/recipe_share.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class RecipeShareSheet extends ConsumerStatefulWidget {
@@ -50,40 +52,53 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // Resolve the gym-aware accent the same way the rest of the sheet did.
     final accent = AccentColorScope.of(context).getColor(widget.isDark);
-    final isDark = widget.isDark;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
     return Padding(
       padding: EdgeInsets.fromLTRB(20, 24, 20, MediaQuery.of(context).viewInsets.bottom + 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(_link != null ? Icons.public : Icons.share_outlined, size: 48, color: accent),
-          const SizedBox(height: 12),
-          Text(_link != null ? AppLocalizations.of(context).recipeShareRecipeIsPublic : AppLocalizations.of(context).recipeShareSharePublicly,
-              style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 4),
+          Icon(_link != null ? Icons.public : Icons.share_outlined, size: 44, color: accent),
+          const SizedBox(height: 14),
+          Text(
+            (_link != null
+                    ? AppLocalizations.of(context).recipeShareRecipeIsPublic
+                    : AppLocalizations.of(context).recipeShareSharePublicly)
+                .toUpperCase(),
+            style: ZType.disp(22, color: text),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
           Text(
             _link != null
                 ? AppLocalizations.of(context)!.recipeShareSheetAnyoneWithTheLink(_link!.saveCount, _link!.viewCount)
                 : 'Generate a link anyone can open. They can save a copy to their library.',
-            style: TextStyle(color: muted, fontSize: 12, height: 1.4),
+            style: TextStyle(color: muted, fontSize: 12.5, height: 1.5),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
           if (_link != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              padding: const EdgeInsets.fromLTRB(14, 10, 6, 10),
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: accent.withValues(alpha: 0.3)),
+                color: tc.surface,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: Row(children: [
-                Expanded(child: Text(_link!.url, style: TextStyle(color: text, fontSize: 12))),
+                Expanded(
+                  child: Text(_link!.url,
+                      style: ZType.data(12.5, color: text),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                ),
                 IconButton(
-                  icon: const Icon(Icons.copy, size: 18),
+                  icon: Icon(Icons.copy, size: 18, color: muted),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: _link!.url));
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -97,13 +112,16 @@ class _RecipeShareSheetState extends ConsumerState<RecipeShareSheet> {
               ]),
             ),
             const SizedBox(height: 16),
-            OutlinedButton(onPressed: _loading ? null : _disable, child: Text(AppLocalizations.of(context).recipeShareStopSharing)),
+            ZealovaButton(
+              label: AppLocalizations.of(context).recipeShareStopSharing,
+              variant: ZealovaButtonVariant.ghost,
+              onTap: _loading ? null : _disable,
+            ),
           ] else
-            ElevatedButton.icon(
-              onPressed: _loading ? null : _enable,
-              icon: const Icon(Icons.link),
-              label: Text(AppLocalizations.of(context).recipeShareGenerateShareLink),
-              style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
+            ZealovaButton(
+              label: AppLocalizations.of(context).recipeShareGenerateShareLink,
+              trailingIcon: Icons.link,
+              onTap: _loading ? null : _enable,
             ),
         ],
       ),

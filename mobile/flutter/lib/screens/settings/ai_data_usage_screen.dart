@@ -3,8 +3,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Screen explaining how AI uses user data, what it sees and doesn't see,
@@ -15,18 +17,16 @@ class AIDataUsageScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.read(posthogServiceProvider).capture(eventName: 'ai_data_usage_viewed');
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final backgroundColor =
+        tc.isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
+        kicker: 'PRIVACY',
         title: AppLocalizations.of(context).aiPrivacyHowYourDataIs,
+        titleSize: 24,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -34,44 +34,40 @@ class AIDataUsageScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Container(
-              width: double.infinity,
+            ZealovaCard(
+              variant: ZealovaCardVariant.hero,
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: cardBorder),
-              ),
               child: Column(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    width: 56,
+                    height: 56,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.info.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.cardBorder),
+                      borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       Icons.shield_outlined,
-                      color: AppColors.info,
-                      size: 36,
+                      color: tc.accent,
+                      size: 30,
                     ),
                   ),
                   const SizedBox(height: 16),
                   Text(
                     AppLocalizations.of(context).aiPrivacyHowYourDataIs,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
+                    textAlign: TextAlign.center,
+                    style: ZType.disp(20, color: tc.textPrimary),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    AppLocalizations.of(context)!.aiDataUsageScreenSendsYourFitnessProfile(Branding.appName),
+                    AppLocalizations.of(context)!
+                        .aiDataUsageScreenSendsYourFitnessProfile(
+                            Branding.appName),
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: textSecondary,
+                      color: tc.textSecondary,
                       height: 1.5,
                     ),
                   ),
@@ -85,9 +81,9 @@ class AIDataUsageScreen extends ConsumerWidget {
             _buildSection(
               context,
               icon: Icons.visibility_outlined,
-              iconColor: AppColors.success,
               title: AppLocalizations.of(context).aiDataUsageWhatModelsReceive,
-              subtitle: AppLocalizations.of(context).aiDataUsageEverythingNeededToCoach,
+              subtitle:
+                  AppLocalizations.of(context).aiDataUsageEverythingNeededToCoach,
               items: const [
                 'Your fitness profile (age, height, weight, goals, equipment)',
                 'Workout history (exercises, sets, reps, weights, RPE)',
@@ -97,11 +93,6 @@ class AIDataUsageScreen extends ConsumerWidget {
                 'Exercise form videos you upload for technique feedback',
                 'Your account ID (so your coach can retrieve your history and context)',
               ],
-              elevated: elevated,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              textMuted: textMuted,
             ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 16),
@@ -110,7 +101,6 @@ class AIDataUsageScreen extends ConsumerWidget {
             _buildSection(
               context,
               icon: Icons.visibility_off_outlined,
-              iconColor: AppColors.error,
               title: AppLocalizations.of(context).aiDataUsageWhatNeverLeavesOur,
               subtitle: AppLocalizations.of(context).aiDataUsageDataWeDoNot,
               items: const [
@@ -121,11 +111,6 @@ class AIDataUsageScreen extends ConsumerWidget {
                 'Social connections or friends',
                 'Authentication credentials and tokens',
               ],
-              elevated: elevated,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              textMuted: textMuted,
             ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 16),
@@ -134,9 +119,9 @@ class AIDataUsageScreen extends ConsumerWidget {
             _buildSection(
               context,
               icon: Icons.lock_outlined,
-              iconColor: AppColors.info,
               title: AppLocalizations.of(context).aiDataUsageHowDataIsProtected,
-              subtitle: AppLocalizations.of(context).aiDataUsageTechnicalSafeguardsInPlace,
+              subtitle: AppLocalizations.of(context)
+                  .aiDataUsageTechnicalSafeguardsInPlace,
               items: const [
                 'TLS/HTTPS encryption for all data in transit',
                 'Encryption at rest in our database',
@@ -145,11 +130,6 @@ class AIDataUsageScreen extends ConsumerWidget {
                 'Chat history retained up to 12 months, then auto-deleted',
                 'You can clear chat history or delete your account at any time',
               ],
-              elevated: elevated,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              textMuted: textMuted,
             ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 16),
@@ -158,7 +138,6 @@ class AIDataUsageScreen extends ConsumerWidget {
             _buildSection(
               context,
               icon: Icons.tune,
-              iconColor: AppColors.purple,
               title: AppLocalizations.of(context).aiDataUsageYourControls,
               subtitle: AppLocalizations.of(context).aiDataUsageYouAreInCharge,
               items: const [
@@ -169,11 +148,6 @@ class AIDataUsageScreen extends ConsumerWidget {
                 'Delete your account — personal data is removed within 30 days',
                 'Revoke Health Connect / HealthKit permission anytime',
               ],
-              elevated: elevated,
-              cardBorder: cardBorder,
-              textPrimary: textPrimary,
-              textSecondary: textSecondary,
-              textMuted: textMuted,
             ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.05),
 
             const SizedBox(height: 32),
@@ -186,36 +160,26 @@ class AIDataUsageScreen extends ConsumerWidget {
   Widget _buildSection(
     BuildContext context, {
     required IconData icon,
-    required Color iconColor,
     required String title,
     required String subtitle,
     required List<String> items,
-    required Color elevated,
-    required Color cardBorder,
-    required Color textPrimary,
-    required Color textSecondary,
-    required Color textMuted,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
+    final tc = ThemeColors.of(context);
+    return ZealovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
+                  border: Border.all(color: AppColors.cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: iconColor, size: 20),
+                child: Icon(icon, color: tc.textSecondary, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -224,17 +188,15 @@ class AIDataUsageScreen extends ConsumerWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
+                      style: ZType.lbl(14,
+                          color: tc.textPrimary, letterSpacing: 1.2),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: textMuted,
+                        color: tc.textMuted,
                       ),
                     ),
                   ],
@@ -253,7 +215,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                       width: 6,
                       height: 6,
                       decoration: BoxDecoration(
-                        color: iconColor.withValues(alpha: 0.6),
+                        color: tc.accent.withValues(alpha: 0.7),
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -263,7 +225,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                         item,
                         style: TextStyle(
                           fontSize: 14,
-                          color: textSecondary,
+                          color: tc.textSecondary,
                           height: 1.4,
                         ),
                       ),

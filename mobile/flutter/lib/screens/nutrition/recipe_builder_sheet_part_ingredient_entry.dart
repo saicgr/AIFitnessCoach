@@ -47,11 +47,11 @@ class _IngredientRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final errorColor = isDark ? AppColors.error : AppColorsLight.error;
+    final errorColor = tc.error;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -65,7 +65,7 @@ class _IngredientRow extends StatelessWidget {
             width: 6,
             height: 6,
             decoration: BoxDecoration(
-              color: teal,
+              color: textMuted,
               shape: BoxShape.circle,
             ),
           ),
@@ -99,18 +99,11 @@ class _IngredientRow extends StatelessWidget {
             children: [
               Text(
                 '${ingredient.calories ?? 0}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: teal,
-                ),
+                style: ZType.data(14, color: textPrimary),
               ),
               Text(
-                'kcal',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: textMuted,
-                ),
+                'KCAL',
+                style: ZType.lbl(9, color: textMuted, letterSpacing: 1.5),
               ),
             ],
           ),
@@ -248,13 +241,43 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
     Navigator.pop(context, ingredient);
   }
 
+  /// Hairline-led input decoration for the Signature dark sheet.
+  InputDecoration _hairlineDecoration({
+    required String labelText,
+    String? hintText,
+    String? suffixText,
+    required Color textMuted,
+    required Color surface,
+    required Color cardBorder,
+  }) {
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: color),
+        );
+    return InputDecoration(
+      labelText: labelText,
+      labelStyle: ZType.lbl(12, color: textMuted, letterSpacing: 1.3),
+      hintText: hintText,
+      hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
+      suffixText: suffixText,
+      suffixStyle: ZType.lbl(12, color: textMuted, letterSpacing: 1.3),
+      filled: true,
+      fillColor: surface,
+      border: border(cardBorder),
+      enabledBorder: border(cardBorder),
+      focusedBorder: border(ThemeColors.of(context).accent),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final tc = ThemeColors.of(context);
+    final surface = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final accent = tc.accent;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return SizedBox(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -267,11 +290,7 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
               children: [
                 Text(
                   AppLocalizations.of(context).recipeBuilderSheetAddIngredient,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
+                  style: ZType.disp(22, color: textPrimary),
                 ),
                 const Spacer(),
                 TextButton(
@@ -292,17 +311,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                   TextField(
                     controller: _nameController,
                     style: TextStyle(color: textPrimary),
-                    decoration: InputDecoration(
+                    decoration: _hairlineDecoration(
                       labelText: AppLocalizations.of(context).recipeBuilderSheetIngredientName,
-                      labelStyle: TextStyle(color: textMuted),
                       hintText: 'e.g., Chicken breast, Oats, Banana',
-                      hintStyle: TextStyle(color: textMuted.withOpacity(0.5)),
-                      filled: true,
-                      fillColor: elevated,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
+                      textMuted: textMuted,
+                      surface: surface,
+                      cardBorder: cardBorder,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -316,15 +330,11 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           controller: _amountController,
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
-                          decoration: InputDecoration(
+                          decoration: _hairlineDecoration(
                             labelText: AppLocalizations.of(context).recipeBuilderSheetAmount,
-                            labelStyle: TextStyle(color: textMuted),
-                            filled: true,
-                            fillColor: elevated,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            textMuted: textMuted,
+                            surface: surface,
+                            cardBorder: cardBorder,
                           ),
                         ),
                       ),
@@ -333,14 +343,15 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           decoration: BoxDecoration(
-                            color: elevated,
+                            color: surface,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: cardBorder),
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
                               value: _selectedUnit,
                               isExpanded: true,
-                              dropdownColor: elevated,
+                              dropdownColor: surface,
                               style: TextStyle(color: textPrimary),
                               items: _units.map((unit) {
                                 return DropdownMenuItem(
@@ -361,47 +372,43 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Analyze Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _isAnalyzing ? null : _analyzeIngredient,
-                      icon: _isAnalyzing
-                          ? SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: teal,
-                              ),
-                            )
-                          : Icon(Icons.auto_awesome, color: teal),
-                      label: Text(
-                        _isAnalyzing
-                            ? AppLocalizations.of(context).recipeBuilderSheetAnalyzing
-                            : 'Estimate Nutrition with AI',
-                        style: TextStyle(color: teal),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: teal),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                  // Analyze Button — ghost secondary (accent reserved for Add CTA)
+                  _isAnalyzing
+                      ? SizedBox(
+                          height: 46,
+                          child: Center(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: accent,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Text(
+                                  AppLocalizations.of(context).recipeBuilderSheetAnalyzing,
+                                  style: ZType.lbl(14, color: textMuted, letterSpacing: 2.5),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : ZealovaButton(
+                          label: 'Estimate Nutrition with AI',
+                          onTap: _analyzeIngredient,
+                          variant: ZealovaButtonVariant.ghost,
+                          trailingIcon: Icons.auto_awesome,
+                          height: 46,
                         ),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 24),
 
                   // Nutrition Fields
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).recipeBuilderSheetNutritionPerAmountAbove,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                      letterSpacing: 1,
-                    ),
                   ),
                   const SizedBox(height: 12),
 
@@ -410,17 +417,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                     controller: _caloriesController,
                     keyboardType: TextInputType.number,
                     style: TextStyle(color: textPrimary),
-                    decoration: InputDecoration(
+                    decoration: _hairlineDecoration(
                       labelText: AppLocalizations.of(context).workoutSummaryGeneralCalories,
-                      labelStyle: TextStyle(color: textMuted),
                       suffixText: 'kcal',
-                      suffixStyle: TextStyle(color: textMuted),
-                      filled: true,
-                      fillColor: elevated,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
+                      textMuted: textMuted,
+                      surface: surface,
+                      cardBorder: cardBorder,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -433,17 +435,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           controller: _proteinController,
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
-                          decoration: InputDecoration(
+                          decoration: _hairlineDecoration(
                             labelText: AppLocalizations.of(context).weeklyCheckinSheetProtein,
-                            labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
-                            suffixStyle: TextStyle(color: textMuted),
-                            filled: true,
-                            fillColor: elevated,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            textMuted: textMuted,
+                            surface: surface,
+                            cardBorder: cardBorder,
                           ),
                         ),
                       ),
@@ -453,17 +450,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           controller: _carbsController,
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
-                          decoration: InputDecoration(
+                          decoration: _hairlineDecoration(
                             labelText: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
-                            labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
-                            suffixStyle: TextStyle(color: textMuted),
-                            filled: true,
-                            fillColor: elevated,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            textMuted: textMuted,
+                            surface: surface,
+                            cardBorder: cardBorder,
                           ),
                         ),
                       ),
@@ -478,17 +470,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           controller: _fatController,
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
-                          decoration: InputDecoration(
+                          decoration: _hairlineDecoration(
                             labelText: AppLocalizations.of(context).weeklyCheckinSheetFat,
-                            labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
-                            suffixStyle: TextStyle(color: textMuted),
-                            filled: true,
-                            fillColor: elevated,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            textMuted: textMuted,
+                            surface: surface,
+                            cardBorder: cardBorder,
                           ),
                         ),
                       ),
@@ -498,17 +485,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                           controller: _fiberController,
                           keyboardType: TextInputType.number,
                           style: TextStyle(color: textPrimary),
-                          decoration: InputDecoration(
+                          decoration: _hairlineDecoration(
                             labelText: AppLocalizations.of(context).recipeBuilderSheetFiber,
-                            labelStyle: TextStyle(color: textMuted),
                             suffixText: 'g',
-                            suffixStyle: TextStyle(color: textMuted),
-                            filled: true,
-                            fillColor: elevated,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
+                            textMuted: textMuted,
+                            surface: surface,
+                            cardBorder: cardBorder,
                           ),
                         ),
                       ),
@@ -516,24 +498,12 @@ class _AddIngredientSheetState extends ConsumerState<_AddIngredientSheet> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Add Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton.icon(
-                      onPressed: _addIngredient,
-                      icon: const Icon(Icons.add),
-                      label: Text(
-                        AppLocalizations.of(context).recipeBuilderSheetAddIngredient,
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: teal,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
+                  // Add Button — the one primary CTA for this sheet
+                  ZealovaButton(
+                    label: AppLocalizations.of(context).recipeBuilderSheetAddIngredient,
+                    onTap: _addIngredient,
+                    trailingIcon: Icons.add,
+                    height: 52,
                   ),
                 ],
               ),
@@ -571,70 +541,63 @@ class _NutritionSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final tc = ThemeColors.of(context);
+    final surface = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final accent = tc.accent;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    // Monochrome macro colors
-    final caloriesColor = AppColors.textPrimary;
-    final proteinColor = AppColors.textSecondary;
-    final carbsColor = AppColors.textMuted;
-    final fatColor = AppColors.textSecondary;
-    final fiberColor = AppColors.textMuted;
+    // Semantic macro colors
+    final proteinColor = AppColors.macroProtein;
+    final carbsColor = AppColors.macroCarbs;
+    final fatColor = AppColors.macroFat;
+    final fiberColor = tc.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: teal.withOpacity(0.3)),
+        color: surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
           // Calories Row
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: caloriesColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: tc.elevated,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
                 ),
-                child: Icon(Icons.local_fire_department, size: 20, color: caloriesColor),
+                child: Icon(Icons.local_fire_department, size: 20, color: textPrimary),
               ),
               const SizedBox(width: 12),
               Text(
                 '$calories',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
+                style: ZType.disp(30, color: textPrimary),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 6),
               Text(
-                'kcal',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textMuted,
-                ),
+                'KCAL',
+                style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
               ),
               const Spacer(),
               if (servings > 1)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: teal.withOpacity(0.1),
+                    color: tc.elevated,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: cardBorder),
                   ),
                   child: Text(
                     '${calories * servings} total',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: teal,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: ZType.lbl(11, color: accent, letterSpacing: 1.3),
                   ),
                 ),
             ],
@@ -695,32 +658,28 @@ class _MacroChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final textMuted = tc.textMuted;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           children: [
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: textMuted,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(9, color: textMuted, letterSpacing: 1.5),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 4),
             Text(
               '${value.toStringAsFixed(1)}g',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+              style: ZType.data(14, color: color),
             ),
           ],
         ),

@@ -4,10 +4,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/recipe_suggestion_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/nutrition_preferences_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for editing recipe preferences (body type, cuisines, spice tolerance)
@@ -104,11 +106,11 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.background : AppColorsLight.background;
-    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final surface = tc.surface;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final accent = tc.accent;
 
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
@@ -159,11 +161,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context).recipePreferencesRecipePreferences,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
+                        style: ZType.disp(22, color: textPrimary),
                       ),
                     ),
                     TextButton(
@@ -215,26 +213,14 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                       runSpacing: 8,
                       children: SpiceTolerance.values.map((spice) {
                         final isSelected = spice == _selectedSpiceTolerance;
-                        return ChoiceChip(
-                          label: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(_getSpiceEmoji(spice)),
-                              const SizedBox(width: 4),
-                              Text(spice.displayName),
-                            ],
-                          ),
+                        final emoji = _getSpiceEmoji(spice);
+                        return ZealovaChip(
+                          label: spice.displayName,
+                          emoji: emoji.isNotEmpty ? emoji : null,
                           selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) {
-                              setState(() => _selectedSpiceTolerance = spice);
-                            }
+                          onTap: () {
+                            setState(() => _selectedSpiceTolerance = spice);
                           },
-                          selectedColor: accent.withValues(alpha: 0.2),
-                          labelStyle: TextStyle(
-                            color: isSelected ? accent : textSecondary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
                         );
                       }).toList(),
                     ),
@@ -252,24 +238,18 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                       runSpacing: 8,
                       children: CuisineType.values.map((cuisine) {
                         final isSelected = _selectedCuisines.contains(cuisine.value);
-                        return FilterChip(
-                          label: Text(cuisine.displayName),
+                        return ZealovaChip(
+                          label: cuisine.displayName,
                           selected: isSelected,
-                          onSelected: (selected) {
+                          onTap: () {
                             setState(() {
-                              if (selected) {
-                                _selectedCuisines.add(cuisine.value);
-                              } else {
+                              if (isSelected) {
                                 _selectedCuisines.remove(cuisine.value);
+                              } else {
+                                _selectedCuisines.add(cuisine.value);
                               }
                             });
                           },
-                          selectedColor: accent.withValues(alpha: 0.2),
-                          checkmarkColor: accent,
-                          labelStyle: TextStyle(
-                            color: isSelected ? accent : textSecondary,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          ),
                         );
                       }).toList(),
                     ),
@@ -289,14 +269,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
   Widget _buildSectionHeader(String title, Color textPrimary) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: textPrimary,
-        ),
-      ),
+      child: ZealovaSectionKicker(title),
     );
   }
 
@@ -308,6 +281,9 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
     required Color accent,
   }) {
     final isSelected = type == _selectedBodyType;
+    final cardBorder = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.cardBorder
+        : AppColorsLight.cardBorder;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -315,13 +291,13 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
         onTap: () => setState(() => _selectedBodyType = type),
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isSelected ? accent.withValues(alpha: 0.1) : surface,
+            color: surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? accent : Colors.transparent,
-              width: 2,
+              color: isSelected ? accent : cardBorder,
+              width: isSelected ? 1.5 : 1,
             ),
           ),
           child: Row(
@@ -338,7 +314,7 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                   color: isSelected ? accent : Colors.transparent,
                 ),
                 child: isSelected
-                    ? const Icon(Icons.check, size: 14, color: Colors.white)
+                    ? Icon(Icons.check, size: 14, color: ThemeColors.of(context).accentContrast)
                     : null,
               ),
               const SizedBox(width: 12),
@@ -348,11 +324,13 @@ class _RecipePreferencesSheetState extends ConsumerState<RecipePreferencesSheet>
                   children: [
                     Text(
                       type.displayName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
+                      style: ZType.lbl(
+                        14,
                         color: isSelected ? accent : textPrimary,
+                        letterSpacing: 1.3,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       type.description,
                       style: TextStyle(

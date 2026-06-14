@@ -27,23 +27,17 @@ class _StatItem extends StatelessWidget {
     return Column(
       children: [
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: textSecondary,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
         ),
         const SizedBox(height: 4),
         Row(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            // Anton display numeral.
             Text(
               value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
+              style: ZType.disp(22, color: color, letterSpacing: 0),
             ),
             const SizedBox(width: 2),
             Padding(
@@ -85,7 +79,9 @@ class _QuickAddSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final electricBlue =
         isDark ? AppColors.waterBlue : AppColorsLight.waterBlue;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -119,9 +115,9 @@ class _QuickAddSection extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
-                      color: elevated,
+                      color: surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: electricBlue.withValues(alpha: 0.3)),
+                      border: Border.all(color: cardBorder),
                     ),
                     child: Column(
                       children: [
@@ -173,7 +169,9 @@ class _QuickAddButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final electricBlue = isDark
         ? AppColors.waterBlue
         : AppColorsLight.waterBlue;
@@ -187,9 +185,9 @@ class _QuickAddButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: elevated,
+          color: surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: electricBlue.withValues(alpha: 0.3)),
+          border: Border.all(color: cardBorder),
         ),
         child: Column(
           children: [
@@ -228,7 +226,9 @@ class _DrinkTypeSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textSecondary = isDark
         ? AppColors.textSecondary
         : AppColorsLight.textSecondary;
@@ -250,8 +250,9 @@ class _DrinkTypeSection extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: elevated,
+                      color: surface,
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: cardBorder),
                     ),
                     child: Column(
                       children: [
@@ -293,26 +294,24 @@ class _TodayBreakdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).hydrationTabPartBreakdown,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: textMuted,
-              letterSpacing: 1.5,
-            ),
+            AppLocalizations.of(context).hydrationTabPartBreakdown.toUpperCase(),
+            style: ZType.lbl(12, color: textMuted, letterSpacing: 1.8),
           ),
           const SizedBox(height: 12),
           _BreakdownRow(
@@ -469,7 +468,9 @@ class _LogEntry extends StatelessWidget {
         ? '${log.loggedAt!.hour.toString().padLeft(2, '0')}:${log.loggedAt!.minute.toString().padLeft(2, '0')}'
         : '';
 
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final textPrimary = isDark
         ? AppColors.textPrimary
         : AppColorsLight.textPrimary;
@@ -485,8 +486,9 @@ class _LogEntry extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         children: [
@@ -596,12 +598,11 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
+      title.toUpperCase(),
+      style: ZType.lbl(
+        12,
         color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-        letterSpacing: 1.5,
+        letterSpacing: 1.8,
       ),
     );
   }

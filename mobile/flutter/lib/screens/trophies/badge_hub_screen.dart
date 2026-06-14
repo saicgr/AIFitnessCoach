@@ -29,13 +29,15 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/providers/masteries_provider.dart';
 import '../../data/providers/personal_bests_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/pill_app_bar.dart';
 import 'widgets/badge_hub_hero.dart';
 import 'widgets/challenges_strip.dart';
 import 'widgets/in_progress_strip.dart';
@@ -92,14 +94,11 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                AppLocalizations.of(context).badgeHubRewardYourProgress,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                ),
+                AppLocalizations.of(context).badgeHubRewardYourProgress.toUpperCase(),
+                style: ZType.disp(22,
+                    color: isDark ? Colors.white : AppColorsLight.textPrimary),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               _HelpRow(
                 icon: Icons.workspace_premium_outlined,
                 title: AppLocalizations.of(context).badgeHubBadges,
@@ -147,12 +146,13 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).badgeHubBadges,
+        kicker: 'Badges & trophies',
         actions: [
-          PillAppBarAction(
-            icon: Icons.info_outline,
+          GestureDetector(
             onTap: () => _showHowItWorks(context, isDark),
+            child: Icon(Icons.info_outline, size: 22, color: ThemeColors.of(context).textMuted),
           ),
         ],
       ),
@@ -236,9 +236,6 @@ class _BadgeHubScreenState extends ConsumerState<BadgeHubScreen> {
               child: _AllBadgesFooter(
                 count: summary?.totalTrophies ?? allTrophies.length,
                 onTap: () => context.push('/trophy-room'),
-                fg: fg,
-                accent: accent,
-                isDark: isDark,
               ),
             ),
           ],
@@ -266,17 +263,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 12, 0),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: fg.withValues(alpha: 0.55),
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.4,
-              ),
-            ),
-          ),
+          Expanded(child: ZealovaSectionKicker(label)),
           if (trailing != null)
             IconButton(
               padding: EdgeInsets.zero,
@@ -301,65 +288,24 @@ class _SectionHeader extends StatelessWidget {
 class _AllBadgesFooter extends StatelessWidget {
   final int count;
   final VoidCallback onTap;
-  final Color fg;
-  final Color accent;
-  final bool isDark;
 
   const _AllBadgesFooter({
     required this.count,
     required this.onTap,
-    required this.fg,
-    required this.accent,
-    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    final border =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    return Material(
-      color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () {
-          HapticService.light();
-          onTap();
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: border),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.grid_view_rounded, color: accent, size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  AppLocalizations.of(context).badgeHubAllAvailableBadges,
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              Text(
-                count > 0 ? AppLocalizations.of(context)!.badgeHubScreenTotal(count) : '',
-                style: TextStyle(
-                  color: fg.withValues(alpha: 0.55),
-                  fontSize: 12,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(Icons.chevron_right_rounded,
-                  color: fg.withValues(alpha: 0.55), size: 22),
-            ],
-          ),
-        ),
-      ),
+    return ZealovaListRow(
+      icon: Icons.grid_view_rounded,
+      label: AppLocalizations.of(context).badgeHubAllAvailableBadges,
+      value: count > 0
+          ? AppLocalizations.of(context)!.badgeHubScreenTotal(count)
+          : null,
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
     );
   }
 }
@@ -388,7 +334,7 @@ class _HelpRow extends StatelessWidget {
           Icon(
             icon,
             size: 22,
-            color: const Color(0xFF22D3EE),
+            color: AppColors.gamGold,
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/services/api_client.dart';
 import '../../../l10n/generated/app_localizations.dart';
@@ -118,8 +119,9 @@ class LoggedMealsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Signature: hairline-led record — no boxed card / shadow. Meal sections
+    // sit directly on the surface, separated by 1px hairline rules.
+    final hairline = isDark ? AppColors.hairline : AppColorsLight.cardBorder;
 
     // Group meals by type
     final mealsByType = <String, List<FoodLog>>{};
@@ -127,39 +129,33 @@ class LoggedMealsSection extends StatelessWidget {
       mealsByType.putIfAbsent(meal.mealType, () => []).add(meal);
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // ── Meal sections (each a self-managed _MealSection for expand state)
-          //    The swipeable HeroNutritionCard now renders above this card on
-          //    every date, so the in-section calorie-ring hero was removed.
-          ..._mealTypes.asMap().entries.map((entry) {
-            final index = entry.key;
-            final mealInfo = entry.value;
-            final mealId = mealInfo['id']!;
-            final typeMeals = mealsByType[mealId] ?? [];
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _MealSection(
-                  mealId: mealId,
-                  label: mealInfo['label']!,
-                  typeMeals: typeMeals,
-                  owner: this,
-                ),
-                if (index < _mealTypes.length - 1)
-                  Divider(height: 1, thickness: 1, color: cardBorder),
-              ],
-            );
-          }),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Meal sections (each a self-managed _MealSection for expand state)
+        //    The swipeable HeroNutritionCard now renders above this card on
+        //    every date, so the in-section calorie-ring hero was removed.
+        ..._mealTypes.asMap().entries.map((entry) {
+          final index = entry.key;
+          final mealInfo = entry.value;
+          final mealId = mealInfo['id']!;
+          final typeMeals = mealsByType[mealId] ?? [];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _MealSection(
+                mealId: mealId,
+                label: mealInfo['label']!,
+                emoji: mealInfo['emoji']!,
+                typeMeals: typeMeals,
+                owner: this,
+              ),
+              if (index < _mealTypes.length - 1)
+                Divider(height: 1, thickness: 1, color: hairline),
+            ],
+          );
+        }),
+      ],
     );
   }
 
@@ -213,13 +209,15 @@ class LoggedMealsSection extends StatelessWidget {
       'restaurant' => Icons.storefront_outlined,
       _ => Icons.info_outline,
     };
+    final hairline = isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;
     return Padding(
-      padding: const EdgeInsets.only(top: 2),
+      padding: const EdgeInsets.only(top: 4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         decoration: BoxDecoration(
-          color: textMuted.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(6),
+          // Signature provenance badge — hairline-outlined, Barlow tiny upper.
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: hairline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -227,8 +225,8 @@ class LoggedMealsSection extends StatelessWidget {
             Icon(icon, size: 10, color: textMuted),
             const SizedBox(width: 4),
             Text(
-              'via $label',
-              style: TextStyle(fontSize: 10, color: textMuted, fontWeight: FontWeight.w500),
+              label.toUpperCase(),
+              style: ZType.lbl(8, color: textMuted, letterSpacing: 1.2),
             ),
           ],
         ),
@@ -341,8 +339,9 @@ class LoggedMealsSection extends StatelessWidget {
                     Text(
                       foodName,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w600,
+                        letterSpacing: -0.1,
                         color: textPrimary,
                       ),
                       maxLines: 1,
@@ -354,10 +353,10 @@ class LoggedMealsSection extends StatelessWidget {
                     // count > 1 renders as "× N"; "1" hides entirely.
                     if (amount != null && _formattedAmount(amount) != null)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 1),
                         child: Text(
                           _formattedAmount(amount)!,
-                          style: TextStyle(fontSize: 11, color: textMuted),
+                          style: TextStyle(fontSize: 10.5, color: textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -383,18 +382,14 @@ class LoggedMealsSection extends StatelessWidget {
                 children: [
                   Text(
                     '$calories cal',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
+                    style: ZType.data(12, color: textPrimary),
                   ),
                   if (proteinG != null && proteinG > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         '${proteinG.round()}g protein',
-                        style: TextStyle(fontSize: 11, color: textMuted),
+                        style: TextStyle(fontSize: 10.5, color: textMuted),
                       ),
                     ),
                   if (showTime)
@@ -3890,12 +3885,14 @@ class _EditHistoryLinkState extends State<_EditHistoryLink> {
 class _MealSection extends StatefulWidget {
   final String mealId;
   final String label;
+  final String emoji;
   final List<FoodLog> typeMeals;
   final LoggedMealsSection owner;
 
   const _MealSection({
     required this.mealId,
     required this.label,
+    required this.emoji,
     required this.typeMeals,
     required this.owner,
   });
@@ -3919,85 +3916,63 @@ class _MealSectionState extends State<_MealSection> {
     final owner = widget.owner;
     final isDark = owner.isDark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    // Macro colors match the daily summary bar (🔥 cal · C cyan · P purple · F orange).
-    final macroC = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
-    final macroP = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
-    final macroF = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
 
     final totalCal = widget.typeMeals.fold<int>(0, (s, m) => s + m.totalCalories);
     final totalProtein = widget.typeMeals.fold<double>(0, (s, m) => s + m.proteinG);
     final totalCarbs = widget.typeMeals.fold<double>(0, (s, m) => s + m.carbsG);
     final totalFat = widget.typeMeals.fold<double>(0, (s, m) => s + m.fatG);
 
+    // Count line ("1 item" / "menu scan · 3 items"). A menu-scan log inside
+    // the section earns the "menu scan ·" prefix per the Signature reference.
+    final itemCount = widget.typeMeals.length;
+    final hasMenuScan =
+        widget.typeMeals.any((m) => m.sourceType == 'menu');
+    final countLabel = itemCount == 0
+        ? null
+        : '${hasMenuScan ? 'menu scan · ' : ''}$itemCount '
+            '${itemCount == 1 ? 'item' : 'items'}';
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Surface 3.4 — section header: tap-row opens log sheet (single
-        // primary action), chevron toggles expansion. No more accent-tinted
-        // `+` icon. The previous trio of affordances (chevron + label + `+`)
-        // collapses to two with clearer semantics.
+        // primary action), chevron toggles expansion. Signature: emoji +
+        // Barlow-uppercase meal name + tabular calorie + count, on a hairline.
         Padding(
-          padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+          padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
           child: Row(
             children: [
-              IconButton(
-                onPressed: _toggle,
-                icon: AnimatedRotation(
-                  duration: const Duration(milliseconds: 180),
-                  turns: _isExpanded ? 0.25 : 0,
-                  child: Icon(Icons.chevron_right, size: 20, color: textMuted),
-                ),
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 36),
-                tooltip: _isExpanded ? 'Collapse' : 'Expand',
-              ),
               Expanded(
                 child: InkWell(
                   onTap: () => owner.onLogMeal(widget.mealId),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+                    padding: const EdgeInsets.fromLTRB(4, 9, 4, 9),
                     child: Row(
                       children: [
+                        Text(widget.emoji, style: const TextStyle(fontSize: 16)),
+                        const SizedBox(width: 9),
                         Text(
-                          widget.label,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: textPrimary,
-                          ),
+                          widget.label.toUpperCase(),
+                          style: ZType.lbl(11.5, color: textPrimary, letterSpacing: 2),
                         ),
-                        const SizedBox(width: 8),
-                        // Totals in cal · C · P · F order. Macro tints stay
-                        // (category colors, not accent).
-                        Flexible(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            reverse: true,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                if (totalCal > 0) _StatPill(label: '$totalCal cal', color: accent),
-                                if (totalCarbs > 0) ...[
-                                  const SizedBox(width: 6),
-                                  _StatPill(label: '${totalCarbs.round()}g C', color: macroC),
-                                ],
-                                if (totalProtein > 0) ...[
-                                  const SizedBox(width: 6),
-                                  _StatPill(label: '${totalProtein.round()}g P', color: macroP),
-                                ],
-                                if (totalFat > 0) ...[
-                                  const SizedBox(width: 6),
-                                  _StatPill(label: '${totalFat.round()}g F', color: macroF),
-                                ],
-                              ],
-                            ),
+                        if (totalCal > 0) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '$totalCal',
+                            style: ZType.data(11.5, color: textPrimary),
                           ),
-                        ),
+                        ],
+                        const Spacer(),
+                        if (countLabel != null)
+                          Text(
+                            countLabel.toUpperCase(),
+                            style: ZType.lbl(9, color: textMuted, letterSpacing: 1.5),
+                          ),
                       ],
                     ),
                   ),
@@ -4006,16 +3981,43 @@ class _MealSectionState extends State<_MealSection> {
               if (widget.typeMeals.isNotEmpty)
                 IconButton(
                   onPressed: () => owner.onShareMealGroup(widget.mealId),
-                  icon: Icon(Icons.ios_share_rounded, size: 18, color: textMuted),
+                  icon: Icon(Icons.ios_share_rounded, size: 16, color: textMuted),
                   visualDensity: VisualDensity.compact,
                   padding: EdgeInsets.zero,
                   constraints:
-                      const BoxConstraints(minWidth: 32, minHeight: 36),
+                      const BoxConstraints(minWidth: 30, minHeight: 34),
                   tooltip: 'Share ${widget.label}',
                 ),
+              IconButton(
+                onPressed: _toggle,
+                icon: AnimatedRotation(
+                  duration: const Duration(milliseconds: 180),
+                  turns: _isExpanded ? 0.25 : 0,
+                  child: Icon(Icons.chevron_right, size: 18, color: textMuted),
+                ),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 30, minHeight: 34),
+                tooltip: _isExpanded ? 'Collapse' : 'Expand',
+              ),
             ],
           ),
         ),
+        // Compact MUTED per-meal P/C/F line — not colored, not emphatic
+        // (Signature `.rm-macro`). Only when there are macros to show.
+        if (_isExpanded && (totalProtein + totalCarbs + totalFat) > 0)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(33, 0, 6, 8),
+            child: Text(
+              [
+                '${totalProtein.round()}P',
+                '${totalCarbs.round()}C',
+                '${totalFat.round()}F',
+              ].join('   '),
+              style: ZType.lbl(11, color: textSecondary, letterSpacing: 0.8)
+                  .copyWith(color: textMuted),
+            ),
+          ),
         // Items or empty state
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 180),
@@ -4071,35 +4073,6 @@ class _MealSectionState extends State<_MealSection> {
                 ),
         ),
       ],
-    );
-  }
-}
-
-// ============================================
-// _StatPill — compact accent/macro-tinted pill for meal header totals.
-// ============================================
-
-class _StatPill extends StatelessWidget {
-  final String label;
-  final Color color;
-  const _StatPill({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
     );
   }
 }
@@ -4240,17 +4213,18 @@ class _FoodGroup extends StatelessWidget {
                         Text(
                           title,
                           style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.1,
                             color: textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
-                          summary,
-                          style: TextStyle(fontSize: 11, color: textMuted),
+                          summary.toUpperCase(),
+                          style: ZType.lbl(9, color: textMuted, letterSpacing: 1.3),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -4276,7 +4250,8 @@ class _FoodGroup extends StatelessWidget {
             ),
           ),
         ),
-        // ── Children with subtle connector line on the left
+        // ── Children indented on the resolved-accent connector (Signature
+        //    "orange connector" — the grouped-log left border).
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -4286,8 +4261,8 @@ class _FoodGroup extends StatelessWidget {
                 width: 28 + 14, // align under thumbnail center (14 padding + 14 half-thumbnail)
                 alignment: Alignment.center,
                 child: Container(
-                  width: 1,
-                  color: textMuted.withValues(alpha: 0.22),
+                  width: 2,
+                  color: accent.withValues(alpha: 0.85),
                 ),
               ),
               Expanded(
@@ -4377,7 +4352,7 @@ class _FoodGroup extends StatelessWidget {
                     Text(
                       food.name,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: textPrimary,
                       ),
@@ -4386,10 +4361,10 @@ class _FoodGroup extends StatelessWidget {
                     ),
                     if (food.amount != null && food.amount!.isNotEmpty)
                       Padding(
-                        padding: const EdgeInsets.only(top: 2),
+                        padding: const EdgeInsets.only(top: 1),
                         child: Text(
                           food.amount!,
-                          style: TextStyle(fontSize: 11, color: textMuted),
+                          style: TextStyle(fontSize: 10, color: textMuted),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -4403,18 +4378,14 @@ class _FoodGroup extends StatelessWidget {
                 children: [
                   Text(
                     '${food.calories ?? 0} cal',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
+                    style: ZType.data(11, color: textPrimary),
                   ),
                   if (food.proteinG != null && food.proteinG! > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: Text(
                         '${food.proteinG!.round()}g protein',
-                        style: TextStyle(fontSize: 11, color: textMuted),
+                        style: TextStyle(fontSize: 10, color: textMuted),
                       ),
                     ),
                 ],

@@ -2,26 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Horizontal strip of active async challenges. Each card shows the
-/// challenge name, end-date, and a JOIN button. Tapping JOIN navigates
-/// to the challenge detail (hooked into the existing leaderboard screen).
-///
-/// For the first ship we surface two bundled monthly challenges that are
-/// always available — matches the reference screenshot's "April Run" /
-/// "April Cycling" cards. The backend's `/leaderboard/async-challenge`
-/// endpoint can later drive this list dynamically.
+/// CHALLENGES — Signature hairline rows with a JOIN pill. Each row carries an
+/// emoji, the challenge name + meta, and a JOIN affordance routing into the
+/// existing leaderboard screen.
 class ChallengesStrip extends ConsumerWidget {
   const ChallengesStrip({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AccentColorScope.of(context).getColor(isDark);
-
     final now = DateTime.now();
     final endOfMonth = DateTime(now.year, now.month + 1, 0);
     final endsLabel =
@@ -33,41 +27,31 @@ class ChallengesStrip extends ConsumerWidget {
         subtitle: AppLocalizations.of(context).challengesStrip25KmTarget,
         endsLabel: endsLabel,
         emoji: '🏃',
-        gradient: const [Color(0xFF22C55E), Color(0xFF86EFAC)],
       ),
       _ChallengeData(
         title: 'Monthly Cycling Challenge',
         subtitle: AppLocalizations.of(context).challengesStrip100KmTarget,
         endsLabel: endsLabel,
         emoji: '🚴',
-        gradient: const [Color(0xFF3B82F6), Color(0xFF60A5FA)],
       ),
       _ChallengeData(
         title: 'Consistency Week',
         subtitle: AppLocalizations.of(context).challengesStrip5WorkoutsIn7,
         endsLabel: endsLabel,
         emoji: '🔥',
-        gradient: const [Color(0xFFF97316), Color(0xFFFBBF24)],
       ),
     ];
 
-    // Adaptive height — scales with user text size so the JOIN button
-    // can't overflow when iOS/Android Dynamic Type is cranked up.
-    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
-    final height = (180 * textScale).clamp(180.0, 240.0);
-
-    return SizedBox(
-      height: height,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: challenges.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 10),
-        itemBuilder: (_, i) => _ChallengeCard(
-          data: challenges[i],
-          accent: accent,
-          isDark: isDark,
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          for (int i = 0; i < challenges.length; i++)
+            _ChallengeRow(
+              data: challenges[i],
+              isLast: i == challenges.length - 1,
+            ),
+        ],
       ),
     );
   }
@@ -79,134 +63,91 @@ class _ChallengeData {
   final String subtitle;
   final String endsLabel;
   final String emoji;
-  final List<Color> gradient;
 
   const _ChallengeData({
     required this.title,
     required this.subtitle,
     required this.endsLabel,
     required this.emoji,
-    required this.gradient,
   });
 }
 
 
-class _ChallengeCard extends StatelessWidget {
+class _ChallengeRow extends StatelessWidget {
   final _ChallengeData data;
-  final Color accent;
-  final bool isDark;
+  final bool isLast;
 
-  const _ChallengeCard({
-    required this.data,
-    required this.accent,
-    required this.isDark,
-  });
+  const _ChallengeRow({required this.data, required this.isLast});
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
-      width: 180,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          colors: data.gradient,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: data.gradient.first.withValues(alpha: 0.22),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            data.emoji,
-            style: TextStyle(
-              fontSize: 40,
-              shadows: [
-                Shadow(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      decoration: isLast
+          ? null
+          : const BoxDecoration(
+              border: Border(bottom: BorderSide(color: AppColors.hairline)),
             ),
-          ),
-          const SizedBox(height: 4),
-          Flexible(
+      child: Row(
+        children: [
+          Text(data.emoji, style: const TextStyle(fontSize: 21)),
+          const SizedBox(width: 12),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  data.title,
-                  maxLines: 2,
+                  data.title.toUpperCase(),
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    height: 1.2,
-                  ),
+                  style: ZType.lbl(12, color: tc.textPrimary, weight: FontWeight.w800, letterSpacing: 1),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  data.endsLabel,
+                  '${data.subtitle} · ${data.endsLabel}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 10, color: tc.textMuted),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            child: Material(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () {
-                  HapticService.light();
-                  GoRouter.of(context).push('/xp-leaderboard');
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.55),
-                      width: 1.2,
-                    ),
-                  ),
-                  child: const Text(
-                    'JOIN',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+          const SizedBox(width: 10),
+          _JoinPill(onTap: () {
+            HapticService.light();
+            GoRouter.of(context).push('/xp-leaderboard');
+          }),
         ],
+      ),
+    );
+  }
+}
+
+
+class _JoinPill extends StatelessWidget {
+  final VoidCallback onTap;
+  const _JoinPill({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        height: 28,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.cardBorder),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          'JOIN',
+          style: ZType.lbl(10, color: tc.textSecondary, weight: FontWeight.w800, letterSpacing: 1.8),
+        ),
       ),
     );
   }

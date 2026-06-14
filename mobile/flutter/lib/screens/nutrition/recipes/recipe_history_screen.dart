@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/recipe_version.dart';
 import '../../../data/repositories/recipe_repository.dart';
@@ -89,19 +90,15 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AccentColorScope.of(context).getColor(widget.isDark);
-    final isDark = widget.isDark;
-    final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final bg = tc.background;
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg, elevation: 0,
-        title: Text(AppLocalizations.of(context).workoutHistory, style: TextStyle(color: text)),
-        iconTheme: IconThemeData(color: text),
-      ),
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).workoutHistory),
       body: _loading
           // Layout-matched skeleton rows (avatar chip + 2 text lines) instead
           // of a blocking centered spinner.
@@ -125,16 +122,46 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                   itemBuilder: (_, i) {
                     final v = _versions!.items[i];
                     final isCurrent = v.versionNumber == _versions!.currentVersion;
-                    return Card(
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: accent.withValues(alpha: 0.18),
-                          child: Text('v${v.versionNumber}', style: TextStyle(color: accent, fontSize: 11)),
-                        ),
-                        title: Text(v.changeSummary ?? AppLocalizations.of(context).recipeHistoryUpdated, style: TextStyle(color: text)),
-                        subtitle: Text(v.editedAt.toLocal().toString().substring(0, 16),
-                            style: TextStyle(color: muted, fontSize: 11)),
-                        trailing: PopupMenuButton<String>(
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: ZealovaCard(
+                        variant: isCurrent
+                            ? ZealovaCardVariant.hero
+                            : ZealovaCardVariant.outlined,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: AppColors.cardBorder),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text('V${v.versionNumber}',
+                                  style: ZType.data(13, color: accent)),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    v.changeSummary ?? AppLocalizations.of(context).recipeHistoryUpdated,
+                                    style: TextStyle(
+                                        color: text, fontSize: 14, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    v.editedAt.toLocal().toString().substring(0, 16).toUpperCase(),
+                                    style: ZType.lbl(10, color: muted, letterSpacing: 1.3),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            PopupMenuButton<String>(
                           tooltip: AppLocalizations.of(context).homeMore,
                           position: PopupMenuPosition.under,
                           itemBuilder: (_) => [
@@ -178,6 +205,8 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
                             }
                           },
                         ),
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -189,9 +218,10 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
 /// Skeleton row for the history list — a version-chip avatar + 2 text lines
 /// inside a `Card`, matching the real `Card`/`ListTile` shape so the
 /// skeleton→content swap is reflow-free.
-Widget _historySkeletonRow(BuildContext context, int index) => const Card(
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+Widget _historySkeletonRow(BuildContext context, int index) => const Padding(
+      padding: EdgeInsets.only(bottom: 10),
+      child: ZealovaCard(
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
             SkeletonCircle(size: 40),
@@ -208,13 +238,14 @@ class _DiffSheet extends StatelessWidget {
   const _DiffSheet({required this.diff, required this.isDark});
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
     return Padding(
       padding: const EdgeInsets.all(20),
       child: ListView(shrinkWrap: true, children: [
-        Text('v${diff.fromVersion} → v${diff.toVersion}',
-          style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
-        const Divider(),
+        Text('V${diff.fromVersion} → V${diff.toVersion}',
+          style: ZType.disp(22, color: text)),
+        const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 12)),
         if (diff.fieldDiffs.isEmpty && diff.ingredientDiffs.isEmpty)
           Text(AppLocalizations.of(context).recipeHistoryNoDifferences, style: TextStyle(color: text)),
         ...diff.fieldDiffs.map((f) => ListTile(

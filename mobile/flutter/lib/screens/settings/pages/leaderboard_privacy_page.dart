@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/privacy_settings_provider.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Full-screen Leaderboard Privacy settings. Opened from the Profile screen's
@@ -19,20 +19,14 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accent = ref.watch(accentColorProvider).getColor(isDark);
+    final tc = ThemeColors.of(context);
+    final textMuted = tc.textMuted;
 
     final state = ref.watch(privacySettingsProvider);
 
     return Scaffold(
-      backgroundColor: bgColor,
-      appBar: PillAppBar(title: AppLocalizations.of(context).leaderboardPrivacyLeaderboardPrivacy),
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).leaderboardPrivacyLeaderboardPrivacy),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -51,12 +45,8 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                   ),
                 ),
               ),
-              Container(
-                decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: border),
-                ),
+              ZealovaCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: state.when(
                   loading: () => const Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
@@ -87,12 +77,11 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                           onChanged: (v) => ref
                               .read(privacySettingsProvider.notifier)
                               .setShowOnLeaderboard(v),
-                          textPrimary: textPrimary,
+                          textPrimary: tc.textPrimary,
                           textMuted: textMuted,
-                          accent: accent,
                           enabled: true,
+                          isLast: false,
                         ),
-                        Divider(height: 1, color: border),
                         _row(
                           title: AppLocalizations.of(context).leaderboardPrivacyAnonymousMode,
                           subtitle:
@@ -102,12 +91,11 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                           onChanged: (v) => ref
                               .read(privacySettingsProvider.notifier)
                               .setAnonymous(v),
-                          textPrimary: textPrimary,
+                          textPrimary: tc.textPrimary,
                           textMuted: textMuted,
-                          accent: accent,
                           enabled: masterOn,
+                          isLast: false,
                         ),
-                        Divider(height: 1, color: border),
                         _row(
                           title: AppLocalizations.of(context).leaderboardPrivacyShowMyStatsOn,
                           subtitle:
@@ -117,10 +105,10 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
                           onChanged: (v) => ref
                               .read(privacySettingsProvider.notifier)
                               .setStatsVisible(v),
-                          textPrimary: textPrimary,
+                          textPrimary: tc.textPrimary,
                           textMuted: textMuted,
-                          accent: accent,
                           enabled: masterOn,
+                          isLast: true,
                         ),
                       ],
                     );
@@ -142,38 +130,54 @@ class LeaderboardPrivacyPage extends ConsumerWidget {
     required ValueChanged<bool> onChanged,
     required Color textPrimary,
     required Color textMuted,
-    required Color accent,
     required bool enabled,
+    required bool isLast,
   }) {
     final effectiveValue = enabled ? value : false;
     return Opacity(
       opacity: enabled ? 1.0 : 0.45,
-      child: SwitchListTile.adaptive(
-        value: effectiveValue,
-        activeThumbColor: accent,
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            color: textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: isLast
+            ? null
+            : const BoxDecoration(
+                border: Border(bottom: BorderSide(color: AppColors.hairline)),
+              ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: textMuted, height: 1.35),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            ZealovaToggle(
+              value: effectiveValue,
+              onChanged: enabled
+                  ? (v) {
+                      HapticService.light();
+                      onChanged(v);
+                    }
+                  : null,
+            ),
+          ],
         ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Text(
-            subtitle,
-            style: TextStyle(fontSize: 12, color: textMuted, height: 1.35),
-          ),
-        ),
-        onChanged: enabled
-            ? (v) {
-                HapticService.light();
-                onChanged(v);
-              }
-            : null,
       ),
     );
   }

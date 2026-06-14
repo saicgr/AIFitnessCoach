@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/workout_mutation_coordinator.dart';
 import '../../../data/models/hormonal_health.dart';
@@ -791,14 +792,14 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     child: SizedBox(height: 60),
                   ),
 
-                  // Workout title - large and prominent
+                  // Workout title — Anton display masthead (Signature).
                   Text(
-                    workout.name ?? AppLocalizations.of(context).navWorkout,
-                    style: TextStyle(
+                    (workout.name ?? AppLocalizations.of(context).navWorkout)
+                        .toUpperCase(),
+                    style: ZType.disp(
+                      26,
                       color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
+                    ).copyWith(
                       shadows: isDark
                           ? [
                               const Shadow(
@@ -917,13 +918,13 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         );
                         context.push('/active-workout', extra: workout);
                       },
-                      icon: const Icon(Icons.play_arrow, size: 22),
-                      label: const Text(
-                        'START',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 0.5,
-                          fontSize: 15,
+                      icon: const Icon(Icons.arrow_forward, size: 20),
+                      label: Text(
+                        'START WORKOUT',
+                        style: ZType.lbl(
+                          14,
+                          color: isDark ? Colors.black : Colors.white,
+                          letterSpacing: 2.5,
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -931,13 +932,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                         foregroundColor: isDark ? Colors.black : Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 28,
-                          vertical: 12,
+                          vertical: 14,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(26),
                         ),
-                        elevation: 4,
-                        shadowColor: accentColor.withValues(alpha: 0.5),
+                        elevation: 0,
                       ),
                     ),
                   ),

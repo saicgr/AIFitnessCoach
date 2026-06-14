@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../../widgets/design_system/zealova.dart';
 import '../../../../widgets/trends/trend_chart.dart';
 import '../../../../widgets/trends/trend_correlation.dart';
 
@@ -114,28 +116,19 @@ class VolumeChart extends ConsumerWidget {
   Widget _header(ThemeColors colors, AppLocalizations l10n) {
     return Row(
       children: [
-        Icon(Icons.bar_chart, color: colors.accent),
+        Icon(Icons.bar_chart, color: colors.accent, size: 18),
         const SizedBox(width: 8),
         Text(
-          l10n.volumeChartVolumeTrends,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
-          ),
+          l10n.volumeChartVolumeTrends.toUpperCase(),
+          style: ZType.lbl(13, color: colors.textPrimary, letterSpacing: 1.5),
         ),
       ],
     );
   }
 
   Widget _card(ThemeColors colors, {required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       child: child,
     );
   }

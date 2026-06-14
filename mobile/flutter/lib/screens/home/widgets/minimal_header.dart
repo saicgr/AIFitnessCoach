@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -86,8 +89,9 @@ class _HomeAvatarButton extends ConsumerWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: fg.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          color: ThemeColors.of(context).surface,
+          border: Border.all(color: AppColors.cardBorder),
         ),
         clipBehavior: Clip.antiAlias,
         child: photoUrl != null && photoUrl.isNotEmpty
@@ -97,9 +101,9 @@ class _HomeAvatarButton extends ConsumerWidget {
                 height: 36,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) =>
-                    Icon(Icons.person, color: muted, size: 20),
+                    Icon(Icons.person_outline, color: muted, size: 20),
               )
-            : Icon(Icons.person, color: muted, size: 20),
+            : Icon(Icons.person_outline, color: muted, size: 20),
       ),
     );
   }
@@ -161,27 +165,26 @@ class _Greeting extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          greeting,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+          'ZEALOVA',
+          style: ZType.lbl(
+            10,
             color: isDark ? Colors.white60 : Colors.black54,
+            letterSpacing: 2,
           ),
         ),
-        const SizedBox(height: 1),
+        const SizedBox(height: 2),
         Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Flexible(
+              // The human/emotional line — Fraunces italic greeting + name.
               child: Text(
-                firstName,
+                '${greeting.replaceAll(',', '')}, $firstName',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
+                style: ZType.ser(
+                  19,
                   color: isDark ? Colors.white : const Color(0xFF0A0A0A),
                 ),
               ),

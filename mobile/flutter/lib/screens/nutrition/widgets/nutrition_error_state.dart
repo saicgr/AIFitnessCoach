@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class NutritionErrorState extends StatelessWidget {
@@ -29,26 +30,23 @@ class NutritionErrorState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
-                color: errorColor.withOpacity(0.1),
+                color: errorColor.withOpacity(0.08),
                 shape: BoxShape.circle,
+                border: Border.all(color: errorColor.withOpacity(0.3)),
               ),
               child: Icon(
                 Icons.error_outline_rounded,
-                size: 40,
+                size: 34,
                 color: errorColor,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              AppLocalizations.of(context).nutritionErrorStateUnableToLoadNutrition,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).nutritionErrorStateUnableToLoadNutrition.toUpperCase(),
+              style: ZType.disp(22, color: textPrimary, letterSpacing: 0.5),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),

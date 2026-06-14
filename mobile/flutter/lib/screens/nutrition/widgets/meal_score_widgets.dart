@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import 'inflammation_chip.dart' show inflammationColor;
 import 'score_explain_sheet.dart';
 
@@ -171,17 +172,12 @@ class CompactGoalScore extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: scoreColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: scoreColor.withValues(alpha: 0.4), width: 1.5),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.45)),
       ),
       child: Text(
         AppLocalizations.of(context)!.mealScoreWidgetsValue(score),
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
-          color: scoreColor,
-        ),
+        style: ZType.data(13, color: scoreColor),
       ),
     );
   }
@@ -215,9 +211,8 @@ class _LabeledScorePill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.40)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -225,20 +220,13 @@ class _LabeledScorePill extends StatelessWidget {
           Icon(icon, size: 14, color: color),
           const SizedBox(width: 6),
           Text(
-            '$label ',
-            style: TextStyle(
-              fontSize: 11,
-              color: color.withValues(alpha: 0.85),
-              fontWeight: FontWeight.w500,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(9.5, color: color.withValues(alpha: 0.85), letterSpacing: 1.2),
           ),
+          const SizedBox(width: 6),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 13,
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
+            style: ZType.data(12, color: color),
           ),
           if (showHelpIcon) ...[
             const SizedBox(width: 4),

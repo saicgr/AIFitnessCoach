@@ -5,12 +5,15 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/posthog_service.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/consistency.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/pill_app_bar.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Consistency Insights Dashboard Screen
@@ -64,18 +67,19 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tc = ThemeColors.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
     final state = ref.watch(consistencyProvider);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: PillAppBar(
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).scoreBreakdownConsistency,
       ),
       body: _isLoading || _userId == null
           ? AppLoading.fullScreen()
           : RefreshIndicator(
+              color: tc.accent,
               onRefresh: () => ref
                   .read(consistencyProvider.notifier)
                   .refresh(userId: _userId),
@@ -120,6 +124,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   }
 
   Widget _buildErrorState(String error, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -129,30 +134,26 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             Icon(
               Icons.error_outline,
               size: 64,
-              color: colorScheme.error,
+              color: tc.error,
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).measurementsFailedToLoadData,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
+              AppLocalizations.of(context).measurementsFailedToLoadData.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.lbl(18, color: tc.textPrimary, letterSpacing: 1.2),
             ),
             const SizedBox(height: 8),
             Text(
               error,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: ZType.data(12, color: tc.textMuted),
             ),
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _loadData,
-              icon: const Icon(Icons.refresh),
-              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutStateCardsTryAgain,
+              onTap: _loadData,
+              trailingIcon: Icons.refresh,
+              expand: false,
             ),
           ],
         ),
@@ -165,37 +166,15 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   // ============================================
 
   Widget _buildStreakCard(ConsistencyState state, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     final currentStreak = state.currentStreak;
     final longestStreak = state.longestStreak;
     final isActive = state.isStreakActive;
+    final fireColor = isActive ? tc.accent : tc.textMuted;
 
-    return Container(
+    return ZealovaCard(
+      variant: isActive ? ZealovaCardVariant.hero : ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: isActive
-              ? [
-                  Colors.orange.shade400,
-                  Colors.red.shade400,
-                ]
-              : [
-                  colorScheme.surfaceContainerHighest,
-                  colorScheme.surfaceContainerHigh,
-                ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: isActive
-            ? [
-                BoxShadow(
-                  color: Colors.orange.withValues(alpha: 0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
       child: Column(
         children: [
           // Fire Icon with Animation
@@ -204,34 +183,10 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             builder: (context, child) {
               return Transform.scale(
                 scale: 1.0 + (_fireAnimationController.value * 0.1),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Glow effect
-                    if (isActive)
-                      Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.orange
-                                  .withValues(alpha: 0.3 + _fireAnimationController.value * 0.2),
-                              blurRadius: 30,
-                              spreadRadius: 10,
-                            ),
-                          ],
-                        ),
-                      ),
-                    Icon(
-                      Icons.local_fire_department,
-                      size: 80,
-                      color: isActive
-                          ? Colors.white
-                          : colorScheme.onSurfaceVariant,
-                    ),
-                  ],
+                child: Icon(
+                  Icons.local_fire_department,
+                  size: 80,
+                  color: fireColor,
                 ),
               );
             },
@@ -241,23 +196,12 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
           // Streak Count
           Text(
             '$currentStreak',
-            style: TextStyle(
-              fontSize: 64,
-              fontWeight: FontWeight.bold,
-              color: isActive ? Colors.white : colorScheme.onSurface,
-              height: 1,
-            ),
+            style: ZType.disp(64,
+                color: isActive ? tc.accent : tc.textPrimary, height: 1),
           ),
           Text(
-            currentStreak == 1 ? AppLocalizations.of(context).statsStreakFireDayStreak : AppLocalizations.of(context).statsStreakFireDayStreak,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 2,
-              color: isActive
-                  ? Colors.white.withValues(alpha: 0.9)
-                  : colorScheme.onSurfaceVariant,
-            ),
+            (currentStreak == 1 ? AppLocalizations.of(context).statsStreakFireDayStreak : AppLocalizations.of(context).statsStreakFireDayStreak).toUpperCase(),
+            style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 2),
           ),
           const SizedBox(height: 16),
 
@@ -265,9 +209,8 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: isActive
-                  ? Colors.white.withValues(alpha: 0.2)
-                  : colorScheme.primary.withValues(alpha: 0.1),
+              color: tc.surface,
+              border: Border.all(color: AppColors.hairlineStrong),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -276,15 +219,12 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                 Icon(
                   Icons.emoji_events,
                   size: 18,
-                  color: isActive ? Colors.amber : colorScheme.primary,
+                  color: tc.textSecondary,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Longest: $longestStreak days',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: isActive ? Colors.white : colorScheme.primary,
-                  ),
+                  'Longest: $longestStreak days'.toUpperCase(),
+                  style: ZType.lbl(12, color: tc.textSecondary, letterSpacing: 1),
                 ),
               ],
             ),
@@ -305,27 +245,18 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
       return const SizedBox.shrink();
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    final tc = ThemeColors.of(context);
+    return ZealovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.calendar_today,
-                  size: 20, color: colorScheme.onSurfaceVariant),
+              Icon(Icons.calendar_today, size: 18, color: tc.textMuted),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context).consistencyLast4Weeks,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
+                AppLocalizations.of(context).consistencyLast4Weeks.toUpperCase(),
+                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
               ),
             ],
           ),
@@ -340,11 +271,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                       child: Text(
                         d,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                        style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1),
                       ),
                     ))
                 .toList(),
@@ -360,11 +287,11 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildLegendItem('Completed', Colors.green, colorScheme),
+              _buildLegendItem('Completed', tc.accent, colorScheme),
               const SizedBox(width: 16),
-              _buildLegendItem('Missed', Colors.red, colorScheme),
+              _buildLegendItem('Missed', tc.textMuted, colorScheme),
               const SizedBox(width: 16),
-              _buildLegendItem('Rest', colorScheme.outline, colorScheme),
+              _buildLegendItem('Rest', AppColors.hairlineStrong, colorScheme),
             ],
           ),
         ],
@@ -374,6 +301,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
 
   Widget _buildCalendarGrid(
       List<CalendarHeatmapData> data, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     if (data.isEmpty) {
       return const SizedBox(height: 150);
     }
@@ -419,22 +347,25 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
 
               Color bgColor;
               Color textColor;
+              Border? cellBorder;
               switch (day.statusEnum) {
                 case CalendarStatus.completed:
-                  bgColor = Colors.green;
-                  textColor = Colors.white;
+                  bgColor = tc.accent;
+                  textColor = tc.accentContrast;
                   break;
                 case CalendarStatus.missed:
-                  bgColor = Colors.red.shade400;
-                  textColor = Colors.white;
+                  bgColor = tc.surface;
+                  textColor = tc.textMuted;
+                  cellBorder = Border.all(color: AppColors.hairlineStrong);
                   break;
                 case CalendarStatus.rest:
-                  bgColor = colorScheme.surfaceContainerHighest;
-                  textColor = colorScheme.onSurfaceVariant;
+                  bgColor = AppColors.hairlineStrong;
+                  textColor = tc.textSecondary;
                   break;
                 case CalendarStatus.future:
-                  bgColor = colorScheme.surfaceContainerHigh;
-                  textColor = colorScheme.outline;
+                  bgColor = tc.surface;
+                  textColor = tc.textMuted;
+                  cellBorder = Border.all(color: AppColors.hairline);
                   break;
               }
 
@@ -443,16 +374,13 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                 height: 36,
                 decoration: BoxDecoration(
                   color: bgColor,
+                  border: cellBorder,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
                   child: Text(
                     day.dateTime.day.toString(),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textColor,
-                    ),
+                    style: ZType.data(11, color: textColor),
                   ),
                 ),
               );
@@ -464,6 +392,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   }
 
   Widget _buildLegendItem(String label, Color color, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -477,11 +406,8 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
         ),
         const SizedBox(width: 4),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 0.8),
         ),
       ],
     );
@@ -493,29 +419,21 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
 
   Widget _buildDayPatternsCard(
       ConsistencyState state, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     final insights = state.insights;
     if (insights == null) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return ZealovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.insights, size: 20, color: colorScheme.primary),
+              Icon(Icons.insights, size: 18, color: tc.textMuted),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context).consistencyWorkoutPatterns,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
+                AppLocalizations.of(context).consistencyWorkoutPatterns.toUpperCase(),
+                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
               ),
             ],
           ),
@@ -527,7 +445,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
               'Your best day',
               insights.bestDayDisplay ?? 'N/A',
               Icons.thumb_up,
-              Colors.green,
+              tc.accent,
               colorScheme,
             ),
           const SizedBox(height: 12),
@@ -538,7 +456,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
               'You tend to skip',
               insights.worstDayDisplay ?? 'N/A',
               Icons.warning_amber,
-              Colors.orange,
+              tc.textMuted,
               colorScheme,
             ),
           const SizedBox(height: 12),
@@ -549,7 +467,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
               'Preferred time',
               _formatTimeOfDay(insights.preferredTime!),
               Icons.schedule,
-              colorScheme.primary,
+              tc.textSecondary,
               colorScheme,
             ),
         ],
@@ -564,13 +482,15 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     Color iconColor,
     ColorScheme colorScheme,
   ) {
+    final tc = ThemeColors.of(context);
     return Row(
       children: [
         Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.1),
+            color: tc.surface,
+            border: Border.all(color: AppColors.hairlineStrong),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, size: 18, color: iconColor),
@@ -578,18 +498,13 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
         const SizedBox(width: 12),
         Expanded(
           child: Text(
-            label,
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 0.8),
           ),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: colorScheme.onSurface,
-          ),
+          style: ZType.lbl(14, color: tc.textPrimary, letterSpacing: 0.5),
         ),
       ],
     );
@@ -616,31 +531,22 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     final insights = state.insights;
     if (insights == null) return const SizedBox.shrink();
 
+    final tc = ThemeColors.of(context);
     final completed = insights.monthWorkoutsCompleted;
     final scheduled = insights.monthWorkoutsScheduled;
     final rate = insights.monthCompletionRate;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return ZealovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.calendar_month,
-                  size: 20, color: colorScheme.onSurfaceVariant),
+              Icon(Icons.calendar_month, size: 18, color: tc.textMuted),
               const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context).consistencyThisMonth,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
+                AppLocalizations.of(context).consistencyThisMonth.toUpperCase(),
+                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
               ),
             ],
           ),
@@ -653,20 +559,12 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             children: [
               Text(
                 '$completed',
-                style: TextStyle(
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.primary,
-                  height: 1,
-                ),
+                style: ZType.disp(48, color: tc.accent, height: 1),
               ),
               const SizedBox(width: 8),
               Text(
-                'of $scheduled workouts',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                'of $scheduled workouts'.toUpperCase(),
+                style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 1),
               ),
             ],
           ),
@@ -677,14 +575,8 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: scheduled > 0 ? completed / scheduled : 0,
-              backgroundColor: colorScheme.outline.withValues(alpha: 0.2),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                rate >= 80
-                    ? Colors.green
-                    : rate >= 50
-                        ? Colors.orange
-                        : Colors.red,
-              ),
+              backgroundColor: AppColors.hairlineStrong,
+              valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
               minHeight: 8,
             ),
           ),
@@ -692,12 +584,8 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
 
           // Completion rate
           Text(
-            '${rate.toStringAsFixed(0)}% completion rate',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            '${rate.toStringAsFixed(0)}% completion rate'.toUpperCase(),
+            style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1),
           ),
         ],
       ),

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 // Prefixed: `empty_state.dart` also exports a `SkeletonCard`, so the shared
 // instant-load skeleton kit is namespaced to disambiguate.
 import '../../../core/widgets/skeleton/skeleton.dart' as skel;
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/empty_state.dart';
 import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';
@@ -76,8 +79,9 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     final performedOnly = ref.watch(performedOnlyProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final cyan = tc.accent;
+    final textMuted = tc.textMuted;
     final activeFilters = getActiveFilterCount(ref);
 
     // Get total exercise count from filter options (when no filters applied)
@@ -132,39 +136,21 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           child: Row(
             children: [
               Text(
-                countLabel,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textMuted,
-                  fontWeight: FontWeight.w500,
-                ),
+                countLabel.toUpperCase(),
+                style: ZType.lbl(11, color: textMuted, letterSpacing: 1.4),
               ),
               const Spacer(),
               // "Performed" toggle chip
               Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
-                child: FilterChip(
-                  label: Text(
-                    AppLocalizations.of(context).commonDone,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: performedOnly ? cyan : textMuted,
-                      fontWeight: performedOnly ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                  ),
+                child: ZealovaChip(
+                  label: AppLocalizations.of(context).commonDone,
+                  icon: performedOnly ? Icons.check_circle : Icons.history,
                   selected: performedOnly,
-                  onSelected: (value) {
-                    ref.read(performedOnlyProvider.notifier).state = value;
+                  onTap: () {
+                    ref.read(performedOnlyProvider.notifier).state =
+                        !performedOnly;
                   },
-                  avatar: Icon(
-                    performedOnly ? Icons.check_circle : Icons.history,
-                    size: 16,
-                    color: performedOnly ? cyan : textMuted,
-                  ),
-                  selectedColor: cyan.withValues(alpha: 0.15),
-                  showCheckmark: false,
-                  visualDensity: VisualDensity.compact,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
               FilterButton(
@@ -190,9 +176,9 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: cyan.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: cyan.withOpacity(0.3)),
+                  color: tc.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
                 child: Row(
                   children: [

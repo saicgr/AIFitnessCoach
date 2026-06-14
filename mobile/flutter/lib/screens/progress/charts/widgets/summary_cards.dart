@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/stat_typography.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// Summary cards displaying key progress metrics
@@ -11,8 +12,6 @@ class SummaryCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -23,7 +22,7 @@ class SummaryCards extends StatelessWidget {
               icon: Icons.fitness_center,
               value: '${summary.totalWorkouts}',
               label: AppLocalizations.of(context).workoutListTitle,
-              color: colorScheme.primary,
+              accentValue: false,
             ),
           ),
           const SizedBox(width: 8),
@@ -33,7 +32,7 @@ class SummaryCards extends StatelessWidget {
               icon: Icons.emoji_events,
               value: '${summary.totalPRs}',
               label: AppLocalizations.of(context).weeklyWrappedPrs,
-              color: Colors.amber,
+              accentValue: true,
             ),
           ),
           const SizedBox(width: 8),
@@ -43,7 +42,7 @@ class SummaryCards extends StatelessWidget {
               icon: _getTrendIcon(summary.volumeIncreasePercent),
               value: '${summary.volumeIncreasePercent >= 0 ? '+' : ''}${summary.volumeIncreasePercent.toStringAsFixed(1)}%',
               label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-              color: _getTrendColor(summary.volumeIncreasePercent),
+              valueColor: _getTrendColor(context, summary.volumeIncreasePercent),
             ),
           ),
           const SizedBox(width: 8),
@@ -53,7 +52,7 @@ class SummaryCards extends StatelessWidget {
               icon: Icons.local_fire_department,
               value: '${summary.currentStreak}',
               label: AppLocalizations.of(context).xpProgressCardStreak,
-              color: Colors.deepOrange,
+              accentValue: true,
             ),
           ),
         ],
@@ -66,38 +65,38 @@ class SummaryCards extends StatelessWidget {
     required IconData icon,
     required String value,
     required String label,
-    required Color color,
+    bool accentValue = false,
+    Color? valueColor,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
+    final iconColor =
+        valueColor ?? (accentValue ? tc.accent : tc.textSecondary);
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(height: 4),
-          StatNumber(
-            value: value,
-            size: StatType.secondary,
-            color: color,
-            alignment: Alignment.center,
-          ),
-          const SizedBox(height: 2),
+          Icon(icon, color: iconColor, size: 18),
+          const SizedBox(height: 6),
           Text(
-            label,
-            style: TextStyle(
-              fontSize: StatType.labelSm,
-              color: colorScheme.onSurfaceVariant,
+            value,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZType.disp(
+              18,
+              color: valueColor ?? (accentValue ? tc.accent : tc.textPrimary),
             ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label.toUpperCase(),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
           ),
         ],
       ),
@@ -110,9 +109,10 @@ class SummaryCards extends StatelessWidget {
     return Icons.trending_flat;
   }
 
-  Color _getTrendColor(double percent) {
-    if (percent > 5) return Colors.green;
-    if (percent < -5) return Colors.red;
-    return Colors.grey;
+  Color _getTrendColor(BuildContext context, double percent) {
+    final tc = ThemeColors.of(context);
+    if (percent > 5) return tc.success;
+    if (percent < -5) return tc.error;
+    return tc.textMuted;
   }
 }

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
@@ -291,6 +292,7 @@ class _NutritionScalarStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.hairline),
       ),
       child: weeklySummary.when(
         loading: () => const _ScalarStripSkeleton(),
@@ -604,7 +606,8 @@ class _NutritionStatsEmptyState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 22),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.hairline),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -621,14 +624,9 @@ class _NutritionStatsEmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'No meals logged this week',
+            'NO MEALS LOGGED THIS WEEK',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-              letterSpacing: -0.2,
-            ),
+            style: ZType.disp(20, color: textPrimary, letterSpacing: 0.5),
           ),
           const SizedBox(height: 8),
           Text(

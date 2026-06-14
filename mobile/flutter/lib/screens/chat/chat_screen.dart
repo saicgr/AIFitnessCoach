@@ -13,6 +13,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:ui';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../data/models/chat_message.dart';
@@ -915,17 +916,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     final coach = resolvedCoach ?? CoachPersona.defaultCoach;
     final coachName = showLoadingCoach ? 'Loading coach…' : coach.name;
 
-    final topBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
-    final topBarBorder = isDark
-        ? null
-        : Border.all(color: (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder).withValues(alpha: 0.3));
-    final topBarShadow = BoxShadow(
-      color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.1),
-      blurRadius: 12,
-      offset: const Offset(0, 4),
-    );
+    // Signature: matte hairline pills (surface + cardBorder), no drop shadow.
+    final topBarColor = isDark ? AppColors.surface : AppColorsLight.surface;
+    final topBarBorder = Border.all(
+        color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder);
+    final topBarShadow = const BoxShadow(color: Colors.transparent);
+    final accentColor = ThemeColors.of(context).accent;
     final statusColor = _isLoading
-        ? AppColors.orange
+        ? accentColor
         : offlineChatState.isAvailable
             ? Colors.amber
             : AppColors.success;
@@ -1475,11 +1473,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            coachName,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                            coachName.toUpperCase(),
+                            style: ZType.lbl(
+                              13,
                               color: isDark ? Colors.white : AppColorsLight.textPrimary,
+                              letterSpacing: 1.2,
                             ),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
@@ -1497,12 +1495,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               ),
                               Flexible(
                                 child: Text(
-                                  _isLoading
-                                      ? l10n.chatScreenTyping
-                                      : offlineChatState.isAvailable
-                                          ? l10n.agentInfoHeaderOffline
-                                          : l10n.agentInfoHeaderOnline,
-                                  style: TextStyle(fontSize: 11, color: statusColor),
+                                  (_isLoading
+                                          ? l10n.chatScreenTyping
+                                          : offlineChatState.isAvailable
+                                              ? l10n.agentInfoHeaderOffline
+                                              : l10n.agentInfoHeaderOnline)
+                                      .toUpperCase(),
+                                  style: ZType.lbl(9.5,
+                                      color: statusColor, letterSpacing: 1.2),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),

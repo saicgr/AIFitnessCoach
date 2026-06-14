@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/personal_bests_provider.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -19,8 +21,6 @@ class PersonalBestsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final l10n = AppLocalizations.of(context)!;
     final tiles = <_PbTileData>[
       _buildHeaviestTile(l10n, data?.heaviestLift),
@@ -40,7 +40,6 @@ class PersonalBestsGrid extends StatelessWidget {
       itemCount: tiles.length,
       itemBuilder: (_, i) => _PbTile(
         data: tiles[i],
-        isDark: isDark,
         loading: loading,
       ),
     );
@@ -145,72 +144,63 @@ class _PbTileData {
 
 class _PbTile extends StatelessWidget {
   final _PbTileData data;
-  final bool isDark;
   final bool loading;
 
   const _PbTile({
     required this.data,
-    required this.isDark,
     required this.loading,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final border =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
-    final textMuted =
-        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: bg,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: data.hasData
-                  ? const RadialGradient(
-                      colors: [Color(0xFFFDE68A), Color(0xFFF59E0B)],
-                    )
-                  : null,
-              color: data.hasData
-                  ? null
-                  : (isDark ? Colors.white : Colors.black)
-                      .withValues(alpha: 0.06),
-            ),
-            child: Center(
-              child: Opacity(
-                opacity: data.hasData ? 1.0 : 0.5,
-                child: Text(
-                  data.emoji,
-                  style: const TextStyle(fontSize: 22),
+          SizedBox(
+            width: 46,
+            height: 46,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (data.hasData)
+                  Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Color(0x52FBBF24), // gold @ 32%
+                          Colors.transparent,
+                        ],
+                        stops: [0.0, 0.72],
+                      ),
+                    ),
+                  ),
+                Opacity(
+                  opacity: data.hasData ? 1.0 : 0.4,
+                  child: Text(data.emoji, style: const TextStyle(fontSize: 22)),
                 ),
-              ),
+              ],
             ),
           ),
           const SizedBox(height: 6),
           Text(
-            data.label,
+            data.label.toUpperCase(),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: textPrimary,
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              height: 1.2,
-            ),
+            style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Flexible(
             child: Text(
               loading
@@ -219,27 +209,20 @@ class _PbTile extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: data.hasData ? textPrimary : textMuted,
-                fontSize: data.hasData ? 12 : 10,
-                fontWeight:
-                    data.hasData ? FontWeight.w800 : FontWeight.w500,
-              ),
+              style: data.hasData
+                  ? ZType.disp(15, color: textPrimary)
+                  : TextStyle(color: textMuted, fontSize: 10, fontWeight: FontWeight.w500),
             ),
           ),
           if (data.secondary != null) ...[
-            const SizedBox(height: 1),
+            const SizedBox(height: 2),
             Flexible(
               child: Text(
                 data.secondary!,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: textMuted,
-                  fontSize: 9,
-                  height: 1.2,
-                ),
+                style: TextStyle(color: textMuted, fontSize: 9, height: 1.2),
               ),
             ),
           ],

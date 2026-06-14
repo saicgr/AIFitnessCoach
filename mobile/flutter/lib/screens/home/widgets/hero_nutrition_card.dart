@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrient_catalog.dart';
 import '../../../data/providers/micronutrient_visibility_provider.dart';
@@ -288,10 +289,12 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
         ? AppColors.macroCarbs
         : AppColorsLight.macroCarbs;
     final fatColor = isDark ? AppColors.macroFat : AppColorsLight.macroFat;
-    final buttonBg = isDark
-        ? AppColors.textPrimary
-        : AppColorsLight.textPrimary;
-    final buttonFg = isDark ? Colors.black : Colors.white;
+    // Primary CTA: the one place this screen spends the reserved accent (the
+    // Signature "solid accent exactly once per screen"). Foreground flips by
+    // accent luminance so the label stays legible across accent themes.
+    final buttonBg = accent;
+    final buttonFg =
+        accent.computeLuminance() > 0.6 ? Colors.black : Colors.white;
 
     final calorieProgress = calorieTarget > 0
         ? (caloriesConsumed / calorieTarget).clamp(0.0, 1.3)
@@ -341,19 +344,10 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: (isDark ? Colors.white : Colors.black).withValues(
-              alpha: 0.08,
-            ),
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
@@ -588,11 +582,8 @@ class _HeroNutritionCardState extends ConsumerState<HeroNutritionCard>
                               const Icon(Icons.restaurant_outlined, size: 20),
                               const SizedBox(width: 8),
                               Text(
-                                l10n.heroNutritionCardLogMeal,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                l10n.heroNutritionCardLogMeal.toUpperCase(),
+                                style: ZType.lbl(15, color: buttonFg, letterSpacing: 1.5),
                               ),
                             ],
                           ),
@@ -990,12 +981,7 @@ class _MacrosPage extends StatelessWidget {
                               const SizedBox(height: 2),
                               Text(
                                 l10n.heroNutritionCardCalLeft.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.5,
-                                  color: textSecondary,
-                                ),
+                                style: ZType.lbl(10, color: textSecondary, letterSpacing: 2.0),
                               ),
                               const SizedBox(height: 2),
                               FittedBox(
@@ -1003,11 +989,10 @@ class _MacrosPage extends StatelessWidget {
                                 child: Text(
                                   over ? '+${shown.abs()}' : '$shown',
                                   maxLines: 1,
-                                  style: TextStyle(
-                                    fontSize: 26,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.0,
+                                  style: ZType.disp(
+                                    30,
                                     color: over ? AppColors.error : textPrimary,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ),
@@ -1017,11 +1002,7 @@ class _MacrosPage extends StatelessWidget {
                                 prefix: 'of ',
                                 suffix: '',
                                 onCommit: onEditCalorieGoal,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: textSecondary,
-                                ),
+                                style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.0),
                               ),
                             ],
                           ),
@@ -1271,12 +1252,7 @@ class _MacroPill extends StatelessWidget {
                   label.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.3,
-                    color: labelColor,
-                  ),
+                  style: ZType.lbl(10, color: labelColor, letterSpacing: 1.5),
                 ),
                 const Spacer(),
                 TweenAnimationBuilder<int>(
@@ -1285,12 +1261,7 @@ class _MacroPill extends StatelessWidget {
                   curve: Curves.easeOutCubic,
                   builder: (context, v, _) => Text(
                     '$v',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      height: 1.0,
-                      color: color,
-                    ),
+                    style: ZType.disp(17, color: color, letterSpacing: 0),
                   ),
                 ),
                 _EditableGoal(
@@ -1298,11 +1269,7 @@ class _MacroPill extends StatelessWidget {
                   prefix: ' / ',
                   suffix: 'g',
                   onCommit: onEditGoal,
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: labelColor,
-                  ),
+                  style: ZType.lbl(10.5, color: labelColor, letterSpacing: 0.5),
                 ),
               ],
             ),
@@ -1462,12 +1429,7 @@ class _MicroTile extends StatelessWidget {
                       spec.name.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.2,
-                        color: labelColor,
-                      ),
+                      style: ZType.lbl(10, color: labelColor, letterSpacing: 1.2),
                     ),
                     const SizedBox(height: 1),
                     Row(
@@ -1483,22 +1445,13 @@ class _MicroTile extends StatelessWidget {
                               _fmt(v),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                height: 1.1,
-                                color: c,
-                              ),
+                              style: ZType.disp(17, color: c, letterSpacing: 0),
                             ),
                           ),
                         ),
                         Text(
                           ' / ${_fmt(spec.goal)}${spec.unit}',
-                          style: TextStyle(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            color: labelColor,
-                          ),
+                          style: ZType.lbl(10.5, color: labelColor, letterSpacing: 0.5),
                         ),
                       ],
                     ),

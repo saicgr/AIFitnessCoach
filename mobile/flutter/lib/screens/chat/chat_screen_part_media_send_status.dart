@@ -39,7 +39,10 @@ class _TypingIndicator extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: isDark ? AppColors.elevated : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16).copyWith(
+          border: Border.all(
+            color: isDark ? AppColors.cardBorder : Colors.grey.shade300,
+          ),
+          borderRadius: BorderRadius.circular(14).copyWith(
             bottomLeft: const Radius.circular(4),
           ),
         ),
@@ -317,9 +320,9 @@ class _InputBarState extends State<_InputBar> {
         bottomInset,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.nearBlack : Colors.white,
-        border: Border(
-          top: BorderSide(color: colors.cardBorder.withOpacity(0.5)),
+        color: isDark ? AppColors.pureBlack : Colors.white,
+        border: const Border(
+          top: BorderSide(color: AppColors.hairline),
         ),
       ),
       child: Column(
@@ -363,10 +366,9 @@ class _InputBarState extends State<_InputBar> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.08)
-                              : Colors.black.withOpacity(0.05),
-                          shape: BoxShape.circle,
+                          color: colors.surface,
+                          border: Border.all(color: colors.cardBorder),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           Icons.camera_alt_outlined,
@@ -387,17 +389,16 @@ class _InputBarState extends State<_InputBar> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.08)
-                              : Colors.black.withOpacity(0.05),
-                          shape: BoxShape.circle,
+                          color: colors.surface,
+                          border: Border.all(color: colors.cardBorder),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           Icons.videocam_outlined,
                           size: 18,
                           color: widget.isLoading
                               ? colors.textMuted
-                              : const Color(0xFFF97316),
+                              : colors.textSecondary,
                         ),
                       ),
                     ),
@@ -411,10 +412,9 @@ class _InputBarState extends State<_InputBar> {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withOpacity(0.08)
-                              : Colors.black.withOpacity(0.05),
-                          shape: BoxShape.circle,
+                          color: colors.surface,
+                          border: Border.all(color: colors.cardBorder),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           Icons.attach_file_outlined,
@@ -446,10 +446,18 @@ class _InputBarState extends State<_InputBar> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           filled: true,
-                          fillColor: colors.glassSurface,
+                          fillColor: colors.surface,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colors.cardBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colors.cardBorder),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: colors.accent, width: 1.4),
                           ),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14,
@@ -465,27 +473,28 @@ class _InputBarState extends State<_InputBar> {
                     if (_hasText || _selectedMedia.isNotEmpty || widget.isLoading)
                       Container(
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: widget.isLoading
-                                ? [colors.textMuted, colors.textMuted]
-                                : [AppColors.cyan, AppColors.purple],
-                          ),
-                          shape: BoxShape.circle,
+                          color: widget.isLoading
+                              ? colors.surface
+                              : colors.accent,
+                          border: widget.isLoading
+                              ? Border.all(color: colors.cardBorder)
+                              : null,
+                          borderRadius: BorderRadius.circular(12),
                         ),
                         child: IconButton(
                           onPressed: widget.isLoading ? null : _handleSend,
                           icon: widget.isLoading
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 20,
                                   height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: Colors.white,
+                                    color: colors.textMuted,
                                   ),
                                 )
-                              : const Icon(
-                                  Icons.send_rounded,
-                                  color: Colors.white,
+                              : Icon(
+                                  Icons.arrow_upward_rounded,
+                                  color: colors.accentContrast,
                                 ),
                         ),
                       )

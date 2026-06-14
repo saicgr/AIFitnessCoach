@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/cache/cache_first_mixin.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_sheet.dart';
 import 'injuries_list_screen.dart';
 import 'widgets/rehab_exercise_card.dart';
@@ -168,36 +170,38 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
   }
 
   void _showMarkHealedDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        backgroundColor: tc.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: AppColors.cardBorder),
+        ),
         title: Text(
-          AppLocalizations.of(context).injuryDetailMarkAsHealed,
-          style: TextStyle(
-            color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-          ),
+          AppLocalizations.of(context).injuryDetailMarkAsHealed.toUpperCase(),
+          style: ZType.disp(20, color: tc.textPrimary),
         ),
         content: Text(
           AppLocalizations.of(context).injuryDetailAreYouSureThis,
-          style: TextStyle(
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-          ),
+          style: ZType.ser(14, color: tc.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: Text(
-              AppLocalizations.of(context).buttonCancel,
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
+              AppLocalizations.of(context).buttonCancel.toUpperCase(),
+              style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1.5),
             ),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: tc.success,
+              foregroundColor: tc.background,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
             onPressed: () async {
               Navigator.pop(context);
               try {
@@ -225,10 +229,6 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                 }
               }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.success,
-              foregroundColor: Colors.white,
-            ),
             child: Text(AppLocalizations.of(context).injuryDetailYesHealed),
           ),
         ],
@@ -238,21 +238,26 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
+    final backgroundColor = tc.background;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final elevated = tc.surface;
+    final cardBorder = AppColors.cardBorder;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).injuryDetailInjuryDetails,
+        kicker: 'RECOVERY',
         actions: [
           if (_injury != null && _injury!.status.toLowerCase() != 'healed')
-            PillAppBarAction(icon: Icons.edit_note, onTap: _showCheckInSheet),
+            GestureDetector(
+              onTap: _showCheckInSheet,
+              child: Icon(Icons.edit_note, size: 24, color: tc.textPrimary),
+            ),
         ],
       ),
       body: _isLoading
@@ -286,62 +291,68 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
   }
 
   Widget _buildErrorState(Color textPrimary, Color textSecondary) {
+    final tc = ThemeColors.of(context);
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 56, color: tc.error.withValues(alpha: 0.6)),
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context).workoutGenerationSomethingWentWrong.toUpperCase(),
+              style: ZType.disp(20, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
-            style: TextStyle(color: textSecondary),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _loadInjuryDetails,
-            child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
+              style: ZType.ser(14, color: textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutStateCardsTryAgain,
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              onTap: _loadInjuryDetails,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildEmptyState(Color textPrimary, Color textSecondary, Color textMuted) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.search_off, size: 64, color: textMuted),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context).injuryDetailInjuryNotFound,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 56, color: textMuted),
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context).injuryDetailInjuryNotFound.toUpperCase(),
+              style: ZType.disp(20, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            AppLocalizations.of(context).injuryDetailThisInjuryMayHave,
-            style: TextStyle(color: textSecondary),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => context.pop(),
-            child: Text(AppLocalizations.of(context).workoutCompleteScreenGoBack),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              AppLocalizations.of(context).injuryDetailThisInjuryMayHave,
+              style: ZType.ser(14, color: textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutCompleteScreenGoBack,
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              onTap: () => context.pop(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -401,18 +412,31 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           // Mark as healed button
           if (!isHealed) ...[
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _showMarkHealedDialog,
-                icon: const Icon(Icons.check_circle),
-                label: Text(AppLocalizations.of(context).injuryDetailMarkAsHealed2),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: _showMarkHealedDialog,
+                borderRadius: BorderRadius.circular(26),
+                child: Container(
+                  height: 52,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: ThemeColors.of(context).success,
+                    borderRadius: BorderRadius.circular(26),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.check_circle,
+                          size: 18, color: ThemeColors.of(context).background),
+                      const SizedBox(width: 8),
+                      Text(
+                        AppLocalizations.of(context).injuryDetailMarkAsHealed2.toUpperCase(),
+                        style: ZType.lbl(14,
+                            color: ThemeColors.of(context).background,
+                            letterSpacing: 2.5),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -433,31 +457,26 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
     Color textSecondary,
     Color elevated,
   ) {
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: severityColor.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: severityColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   Icons.personal_injury,
                   color: severityColor,
-                  size: 32,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 16),
@@ -466,64 +485,53 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      injury.bodyPartDisplay,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
+                      injury.bodyPartDisplay.toUpperCase(),
+                      style: ZType.disp(24, color: textPrimary),
                     ),
-                    const SizedBox(height: 4),
-                    if (injury.injuryType != null)
+                    if (injury.injuryType != null) ...[
+                      const SizedBox(height: 4),
                       Text(
                         _formatInjuryType(injury.injuryType!),
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: textSecondary,
-                        ),
+                        style: ZType.ser(14, color: textSecondary),
                       ),
+                    ],
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
                   color: severityColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  injury.severityDisplay,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: severityColor,
-                  ),
+                  injury.severityDisplay.toUpperCase(),
+                  style: ZType.lbl(10, color: severityColor, letterSpacing: 1.2),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 20),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
             children: [
               _buildInfoChip(
                 Icons.calendar_today,
                 'Reported ${DateFormat('MMM d').format(injury.reportedAt)}',
                 textSecondary,
               ),
-              const SizedBox(width: 12),
               _buildInfoChip(
                 Icons.healing,
                 injury.recoveryPhaseDisplay,
                 textSecondary,
               ),
-              if (injury.painLevel != null) ...[
-                const SizedBox(width: 12),
+              if (injury.painLevel != null)
                 _buildInfoChip(
                   Icons.sentiment_dissatisfied,
                   'Pain: ${injury.painLevel}/10',
                   _getPainColor(injury.painLevel!),
                 ),
-              ],
             ],
           ),
         ],
@@ -536,13 +544,10 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
+        const SizedBox(width: 5),
         Text(
-          text,
-          style: TextStyle(
-            fontSize: 12,
-            color: color,
-          ),
+          text.toUpperCase(),
+          style: ZType.lbl(10, color: color, letterSpacing: 1),
         ),
       ],
     );
@@ -555,51 +560,41 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
     Color elevated,
     Color cardBorder,
   ) {
+    final tc = ThemeColors.of(context);
     final progressColor = injury.recoveryProgress >= 75
-        ? AppColors.success
+        ? tc.success
         : injury.recoveryProgress >= 50
-            ? AppColors.warning
-            : AppColors.coral;
+            ? tc.warning
+            : tc.error;
 
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                AppLocalizations.of(context).injuryDetailRecoveryProgress,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: ZealovaSectionKicker(
+                    AppLocalizations.of(context).injuryDetailRecoveryProgress),
               ),
               Text(
                 '${injury.recoveryProgress.toInt()}%',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: progressColor,
-                ),
+                style: ZType.disp(28, color: progressColor),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: injury.recoveryProgress / 100,
-              backgroundColor: cardBorder,
+              backgroundColor: AppColors.hairlineStrong,
               valueColor: AlwaysStoppedAnimation<Color>(progressColor),
-              minHeight: 12,
+              minHeight: 10,
             ),
           ),
           if (injury.expectedRecoveryDate != null) ...[
@@ -610,10 +605,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                 const SizedBox(width: 6),
                 Text(
                   'Expected recovery: ${DateFormat('MMM d, yyyy').format(injury.expectedRecoveryDate!)}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: textMuted,
-                  ),
+                  style: ZType.lbl(10, color: textMuted, letterSpacing: 1),
                 ),
               ],
             ),
@@ -629,24 +621,13 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
     Color elevated,
     Color cardBorder,
   ) {
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppLocalizations.of(context).injuryDetailPainLevelHistory,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
-          ),
+          ZealovaSectionKicker(
+              AppLocalizations.of(context).injuryDetailPainLevelHistory),
           const SizedBox(height: 16),
           SizedBox(
             height: 100,
@@ -662,11 +643,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                   children: [
                     Text(
                       '${entry.painLevel}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
+                      style: ZType.data(13, color: color),
                     ),
                     const SizedBox(height: 4),
                     Container(
@@ -681,10 +658,7 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
                     const SizedBox(height: 4),
                     Text(
                       DateFormat('M/d').format(entry.date),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: textMuted,
-                      ),
+                      style: ZType.lbl(9, color: textMuted, letterSpacing: 0.5),
                     ),
                   ],
                 );
@@ -703,28 +677,18 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
     Color elevated,
     Color cardBorder,
   ) {
-    return Container(
+    final tc = ThemeColors.of(context);
+    return ZealovaCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.warning_amber, color: AppColors.warning, size: 20),
+              Icon(Icons.warning_amber, color: tc.warning, size: 18),
               const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).injuryDetailAffectedExercises,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
-              ),
+              ZealovaSectionKicker(
+                  AppLocalizations.of(context).injuryDetailAffectedExercises),
             ],
           ),
           const SizedBox(height: 12),
@@ -735,16 +699,13 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.warning.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                  color: tc.warning.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: tc.warning.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  _formatExerciseName(exercise),
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.warning,
-                  ),
+                  _formatExerciseName(exercise).toUpperCase(),
+                  style: ZType.lbl(10, color: tc.warning, letterSpacing: 1),
                 ),
               );
             }).toList(),
@@ -768,16 +729,14 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              AppLocalizations.of(context).injuryDetailRehabExercises,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).injuryDetailRehabExercises.toUpperCase(),
+              style: ZType.disp(20, color: textPrimary),
             ),
             TextButton(
               onPressed: () => context.push('/library?filter=rehab'),
-              child: const Text('View All'),
+              child: Text('View All'.toUpperCase(),
+                  style: ZType.lbl(11,
+                      color: ThemeColors.of(context).accent, letterSpacing: 1.5)),
             ),
           ],
         ),
@@ -801,37 +760,24 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
   }
 
   Widget _buildNotesCard(Injury injury, Color textPrimary, Color textMuted, Color elevated) {
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.flat,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.notes, color: textMuted, size: 20),
+              Icon(Icons.notes, color: textMuted, size: 18),
               const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).syncedWorkoutDetailNotes,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
-              ),
+              ZealovaSectionKicker(
+                  AppLocalizations.of(context).syncedWorkoutDetailNotes),
             ],
           ),
           const SizedBox(height: 12),
           Text(
             injury.notes!,
-            style: TextStyle(
-              fontSize: 14,
-              color: textMuted,
-              height: 1.5,
-            ),
+            style: ZType.ser(14, color: textMuted, style: FontStyle.normal),
           ),
         ],
       ),

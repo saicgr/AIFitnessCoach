@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Vacation Mode settings page.
@@ -218,19 +219,19 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
     // Watch so the UI rebuilds if the user refreshes profile elsewhere.
     ref.watch(authStateProvider);
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final background = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final background = tc.background;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final cardBorder = tc.cardBorder;
+    final elevated = tc.elevated;
 
     final enabled = _currentEnabled();
     final active = _isActiveNow();
 
     return Scaffold(
       backgroundColor: background,
-      appBar: PillAppBar(title: AppLocalizations.of(context).vacationModeVacationMode),
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).vacationModeVacationMode),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -337,39 +338,53 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
     Color elevated,
     Color cardBorder,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder, width: 0.5),
-      ),
-      child: SwitchListTile.adaptive(
-        value: enabled,
-        onChanged: _saving
-            ? null
-            : (v) {
-                HapticFeedback.selectionClick();
-                setState(() => _stagedEnabled = v);
-              },
-        title: Text(
-          AppLocalizations.of(context).vacationModeVacationMode,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: textPrimary,
+    return ZealovaCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.beach_access_rounded,
+            size: 20,
+            color: enabled ? const Color(0xFF4FC3F7) : textMuted,
           ),
-        ),
-        subtitle: Text(
-          enabled
-              ? AppLocalizations.of(context).vacationModeSuppressingNonCriticalNotif
-              : 'Receive all your notifications normally',
-          style: TextStyle(fontSize: 13, color: textMuted),
-        ),
-        secondary: Icon(
-          Icons.beach_access_rounded,
-          color: enabled ? const Color(0xFF4FC3F7) : textMuted,
-        ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).vacationModeVacationMode,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    enabled
+                        ? AppLocalizations.of(context).vacationModeSuppressingNonCriticalNotif
+                        : 'Receive all your notifications normally',
+                    style: TextStyle(fontSize: 13, color: textMuted),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          ZealovaToggle(
+            value: enabled,
+            onChanged: _saving
+                ? null
+                : (v) {
+                    HapticFeedback.selectionClick();
+                    setState(() => _stagedEnabled = v);
+                  },
+          ),
+        ],
       ),
     );
   }
@@ -384,12 +399,8 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
     final start = _currentStart();
     final end = _currentEnd();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder, width: 0.5),
-      ),
+    return ZealovaCard(
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           _dateTile(
@@ -472,13 +483,7 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
       'Your streak and workout plan are untouched',
     ];
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder, width: 0.5),
-      ),
+    return ZealovaCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -536,28 +541,24 @@ class _VacationModePageState extends ConsumerState<VacationModePage> {
 
   Widget _buildSaveButton() {
     final canSave = _hasUnsavedChanges && !_saving;
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: canSave ? _save : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF4FC3F7),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Colors.grey.withOpacity(0.2),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    if (_saving) {
+      return const SizedBox(
+        height: 52,
+        child: Center(
+          child: SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
         ),
-        child: _saving
-            ? const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-              )
-            : Text(
-                _hasUnsavedChanges ? AppLocalizations.of(context).vacationModeSaveChanges : AppLocalizations.of(context).vacationModeNoChanges,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-      ),
+      );
+    }
+    return ZealovaButton(
+      label: _hasUnsavedChanges
+          ? AppLocalizations.of(context).vacationModeSaveChanges
+          : AppLocalizations.of(context).vacationModeNoChanges,
+      variant: ZealovaButtonVariant.primary,
+      onTap: canSave ? _save : null,
     );
   }
 }

@@ -20,6 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../widgets/design_system/zealova.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
@@ -277,12 +278,8 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppLocalizations.of(context).recipesFilters,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: textPrimary,
-                ),
+                AppLocalizations.of(context).recipesFilters.toUpperCase(),
+                style: ZType.disp(22, color: textPrimary),
               ),
               _ClearAllPill(
                 enabled: !_state.isDefault,
@@ -400,26 +397,9 @@ class _RecipeFilterSortBodyState extends State<_RecipeFilterSortBody> {
         // breathing room above/below the button itself.
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(_state),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Text(
-                AppLocalizations.of(context).setAdjustmentSheetApply,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                ),
-              ),
-            ),
+          child: ZealovaButton(
+            label: AppLocalizations.of(context).setAdjustmentSheetApply,
+            onTap: () => Navigator.of(context).pop(_state),
           ),
         ),
       ],
@@ -451,13 +431,8 @@ class _SectionLabel extends StatelessWidget {
         Icon(icon, size: 16, color: accent),
         const SizedBox(width: 8),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w800,
-            color: text,
-            letterSpacing: 0.2,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(12, color: text, letterSpacing: 1.8),
         ),
       ],
     );
@@ -482,21 +457,18 @@ class _FilterChipPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? accent.withValues(alpha: 0.18) : glassSurface,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? accent : muted.withValues(alpha: 0.25),
+            color: selected ? accent : AppColors.cardBorder,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -508,12 +480,9 @@ class _FilterChipPill extends StatelessWidget {
               const SizedBox(width: 4),
             ],
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                color: selected ? accent : text,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(11,
+                  color: selected ? accent : muted, letterSpacing: 1.3),
             ),
           ],
         ),
@@ -542,21 +511,17 @@ class _ClearAllPill extends StatelessWidget {
     final color = enabled ? accent : textMuted.withValues(alpha: 0.5);
     return InkWell(
       onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(999),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: enabled ? accent.withValues(alpha: 0.12) : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.6)),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: enabled ? accent : AppColors.cardBorder),
         ),
         child: Text(
-          AppLocalizations.of(context).settingsCardPartClearAll,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
+          AppLocalizations.of(context).settingsCardPartClearAll.toUpperCase(),
+          style: ZType.lbl(11, color: color, letterSpacing: 1.3),
         ),
       ),
     );

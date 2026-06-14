@@ -4,14 +4,15 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../widgets/app_loading.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/models/milestone.dart';
 import '../../data/providers/milestones_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/segmented_tab_bar.dart';
 import '../../core/services/posthog_service.dart';
 import '../reports/widgets/report_share_sheet.dart';
 import 'widgets/milestone_celebration_dialog.dart';
@@ -61,9 +62,8 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final state = ref.watch(milestonesProvider);
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.background;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     // Check for uncelebrated milestones and show celebration
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -71,19 +71,26 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     });
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).milestonesYourJourney,
+        kicker: 'Progress',
       ),
       body: Column(
         children: [
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: [
-              SegmentedTabItem(label: AppLocalizations.of(context).trophiesEarnedMilestones),
-              SegmentedTabItem(label: AppLocalizations.of(context).milestonesYourRoi),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 14),
+            child: AnimatedBuilder(
+              animation: _tabController,
+              builder: (context, _) => ZealovaTextTabs(
+                tabs: [
+                  AppLocalizations.of(context).trophiesEarnedMilestones,
+                  AppLocalizations.of(context).milestonesYourRoi,
+                ],
+                activeIndex: _tabController.index,
+                onChanged: (i) => _tabController.animateTo(i),
+              ),
+            ),
           ),
           Expanded(
             child: state.isLoading
@@ -201,25 +208,13 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   Widget _buildSummaryCard(bool isDark, MilestonesState state) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Container(
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            colors: [
-              AppColors.purple.withOpacity(0.1),
-              AppColors.cyan.withOpacity(0.05),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
         child: Row(
           children: [
             // Total points
@@ -228,24 +223,15 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 children: [
                   Icon(
                     Icons.stars,
-                    color: AppColors.yellow,
-                    size: 32,
+                    color: tc.accent,
+                    size: 28,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${state.totalPoints}',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  Text(
-                    AppLocalizations.of(context).trophyRoomPoints,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                    ),
+                  const SizedBox(height: 10),
+                  ZealovaStatTile(
+                    value: '${state.totalPoints}',
+                    label: AppLocalizations.of(context).trophyRoomPoints,
+                    valueSize: 32,
+                    align: CrossAxisAlignment.center,
                   ),
                 ],
               ),
@@ -253,7 +239,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
             Container(
               height: 60,
               width: 1,
-              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+              color: AppColors.hairline,
             ),
             // Total achieved
             Expanded(
@@ -261,24 +247,15 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 children: [
                   Icon(
                     Icons.emoji_events,
-                    color: AppColors.purple,
-                    size: 32,
+                    color: tc.accent,
+                    size: 28,
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${state.totalAchieved}',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                  Text(
-                    AppLocalizations.of(context).milestonesAchieved,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                    ),
+                  const SizedBox(height: 10),
+                  ZealovaStatTile(
+                    value: '${state.totalAchieved}',
+                    label: AppLocalizations.of(context).milestonesAchieved,
+                    valueSize: 32,
+                    align: CrossAxisAlignment.center,
                   ),
                 ],
               ),
@@ -290,11 +267,8 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   Widget _buildCategoryFilter(bool isDark, List<MilestoneCategory> categories) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-
     return SizedBox(
-      height: 40,
+      height: 36,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -305,20 +279,13 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
             final isSelected = _selectedCategory == null;
             return Padding(
               padding: const EdgeInsets.only(right: 8),
-              child: FilterChip(
-                label: Text(AppLocalizations.of(context).syncedWorkoutsHistoryAll),
+              child: ZealovaChip(
+                label: AppLocalizations.of(context).syncedWorkoutsHistoryAll,
                 selected: isSelected,
-                onSelected: (_) {
+                onTap: () {
                   HapticService.light();
                   setState(() => _selectedCategory = null);
                 },
-                backgroundColor: glassSurface,
-                selectedColor: AppColors.purple.withOpacity(0.2),
-                labelStyle: TextStyle(
-                  color: isSelected ? AppColors.purple : textMuted,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                ),
-                showCheckmark: false,
               ),
             );
           }
@@ -328,20 +295,13 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(category.displayName),
+            child: ZealovaChip(
+              label: category.displayName,
               selected: isSelected,
-              onSelected: (_) {
+              onTap: () {
                 HapticService.light();
                 setState(() => _selectedCategory = isSelected ? null : category.name);
               },
-              backgroundColor: glassSurface,
-              selectedColor: AppColors.purple.withOpacity(0.2),
-              labelStyle: TextStyle(
-                color: isSelected ? AppColors.purple : textMuted,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-              showCheckmark: false,
             ),
           );
         },
@@ -350,21 +310,13 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   Widget _buildNextMilestoneCard(bool isDark, MilestoneProgress next) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Container(
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.hero,
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: AppColors.cyan.withOpacity(0.3),
-          ),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -372,26 +324,18 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               children: [
                 Icon(
                   Icons.flag,
-                  color: AppColors.cyan,
-                  size: 20,
+                  color: tc.accent,
+                  size: 18,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  AppLocalizations.of(context).milestonesNextMilestone,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+                  AppLocalizations.of(context).milestonesNextMilestone.toUpperCase(),
+                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
                 ),
                 const Spacer(),
                 Text(
                   '${next.progressPercentage?.toStringAsFixed(0) ?? 0}%',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.cyan,
-                  ),
+                  style: ZType.data(15, color: tc.accent),
                 ),
               ],
             ),
@@ -401,7 +345,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: textColor,
+                color: tc.textPrimary,
               ),
             ),
             if (next.milestone.description != null)
@@ -411,7 +355,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   next.milestone.description!,
                   style: TextStyle(
                     fontSize: 13,
-                    color: textMuted,
+                    color: tc.textMuted,
                   ),
                 ),
               ),
@@ -421,18 +365,15 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: next.progressFraction,
-                backgroundColor: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
-                minHeight: 8,
+                backgroundColor: AppColors.hairlineStrong,
+                valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
+                minHeight: 6,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               '${next.currentValue?.toInt() ?? 0} / ${next.milestone.threshold}',
-              style: TextStyle(
-                fontSize: 12,
-                color: textMuted,
-              ),
+              style: ZType.data(12, color: tc.textMuted),
             ),
           ],
         ),
@@ -441,9 +382,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   Widget _buildMilestoneBadge(bool isDark, MilestoneProgress progress, bool isAchieved) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
     final tier = progress.milestone.tier;
 
     return GestureDetector(
@@ -454,12 +393,12 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isAchieved ? elevatedColor : elevatedColor.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(16),
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isAchieved
                 ? Color(tier.colorValue).withOpacity(0.5)
-                : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                : AppColors.cardBorder,
           ),
         ),
         child: Column(
@@ -472,7 +411,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               decoration: BoxDecoration(
                 color: isAchieved
                     ? Color(tier.colorValue).withOpacity(0.2)
-                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                    : AppColors.hairlineStrong,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -480,7 +419,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   _getIconForMilestone(progress.milestone.icon ?? 'star'),
                   style: TextStyle(
                     fontSize: 24,
-                    color: isAchieved ? null : textMuted,
+                    color: isAchieved ? null : tc.textMuted,
                   ),
                 ),
               ),
@@ -495,7 +434,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isAchieved ? textColor : textMuted,
+                color: isAchieved ? tc.textPrimary : tc.textMuted,
               ),
             ),
             // Progress for upcoming
@@ -504,11 +443,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '${progress.progressPercentage!.toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: AppColors.cyan,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: ZType.data(10, color: tc.accent),
                 ),
               ),
           ],
@@ -539,9 +474,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   void _showMilestoneDetails(MilestoneProgress progress, bool isAchieved) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
     final tier = progress.milestone.tier;
 
     showGlassSheet(
@@ -559,7 +492,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               decoration: BoxDecoration(
                 color: isAchieved
                     ? Color(tier.colorValue).withOpacity(0.2)
-                    : (isDark ? AppColors.glassSurface : AppColorsLight.glassSurface),
+                    : AppColors.hairlineStrong,
                 shape: BoxShape.circle,
                 border: isAchieved
                     ? Border.all(color: Color(tier.colorValue), width: 2)
@@ -578,7 +511,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: textColor,
+                color: tc.textPrimary,
               ),
             ),
             if (progress.milestone.description != null)
@@ -589,7 +522,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: textMuted,
+                    color: tc.textMuted,
                   ),
                 ),
               ),
@@ -602,36 +535,28 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: Color(tier.colorValue).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    tier.displayName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(tier.colorValue),
-                    ),
+                    tier.displayName.toUpperCase(),
+                    style: ZType.lbl(10, color: Color(tier.colorValue), letterSpacing: 1.4),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.yellow.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.stars, size: 14, color: AppColors.yellow),
+                      Icon(Icons.stars, size: 13, color: tc.accent),
                       const SizedBox(width: 4),
                       Text(
                         '${progress.milestone.points} pts',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.yellow,
-                        ),
+                        style: ZType.lbl(10, color: tc.accent, letterSpacing: 1.2),
                       ),
                     ],
                   ),
@@ -645,18 +570,15 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress.progressFraction,
-                  backgroundColor: isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppColors.cyan),
-                  minHeight: 8,
+                  backgroundColor: AppColors.hairlineStrong,
+                  valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
+                  minHeight: 6,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 '${progress.currentValue?.toInt() ?? 0} / ${progress.milestone.threshold}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textMuted,
-                ),
+                style: ZType.data(13, color: tc.textMuted),
               ),
             ],
             if (isAchieved && progress.achievedAt != null) ...[
@@ -665,7 +587,7 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
                 'Achieved ${_formatDate(progress.achievedAt!)}',
                 style: TextStyle(
                   fontSize: 12,
-                  color: textMuted,
+                  color: tc.textMuted,
                 ),
               ),
             ],
@@ -689,54 +611,36 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   Widget _buildROIHeader(bool isDark, ROIMetrics roi) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            AppColors.purple.withOpacity(0.15),
-            AppColors.cyan.withOpacity(0.1),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
       child: Column(
         children: [
           Text(
             '${roi.totalWorkoutsCompleted}',
-            style: TextStyle(
-              fontSize: 56,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
+            style: ZType.disp(58, color: tc.textPrimary),
           ),
+          const SizedBox(height: 4),
           Text(
-            AppLocalizations.of(context).trophiesEarnedTotalWorkouts,
-            style: TextStyle(
-              fontSize: 16,
-              color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-            ),
+            AppLocalizations.of(context).trophiesEarnedTotalWorkouts.toUpperCase(),
+            style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1.6),
           ),
           const SizedBox(height: 16),
           if (roi.strengthSummary.isNotEmpty)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.green.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
+                color: tc.success.withOpacity(0.12),
+                borderRadius: BorderRadius.circular(999),
               ),
               child: Text(
                 roi.strengthSummary,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.green,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: tc.success,
                 ),
               ),
             ),
@@ -753,25 +657,20 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     Color color, {
     String? subtitle,
   }) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(11),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
+              border: Border.all(color: AppColors.cardBorder),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: color, size: 24),
+            child: Icon(icon, color: color, size: 22),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -779,26 +678,23 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textMuted,
-                  ),
+                  title.toUpperCase(),
+                  style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.4),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
+                  style: ZType.disp(22, color: tc.textPrimary),
                 ),
                 if (subtitle != null)
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: tc.textMuted,
+                      ),
                     ),
                   ),
               ],
@@ -810,26 +706,17 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
   }
 
   Widget _buildJourneyStats(bool isDark, ROIMetrics roi) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).milestonesYourJourney,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
+            AppLocalizations.of(context).milestonesYourJourney.toUpperCase(),
+            style: ZType.lbl(12, color: tc.textSecondary, letterSpacing: 1.6),
           ),
           const SizedBox(height: 16),
           Row(
@@ -902,28 +789,24 @@ class _MilestonesScreenState extends ConsumerState<MilestonesScreen>
     IconData icon, {
     bool highlighted = false,
   }) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final color = highlighted ? AppColors.orange : textMuted;
+    final tc = ThemeColors.of(context);
+    final iconColor = highlighted ? tc.accent : tc.textMuted;
 
     return Column(
       children: [
-        Icon(icon, color: color, size: 20),
+        Icon(icon, color: iconColor, size: 18),
         const SizedBox(height: 6),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: highlighted ? AppColors.orange : textColor,
+          style: ZType.disp(
+            18,
+            color: highlighted ? tc.accent : tc.textPrimary,
           ),
         ),
+        const SizedBox(height: 2),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: textMuted,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
         ),
       ],
     );

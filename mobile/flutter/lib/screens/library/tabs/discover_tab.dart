@@ -3,8 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ai_split_preset.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../components/ai_split_preset_detail_sheet.dart';
 import '../providers/for_you_provider.dart';
@@ -58,112 +61,66 @@ class _AiHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final textPrimary = tc.textPrimary;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GestureDetector(
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.hero,
+        padding: const EdgeInsets.all(16),
         onTap: () {
           HapticService.light();
           context.push('/chat', extra: {
             'initialMessage': 'What should I train today? Give me a personalized recommendation based on my recent workouts, recovery, and goals.',
           });
         },
-        child: Container(
-          height: 100,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                purple.withOpacity(0.25),
-                cyan.withOpacity(0.15),
-              ],
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: tc.elevated,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.cardBorder),
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                color: accent,
+                size: 22,
+              ),
             ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: purple.withOpacity(0.3),
-            ),
-          ),
-          child: Stack(
-            children: [
-              // Shimmer overlay on the border
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: cyan.withOpacity(0.15),
-                      width: 1.5,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)
+                        .discoverWhatShouldITrain
+                        .toUpperCase(),
+                    style: ZType.disp(18, color: textPrimary),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    AppLocalizations.of(context).discoverGetAPersonalizedAi,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: tc.textSecondary,
                     ),
                   ),
-                )
-                    .animate(onPlay: (controller) => controller.repeat())
-                    .shimmer(
-                      duration: 2000.ms,
-                      color: cyan.withOpacity(0.3),
-                    ),
+                ],
               ),
-              // Content
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: purple.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.auto_awesome,
-                        color: purple,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            AppLocalizations.of(context).discoverWhatShouldITrain,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            AppLocalizations.of(context).discoverGetAPersonalizedAi,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: isDark
-                                  ? AppColors.textSecondary
-                                  : AppColorsLight.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: isDark
-                          ? AppColors.textMuted
-                          : AppColorsLight.textMuted,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: tc.textMuted,
+            ),
+          ],
         ),
       ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, duration: 400.ms);
@@ -182,11 +139,10 @@ class _ForYouSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final cyan = tc.accent;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -198,12 +154,8 @@ class _ForYouSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                AppLocalizations.of(context).discoverForYou,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
+                AppLocalizations.of(context).discoverForYou.toUpperCase(),
+                style: ZType.disp(22, color: textPrimary),
               ),
               const SizedBox(height: 2),
               Text(
@@ -226,8 +178,9 @@ class _ForYouSection extends StatelessWidget {
             child: Container(
               height: 110,
               decoration: BoxDecoration(
-                color: (isDark ? AppColors.elevated : AppColorsLight.elevated),
+                color: tc.surface,
                 borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -235,9 +188,7 @@ class _ForYouSection extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: isDark
-                      ? AppColors.textMuted
-                      : AppColorsLight.textMuted,
+                  color: tc.textMuted,
                 ),
               ),
             ),
@@ -341,14 +292,9 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
 
     final presets = _presetsForSelected();
     if (presets.isEmpty) return const SizedBox.shrink();
@@ -361,14 +307,11 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Text(
-                AppLocalizations.of(context).discoverTrainingPlans,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary,
-                ),
+                AppLocalizations.of(context).discoverTrainingPlans.toUpperCase(),
+                style: ZType.disp(22, color: textPrimary),
               ),
               GestureDetector(
                 onTap: () {
@@ -379,12 +322,10 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
                   context.push('/library/splits$qs');
                 },
                 child: Text(
-                  AppLocalizations.of(context).workoutHistoryImportViewAll,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: textSecondary,
-                  ),
+                  AppLocalizations.of(context)
+                      .workoutHistoryImportViewAll
+                      .toUpperCase(),
+                  style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.4),
                 ),
               ),
             ],
@@ -404,35 +345,15 @@ class _TrainingPlansSectionState extends State<_TrainingPlansSection> {
             itemBuilder: (context, i) {
               final (key, label) = _categories[i];
               final selected = _selectedCategory == key;
-              return GestureDetector(
-                onTap: () {
-                  HapticService.light();
-                  setState(() => _selectedCategory = key);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected ? purple : elevated,
-                    borderRadius: BorderRadius.circular(16),
-                    border: selected
-                        ? null
-                        : Border.all(
-                            color: textMuted.withValues(alpha: 0.2),
-                          ),
-                  ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w500,
-                      color: selected ? Colors.white : textSecondary,
-                    ),
-                  ),
+              return Align(
+                alignment: Alignment.center,
+                child: ZealovaChip(
+                  label: label,
+                  selected: selected,
+                  onTap: () {
+                    HapticService.light();
+                    setState(() => _selectedCategory = key);
+                  },
                 ),
               );
             },
@@ -485,8 +406,8 @@ class _BrowseSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
     final categoryData = ref.watch(categoryExercisesProvider);
 
     return Column(
@@ -496,12 +417,8 @@ class _BrowseSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            AppLocalizations.of(context).discoverBrowseByMuscle,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context).discoverBrowseByMuscle.toUpperCase(),
+            style: ZType.disp(18, color: textPrimary),
           ),
         ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
@@ -549,12 +466,8 @@ class _BrowseSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            AppLocalizations.of(context).discoverBrowseByEquipment,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context).discoverBrowseByEquipment.toUpperCase(),
+            style: ZType.disp(18, color: textPrimary),
           ),
         ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
@@ -592,12 +505,8 @@ class _BrowseSection extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Text(
-            AppLocalizations.of(context).discoverBrowseByCategory,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context).discoverBrowseByCategory.toUpperCase(),
+            style: ZType.disp(18, color: textPrimary),
           ),
         ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05),
 
@@ -665,10 +574,9 @@ class _MusclePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
 
     return GestureDetector(
       onTap: onTap,
@@ -676,15 +584,15 @@ class _MusclePill extends StatelessWidget {
         width: 72,
         child: Column(
           children: [
-            // Circular avatar with anatomy image
+            // Squared avatar tile with anatomy image
             Container(
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: elevated,
+                borderRadius: BorderRadius.circular(12),
+                color: tc.surface,
                 border: Border.all(
-                  color: (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+                  color: AppColors.cardBorder,
                   width: 1,
                 ),
               ),
@@ -708,12 +616,8 @@ class _MusclePill extends StatelessWidget {
             const SizedBox(height: 6),
             // Name
             Text(
-              name,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              name.toUpperCase(),
+              style: ZType.lbl(10.5, color: textPrimary, letterSpacing: 0.8),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
@@ -722,10 +626,7 @@ class _MusclePill extends StatelessWidget {
             if (countLabel.isNotEmpty)
               Text(
                 countLabel,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: textMuted,
-                ),
+                style: ZType.data(10, color: textMuted),
               ),
           ],
         ),
@@ -766,8 +667,8 @@ class _EquipmentPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
 
     return GestureDetector(
       onTap: onTap,
@@ -775,15 +676,15 @@ class _EquipmentPill extends StatelessWidget {
         width: 72,
         child: Column(
           children: [
-            // Circular icon with color
+            // Squared hairline icon tile
             Container(
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                color: tc.surface,
                 border: Border.all(
-                  color: color.withOpacity(0.3),
+                  color: AppColors.cardBorder,
                   width: 1,
                 ),
               ),
@@ -796,12 +697,8 @@ class _EquipmentPill extends StatelessWidget {
             const SizedBox(height: 6),
             // Name
             Text(
-              name,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              name.toUpperCase(),
+              style: ZType.lbl(10.5, color: textPrimary, letterSpacing: 0.8),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,

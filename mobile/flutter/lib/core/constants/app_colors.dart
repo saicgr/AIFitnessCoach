@@ -80,6 +80,18 @@ class AppColors {
   static const Color aiAccent = Color(0xFFFFFFFF); // White for AI features
 
   // ═══════════════════════════════════════════════════════════════
+  // Gamification accents — Signature semantic accent for trophies/rarity.
+  // Gold is the ONE place the gamification surfaces are allowed a colored
+  // accent (trophy/rarity + small badge progress arcs); orange ≤1/screen.
+  // Rarity tier metals follow.
+  // ═══════════════════════════════════════════════════════════════
+  static const Color gamGold = Color(0xFFFBBF24); // trophy / rarity accent
+  static const Color rarityBronze = Color(0xFFCD7F32);
+  static const Color raritySilver = Color(0xFFC7C7CF);
+  static const Color rarityGold = Color(0xFFFBBF24);
+  static const Color rarityPlatinum = Color(0xFF22D3EE);
+
+  // ═══════════════════════════════════════════════════════════════
   // Quick Action Semantic Colors - ALWAYS colorful (not affected by theme)
   // ═══════════════════════════════════════════════════════════════
   static const Color quickActionFood = Color(0xFF22C55E); // Green for food/nutrition

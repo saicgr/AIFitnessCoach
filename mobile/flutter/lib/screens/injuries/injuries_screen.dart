@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/injury.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/services/posthog_service.dart';
-import '../../widgets/segmented_tab_bar.dart';
 import 'widgets/injury_card.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -135,48 +136,69 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) {
-          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          final tc = ThemeColors.of(ctx);
           return AlertDialog(
-            backgroundColor: isDark ? AppColors.elevated : Colors.white,
-            title: Text(AppLocalizations.of(context)!.injuriesScreenCheckIn(injury.bodyPartDisplay)),
+            backgroundColor: tc.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+              side: BorderSide(color: AppColors.cardBorder),
+            ),
+            title: Text(
+              AppLocalizations.of(context)!.injuriesScreenCheckIn(injury.bodyPartDisplay).toUpperCase(),
+              style: ZType.disp(22, color: tc.textPrimary),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(AppLocalizations.of(context).injuriesHowIsYourPain,
-                  style: TextStyle(fontSize: 14, color: isDark ? AppColors.textSecondary : Colors.black54)),
+                  style: ZType.ser(14, color: tc.textSecondary)),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text('$painLevel', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold,
-                      color: painLevel <= 3 ? AppColors.success : painLevel <= 6 ? AppColors.warning : AppColors.error)),
-                    Text(' / 10', style: TextStyle(fontSize: 16, color: isDark ? AppColors.textMuted : Colors.black38)),
+                    Text('$painLevel', style: ZType.disp(36,
+                      color: painLevel <= 3 ? tc.success : painLevel <= 6 ? tc.warning : tc.error)),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Text(' / 10', style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1)),
+                    ),
                   ],
                 ),
                 Slider(
                   value: painLevel.toDouble(),
                   min: 1, max: 10, divisions: 9,
-                  activeColor: painLevel <= 3 ? AppColors.success : painLevel <= 6 ? AppColors.warning : AppColors.error,
+                  activeColor: painLevel <= 3 ? tc.success : painLevel <= 6 ? tc.warning : tc.error,
                   onChanged: (v) => setDialogState(() => painLevel = v.toInt()),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(AppLocalizations.of(context).injuriesMild, style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
-                    Text(AppLocalizations.of(context).injuriesSevere, style: TextStyle(fontSize: 11, color: isDark ? AppColors.textMuted : Colors.black38)),
+                    Text(AppLocalizations.of(context).injuriesMild, style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1)),
+                    Text(AppLocalizations.of(context).injuriesSevere, style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1)),
                   ],
                 ),
               ],
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(AppLocalizations.of(context).buttonCancel)),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(AppLocalizations.of(context).buttonCancel.toUpperCase(),
+                    style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1.5)),
+              ),
               FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: tc.accent,
+                  foregroundColor: tc.accentContrast,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
                 onPressed: () {
                   Navigator.pop(ctx);
                   AppSnackBar.success(context, AppLocalizations.of(context)!.injuriesScreenCheckInSavedPain(painLevel));
                   _loadInjuries();
                 },
-                child: Text(AppLocalizations.of(context).buttonSave),
+                child: Text(AppLocalizations.of(context).buttonSave.toUpperCase(),
+                    style: ZType.lbl(12, color: tc.accentContrast, letterSpacing: 1.5)),
               ),
             ],
           );
@@ -187,33 +209,40 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final elevated = tc.surface;
+    final cardBorder = AppColors.cardBorder;
 
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).injuriesInjuryTracker,
+        kicker: 'RECOVERY',
         actions: [
-          PillAppBarAction(icon: Icons.refresh, onTap: _loadInjuries),
+          GestureDetector(
+            onTap: _loadInjuries,
+            child: Icon(Icons.refresh, size: 22, color: tc.textPrimary),
+          ),
         ],
       ),
       body: Column(
         children: [
-          SegmentedTabBar(
-            controller: _tabController,
-            showIcons: false,
-            tabs: [
-              SegmentedTabItem(label: AppLocalizations.of(context).syncedWorkoutsHistoryActive),
-              SegmentedTabItem(label: AppLocalizations.of(context).injuriesRecovering),
-              SegmentedTabItem(label: AppLocalizations.of(context).injuryCardHealed),
-            ],
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+            child: ZealovaTextTabs(
+              tabs: [
+                AppLocalizations.of(context).syncedWorkoutsHistoryActive,
+                AppLocalizations.of(context).injuriesRecovering,
+                AppLocalizations.of(context).injuryCardHealed,
+              ],
+              activeIndex: _currentFilter.index,
+              onChanged: (i) => _tabController.animateTo(i),
+            ),
           ),
+          ZealovaRule(margin: const EdgeInsets.symmetric(horizontal: 20)),
           Expanded(
             child: _isLoading
           ? const SkeletonList(itemCount: 5, padding: EdgeInsets.all(16))
@@ -225,41 +254,48 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToReportInjury,
-        backgroundColor: AppColors.coral,
-        foregroundColor: Colors.white,
+        backgroundColor: tc.accent,
+        foregroundColor: tc.accentContrast,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         icon: const Icon(Icons.add),
-        label: Text(AppLocalizations.of(context).reportInjuryReportInjury),
+        label: Text(
+          AppLocalizations.of(context).reportInjuryReportInjury.toUpperCase(),
+          style: ZType.lbl(13, color: tc.accentContrast, letterSpacing: 1.5),
+        ),
       ),
     );
   }
 
   Widget _buildErrorState(Color textPrimary, Color textSecondary) {
+    final tc = ThemeColors.of(context);
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 64, color: AppColors.error.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          Text(
-            AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 56, color: tc.error.withValues(alpha: 0.6)),
+            const SizedBox(height: 16),
+            Text(
+              AppLocalizations.of(context).workoutGenerationSomethingWentWrong.toUpperCase(),
+              style: ZType.disp(20, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
-            style: TextStyle(color: textSecondary),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _loadInjuries,
-            child: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
-          ),
-        ],
+            const SizedBox(height: 8),
+            Text(
+              _error ?? AppLocalizations.of(context).subscriptionManagementUnknownError,
+              style: ZType.ser(14, color: textSecondary),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutStateCardsTryAgain,
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              onTap: _loadInjuries,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -310,6 +346,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
     Color elevated,
     Color cardBorder,
   ) {
+    final tc = ThemeColors.of(context);
     String title;
     String subtitle;
     IconData icon;
@@ -320,13 +357,13 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
         title = 'No active injuries';
         subtitle = 'Great! You have no active injuries to report.';
         icon = Icons.check_circle_outline;
-        iconColor = AppColors.success;
+        iconColor = tc.success;
         break;
       case InjuryFilter.recovering:
         title = 'No recovering injuries';
         subtitle = 'You have no injuries currently in recovery.';
         icon = Icons.healing;
-        iconColor = AppColors.warning;
+        iconColor = tc.warning;
         break;
       case InjuryFilter.healed:
         title = 'No healed injuries';
@@ -343,46 +380,40 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              width: 88,
+              height: 88,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
+                color: tc.surface,
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
                 icon,
-                size: 64,
+                size: 40,
                 color: iconColor,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              title.toUpperCase(),
+              style: ZType.disp(22, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               subtitle,
-              style: TextStyle(
-                fontSize: 14,
-                color: textSecondary,
-              ),
+              style: ZType.ser(14, color: textSecondary),
               textAlign: TextAlign.center,
             ),
             if (_currentFilter == InjuryFilter.active) ...[
               const SizedBox(height: 32),
-              OutlinedButton.icon(
-                onPressed: _navigateToReportInjury,
-                icon: const Icon(Icons.add),
-                label: Text(AppLocalizations.of(context).injuriesReportAnInjury),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.coral,
-                  side: const BorderSide(color: AppColors.coral),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+              ZealovaButton(
+                label: AppLocalizations.of(context).injuriesReportAnInjury,
+                variant: ZealovaButtonVariant.ghost,
+                expand: false,
+                trailingIcon: Icons.add,
+                onTap: _navigateToReportInjury,
               ),
             ],
           ],

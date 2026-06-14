@@ -21,12 +21,9 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
         ? 'kg'
         : (_selectedType == MeasurementType.bodyFat ? '%' : 'cm');
 
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -43,12 +40,9 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _selectedType.displayName,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
+                        _selectedType.displayName.toUpperCase(),
+                        style: ZType.lbl(15,
+                            color: textPrimary, letterSpacing: 1.2),
                       ),
                       const SizedBox(width: 4),
                       Icon(Icons.arrow_drop_down,
@@ -85,7 +79,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                   ),
                 ],
               ] else
-                Text(AppLocalizations.of(context)!.measurementsTabUiValue(unit), style: TextStyle(fontSize: 16, color: textMuted)),
+                Text(AppLocalizations.of(context)!.measurementsTabUiValue(unit), style: ZType.data(15, color: textMuted)),
             ],
           ),
 
@@ -137,12 +131,8 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
                   child: Text(
-                    AppLocalizations.of(context).measurementsTabUiChooseMetric,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
+                    AppLocalizations.of(context).measurementsTabUiChooseMetric.toUpperCase(),
+                    style: ZType.lbl(14, color: textPrimary, letterSpacing: 1.5),
                   ),
                 ),
                 Flexible(
@@ -242,7 +232,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
               reservedSize: 45,
               getTitlesWidget: (value, meta) => Text(
                 _formatValue(value),
-                style: TextStyle(fontSize: 10, color: textMuted),
+                style: ZType.lbl(9, color: textMuted, letterSpacing: 0.5),
               ),
             ),
           ),
@@ -258,7 +248,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
                       DateFormat('M/d').format(data[index].recordedAt),
-                      style: TextStyle(fontSize: 10, color: textMuted),
+                      style: ZType.lbl(8, color: textMuted, letterSpacing: 0.5),
                     ),
                   );
                 }

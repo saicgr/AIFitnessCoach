@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// Dropdown filter for selecting muscle group
@@ -16,14 +17,12 @@ class MuscleGroupFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     if (muscleGroups.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return SizedBox(
-      height: 40,
+      height: 32,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: muscleGroups.length + 1, // +1 for "All" option
@@ -32,50 +31,20 @@ class MuscleGroupFilter extends StatelessWidget {
           if (index == 0) {
             // "All" option
             final isSelected = selectedMuscleGroup == null;
-            return FilterChip(
-              label: Text(AppLocalizations.of(context).muscleGroupFilterAllMuscles),
+            return ZealovaChip(
+              label: AppLocalizations.of(context).muscleGroupFilterAllMuscles,
               selected: isSelected,
-              onSelected: (_) => onMuscleGroupSelected(null),
-              selectedColor: colorScheme.primary,
-              labelStyle: TextStyle(
-                color: isSelected
-                    ? colorScheme.onPrimary
-                    : colorScheme.onSurfaceVariant,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 12,
-              ),
-              backgroundColor: colorScheme.surfaceContainerHighest,
-              side: BorderSide(
-                color: isSelected
-                    ? colorScheme.primary
-                    : colorScheme.outline.withOpacity(0.3),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              onTap: () => onMuscleGroupSelected(null),
             );
           }
 
           final muscleGroup = muscleGroups[index - 1];
           final isSelected = selectedMuscleGroup == muscleGroup;
 
-          return FilterChip(
-            label: Text(_formatMuscleGroup(muscleGroup)),
+          return ZealovaChip(
+            label: _formatMuscleGroup(muscleGroup),
             selected: isSelected,
-            onSelected: (_) => onMuscleGroupSelected(muscleGroup),
-            selectedColor: colorScheme.primary,
-            labelStyle: TextStyle(
-              color: isSelected
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              fontSize: 12,
-            ),
-            backgroundColor: colorScheme.surfaceContainerHighest,
-            side: BorderSide(
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.outline.withOpacity(0.3),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            onTap: () => onMuscleGroupSelected(muscleGroup),
           );
         },
       ),

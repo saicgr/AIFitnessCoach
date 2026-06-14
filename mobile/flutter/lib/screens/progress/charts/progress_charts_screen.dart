@@ -14,8 +14,9 @@ import 'widgets/summary_cards.dart';
 import 'widgets/time_range_selector.dart';
 import 'widgets/muscle_group_filter.dart';
 import '../widgets/gym_progress_filter.dart';
-import '../../../widgets/pill_app_bar.dart';
-import '../../../widgets/segmented_tab_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/line_icon.dart';
 
@@ -68,30 +69,37 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final tc = ThemeColors.of(context);
     final state = ref.watch(progressChartsProvider);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
-      appBar: PillAppBar(
+      backgroundColor: tc.background,
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).progressChartsTrends,
         actions: [
-          PillAppBarAction(
-            customIcon: LineIcon(
-              'custom_trend',
-              size: 20,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white70
-                  : AppColorsLight.textSecondary,
-            ),
+          GestureDetector(
             onTap: () => context.push('/trends/custom'),
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: LineIcon(
+                'custom_trend',
+                size: 20,
+                color: tc.textSecondary,
+              ),
+            ),
           ),
-          PillAppBarAction(
-            icon: Icons.refresh,
-            visible: !state.isLoading,
-            onTap: () => ref.read(progressChartsProvider.notifier).refresh(userId: _userId),
-          ),
+          if (!state.isLoading)
+            GestureDetector(
+              onTap: () => ref
+                  .read(progressChartsProvider.notifier)
+                  .refresh(userId: _userId),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Icon(Icons.refresh, size: 20, color: tc.textSecondary),
+              ),
+            ),
         ],
       ),
       body: _userId == null || state.isLoading
@@ -101,13 +109,20 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               : Column(
                   children: [
                     // Tab Bar
-                    SegmentedTabBar(
-                      controller: _tabController,
-                      showIcons: false,
-                      tabs: [
-                        SegmentedTabItem(label: AppLocalizations.of(context).volumeChartVolumeTrends),
-                        SegmentedTabItem(label: AppLocalizations.of(context).strengthChartStrengthTrends),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                      child: AnimatedBuilder(
+                        animation: _tabController,
+                        builder: (context, _) => ZealovaTextTabs(
+                          tabs: [
+                            AppLocalizations.of(context).volumeChartVolumeTrends,
+                            AppLocalizations.of(context)
+                                .strengthChartStrengthTrends,
+                          ],
+                          activeIndex: _tabController.index,
+                          onChanged: (i) => _tabController.animateTo(i),
+                        ),
+                      ),
                     ),
 
                     // Time Range Selector
@@ -240,7 +255,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
   }
 
   Widget _buildErrorState(String error) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -250,24 +265,21 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
             Icon(
               Icons.error_outline,
               size: 64,
-              color: colorScheme.error,
+              color: tc.error,
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).strainDashboardFailedToLoadData,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
+              AppLocalizations.of(context)
+                  .strainDashboardFailedToLoadData
+                  .toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(22, color: tc.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               error,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: TextStyle(color: tc.textSecondary),
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
@@ -287,7 +299,7 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
     required String title,
     required String message,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -297,24 +309,19 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
             Icon(
               icon,
               size: 80,
-              color: colorScheme.outline,
+              color: tc.textMuted,
             ),
             const SizedBox(height: 16),
             Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
+              title.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(22, color: tc.textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: TextStyle(color: tc.textSecondary),
             ),
           ],
         ),
@@ -323,33 +330,17 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
   }
 
   Widget _buildVolumeTrendCard(VolumeProgressionData data) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     final isPositive = data.percentChange >= 0;
-    final trendColor = isPositive ? Colors.green : Colors.red;
+    final trendColor = isPositive ? tc.success : tc.error;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.trending_up, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).progressChartsVolumeTrend,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
+          _cardHeader(Icons.trending_up,
+              AppLocalizations.of(context).progressChartsVolumeTrend),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -362,12 +353,12 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               _buildTrendStat(
                 'Avg Weekly',
                 '${data.avgWeeklyVolumeKg.toStringAsFixed(0)} kg',
-                colorScheme.primary,
+                tc.accent,
               ),
               _buildTrendStat(
                 'Peak',
                 '${data.peakVolumeKg.toStringAsFixed(0)} kg',
-                Colors.amber,
+                tc.textPrimary,
               ),
             ],
           ),
@@ -376,57 +367,47 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
     );
   }
 
+  /// Signature card header — accent icon + Barlow uppercase title.
+  Widget _cardHeader(IconData icon, String title) {
+    final tc = ThemeColors.of(context);
+    return Row(
+      children: [
+        Icon(icon, color: tc.accent, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          title.toUpperCase(),
+          style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 1.5),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTrendStat(String label, String value, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     return Column(
       children: [
         Text(
           value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          style: ZType.disp(18, color: color),
         ),
         const SizedBox(height: 4),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: colorScheme.onSurfaceVariant,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
         ),
       ],
     );
   }
 
   Widget _buildVolumeBreakdownCard(VolumeProgressionData data) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.analytics, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).progressChartsPeriodSummary,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+          _cardHeader(Icons.analytics,
+              AppLocalizations.of(context).progressChartsPeriodSummary),
+          const SizedBox(height: 12),
           _buildBreakdownRow('Total Volume', '${data.totalVolumeKg.toStringAsFixed(0)} kg'),
           _buildBreakdownRow('Total Workouts', '${data.totalWorkouts}'),
           _buildBreakdownRow('Total Sets', '${data.sortedData.fold(0, (sum, w) => sum + w.totalSets)}'),
@@ -437,22 +418,19 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
   }
 
   Widget _buildBreakdownRow(String label, String value) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            label,
-            style: TextStyle(color: colorScheme.onSurfaceVariant),
+            label.toUpperCase(),
+            style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1),
           ),
           Text(
             value,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
+            style: ZType.data(13, color: tc.textPrimary),
           ),
         ],
       ),
@@ -460,31 +438,15 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
   }
 
   Widget _buildStrengthSummaryCard(StrengthProgressionData data) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.fitness_center, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).progressChartsStrengthSummary,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
+          _cardHeader(Icons.fitness_center,
+              AppLocalizations.of(context).progressChartsStrengthSummary),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -492,42 +454,44 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
               _buildTrendStat(
                 'Total Volume',
                 '${(data.totalVolumeKg / 1000).toStringAsFixed(1)}t',
-                colorScheme.primary,
+                tc.accent,
               ),
               _buildTrendStat(
                 'Total Sets',
                 '${data.totalSets}',
-                Colors.blue,
+                tc.textPrimary,
               ),
               _buildTrendStat(
                 'Avg Weekly',
                 '${data.avgWeeklyVolumeKg.toStringAsFixed(0)} kg',
-                Colors.purple,
+                tc.textPrimary,
               ),
             ],
           ),
           if (data.topMuscleGroup != null) ...[
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+                color: tc.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.hairlineStrong),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.star, color: colorScheme.primary, size: 20),
+                  Icon(Icons.star, color: tc.accent, size: 18),
                   const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context).progressChartsTopMuscle,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                    AppLocalizations.of(context)
+                        .progressChartsTopMuscle
+                        .toUpperCase(),
+                    style:
+                        ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.2),
                   ),
+                  const SizedBox(width: 6),
                   Text(
-                    _formatMuscleGroup(data.topMuscleGroup!),
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                    ),
+                    _formatMuscleGroup(data.topMuscleGroup!).toUpperCase(),
+                    style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.2),
                   ),
                 ],
               ),
@@ -554,29 +518,15 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
 
     if (sortedMuscles.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-      ),
+    final tc = ThemeColors.of(context);
+
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(Icons.pie_chart, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).progressChartsMuscleGroupBreakdown,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
+          _cardHeader(Icons.pie_chart,
+              AppLocalizations.of(context).progressChartsMuscleGroupBreakdown),
           const SizedBox(height: 16),
           ...sortedMuscles.take(5).map((entry) {
             final maxVolume = sortedMuscles.first.value;
@@ -590,30 +540,24 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        _formatMuscleGroup(entry.key),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurface,
-                        ),
+                        _formatMuscleGroup(entry.key).toUpperCase(),
+                        style: ZType.lbl(11,
+                            color: tc.textSecondary, letterSpacing: 1),
                       ),
                       Text(
                         AppLocalizations.of(context)!.progressChartsScreenKg(entry.value.toStringAsFixed(0)),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.primary,
-                        ),
+                        style: ZType.data(12, color: tc.accent),
                       ),
                     ],
                   ),
                   const SizedBox(height: 6),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(2),
                     child: LinearProgressIndicator(
                       value: progress,
-                      backgroundColor: colorScheme.outline.withOpacity(0.2),
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(colorScheme.primary),
-                      minHeight: 8,
+                      backgroundColor: AppColors.hairlineStrong,
+                      valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
+                      minHeight: 6,
                     ),
                   ),
                 ],

@@ -11,7 +11,9 @@ import 'package:go_router/go_router.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/providers/warmup_duration_provider.dart';
 import '../../core/utils/difficulty_utils.dart';
@@ -500,33 +502,60 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                 ),
               ),
 
-              // Stats Row
+              // Stats Row — Signature telemetry ledger: Anton numerals on a
+              // hairline strip (no boxed cards). Calorie stat keeps its orange
+              // animated flame (semantic energy color).
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  WorkoutDetailStatCard(
-                    icon: Icons.timer_outlined,
-                    value: '${workout.bestDurationMinutes}',
-                    label: 'min',
-                    color: accentColor,
+                  const ZealovaRule(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ZealovaStatTile(
+                            value: '${workout.bestDurationMinutes}',
+                            unit: 'min',
+                            label: 'duration',
+                            valueSize: 26,
+                          ),
+                        ),
+                        Container(width: 1, height: 32, color: AppColors.hairline),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: ZealovaStatTile(
+                            value: '${exercises.length}',
+                            label: 'exercises',
+                            valueSize: 26,
+                          ),
+                        ),
+                        Container(width: 1, height: 32, color: AppColors.hairline),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const AnimatedFireIcon(size: 18, color: Color(0xFFF97316)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: ZealovaStatTile(
+                                  value: '${workout.estimatedCalories}',
+                                  unit: 'cal',
+                                  label: 'energy',
+                                  valueSize: 26,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  WorkoutDetailStatCard(
-                    icon: Icons.fitness_center,
-                    value: '${exercises.length}',
-                    label: 'exercises',
-                    color: accentColor,
-                  ),
-                  const SizedBox(width: 12),
-                  WorkoutDetailStatCard(
-                    icon: Icons.local_fire_department,
-                    value: '${workout.estimatedCalories}',
-                    label: 'cal',
-                    color: const Color(0xFFF97316),  // Orange fire color
-                    useAnimatedFire: true,
-                  ),
+                  const ZealovaRule(),
                 ],
               ),
             ).animate()
@@ -605,23 +634,25 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: elevatedColor,
-                          borderRadius: BorderRadius.circular(8),
+                          color: ThemeColors.of(context).surface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppColors.cardBorder),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_circle,
-                              size: 14,
-                              color: AppColors.success,
+                              size: 13,
+                              color: ThemeColors.of(context).success,
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              localizeEquipment(equipment, context),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                              localizeEquipment(equipment, context).toUpperCase(),
+                              style: ZType.lbl(
+                                11,
+                                color: ThemeColors.of(context).textSecondary,
+                                letterSpacing: 1.2,
                               ),
                             ),
                           ],
@@ -643,13 +674,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 child: _saunaLog != null
-                    ? Container(
+                    ? ZealovaCard(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE65100).withOpacity(0.08),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE65100).withOpacity(0.2)),
-                        ),
                         child: Row(
                           children: [
                             const Icon(Icons.hot_tub_rounded, size: 20, color: Color(0xFFE65100)),
@@ -659,11 +685,11 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${_saunaLog!.durationMinutes} min sauna',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+                                    '${_saunaLog!.durationMinutes} MIN SAUNA',
+                                    style: ZType.lbl(
+                                      12,
+                                      color: ThemeColors.of(context).textPrimary,
+                                      letterSpacing: 1.2,
                                     ),
                                   ),
                                   if (_saunaLog!.estimatedCalories != null)

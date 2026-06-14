@@ -15,6 +15,7 @@ import '../../data/providers/schedule_provider.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/app_typography.dart';
 import '../../widgets/glass_sheet.dart';
 import '../profile/synced_workout_detail_screen.dart';
 import 'widgets/add_schedule_item_sheet.dart';
@@ -315,11 +316,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               Icon(Icons.schedule, size: 18, color: colors.textMuted),
               const SizedBox(width: 8),
               Text(
-                DateFormat('EEEE, MMM d').format(selectedDate),
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
+                DateFormat('EEEE, MMM d').format(selectedDate).toUpperCase(),
+                style: ZType.lbl(
+                  14,
                   color: colors.textPrimary,
+                  letterSpacing: 1.4,
                 ),
               ),
               if (selectedDate.year == now.year &&
@@ -329,16 +330,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: colors.cyan.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(10),
+                    color: colors.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: colors.accent.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     AppLocalizations.of(context).todayScoreCardToday,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: colors.cyan,
-                    ),
+                    style: ZType.lbl(9, color: colors.accent, letterSpacing: 1.6),
                   ),
                 ),
               ],
@@ -413,55 +411,31 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      gradient: isToday
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [dayAccent, dayAccent.withOpacity(0.7)],
-                            )
-                          : LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                dayAccent.withOpacity(isPast ? 0.08 : 0.18),
-                                dayAccent.withOpacity(isPast ? 0.04 : 0.08),
-                              ],
-                            ),
+                      color: isToday ? dayAccent : colors.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: isToday
                           ? null
-                          : Border.all(color: dayAccent.withOpacity(isPast ? 0.15 : 0.3)),
-                      boxShadow: isToday
-                          ? [
-                              BoxShadow(
-                                color: dayAccent.withOpacity(0.35),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ]
-                          : null,
+                          : Border.all(color: AppColors.cardBorder),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           DateFormat('E').format(day).toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+                          style: ZType.lbl(
+                            9,
                             color: isToday
-                                ? Colors.white
-                                : dayAccent.withOpacity(isPast ? 0.6 : 0.9),
-                            letterSpacing: 0.5,
+                                ? colors.accentContrast
+                                : (isPast ? colors.textMuted : colors.textSecondary),
+                            letterSpacing: 1.2,
                           ),
                         ),
                         Text(
                           '${day.day}',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+                          style: ZType.disp(
+                            18,
                             color: isToday
-                                ? Colors.white
+                                ? colors.accentContrast
                                 : (isPast ? colors.textMuted : colors.textPrimary),
                           ),
                         ),
@@ -474,11 +448,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          DateFormat('EEEE').format(day),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                          DateFormat('EEEE').format(day).toUpperCase(),
+                          style: ZType.lbl(
+                            15,
                             color: isToday ? dayAccent : (isPast ? colors.textMuted : colors.textPrimary),
+                            letterSpacing: 1.5,
                           ),
                         ),
                         Text(
@@ -495,17 +469,13 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: dayAccent.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+                        color: dayAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: dayAccent.withValues(alpha: 0.4)),
                       ),
                       child: Text(
                         'TODAY',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: dayAccent,
-                          letterSpacing: 0.5,
-                        ),
+                        style: ZType.lbl(10, color: dayAccent, letterSpacing: 1.8),
                       ),
                     ),
                 ],
@@ -724,27 +694,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
     }).toList();
   }
 
-  /// Day-of-week accent palette — gives each weekday its own identity so the
-  /// agenda view has visual rhythm instead of reading as a monochrome list.
+  /// Signature: accent is reserved — the agenda reads as a hairline-led list
+  /// with a single resolved accent, not a per-weekday rainbow. Kept as a method
+  /// so every caller threads the one accent through unchanged.
   Color _accentForWeekday(int weekday) {
-    switch (weekday) {
-      case DateTime.monday:
-        return const Color(0xFF6366F1); // Indigo
-      case DateTime.tuesday:
-        return const Color(0xFFA855F7); // Purple
-      case DateTime.wednesday:
-        return const Color(0xFFEC4899); // Pink
-      case DateTime.thursday:
-        return const Color(0xFF06B6D4); // Cyan
-      case DateTime.friday:
-        return const Color(0xFFF59E0B); // Amber
-      case DateTime.saturday:
-        return const Color(0xFFF87171); // Coral
-      case DateTime.sunday:
-        return const Color(0xFF14B8A6); // Teal
-      default:
-        return const Color(0xFF6366F1);
-    }
+    return ThemeColors.of(context).accent;
   }
 
   /// Layout-matched skeleton for the agenda view — a vertical list of
@@ -798,31 +752,24 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       margin: EdgeInsets.only(left: leftMargin, bottom: 8),
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            dayAccent.withOpacity(isPast ? 0.05 : 0.10),
-            dayAccent.withOpacity(isPast ? 0.02 : 0.04),
-          ],
-        ),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: dayAccent.withOpacity(isPast ? 0.12 : 0.22)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
           Icon(
             isPast ? Icons.bedtime_outlined : Icons.event_available,
             size: 20,
-            color: dayAccent.withOpacity(isPast ? 0.6 : 0.85),
+            color: isPast ? colors.textMuted : dayAccent,
           ),
           const SizedBox(width: 12),
           Text(
             isPast ? AppLocalizations.of(context).scheduleRestDay : AppLocalizations.of(context).scheduleNoItemsScheduled,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: isPast ? colors.textMuted : colors.textPrimary.withOpacity(0.85),
+            style: ZType.lbl(
+              12,
+              color: isPast ? colors.textMuted : colors.textSecondary,
+              letterSpacing: 1.2,
             ),
           ),
         ],
@@ -946,14 +893,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                colors.cyan.withOpacity(0.15),
-                colors.cyan.withOpacity(0.05),
-              ],
-            ),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.cyan.withOpacity(0.3)),
+            border: Border(
+              left: BorderSide(color: colors.accent, width: 3),
+              top: BorderSide(color: AppColors.cardBorder),
+              right: BorderSide(color: AppColors.cardBorder),
+              bottom: BorderSide(color: AppColors.cardBorder),
+            ),
           ),
           child: Material(
             color: Colors.transparent,
@@ -972,12 +919,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: colors.cyan.withOpacity(0.2),
+                              color: colors.accent.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: colors.accent.withValues(alpha: 0.35)),
                             ),
                             child: Icon(
                               Icons.auto_awesome,
-                              color: colors.cyan,
+                              color: colors.accent,
                               size: 24,
                             ),
                           ),
@@ -988,10 +937,10 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                               children: [
                                 Text(
                                   AppLocalizations.of(context).scheduleGenerateThisWeek,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
+                                  style: ZType.lbl(
+                                    14,
                                     color: colors.textPrimary,
+                                    letterSpacing: 1.2,
                                   ),
                                 ),
                                 const SizedBox(height: 2),
@@ -1008,7 +957,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                           Icon(
                             Icons.arrow_forward_ios,
                             size: 16,
-                            color: colors.cyan,
+                            color: colors.accent,
                           ),
                         ],
                       ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -147,16 +148,31 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
     final logged = _logState == _LogState.logged;
     final logging = _logState == _LogState.logging;
 
-    Widget macroPill(String label, double grams, Color color) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.18 : 0.12),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-          ),
-          child: Text('$label ${grams.round()}g',
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+    // Signature `.nn-mline` group: semantic colored dot + Anton numeral + a
+    // Barlow-Condensed macro kicker.
+    Widget macroPill(String label, double grams, Color color) => Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '${grams.round()}',
+              style: ZType.disp(15, color: textPrimary, letterSpacing: 0.5),
+            ),
+            Text(
+              'g',
+              style: ZType.lbl(10, color: textSecondary, letterSpacing: 0.5),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label.toUpperCase(),
+              style: ZType.lbl(10, color: textSecondary, letterSpacing: 2.0),
+            ),
+          ],
         );
 
     return Padding(
@@ -188,12 +204,7 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
                       const SizedBox(width: 6),
                       Text(
                         'COACH RECOMMENDS',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.8,
-                          color: accent,
-                        ),
+                        style: ZType.lbl(11, color: accent, letterSpacing: 2.0),
                       ),
                     ],
                   ),
@@ -224,17 +235,24 @@ class _CoachRecommendsCardState extends ConsumerState<CoachRecommendsCard> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text('${s.calories} kcal',
-                          style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: accent)),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text('${s.calories}',
+                              style: ZType.disp(18, color: accent, letterSpacing: 0.5)),
+                          const SizedBox(width: 3),
+                          Text('KCAL',
+                              style: ZType.lbl(9, color: accent, letterSpacing: 1.5)),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
+                    spacing: 16,
+                    runSpacing: 8,
                     children: [
                       macroPill('P', s.proteinG, proteinColor),
                       macroPill('C', s.carbsG, carbsColor),

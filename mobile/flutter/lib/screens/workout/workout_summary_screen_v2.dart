@@ -6,8 +6,11 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/lottie_animations.dart';
 import 'workout_detail_screen.dart';
@@ -214,17 +217,19 @@ class _WorkoutSummaryScreenV2State
   }
 
   Widget _buildLoadingState(bool isDark) {
+    final tc = ThemeColors.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const LottieLoading(size: 80),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(
             AppLocalizations.of(context).workoutSummaryScreenLoadingSummary,
-            style: TextStyle(
-              fontSize: 15,
-              color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+            style: ZType.lbl(
+              12,
+              color: tc.textMuted,
+              letterSpacing: 2.0,
             ),
           ),
         ],
@@ -233,44 +238,46 @@ class _WorkoutSummaryScreenV2State
   }
 
   Widget _buildErrorState(bool isDark, Color accentColor) {
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: isDark ? AppColors.textMuted : Colors.grey.shade400,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              AppLocalizations.of(context).workoutSummaryScreenFailedToLoadSummary,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isDark ? AppColors.textPrimary : Colors.black87,
+            Container(
+              width: 56,
+              height: 56,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.error_outline,
+                size: 26,
+                color: tc.textMuted,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 20),
+            Text(
+              AppLocalizations.of(context).workoutSummaryScreenFailedToLoadSummary
+                  .toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(24, color: tc.textPrimary),
+            ),
+            const SizedBox(height: 10),
             Text(
               _error ?? AppLocalizations.of(context).workoutSummaryScreenPleaseCheckYourConnection,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
-              ),
+              style: ZType.ser(15, color: tc.textSecondary),
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _fetchData,
-              icon: const Icon(Icons.refresh, size: 18),
-              label: Text(AppLocalizations.of(context).buttonRetry),
-              style: FilledButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white,
-              ),
+            const SizedBox(height: 28),
+            ZealovaButton(
+              label: AppLocalizations.of(context).buttonRetry,
+              onTap: _fetchData,
+              trailingIcon: Icons.refresh,
+              expand: false,
             ),
           ],
         ),

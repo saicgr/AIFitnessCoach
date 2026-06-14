@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/coach_memory.dart';
 import '../../data/repositories/coach_memory_repository.dart';
+import '../../widgets/design_system/zealova.dart';
 
 /// "What Coach Remembers" — lets the user view, correct, and delete the AI
 /// coach's long-term memories, and turn memory on/off entirely.
@@ -204,9 +206,10 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = AccentColorScope.of(context).getColor(isDark);
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
+    final accent = tc.accent;
+    final textMuted = tc.textMuted;
 
     final listAsync = ref.watch(coachMemoryListProvider(_queryKey));
     // Local optimistic toggle state — falls back to the server value from the
@@ -214,13 +217,17 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
     final localEnabled = ref.watch(coachMemoryEnabledProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('What Coach Remembers')),
+      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+      appBar: const ZealovaAppBar(
+        kicker: 'COACH',
+        title: 'What Coach Remembers',
+        titleSize: 26,
+      ),
       body: SafeArea(
         child: listAsync.when(
           loading: () => _LoadingState(isDark: isDark),
           error: (e, _) => _ErrorState(
             isDark: isDark,
-            accent: accent,
             onRetry: _refresh,
           ),
           data: (list) {
@@ -242,9 +249,6 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
     CoachMemoryList list,
     bool enabled,
   ) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
     return RefreshIndicator(
       color: accent,
       onRefresh: () async => _refresh(),
@@ -252,26 +256,30 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           // ── Master enable toggle ──────────────────────────────────
-          _Card(
-            isDark: isDark,
-            child: SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              value: enabled,
-              onChanged: _setEnabled,
-              activeThumbColor: accent,
-              secondary: Icon(Icons.psychology_outlined, color: accent),
-              title: Text(
-                'Let Coach remember things about you',
-                style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
-              ),
-              subtitle: Text(
-                enabled
-                    ? 'Coach notes the important stuff from your chats so its '
-                        'advice stays personal over time.'
-                    : 'Memory is off. Coach will only use what you say in the '
-                        'current conversation.',
-                style: TextStyle(color: textMuted, fontSize: 12, height: 1.4),
-              ),
+          ZealovaCard(
+            variant: ZealovaCardVariant.hero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ZealovaListRow(
+                  icon: Icons.psychology_outlined,
+                  label: 'Let Coach remember things about you',
+                  showChevron: false,
+                  hairline: false,
+                  trailing: ZealovaToggle(
+                    value: enabled,
+                    onChanged: _setEnabled,
+                  ),
+                ),
+                Text(
+                  enabled
+                      ? 'Coach notes the important stuff from your chats so its '
+                          'advice stays personal over time.'
+                      : 'Memory is off. Coach will only use what you say in the '
+                          'current conversation.',
+                  style: TextStyle(color: textMuted, fontSize: 12, height: 1.4),
+                ),
+              ],
             ),
           ),
 
@@ -300,11 +308,9 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
                     style: TextStyle(fontSize: 13, color: textMuted),
                   ),
                 ),
-                Switch.adaptive(
+                ZealovaToggle(
                   value: _includeResolved,
                   onChanged: (v) => setState(() => _includeResolved = v),
-                  activeThumbColor: accent,
-                  activeTrackColor: accent.withValues(alpha: 0.45),
                 ),
               ],
             ),
@@ -326,9 +332,10 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
                       color: isDark ? AppColors.error : AppColorsLight.error),
                   label: Text(
                     'Forget everything',
-                    style: TextStyle(
+                    style: ZType.lbl(
+                      13,
                       color: isDark ? AppColors.error : AppColorsLight.error,
-                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ),
@@ -358,15 +365,15 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
 
     final widgets = <Widget>[];
     for (final key in orderedKeys) {
-      widgets.add(_SectionLabel(key.toUpperCase(), textMuted));
+      widgets.add(ZealovaSectionKicker(key.toUpperCase(),
+          padding: const EdgeInsets.only(left: 4)));
       widgets.add(const SizedBox(height: 8));
       widgets.add(
-        _Card(
-          isDark: isDark,
+        ZealovaCard(
           child: Column(
             children: [
               for (var i = 0; i < groups[key]!.length; i++) ...[
-                if (i > 0) _Divider(isDark),
+                if (i > 0) const ZealovaRule(),
                 _MemoryTile(
                   memory: groups[key]![i],
                   isDark: isDark,
@@ -602,55 +609,6 @@ class _MemoryTile extends StatelessWidget {
 // Small presentational helpers
 // ─────────────────────────────────────────────────────────────────
 
-class _Card extends StatelessWidget {
-  final Widget child;
-  final bool isDark;
-  const _Card({required this.child, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _SectionLabel(this.text, this.color);
-
-  @override
-  Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(left: 4),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 11.5,
-            fontWeight: FontWeight.w700,
-            color: color,
-            letterSpacing: 0.6,
-          ),
-        ),
-      );
-}
-
-class _Divider extends StatelessWidget {
-  final bool isDark;
-  const _Divider(this.isDark);
-
-  @override
-  Widget build(BuildContext context) => Divider(
-        height: 1,
-        color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-      );
-}
-
 class _Chip extends StatelessWidget {
   final String label;
   final Color color;
@@ -669,8 +627,8 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -680,12 +638,8 @@ class _Chip extends StatelessWidget {
             const SizedBox(width: 4),
           ],
           Text(
-            label,
-            style: TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(10, color: color, letterSpacing: 1.2),
           ),
         ],
       ),
@@ -721,13 +675,11 @@ class _SearchField extends StatelessWidget {
         prefixIcon: Icon(Icons.search, color: textMuted, size: 20),
         isDense: true,
         filled: true,
-        fillColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
+        fillColor: isDark ? AppColors.surface : AppColorsLight.surface,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-          ),
+          borderSide: const BorderSide(color: AppColors.cardBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -875,12 +827,10 @@ class _ShimmerBoxState extends State<_ShimmerBox>
 
 class _ErrorState extends StatelessWidget {
   final bool isDark;
-  final Color accent;
   final VoidCallback onRetry;
 
   const _ErrorState({
     required this.isDark,
-    required this.accent,
     required this.onRetry,
   });
 
@@ -911,11 +861,12 @@ class _ErrorState extends StatelessWidget {
               style: TextStyle(fontSize: 13, color: textMuted, height: 1.5),
             ),
             const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onRetry,
-              style: FilledButton.styleFrom(backgroundColor: accent),
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+            ZealovaButton(
+              label: 'Retry',
+              onTap: onRetry,
+              trailingIcon: Icons.refresh,
+              expand: false,
+              height: 46,
             ),
           ],
         ),

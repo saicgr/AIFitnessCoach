@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/background_sync_service.dart';
-import '../../../widgets/pill_app_bar.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../sections/sections.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -13,13 +12,11 @@ class HealthDevicesPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final backgroundColor = ThemeColors.of(context).background;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: AppLocalizations.of(context).settingsHealthDevices),
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).settingsHealthDevices),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -88,50 +85,37 @@ class _AutoImportWorkoutsCardState extends State<_AutoImportWorkoutsCard> {
     final c = ThemeColors.of(context);
     final enabled = _enabled ?? true;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.cardBorder),
-      ),
+    return ZealovaCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: c.accent.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Icon(Icons.sync_rounded, size: 18, color: c.accent),
-          ),
-          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Auto-import workouts',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: c.textPrimary,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Auto-import workouts',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: c.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Pull workouts logged by other apps in Apple Health / '
-                  'Health Connect into your Zealova history automatically.',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    height: 1.4,
-                    color: c.textSecondary,
+                  const SizedBox(height: 4),
+                  Text(
+                    'Pull workouts logged by other apps in Apple Health / '
+                    'Health Connect into your Zealova history automatically.',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color: c.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -145,11 +129,9 @@ class _AutoImportWorkoutsCardState extends State<_AutoImportWorkoutsCard> {
               ),
             )
           else
-            Switch.adaptive(
+            ZealovaToggle(
               value: enabled,
               onChanged: _set,
-              activeTrackColor: c.accent.withValues(alpha: 0.5),
-              activeThumbColor: c.accent,
             ),
         ],
       ),

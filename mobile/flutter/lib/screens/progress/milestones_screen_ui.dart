@@ -4,6 +4,7 @@ part of 'milestones_screen.dart';
 extension _MilestonesScreenStateUI on _MilestonesScreenState {
 
   Widget _buildMilestonesTab(bool isDark, MilestonesState state) {
+    final tc = ThemeColors.of(context);
     final categories = MilestoneCategory.values;
 
     return RefreshIndicator(
@@ -34,12 +35,8 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
-                  AppLocalizations.of(context)!.milestonesScreenUiAchieved(state.totalAchieved),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  ),
+                  AppLocalizations.of(context)!.milestonesScreenUiAchieved(state.totalAchieved).toUpperCase(),
+                  style: ZType.lbl(12, color: tc.textSecondary, letterSpacing: 1.6),
                 ),
               ),
             ),

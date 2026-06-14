@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/nutrition_stats_layout_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -50,12 +51,8 @@ class NutritionStatsCustomizeSheet extends ConsumerWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Customize stats',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                  ),
+                  'CUSTOMIZE STATS',
+                  style: ZType.disp(22, color: textPrimary, letterSpacing: 0.5),
                 ),
               ),
               TextButton(

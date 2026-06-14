@@ -18,6 +18,7 @@ import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/ai_settings_provider.dart';
 import '../../../data/providers/coach_card_visibility_provider.dart';
@@ -83,16 +84,16 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         onLongPress: isMinimized ? null : _onLongPressRegen,
         behavior: HitTestBehavior.opaque,
         child: Container(
+          // Signature hero surface — matte fill + accent left edge (the focus
+          // card), replacing the accent gradient + uniform border.
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: c.cardBorder),
-            gradient: LinearGradient(
-              begin: AlignmentDirectional.topStart,
-              end: AlignmentDirectional.bottomEnd,
-              colors: [
-                c.accent.withValues(alpha: 0.10),
-                c.accent.withValues(alpha: 0.03),
-              ],
+            color: c.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: BorderDirectional(
+              start: BorderSide(color: c.accent, width: 3),
+              top: BorderSide(color: c.cardBorder),
+              end: BorderSide(color: c.cardBorder),
+              bottom: BorderSide(color: c.cardBorder),
             ),
           ),
           padding: EdgeInsetsDirectional.fromSTEB(16, 10, 10, isMinimized ? 12 : 14),
@@ -243,13 +244,8 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           insight.headline.isEmpty
               ? AppLocalizations.of(context).coachHeroCardYourCoachIsHere
               : insight.headline,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            height: 1.2,
-            letterSpacing: -0.2,
-            color: c.textPrimary,
-          ),
+          // The coach's human line — Fraunces serif, the Signature voice.
+          style: ZType.ser(18, color: c.textPrimary),
         ),
         if (hasBullets) ...[
           const SizedBox(height: 8),
@@ -331,27 +327,11 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     // to surface "the server is down" to the user.
     return Row(
       children: [
-        Container(
-          width: 22,
-          height: 22,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [c.accent, c.accent.withValues(alpha: 0.70)],
-            ),
-          ),
-          child: const Icon(Icons.auto_awesome, size: 12, color: Colors.white),
-        ),
-        const SizedBox(width: 8),
+        Icon(Icons.auto_awesome, size: 13, color: c.accent),
+        const SizedBox(width: 7),
         Text(
-          AppLocalizations.of(context).coachHeroCardYourCoach,
-          style: TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.1,
-            color: c.accent,
-          ),
+          AppLocalizations.of(context).coachHeroCardYourCoach.toUpperCase(),
+          style: ZType.lbl(10, color: c.accent, letterSpacing: 1.8),
         ),
         const Spacer(),
         // ⋮ — opens the coach options sheet (change persona / open AI

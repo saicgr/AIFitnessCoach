@@ -8,6 +8,7 @@
 /// sheets; everything else is matte hairline surfaces.
 library;
 
+export '../../core/theme/app_typography.dart' show ZType, ZTypeContext;
 export 'zealova_app_bar.dart';
 export 'zealova_button.dart';
 export 'zealova_card.dart';

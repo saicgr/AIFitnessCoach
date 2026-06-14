@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -92,12 +93,9 @@ class WrappedFavoritesCard extends StatelessWidget {
                   // Header
                   Text(
                     AppLocalizations.of(context).favoritesCardYourGoTo,
-                    style: TextStyle(
-                      color: const Color(0xFF5EEAD4).withValues(alpha: 0.9),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 6,
-                    ),
+                    style: ZType.lbl(16,
+                        color: const Color(0xFF5EEAD4).withValues(alpha: 0.9),
+                        letterSpacing: 6),
                   ),
 
                   const Spacer(),
@@ -109,12 +107,10 @@ class WrappedFavoritesCard extends StatelessWidget {
                       fit: BoxFit.scaleDown,
                       child: Text(
                         data.favoriteExercise,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 42,
-                          fontWeight: FontWeight.w900,
-                          height: 1.1,
-                        ),
+                        style: ZType.disp(42,
+                            color: Colors.white,
+                            height: 1.1,
+                            letterSpacing: 0),
                         textAlign: TextAlign.center,
                         maxLines: 2,
                       ),
@@ -123,11 +119,10 @@ class WrappedFavoritesCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     AppLocalizations.of(context).favoritesCardYourMostPerformedExercise,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: ZType.lbl(15,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        weight: FontWeight.w500,
+                        letterSpacing: 1),
                   ),
 
                   const Spacer(flex: 2),
@@ -153,22 +148,15 @@ class WrappedFavoritesCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     AppLocalizations.of(context).favoritesCardFavoriteMuscleGroup,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 3,
-                    ),
+                    style: ZType.lbl(12,
+                        color: Colors.white.withValues(alpha: 0.4),
+                        letterSpacing: 3),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     data.favoriteMuscleGroup.toUpperCase(),
-                    style: const TextStyle(
-                      color: Color(0xFF5EEAD4),
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 2,
-                    ),
+                    style: ZType.disp(28,
+                        color: const Color(0xFF5EEAD4), letterSpacing: 2),
                   ),
 
                   const Spacer(flex: 2),

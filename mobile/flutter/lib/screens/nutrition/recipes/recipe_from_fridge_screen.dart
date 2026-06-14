@@ -10,10 +10,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/repositories/recipe_repository.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -218,38 +218,26 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final accent = AccentColorScope.of(context).getColor(widget.isDark);
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
     final isDark = widget.isDark;
-    final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final topPad = MediaQuery.of(context).padding.top;
+    final bg = tc.background;
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
+    final surface = tc.surface;
     final isLoading = _anyDetecting || _searching;
 
     return Scaffold(
       backgroundColor: bg,
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).recipeFromFridgeFromYourFridge,
+        onBack: () => Navigator.of(context).pop(),
+      ),
       body: ListView(
-        padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, 32),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         children: [
-          // Header
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              GlassBackButton(onTap: () => Navigator.of(context).pop()),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(AppLocalizations.of(context).recipeFromFridgeFromYourFridge,
-                  style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 52),
-            child: Text(AppLocalizations.of(context).recipeFromFridgeTypeIngredientsOrSnap,
-              style: TextStyle(color: muted, fontSize: 11, height: 1.3)),
-          ),
+          Text(AppLocalizations.of(context).recipeFromFridgeTypeIngredientsOrSnap.toUpperCase(),
+            style: ZType.lbl(10, color: muted, letterSpacing: 1.5)),
           const SizedBox(height: 16),
 
           // Input row: text field + gallery + camera
@@ -261,7 +249,9 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                   hintText: AppLocalizations.of(context).recipeFromFridgeTypeIngredientEggsSpinach,
                   hintStyle: TextStyle(color: muted),
                   filled: true, fillColor: surface,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.cardBorder)),
+                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.cardBorder)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: AppColors.cardBorder)),
                 ),
                 onSubmitted: (v) {
                   final cleaned = v.trim();
@@ -322,10 +312,9 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             const SizedBox(height: 12),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (var i = 0; i < _items.length; i++)
-                InputChip(
-                  label: Text(_items[i]),
+                _IngredientChip(
+                  label: _items[i],
                   onDeleted: () => setState(() => _items.removeAt(i)),
-                  backgroundColor: accent.withValues(alpha: 0.12),
                 ),
             ]),
           ],
@@ -333,24 +322,12 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           const SizedBox(height: 16),
 
           // Find recipes button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: isLoading ? null : _findRecipes,
-              icon: _searching
-                  ? SizedBox(
-                      width: 18, height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white.withValues(alpha: 0.7)),
-                    )
-                  : const Icon(Icons.auto_awesome),
-              label: Text(_searching ? AppLocalizations.of(context).recipeFromFridgeFindingRecipesU2026 : AppLocalizations.of(context).recipeFromFridgeFindRecipes),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accent,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-              ),
-            ),
+          ZealovaButton(
+            label: _searching
+                ? AppLocalizations.of(context).recipeFromFridgeFindingRecipesU2026
+                : AppLocalizations.of(context).recipeFromFridgeFindRecipes,
+            onTap: isLoading ? null : _findRecipes,
+            trailingIcon: _searching ? null : Icons.auto_awesome,
           ),
 
           // Error display
@@ -406,8 +383,8 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
           // Recipe suggestions
           if (_result != null) ...[
             const SizedBox(height: 24),
-            Text(AppLocalizations.of(context).unresolvedExercisesSuggestions, style: TextStyle(color: text, fontSize: 16, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 8),
+            ZealovaSectionKicker(AppLocalizations.of(context).unresolvedExercisesSuggestions, fontSize: 12),
+            const SizedBox(height: 10),
             ..._result!.suggestions.map((s) => _SuggestionCard(suggestion: s, isDark: isDark, accent: accent)),
             if (_result!.suggestions.isEmpty)
               Padding(
@@ -449,9 +426,10 @@ class _PhotoStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final surface = tc.surface;
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
     final scanning = detecting.where((b) => b).length;
     final total = imagePaths.length;
     final done = total - scanning;
@@ -461,7 +439,7 @@ class _PhotoStrip extends StatelessWidget {
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,9 +449,8 @@ class _PhotoStrip extends StatelessWidget {
               Icon(Icons.collections_outlined, size: 16, color: accent),
               const SizedBox(width: 6),
               Text(
-                '$total photo${total == 1 ? '' : 's'}',
-                style: TextStyle(
-                    color: text, fontSize: 13, fontWeight: FontWeight.w700),
+                '$total PHOTO${total == 1 ? '' : 'S'}',
+                style: ZType.lbl(11, color: text, letterSpacing: 1.3),
               ),
               const SizedBox(width: 8),
               if (scanning > 0)
@@ -485,15 +462,12 @@ class _PhotoStrip extends StatelessWidget {
                         strokeWidth: 1.5, color: accent),
                   ),
                   const SizedBox(width: 6),
-                  Text('Scanning $done/$total\u2026',
-                      style: TextStyle(color: muted, fontSize: 11)),
+                  Text('SCANNING $done/$total\u2026',
+                      style: ZType.lbl(10, color: muted, letterSpacing: 1)),
                 ])
               else
-                Text(AppLocalizations.of(context).recipeFromFridgeScanComplete,
-                    style: TextStyle(
-                        color: accent,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600)),
+                Text(AppLocalizations.of(context).recipeFromFridgeScanComplete.toUpperCase(),
+                    style: ZType.lbl(10, color: accent, letterSpacing: 1)),
             ],
           ),
           const SizedBox(height: 10),
@@ -653,7 +627,8 @@ class _AddMoreTile extends StatelessWidget {
           children: [
             Icon(Icons.add_a_photo_outlined, color: accent, size: 22),
             const SizedBox(height: 4),
-            Text(AppLocalizations.of(context).tilePickerAdd, style: TextStyle(color: accent, fontSize: 11)),
+            Text(AppLocalizations.of(context).tilePickerAdd.toUpperCase(),
+                style: ZType.lbl(10, color: accent, letterSpacing: 1.2)),
           ],
         ),
       ),
@@ -678,8 +653,9 @@ class _DetectedItemsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -687,18 +663,19 @@ class _DetectedItemsSection extends StatelessWidget {
         Row(children: [
           Icon(Icons.visibility, size: 16, color: accent),
           const SizedBox(width: 6),
-          Text(AppLocalizations.of(context).recipeFromFridgeFoundInYourPhoto,
-            style: TextStyle(color: text, fontSize: 13, fontWeight: FontWeight.w700)),
+          Text(AppLocalizations.of(context).recipeFromFridgeFoundInYourPhoto.toUpperCase(),
+            style: ZType.lbl(11, color: text, letterSpacing: 1.5)),
         ]),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Wrap(spacing: 6, runSpacing: 6, children: [
           for (final item in items)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.1),
+                color: tc.surface,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: accent.withValues(alpha: 0.25)),
+                border: Border.all(
+                    color: item.confidence >= 80 ? accent : AppColors.cardBorder),
               ),
               child: Row(mainAxisSize: MainAxisSize.min, children: [
                 Text(item.name,
@@ -710,7 +687,7 @@ class _DetectedItemsSection extends StatelessWidget {
               ]),
             ),
         ]),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(AppLocalizations.of(context).recipeFromFridgeTapFindRecipesTo,
           style: TextStyle(color: muted, fontSize: 11)),
       ],
@@ -746,9 +723,14 @@ class _IconSquareButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: onTap,
-          child: SizedBox(
+          child: Container(
             width: 48,
             height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Icon(icon, color: color, size: 22),
           ),
         ),
@@ -764,54 +746,98 @@ class _SuggestionCard extends StatelessWidget {
   const _SuggestionCard({required this.suggestion, required this.isDark, required this.accent});
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: surface, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.18)),
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ZealovaCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Expanded(
+                child: Text(suggestion.name,
+                  style: TextStyle(color: text, fontSize: 15, fontWeight: FontWeight.w700)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                    border: Border.all(color: accent),
+                    borderRadius: BorderRadius.circular(8)),
+                child: Text('${suggestion.overallMatchScore}% MATCH',
+                  style: ZType.lbl(10, color: accent, letterSpacing: 1)),
+              ),
+            ]),
+            if (suggestion.suggestionReason != null) ...[
+              const SizedBox(height: 4),
+              Text(suggestion.suggestionReason!, style: TextStyle(color: muted, fontSize: 12)),
+            ],
+            const SizedBox(height: 10),
+            Wrap(spacing: 14, runSpacing: 6, crossAxisAlignment: WrapCrossAlignment.end, children: [
+              if (suggestion.caloriesPerServing != null)
+                Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text('${suggestion.caloriesPerServing}', style: ZType.data(15, color: text)),
+                  const SizedBox(width: 3),
+                  Text('KCAL/SERV', style: ZType.lbl(9, color: muted, letterSpacing: 1)),
+                ]),
+              if (suggestion.proteinPerServingG != null)
+                Row(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.end, children: [
+                  Text(suggestion.proteinPerServingG!.toStringAsFixed(0),
+                      style: ZType.data(15, color: AppColors.macroProtein)),
+                  const SizedBox(width: 3),
+                  Text('G PROTEIN', style: ZType.lbl(9, color: muted, letterSpacing: 1)),
+                ]),
+            ]),
+            if (suggestion.matchedPantryItems.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text('USES', style: ZType.lbl(9, color: muted, letterSpacing: 1.5)),
+              const SizedBox(height: 2),
+              Text(suggestion.matchedPantryItems.join(", "),
+                style: TextStyle(color: text, fontSize: 11)),
+            ],
+            if (suggestion.missingIngredients.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text('NEED', style: ZType.lbl(9, color: AppColors.warning, letterSpacing: 1.5)),
+              const SizedBox(height: 2),
+              Text(suggestion.missingIngredients.join(", "),
+                style: const TextStyle(color: AppColors.warning, fontSize: 11)),
+            ],
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+/// Hairline ingredient chip with an inline delete affordance \u2014 replaces the
+/// Material `InputChip` with the Signature outlined look.
+class _IngredientChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onDeleted;
+  const _IngredientChip({required this.label, required this.onDeleted});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Container(
+      height: 30,
+      padding: const EdgeInsets.only(left: 12, right: 6),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.cardBorder),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(children: [
-            Expanded(
-              child: Text(suggestion.name,
-                style: TextStyle(color: text, fontSize: 15, fontWeight: FontWeight.w700)),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(color: accent.withValues(alpha: 0.18), borderRadius: BorderRadius.circular(8)),
-              child: Text('${suggestion.overallMatchScore}% match',
-                style: TextStyle(color: accent, fontSize: 11, fontWeight: FontWeight.w800)),
-            ),
-          ]),
-          if (suggestion.suggestionReason != null) ...[
-            const SizedBox(height: 4),
-            Text(suggestion.suggestionReason!, style: TextStyle(color: muted, fontSize: 12)),
-          ],
-          const SizedBox(height: 8),
-          Wrap(spacing: 8, children: [
-            if (suggestion.caloriesPerServing != null)
-              Text('${suggestion.caloriesPerServing} kcal/serv',
-                  style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w600)),
-            if (suggestion.proteinPerServingG != null)
-              Text('\u2022 ${suggestion.proteinPerServingG!.toStringAsFixed(0)}g P',
-                  style: TextStyle(color: muted, fontSize: 11)),
-          ]),
-          if (suggestion.matchedPantryItems.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text('Uses: ${suggestion.matchedPantryItems.join(", ")}',
-              style: TextStyle(color: text, fontSize: 11)),
-          ],
-          if (suggestion.missingIngredients.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text('Need: ${suggestion.missingIngredients.join(", ")}',
-              style: TextStyle(color: AppColors.yellow, fontSize: 11)),
-          ],
+          Text(label,
+              style: TextStyle(
+                  color: tc.textPrimary, fontSize: 12.5, fontWeight: FontWeight.w500)),
+          const SizedBox(width: 4),
+          GestureDetector(
+            onTap: onDeleted,
+            child: Icon(Icons.close_rounded, size: 15, color: tc.textMuted),
+          ),
         ],
       ),
     );

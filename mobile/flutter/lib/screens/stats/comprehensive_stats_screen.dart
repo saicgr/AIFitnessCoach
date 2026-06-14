@@ -9,6 +9,7 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/services/posthog_service.dart';
 import '../progress/comparison_view.dart';
 import 'widgets/date_range_filter_sheet.dart';
@@ -155,91 +156,24 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
   }
 
   static const _tabLabels = ['Overview', 'Photos', 'Score', 'Measurements', 'Nutrition', 'Mood'];
-  static const _tabIcons = [
-    Icons.dashboard_rounded,      // Overview
-    Icons.photo_library_rounded,  // Photos
-    Icons.emoji_events_rounded,   // Score
-    Icons.straighten_rounded,     // Measurements
-    Icons.restaurant_rounded,     // Nutrition
-    Icons.mood_rounded,           // Mood
-  ];
-  static const _tabColors = [
-    Color(0xFF3B82F6), // Overview - Blue
-    Color(0xFFA855F7), // Photos - Purple
-    Color(0xFFF97316), // Score - Orange
-    Color(0xFF22C55E), // Measurements - Green
-    Color(0xFFEF4444), // Nutrition - Red
-    Color(0xFFEC4899), // Mood - Pink
-  ];
 
   Widget _buildPillTabBar() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final mutedText = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
+    // Signature text-tabs: Barlow uppercase labels with an accent underline on
+    // the active item. Horizontally scrollable to keep all six tabs reachable.
     return AnimatedBuilder(
       animation: _tabController,
       builder: (context, _) {
         return SingleChildScrollView(
           controller: _pillScrollController,
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: List.generate(_tabLabels.length, (i) {
-              final animValue = _tabController.animation?.value ?? 0.0;
-              final progress = (1.0 - (animValue - i).abs()).clamp(0.0, 1.0);
-              final isSelected = _tabController.index == i;
-              final pillColor = _tabColors[i];
-
-              final bg = Color.lerp(
-                isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.05),
-                pillColor,
-                progress,
-              )!;
-              final fg = Color.lerp(mutedText, Colors.white, progress)!;
-
-              return Padding(
-                padding: EdgeInsetsDirectional.only(end: i < _tabLabels.length - 1 ? 8 : 0),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    _tabController.animateTo(i);
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: bg,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: isSelected
-                          ? [
-                              BoxShadow(
-                                color: pillColor.withValues(alpha: 0.4),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(_tabIcons[i], size: 16, color: fg),
-                        const SizedBox(width: 6),
-                        Text(
-                          _tabLabels[i],
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: fg,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }),
+          padding: const EdgeInsets.fromLTRB(20, 6, 20, 10),
+          child: ZealovaTextTabs(
+            tabs: _tabLabels,
+            activeIndex: _tabController.index,
+            onChanged: (i) {
+              HapticFeedback.lightImpact();
+              _tabController.animateTo(i);
+            },
           ),
         );
       },

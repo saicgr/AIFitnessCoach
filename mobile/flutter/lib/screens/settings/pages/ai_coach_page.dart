@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/services/notification_service.dart';
 import '../../../screens/ai_settings/ai_settings_screen.dart';
 import '../../../widgets/coach_avatar.dart';
 import '../../../widgets/coach_voice_picker.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/main_shell.dart';
-import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -56,20 +57,16 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final backgroundColor = tc.background;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final textSecondary = tc.textSecondary;
+    final cardBorder = tc.cardBorder;
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: AppLocalizations.of(context).authIntroAiCoach),
+      appBar: ZealovaAppBar(title: AppLocalizations.of(context).authIntroAiCoach),
       body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -95,7 +92,6 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
               _AdvancedToggleRow(
                 value: _advancedEnabled,
                 onChanged: _setAdvanced,
-                isDark: isDark,
                 textPrimary: textPrimary,
                 textSecondary: textSecondary,
               ),
@@ -137,27 +133,16 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
+        ZealovaSectionKicker(
+          AppLocalizations.of(context).aiCoachCoachNotifications,
           padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
-          child: Text(
-            AppLocalizations.of(context).aiCoachCoachNotifications,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textMuted,
-              letterSpacing: 1.2,
-            ),
-          ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
-          ),
+        ZealovaCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                padding: const EdgeInsets.only(top: 14, bottom: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -196,24 +181,20 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
                   ],
                 ),
               ),
-              Divider(height: 1, color: cardBorder),
+              ZealovaRule(),
               _coachToggle(
                 icon: Icons.auto_awesome,
-                iconColor: AppColors.purple,
                 title: AppLocalizations.of(context).aiCoachAiPersonalizedMessages,
                 subtitle: AppLocalizations.of(context).aiCoachMatchYourCoachS,
                 value: prefs.aiPersonalizedNudges,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v),
-                cardBorder: cardBorder,
               ),
               _coachToggle(
                 icon: Icons.alarm,
-                iconColor: AppColors.error,
                 title: AppLocalizations.of(context).aiCoachMissedWorkoutNudge,
                 subtitle: AppLocalizations.of(context).aiCoachRemindByEveningIf,
                 value: prefs.missedWorkoutNudge,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v),
-                cardBorder: cardBorder,
                 isLast: true,
               ),
             ],
@@ -235,72 +216,48 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
+        ZealovaSectionKicker(
+          AppLocalizations.of(context).aiCoachOtherNotifications,
           padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
-          child: Text(
-            AppLocalizations.of(context).aiCoachOtherNotifications,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textMuted,
-              letterSpacing: 1.2,
-            ),
-          ),
         ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
-          ),
+        ZealovaCard(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
               _coachToggle(
                 icon: Icons.lunch_dining,
-                iconColor: AppColors.success,
                 title: AppLocalizations.of(context).aiCoachPostWorkoutMeal,
                 subtitle: AppLocalizations.of(context).aiCoachRefuelReminderAfterTraining,
                 value: prefs.postWorkoutMealReminder,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v),
-                cardBorder: cardBorder,
               ),
               _coachToggle(
                 icon: Icons.checklist,
-                iconColor: AppColors.cyan,
                 title: AppLocalizations.of(context).aiCoachHabitReminders,
                 subtitle: AppLocalizations.of(context).aiCoachEveningCheckInFor,
                 value: prefs.habitReminders,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v),
-                cardBorder: cardBorder,
               ),
               _coachToggle(
                 icon: Icons.celebration,
-                iconColor: AppColors.warning,
                 title: AppLocalizations.of(context).aiCoachStreakCelebrations,
                 subtitle: AppLocalizations.of(context).aiCoachCelebrateStreakMilestones,
                 value: prefs.streakCelebration,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
-                cardBorder: cardBorder,
               ),
               _coachToggle(
                 icon: Icons.card_giftcard,
-                iconColor: const Color(0xFFFFB300),
                 title: 'Daily Crate Reminders',
                 subtitle: AppLocalizations.of(context).aiCoachGetNotifiedWhenYour,
                 value: prefs.dailyCrateReminders,
                 onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
-                cardBorder: cardBorder,
               ),
-              Divider(height: 1, color: cardBorder),
-              Builder(
-                builder: (context) => ListTile(
-                  leading: const Icon(Icons.beach_access_rounded, color: Color(0xFF4FC3F7), size: 20),
-                  title: const Text('Vacation Mode', style: TextStyle(fontSize: 14)),
-                  subtitle: const Text('Pause all non-critical notifications', style: TextStyle(fontSize: 11)),
-                  trailing: Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
-                  dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  onTap: () => context.push('/settings/vacation-mode'),
-                ),
+              ZealovaListRow(
+                icon: Icons.beach_access_rounded,
+                label: 'Vacation Mode',
+                value: 'Pause all non-critical notifications',
+                hairline: false,
+                onTap: () => context.push('/settings/vacation-mode'),
               ),
             ],
           ),
@@ -318,97 +275,117 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   }) {
     final aiSettings = ref.watch(aiSettingsProvider);
     final coach = CoachPersona.findById(aiSettings.coachPersonaId);
+    final tc = ThemeColors.of(context);
 
-    return InkWell(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       onTap: () {
         HapticFeedback.selectionClick();
         GoRouter.of(context).push('/ai-settings');
       },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Row(
-          children: [
-            if (coach != null)
-              CoachAvatar(
-                coach: coach,
-                size: 48,
-                showBorder: true,
-                borderWidth: 2,
-                showShadow: false,
-                enableTapToView: false,
-              )
-            else
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppColors.info.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.record_voice_over, color: AppColors.info, size: 24),
+      child: Row(
+        children: [
+          if (coach != null)
+            CoachAvatar(
+              coach: coach,
+              size: 48,
+              showBorder: true,
+              borderWidth: 2,
+              showShadow: false,
+              enableTapToView: false,
+            )
+          else
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: tc.accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
               ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    coach?.name ?? AppLocalizations.of(context).aiCoachCoachVoicePersonality,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    coach != null
-                        ? AppLocalizations.of(context)!.aiCoachPageTapToChange(coach.tagline)
-                        : 'Change AI voice and style',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
+              child: Icon(Icons.record_voice_over, color: tc.accent, size: 24),
             ),
-            Icon(Icons.chevron_right, color: textMuted, size: 22),
-          ],
-        ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  coach?.name ?? AppLocalizations.of(context).aiCoachCoachVoicePersonality,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  coach != null
+                      ? AppLocalizations.of(context)!.aiCoachPageTapToChange(coach.tagline)
+                      : 'Change AI voice and style',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: textMuted, size: 22),
+        ],
       ),
     );
   }
 
   Widget _coachToggle({
     required IconData icon,
-    required Color iconColor,
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
-    required Color cardBorder,
     bool isLast = false,
   }) {
-    return Column(
-      children: [
-        SwitchListTile(
-          secondary: Icon(icon, color: value ? iconColor : Colors.grey, size: 20),
-          title: Text(title, style: const TextStyle(fontSize: 14)),
-          subtitle: Text(subtitle, style: const TextStyle(fontSize: 11)),
-          value: value,
-          activeColor: AppColors.cyan,
-          dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-          onChanged: onChanged,
-        ),
-        if (!isLast) Divider(height: 1, color: cardBorder, indent: 50),
-      ],
+    return Builder(
+      builder: (context) {
+        final tc = ThemeColors.of(context);
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: isLast
+              ? null
+              : const BoxDecoration(
+                  border: Border(bottom: BorderSide(color: AppColors.hairline)),
+                ),
+          child: Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.cardBorder),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 15,
+                    color: value ? tc.accent : tc.textMuted),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: TextStyle(fontSize: 14, color: tc.textPrimary, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 2),
+                    Text(subtitle,
+                        style: TextStyle(fontSize: 11, color: tc.textMuted, height: 1.3)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              ZealovaToggle(value: value, onChanged: onChanged),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -419,50 +396,56 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     required Color cardBorder,
   }) {
     final isEnabled = ref.watch(edgeHandleEnabledProvider);
+    final tc = ThemeColors.of(context);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cardBorder),
-      ),
+    return ZealovaCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            color: AppColors.info,
-            size: 20,
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.chat_bubble_outline, size: 15,
+                color: isEnabled ? tc.accent : tc.textMuted),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).aiCoachFloatingAiChatBubble,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: textPrimary,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).aiCoachFloatingAiChatBubble,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  AppLocalizations.of(context).aiCoachShowFloatingBubbleFor,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textMuted,
+                  Text(
+                    AppLocalizations.of(context).aiCoachShowFloatingBubbleFor,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textMuted,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          Switch.adaptive(
+          const SizedBox(width: 12),
+          ZealovaToggle(
             value: isEnabled,
             onChanged: (value) {
               HapticFeedback.lightImpact();
               ref.read(edgeHandleEnabledProvider.notifier).setEnabled(value);
             },
-            activeColor: AppColors.info,
           ),
         ],
       ),
@@ -475,52 +458,49 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
 class _AdvancedToggleRow extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
-  final bool isDark;
   final Color textPrimary;
   final Color textSecondary;
 
   const _AdvancedToggleRow({
     required this.value,
     required this.onChanged,
-    required this.isDark,
     required this.textPrimary,
     required this.textSecondary,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.flat,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
           Icon(Icons.tune, size: 18, color: textSecondary),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).aiSettingsAdvancedSettings,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppLocalizations.of(context).aiSettingsAdvancedSettings,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
                   ),
-                ),
-                Text(
-                  AppLocalizations.of(context).aiCoachShowFloatingChatBubble,
-                  style: TextStyle(fontSize: 12, color: textSecondary),
-                ),
-              ],
+                  Text(
+                    AppLocalizations.of(context).aiCoachShowFloatingChatBubble,
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                  ),
+                ],
+              ),
             ),
           ),
-          Switch.adaptive(value: value, onChanged: onChanged),
+          const SizedBox(width: 12),
+          ZealovaToggle(value: value, onChanged: onChanged),
         ],
       ),
     );

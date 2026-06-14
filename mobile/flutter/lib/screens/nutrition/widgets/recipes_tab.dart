@@ -24,6 +24,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/services/data_cache_service.dart';
 import '../../../data/providers/recipe_providers.dart';
@@ -210,11 +211,9 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
               },
               child: Ink(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [accent, accent.withValues(alpha: 0.85)],
-                  ),
+                  // The ONE reserved-accent CTA on this screen — flat accent
+                  // fill (no gradient) in the Signature language.
+                  color: accent,
                   borderRadius: BorderRadius.circular(28),
                   // Neutral shadow — the previous accent-tinted shadow
                   // (alpha 0.35 blur 16 offset 0,6) painted a soft red
@@ -235,16 +234,14 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
+                      Icon(Icons.auto_awesome_rounded,
+                          color: ThemeColors.of(context).accentContrast, size: 20),
+                      const SizedBox(width: 8),
                       Text(
-                        AppLocalizations.of(context).recipesBuild,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                          letterSpacing: 0.2,
-                        ),
+                        AppLocalizations.of(context).recipesBuild.toUpperCase(),
+                        style: ZType.lbl(13,
+                            color: ThemeColors.of(context).accentContrast,
+                            letterSpacing: 2),
                       ),
                     ],
                   ),
@@ -278,7 +275,6 @@ class _ComingUpCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final hasContent = upcoming.maybeWhen(
           data: (d) => (d as List).isNotEmpty,
           orElse: () => false,
@@ -300,10 +296,9 @@ class _ComingUpCarousel extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
-            child: Text(
+            child: ZealovaSectionKicker(
               AppLocalizations.of(context).recipesComingUpToday,
-              style: TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 14, color: muted),
+              fontSize: 11,
             ),
           ),
           SizedBox(
@@ -346,37 +341,33 @@ class _UpcomingCard extends StatelessWidget {
     final fireAt = item.fireAt as DateTime;
     final timeLabel =
         '${fireAt.hour.toString().padLeft(2, '0')}:${fireAt.minute.toString().padLeft(2, '0')}';
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
     return Container(
       width: 220,
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: surface,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.2)),
+        // Hairline surface with an accent left rail (hero-card cue).
+        border: Border(
+          left: BorderSide(color: accent, width: 3),
+          top: const BorderSide(color: AppColors.cardBorder),
+          right: const BorderSide(color: AppColors.cardBorder),
+          bottom: const BorderSide(color: AppColors.cardBorder),
+        ),
       ),
       child: Row(
         children: [
-          Container(
-            width: 8,
-            height: 56,
-            decoration: BoxDecoration(
-                color: accent, borderRadius: BorderRadius.circular(4)),
-          ),
-          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  '$timeLabel · ${item.mealType.value}',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: accent,
-                      fontWeight: FontWeight.w700),
+                  '$timeLabel · ${item.mealType.value}'.toUpperCase(),
+                  style: ZType.lbl(10, color: accent, letterSpacing: 1.3),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -388,10 +379,7 @@ class _UpcomingCard extends StatelessWidget {
                 ),
                 Text(
                   '${item.servings.toStringAsFixed(item.servings == item.servings.toInt() ? 0 : 1)} serving',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 11, color: tc.textMuted),
                 ),
               ],
             ),
@@ -411,25 +399,31 @@ class _LeftoverCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
     final warningColor = item.isExpired
-        ? (isDark ? AppColors.error : AppColorsLight.error)
+        ? tc.error
         : item.isExpiringSoon
-            ? AppColors.yellow
+            ? tc.warning
             : accent;
     return Container(
       width: 220,
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: surface,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: warningColor.withValues(alpha: 0.3)),
+        // Hairline surface; status colour rides the left rail only.
+        border: Border(
+          left: BorderSide(color: warningColor, width: 3),
+          top: const BorderSide(color: AppColors.cardBorder),
+          right: const BorderSide(color: AppColors.cardBorder),
+          bottom: const BorderSide(color: AppColors.cardBorder),
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.kitchen_rounded, size: 30, color: warningColor),
+          Icon(Icons.kitchen_rounded, size: 28, color: warningColor),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -437,12 +431,8 @@ class _LeftoverCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  item.isExpired ? AppLocalizations.of(context).recipesExpired : AppLocalizations.of(context).recipesLeftovers,
-                  style: TextStyle(
-                      fontSize: 10,
-                      color: warningColor,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5),
+                  (item.isExpired ? AppLocalizations.of(context).recipesExpired : AppLocalizations.of(context).recipesLeftovers).toUpperCase(),
+                  style: ZType.lbl(10, color: warningColor, letterSpacing: 1.5),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -454,10 +444,7 @@ class _LeftoverCard extends StatelessWidget {
                 ),
                 Text(
                   '${item.portionsRemaining.toStringAsFixed(item.portionsRemaining == item.portionsRemaining.toInt() ? 0 : 1)} of ${item.portionsMade.toStringAsFixed(0)} left',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 11, color: tc.textMuted),
                 ),
               ],
             ),
@@ -519,11 +506,8 @@ class _QuickActions extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(AppLocalizations.of(context).recipesScanYourFridge,
-                    style: TextStyle(
-                        color: text,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700)),
+                Text(AppLocalizations.of(context).recipesScanYourFridge.toUpperCase(),
+                    style: ZType.disp(22, color: text)),
                 const SizedBox(height: 4),
                 Text(AppLocalizations.of(context).recipesUpTo5Photos,
                     style: TextStyle(color: muted, fontSize: 13)),
@@ -689,30 +673,28 @@ class _QuickActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
     return InkWell(
       onTap: action.onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 4),
         decoration: BoxDecoration(
-          color: surface,
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: accent.withValues(alpha: 0.18)),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(action.icon, size: 20, color: accent),
+            Icon(action.icon, size: 20, color: tc.textSecondary),
             const SizedBox(height: 6),
             Text(
-              action.label,
+              action.label.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  fontSize: 11, fontWeight: FontWeight.w600, color: text),
+              style: ZType.lbl(9.5, color: tc.textMuted, letterSpacing: 0.8),
             ),
           ],
         ),
@@ -1003,7 +985,7 @@ class _SearchIconButton extends StatelessWidget {
           color: active ? accent : Colors.transparent,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: active ? accent : muted.withValues(alpha: 0.35),
+            color: active ? accent : AppColors.cardBorder,
           ),
         ),
         child: Stack(
@@ -1012,7 +994,7 @@ class _SearchIconButton extends StatelessWidget {
             Icon(
               Icons.search_rounded,
               size: 20,
-              color: active ? Colors.white : text,
+              color: active ? ThemeColors.of(context).accentContrast : text,
             ),
             if (active)
               Positioned(
@@ -1021,9 +1003,9 @@ class _SearchIconButton extends StatelessWidget {
                 child: Container(
                   width: 6,
                   height: 6,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white,
+                    color: ThemeColors.of(context).accentContrast,
                   ),
                 ),
               ),
@@ -1091,20 +1073,16 @@ class _SortDropdown extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: muted.withValues(alpha: 0.35)),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.swap_vert_rounded, size: 16, color: text),
-            const SizedBox(width: 4),
+            const SizedBox(width: 5),
             Text(
-              _sortLabelFor(currentSort),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: text,
-              ),
+              _sortLabelFor(currentSort).toUpperCase(),
+              style: ZType.lbl(11, color: text, letterSpacing: 1.3),
             ),
             Icon(Icons.arrow_drop_down_rounded, size: 18, color: text),
           ],
@@ -1134,6 +1112,7 @@ class _FiltersButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = count > 0;
+    final onActive = ThemeColors.of(context).accentContrast;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -1144,7 +1123,7 @@ class _FiltersButton extends StatelessWidget {
           color: active ? accent : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: active ? accent : muted.withValues(alpha: 0.35),
+            color: active ? accent : AppColors.cardBorder,
           ),
         ),
         child: Row(
@@ -1153,16 +1132,13 @@ class _FiltersButton extends StatelessWidget {
             Icon(
               Icons.tune_rounded,
               size: 16,
-              color: active ? Colors.white : text,
+              color: active ? onActive : text,
             ),
             const SizedBox(width: 6),
             Text(
-              AppLocalizations.of(context).recipesFilters,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: active ? Colors.white : text,
-              ),
+              AppLocalizations.of(context).recipesFilters.toUpperCase(),
+              style: ZType.lbl(11,
+                  color: active ? onActive : text, letterSpacing: 1.3),
             ),
             if (active) ...[
               const SizedBox(width: 6),
@@ -1170,16 +1146,12 @@ class _FiltersButton extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.25),
+                  color: onActive.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '$count',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
+                  style: ZType.data(11, color: onActive),
                 ),
               ),
             ],
@@ -1219,12 +1191,8 @@ class _ActivePill extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: accent,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(10.5, color: accent, letterSpacing: 1.2),
             ),
             const SizedBox(width: 4),
             Icon(Icons.close_rounded, size: 14, color: accent),
@@ -1555,19 +1523,20 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       child: Column(
         children: [
           Icon(Icons.menu_book_rounded,
-              size: 64, color: accent.withValues(alpha: 0.4)),
+              size: 60, color: accent.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(
-            hint ?? AppLocalizations.of(context).recipesNoRecipesYet,
-            style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: text),
+            (hint ?? AppLocalizations.of(context).recipesNoRecipesYet).toUpperCase(),
+            textAlign: TextAlign.center,
+            style: ZType.disp(20, color: text),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1687,18 +1656,18 @@ class _SheetAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final text = tc.textPrimary;
+    final muted = tc.textMuted;
     return InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.08),
+          color: tc.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: accent.withValues(alpha: 0.18)),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
           children: [
@@ -1707,7 +1676,7 @@ class _SheetAction extends StatelessWidget {
               height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.15),
+                border: Border.all(color: AppColors.cardBorder),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: accent, size: 22),

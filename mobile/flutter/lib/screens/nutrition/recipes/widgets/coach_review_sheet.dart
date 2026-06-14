@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../data/models/coach_review.dart';
 import '../../../../data/repositories/recipe_repository.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 class CoachReviewSheet extends ConsumerStatefulWidget {
@@ -76,22 +77,27 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
             Row(children: [
               Icon(Icons.psychology_outlined, color: accent),
               const SizedBox(width: 8),
-              Text(AppLocalizations.of(context).recipeDetailCoachReview, style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
-              const Spacer(),
-              IconButton(icon: const Icon(Icons.refresh), onPressed: () => _load(fresh: true)),
+              Expanded(
+                child: Text(AppLocalizations.of(context).recipeDetailCoachReview.toUpperCase(),
+                    style: ZType.disp(20, color: text)),
+              ),
+              IconButton(icon: Icon(Icons.refresh, color: muted), onPressed: () => _load(fresh: true)),
             ]),
             const SizedBox(height: 12),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? Center(child: CircularProgressIndicator(color: accent))
                   : _error != null
                       ? Center(child: Text(_error!, style: TextStyle(color: muted)))
                       : _review == null
                           ? Center(child: Text(AppLocalizations.of(context).coachReviewNoReviewYetTap, style: TextStyle(color: muted)))
                           : ListView(controller: controller, children: _buildReview(_review!, accent, text, muted)),
             ),
-            OutlinedButton(
-              onPressed: _review == null ? null : () async {
+            const SizedBox(height: 12),
+            ZealovaButton(
+              label: AppLocalizations.of(context).coachReviewRequestHumanProReview,
+              variant: ZealovaButtonVariant.ghost,
+              onTap: _review == null ? null : () async {
                 try {
                   await ref.read(recipeRepositoryProvider).requestHumanProReview(_review!.id);
                   if (mounted) {
@@ -101,7 +107,6 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
                   }
                 } catch (_) {}
               },
-              child: Text(AppLocalizations.of(context).coachReviewRequestHumanProReview),
             ),
           ],
         ),
@@ -117,8 +122,9 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
       Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.08),
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Row(children: [
           Stack(alignment: Alignment.center, children: [
@@ -126,12 +132,13 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
               value: score / 100, strokeWidth: 6, color: scoreColor,
               backgroundColor: scoreColor.withValues(alpha: 0.18),
             )),
-            Text('$score', style: TextStyle(color: text, fontSize: 18, fontWeight: FontWeight.w800)),
+            Text('$score', style: ZType.disp(22, color: text)),
           ]),
           const SizedBox(width: 16),
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(AppLocalizations.of(context).coachReviewOverallScore, style: TextStyle(color: muted, fontSize: 11)),
+              Text(AppLocalizations.of(context).coachReviewOverallScore.toUpperCase(),
+                  style: ZType.lbl(10, color: muted, letterSpacing: 1.5)),
               if (r.isStale)
                 Container(
                   margin: const EdgeInsets.only(top: 4),
@@ -163,13 +170,13 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         ),
       const SizedBox(height: 16),
       if (r.macroBalanceNotes != null) ...[
-        Text(AppLocalizations.of(context).coachReviewMacroBalance, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewMacroBalance.toUpperCase(), style: ZType.lbl(12, color: text, letterSpacing: 1.8)),
         const SizedBox(height: 4),
         Text(r.macroBalanceNotes!, style: TextStyle(color: muted, height: 1.4)),
         const SizedBox(height: 16),
       ],
       if (r.micronutrientGaps.isNotEmpty) ...[
-        Text(AppLocalizations.of(context).coachReviewMicronutrientGaps, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewMicronutrientGaps.toUpperCase(), style: ZType.lbl(12, color: text, letterSpacing: 1.8)),
         const SizedBox(height: 4),
         ...r.micronutrientGaps.map((g) => ListTile(
           dense: true,
@@ -183,7 +190,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         const SizedBox(height: 16),
       ],
       if (r.swapSuggestions.isNotEmpty) ...[
-        Text(AppLocalizations.of(context).coachReviewSuggestedSwaps, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewSuggestedSwaps.toUpperCase(), style: ZType.lbl(12, color: text, letterSpacing: 1.8)),
         const SizedBox(height: 8),
         ...r.swapSuggestions.map((s) => Card(
           child: ListTile(
@@ -201,7 +208,7 @@ class _CoachReviewSheetState extends ConsumerState<CoachReviewSheet> {
         const SizedBox(height: 16),
       ],
       if (r.fullFeedback != null) ...[
-        Text(AppLocalizations.of(context).coachReviewFullFeedback, style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w700)),
+        Text(AppLocalizations.of(context).coachReviewFullFeedback.toUpperCase(), style: ZType.lbl(12, color: text, letterSpacing: 1.8)),
         const SizedBox(height: 4),
         Text(r.fullFeedback!, style: TextStyle(color: muted, height: 1.5)),
       ],

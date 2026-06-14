@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/recipe_providers.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -68,18 +70,18 @@ class _RecipeSearchBarState extends ConsumerState<RecipeSearchBar> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = widget.isDark;
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final muted = tc.textMuted;
+    final text = tc.textPrimary;
+    final surface = tc.surface;
     final history = ref.watch(recipeSearchHistoryProvider);
     final showRecents = _live.trim().isEmpty && history.isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: muted.withValues(alpha: 0.18)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Row(
@@ -98,7 +100,7 @@ class _RecipeSearchBarState extends ConsumerState<RecipeSearchBar> {
                 contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 border: InputBorder.none,
                 hintText: AppLocalizations.of(context).recipeSearchBarSearchYourRecipesIngredien,
-                hintStyle: TextStyle(color: muted, fontSize: 14),
+                hintStyle: ZType.lbl(13, color: muted, letterSpacing: 1.0),
               ),
             ),
           ),

@@ -10,6 +10,8 @@ import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/models/set_progression.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Inline rest row that appears between sets during rest period
@@ -134,12 +136,11 @@ class _InlineRestRowState extends State<InlineRestRow>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark
-        ? AppColors.electricBlue.withValues(alpha: 0.08)
-        : AppColors.electricBlue.withValues(alpha: 0.05);
-    final borderColor = isDark
-        ? AppColors.electricBlue.withValues(alpha: 0.3)
-        : AppColors.electricBlue.withValues(alpha: 0.2);
+    // Signature inline-rest "ember" row — the accent at low alpha, hairline
+    // bordered. Never a boxed glass card; the accent stays reserved by tint.
+    final accent = ThemeColors.of(context).accent;
+    final backgroundColor = accent.withValues(alpha: isDark ? 0.10 : 0.06);
+    final borderColor = accent.withValues(alpha: 0.30);
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
@@ -150,7 +151,7 @@ class _InlineRestRowState extends State<InlineRestRow>
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -184,11 +185,12 @@ class _InlineRestRowState extends State<InlineRestRow>
   }
 
   Widget _buildTimerRow(bool isDark, Color textPrimary, Color textMuted) {
+    final accent = ThemeColors.of(context).accent;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
+      padding: const EdgeInsets.fromLTRB(14, 11, 14, 6),
       child: Row(
         children: [
-          // Timer display
+          // Timer display — Barlow "REST" kicker + Space Mono telemetry numeral.
           AnimatedBuilder(
             animation: _pulseController,
             builder: (context, child) {
@@ -197,23 +199,17 @@ class _InlineRestRowState extends State<InlineRestRow>
                 scale: _remainingSeconds <= 10 ? scale : 1.0,
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.timer_outlined,
-                      size: 20,
-                      color: _remainingSeconds <= 10
-                          ? AppColors.orange
-                          : AppColors.electricBlue,
+                    Text(
+                      AppLocalizations.of(context).workoutSummaryAdvancedRest
+                          .toUpperCase(),
+                      style: ZType.lbl(10.5, color: textMuted, letterSpacing: 2),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 9),
                     Text(
                       _formatTime(_remainingSeconds),
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'monospace',
-                        color: _remainingSeconds <= 10
-                            ? AppColors.orange
-                            : textPrimary,
+                      style: ZType.data(
+                        20,
+                        color: _remainingSeconds <= 10 ? accent : textPrimary,
                       ),
                     ),
                   ],
@@ -242,34 +238,31 @@ class _InlineRestRowState extends State<InlineRestRow>
           ),
           const SizedBox(width: 8),
 
-          // Skip button
+          // Skip control — Barlow uppercase, accent-tinted.
           GestureDetector(
             onTap: () {
               HapticFeedback.mediumImpact();
               widget.onSkipRest();
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
               decoration: BoxDecoration(
-                color: (isDark ? AppColors.orange : AppColorsLight.orange).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(16),
+                color: accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: accent.withValues(alpha: 0.30)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    AppLocalizations.of(context).onboardingSkip,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.orange : AppColorsLight.orange,
-                    ),
+                    AppLocalizations.of(context).onboardingSkip.toUpperCase(),
+                    style: ZType.lbl(10.5, color: accent, letterSpacing: 1.2),
                   ),
                   const SizedBox(width: 3),
                   Icon(
                     Icons.arrow_forward_rounded,
-                    size: 14,
-                    color: isDark ? AppColors.orange : AppColorsLight.orange,
+                    size: 13,
+                    color: accent,
                   ),
                 ],
               ),
@@ -291,37 +284,28 @@ class _InlineRestRowState extends State<InlineRestRow>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.05),
+          border: Border.all(color: AppColors.cardBorder),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: textMuted,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1),
         ),
       ),
     );
   }
 
   Widget _buildProgressBar(bool isDark) {
+    final accent = ThemeColors.of(context).accent;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(2),
         child: LinearProgressIndicator(
           value: _progress,
           minHeight: 4,
-          backgroundColor: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.08),
-          valueColor: AlwaysStoppedAnimation<Color>(
-            _remainingSeconds <= 10 ? AppColors.orange : AppColors.electricBlue,
-          ),
+          backgroundColor: accent.withValues(alpha: 0.18),
+          valueColor: AlwaysStoppedAnimation<Color>(accent),
         ),
       ),
     );
@@ -425,27 +409,30 @@ class _InlineRestRowState extends State<InlineRestRow>
 
     return Container(
       margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: chipColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: chipColor.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: chipColor,
-              ),
-            ),
+      width: double.infinity,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: chipColor.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: chipColor.withValues(alpha: 0.30)),
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(icon, style: const TextStyle(fontSize: 12)),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  message.toUpperCase(),
+                  style: ZType.lbl(10, color: chipColor, letterSpacing: 1),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -471,12 +458,10 @@ class _InlineRestRowState extends State<InlineRestRow>
                 },
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
                   decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.08)
-                        : Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(999),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -486,13 +471,11 @@ class _InlineRestRowState extends State<InlineRestRow>
                         size: 12,
                         color: textMuted,
                       ),
-                      const SizedBox(width: 3),
+                      const SizedBox(width: 4),
                       Text(
-                        AppLocalizations.of(context).workoutUiBuildersNote,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textMuted,
-                        ),
+                        AppLocalizations.of(context).workoutUiBuildersNote
+                            .toUpperCase(),
+                        style: ZType.lbl(10, color: textMuted, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -546,13 +529,13 @@ class _InlineRestRowState extends State<InlineRestRow>
             child: Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.electricBlue,
+                color: ThemeColors.of(context).accent,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.send_rounded,
                 size: 20,
-                color: Colors.white,
+                color: ThemeColors.of(context).accentContrast,
               ),
             ),
           ),

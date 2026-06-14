@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
@@ -31,7 +32,9 @@ class _PinnedNutrientsCardState extends ConsumerState<PinnedNutrientsCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -48,8 +51,9 @@ class _PinnedNutrientsCardState extends ConsumerState<PinnedNutrientsCard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,12 +76,10 @@ class _PinnedNutrientsCardState extends ConsumerState<PinnedNutrientsCard> {
               child: Row(
                 children: [
                   Text(
-                    AppLocalizations.of(context).pinnedNutrientsCardPinnedNutrients,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                    ),
+                    AppLocalizations.of(context)
+                        .pinnedNutrientsCardPinnedNutrients
+                        .toUpperCase(),
+                    style: ZType.lbl(12, color: textMuted, letterSpacing: 1.5),
                   ),
                   const Spacer(),
                   AnimatedRotation(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../l10n/generated/app_localizations.dart';
 
@@ -38,23 +39,23 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
 
   @override
   Widget build(BuildContext context) {
-    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = widget.isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final cardBorder = widget.isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;
     final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
 
     return Container(
       decoration: BoxDecoration(
         color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
@@ -62,8 +63,8 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: teal.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: teal.withValues(alpha: 0.40)),
                     ),
                     child: Icon(Icons.list_alt, size: 20, color: teal),
                   ),
@@ -73,8 +74,8 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          AppLocalizations.of(context).foodItemRankingNFoodItems(widget.foodItems.length),
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary),
+                          AppLocalizations.of(context).foodItemRankingNFoodItems(widget.foodItems.length).toUpperCase(),
+                          style: ZType.lbl(11, color: textPrimary, letterSpacing: 1.5),
                         ),
                         Text(
                           _isExpanded
@@ -368,18 +369,17 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
               if (widget.item.goalScore != null)
                 Column(
                   children: [
-                    Text(AppLocalizations.of(context).foodItemRankingScore, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w500, color: scoreColor.withValues(alpha: 0.7))),
+                    Text(AppLocalizations.of(context).foodItemRankingScore.toUpperCase(), style: ZType.lbl(8, color: scoreColor.withValues(alpha: 0.7), letterSpacing: 1.2)),
                     const SizedBox(height: 2),
                     Container(
                       width: 42,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: scoreColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: scoreColor.withValues(alpha: 0.40)),
                       ),
                       child: Center(
-                        child: Text('${widget.item.goalScore}/10', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: scoreColor)),
+                        child: Text('${widget.item.goalScore}/10', style: ZType.data(11, color: scoreColor)),
                       ),
                     ),
                   ],
@@ -408,9 +408,8 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: teal.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: teal.withValues(alpha: 0.4), width: 0.5),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: teal.withValues(alpha: 0.45)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -418,8 +417,8 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
                                 Icon(Icons.edit_rounded, size: 9, color: teal),
                                 const SizedBox(width: 3),
                                 Text(
-                                  'edited',
-                                  style: TextStyle(fontSize: 9, color: teal, fontWeight: FontWeight.w600),
+                                  'EDITED',
+                                  style: ZType.lbl(8, color: teal, letterSpacing: 1),
                                 ),
                               ],
                             ),

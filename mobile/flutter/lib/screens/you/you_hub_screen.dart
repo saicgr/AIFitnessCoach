@@ -33,6 +33,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
 import '../../data/providers/you_hub_tab_request_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/minigame_unlock_service.dart';
@@ -246,32 +247,34 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                         child: Container(
                           width: 40,
                           height: 40,
+                          alignment: Alignment.center,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                accent.withValues(alpha: 0.7),
-                                accent,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            shape: BoxShape.circle,
+                            color: AppColors.surface,
+                            border: Border.all(color: AppColors.cardBorder),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Icon(
-                            Icons.person,
-                            size: 22,
-                            color: Colors.white,
+                          child: Icon(
+                            Icons.person_outline,
+                            size: 20,
+                            color: accent,
                           ),
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        AppLocalizations.of(context).navYou,
-                        style: TextStyle(
-                          color: fg,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w800,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'ZEALOVA',
+                            style: ZType.lbl(10,
+                                color: AppColors.textMuted, letterSpacing: 2),
+                          ),
+                          Text(
+                            AppLocalizations.of(context).navYou.toUpperCase(),
+                            style: ZType.disp(28, color: fg),
+                          ),
+                        ],
                       ),
                       const Spacer(),
                       // Permanent mini-games entry point — hidden until the

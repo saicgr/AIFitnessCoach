@@ -57,7 +57,13 @@ class _StreamingBubble extends StatelessWidget {
                       decoration: BoxDecoration(
                         color:
                             isDark ? AppColors.elevated : Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(16).copyWith(
+                        border: Border.all(
+                          color: isDark
+                              ? AppColors.cardBorder
+                              : Colors.grey.shade300,
+                          width: 1,
+                        ),
+                        borderRadius: BorderRadius.circular(14).copyWith(
                           bottomLeft: const Radius.circular(4),
                         ),
                       ),

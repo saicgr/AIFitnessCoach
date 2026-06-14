@@ -5,10 +5,13 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton_list.dart';
 import '../../../data/models/workout_studio_models.dart';
 import '../../../data/providers/workout_studio_providers.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../workout/customization_studio_sheet.dart';
 
 /// "Workouts" tab of the Library — the user's saved custom workouts.
@@ -210,22 +213,15 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
       );
     }
 
-    final accent = ref.watch(accentColorProvider).getColor(isDark);
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-          child: SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: _buildNew,
-              icon: const Icon(Icons.tune_rounded, size: 18),
-              label: const Text('Build a workout'),
-              style: FilledButton.styleFrom(
-                backgroundColor: accent,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+          child: ZealovaButton(
+            label: 'Build a workout',
+            trailingIcon: Icons.tune_rounded,
+            onTap: _buildNew,
+            height: 48,
           ),
         ),
         Expanded(child: _buildList(uid, textSecondary, textMuted)),
@@ -299,10 +295,10 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
 
   Widget _buildWorkoutTile({required Map<String, dynamic> workout}) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
 
     final name = (workout['workout_name'] ?? 'Custom workout').toString();
@@ -316,15 +312,19 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
     ];
 
     return Material(
-      color: elevated,
-      borderRadius: BorderRadius.circular(16),
+      color: tc.surface,
+      borderRadius: BorderRadius.circular(14),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         onTap: () {
           HapticService.light();
           context.push('/workout/${workout['id']}');
         },
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
           padding: const EdgeInsets.fromLTRB(14, 12, 4, 12),
           child: Row(
             children: [
@@ -332,19 +332,13 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      accent.withValues(alpha: 0.35),
-                      AppColors.purple.withValues(alpha: 0.30),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  color: tc.elevated,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.fitness_center_rounded,
-                  color: Colors.white,
+                  color: textPrimary,
                   size: 22,
                 ),
               ),
@@ -366,13 +360,10 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      subtitleParts.join(' • '),
+                      subtitleParts.join(' • ').toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: textMuted,
-                        fontSize: 12.5,
-                      ),
+                      style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.2),
                     ),
                   ],
                 ),

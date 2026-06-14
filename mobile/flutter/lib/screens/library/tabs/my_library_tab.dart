@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../core/providers/favorites_provider.dart';
 import '../../../core/providers/staples_provider.dart';
@@ -29,6 +30,7 @@ class MyLibraryTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tc = ThemeColors.of(context);
 
     // Initialize custom exercises provider after the current build settles.
     // Calling `initialize()` synchronously inside build() mutates provider
@@ -51,7 +53,7 @@ class MyLibraryTab extends ConsumerWidget {
         await ref.read(favoritesProvider.notifier).refresh();
         await ref.read(staplesProvider.notifier).refresh();
       },
-      color: isDark ? AppColors.orange : AppColorsLight.orange,
+      color: tc.accent,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
         children: [

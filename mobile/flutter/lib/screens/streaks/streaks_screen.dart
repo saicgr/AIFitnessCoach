@@ -33,9 +33,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
-import '../../core/constants/stat_typography.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/consistency.dart';
@@ -45,8 +46,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/leaderboard_service.dart';
-import '../../widgets/glass_card.dart';
-import '../../widgets/metric_grid.dart';
+import '../../widgets/design_system/zealova.dart';
 
 /// Default weekly workout target when the user has no `workouts_per_week`
 /// preference set. Documented assumption (Gravl shows "4 days/week" by default).
@@ -73,8 +73,9 @@ class StreaksScreen extends ConsumerStatefulWidget {
 }
 
 class _StreaksScreenState extends ConsumerState<StreaksScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final TabController _boardTabController;
+  late final AnimationController _blinkController;
 
   // ── Streak records (/achievements/user/{id}/streaks) ────────────────────
   List<_StreakRecord>? _streaks;
@@ -91,6 +92,10 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
     super.initState();
     _boardTabController = TabController(length: 2, vsync: this);
     _boardTabController.addListener(_onBoardTabChanged);
+    _blinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
     WidgetsBinding.instance.addPostFrameCallback((_) => _bootstrap());
   }
 
@@ -98,6 +103,7 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
   void dispose() {
     _boardTabController.removeListener(_onBoardTabChanged);
     _boardTabController.dispose();
+    _blinkController.dispose();
     super.dispose();
   }
 
@@ -243,34 +249,40 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
     return count;
   }
 
+  /// Trailing 7 days (oldest → today) marked completed, for the momentum dots.
+  List<bool> _weekCompletion(CalendarHeatmapResponse? cal) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final completedDays = <DateTime>{};
+    if (cal != null) {
+      for (final d in cal.data) {
+        if (d.status.toLowerCase() != 'completed') continue;
+        completedDays
+            .add(DateTime(d.dateTime.year, d.dateTime.month, d.dateTime.day));
+      }
+    }
+    return List.generate(7, (i) {
+      final day = today.subtract(Duration(days: 6 - i));
+      return completedDays.contains(day);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
 
     return Scaffold(
       backgroundColor: c.background,
-      appBar: AppBar(
-        backgroundColor: c.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded, color: c.textPrimary),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/home');
-            }
-          },
-        ),
-        title: Text(
-          'Streaks',
-          style: TextStyle(
-            color: c.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+      appBar: ZealovaAppBar(
+        title: 'Streaks',
+        kicker: 'Momentum',
+        onBack: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
+        },
       ),
       body: RefreshIndicator(
         color: c.accent,
@@ -311,25 +323,17 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
 
   Widget _buildHero(ThemeColors c) {
     if (_loadingStreaks && _streaks == null) {
-      return GlassSurface(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        borderRadius: AppRadius.xl,
-        child: Row(
-          children: [
-            const SkeletonCircle(size: 56),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  SkeletonBox(width: 120, height: 48),
-                  SizedBox(height: 10),
-                  SkeletonBox(width: 90, height: 14),
-                ],
-              ),
-            ),
-          ],
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: AppSpacing.lg),
+          const SkeletonBox(width: 160, height: 96),
+          const SizedBox(height: 14),
+          const SkeletonBox(width: 110, height: 14),
+          const SizedBox(height: 20),
+          const SkeletonBox(width: 220, height: 28),
+          const SizedBox(height: AppSpacing.md),
+        ],
       );
     }
 
@@ -346,141 +350,156 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
     // Weekly cadence subtitle — "X days / week" from completed days this week.
     final cal = ref.watch(consistencyProvider.select((s) => s.calendarData));
     final completed = _completedThisWeek(cal);
+    final week = _weekCompletion(cal);
 
     if (current <= 0) {
-      return _buildEmptyHero(c, freezeCount);
+      return _buildEmptyHero(c, freezeCount, week);
     }
 
-    return GlassSurface(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      borderRadius: AppRadius.xl,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('🔥', style: TextStyle(fontSize: 44)),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedStatNumber(
-                      value: current.toDouble(),
-                      format: (v) => v.round().toString(),
-                      size: 68,
-                      color: c.accent,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Week Streak',
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      completed > 0
-                          ? '$completed ${completed == 1 ? 'day' : 'days'} / week'
-                          : 'Keep it going this week',
-                      style: TextStyle(
-                        color: c.textSecondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _buildFreezeChip(c, freezeCount),
-            ],
-          ),
-        ],
-      ),
+    return Column(
+      children: [
+        const SizedBox(height: AppSpacing.sm),
+        // Freeze chip, right-aligned above the hero numeral.
+        Align(
+          alignment: Alignment.centerRight,
+          child: _buildFreezeChip(c, freezeCount),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        const Text('🔥', style: TextStyle(fontSize: 52)),
+        const SizedBox(height: 4),
+        Text(
+          '$current',
+          style: ZType.disp(108, color: c.accent, letterSpacing: 1, height: 0.9),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'WEEK STREAK',
+          style: ZType.lbl(13, color: c.textSecondary, letterSpacing: 3),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          completed > 0
+              ? '$completed ${completed == 1 ? 'day' : 'days'} this week'
+              : 'Keep it going this week',
+          style: ZType.lbl(11, color: c.textMuted, letterSpacing: 1.5),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        _buildMomentumDots(c, week),
+        const SizedBox(height: AppSpacing.md),
+      ],
     );
   }
 
-  Widget _buildEmptyHero(ThemeColors c, int freezeCount) {
-    return GlassSurface(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      borderRadius: AppRadius.xl,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '🔥',
-                      style: TextStyle(
-                        fontSize: 40,
-                        color: c.textMuted.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Start your streak today',
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Finish a workout to light the flame. '
-                      'Train each scheduled day to grow your week streak.',
-                      style: TextStyle(
-                        color: c.textSecondary,
-                        fontSize: 13,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _buildFreezeChip(c, freezeCount),
-            ],
+  Widget _buildEmptyHero(ThemeColors c, int freezeCount, List<bool> week) {
+    return Column(
+      children: [
+        const SizedBox(height: AppSpacing.sm),
+        Align(
+          alignment: Alignment.centerRight,
+          child: _buildFreezeChip(c, freezeCount),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          '🔥',
+          style: TextStyle(
+            fontSize: 48,
+            color: c.textMuted.withValues(alpha: 0.6),
           ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'START YOUR STREAK',
+          style: ZType.disp(34, color: c.textPrimary),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          child: Text(
+            'Finish a workout to light the flame. '
+            'Train each scheduled day to grow your week streak.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: c.textSecondary,
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        _buildMomentumDots(c, week),
+        const SizedBox(height: AppSpacing.md),
+      ],
+    );
+  }
+
+  /// 7 day-dots: completed = accent-filled rounded square, today = blinking
+  /// accent outline, future/missed = hairline outline.
+  Widget _buildMomentumDots(ThemeColors c, List<bool> week) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < week.length; i++) ...[
+          if (i == week.length - 1)
+            // Today — blinking accent outline (over a fill if completed).
+            AnimatedBuilder(
+              animation: _blinkController,
+              builder: (context, _) {
+                final t = 0.35 + 0.65 * _blinkController.value;
+                return Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: week[i] ? c.accent : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: c.accent.withValues(alpha: t),
+                      width: 2,
+                    ),
+                  ),
+                );
+              },
+            )
+          else
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: week[i] ? c.accent : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: week[i]
+                    ? null
+                    : Border.all(color: AppColors.hairlineStrong),
+              ),
+            ),
+          if (i != week.length - 1) const SizedBox(width: 8),
         ],
-      ),
+      ],
     );
   }
 
   Widget _buildFreezeChip(ThemeColors c, int count) {
+    // Cyan outline pill for streak-freeze.
+    const cyan = Color(0xFF38BDF8);
     return GestureDetector(
       onTap: () {
         HapticService.light();
         context.push('/streak-freeze');
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: c.accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: c.accent.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: cyan.withValues(alpha: 0.55)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.ac_unit_rounded, size: 15, color: c.accent),
-            const SizedBox(width: 5),
+            const Icon(Icons.ac_unit_rounded, size: 14, color: cyan),
+            const SizedBox(width: 6),
             Text(
               '$count',
-              style: TextStyle(
-                color: c.accent,
-                fontSize: StatType.badge,
-                fontWeight: FontWeight.w800,
-              ),
+              style: ZType.data(13, color: cyan),
             ),
           ],
         ),
@@ -493,25 +512,16 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
   Widget _buildStatGrid(ThemeColors c) {
     final loadingGrid = _loadingStreaks && _streaks == null;
     if (loadingGrid) {
-      return GridView.count(
-        crossAxisCount: 2,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 2.1,
+      return Column(
         children: List.generate(
-          4,
-          (_) => GlassSurface(
-            borderRadius: AppRadius.lg,
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+          2,
+          (_) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
               children: const [
-                SkeletonBox(width: 70, height: 11),
-                SizedBox(height: 8),
-                SkeletonBox(width: 50, height: 22),
+                Expanded(child: SkeletonBox(width: 70, height: 34)),
+                SizedBox(width: 16),
+                Expanded(child: SkeletonBox(width: 70, height: 34)),
               ],
             ),
           ),
@@ -535,37 +545,48 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
 
     final bestStreak = _workoutStreak?.longest ?? 0;
 
-    return MetricGrid(
-      columns: 2,
-      numberSize: StatType.secondary,
-      items: [
-        MetricCell(
-          label: 'Workouts This Week',
-          value: '$completed/$target',
-          icon: Icons.fitness_center_rounded,
-          accent: c.accent,
+    Widget cell(String value, String label, {String? unit, bool accent = false}) {
+      return Expanded(
+        child: ZealovaStatTile(
+          value: value,
+          label: label,
+          unit: unit,
+          valueSize: 26,
+          accentValue: accent,
         ),
-        MetricCell(
-          label: 'Best Streak',
-          value: '$bestStreak',
-          unit: bestStreak == 1 ? 'day' : 'days',
-          icon: Icons.local_fire_department_rounded,
-          accent: c.textPrimary,
+      );
+    }
+
+    return Column(
+      children: [
+        const ZealovaRule(),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              cell('$completed/$target', 'Workouts This Week', accent: true),
+              const SizedBox(width: 16),
+              cell('$bestStreak', 'Best Streak',
+                  unit: bestStreak == 1 ? 'day' : 'days'),
+            ],
+          ),
         ),
-        MetricCell(
-          label: 'Consistency Streak',
-          value: '$consistencyStreak',
-          unit: consistencyStreak == 1 ? 'day' : 'days',
-          icon: Icons.bolt_rounded,
-          accent: c.textPrimary,
+        const ZealovaRule(),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              cell('$consistencyStreak', 'Consistency Streak',
+                  unit: consistencyStreak == 1 ? 'day' : 'days'),
+              const SizedBox(width: 16),
+              cell('$consistencyBest', 'Consistency Best',
+                  unit: consistencyBest == 1 ? 'day' : 'days'),
+            ],
+          ),
         ),
-        MetricCell(
-          label: 'Consistency Best',
-          value: '$consistencyBest',
-          unit: consistencyBest == 1 ? 'day' : 'days',
-          icon: Icons.workspace_premium_rounded,
-          accent: c.textPrimary,
-        ),
+        const ZealovaRule(),
       ],
     );
   }
@@ -595,32 +616,15 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
   }
 
   Widget _buildBoardTabBar(ThemeColors c) {
-    return Container(
-      decoration: BoxDecoration(
-        color: c.elevated,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: c.cardBorder),
-      ),
-      child: TabBar(
-        controller: _boardTabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicatorPadding: const EdgeInsets.all(4),
-        indicator: BoxDecoration(
-          color: c.accent.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: c.accent.withValues(alpha: 0.4)),
-        ),
-        labelColor: c.accent,
-        unselectedLabelColor: c.textMuted,
-        labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-        unselectedLabelStyle:
-            const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        dividerColor: Colors.transparent,
-        splashFactory: NoSplash.splashFactory,
-        tabs: const [
-          Tab(text: '🔥 Current Streak'),
-          Tab(text: '🏋️ Workouts'),
-        ],
+    return AnimatedBuilder(
+      animation: _boardTabController,
+      builder: (context, _) => ZealovaTextTabs(
+        tabs: const ['Current Streak', 'Workouts'],
+        activeIndex: _boardTabController.index,
+        onChanged: (i) {
+          HapticService.light();
+          _boardTabController.animateTo(i);
+        },
       ),
     );
   }
@@ -679,63 +683,48 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
       metricValue = '${(e['total_workouts'] as num?)?.toInt() ?? 0}';
     }
 
-    Color? rankColor;
-    IconData? rankIcon;
-    if (rank == 1) {
-      rankColor = const Color(0xFFFFD700);
-      rankIcon = Icons.emoji_events;
-    } else if (rank == 2) {
-      rankColor = const Color(0xFFC0C0C0);
-      rankIcon = Icons.emoji_events;
-    } else if (rank == 3) {
-      rankColor = const Color(0xFFCD7F32);
-      rankIcon = Icons.emoji_events;
-    }
-
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
-        color: isCurrentUser ? c.accent.withValues(alpha: 0.1) : c.elevated,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isCurrentUser
-              ? c.accent.withValues(alpha: 0.4)
-              : c.cardBorder,
-          width: isCurrentUser ? 2 : 1,
-        ),
+        borderRadius: BorderRadius.circular(10),
+        border: isCurrentUser
+            ? Border.all(color: c.accent, width: 1.5)
+            : const Border(
+                bottom: BorderSide(color: AppColors.hairline),
+              ),
       ),
       child: Row(
         children: [
           SizedBox(
-            width: 36,
-            child: Center(
-              child: rankIcon != null
-                  ? Icon(rankIcon, color: rankColor, size: 22)
-                  : Text(
-                      '#$rank',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: c.textMuted,
-                      ),
-                    ),
+            width: 32,
+            child: Text(
+              '$rank',
+              textAlign: TextAlign.center,
+              style: ZType.disp(
+                20,
+                color: rank <= 3
+                    ? (isCurrentUser ? c.accent : c.textPrimary)
+                    : c.textMuted,
+              ),
             ),
           ),
           const SizedBox(width: 10),
           Container(
-            width: 40,
-            height: 40,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
-              color: c.accent.withValues(alpha: 0.18),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: isCurrentUser ? c.accent : AppColors.hairlineStrong,
+              ),
             ),
             child: Center(
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: c.accent,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isCurrentUser ? c.accent : c.textSecondary,
                 ),
               ),
             ),
@@ -756,9 +745,8 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
           const SizedBox(width: 8),
           Text(
             metricValue,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
+            style: ZType.data(
+              14,
               color: isCurrentUser ? c.accent : c.textPrimary,
             ),
           ),
@@ -768,16 +756,11 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
   }
 
   Widget _buildBoardEmpty(ThemeColors c, bool isStreakTab) {
-    return Container(
-      width: double.infinity,
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.xl,
-      ),
-      decoration: BoxDecoration(
-        color: c.elevated,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: c.cardBorder),
       ),
       child: Column(
         children: [
@@ -824,101 +807,87 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
       });
     final icons = recent.take(5).map((t) => t.displayIcon).toList();
 
-    return GestureDetector(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () {
         HapticService.light();
         context.push('/trophy-room');
       },
-      child: GlassSurface(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        borderRadius: AppRadius.lg,
-        child: Row(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'TROPHIES',
-                  style: TextStyle(
-                    color: c.textMuted,
-                    fontSize: StatType.labelSm,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.6,
+      child: Row(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'TROPHIES',
+                style: ZType.lbl(10, color: c.textMuted, letterSpacing: 2),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$earnedCount',
+                    style: ZType.disp(30, color: c.accent),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    StatNumber(
-                      value: '$earnedCount',
-                      size: StatType.primary,
-                      color: c.accent,
-                    ),
-                    if (totalCount > 0) ...[
-                      const SizedBox(width: 4),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 5),
-                        child: Text(
-                          '/ $totalCount',
-                          style: TextStyle(
-                            color: c.textSecondary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: icons.isEmpty
-                  ? Align(
-                      alignment: Alignment.centerLeft,
+                  if (totalCount > 0) ...[
+                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
                       child: Text(
-                        'No trophies yet',
-                        style: TextStyle(
-                          color: c.textMuted,
-                          fontSize: 12,
-                        ),
+                        '/ $totalCount',
+                        style: ZType.lbl(14, color: c.textSecondary,
+                            letterSpacing: 1),
                       ),
-                    )
-                  : Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final icon in icons)
-                          Container(
-                            width: 34,
-                            height: 34,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: c.accent.withValues(alpha: 0.10),
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              border: Border.all(
-                                color: c.accent.withValues(alpha: 0.22),
-                              ),
-                            ),
-                            child: Text(
-                              icon,
-                              style: const TextStyle(fontSize: 18),
-                            ),
-                          ),
-                      ],
                     ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: c.textMuted.withValues(alpha: 0.6),
-            ),
-          ],
-        ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: icons.isEmpty
+                ? Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'No trophies yet',
+                      style: TextStyle(
+                        color: c.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                : Wrap(
+                    alignment: WrapAlignment.end,
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final icon in icons)
+                        Container(
+                          width: 34,
+                          height: 34,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.hairlineStrong),
+                          ),
+                          child: Text(
+                            icon,
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                        ),
+                    ],
+                  ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: c.textMuted.withValues(alpha: 0.6),
+          ),
+        ],
       ),
     );
   }
@@ -930,22 +899,11 @@ class _StreaksScreenState extends ConsumerState<StreaksScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          title,
-          style: TextStyle(
-            color: c.textPrimary,
-            fontSize: 17,
-            fontWeight: FontWeight.w800,
-          ),
+          title.toUpperCase(),
+          style: ZType.disp(22, color: c.textPrimary),
         ),
-        const SizedBox(height: 2),
-        Text(
-          subtitle,
-          style: TextStyle(
-            color: c.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        const SizedBox(height: 3),
+        ZealovaSectionKicker(subtitle),
       ],
     );
   }

@@ -12,6 +12,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class CommunityRecipeSearchScreen extends ConsumerStatefulWidget {
@@ -65,10 +66,10 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg, elevation: 0,
-        title: Text(AppLocalizations.of(context).communityRecipeSearchCommunityRecipes, style: TextStyle(color: text)),
-        iconTheme: IconThemeData(color: text),
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).communityRecipeSearchCommunityRecipes,
+        titleSize: 26,
+        onBack: () => Navigator.of(context).pop(),
       ),
       body: Column(
         children: [
@@ -78,11 +79,25 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
               controller: _controller,
               onChanged: _onChanged,
               autofocus: true,
+              style: TextStyle(color: text, fontSize: 15),
               decoration: InputDecoration(
                 hintText: AppLocalizations.of(context).communityRecipeSearchSearchPublicRecipes,
-                hintStyle: TextStyle(color: muted),
-                prefixIcon: Icon(Icons.public_rounded, color: accent),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
+                hintStyle: ZType.lbl(13, color: muted, letterSpacing: 0.5),
+                prefixIcon: Icon(Icons.public_rounded, color: accent, size: 20),
+                filled: true,
+                fillColor: AppColors.surface,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: accent),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: AppColors.cardBorder),
+                ),
               ),
             ),
           ),
@@ -161,12 +176,12 @@ class _CommunityRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     return Container(
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: accent.withValues(alpha: 0.15)),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       padding: const EdgeInsets.all(12),
       child: Row(
@@ -177,8 +192,8 @@ class _CommunityRow extends ConsumerWidget {
               width: 56, height: 56,
               child: summary.imageUrl != null
                   ? Image.network(summary.imageUrl!, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(color: accent.withValues(alpha: 0.1)))
-                  : Container(color: accent.withValues(alpha: 0.1), child: Icon(Icons.restaurant_menu, color: accent)),
+                      errorBuilder: (_, __, ___) => Container(color: AppColors.elevated))
+                  : Container(color: AppColors.elevated, child: Icon(Icons.restaurant_menu, color: muted)),
             ),
           ),
           const SizedBox(width: 12),

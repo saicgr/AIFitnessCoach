@@ -14,7 +14,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
-import '../../../widgets/glass_back_button.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
@@ -95,7 +95,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final topPad = MediaQuery.of(context).padding.top;
 
     final args = DiscoverArgs(category: _category, sort: _sort);
     // Cache-first notifier: a valid disk blob paints the grid instantly on a
@@ -104,45 +103,15 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
     return Scaffold(
       backgroundColor: bg,
+      appBar: ZealovaAppBar(
+        title: AppLocalizations.of(context).navDiscover,
+        kicker: AppLocalizations.of(context).discoverCuratedRecipesToTry,
+        onBack: () => Navigator.of(context).pop(),
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header row
-          Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(8, topPad + 8, 16, 4),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GlassBackButton(onTap: () => Navigator.of(context).pop()),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).navDiscover,
-                        style: TextStyle(
-                          color: text,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        AppLocalizations.of(context).discoverCuratedRecipesToTry,
-                        style: TextStyle(
-                          color: muted,
-                          fontSize: 11,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
 
           // Category chip row + sort pill
           Padding(
@@ -349,23 +318,23 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(999),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? accent : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: selected ? accent : muted.withValues(alpha: 0.3),
+            color: selected ? accent : AppColors.cardBorder,
           ),
         ),
         child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: selected ? Colors.white : text,
+          label.toUpperCase(),
+          style: ZType.lbl(
+            11,
+            color: selected ? accent : muted,
+            letterSpacing: 1.3,
           ),
         ),
       ),
@@ -395,11 +364,11 @@ class _SortPill extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          color: accent.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: accent.withValues(alpha: 0.45)),
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: accent),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -407,12 +376,8 @@ class _SortPill extends StatelessWidget {
             Icon(Icons.swap_vert_rounded, size: 14, color: accent),
             const SizedBox(width: 4),
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: accent,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(11, color: accent, letterSpacing: 1.3),
             ),
           ],
         ),
@@ -459,13 +424,9 @@ class _EmptyDiscoverView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              title,
+              title.toUpperCase(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: text,
-              ),
+              style: ZType.disp(20, color: text),
             ),
             const SizedBox(height: 8),
             Text(
@@ -507,13 +468,9 @@ class _ErrorView extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              AppLocalizations.of(context).discoverCouldnTLoadDiscover,
+              AppLocalizations.of(context).discoverCouldnTLoadDiscover.toUpperCase(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: text,
-              ),
+              style: ZType.disp(18, color: text),
             ),
             const SizedBox(height: 4),
             Text(
@@ -521,11 +478,12 @@ class _ErrorView extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: muted),
             ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: onRetry,
-              style: TextButton.styleFrom(foregroundColor: accent),
-              child: Text(AppLocalizations.of(context).workoutReviewTryAgain),
+            const SizedBox(height: 16),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutReviewTryAgain,
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              onTap: onRetry,
             ),
           ],
         ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
@@ -84,6 +85,12 @@ class _FastingTabState extends ConsumerState<FastingTab>
         widget.isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final elevated =
         widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final hairline =
+        widget.isDark ? AppColors.hairline : AppColorsLight.cardBorder;
+    final cardBorder =
+        widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final surface =
+        widget.isDark ? AppColors.surface : AppColorsLight.surface;
 
     // Guest mode check
     final isGuest = ref.watch(isGuestModeProvider);
@@ -126,6 +133,9 @@ class _FastingTabState extends ConsumerState<FastingTab>
                 textSecondary,
                 textMuted,
                 elevated,
+                hairline,
+                cardBorder,
+                surface,
               ),
               // History Tab
               _buildHistoryTab(
@@ -169,8 +179,13 @@ class _FastingTabState extends ConsumerState<FastingTab>
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: elevated,
+                color: widget.isDark ? AppColors.surface : AppColorsLight.surface,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: widget.isDark
+                      ? AppColors.cardBorder
+                      : AppColorsLight.cardBorder,
+                ),
               ),
               child: Icon(
                 Icons.settings_outlined,
@@ -193,6 +208,9 @@ class _FastingTabState extends ConsumerState<FastingTab>
     Color textSecondary,
     Color textMuted,
     Color elevated,
+    Color hairline,
+    Color cardBorder,
+    Color surface,
   ) {
     final hasFast = fastingState.hasFast;
     final activeFast = fastingState.activeFast;
@@ -228,6 +246,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
             textPrimary,
             textSecondary,
             textMuted,
+            surface: surface,
+            cardBorder: cardBorder,
           ),
 
           const SizedBox(height: 16),
@@ -262,22 +282,25 @@ class _FastingTabState extends ConsumerState<FastingTab>
             _buildScheduleRow(
               _startTime,
               endTime,
-              elevated,
+              surface,
+              cardBorder,
               textPrimary,
               textMuted,
             ),
 
           const SizedBox(height: 24),
 
-          // Divider
-          Divider(color: textMuted.withValues(alpha: 0.2)),
+          // Signature hairline rule separating hero/CTA from stats.
+          Divider(color: hairline, height: 1, thickness: 1),
 
           const SizedBox(height: 24),
 
           // Stats Section
           _buildStatsSection(
             fastingState,
-            elevated,
+            surface,
+            cardBorder,
+            hairline,
             accentColor,
             textPrimary,
             textSecondary,
@@ -297,8 +320,10 @@ class _FastingTabState extends ConsumerState<FastingTab>
     Color accentColor,
     Color textPrimary,
     Color textSecondary,
-    Color textMuted,
-  ) {
+    Color textMuted, {
+    Color? surface,
+    Color? cardBorder,
+  }) {
     final hours = remainingMinutes ~/ 60;
     final minutes = remainingMinutes % 60;
     final seconds = hasFast
@@ -320,27 +345,25 @@ class _FastingTabState extends ConsumerState<FastingTab>
 
     return Column(
       children: [
-        // Status Label
+        // Status Label — Barlow uppercase kicker.
         Text(
-          statusText,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: hasFast ? accentColor : textSecondary,
+          statusText.toUpperCase(),
+          style: ZType.lbl(
+            14,
+            color: hasFast ? accentColor : textMuted,
+            letterSpacing: 2,
           ),
         ),
 
         const SizedBox(height: 12),
 
-        // Countdown Display (HERO)
+        // Countdown Display (HERO) — Anton display numerals.
         Text(
           countdownText,
-          style: TextStyle(
-            fontSize: 56,
-            fontWeight: FontWeight.bold,
+          style: ZType.disp(
+            58,
             color: textPrimary,
-            letterSpacing: -2,
-            height: 1.1,
+            letterSpacing: 0,
           ),
         ),
 
@@ -364,10 +387,10 @@ class _FastingTabState extends ConsumerState<FastingTab>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
+                color: surface,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: accentColor.withValues(alpha: 0.3),
+                  color: cardBorder ?? accentColor.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -378,14 +401,14 @@ class _FastingTabState extends ConsumerState<FastingTab>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: accentColor,
+                      color: textPrimary,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Icon(
                     Icons.edit_outlined,
                     size: 14,
-                    color: accentColor,
+                    color: textMuted,
                   ),
                 ],
               ),
@@ -459,7 +482,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
   Widget _buildScheduleRow(
     DateTime startTime,
     DateTime endTime,
-    Color elevated,
+    Color surface,
+    Color cardBorder,
     Color textPrimary,
     Color textMuted,
   ) {
@@ -473,7 +497,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
           child: _buildScheduleChip(
             icon: Icons.play_arrow,
             label: 'Start ${DateFormat('h:mm a').format(startTime)}',
-            elevated: elevated,
+            surface: surface,
+            cardBorder: cardBorder,
             textPrimary: textPrimary,
           ),
         ),
@@ -483,7 +508,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
             icon: Icons.stop_circle_outlined,
             label:
                 'End ${DateFormat('h:mm a').format(endTime)}${isEndTimeTomorrow ? ' Tomorrow' : ''}',
-            elevated: elevated,
+            surface: surface,
+            cardBorder: cardBorder,
             textPrimary: textPrimary,
           ),
         ),
@@ -494,15 +520,17 @@ class _FastingTabState extends ConsumerState<FastingTab>
   Widget _buildScheduleChip({
     required IconData icon,
     required String label,
-    required Color elevated,
+    required Color surface,
+    required Color cardBorder,
     required Color textPrimary,
   }) {
     return Container(
       padding: const EdgeInsets.all(12),
       height: 48,
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -528,7 +556,9 @@ class _FastingTabState extends ConsumerState<FastingTab>
   // ========== STATS SECTION ==========
   Widget _buildStatsSection(
     FastingState fastingState,
-    Color elevated,
+    Color surface,
+    Color cardBorder,
+    Color hairline,
     Color accentColor,
     Color textPrimary,
     Color textSecondary,
@@ -541,8 +571,9 @@ class _FastingTabState extends ConsumerState<FastingTab>
       return Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: elevated.withValues(alpha: 0.5),
+          color: surface,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: hairline),
         ),
         child: Column(
           children: [
@@ -578,7 +609,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
           icon: Icons.local_fire_department,
           value: '${fastingState.streak?.currentStreak ?? 0}',
           label: AppLocalizations.of(context).xpProgressCardStreak,
-          elevated: elevated,
+          surface: surface,
+          cardBorder: cardBorder,
           accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -587,7 +619,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
           icon: Icons.check_circle_outline,
           value: '${stats.completedFasts}',
           label: AppLocalizations.of(context).fastingTotalFasts,
-          elevated: elevated,
+          surface: surface,
+          cardBorder: cardBorder,
           accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -596,7 +629,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
           icon: Icons.schedule,
           value: '${(stats.avgDurationMinutes / 60).toStringAsFixed(1)}h',
           label: AppLocalizations.of(context).fastingScreenRedesignedAvgDuration,
-          elevated: elevated,
+          surface: surface,
+          cardBorder: cardBorder,
           accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -605,7 +639,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
           icon: Icons.star_outline,
           value: '${(stats.longestFastMinutes / 60).toStringAsFixed(1)}h',
           label: AppLocalizations.of(context).fastingScreenRedesignedLongestFast,
-          elevated: elevated,
+          surface: surface,
+          cardBorder: cardBorder,
           accentColor: accentColor,
           textPrimary: textPrimary,
           textMuted: textMuted,
@@ -618,7 +653,8 @@ class _FastingTabState extends ConsumerState<FastingTab>
     required IconData icon,
     required String value,
     required String label,
-    required Color elevated,
+    required Color surface,
+    required Color cardBorder,
     required Color accentColor,
     required Color textPrimary,
     required Color textMuted,
@@ -626,29 +662,28 @@ class _FastingTabState extends ConsumerState<FastingTab>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 24, color: accentColor),
+          Icon(icon, size: 22, color: textMuted),
           const SizedBox(height: 8),
+          // Anton display numeral.
           Text(
             value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: textPrimary,
-            ),
+            style: ZType.disp(24, color: textPrimary, letterSpacing: 0),
           ),
           const SizedBox(height: 4),
+          // Barlow uppercase label.
           Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: textMuted,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(11, color: textMuted, letterSpacing: 1.5),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/stat_typography.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/scores_provider.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../progress/widgets/strength_overview_card.dart';
 import 'muscle_score_breakdown_sheet.dart';
 import 'overview_tab.dart';
@@ -28,8 +30,7 @@ class StrengthTab extends ConsumerWidget {
       return _buildSkeleton();
     }
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
 
     return Stack(
       children: [
@@ -77,10 +78,9 @@ class StrengthTab extends ConsumerWidget {
           bottom: 16,
           child: Container(
             decoration: BoxDecoration(
-               color: isDark
-                  ? Colors.black.withValues(alpha: 0.85)
-                  : Colors.white.withValues(alpha: 0.92),
+              color: tc.surface,
               borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.cardBorder),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.15),
@@ -96,7 +96,7 @@ class StrengthTab extends ConsumerWidget {
                   child: _FloatingNavButton(
                     icon: Icons.emoji_events,
                     label: AppLocalizations.of(context).strengthExercisesPrs,
-                    color: colorScheme.primary,
+                    color: tc.accent,
                     onTap: () => context.push('/stats/exercise-history'),
                   ),
                 ),
@@ -105,7 +105,7 @@ class StrengthTab extends ConsumerWidget {
                   child: _FloatingNavButton(
                     icon: Icons.fitness_center,
                     label: AppLocalizations.of(context).strengthMuscleAnalytics,
-                    color: colorScheme.secondary,
+                    color: tc.textSecondary,
                     onTap: () => context.push('/stats/muscle-analytics'),
                   ),
                 ),
@@ -153,11 +153,8 @@ class FitnessScoreCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
 
     final fitnessBreakdown = ref.watch(fitnessScoreBreakdownProvider);
 
@@ -166,54 +163,31 @@ class FitnessScoreCard extends ConsumerWidget {
     }
 
     final overallScore = fitnessBreakdown.overallScore;
-    final levelColor = Color(fitnessBreakdown.levelColorValue);
 
     final components = [
-      _ScoreComponent('Strength', fitnessBreakdown.strengthScore, 0.40, const Color(0xFFEF4444)),
-      _ScoreComponent('Consistency', fitnessBreakdown.consistencyScore, 0.30, const Color(0xFF3B82F6)),
-      _ScoreComponent('Nutrition', fitnessBreakdown.nutritionScore, 0.20, const Color(0xFF22C55E)),
-      _ScoreComponent('Readiness', fitnessBreakdown.readinessScore, 0.10, const Color(0xFFA855F7)),
+      _ScoreComponent('Strength', fitnessBreakdown.strengthScore, 0.40),
+      _ScoreComponent('Consistency', fitnessBreakdown.consistencyScore, 0.30),
+      _ScoreComponent('Nutrition', fitnessBreakdown.nutritionScore, 0.20),
+      _ScoreComponent('Readiness', fitnessBreakdown.readinessScore, 0.10),
     ];
 
-    return Container(
+    // The single accent bar = the highest-scoring component (the "peak").
+    final peakScore =
+        components.map((c) => c.score).fold<int>(0, (a, b) => a > b ? a : b);
+
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row with overall score
+          // Header: big Anton score numeral carries the hierarchy.
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Score circle
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: levelColor,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: levelColor.withOpacity(0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: StatNumber(
-                      value: '$overallScore',
-                      size: StatType.secondary,
-                      color: Colors.white,
-                      alignment: Alignment.center,
-                    ),
-                  ),
-                ),
+              Text(
+                '$overallScore',
+                style: ZType.disp(56, color: accent),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -221,65 +195,63 @@ class FitnessScoreCard extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppLocalizations.of(context).strengthFitnessScore,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary,
-                      ),
+                      AppLocalizations.of(context)
+                          .strengthFitnessScore
+                          .toUpperCase(),
+                      style: ZType.lbl(13,
+                          color: tc.textSecondary, letterSpacing: 1.5),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       fitnessBreakdown.levelDescription,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: levelColor,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: ZType.lbl(11,
+                          color: tc.textMuted, letterSpacing: 1.2),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+          ZealovaRule(margin: const EdgeInsets.only(bottom: 14)),
 
-          // Component bars
-          ...components.map((c) => Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${c.label} (${(c.weight * 100).toInt()}%)',
-                      style: TextStyle(fontSize: 12, color: textMuted),
-                    ),
-                    Text(
-                      '${c.score}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
+          // Component bars — thin hairline tracks; only the peak bar is accent.
+          ...components.map((c) {
+            final isPeak = c.score == peakScore && peakScore > 0;
+            final barColor = isPeak ? accent : tc.textSecondary;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${c.label.toUpperCase()}  ${(c.weight * 100).toInt()}%',
+                        style: ZType.lbl(10,
+                            color: tc.textMuted, letterSpacing: 1.2),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: c.score / 100,
-                    minHeight: 6,
-                    backgroundColor: c.color.withOpacity(0.15),
-                    valueColor: AlwaysStoppedAnimation(c.color),
+                      Text(
+                        '${c.score}',
+                        style: ZType.data(12, color: tc.textPrimary),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          )),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(1),
+                    child: LinearProgressIndicator(
+                      value: c.score / 100,
+                      minHeight: 3,
+                      backgroundColor: AppColors.hairline,
+                      valueColor: AlwaysStoppedAnimation(barColor),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );
@@ -290,9 +262,8 @@ class _ScoreComponent {
   final String label;
   final int score;
   final double weight;
-  final Color color;
 
-  const _ScoreComponent(this.label, this.score, this.weight, this.color);
+  const _ScoreComponent(this.label, this.score, this.weight);
 }
 
 class _FloatingNavButton extends StatelessWidget {
@@ -310,28 +281,29 @@ class _FloatingNavButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     return Material(
-      color: color.withValues(alpha: 0.1),
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
+              Icon(icon, size: 16, color: color),
+              const SizedBox(width: 7),
               Flexible(
                 child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+                  label.toUpperCase(),
+                  style: ZType.lbl(11,
+                      color: tc.textSecondary, letterSpacing: 1.2),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

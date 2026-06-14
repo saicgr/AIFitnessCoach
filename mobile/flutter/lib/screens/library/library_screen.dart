@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../core/services/posthog_service.dart';
@@ -166,12 +168,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final backgroundColor = tc.background;
+    final elevated = tc.surface;
+    final textMuted = tc.textMuted;
     final accent = ref.watch(accentColorProvider);
     final accentColor = accent.getColor(isDark);
 
@@ -197,11 +197,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                       ),
                       const SizedBox(width: 12),
                       Text(
-                        AppLocalizations.of(context).workoutsLibrary,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        AppLocalizations.of(context).workoutsLibrary.toUpperCase(),
+                        style: ZType.disp(30, color: tc.textPrimary),
                       ),
                     ],
                   ),
@@ -213,14 +210,12 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Container(
-                    height: 44,
+                    height: 46,
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
                       color: elevated,
-                      borderRadius: BorderRadius.circular(22),
-                      border: Border.all(
-                        color: textMuted.withValues(alpha: 0.15),
-                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.cardBorder),
                     ),
                     child: Row(
                       children: [
@@ -286,30 +281,28 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                               duration: const Duration(milliseconds: 200),
                               alignment: Alignment.center,
                               padding: const EdgeInsets.symmetric(
-                                vertical: 8,
+                                vertical: 9,
                               ),
                               decoration: BoxDecoration(
-                                color: isSelected ? accentColor : elevated,
-                                borderRadius: BorderRadius.circular(20),
-                                border: isSelected
-                                    ? null
-                                    : Border.all(
-                                        color:
-                                            textMuted.withValues(alpha: 0.2),
-                                      ),
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: isSelected
+                                        ? accentColor
+                                        : AppColors.hairline,
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
                               ),
                               child: Text(
-                                _tabLabels[index],
+                                _tabLabels[index].toUpperCase(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
+                                style: ZType.lbl(
+                                  12.5,
                                   color: isSelected
-                                      ? Colors.white
-                                      : textSecondary,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  fontSize: 13,
+                                      ? tc.textPrimary
+                                      : textMuted,
+                                  letterSpacing: 1.2,
                                 ),
                               ),
                             ),

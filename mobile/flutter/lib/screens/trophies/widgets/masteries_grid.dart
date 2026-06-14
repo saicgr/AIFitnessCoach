@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/masteries_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -57,16 +59,14 @@ class _MasteryCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final border =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
 
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: bg,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         children: [
@@ -92,26 +92,21 @@ class _MasteryCell extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              color: isDark ? Colors.white : AppColorsLight.textPrimary,
+              color: tc.textPrimary,
               fontSize: 12,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: (isDark ? Colors.white : Colors.black)
-                  .withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              AppLocalizations.of(context)!.masteriesGridLv(entry.level),
-              style: TextStyle(
-                color: isDark ? Colors.white : AppColorsLight.textPrimary,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-              ),
+              AppLocalizations.of(context)!.masteriesGridLv(entry.level).toUpperCase(),
+              style: ZType.lbl(9, color: tc.textSecondary, weight: FontWeight.w800, letterSpacing: 1.2),
             ),
           ),
         ],
@@ -235,20 +230,17 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+        color: tc.surface,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Text(
         AppLocalizations.of(context).masteriesGridYourMasteriesWillLevel,
-        style: TextStyle(
-          color:
-              isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-          fontSize: 13,
-          height: 1.4,
-        ),
+        style: TextStyle(color: tc.textMuted, fontSize: 13, height: 1.4),
       ),
     );
   }

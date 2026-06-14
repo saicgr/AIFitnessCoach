@@ -197,7 +197,9 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
                     child: Icon(
                       (starIdx + 1) <= rating ? Icons.star : Icons.star_border,
                       size: 18,
-                      color: (starIdx + 1) <= rating ? AppColors.orange : AppColors.textMuted,
+                      color: (starIdx + 1) <= rating
+                          ? ThemeColors.of(context).accent
+                          : AppColors.textMuted,
                     ),
                   );
                 }),

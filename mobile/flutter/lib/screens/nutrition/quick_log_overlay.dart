@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Shows a quick log meal overlay that appears immediately from widgets
@@ -55,11 +56,15 @@ class QuickLogOverlay extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    AppLocalizations.of(context).quickLogOverlayQuickLog,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black,
+                    AppLocalizations.of(context)
+                        .quickLogOverlayQuickLog
+                        .toUpperCase(),
+                    style: ZType.lbl(
+                      18,
+                      color: isDark
+                          ? AppColors.textPrimary
+                          : AppColorsLight.textPrimary,
+                      letterSpacing: 1.5,
                     ),
                   ),
                   Row(
@@ -163,14 +168,10 @@ class _MealTypeChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: isDark
-              ? AppColors.surface.withOpacity(0.5)
-              : AppColorsLight.surface.withOpacity(0.5),
+          color: isDark ? AppColors.surface : AppColorsLight.surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.1)
-                : Colors.black.withOpacity(0.1),
+            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
           ),
         ),
         child: Column(

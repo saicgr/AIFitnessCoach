@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -67,23 +68,15 @@ class WrappedIntroCard extends StatelessWidget {
                   // Month + Year
                   Text(
                     data.monthDisplayName.toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 42,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 6,
-                      height: 1,
-                    ),
+                    style: ZType.disp(42,
+                        color: Colors.white, height: 1, letterSpacing: 4),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     data.yearDisplay,
-                    style: TextStyle(
-                      color: const Color(0xFFA855F7).withValues(alpha: 0.8),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 4,
-                    ),
+                    style: ZType.lbl(18,
+                        color: const Color(0xFFA855F7).withValues(alpha: 0.8),
+                        letterSpacing: 4),
                   ),
 
                   const Spacer(flex: 2),
@@ -91,33 +84,20 @@ class WrappedIntroCard extends StatelessWidget {
                   // "was YOUR month."
                   Text(
                     'was',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 2,
-                    ),
+                    style: ZType.ser(20,
+                        color: Colors.white.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'YOUR',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 72,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 8,
-                      height: 1,
-                    ),
+                    style: ZType.disp(72,
+                        color: Colors.white, height: 1, letterSpacing: 6),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     AppLocalizations.of(context).introCardMonth,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 20,
-                      fontWeight: FontWeight.w300,
-                      letterSpacing: 2,
-                    ),
+                    style: ZType.ser(20,
+                        color: Colors.white.withValues(alpha: 0.5)),
                   ),
 
                   const Spacer(flex: 2),
@@ -135,12 +115,9 @@ class WrappedIntroCard extends StatelessWidget {
                     ),
                     child: Text(
                       '${data.totalWorkouts} workouts · ${NumberFormat('#,###').format(data.totalVolumeLbs.round())} lbs · ${data.totalSets} sets',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        letterSpacing: 0.5,
-                      ),
+                      style: ZType.lbl(14,
+                          color: Colors.white.withValues(alpha: 0.7),
+                          letterSpacing: 0.5),
                       textAlign: TextAlign.center,
                     ),
                   ),

@@ -14,11 +14,9 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     if (perf == null || perf.isEmpty) return null;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final useKg = ref.watch(useKgForWorkoutProvider);
 
     // PR lookup by exercise name — drives the badge AND the per-set star.
@@ -38,32 +36,24 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 const <Map<String, dynamic>>[]),
     };
 
-    return Container(
-      width: double.infinity,
+    return ZealovaCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.format_list_bulleted_rounded,
-                  size: 18, color: textMuted),
+                  size: 16, color: textMuted),
               const SizedBox(width: 8),
               Text(
-                'Exercises',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: textPrimary,
-                ),
+                'Exercises'.toUpperCase(),
+                style: ZType.lbl(11, color: textMuted, letterSpacing: 2.0),
               ),
             ],
           ),
+          const SizedBox(height: 4),
+          const ZealovaRule(),
           const SizedBox(height: 8),
           for (final e in perf)
             () {
@@ -441,35 +431,21 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: hasAchievements
-                ? [
-                    AppColors.orange.withOpacity(0.2),
-                    AppColors.purple.withOpacity(0.15),
-                  ]
-                : [
-                    AppColors.orange.withOpacity(0.1),
-                    AppColors.purple.withOpacity(0.05),
-                  ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
+          color: ThemeColors.of(context).surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: hasAchievements
-                ? AppColors.orange.withOpacity(0.5)
-                : AppColors.orange.withOpacity(0.2),
-            width: hasAchievements ? 1.5 : 1,
+          // Gold left edge is the sanctioned gamification accent (≤1/screen,
+          // distinct from the reserved app accent). Stronger when earned.
+          border: Border(
+            left: BorderSide(
+              color: hasAchievements
+                  ? AppColors.gamGold
+                  : AppColors.cardBorder,
+              width: hasAchievements ? 3 : 1,
+            ),
+            top: const BorderSide(color: AppColors.cardBorder),
+            right: const BorderSide(color: AppColors.cardBorder),
+            bottom: const BorderSide(color: AppColors.cardBorder),
           ),
-          boxShadow: hasAchievements
-              ? [
-                  BoxShadow(
-                    color: AppColors.orange.withOpacity(0.15),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ]
-              : null,
         ),
         child: Row(
           children: [
@@ -481,25 +457,21 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [AppColors.orange, AppColors.purple],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    color: hasAchievements
+                        ? AppColors.gamGold.withOpacity(0.15)
+                        : ThemeColors.of(context).elevated,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: hasAchievements
-                        ? [
-                            BoxShadow(
-                              color: AppColors.orange.withOpacity(0.4),
-                              blurRadius: 12,
-                              spreadRadius: 2,
-                            ),
-                          ]
-                        : null,
+                    border: Border.all(
+                      color: hasAchievements
+                          ? AppColors.gamGold.withOpacity(0.5)
+                          : AppColors.cardBorder,
+                    ),
                   ),
                   child: Icon(
                     Icons.emoji_events_rounded,
-                    color: Colors.white,
+                    color: hasAchievements
+                        ? AppColors.gamGold
+                        : textSecondary,
                     size: 24,
                   ),
                 )
@@ -560,17 +532,12 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   Row(
                     children: [
                       if (hasAchievements)
-                        ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [Color(0xFFFFD700), AppColors.orange],
-                          ).createShader(bounds),
-                          child: Text(
-                            AppLocalizations.of(context).workoutCompleteScreenTrophiesEarned,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                        Text(
+                          AppLocalizations.of(context).workoutCompleteScreenTrophiesEarned.toUpperCase(),
+                          style: ZType.lbl(
+                            13,
+                            color: AppColors.gamGold,
+                            letterSpacing: 1.5,
                           ),
                         )
                             .animate(onPlay: (controller) => controller.repeat(reverse: true))
@@ -580,17 +547,17 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                             )
                       else
                         Text(
-                          AppLocalizations.of(context).workoutCompleteScreenTrophiesMilestones,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                          AppLocalizations.of(context).workoutCompleteScreenTrophiesMilestones.toUpperCase(),
+                          style: ZType.lbl(
+                            13,
                             color: textPrimary,
+                            letterSpacing: 1.5,
                           ),
                         ),
                       const Spacer(),
                       Icon(
                         Icons.chevron_right_rounded,
-                        color: hasAchievements ? AppColors.orange : textSecondary,
+                        color: hasAchievements ? AppColors.gamGold : textSecondary,
                         size: 20,
                       ),
                     ],
@@ -604,7 +571,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                             : 'Track your progress',
                     style: TextStyle(
                       fontSize: 12,
-                      color: hasAchievements ? AppColors.orange.withOpacity(0.8) : textSecondary,
+                      color: hasAchievements ? AppColors.gamGold.withOpacity(0.85) : textSecondary,
                     ),
                   ),
                 ],
@@ -625,7 +592,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           .shimmer(
             delay: 200.ms,
             duration: 1800.ms,
-            color: AppColors.orange.withOpacity(0.15),
+            color: AppColors.gamGold.withOpacity(0.15),
           );
     }
 

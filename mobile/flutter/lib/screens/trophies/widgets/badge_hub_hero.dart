@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Teal→green gradient hero banner at the top of the Badge Hub.
-/// Matches the reference art — stacked badges illustration on the right
-/// and a "How it works >" pill on the left. The right-side badges are
-/// rendered as text emoji (no image asset needed) so the banner stays
-/// distinctive without blocking on art pipeline.
+/// Signature hairline-led Badge Hub hero. No boxed teal gradient — an Anton
+/// masthead with a floating gold badge cluster and a Fraunces subline. Gold
+/// is the trophy accent (the one colored accent the gamification surfaces are
+/// allowed); the "How it works" affordance stays muted.
 class BadgeHubHero extends StatelessWidget {
   final VoidCallback onHowItWorksTap;
 
@@ -15,100 +17,51 @@ class BadgeHubHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return InkWell(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(14),
       onTap: () {
         HapticService.light();
         onHowItWorksTap();
       },
-      child: Container(
-        height: 140,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          gradient: const LinearGradient(
-            begin: AlignmentDirectional.centerStart,
-            end: AlignmentDirectional.centerEnd,
-            colors: [
-              Color(0xFF14B8A6), // teal-500
-              Color(0xFF22D3EE), // cyan-400
-              Color(0xFF86EFAC), // green-300
-            ],
-            stops: [0.0, 0.55, 1.0],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF22D3EE).withValues(alpha: 0.18),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Stack(
-          clipBehavior: Clip.none,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Decorative badge emojis spilling out
-            PositionedDirectional(end: -6,
-              top: 24,
-              child: Opacity(
-                opacity: 0.9,
-                child: Row(
-                        children: const [
-                    _HeroBadge(emoji: '🏆', size: 46, rotation: -0.22),
-                    SizedBox(width: 2),
-                    _HeroBadge(emoji: '🎖️', size: 52, rotation: 0.06),
-                    SizedBox(width: 2),
-                    _HeroBadge(emoji: '🥇', size: 44, rotation: 0.18),
-                  ],
-                ),
+            // Floating gold badge cluster
+            const SizedBox(
+              width: 64,
+              height: 56,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  PositionedDirectional(start: 0, top: 4, child: _HeroBadge(emoji: '🏆', gold: true)),
+                  PositionedDirectional(end: 0, top: 0, child: _HeroBadge(emoji: '🥇')),
+                  PositionedDirectional(start: 14, bottom: 0, child: _HeroBadge(emoji: '🔥')),
+                ],
               ),
             ),
-
-            // Copy
-            Padding(
-              padding: const EdgeInsetsDirectional.fromSTEB(20, 18, 150, 18),
+            const SizedBox(width: 14),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    AppLocalizations.of(context).badgeHubRewardYourProgress,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 19,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
-                    ),
+                    AppLocalizations.of(context).badgeHubRewardYourProgress.toUpperCase(),
+                    style: ZType.disp(21, color: tc.textPrimary, height: 0.96),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   Text(
                     AppLocalizations.of(context).badgeHubHeroEarnBadgesForEvery,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      height: 1.35,
-                    ),
-                  ),
-                  const Spacer(),
-                  Row(
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).referralsHowItWorks,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.white.withValues(alpha: 0.95),
-                        size: 20,
-                      ),
-                    ],
+                    style: ZType.ser(13, color: tc.textSecondary),
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
+            Icon(Icons.info_outline, size: 18, color: tc.textMuted),
           ],
         ),
       ),
@@ -119,32 +72,29 @@ class BadgeHubHero extends StatelessWidget {
 
 class _HeroBadge extends StatelessWidget {
   final String emoji;
-  final double size;
-  final double rotation; // radians
+  final bool gold;
 
-  const _HeroBadge({
-    required this.emoji,
-    required this.size,
-    required this.rotation,
-  });
+  const _HeroBadge({required this.emoji, this.gold = false});
 
   @override
   Widget build(BuildContext context) {
-    return Transform.rotate(
-      angle: rotation,
-      child: Text(
-        emoji,
-        style: TextStyle(
-          fontSize: size,
-          shadows: [
-            Shadow(
-              color: Colors.black.withValues(alpha: 0.25),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
-            ),
-          ],
+    final tc = ThemeColors.of(context);
+    return Container(
+      width: 30,
+      height: 30,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: gold
+            ? AppColors.gamGold.withValues(alpha: 0.08)
+            : tc.surface,
+        border: Border.all(
+          color: gold
+              ? AppColors.gamGold.withValues(alpha: 0.5)
+              : AppColors.cardBorder,
         ),
       ),
+      child: Text(emoji, style: const TextStyle(fontSize: 15)),
     );
   }
 }

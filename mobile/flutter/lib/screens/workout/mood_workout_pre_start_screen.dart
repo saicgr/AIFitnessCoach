@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/app_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/mood.dart';
 import '../../data/models/workout.dart';
 import '../../widgets/breath_prompt_widget.dart';
@@ -74,8 +77,22 @@ class _MoodWorkoutPreStartScreenState
 
     // Fallback — should never hit because initState routes away, but kept
     // defensively so a hot-reload edge case doesn't show a blank screen.
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+    final tc = ThemeColors.of(context);
+    return Scaffold(
+      backgroundColor: AppColors.pureBlack,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: tc.accent, strokeWidth: 2),
+            const SizedBox(height: 24),
+            Text(
+              'Settling in',
+              style: ZType.ser(20, color: tc.textSecondary),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

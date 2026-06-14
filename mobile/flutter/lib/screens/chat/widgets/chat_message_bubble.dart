@@ -6,6 +6,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/repositories/chat_repository.dart';
@@ -116,6 +118,7 @@ class ChatMessageBubble extends ConsumerWidget {
       return _buildErrorMessage(context);
     }
 
+    final tc = ThemeColors.of(context);
     Widget bubbleContent = Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -123,8 +126,17 @@ class ChatMessageBubble extends ConsumerWidget {
         maxWidth: MediaQuery.of(context).size.width * 0.8,
       ),
       decoration: BoxDecoration(
-        color: isUser ? AppColors.cyan : AppColors.elevated,
-        borderRadius: BorderRadius.circular(16).copyWith(
+        // Signature: matte hairline bubbles. The user's turn is marked by an
+        // accent-tinted border (the reserved accent), the coach's by a plain
+        // hairline. No solid accent fill — accent stays reserved.
+        color: isUser ? tc.surface : AppColors.elevated,
+        border: Border.all(
+          color: isUser
+              ? tc.accent.withValues(alpha: 0.55)
+              : AppColors.cardBorder,
+          width: 1,
+        ),
+        borderRadius: BorderRadius.circular(14).copyWith(
           bottomRight: isUser ? const Radius.circular(4) : null,
           bottomLeft: !isUser ? const Radius.circular(4) : null,
         ),
@@ -148,11 +160,11 @@ class ChatMessageBubble extends ConsumerWidget {
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    messageCoach.name,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                    messageCoach.name.toUpperCase(),
+                    style: ZType.lbl(
+                      10.5,
                       color: messageCoach.primaryColor,
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ],
@@ -277,28 +289,29 @@ class ChatMessageBubble extends ConsumerWidget {
                   height: 48,
                   width: 140,
                   decoration: BoxDecoration(
-                    color: AppColors.pureBlack.withOpacity(0.1),
+                    color: AppColors.surface,
+                    border: Border.all(color: AppColors.cardBorder),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(
+                      const SizedBox(
                         width: 14,
                         height: 14,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppColors.pureBlack.withOpacity(0.5),
+                          color: AppColors.textMuted,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         AppLocalizations.of(context).storyCreateUploading,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.pureBlack.withOpacity(0.6),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -314,7 +327,7 @@ class ChatMessageBubble extends ConsumerWidget {
           else if (isUser && message.content.contains('[ACTIVE WORKOUT CONTEXT]'))
             _WorkoutContextMessage(
               content: message.content,
-              textColor: AppColors.pureBlack,
+              textColor: AppColors.textPrimary,
             )
           else
             Text(
@@ -323,8 +336,8 @@ class ChatMessageBubble extends ConsumerWidget {
               // leak through from older agent prompts. The /support route
               // does not exist; show_options chips render below instead.
               _scrubLegacyActionTokens(message.content),
-              style: TextStyle(
-                color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
                 fontSize: 15,
                 height: 1.4,
               ),
@@ -546,11 +559,9 @@ class ChatMessageBubble extends ConsumerWidget {
               children: [
                 Text(
                   _formatTime(message.timestamp ?? DateTime.now()),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 10,
-                    color: isUser
-                        ? AppColors.pureBlack.withOpacity(0.6)
-                        : AppColors.textMuted,
+                    color: AppColors.textMuted,
                   ),
                 ),
                 if (!isUser && message.responseTimeMs != null) ...[
@@ -577,9 +588,7 @@ class ChatMessageBubble extends ConsumerWidget {
                 style: TextStyle(
                   fontSize: 9,
                   fontStyle: FontStyle.italic,
-                  color: isUser
-                      ? AppColors.pureBlack.withOpacity(0.4)
-                      : AppColors.textMuted.withOpacity(0.6),
+                  color: AppColors.textMuted.withOpacity(0.6),
                 ),
               ),
             ),
@@ -657,7 +666,7 @@ class ChatMessageBubble extends ConsumerWidget {
   }
 
   Widget _buildStatusIcon(MessageStatus status) {
-    final statusColor = AppColors.pureBlack.withOpacity(0.5);
+    final statusColor = AppColors.textMuted;
     switch (status) {
       case MessageStatus.pending:
         return Icon(Icons.access_time, size: 10, color: statusColor);

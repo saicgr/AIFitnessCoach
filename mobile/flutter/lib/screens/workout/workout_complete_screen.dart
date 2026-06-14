@@ -49,6 +49,8 @@ import '../../widgets/heart_rate_chart.dart';
 import '../../widgets/metric_grid.dart';
 import '../../core/constants/stat_typography.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/theme/app_typography.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../core/providers/heart_rate_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -676,60 +678,42 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             children: [
               Row(
                 children: [
+                  // Secondary action — ghost (hairline outline), keeps the
+                  // reserved accent for the single primary CTA.
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _showShareSheet,
-                      icon: const Icon(Icons.share_rounded, size: 18),
-                      label: Text(AppLocalizations.of(context).commonShare),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.orange,
-                        side: BorderSide(color: AppColors.orange.withOpacity(0.5)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
+                    child: ZealovaButton(
+                      label: AppLocalizations.of(context).commonShare,
+                      onTap: _showShareSheet,
+                      variant: ZealovaButtonVariant.ghost,
+                      trailingIcon: Icons.share_rounded,
                     ),
                   ),
                   const SizedBox(width: 12),
+                  // THE one accent CTA on this screen.
                   Expanded(
                     flex: 2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [AppColors.orange, AppColors.purple],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.orange.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _isSubmitting ? null : _submitFeedback,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.transparent,
-                          shadowColor: Colors.transparent,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: _isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: LottieLoading(size: 20, useDots: true, color: Colors.white),
-                              )
-                            : Text(
-                                AppLocalizations.of(context).commonDone,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                    child: _isSubmitting
+                        ? Container(
+                            height: 52,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: ThemeColors.of(context).accent,
+                              borderRadius: BorderRadius.circular(26),
+                            ),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: LottieLoading(
+                                size: 20,
+                                useDots: true,
+                                color: ThemeColors.of(context).accentContrast,
                               ),
-                      ),
-                    ),
+                            ),
+                          )
+                        : ZealovaButton(
+                            label: AppLocalizations.of(context).commonDone,
+                            onTap: _submitFeedback,
+                          ),
                   ),
                 ],
               ),
@@ -741,11 +725,8 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  AppLocalizations.of(context).workoutCompleteSkipRating,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: textSecondary,
-                  ),
+                  AppLocalizations.of(context).workoutCompleteSkipRating.toUpperCase(),
+                  style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
                 ),
               ),
             ],
@@ -760,52 +741,44 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Title Row (compact)
-                  Row(
+                  // Title — typographic "DONE." masthead (Anton) over a
+                  // Barlow kicker + the workout name, with a Fraunces human
+                  // exhale line. Replaces the gradient check-circle + bold
+                  // titleLarge with the Signature celebration treatment.
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppColors.orange, AppColors.purple],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.orange.withOpacity(0.3),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.check_rounded,
-                          color: Colors.white,
-                          size: 24,
-                        ),
+                      ZealovaSectionKicker(
+                        AppLocalizations.of(context).workoutCompleteWorkoutComplete,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppLocalizations.of(context).workoutCompleteWorkoutComplete,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                      const SizedBox(height: 4),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'DONE.',
+                            style: ZType.disp(
+                              52,
+                              color: ThemeColors.of(context).textPrimary,
                             ),
-                            Text(
-                              widget.workout.name ?? AppLocalizations.of(context).navWorkout,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: textSecondary,
-                              ),
+                          ),
+                          const SizedBox(width: 12),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Icon(
+                              Icons.check_rounded,
+                              color: ThemeColors.of(context).accent,
+                              size: 28,
                             ),
-                          ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        widget.workout.name ?? AppLocalizations.of(context).navWorkout,
+                        style: ZType.ser(
+                          16,
+                          color: textSecondary,
                         ),
                       ),
                     ],
@@ -876,10 +849,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   const SizedBox(height: 16),
 
                   // Rating Section
-                  Text(
-                    AppLocalizations.of(context).workoutCompleteHowWasYourWorkout,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: ZealovaSectionKicker(
+                      AppLocalizations.of(context).workoutCompleteHowWasYourWorkout,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -894,7 +867,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           child: Icon(
                             starIndex <= _rating ? Icons.star : Icons.star_border,
                             size: 36,
-                            color: starIndex <= _rating ? AppColors.orange : AppColors.textMuted,
+                            color: starIndex <= _rating
+                                ? ThemeColors.of(context).accent
+                                : AppColors.textMuted,
                           ),
                         ),
                       );
@@ -903,20 +878,16 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   if (_rating > 0)
                     Text(
                       _getRatingLabel(_rating),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.orange,
-                        fontWeight: FontWeight.w500,
+                      style: ZType.lbl(
+                        12,
+                        color: ThemeColors.of(context).accent,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   const SizedBox(height: 6),
                   Text(
                     AppLocalizations.of(context).workoutCompleteYourRatingsHelpUs,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontStyle: FontStyle.italic,
-                      color: textSecondary,
-                    ),
+                    style: ZType.ser(13, color: textSecondary),
                   ),
 
                   const SizedBox(height: 16),
@@ -949,7 +920,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.purple,
+                          foregroundColor: textSecondary,
                         ),
                       ),
                       TextButton.icon(
@@ -957,14 +928,14 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         icon: Icon(
                           Icons.hot_tub_rounded,
                           size: 16,
-                          color: _saunaMinutes != null ? AppColors.textMuted : null,
+                          color: _saunaMinutes != null ? AppColors.textMuted : textSecondary,
                         ),
                         label: Text(
                           _saunaMinutes != null ? '${_saunaMinutes}min' : AppLocalizations.of(context).workoutCompleteSauna,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFE65100),
+                          foregroundColor: textSecondary,
                         ),
                       ),
                       if (widget.workout.id != null)
@@ -981,7 +952,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             style: TextStyle(fontSize: 13),
                           ),
                           style: TextButton.styleFrom(
-                            foregroundColor: AppColors.orange,
+                            foregroundColor: textSecondary,
                           ),
                         ),
                       TextButton.icon(
@@ -995,7 +966,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.purple,
+                          foregroundColor: textSecondary,
                         ),
                       ),
                       // Overflow menu — holds the less-frequently-used
@@ -1067,21 +1038,22 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE65100).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFE65100).withOpacity(0.3)),
+                          color: ThemeColors.of(context).surface,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: AppColors.cardBorder),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.hot_tub_rounded, size: 16, color: Color(0xFFE65100)),
+                            Icon(Icons.hot_tub_rounded,
+                                size: 16, color: ThemeColors.of(context).textSecondary),
                             const SizedBox(width: 8),
                             Text(
                               '$_saunaMinutes min sauna · ~$_saunaCalories cal',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFFE65100),
-                                fontWeight: FontWeight.w500,
+                              style: ZType.lbl(
+                                11,
+                                color: ThemeColors.of(context).textSecondary,
+                                letterSpacing: 0.8,
                               ),
                             ),
                           ],
@@ -1094,10 +1066,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     const SizedBox(height: 16),
 
                     // Difficulty Section
-                    Text(
-                      AppLocalizations.of(context).workoutCompleteHowWasTheDifficulty,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ZealovaSectionKicker(
+                        AppLocalizations.of(context).workoutCompleteHowWasTheDifficulty,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1132,18 +1104,19 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     const SizedBox(height: 16),
 
                     // Per-exercise feedback
-                    Text(
-                      AppLocalizations.of(context).workoutCompleteRateExercises,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: ZealovaSectionKicker(
+                        AppLocalizations.of(context).workoutCompleteRateExercises,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Container(
                       constraints: const BoxConstraints(maxHeight: 200),
                       decoration: BoxDecoration(
-                        color: elevated,
+                        color: ThemeColors.of(context).surface,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.cardBorder),
                       ),
                       child: _buildCompactExerciseFeedback(),
                     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_typography.dart';
 import 'sheet_theme_colors.dart';
 
 /// A section title widget with icon and optional badge
@@ -84,13 +85,8 @@ class SectionHeader extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: colors.textMuted,
-              letterSpacing: 1.5,
-            ),
+            title.toUpperCase(),
+            style: ZType.lbl(11, color: colors.textMuted, letterSpacing: 2.0),
           ),
           if (subtitle != null) ...[
             const SizedBox(width: 8),
@@ -110,18 +106,15 @@ class SectionHeader extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    actionText!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: colors.cyan,
-                    ),
+                    actionText!.toUpperCase(),
+                    style: ZType.lbl(10,
+                        color: colors.textMuted, letterSpacing: 1.5),
                   ),
                   const SizedBox(width: 4),
                   Icon(
                     Icons.arrow_forward_ios,
-                    size: 12,
-                    color: colors.cyan,
+                    size: 11,
+                    color: colors.textMuted,
                   ),
                 ],
               ),
