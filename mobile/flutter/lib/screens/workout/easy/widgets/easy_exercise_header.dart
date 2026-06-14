@@ -14,6 +14,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/exercise.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../widgets/exercise_image.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
@@ -82,24 +84,22 @@ class EasyExerciseHeader extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 8),
-            // Single-line auto-shrinking title. Starts at 24pt and
-            // scales down to fit the row width — long names like "Cable
-            // Standing Up Straight Crossovers" stay on ONE line instead
-            // of wrapping and stealing ~26px from the focal column
-            // budget below. Tap-to-see-full-name is still available via
-            // the info button on the right of this header.
+            // The exercise-name MASTHEAD (`.rw-mast`): the name set in Anton
+            // display type, uppercase, the signature-v2 header treatment. A
+            // single auto-shrinking line — long names like "Cable Standing
+            // Up Straight Crossovers" scale down to ONE line instead of
+            // wrapping and stealing ~26px from the focal column budget below.
+            // Tap-to-see-full-name is still available via the info button.
             SizedBox(
-              height: 28,
+              height: compact ? 26 : 30,
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.center,
                 child: Text(
-                  exercise.name,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                    height: 1.1,
+                  exercise.name.toUpperCase(),
+                  style: ZType.disp(
+                    compact ? 22 : 24,
+                    color: ThemeColors.of(context).textPrimary,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -119,12 +119,15 @@ class EasyExerciseHeader extends ConsumerWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
+                  // Barlow Condensed uppercase label (`.lbl`) — the v2
+                  // "SET 3 OF 4" subtitle treatment under the masthead.
                   child: Text(
-                    'Set $currentSet of $totalSets',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                    'SET $currentSet OF $totalSets',
+                    style: ZType.lbl(
+                      12,
                       color: muted,
+                      weight: FontWeight.w600,
+                      letterSpacing: 1.2,
                     ),
                   ),
                 ),
