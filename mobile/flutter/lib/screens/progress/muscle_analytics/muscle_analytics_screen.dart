@@ -74,7 +74,6 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final timeRange = ref.watch(muscleAnalyticsTimeRangeProvider);
 
     final l10n = AppLocalizations.of(context)!;
@@ -190,7 +189,6 @@ class _HeatmapTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final heatmapAsync = ref.watch(muscleHeatmapProvider);
 
     // Cache-first: render a layout-matched skeleton on a cold load; once data
@@ -289,7 +287,6 @@ class _FrequencyTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final frequencyAsync = ref.watch(muscleFrequencyProvider);
 
     // Cache-first: skeleton on cold load, content kept during revalidation.
@@ -382,7 +379,6 @@ class _BalanceTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = Theme.of(context);
     final balanceAsync = ref.watch(muscleBalanceProvider);
 
     // Cache-first: skeleton on cold load, content kept during revalidation.
