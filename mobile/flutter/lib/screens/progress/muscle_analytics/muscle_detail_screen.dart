@@ -10,6 +10,9 @@ import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
 import '../../../widgets/pill_app_bar.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Detail screen showing analytics for a specific muscle group
@@ -65,7 +68,6 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final exercisesAsync = ref.watch(muscleExercisesProvider(widget.muscleGroup));
     final historyAsync = ref.watch(muscleHistoryProvider(widget.muscleGroup));
     final frequencyAsync = ref.watch(muscleFrequencyProvider);
@@ -107,12 +109,7 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
               const SizedBox(height: 24),
 
               // Exercises Section
-              Text(
-                AppLocalizations.of(context).authIntroExercises,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              ZealovaSectionKicker(AppLocalizations.of(context).authIntroExercises),
               const SizedBox(height: 12),
               exercisesAsync.when(
                 loading: () => const _LoadingCard(),
@@ -126,33 +123,22 @@ class _MuscleDetailScreenState extends ConsumerState<MuscleDetailScreen> {
 
                   return Column(
                     children: [
-                      // Summary
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _StatItem(
-                                  label: AppLocalizations.of(context).authIntroExercises,
-                                  value: '${exerciseData.totalExercises ?? exerciseData.exercises.length}',
-                                ),
-                              ),
-                              Expanded(
-                                child: _StatItem(
-                                  label: AppLocalizations.of(context).volumeHistoryTotalVolume,
-                                  value: exerciseData.formattedTotalVolume,
-                                ),
-                              ),
-                              Expanded(
-                                child: _StatItem(
-                                  label: AppLocalizations.of(context).muscleDetailTotalSets,
-                                  value: '${exerciseData.totalSets ?? 0}',
-                                ),
-                              ),
-                            ],
+                      // Summary — hairline-divided stat tiles.
+                      _StatRow(
+                        items: [
+                          _StatItemData(
+                            label: AppLocalizations.of(context).authIntroExercises,
+                            value: '${exerciseData.totalExercises ?? exerciseData.exercises.length}',
                           ),
-                        ),
+                          _StatItemData(
+                            label: AppLocalizations.of(context).volumeHistoryTotalVolume,
+                            value: exerciseData.formattedTotalVolume,
+                          ),
+                          _StatItemData(
+                            label: AppLocalizations.of(context).muscleDetailTotalSets,
+                            value: '${exerciseData.totalSets ?? 0}',
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
 
@@ -184,8 +170,6 @@ class _VolumeHistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     if (!history.hasData) {
       return const _EmptyCard(message: 'Not enough data for volume chart.');
     }
@@ -196,12 +180,7 @@ class _VolumeHistorySection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              AppLocalizations.of(context).progressChartsVolumeTrend,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            ZealovaSectionKicker(AppLocalizations.of(context).progressChartsVolumeTrend),
             if (history.summary != null)
               _TrendBadge(
                 trend: history.summary!.volumeTrend ?? 'stable',
@@ -211,34 +190,23 @@ class _VolumeHistorySection extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // Summary stats
+        // Summary stats — hairline-divided tiles.
         if (history.summary != null)
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _StatItem(
-                      label: AppLocalizations.of(context).workoutListTitle,
-                      value: '${history.summary!.totalWorkouts}',
-                    ),
-                  ),
-                  Expanded(
-                    child: _StatItem(
-                      label: AppLocalizations.of(context).volumeHistoryTotalVolume,
-                      value: history.summary!.formattedTotalVolume,
-                    ),
-                  ),
-                  Expanded(
-                    child: _StatItem(
-                      label: AppLocalizations.of(context).muscleDetailMaxWeight,
-                      value: history.summary!.formattedMaxWeight,
-                    ),
-                  ),
-                ],
+          _StatRow(
+            items: [
+              _StatItemData(
+                label: AppLocalizations.of(context).workoutListTitle,
+                value: '${history.summary!.totalWorkouts}',
               ),
-            ),
+              _StatItemData(
+                label: AppLocalizations.of(context).volumeHistoryTotalVolume,
+                value: history.summary!.formattedTotalVolume,
+              ),
+              _StatItemData(
+                label: AppLocalizations.of(context).muscleDetailMaxWeight,
+                value: history.summary!.formattedMaxWeight,
+              ),
+            ],
           ),
 
         const SizedBox(height: 16),
@@ -261,42 +229,40 @@ class _TrendBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     IconData icon;
     Color color;
 
+    // Trend is semantic (success/error/muted), NOT the screen accent.
     switch (trend) {
       case 'increasing':
         icon = Icons.trending_up;
-        color = Colors.green;
+        color = tc.success;
         break;
       case 'decreasing':
         icon = Icons.trending_down;
-        color = Colors.red;
+        color = tc.error;
         break;
       default:
         icon = Icons.trending_flat;
-        color = theme.colorScheme.onSurfaceVariant;
+        color = tc.textMuted;
     }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
+          Icon(icon, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
-            change,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.bold,
-            ),
+            change.toUpperCase(),
+            style: ZType.lbl(10, color: color, letterSpacing: 1.0),
           ),
         ],
       ),
@@ -311,15 +277,14 @@ class _VolumeChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     if (dataPoints.length < 2) {
       return Center(
         child: Text(
           AppLocalizations.of(context).muscleDetailNeedMoreDataFor,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          textAlign: TextAlign.center,
+          style: ZType.ser(14, color: tc.textSecondary),
         ),
       );
     }
@@ -342,9 +307,9 @@ class _VolumeChart extends StatelessWidget {
             barRods: [
               BarChartRodData(
                 toY: spot.y,
-                color: theme.colorScheme.primary,
-                width: 16,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                color: tc.accent,
+                width: 14,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
               ),
             ],
           );
@@ -353,6 +318,8 @@ class _VolumeChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: maxY / 4,
+          getDrawingHorizontalLine: (value) =>
+              FlLine(color: AppColors.hairline, strokeWidth: 1),
         ),
         titlesData: FlTitlesData(
           leftTitles: AxisTitles(
@@ -360,15 +327,12 @@ class _VolumeChart extends StatelessWidget {
               showTitles: true,
               reservedSize: 50,
               getTitlesWidget: (value, meta) {
-                if (value >= 1000) {
-                  return Text(
-                    '${(value / 1000).toStringAsFixed(1)}k',
-                    style: theme.textTheme.bodySmall,
-                  );
-                }
+                final label = value >= 1000
+                    ? '${(value / 1000).toStringAsFixed(1)}K'
+                    : '${value.toInt()}';
                 return Text(
-                  '${value.toInt()}',
-                  style: theme.textTheme.bodySmall,
+                  label,
+                  style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 0.8),
                 );
               },
             ),
@@ -381,8 +345,8 @@ class _VolumeChart extends StatelessWidget {
                 final index = value.toInt();
                 if (index >= 0 && index < dataPoints.length) {
                   return Text(
-                    dataPoints[index].axisLabel,
-                    style: theme.textTheme.bodySmall,
+                    dataPoints[index].axisLabel.toUpperCase(),
+                    style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 0.8),
                   );
                 }
                 return const Text('');
@@ -399,7 +363,7 @@ class _VolumeChart extends StatelessWidget {
               if (groupIndex >= 0 && groupIndex < dataPoints.length) {
                 return BarTooltipItem(
                   dataPoints[groupIndex].label ?? '${rod.toY.toInt()} kg',
-                  theme.textTheme.bodySmall!.copyWith(color: Colors.white),
+                  ZType.data(11, color: tc.accentContrast),
                 );
               }
               return null;
@@ -425,36 +389,40 @@ class _ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
     final contribution = totalVolume > 0
-        ? (exercise.totalVolumeKg ?? 0) / totalVolume
+        ? ((exercise.totalVolumeKg ?? 0) / totalVolume).clamp(0.0, 1.0)
         : 0.0;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
-                      exercise.exerciseName,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      exercise.exerciseName.toUpperCase(),
+                      style: ZType.lbl(13,
+                          color: tc.textPrimary, letterSpacing: 1.2),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  Icon(
-                    Icons.chevron_right,
-                    color: theme.colorScheme.onSurfaceVariant,
+                  Text(
+                    '${(contribution * 100).toStringAsFixed(0)}%',
+                    style: ZType.disp(15, color: tc.textPrimary),
                   ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right, size: 18, color: tc.textMuted),
                 ],
               ),
               const SizedBox(height: 8),
@@ -464,32 +432,26 @@ class _ExerciseCard extends StatelessWidget {
                     label: AppLocalizations.of(context).muscleDetailTimes,
                     value: '${exercise.timesPerformed}',
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 18),
                   _MiniStat(
                     label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
                     value: exercise.formattedVolume,
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 18),
                   _MiniStat(
                     label: AppLocalizations.of(context).strengthOverviewCardMax,
                     value: exercise.formattedMaxWeight,
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(2),
                 child: LinearProgressIndicator(
                   value: contribution,
-                  minHeight: 6,
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${(contribution * 100).toStringAsFixed(0)}% of total volume',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  minHeight: 4,
+                  backgroundColor: AppColors.hairlineStrong,
+                  valueColor: AlwaysStoppedAnimation(tc.accent),
                 ),
               ),
             ],
@@ -508,55 +470,94 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
         ),
+        const SizedBox(height: 1),
         Text(
           value,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: ZType.data(13, color: tc.textPrimary),
         ),
       ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
+/// Immutable spec for one tile in [_StatRow].
+class _StatItemData {
   final String label;
   final String value;
+  const _StatItemData({required this.label, required this.value});
+}
 
-  const _StatItem({required this.label, required this.value});
+/// A row of summary stats laid out as hairline-divided tiles (Anton numeral
+/// over a Barlow uppercase label) — replaces the boxed Material summary `Card`.
+class _StatRow extends StatelessWidget {
+  final List<_StatItemData> items;
+
+  const _StatRow({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: tc.surface,
+        border: Border.all(color: tc.cardBorder),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0) Container(width: 1, color: AppColors.hairline),
+              Expanded(child: _StatItem(data: items[i])),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+class _StatItem extends StatelessWidget {
+  final _StatItemData data;
+
+  const _StatItem({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            data.label.toUpperCase(),
+            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+          const SizedBox(height: 6),
+          Text(
+            data.value,
+            style: ZType.disp(20, color: tc.textPrimary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -589,18 +590,22 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.error_outline, color: theme.colorScheme.error),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
-          ],
-        ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline, size: 20, color: tc.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: ZType.ser(14, color: tc.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -613,18 +618,16 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Text(
-            message,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: Text(
+          message,
+          textAlign: TextAlign.center,
+          style: ZType.ser(14, color: tc.textSecondary),
         ),
       ),
     );
@@ -672,29 +675,29 @@ class _InsightsCardState extends State<_InsightsCard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
     final insights = _insights;
 
     if (insights.isEmpty) return const SizedBox.shrink();
 
-    return Card(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           // Header with collapse toggle
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  Icon(Icons.lightbulb_outline, size: 20, color: theme.colorScheme.primary),
+                  Icon(Icons.lightbulb_outline, size: 18, color: tc.accent),
                   const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context).muscleDetailInsights,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    AppLocalizations.of(context).muscleDetailInsights.toUpperCase(),
+                    style: ZType.lbl(12, color: tc.textPrimary, letterSpacing: 1.4),
                   ),
                   const Spacer(),
                   AnimatedRotation(
@@ -703,7 +706,7 @@ class _InsightsCardState extends State<_InsightsCard> {
                     child: Icon(
                       Icons.keyboard_arrow_down,
                       size: 20,
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: tc.textMuted,
                     ),
                   ),
                 ],
@@ -717,18 +720,25 @@ class _InsightsCardState extends State<_InsightsCard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: insights.map((insight) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 10),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(AppLocalizations.of(context).programLibrary, style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, right: 10),
+                        child: Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            color: tc.accent,
+                            borderRadius: BorderRadius.circular(1),
+                          ),
+                        ),
+                      ),
                       Expanded(
                         child: Text(
                           insight,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                            height: 1.4,
-                          ),
+                          style: ZType.ser(14, color: tc.textPrimary),
                         ),
                       ),
                     ],
@@ -821,34 +831,29 @@ class _MuscleStatusBadge extends ConsumerWidget {
       muscleData: muscleData,
       readiness: readiness,
     );
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
+    // `status.color` is the model's semantic readiness color — kept for the
+    // icon + label, but the surface itself is a hairline-outlined matte tile.
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: status.color.withValues(alpha: 0.1),
+        color: tc.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: status.color.withValues(alpha: 0.3)),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Row(
         children: [
           Icon(status.icon, size: 18, color: status.color),
           const SizedBox(width: 8),
           Text(
-            status.label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: status.color,
-            ),
+            status.label.toUpperCase(),
+            style: ZType.lbl(12, color: status.color, letterSpacing: 1.4),
           ),
           const Spacer(),
           Text(
-            AppLocalizations.of(context)!.muscleDetailScreenSetsWk(muscleData.weeklySets),
-            style: TextStyle(
-              fontSize: 13,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
+            AppLocalizations.of(context)!.muscleDetailScreenSetsWk(muscleData.weeklySets).toUpperCase(),
+            style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.2),
           ),
         ],
       ),

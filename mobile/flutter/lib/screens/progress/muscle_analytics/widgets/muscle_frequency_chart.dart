@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../../data/models/muscle_analytics.dart';
+import '../../../../core/theme/theme_colors.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../widgets/design_system/zealova.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
 /// Horizontal bar chart showing training frequency per muscle group
@@ -14,50 +17,69 @@ class MuscleFrequencyChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final sortedFrequencies = frequency.sortedByFrequency;
 
     if (sortedFrequencies.isEmpty) {
-      return Card(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Center(child: Text(AppLocalizations.of(context).muscleFrequencyChartNoFrequencyDataAvailable)),
+      return ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
+        padding: const EdgeInsets.all(24),
+        child: Center(
+          child: Text(
+            AppLocalizations.of(context)
+                .muscleFrequencyChartNoFrequencyDataAvailable,
+            textAlign: TextAlign.center,
+            style: ZType.ser(14, color: tc.textSecondary),
+          ),
         ),
       );
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Legend — Wrap so it reflows to 2 rows on narrow screens
-            // (iPhone SE ≤ 360 dp) instead of overflowing by 5.7 px.
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 10,
-              runSpacing: 6,
-              children: [
-                _LegendItem(color: Colors.green, label: AppLocalizations.of(context).muscleFrequencyChartOptimal13xWk),
-                _LegendItem(color: Colors.orange, label: AppLocalizations.of(context).muscleFrequencyChartLow1xWk),
-                _LegendItem(color: Colors.red, label: AppLocalizations.of(context).muscleFrequencyChartHigh4xWk),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 8),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Legend — Wrap so it reflows to 2 rows on narrow screens
+          // (iPhone SE ≤ 360 dp) instead of overflowing by 5.7 px. Status
+          // tints are semantic (success/warning/error), NOT the screen accent.
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 6,
+            children: [
+              _LegendItem(color: tc.success, label: AppLocalizations.of(context).muscleFrequencyChartOptimal13xWk),
+              _LegendItem(color: tc.warning, label: AppLocalizations.of(context).muscleFrequencyChartLow1xWk),
+              _LegendItem(color: tc.error, label: AppLocalizations.of(context).muscleFrequencyChartHigh4xWk),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const ZealovaRule(),
+          const SizedBox(height: 4),
 
-            // Bar list
-            ...sortedFrequencies.map((f) => _FrequencyBar(
-              muscleGroup: f.formattedMuscleGroup,
-              frequency: f.timesPerWeek,
-              status: f.frequencyStatus ?? 'optimal',
-              lastTrained: f.formattedLastTrained,
-            )),
-          ],
-        ),
+          // Bar list
+          ...sortedFrequencies.map((f) => _FrequencyBar(
+            muscleGroup: f.formattedMuscleGroup,
+            frequency: f.timesPerWeek,
+            status: f.frequencyStatus ?? 'optimal',
+            lastTrained: f.formattedLastTrained,
+          )),
+        ],
       ),
     );
+  }
+}
+
+/// Maps a frequency status to its semantic theme color (NOT the screen accent).
+Color _statusColor(ThemeColors tc, String status) {
+  switch (status) {
+    case 'undertrained':
+      return tc.warning;
+    case 'overtrained':
+      return tc.error;
+    default:
+      return tc.success;
   }
 }
 
@@ -69,23 +91,23 @@ class _LegendItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 5),
         Text(
-          label,
-          style: theme.textTheme.bodySmall,
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
         ),
       ],
     );
@@ -107,19 +129,8 @@ class _FrequencyBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    Color barColor;
-    switch (status) {
-      case 'undertrained':
-        barColor = Colors.orange;
-        break;
-      case 'overtrained':
-        barColor = Colors.red;
-        break;
-      default:
-        barColor = Colors.green;
-    }
+    final tc = ThemeColors.of(context);
+    final barColor = _statusColor(tc, status);
 
     // Max frequency for bar width calculation (cap at 5)
     final maxFreq = 5.0;
@@ -128,95 +139,69 @@ class _FrequencyBar extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isNarrow = screenWidth < 380;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      ),
       child: Row(
         children: [
-          // Muscle name — shrinks with ellipsis instead of hard-fixed width
-          // so the trailing icon never gets clipped on narrow / text-scaled
-          // layouts.
+          // Muscle name — Barlow uppercase, ellipsis on narrow layouts.
           Flexible(
             flex: 2,
             child: Text(
-              muscleGroup,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: isNarrow ? 12 : 14,
-              ),
+              muscleGroup.toUpperCase(),
+              style: ZType.lbl(isNarrow ? 11 : 12,
+                  color: tc.textPrimary, letterSpacing: 1.2),
               overflow: TextOverflow.ellipsis,
               maxLines: 1,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
 
-          // Bar
+          // Thin 4px hairline track with a semantic fill.
           Expanded(
             flex: 5,
             child: Stack(
               children: [
-                // Background
                 Container(
-                  height: 20,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(4),
+                    color: AppColors.hairlineStrong,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                // Filled bar
                 FractionallySizedBox(
                   widthFactor: barWidth,
                   child: Container(
-                    height: 20,
+                    height: 4,
                     decoration: BoxDecoration(
                       color: barColor,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Center(
-                      child: frequency >= 0.5
-                          ? Text(
-                              '${frequency.toStringAsFixed(1)}x',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                            )
-                          : null,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
               ],
             ),
           ),
+          const SizedBox(width: 10),
+
+          // Frequency as an Anton numeral.
+          Text(
+            '${frequency.toStringAsFixed(1)}×',
+            style: ZType.disp(14, color: tc.textPrimary),
+          ),
           const SizedBox(width: 8),
 
-          // Trailing slot — single 32 dp cell that shows either the
-          // small-frequency label (when bar is too small to label inline)
-          // or the status icon. Never both, which was the source of the
-          // 5.7 px overflow.
-          SizedBox(
-            width: 32,
-            child: frequency < 0.5
-                ? Text(
-                    '${frequency.toStringAsFixed(1)}x',
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: barColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    textAlign: TextAlign.center,
-                  )
-                : Icon(
-                    status == 'optimal'
-                        ? Icons.check_circle
-                        : status == 'undertrained'
-                            ? Icons.arrow_downward
-                            : Icons.arrow_upward,
-                    size: 18,
-                    color: barColor,
-                  ),
+          // Status glyph — outlined, semantic-tinted.
+          Icon(
+            status == 'optimal'
+                ? Icons.check_circle_outline
+                : status == 'undertrained'
+                    ? Icons.arrow_downward
+                    : Icons.arrow_upward,
+            size: 16,
+            color: barColor,
           ),
         ],
       ),
@@ -235,7 +220,7 @@ class MuscleFrequencyBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
     final sortedFrequencies = frequency.sortedByFrequency.take(10).toList();
 
     if (sortedFrequencies.isEmpty) {
@@ -253,17 +238,8 @@ class MuscleFrequencyBarChart extends StatelessWidget {
           maxY: (maxFreq * 1.2).clamp(4, 10),
           barGroups: sortedFrequencies.asMap().entries.map((entry) {
             final f = entry.value;
-            Color color;
-            switch (f.frequencyStatus) {
-              case 'undertrained':
-                color = Colors.orange;
-                break;
-              case 'overtrained':
-                color = Colors.red;
-                break;
-              default:
-                color = Colors.green;
-            }
+            // Status tint is semantic, NOT the screen accent.
+            final color = _statusColor(tc, f.frequencyStatus ?? 'optimal');
 
             return BarChartGroupData(
               x: entry.key,
@@ -286,8 +262,8 @@ class MuscleFrequencyBarChart extends StatelessWidget {
                   final index = value.toInt();
                   if (index >= 0 && index < sortedFrequencies.length) {
                     return Text(
-                      sortedFrequencies[index].formattedMuscleGroup,
-                      style: theme.textTheme.bodySmall,
+                      sortedFrequencies[index].formattedMuscleGroup.toUpperCase(),
+                      style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
                     );
                   }
                   return const Text('');
@@ -299,8 +275,8 @@ class MuscleFrequencyBarChart extends StatelessWidget {
                 showTitles: true,
                 getTitlesWidget: (value, meta) {
                   return Text(
-                    '${value.toInt()}x/wk',
-                    style: theme.textTheme.bodySmall,
+                    '${value.toInt()}×/WK',
+                    style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
                   );
                 },
               ),
@@ -311,6 +287,8 @@ class MuscleFrequencyBarChart extends StatelessWidget {
           gridData: FlGridData(
             show: true,
             drawVerticalLine: false,
+            getDrawingHorizontalLine: (value) =>
+                FlLine(color: AppColors.hairline, strokeWidth: 1),
           ),
           borderData: FlBorderData(show: false),
         ),

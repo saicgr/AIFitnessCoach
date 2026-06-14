@@ -62,169 +62,145 @@ class _BalanceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
     final total = leftValue + rightValue;
     final leftPercent = total > 0 ? leftValue / total : 0.5;
     final rightPercent = total > 0 ? rightValue / total : 0.5;
 
-    final leftColor = theme.colorScheme.primary;
-    final rightColor = theme.colorScheme.secondary;
+    // The split bar is a single accent fill (left) over a hairline track
+    // (right). Balanced/imbalanced is semantic — success/warning, NOT accent.
+    final fillColor = tc.accent;
+    final semColor = isBalanced ? tc.success : tc.warning;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  label,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: ZType.lbl(12, color: tc.textPrimary, letterSpacing: 1.4),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(color: semColor),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (isBalanced ? Colors.green : Colors.orange).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isBalanced
+                          ? Icons.check_circle_outline
+                          : Icons.warning_amber_outlined,
+                      size: 13,
+                      color: semColor,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      (isBalanced
+                              ? AppLocalizations.of(context)
+                                  .quizProgressionConstraintsBalanced
+                              : AppLocalizations.of(context)
+                                  .muscleBalanceChartImbalanced)
+                          .toUpperCase(),
+                      style: ZType.lbl(9, color: semColor, letterSpacing: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Balance bar — Anton % numerals flank a thin split track.
+          Row(
+            children: [
+              SizedBox(
+                width: 44,
+                child: Text(
+                  '${(leftPercent * 100).toInt()}%',
+                  style: ZType.disp(15, color: tc.textPrimary),
+                ),
+              ),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
                   child: Row(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        isBalanced ? Icons.check_circle : Icons.warning,
-                        size: 14,
-                        color: isBalanced ? Colors.green : Colors.orange,
+                      Flexible(
+                        flex: (leftPercent * 100).toInt().clamp(1, 100),
+                        child: Container(
+                          height: 6,
+                          color: fillColor,
+                          child: Center(
+                            child: leftPercent >= 0.3
+                                ? Text(
+                                    leftLabel.toUpperCase(),
+                                    style: ZType.lbl(8,
+                                        color: tc.accentContrast,
+                                        letterSpacing: 1.0),
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isBalanced ? AppLocalizations.of(context).quizProgressionConstraintsBalanced : AppLocalizations.of(context).muscleBalanceChartImbalanced,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: isBalanced ? Colors.green : Colors.orange,
-                          fontWeight: FontWeight.bold,
+                      // Center hairline divider.
+                      Container(width: 1, height: 6, color: AppColors.hairline),
+                      Flexible(
+                        flex: (rightPercent * 100).toInt().clamp(1, 100),
+                        child: Container(
+                          height: 6,
+                          color: AppColors.hairlineStrong,
+                          child: Center(
+                            child: rightPercent >= 0.3
+                                ? Text(
+                                    rightLabel.toUpperCase(),
+                                    style: ZType.lbl(8,
+                                        color: tc.textSecondary,
+                                        letterSpacing: 1.0),
+                                  )
+                                : null,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Balance bar
-            Row(
-              children: [
-                // Left side label
-                SizedBox(
-                  width: 50,
-                  child: Text(
-                    '${(leftPercent * 100).toInt()}%',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: leftColor,
-                    ),
-                  ),
+              ),
+              SizedBox(
+                width: 44,
+                child: Text(
+                  '${(rightPercent * 100).toInt()}%',
+                  textAlign: TextAlign.end,
+                  style: ZType.disp(15, color: tc.textPrimary),
                 ),
+              ),
+            ],
+          ),
 
-                // Bar
-                Expanded(
-                  child: Container(
-                    height: 24,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: theme.colorScheme.outline.withOpacity(0.2),
-                      ),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Row(
-                        children: [
-                          Flexible(
-                            flex: (leftPercent * 100).toInt(),
-                            child: Container(
-                              color: leftColor,
-                              child: Center(
-                                child: leftPercent >= 0.3
-                                    ? Text(
-                                        leftLabel,
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ),
-                          // Center line indicator
-                          Container(
-                            width: 2,
-                            color: isBalanced ? Colors.green : Colors.orange,
-                          ),
-                          Flexible(
-                            flex: (rightPercent * 100).toInt(),
-                            child: Container(
-                              color: rightColor,
-                              child: Center(
-                                child: rightPercent >= 0.3
-                                    ? Text(
-                                        rightLabel,
-                                        style: theme.textTheme.labelSmall?.copyWith(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+          const SizedBox(height: 8),
 
-                // Right side label
-                SizedBox(
-                  width: 50,
-                  child: Text(
-                    '${(rightPercent * 100).toInt()}%',
-                    textAlign: TextAlign.end,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: rightColor,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            // Volume labels
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${_formatVolume(leftValue)} kg',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                Text(
-                  '${_formatVolume(rightValue)} kg',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+          // Volume labels — Barlow telemetry.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${_formatVolume(leftValue)} KG',
+                style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
+              ),
+              Text(
+                '${_formatVolume(rightValue)} KG',
+                style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
