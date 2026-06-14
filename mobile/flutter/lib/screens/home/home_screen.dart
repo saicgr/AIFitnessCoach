@@ -67,6 +67,7 @@ import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/home/unified_home_widgets.dart';
 import 'widgets/home/metric_summary_deck.dart';
+import 'widgets/home/home_metrics_strip.dart';
 import 'widgets/home/home_timeline.dart';
 import 'widgets/home/reports_recap_row.dart';
 import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
@@ -1128,6 +1129,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 // when the user is ineligible, already set up, or has
                 // dismissed it once.
                 const SliverToBoxAdapter(child: CycleSetupHomePrompt()),
+
+                // SIGNATURE V2 — glanceable metrics strip directly under the
+                // masthead: STEPS · SLEEP · READY · SCORE, tappable, so the
+                // day's key numbers are seen without scrolling. The full metric
+                // deck (ring + tiles + trends) stays below the fold.
+                const SliverToBoxAdapter(child: HomeMetricsStrip()),
+                const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
                 // User-customizable sections, rendered in the order and
                 // visibility chosen via "My Space" (homeSectionsProvider).
