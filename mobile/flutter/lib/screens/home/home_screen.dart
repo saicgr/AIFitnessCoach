@@ -1194,12 +1194,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         (v) => v.valueOrNull?.menstrualTrackingEnabled ?? false,
       ),
     );
-    final visible = sections.visibleInOrder
-        .where((s) => s != HomeSection.strainCoach)
-        .where((s) => s != HomeSection.timeline)
-        .where((s) => s != HomeSection.metricTrio)
-        .where((s) => !(s == HomeSection.cycle && !menstrualEnabled))
-        .toList(growable: true);
+    // SIGNATURE V2 — Home is a FIXED coach-first composition, not the old
+    // user-customizable section stack. Order: coach to-do (hero) → workout
+    // carousel → fuel → (below the fold) the metric deck, habits, reports.
+    // The emoji quick-actions grid and the week strip are dropped from Home —
+    // quick-actions live behind the "+" / quick-log sheet in v2.
+    final visible = <HomeSection>[
+      HomeSection.coachHero,
+      HomeSection.workoutCard,
+      HomeSection.nutritionCard,
+      HomeSection.todayScore,
+      HomeSection.habits,
+      HomeSection.weeklyReport,
+      if (menstrualEnabled) HomeSection.cycle,
+    ];
 
     // Coach card sits ABOVE the workout card (user request). We no longer
     // auto-swap their order by training-day intent — the coach frames the day,
