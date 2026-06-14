@@ -1,0 +1,672 @@
+<div class="sx-wo">
+<style>
+/* ============ ACTIVE WORKOUT section — all selectors .sx-wo scoped ============ */
+
+/* shared: ticking elapsed timer (content swap) */
+.sx-wo .wo-tk::after { content:"22:41"; animation: woTick 10s steps(1) infinite; }
+@keyframes woTick { 0%,24%{content:"22:41"} 25%,49%{content:"22:42"} 50%,74%{content:"22:43"} 75%,100%{content:"22:44"} }
+.sx-wo .wo-kcal::after { content:"312"; animation: woKcal 10s steps(1) infinite; }
+@keyframes woKcal { 0%,69%{content:"312"} 70%,100%{content:"318"} }
+.sx-wo .wo-vol::after { content:"8,420"; animation: woVol 10s steps(1) infinite; }
+@keyframes woVol { 0%,63%{content:"8,420"} 64%,100%{content:"8,900"} }
+/* CTA press pulse at ~60% of the 10s loop */
+@keyframes woPress { 0%,57%,66%,100%{transform:none;filter:none} 60%{transform:scale(.965);filter:brightness(1.18)} }
+/* third set marker fills at 62% */
+@keyframes woFill { 0%,61%{opacity:0} 62%,100%{opacity:1} }
+@keyframes woBlink { 0%,55%{opacity:1} 56%,100%{opacity:.25} }
+@keyframes woGlow { 0%,100%{box-shadow:0 8px 30px -6px rgba(124,45,18,.55)} 50%{box-shadow:0 8px 44px -4px rgba(249,115,22,.42)} }
+
+/* ---------- BEFORE (faithful Easy tier) ---------- */
+.sx-wo .wo-bf-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:50px 16px 26px; }
+.sx-wo .wo-bf-top { height:40px; display:flex; align-items:center; justify-content:space-between; }
+.sx-wo .wo-bf-back { width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,.06); border:.5px solid rgba(255,255,255,.10); display:flex; align-items:center; justify-content:center; font-size:15px; color:rgba(255,255,255,.88); }
+.sx-wo .wo-bf-tier { display:flex; align-items:center; gap:0; border:1px solid rgba(255,255,255,.14); border-radius:16px; padding:2px; height:30px; }
+.sx-wo .wo-bf-tier span { padding:0 9px; font-size:11.5px; font-weight:700; color:rgba(255,255,255,.78); line-height:24px; }
+.sx-wo .wo-bf-tier .on { background:var(--d-accent); color:#000; border-radius:13px; padding:0 13px; }
+.sx-wo .wo-bf-icons { display:flex; gap:10px; font-size:16px; color:rgba(255,255,255,.85); }
+.sx-wo .wo-bf-stats { display:flex; border-bottom:.5px solid rgba(255,255,255,.06); padding:8px 0 9px; margin-top:2px; }
+.sx-wo .wo-bf-stats > div { flex:1; text-align:center; }
+.sx-wo .wo-bf-stats b { display:block; font-size:14.5px; font-weight:700; font-variant-numeric:tabular-nums; }
+.sx-wo .wo-bf-stats b i { font-style:normal; color:#2ECC71; font-size:9px; vertical-align:2px; margin-right:3px; }
+.sx-wo .wo-bf-stats span { font-size:10.5px; color:var(--d-mut); }
+.sx-wo .wo-bf-name { text-align:center; font-size:21px; font-weight:600; margin-top:9px; }
+.sx-wo .wo-bf-setrow { display:flex; align-items:center; justify-content:center; gap:8px; margin-top:5px; font-size:13px; font-weight:500; color:rgba(255,255,255,.58); }
+.sx-wo .wo-bf-setrow i { font-style:normal; width:22px; height:22px; border-radius:11px; background:rgba(255,255,255,.10); display:flex; align-items:center; justify-content:center; font-size:13px; }
+.sx-wo .wo-bf-thumb { width:124px; height:124px; margin:10px auto 0; border-radius:20px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); display:flex; align-items:center; justify-content:center; font-size:46px; }
+.sx-wo .wo-bf-chips { display:flex; justify-content:center; gap:12px; margin-top:9px; font-size:11.5px; font-weight:600; color:rgba(255,255,255,.80); white-space:nowrap; }
+.sx-wo .wo-bf-dots { text-align:center; margin-top:9px; font-size:11px; font-weight:600; color:rgba(255,255,255,.78); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.sx-wo .wo-bf-dots .nw { color:#fff; font-weight:700; }
+.sx-wo .wo-bf-dots .up { color:rgba(255,255,255,.32); }
+.sx-wo .wo-bf-dots .dv { color:rgba(255,255,255,.38); margin:0 3px; }
+.sx-wo .wo-bf-chip { margin:7px auto 0; height:27px; padding:0 12px; border-radius:14px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:rgba(255,255,255,.6); width:max-content; }
+.sx-wo .wo-bf-score { margin:5px auto 0; height:27px; padding:0 12px; border-radius:14px; background:rgba(249,115,22,.14); border:1px solid rgba(249,115,22,.35); display:flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; width:max-content; max-width:100%; white-space:nowrap; }
+.sx-wo .wo-bf-score b { color:var(--d-accent); font-weight:800; }
+.sx-wo .wo-bf-lbl { display:flex; justify-content:space-between; align-items:center; font-size:12px; font-weight:600; color:rgba(255,255,255,.62); margin-top:8px; }
+.sx-wo .wo-bf-lbl .unit { font-size:10px; border:1px solid rgba(255,255,255,.16); border-radius:10px; padding:2px 8px; color:rgba(255,255,255,.7); }
+.sx-wo .wo-bf-lbl .unit b { color:var(--d-accent); font-weight:700; }
+.sx-wo .wo-bf-step { display:flex; align-items:center; gap:10px; margin-top:5px; }
+.sx-wo .wo-bf-step .btn { width:54px; height:54px; border-radius:16px; background:var(--d-surface); border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; font-size:26px; color:rgba(255,255,255,.9); }
+.sx-wo .wo-bf-step .num { flex:1; text-align:center; font-size:30px; font-weight:700; font-variant-numeric:tabular-nums; }
+.sx-wo .wo-bf-step .num i { font-style:normal; font-size:15px; font-weight:600; color:var(--d-mut); margin-left:4px; }
+.sx-wo .wo-bf-log { height:58px; margin-top:12px; border-radius:18px; background:var(--d-accent); color:#000; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; animation:woPress 10s ease-out infinite; }
+.sx-wo .wo-bf-bot { display:flex; gap:8px; margin-top:9px; }
+.sx-wo .wo-bf-upnext { flex:1; height:40px; border-radius:20px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.10); display:flex; align-items:center; gap:8px; padding:0 12px 0 5px; font-size:12px; font-weight:600; color:rgba(255,255,255,.58); }
+.sx-wo .wo-bf-upnext .im { width:30px; height:30px; border-radius:15px; background:rgba(255,255,255,.07); display:flex; align-items:center; justify-content:center; font-size:14px; }
+.sx-wo .wo-bf-ask { height:40px; border-radius:20px; padding:0 13px; background:rgba(249,115,22,.08); border:1px solid rgba(249,115,22,.35); display:flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--d-accent); }
+
+/* ---------- A · EDITORIAL ATHLETIC ---------- */
+.sx-wo .wo-a-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:54px 24px 26px; }
+.sx-wo .wo-a-top { display:flex; justify-content:space-between; align-items:baseline; }
+.sx-wo .wo-a-mast { font-size:35px; line-height:1.0; margin-top:14px; }
+.sx-wo .wo-a-meta { display:flex; justify-content:space-between; font-size:12px; color:var(--d-mut); margin-top:10px; }
+.sx-wo .wo-a-poster { font-size:92px; line-height:.92; letter-spacing:1px; }
+.sx-wo .wo-a-poster small { font-size:26px; letter-spacing:2px; color:var(--d-mut); margin-left:6px; }
+.sx-wo .wo-a-adj { display:flex; gap:18px; font-size:12px; color:var(--d-faint); }
+.sx-wo .wo-a-adj span { letter-spacing:2.5px; border-bottom:1px solid var(--d-rule); padding-bottom:2px; }
+.sx-wo .wo-a-sq { display:flex; gap:8px; align-items:center; }
+.sx-wo .wo-a-sq i { width:11px; height:11px; border:1.5px solid #4A4A52; display:block; position:relative; }
+.sx-wo .wo-a-sq i.f { background:#FAFAFA; border-color:#FAFAFA; }
+.sx-wo .wo-a-sq i.cur::after { content:''; position:absolute; inset:1px; background:#FAFAFA; animation:woFill 10s steps(1) infinite; }
+.sx-wo .wo-a-stats { display:flex; gap:14px; font-size:11.5px; letter-spacing:2px; color:var(--d-mut); white-space:nowrap; }
+.sx-wo .wo-a-cta { height:58px; border-radius:4px; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:19px; letter-spacing:3px; text-transform:uppercase; animation:woPress 10s ease-out infinite; }
+
+/* ---------- B · INSTRUMENT PANEL ---------- */
+.sx-wo .wo-b-body { position:absolute; inset:0; display:flex; flex-direction:column; gap:10px; padding:52px 16px 24px; }
+.sx-wo .wo-b-r1 { display:flex; gap:10px; }
+.sx-wo .wo-b-r1 .panel { flex:1; padding:9px 11px 8px; position:relative; }
+.sx-wo .wo-b-l { font-size:9.5px; color:var(--d-faint); letter-spacing:2px; font-family:'Barlow Condensed',sans-serif; font-weight:600; text-transform:uppercase; }
+.sx-wo .wo-b-v { font-family:'Space Mono',monospace; font-size:19px; margin-top:2px; color:var(--d-text); white-space:nowrap; }
+.sx-wo .wo-b-v u { text-decoration:none; font-size:10px; color:var(--d-mut); }
+.sx-wo .wo-b-v.tl { color:var(--d-data); }
+.sx-wo .wo-b-focal { padding:13px 14px 12px; position:relative; }
+.sx-wo .wo-b-fh { display:flex; justify-content:space-between; align-items:baseline; }
+.sx-wo .wo-b-fh b { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:1.5px; text-transform:uppercase; }
+.sx-wo .wo-b-fh span { font-family:'Space Mono',monospace; font-size:11px; color:var(--d-accent); }
+.sx-wo .wo-b-readout { display:flex; align-items:center; gap:10px; margin-top:11px; }
+.sx-wo .wo-b-btn { width:52px; height:46px; border-radius:8px; background:var(--d-surface2); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-family:'Space Mono',monospace; font-size:13px; color:var(--d-mut); }
+.sx-wo .wo-b-num { flex:1; text-align:center; font-family:'Space Mono',monospace; font-size:42px; color:var(--d-data); line-height:1; }
+.sx-wo .wo-b-num u { text-decoration:none; font-size:13px; color:var(--d-mut); margin-left:3px; }
+.sx-wo .wo-b-num.sm { font-size:30px; }
+.sx-wo .wo-b-ann { margin-top:9px; font-family:'Space Mono',monospace; font-size:9.5px; color:var(--d-faint); display:flex; justify-content:space-between; }
+.sx-wo .wo-b-ann b { color:var(--d-data); font-weight:400; }
+.sx-wo .wo-b-tbl { padding:10px 13px 9px; }
+.sx-wo .wo-b-row { display:flex; justify-content:space-between; font-family:'Space Mono',monospace; font-size:11.5px; padding:4px 0; color:var(--d-mut); border-bottom:1px dashed #161B1F; }
+.sx-wo .wo-b-row:last-child { border-bottom:none; }
+.sx-wo .wo-b-row .ok { color:var(--d-data); }
+.sx-wo .wo-b-row.act { color:var(--d-text); }
+.sx-wo .wo-b-row.act .cu { color:var(--d-accent); animation:woBlink 1.1s steps(1) infinite; }
+.sx-wo .wo-b-row.act .dn { color:var(--d-data); position:absolute; right:0; top:4px; padding-left:10px; background:var(--d-surface); opacity:0; animation:woFill 10s steps(1) infinite; }
+.sx-wo .wo-b-cta { height:54px; border-radius:10px; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; gap:9px; font-family:'Space Mono',monospace; font-weight:700; font-size:15px; letter-spacing:1px; animation:woPress 10s ease-out infinite; }
+
+/* ---------- C · SOFT BRUTAL ---------- */
+.sx-wo .wo-c-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:54px 20px 24px; }
+.sx-wo .wo-c-top { display:flex; align-items:center; gap:8px; }
+.sx-wo .wo-c-sq { width:40px; height:40px; border-radius:16px; border:2px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; }
+.sx-wo .wo-c-chip { height:34px; padding:0 13px; border-radius:17px; border:2px solid var(--d-border); display:flex; align-items:center; font-size:13px; font-weight:800; font-variant-numeric:tabular-nums; }
+.sx-wo .wo-c-title { font-size:23px; margin-top:14px; }
+.sx-wo .wo-c-sets { display:flex; gap:7px; margin-top:11px; flex-wrap:nowrap; }
+.sx-wo .wo-c-set { height:32px; padding:0 11px; border-radius:16px; display:flex; align-items:center; gap:4px; font-size:12px; font-weight:800; white-space:nowrap; }
+.sx-wo .wo-c-set.dn { background:#103D26; color:#5BE49B; border:2px solid #1B5A39; }
+.sx-wo .wo-c-set.nw { background:transparent; color:var(--d-accent); border:2px solid var(--d-accent); position:relative; }
+.sx-wo .wo-c-set.nw em { font-style:normal; position:absolute; inset:-2px; border-radius:16px; background:#103D26; color:#5BE49B; border:2px solid #1B5A39; display:flex; align-items:center; justify-content:center; gap:4px; opacity:0; animation:woFill 10s steps(1) infinite; }
+.sx-wo .wo-c-set.up { background:var(--d-surface2); color:var(--d-faint); border:2px solid #232329; }
+.sx-wo .wo-c-card { border-radius:26px; padding:16px 16px 14px; margin-top:13px; }
+.sx-wo .wo-c-lab { font-size:11px; font-weight:800; letter-spacing:2.5px; color:var(--d-mut); text-transform:uppercase; }
+.sx-wo .wo-c-strow { display:flex; align-items:center; gap:10px; margin-top:7px; }
+.sx-wo .wo-c-bbtn { width:76px; height:62px; border-radius:20px; background:var(--d-surface2); border:2px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; }
+.sx-wo .wo-c-bnum { flex:1; text-align:center; font-size:72px; font-weight:800; letter-spacing:-3px; line-height:1; }
+.sx-wo .wo-c-bnum u { text-decoration:none; font-size:19px; letter-spacing:0; font-weight:800; color:var(--d-mut); margin-left:3px; }
+.sx-wo .wo-c-bnum.sm { font-size:48px; }
+.sx-wo .wo-c-cta { height:64px; border-radius:32px; background:var(--d-accent); color:#0C0C0E; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:800; letter-spacing:.5px; margin-top:13px; animation:woPress 10s ease-out infinite; }
+.sx-wo .wo-c-foot { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:12.5px; font-weight:700; color:var(--d-mut); }
+.sx-wo .wo-c-next { height:36px; padding:0 14px; border-radius:18px; border:2px solid var(--d-border); display:flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:var(--d-text); }
+
+/* ---------- D · INK & EMBER ---------- */
+.sx-wo .wo-d-body { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; text-align:center; padding:58px 28px 30px; }
+.sx-wo .wo-d-top { width:100%; display:flex; justify-content:space-between; font-size:12.5px; color:var(--d-mut); }
+.sx-wo .wo-d-top u { text-decoration:none; color:var(--d-faint); font-variant-numeric:tabular-nums; }
+.sx-wo .wo-d-set { font-size:11px; letter-spacing:4px; color:var(--d-faint); text-transform:uppercase; }
+.sx-wo .wo-d-big { font-size:118px; font-weight:200; letter-spacing:-5px; line-height:.95; color:var(--d-text); }
+.sx-wo .wo-d-big u { text-decoration:none; font-size:24px; font-weight:400; letter-spacing:0; color:var(--d-mut); }
+.sx-wo .wo-d-reps { font-size:38px; font-weight:300; color:var(--d-mut); letter-spacing:-1px; margin-top:2px; }
+.sx-wo .wo-d-whisper { font-size:19px; font-style:italic; color:#CBB9A4; line-height:1.45; max-width:250px; }
+.sx-wo .wo-d-arcw { position:relative; }
+.sx-wo .wo-d-arclab { position:absolute; left:0; right:0; bottom:6px; font-size:10px; letter-spacing:3px; color:var(--d-faint); text-transform:uppercase; }
+.sx-wo .wo-d-cta { width:100%; height:60px; border-radius:18px; background:var(--d-surface); border:1px solid var(--d-border); color:var(--d-text); display:flex; align-items:center; justify-content:center; font-size:16.5px; font-weight:600; letter-spacing:.3px; animation:woGlow 4.5s ease-in-out infinite; }
+.sx-wo .wo-d-foot { font-size:12px; color:var(--d-faint); margin-top:13px; }
+
+/* ---------- E · WARM GALLERY ---------- */
+.sx-wo .wo-e-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 26px; }
+.sx-wo .wo-e-top { display:flex; justify-content:space-between; align-items:flex-start; }
+.sx-wo .wo-e-back { width:40px; height:40px; border-radius:20px; background:var(--d-surface); border:1px solid var(--d-border); box-shadow:0 1px 2px rgba(28,26,23,.05); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+.sx-wo .wo-e-title { font-size:31px; font-weight:700; letter-spacing:-1.2px; line-height:1.05; margin-top:7px; }
+.sx-wo .wo-e-bar { height:5px; border-radius:3px; background:var(--d-surface2); margin-top:13px; overflow:hidden; }
+.sx-wo .wo-e-bar i { display:block; height:100%; width:44%; border-radius:3px; background:var(--d-accent); animation:fillBar 1.4s ease-out both; }
+.sx-wo .wo-e-big { font-size:74px; letter-spacing:-3.5px; line-height:1; }
+.sx-wo .wo-e-big u { text-decoration:none; font-size:27px; letter-spacing:-.5px; font-weight:700; color:var(--d-mut); }
+.sx-wo .wo-e-big span { font-size:46px; letter-spacing:-1.5px; color:var(--d-mut); }
+.sx-wo .wo-e-steps { display:flex; gap:8px; margin-top:14px; }
+.sx-wo .wo-e-pillbtn { flex:1; height:48px; border-radius:24px; background:var(--d-surface); border:1px solid var(--d-border); box-shadow:0 1px 2px rgba(28,26,23,.04); display:flex; align-items:center; justify-content:center; font-size:15.5px; font-weight:700; }
+.sx-wo .wo-e-pillbtn small { font-size:10px; font-weight:600; letter-spacing:1.5px; color:var(--d-faint); margin-left:5px; }
+.sx-wo .wo-e-cta { height:58px; border-radius:29px; background:var(--d-accent); color:#FFF7F0; display:flex; align-items:center; justify-content:center; font-size:16.5px; font-weight:700; letter-spacing:.2px; margin-top:10px; box-shadow:0 10px 24px -8px rgba(194,65,12,.5); animation:woPress 10s ease-out infinite; }
+.sx-wo .wo-e-hist { margin-top:14px; }
+.sx-wo .wo-e-hrow { display:flex; justify-content:space-between; align-items:center; padding:7px 2px; border-bottom:1px solid var(--d-border); font-size:13px; color:var(--d-text); font-variant-numeric:tabular-nums; }
+.sx-wo .wo-e-hrow:last-child { border-bottom:none; }
+.sx-wo .wo-e-hrow span { color:var(--d-mut); }
+.sx-wo .wo-e-hrow .ck { color:#2E7D4F; font-weight:700; }
+.sx-wo .wo-e-hrow .nw { color:var(--d-accent); font-weight:700; position:relative; }
+.sx-wo .wo-e-hrow .nw em { font-style:normal; position:absolute; right:0; top:0; background:var(--d-bg); color:#2E7D4F; font-weight:700; opacity:0; animation:woFill 10s steps(1) infinite; }
+.sx-wo .wo-e-foot { display:flex; justify-content:space-between; font-size:10.5px; font-weight:600; letter-spacing:1.8px; color:var(--d-faint); text-transform:uppercase; margin-top:12px; }
+/* CSS dumbbell (no images) */
+.sx-wo .wo-e-db { position:absolute; top:54px; right:22px; transform:rotate(-24deg); display:flex; align-items:center; animation:foodFloat 4.5s ease-in-out infinite; }
+.sx-wo .wo-e-db i { display:block; background:#1C1A17; border-radius:3px; }
+.sx-wo .wo-e-db .p1 { width:8px; height:26px; }
+.sx-wo .wo-e-db .p2 { width:8px; height:34px; margin:0 1.5px; }
+.sx-wo .wo-e-db .hb { width:30px; height:7px; border-radius:4px; background:linear-gradient(180deg,#3A362F,#1C1A17); }
+
+/* ---------- F · VOLT STADIUM ---------- */
+.sx-wo .wo-f-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:52px 22px 26px; }
+.sx-wo .wo-f-top { display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--d-mut); }
+.sx-wo .wo-f-name { font-size:30px; line-height:1.02; margin-top:12px; }
+.sx-wo .wo-f-sub { display:flex; justify-content:space-between; margin-top:9px; font-size:11px; color:var(--d-mut); }
+.sx-wo .wo-f-board { margin-top:12px; border-radius:var(--d-radius); background:var(--d-surface); border:1px solid var(--d-border); padding:15px 16px 13px; text-align:center; position:relative; overflow:hidden; }
+.sx-wo .wo-f-board::before { content:''; position:absolute; inset:0; pointer-events:none; background:repeating-linear-gradient(0deg, transparent 0 5px, rgba(255,255,255,.018) 5px 6px); }
+/* volt element 1 of 2: the live number */
+.sx-wo .wo-f-big { font-size:92px; line-height:.9; color:var(--d-accent); animation:woXVoltGlow 3.2s ease-in-out infinite; }
+.sx-wo .wo-f-big small { font-size:22px; letter-spacing:2px; color:var(--d-mut); margin-left:6px; text-shadow:none; }
+.sx-wo .wo-f-reps { font-size:40px; line-height:1; color:var(--d-text); margin-top:3px; letter-spacing:1px; }
+.sx-wo .wo-f-adj { display:flex; gap:8px; margin-top:12px; }
+.sx-wo .wo-f-adj div { flex:1; height:42px; border-radius:8px; border:1px solid var(--d-border); background:var(--d-surface2); display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14.5px; letter-spacing:1.5px; color:var(--d-mut); text-transform:uppercase; }
+.sx-wo .wo-f-navy { margin-top:10px; border-radius:10px; background:var(--d-navy); padding:9px 13px; display:flex; justify-content:space-between; align-items:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; font-size:11.5px; color:#C7D4F4; }
+.sx-wo .wo-f-navy b { color:#FFFFFF; font-size:13.5px; letter-spacing:1px; }
+.sx-wo .wo-f-rail { display:flex; gap:7px; margin-top:11px; }
+.sx-wo .wo-f-rs { flex:1; height:30px; border-radius:7px; border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; gap:4px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:1.2px; color:var(--d-faint); position:relative; white-space:nowrap; }
+.sx-wo .wo-f-rs.dn { color:var(--d-mut); background:var(--d-surface); }
+.sx-wo .wo-f-rs.nw { border-color:rgba(245,246,248,.55); color:var(--d-text); }
+.sx-wo .wo-f-rs.nw i { font-style:normal; font-size:8px; animation:woBlink 1.1s steps(1) infinite; }
+.sx-wo .wo-f-rs.nw em { font-style:normal; position:absolute; inset:-1px; border-radius:7px; background:var(--d-surface); border:1px solid var(--d-border); color:var(--d-mut); display:flex; align-items:center; justify-content:center; gap:4px; opacity:0; animation:woFill 10s steps(1) infinite; }
+.sx-wo .wo-f-stats { display:flex; justify-content:space-between; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:2px; text-transform:uppercase; font-size:11.5px; color:var(--d-faint); }
+.sx-wo .wo-f-stats b { color:var(--d-text); font-weight:700; }
+/* volt element 2 of 2: the LOG SET chip (.voltchip from base.css) */
+.sx-wo .wo-f-cta { height:58px; margin-top:9px; display:flex; align-items:center; justify-content:center; font-family:Anton,sans-serif; font-size:19px; letter-spacing:2.5px; text-transform:uppercase; animation:woPress 10s ease-out infinite; }
+@keyframes woXVoltGlow { 0%,100%{text-shadow:0 0 16px rgba(216,255,58,.28)} 50%{text-shadow:0 0 34px rgba(216,255,58,.55)} }
+
+/* ---------- G · DEPTH FIELD ---------- */
+.sx-wo .wo-g-orb1 { width:230px; height:230px; left:-70px; top:80px; background:radial-gradient(circle,#F97316,transparent 70%); opacity:.32; animation:orbDrift 12s ease-in-out infinite; }
+.sx-wo .wo-g-orb2 { width:200px; height:200px; right:-60px; top:340px; background:radial-gradient(circle,#3B82F6,transparent 70%); opacity:.26; animation:orbDrift 15s ease-in-out infinite reverse; }
+.sx-wo .wo-g-orb3 { width:150px; height:150px; left:100px; bottom:40px; background:radial-gradient(circle,#5EEAD4,transparent 70%); opacity:.18; animation:orbDrift 18s ease-in-out infinite; }
+.sx-wo .wo-g-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:52px 20px 26px; z-index:1; }
+.sx-wo .wo-g-top { display:flex; justify-content:space-between; align-items:center; }
+.sx-wo .wo-g-chip { height:34px; padding:0 13px; border-radius:17px; display:flex; align-items:center; gap:6px; font-size:12px; font-weight:600; color:var(--d-mut); }
+/* focal: NEAR-SOLID backing on purpose — no backdrop blur behind the weight/reps numerals */
+.sx-wo .wo-g-focal { margin-top:16px; border-radius:var(--d-radius); border:1px solid rgba(255,255,255,.17); background:rgba(15,17,23,.94); box-shadow:0 36px 64px -18px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.22); padding:17px 18px 16px; position:relative; }
+.sx-wo .wo-g-db { position:absolute; top:-30px; right:12px; font-size:46px; animation:foodFloat 4.5s ease-in-out infinite; }
+.sx-wo .wo-g-ex { font-size:10.5px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--d-accent); }
+.sx-wo .wo-g-name { font-size:23px; font-weight:800; letter-spacing:-.5px; margin-top:3px; }
+.sx-wo .wo-g-big { font-size:66px; font-weight:700; letter-spacing:-3px; line-height:1; margin-top:11px; }
+.sx-wo .wo-g-big u { text-decoration:none; font-size:23px; letter-spacing:-.5px; color:var(--d-mut); }
+.sx-wo .wo-g-big span { font-size:42px; letter-spacing:-1.5px; color:var(--d-mut); }
+.sx-wo .wo-g-last { font-size:11.5px; color:var(--d-mut); margin-top:5px; }
+.sx-wo .wo-g-pills { display:flex; gap:8px; margin-top:12px; }
+.sx-wo .wo-g-pill { flex:1; height:44px; border-radius:22px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.13); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; }
+.sx-wo .wo-g-pill small { font-size:9.5px; font-weight:600; letter-spacing:1.5px; color:var(--d-faint); margin-left:4px; }
+.sx-wo .wo-g-cta { height:54px; margin-top:11px; border-radius:27px; background:linear-gradient(180deg,#FB8C3C,#F97316); color:#1A0D02; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:800; box-shadow:0 18px 36px -10px rgba(249,115,22,.55); animation:woPress 10s ease-out infinite; }
+.sx-wo .wo-g-mid { display:flex; gap:12px; margin-top:16px; align-items:stretch; }
+.sx-wo .wo-g-hist { flex:1; padding:11px 14px 9px; box-shadow:0 14px 28px -16px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.1); }
+.sx-wo .wo-g-hl { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); margin-bottom:3px; }
+.sx-wo .wo-g-hrow { display:flex; justify-content:space-between; font-size:12.5px; color:var(--d-mut); padding:4px 0; font-variant-numeric:tabular-nums; }
+.sx-wo .wo-g-hrow .ok { color:#5EEAD4; font-weight:700; }
+.sx-wo .wo-g-hrow.nw { color:var(--d-text); position:relative; }
+.sx-wo .wo-g-hrow.nw .cu { color:var(--d-accent); animation:woBlink 1.1s steps(1) infinite; }
+.sx-wo .wo-g-hrow.nw .dn { position:absolute; right:0; top:4px; padding-left:8px; color:#5EEAD4; font-weight:700; background:rgba(13,15,20,.92); border-radius:4px; opacity:0; animation:woFill 10s steps(1) infinite; }
+.sx-wo .wo-g-ring { width:106px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:10px 6px; box-shadow:0 14px 28px -16px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.1); animation:glassFloat 5.5s ease-in-out infinite; }
+.sx-wo .wo-g-ringw { position:relative; width:64px; height:64px; }
+.sx-wo .wo-g-ringw b { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800; }
+.sx-wo .wo-g-rl { font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-faint); margin-top:6px; font-weight:700; white-space:nowrap; }
+.sx-wo .wo-g-foot { display:flex; justify-content:space-between; font-size:10.5px; color:var(--d-faint); font-weight:600; letter-spacing:1.5px; text-transform:uppercase; }
+
+/* ---------- H · KINETIC COLLAGE ---------- */
+.sx-wo .wo-h-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:54px 20px 26px; }
+.sx-wo .wo-h-top { display:flex; justify-content:space-between; align-items:center; font-size:11.5px; font-weight:800; color:var(--d-mut); }
+.sx-wo .wo-h-stamp { background:var(--d-surface2); border:1.5px solid var(--d-border); padding:4px 9px; font-size:11px; color:var(--d-text); }
+.sx-wo .wo-h-title { display:inline-block; width:max-content; max-width:100%; transform:rotate(-2.5deg); padding:7px 16px 9px; font-size:27px; letter-spacing:1px; margin-top:16px; }
+/* the 60×8 circled in orange marker: uneven hand-drawn blob */
+.sx-wo .wo-h-circle { position:relative; width:max-content; margin:16px auto 0; padding:8px 24px 10px; }
+.sx-wo .wo-h-circle::before { content:''; position:absolute; inset:-4px -12px; border:4px solid rgba(249,115,22,.85); border-radius:48% 52% 55% 45% / 58% 44% 60% 42%; transform:rotate(-2deg); }
+.sx-wo .wo-h-bignum { font-size:72px; line-height:.95; letter-spacing:1px; }
+.sx-wo .wo-h-bignum span { font-size:42px; color:#3E3A33; }
+.sx-wo .wo-h-bignum small { font-size:20px; letter-spacing:2px; color:var(--d-mut); }
+.sx-wo .wo-h-beat { text-align:center; font-size:11px; color:var(--d-mut); margin-top:10px; }
+.sx-wo .wo-h-adj { display:flex; gap:9px; justify-content:center; margin-top:13px; }
+.sx-wo .wo-h-adj .st { padding:8px 14px; font-size:14px; font-weight:800; }
+.sx-wo .wo-h-rows { display:flex; flex-direction:column; gap:9px; margin-top:15px; }
+.sx-wo .wo-h-srow { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:7px 12px; font-size:13px; font-weight:800; position:relative; }
+.sx-wo .wo-h-srow.brk { transform:rotate(1.8deg) translateX(8px); } /* the one grid break */
+.sx-wo .wo-h-srow.dim { opacity:.45; box-shadow:2px 2px 0 var(--d-border); }
+.sx-wo .wo-h-ck { font-size:19px; font-weight:900; color:#141210; transform:rotate(-8deg); display:inline-block; line-height:1; text-shadow:1px 1px 0 rgba(20,18,16,.18); }
+.sx-wo .wo-h-ck.pop { color:var(--d-accent); opacity:0; animation:woXScrawl 10s ease-out infinite; }
+.sx-wo .wo-h-now { font-family:'Space Mono',monospace; font-size:10px; background:#141210; color:#EFEAE0; padding:2px 7px; letter-spacing:1px; margin-left:auto; }
+.sx-wo .wo-h-next { position:relative; width:max-content; margin:13px auto 0; padding:8px 18px; font-size:12.5px; font-weight:800; transform:rotate(-1.5deg); }
+.sx-wo .wo-h-next .tp { position:absolute; top:-10px; left:50%; width:76px; height:18px; transform:translateX(-50%) rotate(-4deg); }
+.sx-wo .wo-h-foot { display:flex; justify-content:space-between; font-size:10.5px; color:var(--d-mut); }
+.sx-wo .wo-h-cta { margin-top:11px; height:58px; background:#141210; color:#EFEAE0; border:2px solid #141210; border-radius:8px; box-shadow:5px 5px 0 rgba(20,18,16,.28); display:flex; align-items:center; justify-content:center; font-family:Anton,sans-serif; font-size:19px; letter-spacing:2.5px; text-transform:uppercase; animation:woPress 10s ease-out infinite; }
+@keyframes woXScrawl { 0%,61%{opacity:0;transform:rotate(-30deg) scale(.3)} 64%{opacity:1;transform:rotate(-8deg) scale(1.25)} 67%,100%{opacity:1;transform:rotate(-8deg) scale(1)} }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Probe 2 of 5</div>
+  <div class="sec-title">ACTIVE WORKOUT</div>
+  <div class="sec-desc">The screen users stare at for 50 minutes in the gym — between sets, mid-rep, sweaty thumbs. The only KPI: read 60 lb × 8 from three feet away and log it with one confident hit.</div>
+</section>
+<div class="row">
+
+  <!-- ============ BEFORE ============ -->
+  <div class="cell" id="before-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-bf-body">
+        <div class="wo-bf-top">
+          <div class="wo-bf-back">‹</div>
+          <div class="wo-bf-tier"><span class="on">Easy</span><span>S</span><span>A</span></div>
+          <div class="wo-bf-icons"><span>♡</span><span>⧉</span><span>⋮</span></div>
+        </div>
+        <div class="wo-bf-stats">
+          <div><b><i>●</i><span class="wo-tk"></span></b><span>Duration</span></div>
+          <div><b><span class="wo-kcal"></span> kcal</b><span>Calories</span></div>
+          <div><b><span class="wo-vol"></span> lb</b><span>Volume</span></div>
+        </div>
+        <div class="wo-bf-name">Incline Dumbbell Press</div>
+        <div class="wo-bf-setrow"><i>−</i> Set 3 of 4 <i>+</i></div>
+        <div class="wo-bf-thumb">🏋️</div>
+        <div class="wo-bf-chips"><span>▶ Video</span><span>📖 Instructions</span><span>📋 Plan</span><span>📝 Note</span><span>⋯ More</span></div>
+        <div class="wo-bf-dots">Set 1 ✓ 55×10<span class="dv">·</span>Set 2 ✓ 60×8<span class="dv">·</span><span class="nw">Set 3 now</span><span class="dv">·</span><span class="up">Set 4</span></div>
+        <div class="wo-bf-chip">🕐 Last time: 55 lb × 8 · 5 days ago</div>
+        <div class="wo-bf-score">⚡ Hit <b>80 lb × 8</b> to level up Chest · 10 pts</div>
+        <div class="wo-bf-lbl">Weight <span class="unit">kg | <b>lb</b></span></div>
+        <div class="wo-bf-step"><div class="btn">−</div><div class="num">60 <i>lb</i></div><div class="btn">+</div></div>
+        <div class="wo-bf-lbl">Reps</div>
+        <div class="wo-bf-step"><div class="btn">−</div><div class="num">8 <i>reps</i></div><div class="btn">+</div></div>
+        <div class="wo-bf-log">✓ Log set</div>
+        <div class="wo-bf-bot">
+          <div class="wo-bf-upnext"><div class="im">🏋️</div>Up next: Cable Fly <span style="margin-left:auto;">⏭</span></div>
+          <div class="wo-bf-ask">✨ Ask coach</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current Easy tier — faithful</div>
+      <div class="cap-why">What ships today: ~22 interactive elements share one column — tier pill, 5 link chips, 3 stat columns, score pill, two steppers, two bottom pills — and the number that actually matters (60 lb) is 30 pt, visually equal to everything around it.</div>
+      <div class="cap-risk"><b>Risk:</b> kept honest — the 124 pt thumbnail and the chip rows eat half the screen users stare at for 50 minutes; nothing here is glanceable from a bench.</div>
+    </div>
+  </div>
+
+  <!-- ============ A · EDITORIAL ATHLETIC ============ -->
+  <div class="cell" id="a-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dA grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-a-body">
+        <div class="wo-a-top lp" style="animation-name:s0;">
+          <span class="lbl" style="font-size:13px;color:var(--d-mut);">← Exit</span>
+          <span class="lbl" style="font-size:13px;color:var(--d-mut);">Elapsed <b class="wo-tk" style="color:var(--d-text);font-weight:700;"></b></span>
+        </div>
+        <div class="rule" style="margin-top:12px;"></div>
+        <div class="lbl lp" style="animation-name:s1;font-size:12px;color:var(--d-accent);margin-top:14px;">Exercise 4 of 8</div>
+        <div class="disp wo-a-mast lp" style="animation-name:s1;">Incline<br>Dumbbell Press</div>
+        <div class="wo-a-meta lbl lp" style="animation-name:s2;">
+          <span>Set 3 of 4</span><span>Last time 55 × 8</span>
+        </div>
+        <div class="rule" style="margin-top:12px;"></div>
+        <div style="flex:1;"></div>
+        <div class="lp" style="animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+            <div class="disp wo-a-poster">60<small>LB</small></div>
+            <div class="wo-a-adj lbl"><span>−5</span><span>+5</span></div>
+          </div>
+          <div class="rule" style="margin:14px 0;background:#1C1C20;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+            <div class="disp wo-a-poster">×8<small>REPS</small></div>
+            <div class="wo-a-adj lbl"><span>−1</span><span>+1</span></div>
+          </div>
+        </div>
+        <div style="flex:1.2;"></div>
+        <div class="lp" style="animation-name:s4;display:flex;justify-content:space-between;align-items:center;">
+          <div class="wo-a-sq"><i class="f"></i><i class="f"></i><i class="cur"></i><i></i></div>
+          <div class="wo-a-stats lbl"><span><b class="wo-kcal" style="color:var(--d-text);"></b> KCAL</span><span><b class="wo-vol" style="color:var(--d-text);"></b> LB</span></div>
+        </div>
+        <div class="lbl lp" style="animation-name:s5;font-size:11px;color:var(--d-faint);margin-top:12px;">Up next — Cable Fly</div>
+        <div class="wo-a-cta lp" style="margin-top:10px;">Log set — 60 × 8</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">A</span>Editorial Athletic — the lift as a poster</div>
+      <div class="cap-why">Fixes the flat hierarchy: 60 LB × 8 is a 92 pt Anton headline readable from the squat rack, hairlines replace the card soup, and orange exists in exactly one place — the thing you tap. Zero gradients, zero boxes.</div>
+      <div class="cap-risk"><b>Risk:</b> letterspaced −5/+5 text steppers are elegant but small for gloved, shaking hands — they need 48 pt invisible hit slop or a swipe-on-number gesture to be honest gym UI.</div>
+    </div>
+  </div>
+
+  <!-- ============ B · INSTRUMENT PANEL ============ -->
+  <div class="cell" id="b-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dB grain scan" style="position:relative;">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-b-body">
+        <div class="wo-b-r1 lp" style="animation-name:s0;">
+          <div class="panel"><div class="wo-b-l">Elapsed</div><div class="wo-b-v"><span class="wo-tk"></span></div></div>
+          <div class="panel"><div class="wo-b-l">Exercise</div><div class="wo-b-v">04<u>/08</u></div></div>
+          <div class="panel"><div class="wo-b-l">Kcal</div><div class="wo-b-v tl"><span class="wo-kcal"></span></div></div>
+        </div>
+        <div class="panel wo-b-focal lp" style="animation-name:s1;">
+          <div class="wo-b-fh"><b>Incline Dumbbell Press</b><span>SET 03/04</span></div>
+          <div class="wo-b-readout">
+            <div class="wo-b-btn">−5</div>
+            <div class="wo-b-num">60.0<u>LB</u></div>
+            <div class="wo-b-btn">+5</div>
+          </div>
+          <div class="wo-b-readout" style="margin-top:8px;">
+            <div class="wo-b-btn" style="height:40px;">−1</div>
+            <div class="wo-b-num sm">8<u>REPS</u></div>
+            <div class="wo-b-btn" style="height:40px;">+1</div>
+          </div>
+          <div class="wo-b-ann"><span>LAST 55×8 · <b>Δ +5 LB</b></span><span>TARGET 60×8</span></div>
+        </div>
+        <div class="panel wo-b-tbl lp" style="animation-name:s2;position:relative;">
+          <div class="wo-b-l" style="margin-bottom:4px;">Set log</div>
+          <div class="wo-b-row"><span>S1 &nbsp;55 × 10</span><span class="ok">✓ LOGGED</span></div>
+          <div class="wo-b-row"><span>S2 &nbsp;60 × 8</span><span class="ok">✓ LOGGED</span></div>
+          <div class="wo-b-row act" style="position:relative;"><span>S3 &nbsp;60 × —</span><span class="cu">◉ ACTIVE</span><span class="dn">✓ LOGGED</span></div>
+          <div class="wo-b-row"><span>S4 &nbsp;— × —</span><span>STANDBY</span></div>
+        </div>
+        <div class="wo-b-r1 lp" style="animation-name:s3;">
+          <div class="panel"><div class="wo-b-l">Volume</div><div class="wo-b-v tl" style="font-size:16px;"><span class="wo-vol"></span><u>LB</u></div></div>
+          <div class="panel"><div class="wo-b-l">Next ▸</div><div class="wo-b-v" style="font-size:13px;padding-top:4px;">CABLE FLY</div></div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wo-b-ann lp" style="animation-name:s4;padding:0 2px;"><span>REST 90S AUTO-STARTS ON LOG</span><span>UNIT: LB</span></div>
+        <div class="wo-b-cta lp" style="animation-name:s4;margin-top:8px;">▶ LOG SET 60×8</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B</span>Instrument Panel — a lifting cockpit</div>
+      <div class="cap-why">Fixes "where am I, what did I do": the per-set table replaces memory, every number is live and annotated (Δ +5 lb vs last time), and kcal/volume tick up the moment a set logs. Teal = data, orange = the one active thing.</div>
+      <div class="cap-risk"><b>Risk:</b> this density on the EASY tier contradicts the tier's whole premise — it's the strongest candidate for Advanced, and would need a stripped Easy variant or it intimidates beginners.</div>
+    </div>
+  </div>
+
+  <!-- ============ C · SOFT BRUTAL ============ -->
+  <div class="cell" id="c-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dC grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-c-body">
+        <div class="wo-c-top lp" style="animation-name:s0;">
+          <div class="wo-c-sq">‹</div>
+          <div style="flex:1;"></div>
+          <div class="wo-c-chip"><span class="wo-tk"></span></div>
+          <div class="wo-c-chip">4/8</div>
+        </div>
+        <div class="hed wo-c-title lp" style="animation-name:s1;">Incline Dumbbell Press</div>
+        <div class="wo-c-sets lp" style="animation-name:s2;">
+          <div class="wo-c-set dn">✓ 55×10</div>
+          <div class="wo-c-set dn">✓ 60×8</div>
+          <div class="wo-c-set nw">NOW<em>✓ 60×8</em></div>
+          <div class="wo-c-set up">SET 4</div>
+        </div>
+        <div class="card wo-c-card lp" style="animation-name:s3;">
+          <div class="wo-c-lab">Weight</div>
+          <div class="wo-c-strow">
+            <div class="wo-c-bbtn">−5</div>
+            <div class="hed wo-c-bnum">60<u>LB</u></div>
+            <div class="wo-c-bbtn">+5</div>
+          </div>
+          <div class="wo-c-lab" style="margin-top:13px;">Reps</div>
+          <div class="wo-c-strow">
+            <div class="wo-c-bbtn" style="height:54px;">−1</div>
+            <div class="hed wo-c-bnum sm">8</div>
+            <div class="wo-c-bbtn" style="height:54px;">+1</div>
+          </div>
+        </div>
+        <div class="wo-c-cta lp" style="animation-name:s4;">LOG SET ✓</div>
+        <div style="flex:1;"></div>
+        <div class="wo-c-foot lp" style="animation-name:s5;">
+          <span><b class="wo-kcal" style="color:var(--d-text);"></b> kcal · <b class="wo-vol" style="color:var(--d-text);"></b> lb</span>
+          <div class="wo-c-next">NEXT: CABLE FLY ▸</div>
+        </div>
+        <div class="wo-c-foot lp" style="animation-name:s6;justify-content:center;color:var(--d-faint);font-size:11.5px;">Last time: 55 lb × 8 — beat it</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">C</span>Soft Brutal — gym-chalk confidence</div>
+      <div class="cap-why">Fixes the fiddly-controls problem: 76 pt stepper slabs you can hit with a gloved thumb mid-set, fat green chips that say "done" without reading, and one 64 pt orange pill as the only loud thing. Everything is flat, bordered, unmistakable.</div>
+      <div class="cap-risk"><b>Risk:</b> chunk costs density — long exercise names ("Cable Standing Up Straight Crossovers") and 5+ set schemes start fighting the big radii; needs an auto-shrink rule for the chip rail.</div>
+    </div>
+  </div>
+
+  <!-- ============ D · INK & EMBER ============ -->
+  <div class="cell" id="d-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dD grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-d-body">
+        <div class="wo-d-top lp" style="animation-name:s0;">
+          <span>Incline Dumbbell Press</span><u class="wo-tk"></u>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wo-d-set lp" style="animation-name:s1;">Set 3 of 4</div>
+        <div class="wo-d-big lp" style="animation-name:s2;margin-top:10px;">60<u>lb</u></div>
+        <div class="wo-d-reps lp" style="animation-name:s2;">× 8</div>
+        <div style="flex:.8;"></div>
+        <div class="ser wo-d-whisper lp" style="animation-name:s3;">Last time you did 55. Push.</div>
+        <div style="flex:.8;"></div>
+        <div class="wo-d-arcw lp" style="animation-name:s4;">
+          <svg width="232" height="122" viewBox="0 0 260 140">
+            <defs><linearGradient id="woEmberGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#7C2D12"/><stop offset="1" stop-color="#F97316"/>
+            </linearGradient></defs>
+            <path d="M20 130 A110 110 0 0 1 240 130" fill="none" stroke="#29241F" stroke-width="7" stroke-linecap="round"/>
+            <path d="M20 130 A110 110 0 0 1 240 130" fill="none" stroke="url(#woEmberGrad)" stroke-width="7" stroke-linecap="round"
+                  stroke-dasharray="346" stroke-dashoffset="173" style="--dash:346;animation:ringDraw 1.8s ease-out both;animation-delay:3.6s;"/>
+          </svg>
+          <div class="wo-d-arclab">2 of 4 sets done</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wo-d-cta lp" style="animation-name:s5;">Log set — 60 × 8</div>
+        <div class="wo-d-foot lp" style="animation-name:s6;">Cable Fly is next · rest 90s starts on log</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">D</span>Ink &amp; Ember — focus chamber</div>
+      <div class="cap-why">Fixes cognitive load at the root: five zones total. A matte 118 pt number, one serif coaching whisper that earns its place ("Last time you did 55. Push."), and ember reserved for the single piece of data-viz — the set arc. Calm, expensive, zero clutter.</div>
+      <div class="cap-risk"><b>Risk:</b> radical recession hides kcal/volume/up-next behind taps — data-hungry lifters will feel underfed, and the steppers are gone entirely (swipe-to-adjust must actually work or this fails).</div>
+    </div>
+  </div>
+
+  <!-- ============ E · WARM GALLERY ============ -->
+  <div class="cell" id="e-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dE grain">
+      <div class="notch"></div><div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-e-db food3d lp" style="animation-name:s0,foodFloat;animation-duration:10s,4.5s;animation-iteration-count:infinite,infinite;">
+        <i class="p1"></i><i class="p2"></i><span class="hb"></span><i class="p2"></i><i class="p1"></i>
+      </div>
+      <div class="wo-e-body">
+        <div class="wo-e-top lp" style="animation-name:s0;">
+          <div class="wo-e-back">‹</div>
+          <div class="micro" style="padding-top:13px;"><span class="wo-tk"></span> elapsed</div>
+        </div>
+        <div class="micro lp" style="animation-name:s1;margin-top:14px;">Exercise 4 of 8</div>
+        <div class="wo-e-title lp" style="animation-name:s1;">Incline Dumbbell Press</div>
+        <div class="wo-e-bar lp" style="animation-name:s2;"><i></i></div>
+        <div style="flex:1;"></div>
+        <div class="big wo-e-big lp" style="animation-name:s3;">60 <u>lb</u> <span>× 8</span></div>
+        <div class="micro lp" style="animation-name:s3;margin-top:7px;">Last time 55 lb × 8 · 5 days ago</div>
+        <div class="wo-e-steps lp" style="animation-name:s4;">
+          <div class="wo-e-pillbtn">−5<small>LB</small></div>
+          <div class="wo-e-pillbtn">+5<small>LB</small></div>
+          <div class="wo-e-pillbtn">−1<small>REP</small></div>
+          <div class="wo-e-pillbtn">+1<small>REP</small></div>
+        </div>
+        <div class="wo-e-cta lp" style="animation-name:s5;">Log set</div>
+        <div class="wo-e-hist lp" style="animation-name:s6;">
+          <div class="wo-e-hrow"><span>Set 1</span>55 lb × 10 <span class="ck">✓</span></div>
+          <div class="wo-e-hrow"><span>Set 2</span>60 lb × 8 <span class="ck">✓</span></div>
+          <div class="wo-e-hrow"><span>Set 3</span><span class="nw">● now<em>60 lb × 8 ✓</em></span></div>
+        </div>
+        <div class="wo-e-foot lp" style="animation-name:s7;">
+          <span><b class="wo-kcal" style="color:var(--d-text);"></b> kcal · <b class="wo-vol" style="color:var(--d-text);"></b> lb</span>
+          <span>Up next: Cable Fly</span>
+        </div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">E</span>Warm Gallery — the light gym screen</div>
+      <div class="cap-why">The surprising one: cream paper, ink type, air everywhere. 74 pt editorial numerals beat the dark frames on outdoor/bright-gym legibility, white pill steppers feel like buttons not chrome, and the floating CSS dumbbell gives it a personality no fitness app has.</div>
+      <div class="cap-risk"><b>Risk:</b> a light screen glares in dark gym corners and at night — this direction is only honest if it ships with a true dark twin (auto-switching), doubling the design surface.</div>
+    </div>
+  </div>
+
+  <!-- ============ F · VOLT STADIUM ============ -->
+  <div class="cell" id="f-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dF grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-f-body">
+        <div class="wo-f-top lbl lp" style="animation-name:s0;">
+          <span>← Exit</span>
+          <span>● Live · <b class="wo-tk" style="color:var(--d-text);"></b></span>
+          <span>Ex 04/08</span>
+        </div>
+        <div class="disp wo-f-name lp" style="animation-name:s1;">Incline<br>Dumbbell Press</div>
+        <div class="wo-f-sub lbl lp" style="animation-name:s2;">
+          <span>Set 3 of 4</span><span>Target 60 × 8</span>
+        </div>
+        <div class="wo-f-board lp" style="animation-name:s3;">
+          <div class="lbl" style="font-size:10.5px;color:var(--d-faint);">Working weight</div>
+          <div class="disp wo-f-big">60<small>LB</small></div>
+          <div class="disp wo-f-reps">× 8</div>
+        </div>
+        <div class="wo-f-adj lp" style="animation-name:s4;"><div>−5</div><div>+5</div><div>−1 rep</div><div>+1 rep</div></div>
+        <div class="wo-f-navy lp" style="animation-name:s5;"><span>Last time</span><b>55 LB × 8 · Δ +5</b></div>
+        <div class="wo-f-rail lp" style="animation-name:s6;">
+          <div class="wo-f-rs dn">✓ 55×10</div>
+          <div class="wo-f-rs dn">✓ 60×8</div>
+          <div class="wo-f-rs nw"><i>●</i> LIVE<em>✓ 60×8</em></div>
+          <div class="wo-f-rs">SET 4</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wo-f-stats lp" style="animation-name:s7;">
+          <span><b class="wo-kcal"></b> kcal</span><span><b class="wo-vol"></b> lb vol</span><span>Next · Cable Fly</span>
+        </div>
+        <div class="voltchip wo-f-cta lp" style="animation-name:s8;">Log set 60 × 8</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">F</span>Volt Stadium — the share image, live</div>
+      <div class="cap-why">Zealova's shareables language finally in-app: the set readout is a night-stadium scoreboard — 92 pt Anton volt "60" with a faint glow, Barlow micro-labels, a navy #15275C last-time block doing the supporting math (Δ +5). Floodlight discipline holds: volt appears exactly twice — the live number and the LOG SET chip.</div>
+      <div class="cap-risk"><b>Risk:</b> volt legibility at small sizes under gym lighting is actually GOOD — the danger is drift. The moment a third volt element sneaks in (streak badge, rest pill), the floodlight becomes a highlighter and the whole scoreboard reads as noise.</div>
+    </div>
+  </div>
+
+  <!-- ============ G · DEPTH FIELD ============ -->
+  <div class="cell" id="g-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dG grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="orb wo-g-orb1"></div><div class="orb wo-g-orb2"></div><div class="orb wo-g-orb3"></div>
+      <div class="wo-g-body">
+        <div class="wo-g-top lp" style="animation-name:s0;">
+          <div class="glass wo-g-chip">‹ Exit</div>
+          <div class="glass wo-g-chip"><b class="wo-tk" style="color:var(--d-text);"></b> elapsed · Ex 4/8</div>
+        </div>
+        <div class="wo-g-focal glass-hi lp" style="animation-name:s1,glassFloat;animation-duration:10s,5.5s;animation-iteration-count:infinite,infinite;">
+          <div class="wo-g-db food3d">🏋️</div>
+          <div class="wo-g-ex">Set 3 of 4</div>
+          <div class="wo-g-name">Incline Dumbbell Press</div>
+          <div class="wo-g-big">60 <u>lb</u> <span>× 8</span></div>
+          <div class="wo-g-last">Last time 55 lb × 8 · 5 days ago</div>
+          <div class="wo-g-pills lp" style="animation-name:s2;">
+            <div class="wo-g-pill">−5<small>LB</small></div>
+            <div class="wo-g-pill">+5<small>LB</small></div>
+            <div class="wo-g-pill">−1<small>REP</small></div>
+            <div class="wo-g-pill">+1<small>REP</small></div>
+          </div>
+          <div class="wo-g-cta lp" style="animation-name:s3;">Log set — 60 × 8</div>
+        </div>
+        <div class="wo-g-mid lp" style="animation-name:s4;">
+          <div class="glass wo-g-hist">
+            <div class="wo-g-hl">Set log</div>
+            <div class="wo-g-hrow"><span>Set 1</span><span>55 × 10 <span class="ok">✓</span></span></div>
+            <div class="wo-g-hrow"><span>Set 2</span><span>60 × 8 <span class="ok">✓</span></span></div>
+            <div class="wo-g-hrow nw"><span>Set 3</span><span class="cu">● now</span><span class="dn">60 × 8 ✓</span></div>
+            <div class="wo-g-hrow"><span>Set 4</span><span>—</span></div>
+          </div>
+          <div class="glass wo-g-ring">
+            <div class="wo-g-ringw">
+              <svg width="64" height="64" viewBox="0 0 64 64">
+                <circle cx="32" cy="32" r="27" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/>
+                <circle cx="32" cy="32" r="27" fill="none" stroke="#F97316" stroke-width="5" stroke-linecap="round"
+                        stroke-dasharray="170" stroke-dashoffset="120" transform="rotate(-90 32 32)"
+                        style="--dash:170;animation:ringDraw 1.6s ease-out both;animation-delay:4.2s;"/>
+              </svg>
+              <b>90s</b>
+            </div>
+            <div class="wo-g-rl">Rest on log</div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="wo-g-foot lp" style="animation-name:s6;">
+          <span><b class="wo-kcal" style="color:var(--d-text);"></b> kcal · <b class="wo-vol" style="color:var(--d-text);"></b> lb</span>
+          <span>Up next · Cable Fly</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">G</span>Depth Field — the set logger as a cockpit</div>
+      <div class="cap-why">Z-depth does the hierarchy: orbs drift far behind, the set log recedes to a mid glass layer, the rest ring floats on its own elevation, and the focal card hovers closest with the boldest shadow — a 3D dumbbell resting right on it. Three elevations, no more, and the 66 pt Archivo numerals sit on a near-solid backing — zero blur behind the thing you read from the bench.</div>
+      <div class="cap-risk"><b>Risk:</b> glassmorphism turns to slop the moment anyone gets lazy with elevation rules — and backdrop blur on a screen that stays awake 50 minutes is a real battery tax; ship with a static-fallback mode or it's dishonest.</div>
+    </div>
+  </div>
+
+  <!-- ============ H · KINETIC COLLAGE ============ -->
+  <div class="cell" id="h-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dH grain">
+      <div class="notch"></div><div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-h-body">
+        <div class="wo-h-top lp" style="animation-name:s0;">
+          <span>‹ EXIT</span>
+          <div class="mono-stamp wo-h-stamp">SET 3/4 · <span class="wo-tk"></span></div>
+          <span class="mono-stamp" style="font-size:11px;">EX 4/8</span>
+        </div>
+        <div class="sticker disp wo-h-title lp" style="animation-name:s1;">Incline DB Press</div>
+        <div class="wo-h-circle lp" style="animation-name:s2;">
+          <div class="disp wo-h-bignum">60<small>LB</small> <span>× 8</span></div>
+        </div>
+        <div class="mono-stamp wo-h-beat lp" style="animation-name:s3;">LAST TIME 55×8 — BEAT IT</div>
+        <div class="wo-h-adj lp" style="animation-name:s3;">
+          <div class="sticker st">−5</div><div class="sticker st">+5</div><div class="sticker st">−1</div><div class="sticker st">+1</div>
+        </div>
+        <div class="wo-h-rows lp" style="animation-name:s4;">
+          <div class="sticker wo-h-srow"><span>SET 1 · 55 × 10</span><span class="wo-h-ck">✓</span></div>
+          <div class="sticker wo-h-srow"><span>SET 2 · 60 × 8</span><span class="wo-h-ck">✓</span></div>
+          <div class="sticker wo-h-srow brk"><span>SET 3 · 60 × 8</span><span class="wo-h-now">NOW</span><span class="wo-h-ck pop">✓</span></div>
+          <div class="sticker wo-h-srow dim"><span>SET 4 · — × —</span><span></span></div>
+        </div>
+        <div class="sticker wo-h-next lp" style="animation-name:s5;"><span class="tape tp"></span>UP NEXT: CABLE FLY ▸</div>
+        <div style="flex:1;"></div>
+        <div class="mono-stamp wo-h-foot lp" style="animation-name:s6;">
+          <span><b class="wo-kcal" style="color:var(--d-text);"></b> KCAL</span><span><b class="wo-vol" style="color:var(--d-text);"></b> LB VOLUME</span>
+        </div>
+        <div class="wo-h-cta lp" style="animation-name:s7;">Log set ✓</div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">H</span>Kinetic Collage — the gym zine</div>
+      <div class="cap-why">The lift as a scrapbook page: "INCLINE DB PRESS" is an Anton stamp on a rotated sticker, sets are smaller stickers with hard 4 px shadows, the live row breaks the grid by 1.8°, completed sets get a marker ✓ scrawl (set 3's pops in when it logs), the 60 × 8 is circled in uneven orange marker, and volt tape holds the up-next chip. Most personality per pixel of the eight.</div>
+      <div class="cap-risk"><b>Risk:</b> charming on workout 1, possibly exhausting on workout 200 — and rotation angles, blob radii, and tape placements resist systematization; without a strict token set this devolves into a different screen every sprint.</div>
+    </div>
+  </div>
+
+</div>
+</div>

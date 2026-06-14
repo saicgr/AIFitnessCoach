@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova Signature — The App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400;1,9..144,600&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════
+   ZEALOVA SIGNATURE — THE APP  ·  standalone showcase
+   Self-contained. Opens via file://. No server, no fetch, no external CSS.
+   Tokens, phone-frame chrome, caption classes and loop keyframes
+   inlined from base.css; compositions consolidated from
+   sections/0f-recommended.html, 0g-nav.html, 0i-more.html.
+   ═══════════════════════════════════════════════════════════════════ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange: #F97316; --orange-lt: #FFB366; --orange-dp: #FF6B00;
+  --ink: #0b0b0c; --panel: #121214; --line: #232326;
+  --txt: #f4f4f5; --mut: #9b9ba3;
+  --cyan: #06B6D4; --green: #2ECC71; --gold: #FFD54A; --red: #EF4444; --purple: #A855F7;
+}
+html { scroll-behavior: smooth; }
+body {
+  background: #09090b; color: var(--txt);
+  font-family: Inter, -apple-system, sans-serif;
+  font-size: 15px; line-height: 1.5;
+}
+.anton { font-family: Anton, 'Arial Narrow', sans-serif; font-weight: 400; }
+.cond { font-family: 'Barlow Condensed', sans-serif; }
+.mono { font-family: 'Space Mono', monospace; }
+.serif { font-family: Fraunces, Georgia, serif; }
+.arch { font-family: Archivo, Inter, sans-serif; }
+
+/* ===== Page header ===== */
+.hd { padding: 44px 48px 22px; border-bottom: 1px solid var(--line); background: #09090b; position:relative; overflow:hidden; }
+.hd::before { content:''; position:absolute; right:-80px; top:-80px; width:280px; height:280px; border-radius:50%; background:radial-gradient(circle, rgba(249,115,22,.16), transparent 70%); pointer-events:none; }
+.hd-row { display: flex; gap: 18px; align-items: center; }
+.hd-icon { width: 50px; height: 50px; border-radius: 13px; background:linear-gradient(140deg,#F97316,#7C2D12); display:flex; align-items:center; justify-content:center; font-family:Anton,sans-serif; font-size:26px; color:#160B03; box-shadow:0 10px 30px -8px rgba(249,115,22,.5); }
+.hd-title { font-family: Anton, sans-serif; font-size: 30px; letter-spacing: .5px; text-transform:uppercase; }
+.hd-title .o { color: var(--orange); }
+.hd-sub { color: var(--mut); font-size: 13.5px; margin-top:2px; }
+.hd-nav { display: flex; gap: 22px; margin-top: 18px; flex-wrap: wrap; }
+.hd-nav a { color: var(--orange); text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-size: 14px; }
+.hd-nav a:hover { color: var(--orange-lt); }
+.hd-note { color: var(--mut); font-size: 12.5px; margin-top: 14px; max-width: 1040px; line-height:1.6; }
+.hd-note b { color:#cfcfd6; }
+.ft { padding: 44px 48px; color: #55555c; font-size: 12px; line-height:1.6; }
+
+/* ===== Section + rows ===== */
+.sec { padding: 52px 48px 6px; }
+.sec-kick { color: var(--orange); font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: 3px; font-size: 14px; text-transform: uppercase; }
+.sec-title { font-family: Anton, sans-serif; font-size: 44px; margin: 4px 0 8px; letter-spacing:.5px; }
+.sec-desc { color: var(--mut); max-width: 920px; font-size: 14px; line-height:1.6; }
+.row { display: flex; gap: 36px; overflow-x: auto; padding: 30px 48px 50px; align-items: flex-start; }
+.row::-webkit-scrollbar { height: 10px; }
+.row::-webkit-scrollbar-thumb { background: #28282c; border-radius: 5px; }
+.row::-webkit-scrollbar-track { background: #141416; border-radius: 5px; }
+
+/* ===== Frame + caption ===== */
+.cell { flex: 0 0 auto; width: 312px; }
+.cap { margin-top: 16px; padding: 14px 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+.cap-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; font-size: 15px; }
+.cap-name .tag { font-size: 11px; letter-spacing: 2px; color: var(--orange); margin-right: 8px; }
+.cap-why { color: #c9c9cf; font-size: 12.5px; margin-top: 5px; line-height:1.55; }
+.cap-risk { color: #8a8a92; font-size: 12px; margin-top: 5px; line-height:1.55; }
+.cap-risk b { color: #c9842a; font-weight: 600; }
+
+/* Phone frame: native 390x844, displayed at 0.8 scale */
+.fwrap { width: 312px; height: 675.2px; position: relative; }
+.phone {
+  width: 390px; height: 844px; transform: scale(.8); transform-origin: top left;
+  border-radius: 46px; padding: 4px; position: relative;
+  background: linear-gradient(150deg,#5d5d66 0%,#1e1e23 22%,#0b0b0d 50%,#2a2a30 78%,#4e4e57 100%);
+  box-shadow: 0 30px 70px -22px rgba(0,0,0,.9);
+}
+.screen { width: 100%; height: 100%; border-radius: 42px; overflow: hidden; position: relative; background: #000; color: #fafafa; }
+.notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 110px; height: 26px; background: #000; border-radius: 16px; z-index: 40; }
+.homebar { position: absolute; bottom: 7px; left: 50%; transform: translateX(-50%); width: 120px; height: 4px; background: rgba(255,255,255,.28); border-radius: 2px; z-index: 40; }
+.sbar { position: absolute; top: 14px; left: 0; right: 0; display: flex; justify-content: space-between; padding: 0 30px; font-size: 13.5px; font-weight: 600; z-index: 39; }
+.sbar .sigs { letter-spacing: -1px; opacity: .9; }
+
+/* ===== Signature dark token system (.dR) ===== */
+.dR {
+  --d-bg: #0A0A0B; --d-surface: #141416; --d-surface2: #0F0F11;
+  --d-border: #26262B; --d-rule: #2A2A2E; --d-text: #FAFAFA; --d-mut: #9D9DA6; --d-faint: #5C5C64;
+  --d-accent: #F97316; --d-rust: #C2410C; --d-ember: #7C2D12; --d-radius: 14px;
+  background: var(--d-bg); color: var(--d-text);
+  font-family: Inter, -apple-system, sans-serif;
+}
+.dR .disp { font-family: Anton, sans-serif; font-weight: 400; text-transform: uppercase; letter-spacing: .5px; }
+.dR .lbl { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; }
+.dR .ser { font-family: Fraunces, Georgia, serif; }
+.dR .data { font-family: 'Space Mono', monospace; }
+.dR .rule { height: 1px; background: var(--d-rule); }
+
+/* ===== Shared in-phone bits ===== */
+.grain::after {
+  content:''; position:absolute; inset:0; pointer-events:none; opacity:.05; z-index: 3;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ===== Loop sequence keyframes (10s) ===== */
+.lp { animation-duration: 10s; animation-iteration-count: infinite; animation-timing-function: ease-out; }
+/* Fast staggered entrance — every slot is fully visible by ~2s and STAYS (no mid-loop blank, no end flash) */
+@keyframes s0 { 0%{opacity:0;transform:translateY(8px)} 4%,100%{opacity:1;transform:none} }
+@keyframes s1 { 0%,2%{opacity:0;transform:translateY(8px)} 6%,100%{opacity:1;transform:none} }
+@keyframes s2 { 0%,4%{opacity:0;transform:translateY(8px)} 8%,100%{opacity:1;transform:none} }
+@keyframes s3 { 0%,6%{opacity:0;transform:translateY(8px)} 10%,100%{opacity:1;transform:none} }
+@keyframes s4 { 0%,8%{opacity:0;transform:translateY(8px)} 12%,100%{opacity:1;transform:none} }
+@keyframes s5 { 0%,10%{opacity:0;transform:translateY(8px)} 14%,100%{opacity:1;transform:none} }
+@keyframes s6 { 0%,12%{opacity:0;transform:translateY(8px)} 16%,100%{opacity:1;transform:none} }
+@keyframes s7 { 0%,14%{opacity:0;transform:translateY(8px)} 18%,100%{opacity:1;transform:none} }
+@keyframes s8 { 0%,16%{opacity:0;transform:translateY(8px)} 20%,100%{opacity:1;transform:none} }
+@keyframes s9 { 0%,18%{opacity:0;transform:translateY(8px)} 22%,100%{opacity:1;transform:none} }
+@keyframes pulseGlow { 0%,100%{ box-shadow: 0 16px 50px 6px rgba(249,115,22,.35);} 50%{ box-shadow: 0 16px 70px 6px rgba(249,115,22,.6);} }
+@keyframes floaty { 0%,100%{ transform: translateY(0) rotate(var(--r,0deg)); } 50%{ transform: translateY(-9px) rotate(var(--r,0deg)); } }
+@keyframes foodFloat { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-6px); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fillBar { from { width: 0; } }
+
+/* loop-synced data viz (10s, matches s0..s9 cadence) */
+@keyframes rcFill { 0%,12%{width:0} 30%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes rcGrow { 0%,16%{transform:scaleY(0)} 36%,96%{transform:scaleY(1)} 100%{transform:scaleY(0)} }
+@keyframes rcBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+@keyframes rcDone { 0%,74%{opacity:0} 78%,96%{opacity:1} 100%{opacity:0} }
+@keyframes rcPress { 0%,28%{opacity:0;transform:translateY(8px)} 33%,63%{opacity:1;transform:none} 66%{opacity:1;transform:scale(.96)} 69%,96%{opacity:1;transform:none} 100%{opacity:0;transform:none} }
+@keyframes rcPressLate { 0%,76%{opacity:0;transform:translateY(8px)} 80%,87%{opacity:1;transform:none} 90%{opacity:1;transform:scale(.96)} 92%,96%{opacity:1;transform:none} 100%{opacity:0;transform:none} }
+@keyframes rcSlam { 0%,6%{opacity:0;transform:scale(1.22)} 11%,96%{opacity:1;transform:scale(1)} 100%{opacity:0} }
+@keyframes rcStripOut { 0%,38%{max-height:0;opacity:0} 45%,96%{max-height:120px;opacity:1} 100%{max-height:0;opacity:0} }
+@keyframes rcGhostA { 0%,44%{opacity:1} 48%,76%{opacity:0} 80%,100%{opacity:1} }
+@keyframes rcGhostB { 0%,46%{opacity:0} 50%,74%{opacity:1} 78%,100%{opacity:0} }
+/* CAROUSEL — frame 1: card settles + peek nudges mid-loop as if mid-swipe; dots pulse */
+@keyframes carPeek { 0%,40%{ transform:translateX(0); } 50%{ transform:translateX(-22px); } 60%,100%{ transform:translateX(0); } }
+@keyframes carDotPulse { 0%,45%{ opacity:1; transform:scaleX(1); } 52%{ opacity:.55; transform:scaleX(.7); } 60%,100%{ opacity:1; transform:scaleX(1); } }
+/* REST bar drain (inline rest) */
+@keyframes restDrain { 0%,20%{ width:88%; } 96%{ width:8%; } 100%{ width:88%; } }
+@keyframes restPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(124,45,18,0); } 50%{ box-shadow:0 0 0 4px rgba(124,45,18,.18); } }
+
+/* ════════════════════ shared Signature in-phone classes ════════════════════ */
+.rc-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+.rc-rule { height:1px; background:var(--d-rule); }
+.rc-slbl { font-size:11px; color:var(--d-mut); }
+.rc-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.rc-fill { display:block; height:100%; border-radius:2px; animation:rcFill 10s ease-out infinite; }
+.rc-coachbtn { width:24px; height:24px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--d-mut); }
+.rc-cta-anim { animation:rcPress 10s ease-out infinite; }
+.rc-cta-anim-late { animation:rcPressLate 10s ease-out infinite; }
+
+/* the Signature nav spec: 74px opaque bar + top hairline, glyph over Barlow label, active orange underline */
+.rc-nav2 { position:absolute; left:0; right:0; bottom:0; height:74px; background:#0A0A0B; border-top:1px solid #2A2A2E; display:flex; justify-content:space-around; align-items:flex-start; padding-top:11px; z-index:30; }
+.rc-nav2 .it { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.rc-nav2 .gl { font-size:12px; line-height:1; filter:grayscale(1); opacity:.5; }
+.rc-nav2 .lb { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:#5C5C64; }
+.rc-nav2 .it.on .gl { opacity:.95; filter:none; }
+.rc-nav2 .it.on .lb { color:#F97316; }
+.rc-nav2 .it.on::after { content:''; width:18px; height:2px; border-radius:1px; background:#F97316; margin-top:2px; }
+
+/* ---- HOME ---- */
+.rh-mast { font-size:40px; line-height:.94; margin-top:8px; }
+.rh-mast .mo { color:var(--d-faint); }
+.rh-greet { font-family:Fraunces,Georgia,serif; font-size:17px; font-style:italic; color:#CBB9A4; margin-top:9px; }
+.rh-cta { display:flex; align-items:center; justify-content:center; height:46px; border-radius:6px; background:var(--d-accent); color:#160B03; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:16px; letter-spacing:2.5px; text-transform:uppercase; }
+.rh-coach { display:flex; align-items:flex-start; gap:10px; }
+.rh-coach .tx { flex:1; font-size:12.5px; color:#C9C9CF; line-height:1.45; }
+.rh-coach .ch { color:var(--d-faint); font-size:15px; margin-top:2px; }
+.rh-bell { position:relative; font-size:13px; filter:grayscale(1); opacity:.85; }
+.rh-bell::after { content:''; position:absolute; top:-2px; right:-4px; width:6px; height:6px; border-radius:50%; background:var(--d-mut); }
+.rh-note { display:flex; align-items:center; gap:8px; border:1px solid var(--d-border); border-radius:8px; padding:8px 11px; margin-top:11px; font-size:11.5px; color:#C9C9CF; }
+.rh-note .x { margin-left:auto; color:var(--d-faint); font-size:13px; }
+.rh-task { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.rh-task i { font-style:normal; font-size:11px; color:var(--d-faint); }
+.rh-plus { position:absolute; right:24px; bottom:88px; width:44px; height:44px; border:1px solid var(--d-border); border-radius:6px; background:var(--d-surface); display:flex; align-items:center; justify-content:center; z-index:31; color:var(--d-text); font-size:24px; font-weight:300; line-height:1; box-shadow:0 10px 24px rgba(0,0,0,.45); }
+
+/* ---- HOME · WORKOUT CAROUSEL (the restored peek-next hero) ---- */
+.rh-car { position:relative; overflow:hidden; }
+.rh-cardwrap { display:flex; gap:11px; align-items:stretch; }
+.rh-card { flex:0 0 100%; border:0; border-top:1px solid var(--d-rule); border-radius:14px; background:var(--d-surface2); padding:15px 16px 15px; min-height:212px; display:flex; flex-direction:column; position:relative; }
+.rh-card .datepill { position:absolute; top:13px; right:14px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:10px; letter-spacing:2px; text-transform:uppercase; border:1px solid var(--d-border); border-radius:4px; padding:3px 8px; color:var(--d-mut); }
+.rh-card .datepill.td { color:#160B03; background:var(--d-accent); border-color:var(--d-accent); }
+.rh-card .ttl { font-family:Anton,sans-serif; text-transform:uppercase; font-size:34px; line-height:.96; letter-spacing:.5px; margin-top:2px; }
+.rh-card .sub { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); margin-top:3px; }
+.rh-card .meta { font-size:11.5px; color:var(--d-faint); margin-top:5px; }
+.rh-card .modechip { align-self:flex-start; margin-top:9px; display:inline-flex; align-items:center; gap:5px; height:24px; padding:0 10px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-rust); }
+.rh-card .startbtn { margin-top:auto; height:42px; border-radius:6px; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:14px; letter-spacing:2.5px; text-transform:uppercase; }
+.rh-card.peek { transform:scale(.92); transform-origin:left center; opacity:.4; }
+.rh-card.peek.rt { transform-origin:right center; }
+.rh-card.rest { background:var(--d-surface); }
+.rh-card.rest .ttl { color:var(--d-mut); }
+.rh-dots { display:flex; justify-content:center; gap:7px; margin-top:11px; }
+.rh-dots i { width:6px; height:6px; border-radius:3px; background:#3a3a40; display:inline-block; }
+.rh-dots i.on { width:16px; background:var(--d-mut); }
+/* ---- COACH HERO — a tight to-do list from the coach (home's focus) ---- */
+.rh-chero { background:var(--d-surface); border:1px solid var(--d-border); border-left:3px solid var(--d-accent); border-radius:14px; padding:12px 15px 11px; box-shadow:0 16px 34px -18px rgba(0,0,0,.75); }
+.rh-chero .chd { display:flex; align-items:center; gap:8px; }
+.rh-chero .av { width:22px; height:22px; flex:0 0 auto; border-radius:999px; background:var(--d-surface2); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--d-mut); }
+.rh-chero .nm { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:11px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-text); white-space:nowrap; }
+.rh-chero .nm em { color:var(--d-mut); font-style:normal; }
+.rh-chero .when { margin-left:auto; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-faint); }
+.rh-chero .msg { font-size:13px; line-height:1.45; color:#D9D5CF; margin-top:8px; }
+.rh-chero .tdl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); margin-top:11px; }
+.rh-todo { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--d-rule); }
+.rh-todo:last-of-type { border-bottom:0; }
+.rh-todo .bx { width:16px; height:16px; flex:0 0 auto; border:1.5px solid var(--d-faint); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:10px; color:transparent; }
+.rh-todo.dn .bx { background:#5BE49B; border-color:#5BE49B; color:#0A0A0B; }
+.rh-todo .tl { flex:1; font-size:12.5px; color:var(--d-text); }
+.rh-todo.dn .tl { color:var(--d-faint); text-decoration:line-through; }
+.rh-todo .pg { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:.5px; color:var(--d-mut); }
+.rh-chero .ask { display:flex; align-items:center; gap:14px; margin-top:9px; }
+.rh-chero .ask span { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.rh-chero .ask .pri { color:var(--d-mut); margin-left:auto; }
+/* ---- HOME habits / readiness / timeline (below the fold) ---- */
+.hm-hab { display:flex; align-items:center; gap:9px; padding:8px 0; border-bottom:1px solid var(--d-rule); }
+.hm-hab .nm { flex:1; font-size:12.5px; color:var(--d-text); }
+.hm-hab .dots { display:flex; gap:4px; }
+.hm-hab .dots i { width:11px; height:11px; border-radius:3px; background:#26262B; }
+.hm-hab .dots i.on { background:var(--d-mut); }
+.hm-scrollhint { text-align:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); }
+/* glanceable top metrics strip (always visible under the masthead) */
+.hm-strip { display:flex; align-items:stretch; border:1px solid var(--d-border); border-radius:10px; overflow:hidden; }
+.hm-strip .c { flex:1; padding:7px 4px 8px; text-align:center; border-right:1px solid var(--d-rule); }
+.hm-strip .c:last-child { border-right:0; }
+.hm-strip .c .v { font-family:Anton,sans-serif; font-size:15px; line-height:1; letter-spacing:.3px; }
+.hm-strip .c .v u { text-decoration:none; font-size:8px; color:var(--d-faint); margin-left:1px; }
+.hm-strip .c .k { display:block; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:8px; letter-spacing:1.3px; text-transform:uppercase; color:var(--d-faint); margin-top:4px; }
+.hm-strip .c.acc .v { color:var(--d-text); }
+/* strength-score breakdown (below the fold) — no ring, pure typographic + hairline bars */
+.hm-sb { display:flex; align-items:center; gap:9px; padding:7px 0; border-bottom:1px solid var(--d-rule); }
+.hm-sb:last-of-type { border-bottom:0; }
+.hm-sb .k { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-mut); width:42px; flex:0 0 auto; }
+.hm-sb .bar { flex:1; height:4px; border-radius:2px; background:var(--d-rule); overflow:hidden; }
+.hm-sb .bar i { display:block; height:100%; border-radius:2px; background:var(--d-mut); }
+.hm-sb .n { font-family:Anton,sans-serif; font-size:15px; width:26px; flex:0 0 auto; text-align:right; }
+
+/* ---- ACTIVE WORKOUT (Easy poster + inline rest) ---- */
+.rw-mast { font-size:33px; line-height:.98; margin-top:6px; }
+.rw-poster { font-size:72px; line-height:.92; letter-spacing:0; }
+.rw-poster small { font-size:24px; letter-spacing:1px; color:var(--d-mut); margin-left:4px; }
+.rw-poster .x { color:var(--d-faint); font-size:54px; margin:0 2px; }
+.rw-whisper { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:16.5px; color:#CBB9A4; margin-top:10px; }
+.rw-srow { display:flex; align-items:center; gap:12px; margin-top:7px; }
+.rw-srow .k { width:46px; flex:0 0 auto; font-size:10px; color:var(--d-faint); }
+.rw-srow .val { flex:1; text-align:center; }
+.rw-sq2 { width:52px; height:52px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:22px; color:var(--d-text); }
+.rw-track { position:relative; width:96px; height:7px; margin:6px auto 0; border-top:2px dotted #3F3F46; }
+.rw-track i { position:absolute; left:50%; top:-5px; transform:translateX(-50%); width:9px; height:9px; border-radius:50%; background:var(--d-rust); }
+.rw-edit { border-bottom:2.5px dotted #3F3F46; padding-bottom:2px; }
+.rw-rail { display:flex; gap:7px; }
+.rw-cell { width:28px; height:28px; border:1px solid var(--d-border); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; color:var(--d-faint); position:relative; }
+.rw-cell.dn { color:#5BE49B; border-color:#234034; background:rgba(91,228,155,.07); }
+.rw-cell.cur { color:var(--d-text); }
+.rw-cell.cur::after { content:''; position:absolute; left:4px; right:4px; bottom:-5px; height:2px; background:var(--d-accent); border-radius:1px; }
+.rw-cta { height:56px; border-radius:999px; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; letter-spacing:2.5px; text-transform:uppercase; margin-top:14px; }
+.rw-led { display:flex; align-items:center; gap:10px; padding:7px 2px; border-bottom:1px solid var(--d-rule); font-size:12.5px; color:var(--d-mut); font-variant-numeric:tabular-nums; position:relative; }
+.rw-led b { font-weight:700; color:var(--d-text); }
+.rw-led .ck { margin-left:auto; color:#5BE49B; font-weight:700; }
+.rw-led.act { color:var(--d-text); }
+.rw-led.act .cu { color:var(--d-mut); animation:rcBlink 1.1s steps(1) infinite; }
+.rw-led.act .dn { position:absolute; right:2px; top:7px; color:#5BE49B; font-weight:700; background:var(--d-bg); padding-left:10px; opacity:0; animation:rcDone 10s steps(1) infinite; }
+.rw-chip { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 13px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.rw-chips { display:flex; gap:7px; margin-top:11px; }
+.rw-lkchip { height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); white-space:nowrap; }
+.rw-poster .ed { border-bottom:3px dotted #3F3F46; padding-bottom:3px; }
+.rw-pencil { font-size:14px; color:var(--d-faint); vertical-align:46px; margin-left:6px; font-family:Inter,sans-serif; }
+
+/* INLINE REST STRIP / ROW (the corrected real app rest — never a takeover) */
+.ir-strip { display:flex; align-items:center; gap:10px; height:40px; padding:0 12px; border:1px solid var(--d-ember); border-radius:10px; background:rgba(124,45,18,.10); animation:restPulse 2.4s ease-in-out infinite; }
+.ir-strip .rl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.ir-strip .tm { font-family:'Space Mono',monospace; font-size:14px; font-weight:700; color:var(--d-text); }
+.ir-strip .ctl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:var(--d-mut); }
+.ir-strip .ctl.sk { color:var(--d-mut); }
+.ir-strip .nx { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-faint); white-space:nowrap; }
+/* full-width inline rest ROW spanning the advanced set table */
+.ir-row { border:1px solid var(--d-ember); border-radius:10px; background:rgba(124,45,18,.10); padding:9px 11px; margin:4px 0; animation:restPulse 2.4s ease-in-out infinite; }
+.ir-row .top { display:flex; align-items:center; gap:9px; }
+.ir-row .rl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.ir-row .tm { font-family:'Space Mono',monospace; font-size:19px; font-weight:700; color:var(--d-text); line-height:1; }
+.ir-row .bar { flex:1; height:4px; border-radius:2px; background:rgba(124,45,18,.3); overflow:hidden; }
+.ir-row .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--d-ember),var(--d-rust)); border-radius:2px; animation:restDrain 10s linear infinite; }
+.ir-row .ctls { display:flex; align-items:center; gap:11px; }
+.ir-row .ctl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; color:var(--d-mut); }
+.ir-row .ctl.sk { color:var(--d-mut); }
+.ir-row .adapt { display:inline-flex; align-items:center; gap:5px; margin-top:8px; height:20px; padding:0 9px; border:1px solid rgba(91,228,155,.3); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; letter-spacing:1.2px; text-transform:uppercase; color:#5BE49B; background:rgba(91,228,155,.06); }
+
+/* ---- ACTIVE WORKOUT · ADVANCED — Signature cockpit (ra-) ---- */
+.ra-th { display:flex; align-items:center; padding:0 2px 5px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); border-bottom:1px solid var(--d-rule); }
+.ra-tr { display:flex; align-items:center; padding:6px 2px; border-bottom:1px solid var(--d-rule); font-size:11.5px; color:var(--d-mut); font-variant-numeric:tabular-nums; position:relative; }
+.ra-tr.done { color:var(--d-text); }
+.ra-tr.act { color:var(--d-text); border-left:3px solid var(--d-accent); padding-left:9px; margin-left:-12px; }
+.ra-tr.dim { color:var(--d-faint); }
+.ra-c1 { width:24px; font-family:'Barlow Condensed',sans-serif; font-weight:700; } .ra-c2 { flex:2; } .ra-c3 { flex:2.6; text-align:center; } .ra-c4 { flex:2.2; text-align:center; } .ra-c5 { flex:1.8; text-align:center; } .ra-c6 { width:22px; text-align:center; } .ra-c7 { width:20px; text-align:right; }
+.ra-tg { color:var(--d-rust); }
+.ra-tr .ck { color:#5BE49B; font-weight:700; }
+.ra-val b { font-family:Anton,sans-serif; font-weight:400; font-size:14px; letter-spacing:.5px; }
+.ra-add { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding:6px 2px; }
+.ra-strip { overflow:hidden; border-bottom:1px solid var(--d-rule); max-height:0; animation:rcStripOut 10s ease-in-out infinite; }
+.ra-strip .inner { padding:8px 0 9px; }
+.ra-lane { display:flex; align-items:center; gap:10px; }
+.ra-big { width:48px; height:40px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:19px; color:var(--d-text); }
+.ra-big.sm { width:34px; height:24px; font-size:13px; border-radius:6px; }
+.ra-scrub { flex:1; position:relative; height:32px; }
+.ra-scrub.sm { height:22px; }
+.ra-scrub .tk { position:absolute; left:2px; right:2px; top:50%; border-top:2px dotted #3F3F46; }
+.ra-scrub .gh { position:absolute; top:50%; transform:translateY(-50%); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; color:var(--d-faint); background:var(--d-bg); padding:0 5px; }
+.ra-scrub .th { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border:1px solid var(--d-accent); border-radius:999px; padding:3px 11px; background:var(--d-bg); font-family:Anton,sans-serif; font-size:13px; letter-spacing:.5px; color:var(--d-text); white-space:nowrap; }
+.ra-scrub.sm .th { font-size:11px; padding:2px 9px; }
+.ra-hist { display:flex; gap:6px; }
+.ra-hpill { height:24px; padding:0 9px; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1px; color:var(--d-mut); text-transform:uppercase; white-space:nowrap; }
+.ra-hpill.tg { color:var(--d-text); border-color:var(--d-border); }
+.ra-util { display:flex; gap:6px; }
+.ra-util .rw-lkchip { flex:1; justify-content:center; padding:0 6px; }
+
+/* ---- NUTRITION (dark) ---- */
+.rn-kick { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--d-mut); }
+.rn-track { height:3px; border-radius:2px; background:var(--d-rule); overflow:hidden; }
+.rn-mline { display:flex; gap:15px; align-items:center; }
+.rn-mline .g { display:flex; align-items:baseline; gap:5px; }
+.rn-mline .g i { width:7px; height:7px; border-radius:50%; align-self:center; }
+.rn-mline .g b { font-family:Anton,sans-serif; font-weight:400; font-size:15px; letter-spacing:.5px; }
+.rn-mline .g b u { text-decoration:none; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:.5px; color:var(--d-mut); }
+.rn-mline .g .mk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.rn-chev { width:24px; height:24px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:var(--d-mut); }
+.rn-bub { align-self:flex-end; max-width:78%; background:#1F1F24; border:1px solid var(--d-border); color:var(--d-text); border-radius:18px 18px 4px 18px; padding:10px 14px; font-size:13px; line-height:1.4; }
+/* grouped multi-food entry: parent over indented children on an orange connector */
+.rn-grp { background:var(--d-surface); border:1px solid var(--d-border); border-radius:16px; padding:11px 14px; box-shadow:0 10px 26px rgba(0,0,0,.4); }
+.rn-grp .par { display:flex; align-items:center; gap:11px; }
+.rn-grp .par .ic { font-size:30px; filter:drop-shadow(0 8px 12px rgba(0,0,0,.5)); }
+.rn-grp .par .nm { font-weight:700; font-size:13.5px; letter-spacing:-.2px; }
+.rn-grp .par .ct { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); margin-top:2px; }
+.rn-grp .kids { margin-top:9px; padding-left:11px; border-left:2px solid var(--d-rust); display:flex; flex-direction:column; gap:8px; }
+.rn-grp .kid { display:flex; align-items:center; gap:9px; }
+.rn-grp .kid .ke { font-size:22px; }
+.rn-grp .kid .kn { flex:1; }
+.rn-grp .kid .kn b { font-size:12.5px; font-weight:600; }
+.rn-grp .kid .kn small { display:block; font-size:10px; color:var(--d-mut); margin-top:1px; }
+.rn-grp .kid .kc { font-size:11.5px; font-weight:700; color:var(--d-text); }
+.rn-grp .kid .kv { color:var(--d-faint); font-size:13px; margin-left:6px; }
+.rn-coach { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:14.5px; color:#CBB9A4; padding-left:4px; }
+.rn-input { display:flex; align-items:center; gap:8px; height:50px; border-radius:999px; background:var(--d-surface); border:1px solid var(--d-border); padding:0 7px 0 16px; font-size:13px; color:var(--d-faint); }
+.rn-input .cam { font-size:13px; filter:grayscale(1); opacity:.85; }
+.rn-input .ph { position:relative; flex:1; height:18px; overflow:hidden; }
+.rn-input .ph i { position:absolute; left:0; top:1px; font-style:normal; white-space:nowrap; }
+.rn-input .ph .p1 { animation:rcGhostA 10s ease-in-out infinite; }
+.rn-input .ph .p2 { color:var(--d-text); opacity:0; animation:rcGhostB 10s ease-in-out infinite; }
+.rn-send { margin-left:2px; width:38px; height:38px; flex:0 0 auto; border-radius:50%; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+/* the log-modes "+" affordance — opens Scan food / Scan menu / Barcode / Label / Saved; white glyph, never orange */
+.rn-plus { width:26px; height:26px; border-radius:999px; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; color:var(--d-text); font-size:17px; font-weight:300; flex:0 0 auto; }
+.rn-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding-bottom:5px; }
+.rn-tab.on { color:var(--d-text); border-bottom:2px solid var(--d-accent); }
+.rn-led { display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid var(--d-rule); }
+.rn-led .lk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); width:64px; flex:0 0 auto; }
+.rn-chip { height:24px; padding:0 10px; border:1px solid var(--d-border); border-radius:999px; display:inline-flex; align-items:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1px; color:var(--d-text); }
+
+/* ---- NUTRITION · meal-centric (rm-) — meals are the single food structure ---- */
+.rm-meal { border-bottom:1px solid var(--d-rule); }
+.rm-head { display:flex; align-items:center; gap:9px; padding:9px 2px; }
+.rm-head .em { font-size:16px; }
+.rm-head .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-text); }
+.rm-head .cal { font-size:11.5px; font-weight:700; color:var(--d-text); font-variant-numeric:tabular-nums; margin-left:7px; }
+.rm-head .ct { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-faint); margin-left:auto; white-space:nowrap; }
+.rm-head .cv { color:var(--d-faint); font-size:13px; margin-left:9px; }
+/* compact muted per-meal P/C/F line (not colored, not bold-emphatic) */
+.rm-macro { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:.8px; color:var(--d-mut); padding:0 2px 8px; margin-top:-3px; }
+/* a flat single-food row nested under a meal */
+.rm-food { display:flex; align-items:center; gap:11px; padding:7px 2px 9px 8px; }
+.rm-food .fr { font-size:30px; flex:0 0 auto; filter:drop-shadow(0 8px 11px rgba(0,0,0,.5)); }
+.rm-food .fb { flex:1; min-width:0; }
+.rm-food .fb b { font-size:13px; font-weight:600; letter-spacing:-.1px; }
+.rm-food .fb small { display:block; font-size:10.5px; color:var(--d-mut); margin-top:1px; }
+.rm-food .fc { font-size:12px; font-weight:700; color:var(--d-text); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rm-food .cv { color:var(--d-faint); font-size:13px; margin-left:8px; }
+/* log-type provenance badge (text / photo / menu scan) */
+.rm-badge { display:inline-flex; align-items:center; gap:3px; height:16px; padding:0 6px; border:1px solid var(--d-border); border-radius:4px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:8px; letter-spacing:1.2px; text-transform:uppercase; color:var(--d-faint); margin-top:4px; }
+.rm-badge.scan { color:var(--d-mut); border-color:var(--d-border); }
+/* a grouped multi-food log nested under a meal: parent + indented children on an orange connector */
+.rm-grp { padding:7px 2px 9px 8px; }
+.rm-grp .par { display:flex; align-items:center; gap:11px; }
+.rm-grp .par .ic { font-size:30px; flex:0 0 auto; filter:drop-shadow(0 8px 11px rgba(0,0,0,.5)); }
+.rm-grp .par .thumb { width:28px; height:28px; flex:0 0 auto; border-radius:6px; border:1px solid var(--d-border); background:linear-gradient(135deg,#2a211a,#15110d); display:flex; align-items:center; justify-content:center; font-size:14px; }
+.rm-grp .par .pn { flex:1; min-width:0; }
+.rm-grp .par .pn b { font-size:13px; font-weight:700; letter-spacing:-.1px; }
+.rm-grp .par .pn .meta { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9px; letter-spacing:1.3px; text-transform:uppercase; color:var(--d-mut); margin-top:3px; }
+.rm-grp .kids { margin-top:9px; margin-left:11px; padding-left:13px; border-left:2px solid var(--d-rust); display:flex; flex-direction:column; gap:9px; }
+.rm-grp .kid { display:flex; align-items:center; gap:9px; }
+.rm-grp .kid .ke { font-size:18px; }
+.rm-grp .kid .kn { flex:1; min-width:0; }
+.rm-grp .kid .kn b { font-size:12px; font-weight:600; }
+.rm-grp .kid .kn small { display:block; font-size:10px; color:var(--d-mut); margin-top:1px; }
+.rm-grp .kid .kc { font-size:11px; font-weight:700; color:var(--d-text); font-variant-numeric:tabular-nums; white-space:nowrap; }
+.rm-grp .kid .kv { color:var(--d-faint); font-size:12px; margin-left:5px; }
+/* transient "added to meal" ghost confirmation */
+.rm-ghost { position:absolute; left:24px; right:24px; bottom:140px; z-index:35; display:flex; align-items:center; gap:8px; height:34px; padding:0 14px; border:1px solid #234034; border-radius:999px; background:rgba(91,228,155,.08); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#5BE49B; opacity:0; animation:rmGhost 10s ease-in-out infinite; }
+@keyframes rmGhost { 0%,60%{opacity:0;transform:translateY(8px)} 66%,82%{opacity:1;transform:none} 88%,100%{opacity:0;transform:translateY(-4px)} }
+
+/* ════════════════════ NAV-CONSISTENCY frame chrome (nv-) ════════════════════ */
+@keyframes nvFill { 0%,12%{width:0} 30%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes nvUl   { 0%,6%{transform:scaleX(0)} 11%,96%{transform:scaleX(1)} 100%{transform:scaleX(0)} }
+@keyframes nvBlink{ 0%,49%{opacity:1} 50%,100%{opacity:.25} }
+.nv-bar { position:absolute; left:0; right:0; bottom:0; height:94px; z-index:30; background:var(--d-bg); border-top:1px solid var(--d-rule); display:flex; align-items:flex-start; padding:11px 8px 0; }
+.nv-it { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.nv-gl { font-size:15px; line-height:1; color:var(--d-mut); filter:grayscale(1); opacity:.55; }
+.nv-lb { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.nv-ul { width:18px; height:2px; border-radius:1px; background:var(--d-accent); transform:scaleX(0); }
+.nv-it.on .nv-gl { filter:none; opacity:1; color:var(--d-accent); }
+.nv-it.on .nv-lb { color:var(--d-accent); }
+.nv-it.on .nv-ul { animation:nvUl 10s ease-out infinite; }
+.nv-plus { position:absolute; right:24px; bottom:110px; width:44px; height:44px; z-index:31; border:1px solid var(--d-border); border-radius:6px; background:var(--d-surface); display:flex; align-items:center; justify-content:center; color:var(--d-text); font-size:24px; font-weight:300; line-height:1; box-shadow:0 10px 24px rgba(0,0,0,.45); }
+.nv-body { position:absolute; left:0; right:0; top:0; bottom:94px; display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+.nv-rule { height:1px; background:var(--d-rule); }
+.nv-slbl { font-size:11px; color:var(--d-mut); }
+.nv-mast { font-size:40px; line-height:.94; margin-top:8px; }
+.nv-mast .mo { color:var(--d-faint); }
+.nv-fill { display:block; height:100%; border-radius:2px; animation:nvFill 10s ease-out infinite; }
+.nv-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.nv-cta { display:flex; align-items:center; justify-content:center; height:48px; border-radius:6px; background:var(--d-accent); color:#160B03; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:16px; letter-spacing:2.5px; text-transform:uppercase; }
+.nv-chip { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 14px; border:1px solid var(--d-border); border-radius:6px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.nv-tcl { display:flex; gap:8px; align-items:center; }
+.nv-ask { width:30px; height:30px; border:1px solid var(--d-border); border-radius:6px; background:var(--d-surface2); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--d-mut); }
+.nv-mchip { display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 10px; border:1px solid var(--d-border); border-radius:6px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-mut); }
+/* HOME mirror bits */
+.nh-greet { font-family:Fraunces,Georgia,serif; font-size:17px; font-style:italic; color:#CBB9A4; margin-top:9px; }
+.nh-coach { display:flex; align-items:baseline; gap:10px; }
+.nh-coach .tx { flex:1; font-size:12.5px; color:#C9C9CF; line-height:1.45; }
+.nh-coach .ch { color:var(--d-faint); font-size:15px; align-self:center; }
+.nh-bell { position:relative; font-size:13px; filter:grayscale(1); opacity:.85; }
+.nh-bell::after { content:''; position:absolute; top:-2px; right:-4px; width:6px; height:6px; border-radius:50%; background:var(--d-mut); }
+.nh-note { display:flex; align-items:center; gap:8px; border:1px solid var(--d-border); border-radius:8px; padding:8px 11px; margin-top:11px; font-size:11.5px; color:#C9C9CF; }
+.nh-note .x { margin-left:auto; color:var(--d-faint); font-size:13px; }
+.nh-task { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.nh-task i { font-style:normal; font-size:11px; color:var(--d-faint); }
+/* WORKOUTS bits */
+.nw-wk { display:flex; margin-top:10px; }
+.nw-wd { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.nw-wd .d { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1.5px; color:var(--d-faint); }
+.nw-wd .mk { height:14px; display:flex; align-items:center; font-size:11px; color:var(--d-faint); }
+.nw-wd .mk.ck { color:#5BE49B; font-weight:700; }
+.nw-wd .mk.td i { width:7px; height:7px; border-radius:50%; background:var(--d-accent); display:block; animation:nvBlink 1.4s steps(1) infinite; }
+.nw-wd .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:8.5px; letter-spacing:1.4px; text-transform:uppercase; color:var(--d-mut); }
+.nw-wd.td .d, .nw-wd.td .nm { color:var(--d-accent); }
+.nw-led { display:flex; align-items:baseline; gap:10px; padding:9px 2px; border-bottom:1px solid var(--d-rule); font-size:12px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.nw-led b { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-text); }
+/* COACH bits */
+.nc-sub { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:15.5px; color:#CBB9A4; margin-top:8px; }
+.nc-cb { align-self:flex-start; max-width:82%; background:#141416; border:1px solid var(--d-border); border-radius:14px 14px 14px 4px; padding:10px 13px; font-size:12.5px; line-height:1.45; color:#C9C9CF; }
+.nc-ub { align-self:flex-end; max-width:74%; background:#1F1F24; border:1px solid var(--d-border); border-radius:14px 14px 4px 14px; padding:10px 13px; font-size:12.5px; line-height:1.45; color:var(--d-text); }
+.nc-act { display:inline-flex; align-items:center; gap:8px; margin-top:9px; padding:7px 11px; border:1px solid var(--d-border); border-top:2px solid var(--d-accent); border-radius:4px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--d-text); }
+.nc-act i { color:#5BE49B; font-style:normal; font-weight:700; }
+.nc-sg { display:inline-flex; align-items:center; height:30px; padding:0 13px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-mut); }
+.nc-comp { display:flex; align-items:center; height:46px; border:1px solid var(--d-border); border-radius:8px; background:var(--d-surface2); padding:0 6px 0 14px; font-size:13px; color:var(--d-faint); }
+.nc-comp .att { font-size:13px; opacity:.6; margin-right:9px; }
+.nc-send { margin-left:auto; width:34px; height:34px; border-radius:6px; background:var(--d-accent); display:flex; align-items:center; justify-content:center; font-size:14px; color:#160B03; font-weight:700; }
+/* NUTRITION mirror bits */
+.nn-tabs { display:flex; align-items:center; gap:18px; }
+.nn-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding-bottom:5px; }
+.nn-tab.on { color:var(--d-text); border-bottom:2px solid var(--d-accent); }
+.nn-kick { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--d-mut); }
+.nn-chev { width:24px; height:24px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:var(--d-mut); }
+.nn-track { height:4px; border-radius:2px; background:var(--d-rule); overflow:hidden; }
+.nn-mline { display:flex; gap:15px; align-items:center; }
+.nn-mline .g { display:flex; align-items:baseline; gap:5px; }
+.nn-mline .g i { width:7px; height:7px; border-radius:50%; align-self:center; }
+.nn-mline .g b { font-family:Anton,sans-serif; font-weight:400; font-size:15px; letter-spacing:.5px; }
+.nn-mline .g b u { text-decoration:none; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:.5px; color:var(--d-mut); }
+.nn-mline .g .mk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.nn-led { display:flex; align-items:center; gap:10px; padding:8px 2px; border-bottom:1px solid var(--d-rule); }
+.nn-led .lk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); width:64px; flex:0 0 auto; }
+.nn-led b { font-size:12px; font-weight:700; color:var(--d-text); font-variant-numeric:tabular-nums; }
+.nn-chip { height:24px; padding:0 10px; border:1px solid var(--d-border); border-radius:999px; display:inline-flex; align-items:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1px; color:var(--d-text); }
+.nn-input { display:flex; align-items:center; gap:9px; height:50px; border-radius:999px; background:var(--d-surface); border:1px solid var(--d-border); padding:0 7px 0 16px; font-size:13.5px; color:var(--d-faint); }
+.nn-input .cam { font-size:14px; filter:grayscale(1); opacity:.85; }
+.nn-send { margin-left:auto; width:38px; height:38px; border-radius:50%; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+/* YOU bits */
+.ny-av { width:46px; height:46px; border:1px solid var(--d-border); border-radius:50%; background:var(--d-surface2); display:flex; align-items:center; justify-content:center; font-family:Anton,sans-serif; font-size:19px; color:var(--d-text); }
+.ny-lv { display:inline-flex; align-items:center; height:22px; padding:0 9px; border:1px solid var(--d-border); border-radius:3px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:10.5px; letter-spacing:2px; color:var(--d-accent); }
+.ny-led { display:flex; align-items:center; gap:10px; padding:11px 2px; border-bottom:1px solid var(--d-rule); position:relative; }
+.ny-led .k { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-text); flex:1; }
+.ny-led .v { font-size:12px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.ny-led .ch { color:var(--d-faint); font-size:14px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ PAGE HEADER ════════════════════ -->
+<div class="hd">
+  <div class="hd-row">
+    <div class="hd-icon">Z</div>
+    <div>
+      <div class="hd-title">ZEALOVA SIGNATURE <span class="o">— THE APP</span></div>
+      <div class="hd-sub">The chosen dark direction, built. The proposed final screens — not before/after pairs.</div>
+    </div>
+  </div>
+  <div class="hd-nav">
+    <a href="#sec-home">A · Home</a>
+    <a href="#sec-workout">B · Active workout</a>
+    <a href="#sec-nutrition">C · Nutrition</a>
+    <a href="#sec-nav">D · Nav consistency</a>
+  </div>
+  <div class="hd-note">One mood, one type system: Anton mastheads and numerals, Barlow Condensed labels, Fraunces serif at the emotional beats, Space&nbsp;Mono telemetry, Inter body. Solid orange spent exactly once per screen; sheets are the only glass surface; macros stay semantic (protein <b style="color:#A855F7">violet</b>, carbs <b style="color:#06B6D4">cyan</b>, fat <b style="color:#F97316">orange</b>). This build corrects two flagged regressions — the <b>peek-next workout carousel</b> is restored on Home, and the <b>inline between-sets rest</b> returns to both workout tiers — and adds the five-room nav-consistency proof. Every frame loop-animates over 10s.</div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION A — HOME (top carousel restored)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="sec" id="sec-home">
+  <div class="sec-kick">Section A · The front page</div>
+  <div class="sec-title">HOME — COACH-FIRST</div>
+  <div class="sec-desc">Home leads with the AI coach — a card carrying the message and a real to-do list (the day's coach tasks with checkboxes + progress), like the current app's coach-insight prominence. Below it: the peek-next workout carousel and a compact FUEL strip. And Home scrolls — the third frame shows what's below the fold: the strength-score ring, the MOVE deck (steps / active kcal / sleep), habits, readiness and timeline. Nothing from today's home is lost.</div>
+</section>
+<div class="row">
+
+  <!-- ── FRAME: HOME ── -->
+  <div class="cell" id="home">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 0;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span style="display:inline-flex;align-items:center;gap:9px;">6,840 steps · 23 🔥<span class="rh-bell">🔔</span><span class="rc-coachbtn">✦</span></span></div>
+        <div class="disp rh-mast lp" style="animation-name:s0;font-size:30px;">THURSDAY <span class="mo">· JUNE 11</span></div>
+        <div class="ser rh-greet lp" style="animation-name:s0;font-size:15px;margin-top:6px;">Evening, Chetan.</div>
+        <!-- slim dismissable trophy banner — restored under the greeting, above the strip -->
+        <div class="rh-note lp" style="animation-name:s1;"><span style="font-size:12px;">🏆</span><span>2 trophies earned yesterday ›</span><span class="x">×</span></div>
+        <div style="height:10px"></div>
+        <!-- glanceable metrics strip — key numbers without scrolling; full deck below the fold -->
+        <div class="hm-strip lp" style="animation-name:s1;">
+          <div class="c"><span class="v">6,840</span><span class="k">Steps</span></div>
+          <div class="c"><span class="v">7:12</span><span class="k">Sleep</span></div>
+          <div class="c acc"><span class="v">82<u>%</u></span><span class="k">Ready</span></div>
+          <div class="c"><span class="v">742</span><span class="k">Score</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- ★ COACH HERO — home leads with the coach message + tasks -->
+        <div class="rh-chero lp" style="animation-name:s2;">
+          <div class="chd">
+            <span class="av">✦</span>
+            <span class="nm">Coach <em>· today's focus</em></span>
+            <span class="when">Day 23</span>
+          </div>
+          <div class="msg">Quads ran light last week — press volume tonight and keep protein up to lock in recovery.</div>
+          <div class="tdl">To do today</div>
+          <div class="rh-todo"><span class="bx"></span><span class="tl">Hit 160g protein</span><span class="pg">96 / 160</span></div>
+          <div class="rh-todo"><span class="bx"></span><span class="tl">10 min mobility after lifting</span><span class="pg">tonight</span></div>
+          <div class="rh-todo dn"><span class="bx">✓</span><span class="tl">Log last night's sleep</span><span class="pg">7h 12m</span></div>
+          <div class="ask">
+            <span>Adjust today</span>
+            <span class="pri">Ask coach ›</span>
+          </div>
+        </div>
+        <div style="height:11px"></div>
+        <!-- WORKOUT CAROUSEL — peek-next hero, now secondary under the coach -->
+        <div class="lp" style="animation-name:s3;">
+          <div class="rc-slbl lbl" style="margin-bottom:8px;">Today's session</div>
+          <div class="rh-car">
+            <div class="rh-cardwrap" style="animation:carPeek 10s ease-in-out infinite;">
+              <div class="rh-card" style="min-height:172px;">
+                <div class="datepill td">Today</div>
+                <div class="ttl">PUSH DAY</div>
+                <div class="sub">Chest &amp; Triceps</div>
+                <div class="meta">8 exercises · 52 min</div>
+                <div class="startbtn rc-cta-anim">Start workout →</div>
+              </div>
+              <div class="rh-card peek rt" style="min-height:172px;margin-right:-66%;">
+                <div class="datepill">Tomorrow</div>
+                <div class="ttl">PULL DAY</div>
+                <div class="sub">Back &amp; Biceps</div>
+                <div class="meta">7 exercises · 48 min</div>
+              </div>
+            </div>
+          </div>
+          <div class="rh-dots">
+            <i class="on" style="animation:carDotPulse 10s ease-in-out infinite;"></i><i></i><i></i>
+          </div>
+        </div>
+        <div class="rc-rule" style="margin:13px 0 10px;"></div>
+        <!-- FUEL compact -->
+        <div class="lp" style="animation-name:s4;display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:baseline;gap:9px;"><span class="rc-slbl lbl">Fuel</span><span class="disp" style="font-size:26px;line-height:1;">1,460</span><span class="rc-slbl lbl" style="font-size:9.5px;">/ 2,200 · 740 left</span></div>
+            <div class="lbl" style="display:flex;gap:14px;font-size:10px;color:var(--d-mut);margin-top:6px;">
+              <span><i class="rc-dot" style="background:#A855F7;"></i>P 96</span><span><i class="rc-dot" style="background:#06B6D4;"></i>C 142</span><span><i class="rc-dot" style="background:#F97316;"></i>F 48</span>
+            </div>
+          </div>
+          <span style="font-size:34px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.5));animation:foodFloat 4.5s ease-in-out infinite;display:inline-block;">🥣</span>
+        </div>
+      </div>
+      <div class="rh-plus">+</div>
+      <nav class="rc-nav2 lp" style="animation-name:s6;">
+        <div class="it on"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">HOME</span>Coach-first — the message leads</div>
+      <div class="cap-why">A glanceable metrics strip sits right under the greeting — STEPS · SLEEP · READY · SCORE, tappable, so the key numbers are seen without scrolling. Then the COACH leads as the focus: a card with the message and a real to-do list (Hit 160g protein 96/160 · 10 min mobility · ✓ logged sleep) plus an Adjust today · Ask coach row. Below, secondary: the peek-next workout carousel and a compact FUEL line. The full activity deck (score ring, steps, sleep, habits, readiness) is one scroll down — third frame.</div>
+      <div class="cap-risk"><b>Risk:</b> coach card + carousel + fuel is a lot above the fold — the carousel shrinks to ~172pt and fuel collapses to one line to keep it all on the SE screen.</div>
+    </div>
+  </div>
+
+  <!-- ── FRAME: HOME · CAROUSEL SWIPED ── -->
+  <div class="cell" id="home-swiped">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 0;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span style="display:inline-flex;align-items:center;gap:9px;">6,840 steps · 23 🔥<span class="rh-bell">🔔</span><span class="rc-coachbtn">✦</span></span></div>
+        <div class="disp rh-mast lp" style="animation-name:s0;font-size:30px;">THURSDAY <span class="mo">· JUNE 11</span></div>
+        <div class="ser rh-greet lp" style="animation-name:s0;font-size:15px;margin-top:6px;">Evening, Chetan.</div>
+        <!-- slim dismissable trophy banner — restored under the greeting, above the strip -->
+        <div class="rh-note lp" style="animation-name:s1;"><span style="font-size:12px;">🏆</span><span>2 trophies earned yesterday ›</span><span class="x">×</span></div>
+        <div style="height:10px"></div>
+        <!-- glanceable metrics strip — key numbers without scrolling; full deck below the fold -->
+        <div class="hm-strip lp" style="animation-name:s1;">
+          <div class="c"><span class="v">6,840</span><span class="k">Steps</span></div>
+          <div class="c"><span class="v">7:12</span><span class="k">Sleep</span></div>
+          <div class="c acc"><span class="v">82<u>%</u></span><span class="k">Ready</span></div>
+          <div class="c"><span class="v">742</span><span class="k">Score</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- ★ COACH HERO (identical to Home — the focus is constant) -->
+        <div class="rh-chero lp" style="animation-name:s2;">
+          <div class="chd">
+            <span class="av">✦</span>
+            <span class="nm">Coach <em>· today's focus</em></span>
+            <span class="when">Day 23</span>
+          </div>
+          <div class="msg">Quads ran light last week — press volume tonight and keep protein up to lock in recovery.</div>
+          <div class="tdl">To do today</div>
+          <div class="rh-todo"><span class="bx"></span><span class="tl">Hit 160g protein</span><span class="pg">96 / 160</span></div>
+          <div class="rh-todo"><span class="bx"></span><span class="tl">10 min mobility after lifting</span><span class="pg">tonight</span></div>
+          <div class="rh-todo dn"><span class="bx">✓</span><span class="tl">Log last night's sleep</span><span class="pg">7h 12m</span></div>
+          <div class="ask">
+            <span>Adjust today</span>
+            <span class="pri">Ask coach ›</span>
+          </div>
+        </div>
+        <div style="height:11px"></div>
+        <!-- ▶ CAROUSEL ADVANCED ONE PAGE — card 2 centered, card 1 & card 3 peek -->
+        <div class="lp" style="animation-name:s3;">
+          <div class="rc-slbl lbl" style="margin-bottom:8px;">Tomorrow's session</div>
+          <div class="rh-car">
+            <div class="rh-cardwrap" style="margin-left:-30%;">
+              <div class="rh-card peek" style="min-height:172px;margin-left:-12%;flex-basis:42%;">
+                <div class="datepill td">Today</div>
+                <div class="ttl" style="font-size:24px;">PUSH</div>
+                <div class="sub" style="font-size:11px;">Chest</div>
+              </div>
+              <div class="rh-card" style="min-height:172px;flex-basis:78%;">
+                <div class="datepill">Tomorrow</div>
+                <div class="ttl">PULL DAY</div>
+                <div class="sub">Back &amp; Biceps</div>
+                <div class="meta">7 exercises · 48 min</div>
+                <div class="startbtn" style="background:var(--d-surface2);color:var(--d-mut);border:1px solid var(--d-border);">Preview plan ›</div>
+              </div>
+              <div class="rh-card peek rt rest" style="min-height:172px;flex-basis:42%;margin-right:-12%;">
+                <div class="datepill">Friday</div>
+                <div class="ttl" style="font-size:24px;">REST</div>
+                <div class="sub" style="font-size:11px;">Recovery</div>
+              </div>
+            </div>
+          </div>
+          <div class="rh-dots">
+            <i></i><i class="on" style="animation:carDotPulse 10s ease-in-out infinite;"></i><i></i>
+          </div>
+        </div>
+        <div class="rc-rule" style="margin:13px 0 10px;"></div>
+        <!-- FUEL compact -->
+        <div class="lp" style="animation-name:s4;display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:baseline;gap:9px;"><span class="rc-slbl lbl">Fuel</span><span class="disp" style="font-size:26px;line-height:1;">1,460</span><span class="rc-slbl lbl" style="font-size:9.5px;">/ 2,200 · 740 left</span></div>
+            <div class="lbl" style="display:flex;gap:14px;font-size:10px;color:var(--d-mut);margin-top:6px;">
+              <span><i class="rc-dot" style="background:#A855F7;"></i>P 96</span><span><i class="rc-dot" style="background:#06B6D4;"></i>C 142</span><span><i class="rc-dot" style="background:#F97316;"></i>F 48</span>
+            </div>
+          </div>
+          <span style="font-size:34px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.5));animation:foodFloat 4.5s ease-in-out infinite;display:inline-block;">🥣</span>
+        </div>
+      </div>
+      <div class="rh-plus">+</div>
+      <nav class="rc-nav2 lp" style="animation-name:s6;">
+        <div class="it on"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">HOME · SWIPED</span>Coach stays, the carousel swipes</div>
+      <div class="cap-why">Same coach-first home — the coach card is the constant focus — and below it the workout carousel swipes: here it has advanced one page (TOMORROW · PULL DAY centered, TODAY peeking left, FRIDAY · REST DAY peeking right, second dot active). Peek-next + page dots, just like the current app's hero carousel.</div>
+      <div class="cap-risk"><b>Risk:</b> the carousel is now secondary — make sure its swipe affordance (peek + dots) still reads clearly under the coach card.</div>
+    </div>
+  </div>
+
+  <!-- ── FRAME: HOME · SCROLLED — score / steps / sleep below the fold ── -->
+  <div class="cell" id="home-scrolled">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:48px 24px 0;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--d-faint);border-bottom:1px solid var(--d-rule);padding-bottom:9px;"><span>↑ Thursday · Home</span><span>6,840 steps · 23 🔥</span></div>
+        <div style="height:14px"></div>
+        <!-- STRENGTH-SCORE breakdown — typographic, no ring (steps/sleep already live on the top strip) -->
+        <div class="lp" style="animation-name:s1;">
+          <div class="rc-slbl lbl" style="margin-bottom:9px;">Strength</div>
+          <div style="display:flex;align-items:baseline;gap:11px;">
+            <div class="disp" style="font-size:48px;line-height:.9;">742</div>
+            <div class="lbl" style="font-size:11px;letter-spacing:1px;color:var(--d-accent);line-height:1.35;">+18 this week<br>top 12%</div>
+          </div>
+          <div style="height:11px"></div>
+          <div class="hm-sb"><span class="k">Push</span><span class="bar"><i style="width:88%;"></i></span><span class="n">88</span></div>
+          <div class="hm-sb"><span class="k">Pull</span><span class="bar"><i style="width:81%;"></i></span><span class="n">81</span></div>
+          <div class="hm-sb"><span class="k">Legs</span><span class="bar"><i style="width:74%;"></i></span><span class="n">74</span></div>
+          <div class="lbl lp" style="animation-name:s1;font-size:10px;color:var(--d-faint);margin-top:9px;">Full breakdown ›</div>
+        </div>
+        <div class="rc-rule" style="margin:15px 0 10px;"></div>
+        <!-- HABITS -->
+        <div class="lp" style="animation-name:s2;">
+          <div class="rc-slbl lbl" style="margin-bottom:3px;">Habits</div>
+          <div class="hm-hab"><span style="font-size:14px;">💧</span><span class="nm">Water · 6 of 8</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+          <div class="hm-hab"><span style="font-size:14px;">🥩</span><span class="nm">Protein streak</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+          <div class="hm-hab" style="border-bottom:0;"><span style="font-size:14px;">🧘</span><span class="nm">Mobility</span><span class="dots"><i class="on"></i><i></i><i class="on"></i><i></i><i></i></span></div>
+        </div>
+        <div class="rc-rule" style="margin:11px 0 10px;"></div>
+        <!-- READINESS + TIMELINE -->
+        <div class="lp rh-coach" style="animation-name:s3;align-items:center;"><span class="rc-slbl lbl">Readiness</span><span class="tx" style="font-size:12.5px;">82% — recovered, good to push tonight.</span><span class="ch">›</span></div>
+        <div class="rc-rule" style="margin:10px 0 10px;"></div>
+        <div class="lp rh-coach" style="animation-name:s4;align-items:center;"><span class="rc-slbl lbl">Timeline</span><span class="tx" style="font-size:12.5px;">Today's activity, meals &amp; workout ›</span><span class="ch">›</span></div>
+        <div style="flex:1"></div>
+        <div class="hm-scrollhint lp" style="animation-name:s5;padding-bottom:12px;">▲ scroll up for coach &amp; workout</div>
+      </div>
+      <nav class="rc-nav2 lp" style="animation-name:s6;">
+        <div class="it on"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">HOME · SCROLLED</span>Score · steps · sleep — below the fold</div>
+      <div class="cap-why">The top strip covers the glance; below the fold goes deeper — the strength-score breakdown (742 · +18 this week · top 12%, with PUSH/PULL/LEGS sub-scores on hairline bars), habit streaks, readiness and timeline. No ring, no duplication: steps and sleep already live on the top strip, so this leads with what the strip can't show — a real score breakdown — and orders the rest by what you check most.</div>
+      <div class="cap-risk"><b>Risk:</b> it's a longer scroll — the existing My Space reorder/hide control lets users prune sections they don't use.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION B — ACTIVE WORKOUT (inline rest restored on both tiers)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="sec" id="sec-workout">
+  <div class="sec-kick">Section B · The bench view</div>
+  <div class="sec-title">ACTIVE WORKOUT — INLINE REST RESTORED</div>
+  <div class="sec-desc">The real app's between-sets rest is an inline row inside the flow — timer, ±15s, Skip, a draining bar, an adaptation chip — never a full-screen takeover. The Advanced cockpit gets the full-width rest row mid-table; the Easy poster gets the slim rest strip docked in-flow. The whole table, targets, RIR and next set stay visible the entire time.</div>
+</section>
+<div class="row">
+
+  <!-- ── FRAME: ADVANCED · INLINE REST ── -->
+  <div class="cell" id="adv-rest">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:52px 24px 22px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:12px;color:var(--d-mut);">
+          <span>← Exit</span><span style="font-variant-numeric:tabular-nums;color:var(--d-text);">22:41</span>
+        </div>
+        <div class="rc-rule" style="margin-top:9px;"></div>
+        <div class="lp" style="animation-name:s1;display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;">
+          <span class="lbl" style="font-size:11px;color:var(--d-mut);">Exercise 4 of 8 · Advanced</span>
+          <span class="lbl" style="font-size:10.5px;color:var(--d-mut);"><span style="color:#EF4444;animation:rcBlink 1.1s steps(1) infinite;">♥</span> 132 · 🔥 312</span>
+        </div>
+        <div class="disp rw-mast lp" style="animation-name:s1;font-size:22px;margin-top:5px;">INCLINE DUMBBELL PRESS</div>
+        <div class="lbl lp" style="animation-name:s1;font-size:10px;color:var(--d-mut);margin-top:3px;">Pyramid · +5 lb per set</div>
+        <!-- power tools -->
+        <div class="rw-chips lp" style="animation-name:s2;margin-top:8px;">
+          <div class="rw-lkchip">Swap</div>
+          <div class="rw-lkchip">Adjust</div>
+          <div class="rw-lkchip">Pyramid</div>
+          <div class="rw-lkchip">Superset</div>
+          <div class="rw-lkchip">L·R</div>
+        </div>
+        <!-- last sessions + today's target -->
+        <div class="ra-hist lp" style="animation-name:s2;margin-top:8px;">
+          <span class="ra-hpill">Jun 4 · 55×8</span>
+          <span class="ra-hpill">Jun 6 · 55×10</span>
+          <span class="ra-hpill">Jun 9 · 60×8</span>
+          <span class="ra-hpill tg">Today · 60×8</span>
+        </div>
+        <div style="height:7px"></div>
+        <!-- full set table on hairlines -->
+        <div class="ra-th lp" style="animation-name:s3;">
+          <span class="ra-c1">Set</span><span class="ra-c2">Prev</span><span class="ra-c3">Target</span><span class="ra-c4">LB</span><span class="ra-c5">Reps</span><span class="ra-c6">RIR</span><span class="ra-c7">✓</span>
+        </div>
+        <div class="ra-tr done lp" style="animation-name:s3;">
+          <span class="ra-c1">1</span><span class="ra-c2">50 × 10</span><span class="ra-c3 ra-tg">55×10·R3</span><span class="ra-c4">55</span><span class="ra-c5">10</span><span class="ra-c6">3</span><span class="ra-c7 ck">✓</span>
+        </div>
+        <div class="ra-tr done lp" style="animation-name:s3;">
+          <span class="ra-c1">2</span><span class="ra-c2">55 × 8</span><span class="ra-c3 ra-tg">60×8·R2</span><span class="ra-c4">60</span><span class="ra-c5">8</span><span class="ra-c6">2</span><span class="ra-c7 ck">✓</span>
+        </div>
+        <!-- ▶ row 3 just logged ✓ -->
+        <div class="ra-tr done lp" style="animation-name:s4;">
+          <span class="ra-c1">3</span><span class="ra-c2">55 × 8</span><span class="ra-c3 ra-tg">60×8·R1</span><span class="ra-c4">60</span><span class="ra-c5">8</span><span class="ra-c6">1</span><span class="ra-c7 ck">✓</span>
+        </div>
+        <!-- ▶ INLINE REST ROW — spans the table width, between logged row 3 and active row 4 -->
+        <div class="ir-row lp" style="animation-name:s5;">
+          <div class="top">
+            <span class="rl">Rest</span>
+            <span class="tm">1:28</span>
+            <span class="bar"><i></i></span>
+            <span class="ctls"><span class="ctl">−15</span><span class="ctl sk">Skip</span><span class="ctl">+15</span></span>
+          </div>
+          <span class="adapt">↗ Adding +5 lb next set</span>
+        </div>
+        <!-- ▶ row 4 active, below the rest row, with the edit strip -->
+        <div class="ra-tr act lp" style="animation-name:s6;">
+          <span class="ra-c1">4</span><span class="ra-c2">55 × 6</span><span class="ra-c3 ra-tg">65×8·R1</span>
+          <span class="ra-c4"><span class="ra-val"><b class="rw-edit">65</b></span></span>
+          <span class="ra-c5"><span class="ra-val"><b class="rw-edit">8</b></span></span>
+          <span class="ra-c6">1</span>
+          <span class="ra-c7" style="color:var(--d-faint);">☐</span>
+        </div>
+        <div class="ra-strip">
+          <div class="inner">
+            <div class="ra-lane">
+              <div class="ra-big">−</div>
+              <div class="ra-scrub"><i class="tk"></i><span class="gh" style="left:13%;">60</span><span class="th">65 LB</span><span class="gh" style="right:13%;">70</span></div>
+              <div class="ra-big">+</div>
+            </div>
+            <div class="ra-lane" style="margin-top:6px;">
+              <div class="ra-big sm">−</div>
+              <div class="ra-scrub sm"><i class="tk"></i><span class="gh" style="left:13%;">7</span><span class="th">8 REPS</span><span class="gh" style="right:13%;">9</span></div>
+              <div class="ra-big sm">+</div>
+            </div>
+          </div>
+        </div>
+        <div class="rw-cta rc-cta-anim" style="height:44px;margin-top:7px;">Log set — 65 × 8</div>
+        <!-- utilities -->
+        <div class="ra-util lp" style="animation-name:s7;margin-top:8px;">
+          <div class="rw-lkchip">🫁 Breathe</div>
+          <div class="rw-lkchip">💧 Drink</div>
+          <div class="rw-lkchip">✎ Note</div>
+          <div class="rw-lkchip">✦ Ask coach</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="rw-rail lp" style="animation-name:s8;justify-content:space-between;">
+          <div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div>
+          <div class="rw-cell cur">4</div>
+          <div class="rw-cell">5</div><div class="rw-cell">6</div><div class="rw-cell">7</div><div class="rw-cell">8</div>
+        </div>
+        <div class="lp" style="animation-name:s9;display:flex;justify-content:space-between;align-items:center;margin-top:10px;">
+          <div class="rw-chip" style="height:28px;font-size:10.5px;padding:0 11px;">Next · Cable Fly</div>
+          <span class="lbl" style="font-size:10.5px;color:var(--d-faint);">22:41 · 312 KCAL · 8,420 LB</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">ADVANCED</span>Inline rest, mid-table</div>
+      <div class="cap-why">This is the app's REAL inline-between-sets rest, restyled — never a full-screen takeover; you keep the whole table, targets, RIR, next set all visible. The full cockpit is intact (♥132·🔥312, Pyramid subtitle, Swap/Adjust/Pyramid/Superset/L·R chips, last-sessions strip, SET·PREV·TARGET·LB·REPS·RIR·✓ table), and between the just-logged row 3 and the active row 4 an ember rest row spans the table — REST · 1:28, draining bar, −15 / Skip / +15, and an "↗ ADDING +5 LB NEXT SET" adaptation chip.</div>
+      <div class="cap-risk"><b>Risk:</b> the rest row adds a line mid-table — collapse it to a slim strip once &lt;10s.</div>
+    </div>
+  </div>
+
+  <!-- ── FRAME: EASY · INLINE REST ── -->
+  <div class="cell" id="easy-rest">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 26px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:12px;color:var(--d-mut);">
+          <span>← Exit</span><span style="font-variant-numeric:tabular-nums;color:var(--d-text);">22:41</span>
+        </div>
+        <div class="rc-rule" style="margin-top:11px;"></div>
+        <div class="lbl lp" style="animation-name:s1;font-size:11.5px;color:var(--d-mut);margin-top:11px;">Set 3 of 4 · Exercise 4 of 8</div>
+        <div class="disp rw-mast lp" style="animation-name:s1;">INCLINE<br>DUMBBELL PRESS</div>
+        <div class="rw-chips lp" style="animation-name:s2;margin-top:9px;">
+          <div class="rw-lkchip">▶ Video</div>
+          <div class="rw-lkchip">Plan</div>
+          <div class="rw-lkchip">✎ Note</div>
+          <div class="rw-lkchip">🫁 Breathe</div>
+          <div class="rw-lkchip">⋯</div>
+        </div>
+        <div style="flex:.4;"></div>
+        <!-- the poster -->
+        <div class="disp rw-poster lp" style="animation-name:s2;font-size:66px;"><span class="ed">60</span><small>LB</small><span class="rw-pencil" style="vertical-align:34px;">✎</span><span class="x">×</span><span class="ed">8</span></div>
+        <div class="ser rw-whisper lp" style="animation-name:s3;margin-top:7px;font-size:15.5px;">Last time you did 55. Push.</div>
+        <div class="lp" style="animation-name:s4;">
+          <div class="rw-srow">
+            <span class="k lbl">Weight</span>
+            <div class="rw-sq2">−</div>
+            <div class="val"><div class="disp" style="font-size:28px;line-height:1;">60<small style="font-family:'Barlow Condensed',sans-serif;font-weight:700;">LB</small><span class="rw-pencil" style="vertical-align:11px;font-size:11px;">✎</span></div><div class="rw-track"><i></i></div></div>
+            <div class="rw-sq2">+</div>
+          </div>
+          <div class="rw-srow">
+            <span class="k lbl">Reps</span>
+            <div class="rw-sq2">−</div>
+            <div class="val"><div class="disp" style="font-size:28px;line-height:1;">8<span class="rw-pencil" style="vertical-align:11px;font-size:11px;">✎</span></div><div class="rw-track" style="width:72px;"><i></i></div></div>
+            <div class="rw-sq2">+</div>
+          </div>
+        </div>
+        <!-- set ledger -->
+        <div class="lp" style="animation-name:s5;margin-top:11px;">
+          <div class="rw-led"><b>1</b><span>55 × 10</span><span class="ck">✓</span></div>
+          <div class="rw-led"><b>2</b><span>60 × 8</span><span class="ck">✓</span></div>
+          <div class="rw-led act"><b>3</b><span>60 × <span class="cu">—</span></span><span class="dn">60 × 8 ✓</span></div>
+        </div>
+        <!-- ▶ INLINE REST STRIP — docked in-flow right under the focal set ledger -->
+        <div class="ir-strip lp" style="animation-name:s6;margin-top:11px;">
+          <span class="rl">Rest</span>
+          <span class="tm">1:28</span>
+          <span style="width:1px;height:18px;background:var(--d-ember);"></span>
+          <span class="ctl">−15</span><span class="ctl sk">Skip</span><span class="ctl">+15</span>
+          <span class="nx" style="margin-left:auto;">Next · Cable Fly 55×8</span>
+        </div>
+        <div class="lp" style="animation-name:s6;display:flex;justify-content:flex-end;margin-top:7px;">
+          <div class="rw-lkchip">💧 Drink</div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="rw-cta rc-cta-anim" style="height:52px;margin-top:8px;">Log set — 60 × 8</div>
+        <!-- persistent footer: coach + exercise rail -->
+        <div class="lp" style="animation-name:s7;display:flex;gap:7px;margin-top:11px;">
+          <div class="rw-lkchip" style="flex:1;justify-content:center;height:32px;font-size:11px;">✦ Ask coach</div>
+        </div>
+        <div class="rw-rail lp" style="animation-name:s8;margin-top:11px;justify-content:space-between;">
+          <div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div>
+          <div class="rw-cell cur">4</div>
+          <div class="rw-cell">5</div><div class="rw-cell">6</div><div class="rw-cell">7</div><div class="rw-cell">8</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">EASY</span>Inline rest strip, in-flow</div>
+      <div class="cap-why">Easy gets inline rest too — the poster stays, rest lives in the flow, no takeover. Under the focal set ledger sits a slim ember strip ("REST 1:28 · −15 · SKIP · +15" + "NEXT · CABLE FLY 55×8" + a 💧 DRINK chip), above the persistent ASK COACH / exercise-rail footer — not a separate sheet, not full-screen.</div>
+      <div class="cap-risk"><b>Risk:</b> Easy currently uses a full-screen overlay; this proposes unifying both tiers on inline rest.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION C — NUTRITION (meal-centric — meals are the single structure)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="sec" id="sec-nutrition">
+  <div class="sec-kick">Section C · The fuel ledger</div>
+  <div class="sec-title">NUTRITION — MEALS ARE THE STRUCTURE</div>
+  <div class="sec-desc">Meals are the single source of truth — no duplicate conversational feed. Every food is filed under its meal (Breakfast / Lunch / Dinner / Snacks); the meal sections ARE the record, collapsible and expandable. A single food is a flat row, a multi-food entry is a grouped parent + children, and a menu-scan log carries a MENU SCAN badge + thumbnail — provenance (text / photo / menu scan) is preserved per entry. The "Log food, water, anything…" composer is just input: it files each log into the right meal by time, with a transient "✓ Added to Lunch" ghost — the durable record stays in the meal sections.</div>
+</section>
+<div class="row">
+
+  <!-- ── FRAME 1: NUTRITION · DAY (collapsed overview) ── -->
+  <div class="cell" id="nutrition">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 0;">
+        <!-- segmented tabs + saved hub + ✦ -->
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:16px;">
+          <div class="rn-tab on">Daily</div>
+          <div class="rn-tab">Recipes</div>
+          <div class="rn-tab">Patterns</div>
+          <span class="rn-chip" style="margin-left:auto;gap:4px;"><span style="filter:grayscale(1);font-size:11px;">🔖</span>Saved</span>
+          <span class="rc-coachbtn" style="margin-left:-8px;">✦</span>
+        </div>
+        <div style="height:9px"></div>
+        <!-- simple date: chevrons only -->
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:12px;">
+          <span class="rn-chev">‹</span>
+          <span class="rn-kick" style="flex:1;text-align:center;">Today — June 11</span>
+          <span class="rn-chev">›</span>
+        </div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:center;gap:11px;margin-top:4px;">
+          <div class="disp" style="font-size:54px;line-height:.95;">1,460</div>
+          <span class="rn-chip">Targets · 2,200 kcal ▸</span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="rn-track lp" style="animation-name:s1;"><i class="rc-fill" style="background:var(--d-mut);--w:66%;"></i></div>
+        <div style="height:8px"></div>
+        <!-- consumed / target -->
+        <div class="rn-mline lp" style="animation-name:s2;">
+          <div class="g"><i style="background:#A855F7;"></i><b>96<u>/160</u></b><span class="mk">P</span></div>
+          <div class="g"><i style="background:#06B6D4;"></i><b>142<u>/220</u></b><span class="mk">C</span></div>
+          <div class="g"><i style="background:#F97316;"></i><b>48<u>/73</u></b><span class="mk">F</span></div>
+        </div>
+        <div class="lbl lp" style="animation-name:s2;font-size:10px;color:var(--d-mut);margin-top:6px;">64g protein left · 740 kcal left</div>
+        <div style="height:7px"></div>
+        <!-- THE MEAL SECTIONS — the single, primary food structure (collapsed) -->
+        <div class="rm-meal lp" style="animation-name:s3;border-top:1px solid var(--d-rule);">
+          <div class="rm-head"><span class="em">🍳</span><span class="nm">Breakfast</span><span class="cal">290 cal</span><span class="ct">1 item</span><span class="cv">›</span></div>
+          <div class="rm-macro">12P · 40C · 7F</div>
+        </div>
+        <div class="rm-meal lp" style="animation-name:s3;">
+          <div class="rm-head"><span class="em">🥗</span><span class="nm">Lunch</span><span class="cal">480 cal</span><span class="ct">2 items</span><span class="cv">›</span></div>
+          <div class="rm-macro">38P · 44C · 16F</div>
+        </div>
+        <div class="rm-meal lp" style="animation-name:s4;">
+          <div class="rm-head"><span class="em">🍝</span><span class="nm">Dinner</span><span class="cal">520 cal</span><span class="ct" style="color:var(--d-mut);">menu scan · 3 items</span><span class="cv">›</span></div>
+          <div class="rm-macro">40P · 38C · 18F</div>
+        </div>
+        <div class="rm-meal lp" style="animation-name:s4;">
+          <div class="rm-head"><span class="em">🍎</span><span class="nm">Snacks</span><span class="cal">170 cal</span><span class="ct">1 item</span><span class="cv">›</span></div>
+          <div class="rm-macro">6P · 20C · 7F</div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- water · fasting · micros -->
+        <div class="rn-led lp" style="animation-name:s6;border-top:1px solid var(--d-rule);padding:7px 2px;">
+          <span class="lk">Water</span>
+          <b style="font-size:12px;font-weight:700;color:var(--d-text);">1.4 / 2.5 L</b>
+          <span class="rn-chip" style="margin-left:auto;">+250</span><span class="rn-chip">+500</span>
+        </div>
+        <div class="rn-led lp" style="animation-name:s7;padding:7px 2px;">
+          <span class="lk">Fasting</span>
+          <b style="font-size:12px;font-weight:700;color:var(--d-text);">16:8 schedule</b>
+          <span style="margin-left:auto;color:var(--d-faint);">›</span>
+        </div>
+        <div class="rn-led lp" style="animation-name:s8;padding:7px 2px;">
+          <span class="lk">Micros</span>
+          <b style="font-size:11px;font-weight:600;color:var(--d-text);">Iron 62% · Mg 78% · Vit D 41%</b>
+          <span style="margin-left:auto;color:var(--d-faint);font-size:10.5px;white-space:nowrap;">full panel ›</span>
+        </div>
+        <div style="flex:1"></div>
+        <!-- log-anything composer = the universal input -->
+        <div class="rn-input lp" style="animation-name:s9;padding:0 7px 0 8px;">
+          <span class="rn-plus">+</span>
+          <span class="ph"><i class="p1">Log food, water, anything…</i><i class="p2">half an avocado 🥑</i></span>
+          <span class="cam">🎤</span>
+          <div class="rn-send">↑</div>
+        </div>
+        <div style="height:84px"></div>
+      </div>
+      <!-- transient confirmation after a log — files into the right meal; the meal section is the durable record -->
+      <div class="rm-ghost">✓ Added to Lunch</div>
+      <nav class="rc-nav2 lp" style="animation-name:s9;">
+        <div class="it"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it on"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">NUTRITION · DAY</span>Meals are the only structure</div>
+      <div class="cap-why">Meals are the single structure; no duplicate feed. The four collapsible meal sections (BREAKFAST 1 item · LUNCH 2 items · DINNER menu scan 3 items · SNACKS 1 item) ARE the food record — there's no separate conversational "LOG" repeating the same foods. The composer files each log into the right meal by time (or you pick), flashing a transient "✓ Added to Lunch" ghost; the durable record is the meal section it landed in.</div>
+      <div class="cap-risk"><b>Risk:</b> the old design showed both a meal ledger AND a log feed — the same food appeared twice; folding everything into meals removes the duplicate.</div>
+    </div>
+  </div>
+
+  <!-- ── FRAME 2: NUTRITION · MEALS EXPANDED (mixed foods + mixed log types) ── -->
+  <div class="cell" id="nutrition-expanded">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:16px;">
+          <div class="rn-tab on">Daily</div>
+          <div class="rn-tab">Recipes</div>
+          <div class="rn-tab">Patterns</div>
+          <span class="rn-chip" style="margin-left:auto;gap:4px;"><span style="filter:grayscale(1);font-size:11px;">🔖</span>Saved</span>
+          <span class="rc-coachbtn" style="margin-left:-8px;">✦</span>
+        </div>
+        <div style="height:9px"></div>
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:12px;">
+          <span class="rn-chev">‹</span>
+          <span class="rn-kick" style="flex:1;text-align:center;">Today — June 11</span>
+          <span class="rn-chev">›</span>
+        </div>
+        <div style="height:8px"></div>
+        <!-- compact macro strip (numeral lives on the collapsed view; expanded view is about the meals) -->
+        <div class="rn-mline lp" style="animation-name:s1;">
+          <div class="g"><span class="disp" style="font-size:24px;line-height:1;">1,460</span><span class="mk" style="margin-left:3px;">of 2,200</span></div>
+          <div class="g" style="margin-left:auto;"><i style="background:#A855F7;"></i><b>96<u>/160</u></b><span class="mk">P</span></div>
+          <div class="g"><i style="background:#06B6D4;"></i><b>142<u>/220</u></b><span class="mk">C</span></div>
+          <div class="g"><i style="background:#F97316;"></i><b>48<u>/73</u></b><span class="mk">F</span></div>
+        </div>
+        <div style="height:9px"></div>
+        <!-- BREAKFAST — one flat food, logged via text -->
+        <div class="rm-meal lp" style="animation-name:s2;border-top:1px solid var(--d-rule);">
+          <div class="rm-head"><span class="em">🍳</span><span class="nm">Breakfast</span><span class="cal">290</span><span class="cv" style="margin-left:auto;">▾</span></div>
+          <div class="rm-food">
+            <span class="fr" style="animation:foodFloat 4.5s ease-in-out infinite;">🥣</span>
+            <div class="fb"><b>Oatmeal &amp; Berries</b><small>1 bowl · 290 cal · 12P 40C 7F</small><span class="rm-badge">✎ Text</span></div>
+            <span class="fc">290</span><span class="cv">›</span>
+          </div>
+        </div>
+        <!-- LUNCH — a 2-item grouped log from one entry -->
+        <div class="rm-meal lp" style="animation-name:s3;">
+          <div class="rm-head"><span class="em">🥗</span><span class="nm">Lunch</span><span class="cal">480</span><span class="cv" style="margin-left:auto;">▾</span></div>
+          <div class="rm-grp">
+            <div class="par">
+              <span class="ic" style="animation:foodFloat 4.5s ease-in-out infinite;">🍣</span>
+              <div class="pn"><b>Salmon Poke Bowl + 1 more</b><div class="meta">2 items · 480 cal · ✎ text</div></div>
+            </div>
+            <div class="kids">
+              <div class="kid"><span class="ke">🍣</span><div class="kn"><b>Salmon Poke Bowl</b><small>1 bowl · 420 g · 410 cal · 34P 36C 13F</small></div><span class="kc">410</span><span class="kv">›</span></div>
+              <div class="kid"><span class="ke">🍵</span><div class="kn"><b>Iced Matcha</b><small>16 oz · 70 cal · 4P 8C 3F</small></div><span class="kc">70</span><span class="kv">›</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- DINNER — a MENU-SCAN log: provenance badge + menu photo thumbnail -->
+        <div class="rm-meal lp" style="animation-name:s4;">
+          <div class="rm-head"><span class="em">🍝</span><span class="nm">Dinner</span><span class="cal">520</span><span class="cv" style="margin-left:auto;">▾</span></div>
+          <div class="rm-grp">
+            <div class="par">
+              <span class="thumb">📋</span>
+              <div class="pn"><b>"The Grill"</b><div class="meta"><span class="rm-badge scan" style="margin-top:0;">▦ Menu scan</span> · 3 items · 520 cal</div></div>
+            </div>
+            <div class="kids">
+              <div class="kid"><span class="ke">🍗</span><div class="kn"><b>Grilled Chicken Plate</b><small>1 plate · 300 cal · 32P 6C 14F</small></div><span class="kc">300</span><span class="kv">›</span></div>
+              <div class="kid"><span class="ke">🥗</span><div class="kn"><b>House Salad</b><small>1 bowl · 110 cal · 4P 14C 4F</small></div><span class="kc">110</span><span class="kv">›</span></div>
+              <div class="kid"><span class="ke">🍚</span><div class="kn"><b>Side Rice</b><small>1 side · 110 cal · 4P 18C 0F</small></div><span class="kc">110</span><span class="kv">›</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- SNACKS — one flat food, logged via photo -->
+        <div class="rm-meal lp" style="animation-name:s5;">
+          <div class="rm-head"><span class="em">🍎</span><span class="nm">Snacks</span><span class="cal">170</span><span class="cv" style="margin-left:auto;">▾</span></div>
+          <div class="rm-food">
+            <span class="fr" style="animation:foodFloat 4.5s ease-in-out infinite;">🥛</span>
+            <div class="fb"><b>Greek Yogurt &amp; Honey</b><small>1 cup · 170 cal · 6P 20C 7F</small><span class="rm-badge">📷 Photo</span></div>
+            <span class="fc">170</span><span class="cv">›</span>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="rn-input lp" style="animation-name:s9;padding:0 7px 0 8px;">
+          <span class="rn-plus">+</span>
+          <span class="ph"><i class="p1">Log food, water, anything…</i><i class="p2">scan a menu 📋</i></span>
+          <span class="cam">🎤</span>
+          <div class="rn-send">↑</div>
+        </div>
+        <div style="height:84px"></div>
+      </div>
+      <nav class="rc-nav2 lp" style="animation-name:s9;">
+        <div class="it"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it on"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">NUTRITION · EXPANDED</span>1 breakfast · 2 lunch · menu-scan dinner</div>
+      <div class="cap-why">This answers "how does it show with 1 breakfast / 2 lunch / menu-scan dinner": every food is filed under its meal. Single foods are flat rows (Oatmeal, Greek Yogurt), a multi-food entry is one grouped parent + indented children on an orange connector (Salmon Poke Bowl + Iced Matcha under Lunch), and a menu-scan log carries a MENU SCAN badge + photo thumbnail (The Grill's 3 items under Dinner). Per-entry log-type badges (✎ text / 📷 photo / ▦ menu scan) keep provenance visible across meals; tap any food row → detail.</div>
+      <div class="cap-risk"><b>Risk:</b> a heavy day gets tall — meals collapse by default and expand on tap; a "collapse all" control keeps the page scannable.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     SECTION D — NAV CONSISTENCY (five rooms, one bar)
+     ════════════════════════════════════════════════════════════════ -->
+<section class="sec" id="sec-nav">
+  <div class="sec-kick">Section D · System proof</div>
+  <div class="sec-title">ONE NAV, FIVE ROOMS</div>
+  <div class="sec-desc">One nav spec, five rooms — same geometry, type and spacing, only the active item changes. The outlined "+" docks only on Home / Workouts / You; the ✦ ask-coach sits in every non-coach masthead; Coach carries ⌛ History + New and a 📎/🎤 composer.</div>
+</section>
+<div class="row">
+
+  <!-- ════ TAB 1 — HOME ════ -->
+  <div class="cell" id="nav-home">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body" style="padding-top:54px;">
+        <!-- MIRROR of #home (canonical), compressed for the nav-strip context -->
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span style="display:inline-flex;align-items:center;gap:9px;">6,840 steps · 23 🔥<span class="nh-bell">🔔</span><span class="nv-ask">✦</span></span></div>
+        <div class="disp rh-mast lp" style="animation-name:s0;font-size:30px;">THURSDAY <span class="mo">· JUNE 11</span></div>
+        <div class="ser nh-greet lp" style="animation-name:s0;font-size:15px;margin-top:6px;">Evening, Chetan.</div>
+        <!-- slim dismissable trophy banner — restored under the greeting, above the strip -->
+        <div class="nh-note lp" style="animation-name:s1;"><span style="font-size:12px;">🏆</span><span>2 trophies earned yesterday ›</span><span class="x">×</span></div>
+        <div style="height:10px"></div>
+        <!-- glanceable metrics strip -->
+        <div class="hm-strip lp" style="animation-name:s1;">
+          <div class="c"><span class="v">6,840</span><span class="k">Steps</span></div>
+          <div class="c"><span class="v">7:12</span><span class="k">Sleep</span></div>
+          <div class="c acc"><span class="v">82<u>%</u></span><span class="k">Ready</span></div>
+          <div class="c"><span class="v">742</span><span class="k">Score</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- ★ COACH HERO — to-do card leads -->
+        <div class="rh-chero lp" style="animation-name:s2;">
+          <div class="chd">
+            <span class="av">✦</span>
+            <span class="nm">Coach <em>· today's focus</em></span>
+            <span class="when">Day 23</span>
+          </div>
+          <div class="msg">Quads ran light last week — press volume tonight and keep protein up to lock in recovery.</div>
+          <div class="tdl">To do today</div>
+          <div class="rh-todo"><span class="bx"></span><span class="tl">Hit 160g protein</span><span class="pg">96 / 160</span></div>
+          <div class="rh-todo"><span class="bx"></span><span class="tl">10 min mobility</span><span class="pg">tonight</span></div>
+          <div class="rh-todo dn"><span class="bx">✓</span><span class="tl">Log last night's sleep</span><span class="pg">7h 12m</span></div>
+          <div class="ask"><span>Adjust today</span><span class="pri">Ask coach ›</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- today's session — compact carousel line -->
+        <div class="lp" style="animation-name:s3;">
+          <div class="nv-slbl lbl" style="margin-bottom:8px;">Today's session</div>
+          <div class="rh-car">
+            <div class="rh-cardwrap">
+              <div class="rh-card" style="min-height:150px;">
+                <div class="datepill td">Today</div>
+                <div class="ttl" style="font-size:30px;">PUSH DAY</div>
+                <div class="sub">Chest &amp; Triceps</div>
+                <div class="meta">8 exercises · 52 min</div>
+                <div class="startbtn rc-cta-anim" style="height:38px;">Start workout →</div>
+              </div>
+              <div class="rh-card peek rt" style="min-height:150px;margin-right:-66%;">
+                <div class="datepill">Tomorrow</div>
+                <div class="ttl" style="font-size:30px;">PULL DAY</div>
+                <div class="sub">Back &amp; Biceps</div>
+                <div class="meta">7 exercises · 48 min</div>
+              </div>
+            </div>
+          </div>
+          <div class="rh-dots"><i class="on"></i><i></i><i></i></div>
+        </div>
+        <div class="nv-rule" style="margin:13px 0 10px;"></div>
+        <!-- compact FUEL line -->
+        <div class="lp" style="animation-name:s4;display:flex;justify-content:space-between;align-items:center;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:baseline;gap:9px;"><span class="nv-slbl lbl">Fuel</span><span class="disp" style="font-size:26px;line-height:1;">1,460</span><span class="nv-slbl lbl" style="font-size:9.5px;">/ 2,200 · 740 left</span></div>
+            <div class="lbl" style="display:flex;gap:14px;font-size:10px;color:var(--d-mut);margin-top:6px;">
+              <span><i class="nv-dot" style="background:#A855F7;"></i>P 96</span><span><i class="nv-dot" style="background:#06B6D4;"></i>C 142</span><span><i class="nv-dot" style="background:#F97316;"></i>F 48</span>
+            </div>
+          </div>
+          <span style="font-size:32px;filter:drop-shadow(0 10px 12px rgba(0,0,0,.5));animation:foodFloat 4.5s ease-in-out infinite;display:inline-block;">🥣</span>
+        </div>
+      </div>
+      <div class="nv-plus lp" style="animation-name:s7;">+</div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it on"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 1/5</span>Home</div>
+      <div class="cap-why">The same screen as Section A's Home — the pinned nav (glyph over Barlow label, orange underline on HOME) and the outlined "+" dock around an identical body: steps + streak with the bell + ✦ cluster, the THURSDAY · JUNE 11 masthead and Fraunces greeting, the glanceable strip (STEPS · SLEEP · READY · SCORE), the coach to-do card (Hit 160g protein 96/160 · mobility · ✓ sleep), the peek-next workout carousel and a compact FUEL line. Switching tabs into Home lands on exactly #home — one geometry, one type system.</div>
+    </div>
+  </div>
+
+  <!-- ════ TAB 2 — WORKOUTS ════ -->
+  <div class="cell" id="nav-workouts">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span class="nv-tcl"><span>Week 3</span><span class="nv-ask">✦</span></span></div>
+        <div class="disp nv-mast lp" style="animation-name:s0;">WORKOUTS</div>
+        <div class="nv-rule" style="margin:14px 0 12px;"></div>
+        <!-- today -->
+        <div class="lp" style="animation-name:s1;">
+          <div class="nv-slbl lbl">Today</div>
+          <div class="disp" style="font-size:30px;line-height:1;margin-top:6px;">PUSH DAY</div>
+          <div style="font-size:12.5px;color:var(--d-mut);margin-top:5px;">Chest &amp; Triceps · 8 exercises · 52 min</div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <div class="nv-cta" style="flex:1;">Start workout →</div>
+            <div class="nv-chip" style="height:48px;">Preview plan ›</div>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:15px 0 11px;"></div>
+        <!-- this week -->
+        <div class="lp" style="animation-name:s2;">
+          <div class="nv-slbl lbl">This week</div>
+          <div class="nw-wk">
+            <div class="nw-wd"><span class="d">M</span><span class="mk ck">✓</span><span class="nm">Pull</span></div>
+            <div class="nw-wd"><span class="d">T</span><span class="mk ck">✓</span><span class="nm">Legs</span></div>
+            <div class="nw-wd"><span class="d">W</span><span class="mk">–</span><span class="nm">Rest</span></div>
+            <div class="nw-wd td"><span class="d">T</span><span class="mk td"><i></i></span><span class="nm">Push</span></div>
+            <div class="nw-wd"><span class="d">F</span><span class="mk">–</span><span class="nm">Rest</span></div>
+            <div class="nw-wd"><span class="d">S</span><span class="mk">·</span><span class="nm">Upper</span></div>
+            <div class="nw-wd"><span class="d">S</span><span class="mk">–</span><span class="nm">Rest</span></div>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 11px;"></div>
+        <!-- program -->
+        <div class="lp" style="animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span class="lbl" style="font-size:12.5px;color:var(--d-text);">PPL Program</span>
+            <span class="nv-slbl lbl" style="font-size:10px;">Week 3 of 6</span>
+          </div>
+          <div style="height:3px;background:var(--d-rule);border-radius:2px;margin-top:9px;overflow:hidden;"><i class="nv-fill" style="background:var(--d-mut);--w:50%;"></i></div>
+          <div class="lp" style="animation-name:s4;display:flex;gap:10px;margin-top:11px;flex-wrap:wrap;">
+            <div class="nv-chip">Library ›</div>
+            <div class="nv-chip">Builder ›</div>
+            <div class="nv-chip">Programs ›</div>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:13px 0 9px;"></div>
+        <!-- exercise preferences -->
+        <div class="ny-led lp" style="animation-name:s5;padding:9px 2px;"><span class="lbl" style="font-size:12px;letter-spacing:2px;color:var(--d-text);flex:1;">Exercise preferences</span><span style="color:var(--d-faint);font-size:14px;">›</span></div>
+        <!-- history -->
+        <div class="lp" style="animation-name:s6;">
+          <div class="nv-slbl lbl" style="padding:6px 0 2px;">History</div>
+          <div class="nw-led"><b>Tue</b><span>Pull Day</span><span style="margin-left:auto;">48:12 · 9,120 LB</span></div>
+          <div class="nw-led"><b>Mon</b><span>Legs</span><span style="margin-left:auto;">55:30 · 11,300 LB</span></div>
+          <div class="lbl lp" style="animation-name:s7;font-size:10px;color:var(--d-mut);padding:7px 2px;">All history ›</div>
+        </div>
+      </div>
+      <div class="nv-plus lp" style="animation-name:s7;">+</div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 2/5</span>Workouts — full</div>
+      <div class="cap-why">The training room as a ledger: TODAY repeats Home's session block (solid orange START + hairline PREVIEW), THIS WEEK is a seven-column PPL strip (done ✓, today a pulsing orange dot), PROGRAM is one progress rule with Library / Builder / Programs links, then the EXERCISE PREFERENCES row and HISTORY tabular rows with All history ›. Same hairline grid as Home — switching tabs feels like turning a page.</div>
+    </div>
+  </div>
+
+  <!-- ════ TAB 3 — COACH ════ -->
+  <div class="cell" id="nav-coach">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span>Day 23</span></div>
+        <div class="lp" style="animation-name:s0;display:flex;align-items:flex-end;justify-content:space-between;">
+          <div class="disp nv-mast">COACH</div>
+          <div class="nv-tcl" style="padding-bottom:5px;">
+            <div class="nv-mchip">⌛ History</div>
+            <div class="nv-mchip">+ New</div>
+          </div>
+        </div>
+        <div class="ser nc-sub lp" style="animation-name:s0;">Your corner, always open.</div>
+        <div class="nv-rule" style="margin:13px 0 0;"></div>
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px;">
+          <div class="nc-cb lp" style="animation-name:s1;">Quads ran light last week — want me to press volume tonight?</div>
+          <div class="nc-ub lp" style="animation-name:s2;">Can I swap incline press?</div>
+          <div class="nc-cb lp" style="animation-name:s3;">Sure — machine press keeps the same chest stimulus with less shoulder strain. Swapped it in.
+            <br><span class="nc-act lp" style="animation-name:s4;">Swap → Machine Press <i>✓</i></span>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="lp" style="animation-name:s5;display:flex;gap:9px;">
+          <div class="nc-sg">Adjust today</div>
+          <div class="nc-sg">Why this plan?</div>
+        </div>
+        <div class="nc-comp lp" style="animation-name:s6;margin-top:11px;">Ask anything…<span style="flex:1;"></span><span class="att">📎</span><span class="att">🎤</span><div class="nc-send">↑</div></div>
+        <div style="height:14px;"></div>
+      </div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 3/5</span>Coach — chat + history</div>
+      <div class="cap-why">Chat in the Signature voice with the full kit: ⌛ HISTORY opens the sessions list (past conversations with AI titles), + NEW starts a fresh session, and the composer accepts media — 📎 attach + 🎤 voice inside the hairline field. Matte bubbles, the user's turn marked by an orange-tinted border, and the "SWAP → MACHINE PRESS ✓" action chip showing the coach acting on the plan, not just talking.</div>
+      <div class="cap-risk"><b>Risk:</b> an in-bubble action chip implies one-tap plan mutation — it needs an undo affordance and a clear pending→confirmed state.</div>
+    </div>
+  </div>
+
+  <!-- ════ TAB 4 — NUTRITION ════ -->
+  <div class="cell" id="nav-nutrition">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body" style="padding-top:54px;">
+        <div class="nn-tabs lp" style="animation-name:s0;">
+          <div class="nn-tab on">Daily</div>
+          <div class="nn-tab">Recipes</div>
+          <div class="nn-tab">Patterns</div>
+          <div style="flex:1;"></div>
+          <div class="nv-mchip">🔖 Saved</div>
+          <span class="nv-ask">✦</span>
+        </div>
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:12px;margin-top:11px;">
+          <span class="nn-chev">‹</span>
+          <span class="nn-kick" style="flex:1;text-align:center;">Today — June 11</span>
+          <span class="nn-chev">›</span>
+        </div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:baseline;gap:10px;margin-top:4px;">
+          <div class="disp" style="font-size:54px;line-height:.95;">1,460</div>
+          <div class="nv-slbl lbl" style="font-size:10.5px;">of 2,200 kcal</div>
+        </div>
+        <div class="nn-track lp" style="animation-name:s1;margin-top:8px;"><i class="nv-fill" style="background:var(--d-mut);--w:66%;"></i></div>
+        <div class="nn-mline lp" style="animation-name:s2;margin-top:8px;">
+          <div class="g"><i style="background:#A855F7;"></i><b>96<u>/160</u></b><span class="mk">P</span></div>
+          <div class="g"><i style="background:#06B6D4;"></i><b>142<u>/220</u></b><span class="mk">C</span></div>
+          <div class="g"><i style="background:#F97316;"></i><b>48<u>/73</u></b><span class="mk">F</span></div>
+        </div>
+        <div class="lbl lp" style="animation-name:s2;font-size:10px;color:var(--d-mut);margin-top:6px;">64g protein left · 740 kcal left</div>
+        <div style="height:7px;"></div>
+        <!-- THE MEAL SECTIONS — meal-centric, mirror of #nutrition, each with a muted P/C/F line -->
+        <div class="rm-meal lp" style="animation-name:s3;border-top:1px solid var(--d-rule);">
+          <div class="rm-head"><span class="em">🍳</span><span class="nm">Breakfast</span><span class="cal">290 cal</span><span class="ct">1 item</span><span class="cv">›</span></div>
+          <div class="rm-macro">12P · 40C · 7F</div>
+        </div>
+        <div class="rm-meal lp" style="animation-name:s3;">
+          <div class="rm-head"><span class="em">🥗</span><span class="nm">Lunch</span><span class="cal">480 cal</span><span class="ct">2 items</span><span class="cv">›</span></div>
+          <div class="rm-macro">38P · 44C · 16F</div>
+        </div>
+        <div class="rm-meal lp" style="animation-name:s4;">
+          <div class="rm-head"><span class="em">🍝</span><span class="nm">Dinner</span><span class="cal">520 cal</span><span class="ct" style="color:var(--d-mut);">menu scan · 3 items</span><span class="cv">›</span></div>
+          <div class="rm-macro">40P · 38C · 18F</div>
+        </div>
+        <div class="rm-meal lp" style="animation-name:s4;">
+          <div class="rm-head"><span class="em">🍎</span><span class="nm">Snacks</span><span class="cal">170 cal</span><span class="ct">1 item</span><span class="cv">›</span></div>
+          <div class="rm-macro">6P · 20C · 7F</div>
+        </div>
+        <div style="height:9px;"></div>
+        <div class="nn-led lp" style="animation-name:s6;border-top:1px solid var(--d-rule);"><span class="lk">Water</span><b>1.4 / 2.5 L</b><span class="nn-chip" style="margin-left:auto;">+250</span><span class="nn-chip">+500</span></div>
+        <div class="nn-led lp" style="animation-name:s7;"><span class="lk">Fasting</span><b>16:8 schedule</b><span style="margin-left:auto;color:var(--d-faint);">›</span></div>
+        <div class="nn-led lp" style="animation-name:s8;"><span class="lk">Micros</span><b style="font-size:11px;font-weight:600;">Iron 62% · Mg 78% · Vit D 41%</b><span style="margin-left:auto;color:var(--d-faint);font-size:10.5px;white-space:nowrap;">full panel ›</span></div>
+        <div style="flex:1;"></div>
+        <div class="nn-input lp" style="animation-name:s9;padding:0 7px 0 8px;gap:9px;"><span class="rn-plus">+</span><span>Log food, water, anything…</span><span style="flex:1;"></span><span class="cam">🎤</span><div class="nn-send">↑</div></div>
+        <div style="height:14px;"></div>
+      </div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 4/5</span>Nutrition</div>
+      <div class="cap-why">The same screen as Section C's Nutrition: DAILY/RECIPES/PATTERNS + 🔖 SAVED + ✦, ‹ › date chevrons, the 54pt numeral with consumed/target macro dots and the rust "left" line, then the four meal sections (BREAKFAST 1 item · LUNCH 2 items · DINNER menu scan 3 items · SNACKS 1 item) each carrying a muted P/C/F line, and water/fasting/micros. No duplicate conversational LOG card — meals are the only structure. The "Log food, water, anything…" composer IS the logging entry, so the floating "+" is absent by rule.</div>
+    </div>
+  </div>
+
+  <!-- ════ TAB 5 — YOU ════ -->
+  <div class="cell" id="nav-you">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span class="nv-tcl"><span>Day 23</span><span class="nv-ask">✦</span></span></div>
+        <div class="disp nv-mast lp" style="animation-name:s0;">YOU</div>
+        <div class="nv-rule" style="margin:14px 0 0;"></div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:center;gap:13px;padding:14px 0 0;">
+          <div class="ny-av">C</div>
+          <div style="flex:1;">
+            <div style="font-size:16.5px;font-weight:700;letter-spacing:-.2px;">Chetan</div>
+            <div class="nv-slbl" style="font-size:10.5px;margin-top:2px;">Member since 2025</div>
+          </div>
+          <div class="ny-lv">Level 12</div>
+        </div>
+        <div class="lp" style="animation-name:s2;margin-top:12px;">
+          <div style="height:3px;background:var(--d-rule);border-radius:2px;overflow:hidden;"><i class="nv-fill" style="background:var(--d-mut);--w:84%;"></i></div>
+          <div class="lbl" style="display:flex;justify-content:space-between;font-size:10px;color:var(--d-mut);margin-top:6px;">
+            <span>XP</span><span style="font-variant-numeric:tabular-nums;">8,420 / 10,000</span>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 0;"></div>
+        <div class="ny-led lp" style="animation-name:s3;"><span class="k">Stats</span><span class="v">742</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s4;"><span class="k">Streak</span><span class="v">23 days 🔥</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s5;"><span class="k">Achievements</span>
+          <span style="font-size:26px;margin-right:2px;animation:foodFloat 4.5s ease-in-out infinite;display:inline-block;">🏆</span>
+          <span class="v">18 earned</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s6;"><span class="k">Measurements</span><span class="v">82.4 kg</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s7;"><span class="k">Wrapped</span><span class="v">May ready</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s8;"><span class="k">Settings</span><span class="ch" style="margin-left:auto;">›</span></div>
+        <div style="flex:1;"></div>
+        <div class="lbl lp" style="animation-name:s9;font-size:10px;color:var(--d-faint);text-align:center;padding-bottom:14px;">Premium · Renews Jan 2027</div>
+      </div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 5/5</span>You — the hub</div>
+      <div class="cap-why">Profile as an identity ledger, not a settings dump: avatar, name and a LEVEL 12 chip over one thin XP rule, then six hairline hub rows — STATS, STREAK, ACHIEVEMENTS (with a floating 3D trophy), MEASUREMENTS, WRAPPED, SETTINGS — each a label, a tabular value and a chevron. The muted PREMIUM footer keeps subscription state visible without selling to a paying user.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="ft">
+  Zealova Signature — the app. Standalone showcase, self-contained (no server, no fetch, no external CSS). Opens via file://.<br>
+  Consolidated from sections/0f-recommended.html, 0g-nav.html, 0i-more.html · Signature dark tokens · 4 sections, 10 frames, all loop-animated.
+</div>
+
+</body>
+</html>

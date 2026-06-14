@@ -1,0 +1,745 @@
+<div class="sx-nu">
+<style>
+/* ================= NUTRITION SECTION (sx-nu) ================= */
+
+/* ---- shared mechanics ---- */
+.sx-nu .nufill { animation: nuFill 10s cubic-bezier(.2,.7,.2,1) infinite; height: 100%; border-radius: inherit; }
+@keyframes nuFill { 0%,8% { width: 0; } 24%,100% { width: var(--w,60%); } }
+.sx-nu .nuring { animation: nuRing 10s cubic-bezier(.2,.7,.2,1) infinite; }
+@keyframes nuRing { 0%,8% { stroke-dashoffset: 276.5; } 26%,100% { stroke-dashoffset: var(--off,94); } }
+.sx-nu .nufloat { animation: foodFloat 4.6s ease-in-out infinite; }
+.sx-nu .nupad { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+/* ---- BEFORE: faithful current daily tab ---- */
+.sx-nu .nb-seg { display: flex; background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 999px; padding: 3px; }
+.sx-nu .nb-seg span { flex: 1; text-align: center; font-size: 11.5px; font-weight: 600; color: var(--d-mut); padding: 6px 0; border-radius: 999px; }
+.sx-nu .nb-seg span.on { background: #2A2A2A; color: var(--d-text); font-weight: 700; }
+.sx-nu .nb-date { display: flex; align-items: center; justify-content: center; gap: 14px; font-size: 12px; color: var(--d-mut); }
+.sx-nu .nb-date b { color: var(--d-text); font-size: 12.5px; font-weight: 700; }
+.sx-nu .nb-card { background: var(--d-surface2); border: 1px solid var(--d-border); border-radius: var(--d-radius); }
+.sx-nu .nb-pill { display: flex; align-items: center; border-radius: 10px; overflow: hidden; height: 31px; }
+.sx-nu .nb-pill .chip { width: 34px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+.sx-nu .nb-pill .plbl { font-size: 8.5px; font-weight: 800; letter-spacing: .4px; color: var(--d-mut); margin-left: 7px; }
+.sx-nu .nb-pill .pval { margin-left: auto; margin-right: 8px; font-size: 12.5px; font-weight: 800; }
+.sx-nu .nb-pill .pval i { font-style: normal; font-size: 9px; font-weight: 700; color: var(--d-faint); }
+.sx-nu .nb-mealhead { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; padding: 0 2px; }
+.sx-nu .nb-mealhead .sum { margin-left: auto; font-weight: 500; color: var(--d-mut); font-size: 11px; }
+.sx-nu .nb-mealhead .add { color: var(--d-accent); font-size: 11px; font-weight: 700; margin-left: 10px; }
+.sx-nu .nb-food { background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 12px; padding: 8px 11px; display: flex; align-items: center; }
+.sx-nu .nb-food .fn { font-size: 12.5px; font-weight: 600; }
+.sx-nu .nb-food .fs { font-size: 10px; color: var(--d-faint); margin-top: 1px; }
+.sx-nu .nb-food .fc { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--d-mut); }
+.sx-nu .nb-nav { display: flex; border-top: 1px solid var(--d-border); padding: 9px 6px 4px; background: #0A0A0A; }
+.sx-nu .nb-nav div { flex: 1; text-align: center; font-size: 9px; font-weight: 600; color: var(--d-faint); }
+.sx-nu .nb-nav div i { display: block; font-style: normal; font-size: 15px; margin-bottom: 2px; opacity: .85; }
+.sx-nu .nb-nav div.on { color: var(--d-accent); }
+
+/* ---- A: editorial athletic ---- */
+.sx-nu .na-kick { font-size: 12px; color: var(--d-accent); }
+.sx-nu .na-foodrow { display: grid; grid-template-columns: 56px 1fr auto; align-items: center; column-gap: 10px; padding: 8px 0; }
+.sx-nu .na-foodrow .nm { font-size: 13.5px; font-weight: 600; letter-spacing: .1px; }
+.sx-nu .na-foodrow .sv { font-size: 10.5px; color: var(--d-faint); margin-top: 2px; letter-spacing: .3px; }
+.sx-nu .na-foodrow .kc { font-family: Anton, sans-serif; font-size: 17px; letter-spacing: .5px; color: var(--d-mut); }
+.sx-nu .na-foodrow .kc b { color: var(--d-text); font-weight: 400; }
+.sx-nu .na-mlbl { display: flex; align-items: baseline; gap: 8px; font-size: 11px; color: var(--d-faint); padding-bottom: 5px; }
+.sx-nu .na-mlbl .mk { color: var(--d-mut); }
+.sx-nu .na-macro { flex: 1; }
+.sx-nu .na-macro .v { font-family: Anton, sans-serif; font-size: 26px; line-height: 1; }
+.sx-nu .na-macro .u { font-size: 10px; letter-spacing: 2px; color: var(--d-faint); margin-top: 4px; }
+.sx-nu .na-macro .b { height: 3px; background: #1C1C20; margin-top: 7px; border-radius: 2px; overflow: hidden; }
+.sx-nu .na-cta { display: flex; align-items: center; justify-content: center; height: 48px; background: var(--d-accent); color: #160B03; border-radius: 4px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 3px; }
+
+/* ---- B: instrument panel ---- */
+.sx-nu .pnl-lbl { font-size: 9.5px; color: var(--d-faint); }
+.sx-nu .nbB-bar { height: 4px; background: #161B1F; border-radius: 2px; overflow: hidden; }
+.sx-nu .nbB-cols { display: grid; grid-template-columns: 30px 1fr 34px 22px 22px 22px; align-items: center; column-gap: 6px; }
+.sx-nu .nbB-cols .c { font-family: 'Space Mono', monospace; font-size: 9.5px; text-align: right; color: var(--d-mut); }
+.sx-nu .nbB-cols .c.k { color: var(--d-text); font-weight: 700; }
+.sx-nu .nbB-thumb { width: 30px; height: 30px; border: 1px solid var(--d-border); border-radius: 7px; background: var(--d-surface2); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+.sx-nu .nbB-nm { font-family: 'Space Mono', monospace; font-size: 9.5px; color: var(--d-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sx-nu .nbB-tick { display: flex; gap: 3px; align-items: flex-end; height: 18px; }
+.sx-nu .nbB-tick i { width: 5px; border-radius: 1px; background: #1A2226; height: 100%; }
+.sx-nu .nbB-tick i.f { background: #5EEAD4; box-shadow: 0 0 8px rgba(94,234,212,.4); }
+.sx-nu .nbB-tick i.h { background: linear-gradient(to top, #5EEAD4 50%, #1A2226 50%); }
+
+/* ---- C: soft brutal ---- */
+.sx-nu .nc-macro { flex: 1; border: 2px solid rgba(0,0,0,.35); border-radius: 18px; padding: 10px 11px; color: #181019; }
+.sx-nu .nc-macro .v { font-family: Archivo, sans-serif; font-weight: 800; font-size: 21px; letter-spacing: -.5px; }
+.sx-nu .nc-macro .v i { font-style: normal; font-size: 11px; font-weight: 700; opacity: .55; }
+.sx-nu .nc-macro .l { font-size: 8.5px; font-weight: 800; letter-spacing: 1.5px; margin-top: 1px; opacity: .65; }
+.sx-nu .nc-macro .t { height: 5px; border-radius: 3px; background: rgba(0,0,0,.18); margin-top: 7px; overflow: hidden; }
+.sx-nu .nc-mealhead { display: flex; align-items: center; padding: 0 2px 8px; }
+.sx-nu .nc-mealhead b { font-family: Archivo, sans-serif; font-weight: 800; font-size: 15px; letter-spacing: -.3px; }
+.sx-nu .nc-mealhead .kc { margin-left: 8px; font-size: 11px; font-weight: 700; color: var(--d-mut); }
+.sx-nu .nc-add { margin-left: auto; border: 2px solid var(--d-accent); color: var(--d-accent); font-size: 10px; font-weight: 800; letter-spacing: 1.5px; padding: 4px 11px; border-radius: 999px; }
+.sx-nu .nc-food { display: flex; align-items: center; gap: 12px; padding: 7px 0; }
+.sx-nu .nc-food .nm { font-family: Archivo, sans-serif; font-weight: 700; font-size: 14.5px; letter-spacing: -.2px; }
+.sx-nu .nc-food .sv { font-size: 10.5px; color: var(--d-mut); margin-top: 1px; }
+.sx-nu .nc-food .kc { margin-left: auto; font-family: Archivo, sans-serif; font-weight: 800; font-size: 14px; }
+
+/* ---- D: ink & ember ---- */
+.sx-nu .nd-row { display: flex; align-items: center; gap: 13px; padding: 9px 0; border-bottom: 1px solid #1D1916; }
+.sx-nu .nd-row .nm { font-family: Fraunces, Georgia, serif; font-size: 16px; letter-spacing: .1px; }
+.sx-nu .nd-row .sv { font-size: 10.5px; color: var(--d-faint); margin-top: 2px; }
+.sx-nu .nd-row .kc { margin-left: auto; font-size: 12px; color: var(--d-mut); }
+.sx-nu .nd-mbar { height: 3px; background: #221D18; border-radius: 2px; overflow: hidden; position: relative; }
+.sx-nu .nd-mbar .nufill { background: #4A3527; position: relative; }
+.sx-nu .nd-mbar .nufill::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 7px; background: var(--tip,#F97316); border-radius: 2px; }
+.sx-nu .nd-mlbl { display: flex; justify-content: space-between; font-size: 9.5px; letter-spacing: 1.8px; color: var(--d-faint); text-transform: uppercase; margin-bottom: 6px; }
+.sx-nu .nd-mlbl b { color: var(--d-mut); font-weight: 600; letter-spacing: .5px; text-transform: none; }
+
+/* ---- E: warm gallery (money frame) ---- */
+.sx-nu .ne-icbtn { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; color: var(--d-mut); font-size: 15px; letter-spacing: 1px; }
+.sx-nu .ne-grid { display: grid; grid-template-columns: 5px 5px; grid-template-rows: 5px 5px; gap: 3px; }
+.sx-nu .ne-grid i { background: var(--d-mut); border-radius: 1.5px; }
+.sx-nu .ne-track { height: 4px; background: var(--d-border); border-radius: 2px; overflow: hidden; }
+.sx-nu .ne-mline { display: flex; gap: 22px; align-items: baseline; }
+.sx-nu .ne-mline .g { display: flex; align-items: baseline; gap: 6px; }
+.sx-nu .ne-mline .g b { font-family: Archivo, sans-serif; font-weight: 700; font-size: 17px; letter-spacing: -.4px; }
+.sx-nu .ne-mline .g i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; transform: translateY(-1px); }
+.sx-nu .ne-bub { align-self: flex-end; max-width: 78%; background: var(--d-text); color: #F6F3EE; font-size: 13.5px; line-height: 1.4; padding: 10px 14px; border-radius: 18px; border-bottom-right-radius: 5px; box-shadow: 0 6px 18px rgba(28,26,23,.16); }
+.sx-nu .ne-entry { display: flex; align-items: center; gap: 15px; }
+.sx-nu .ne-entry .nm { font-family: Archivo, sans-serif; font-weight: 600; font-size: 19px; letter-spacing: -.4px; }
+.sx-nu .ne-entry .sv { font-size: 12px; color: var(--d-mut); margin-top: 2px; }
+.sx-nu .ne-entry .dt { font-size: 12px; color: var(--d-text); font-weight: 600; margin-top: 4px; }
+.sx-nu .ne-entry .dt span { color: var(--d-mut); font-weight: 500; margin-left: 7px; }
+.sx-nu .ne-small { display: flex; align-items: center; gap: 11px; }
+.sx-nu .ne-small .nm { font-family: Archivo, sans-serif; font-weight: 600; font-size: 14px; letter-spacing: -.2px; }
+.sx-nu .ne-small .kc { margin-left: auto; font-size: 12px; color: var(--d-mut); font-weight: 600; }
+.sx-nu .ne-coach { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--d-mut); }
+.sx-nu .ne-coach i { width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg,#E8997A,#C2410C); flex: none; }
+.sx-nu .ne-input { display: flex; align-items: center; background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 999px; padding: 8px 8px 8px 18px; box-shadow: 0 10px 28px rgba(28,26,23,.10); font-size: 14px; color: var(--d-faint); }
+.sx-nu .ne-send { margin-left: auto; width: 36px; height: 36px; border-radius: 50%; background: var(--d-accent); color: #FFF4ED; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; }
+
+/* ---- F: volt stadium ---- */
+.sx-nu .nf-live { display: flex; align-items: center; gap: 7px; }
+.sx-nu .nf-live i { width: 7px; height: 7px; border-radius: 50%; background: var(--d-accent); box-shadow: 0 0 10px rgba(216,255,58,.8); font-style: normal; animation: nuLiveBlink 1.8s ease-in-out infinite; }
+@keyframes nuLiveBlink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.sx-nu .nf-stat { flex: 1; text-align: center; background: var(--d-surface); border: 1px solid var(--d-border); border-radius: 10px; padding: 10px 0 9px; }
+.sx-nu .nf-stat .v { font-family: Anton, sans-serif; font-size: 25px; line-height: 1; letter-spacing: .5px; }
+.sx-nu .nf-stat .v i { font-style: normal; font-size: 10px; color: var(--d-faint); letter-spacing: 0; }
+.sx-nu .nf-stat .b { height: 3px; background: #1B1B21; border-radius: 2px; margin: 8px 10px 0; overflow: hidden; }
+.sx-nu .nf-row { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid #17171C; }
+.sx-nu .nf-row .nm { font-size: 12.5px; font-weight: 600; }
+.sx-nu .nf-row .sv { font-size: 9.5px; color: var(--d-faint); margin-top: 1px; letter-spacing: .4px; }
+.sx-nu .nf-row .kc { margin-left: auto; font-family: Anton, sans-serif; font-size: 17px; letter-spacing: .5px; color: var(--d-mut); }
+.sx-nu .nf-mealhead { display: flex; align-items: baseline; padding-bottom: 2px; }
+
+/* ---- G: depth field ---- */
+.sx-nu .ng-orbwrap { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+.sx-nu .ng-lift { position: relative; z-index: 1; }
+.sx-nu .ng-mline { display: flex; gap: 18px; align-items: baseline; }
+.sx-nu .ng-mline .g { display: flex; align-items: baseline; gap: 6px; }
+.sx-nu .ng-mline .g b { font-family: Archivo, sans-serif; font-weight: 700; font-size: 16px; letter-spacing: -.4px; }
+.sx-nu .ng-mline .g i { width: 6px; height: 6px; border-radius: 50%; display: inline-block; transform: translateY(-1px); }
+.sx-nu .ng-mline .g span { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.8px; color: var(--d-mut); }
+.sx-nu .ng-shelf { position: relative; display: flex; align-items: center; gap: 13px; padding: 13px 15px 12px; }
+.sx-nu .ng-exhibit { display: flex; align-items: flex-end; gap: 4px; margin-top: -36px; flex: none; }
+.sx-nu .ng-food { line-height: 1; animation: glassFloat 4.8s ease-in-out infinite; }
+.sx-nu .ng-shelf .mk { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--d-mut); }
+.sx-nu .ng-shelf .fi { font-family: Archivo, sans-serif; font-weight: 600; font-size: 12.5px; letter-spacing: -.1px; margin-top: 3px; }
+.sx-nu .ng-shelf .fi span { color: var(--d-faint); font-weight: 500; font-size: 10.5px; margin-left: 6px; }
+.sx-nu .ng-shelf .kc { margin-left: auto; align-self: flex-start; font-family: Archivo, sans-serif; font-weight: 700; font-size: 17px; letter-spacing: -.4px; }
+.sx-nu .ng-shelf .kc i { font-style: normal; font-size: 9px; color: var(--d-faint); display: block; text-align: right; letter-spacing: 1px; }
+
+/* ---- H: kinetic collage ---- */
+.sx-nu .nh-stamp { font-family: Anton, sans-serif; font-size: 27px; letter-spacing: 1.5px; border: 3px solid var(--d-border); padding: 1px 12px; display: inline-block; transform: rotate(-2deg); }
+.sx-nu .nh-circle { position: relative; display: inline-block; padding: 2px 6px; }
+.sx-nu .nh-circle::after { content: ''; position: absolute; inset: -7px -13px -9px -11px; border: 3px solid var(--d-accent); border-radius: 49% 51% 47% 53% / 60% 51% 58% 47%; transform: rotate(-3deg); pointer-events: none; }
+.sx-nu .nh-chip { font-family: 'Space Mono', monospace; font-size: 9px; font-weight: 700; letter-spacing: .5px; border: 2px solid var(--d-border); padding: 4px 8px; border-radius: 4px; box-shadow: 2px 2px 0 var(--d-border); background: var(--d-surface); display: inline-flex; align-items: center; gap: 5px; }
+.sx-nu .nh-chip i { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+.sx-nu .nh-stk { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 13px 11px; }
+.sx-nu .nh-tape { position: absolute; top: -9px; left: 16px; width: 56px; height: 17px; z-index: 2; }
+.sx-nu .nh-stk .nm { font-family: Archivo, sans-serif; font-weight: 700; font-size: 13px; letter-spacing: -.2px; }
+.sx-nu .nh-stk .nm + .nm { margin-top: 5px; }
+.sx-nu .nh-stk .sv { font-size: 9.5px; color: var(--d-mut); margin-top: 1px; }
+.sx-nu .nh-time { font-family: 'Space Mono', monospace; font-size: 8.5px; letter-spacing: 1px; color: var(--d-mut); position: absolute; top: 7px; right: 11px; }
+.sx-nu .nh-stk .kc { margin-left: auto; font-family: Anton, sans-serif; font-size: 19px; letter-spacing: .5px; padding-right: 2px; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Probe 3 of 5</div>
+  <div class="sec-title">NUTRITION + 3D FOOD</div>
+  <p class="sec-desc">The marquee probe. BEFORE is the current Daily tab verbatim (segmented tabs, date strip, calorie ring + macro pills, text-only meal rows, water card). Every AFTER introduces the Morsel-style generated studio food renders — the emoji here are stand-ins; the real app generates one consistent 3D render per food via Gemini image gen and reuses it everywhere that food appears. Same day of data in all nine frames: June 11 · 1,460 / 2,200 cal · P 96/140 · C 142/220 · F 48/73 · water 1.4 / 2.5 L.</p>
+</section>
+<div class="row">
+
+  <!-- ============ BEFORE ============ -->
+  <div class="cell" id="before-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:56px 16px 0;">
+        <div class="nb-seg lp" style="animation-name:s0;"><span class="on">Daily</span><span>Recipes</span><span>Patterns</span></div>
+        <div style="height:10px"></div>
+        <div class="nb-date lp" style="animation-name:s0;"><span>‹</span><b>Today · Wed, Jun 11</b><span>›</span></div>
+        <div style="height:10px"></div>
+        <!-- hero: calorie ring + macro pills -->
+        <div class="nb-card lp" style="animation-name:s1;padding:12px;display:flex;gap:12px;align-items:center;">
+          <svg width="106" height="106" viewBox="0 0 106 106" style="flex:none;">
+            <circle cx="53" cy="53" r="44" fill="none" stroke="#262626" stroke-width="8"/>
+            <circle class="nuring" cx="53" cy="53" r="44" fill="none" stroke="#F97316" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="276.5" stroke-dashoffset="276.5" style="--off:94;" transform="rotate(-90 53 53)"/>
+            <text x="53" y="51" text-anchor="middle" fill="#FAFAFA" font-size="16.5" font-weight="800" font-family="Inter">1,460</text>
+            <text x="53" y="66" text-anchor="middle" fill="#71717A" font-size="8.5" font-weight="600" font-family="Inter">of 2,200 kcal</text>
+          </svg>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <div class="nb-pill" style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.22);">
+              <div class="chip" style="background:rgba(168,85,247,.24);">🍖</div><div class="plbl">PROTEIN</div>
+              <div class="pval" style="color:#A855F7;">96 <i>/ 140g</i></div>
+            </div>
+            <div class="nb-pill" style="background:rgba(6,182,212,.13);border:1px solid rgba(6,182,212,.22);">
+              <div class="chip" style="background:rgba(6,182,212,.22);">🍞</div><div class="plbl">CARBS</div>
+              <div class="pval" style="color:#06B6D4;">142 <i>/ 220g</i></div>
+            </div>
+            <div class="nb-pill" style="background:rgba(249,115,22,.13);border:1px solid rgba(249,115,22,.22);">
+              <div class="chip" style="background:rgba(249,115,22,.22);">🧈</div><div class="plbl">FAT</div>
+              <div class="pval" style="color:#F97316;">48 <i>/ 73g</i></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:13px"></div>
+        <!-- meals -->
+        <div class="lp" style="animation-name:s2;display:flex;flex-direction:column;gap:6px;">
+          <div class="nb-mealhead"><span>🍳</span>Breakfast<span class="sum">340 cal</span><span class="add">+ Add</span></div>
+          <div class="nb-food"><div><div class="fn">Greek Yogurt with Honey</div><div class="fs">1 bowl · 170 g</div></div><div class="fc">220 cal</div></div>
+          <div class="nb-food"><div><div class="fn">Cappuccino</div><div class="fs">12 oz · whole milk</div></div><div class="fc">120 cal</div></div>
+        </div>
+        <div style="height:11px"></div>
+        <div class="lp" style="animation-name:s3;display:flex;flex-direction:column;gap:6px;">
+          <div class="nb-mealhead"><span>🥗</span>Lunch<span class="sum">730 cal</span><span class="add">+ Add</span></div>
+          <div class="nb-food"><div><div class="fn">Salmon Poke Bowl</div><div class="fs">1 bowl · 420 g</div></div><div class="fc">640 cal</div></div>
+          <div class="nb-food"><div><div class="fn">Iced Matcha</div><div class="fs">16 oz · oat milk</div></div><div class="fc">90 cal</div></div>
+        </div>
+        <div style="height:11px"></div>
+        <div class="lp" style="animation-name:s4;display:flex;flex-direction:column;gap:6px;">
+          <div class="nb-mealhead"><span>🍎</span>Snacks<span class="sum">410 cal</span><span class="add">+ Add</span></div>
+          <div class="nb-food"><div><div class="fn">Almond Croissant</div><div class="fs">1 pastry · 95 g</div></div><div class="fc">410 cal</div></div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- hydration -->
+        <div class="nb-card lp" style="animation-name:s5;padding:11px 12px;">
+          <div style="display:flex;align-items:center;font-size:12.5px;font-weight:700;"><span style="margin-right:7px;">💧</span>Water
+            <span style="margin-left:auto;font-size:11px;color:#A1A1AA;font-weight:600;">1.4 of 2.5 L</span></div>
+          <div style="height:6px;background:#262626;border-radius:3px;margin-top:8px;overflow:hidden;"><div class="nufill" style="--w:56%;background:#38BDF8;"></div></div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <span style="font-size:10px;font-weight:700;color:#38BDF8;border:1px solid rgba(56,189,248,.3);border-radius:99px;padding:3px 9px;">+ 250 ml</span>
+            <span style="font-size:10px;font-weight:700;color:#38BDF8;border:1px solid rgba(56,189,248,.3);border-radius:99px;padding:3px 9px;">+ 500 ml</span>
+            <span style="font-size:10px;font-weight:700;color:#A1A1AA;border:1px solid #262626;border-radius:99px;padding:3px 9px;">Custom</span>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="nb-nav"><div><i>⌂</i>Home</div><div><i>🏋</i>Workouts</div><div class="on"><i>🍽</i>Nutrition</div><div><i>✦</i>Discover</div><div><i>👤</i>Profile</div></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current Daily tab — faithful</div>
+      <div class="cap-why">What ships today: glass cards on OLED black, calorie ring + emoji macro pills, plain-text food rows, inline water card. Functional, dense, zero food imagery — every row looks identical regardless of what was eaten.</div>
+      <div class="cap-risk"><b>Honest read:</b> nothing here is broken; it's just anonymous. The log of a great food day looks exactly like a spreadsheet.</div>
+    </div>
+  </div>
+
+  <!-- ============ A · EDITORIAL ATHLETIC ============ -->
+  <div class="cell" id="a-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dA grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:60px 24px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:baseline;">
+          <div class="lbl na-kick">June 11 — Wednesday</div>
+          <div class="lbl" style="margin-left:auto;font-size:11px;color:var(--d-faint);">Nutrition</div>
+        </div>
+        <div style="height:14px"></div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:baseline;gap:12px;">
+          <div class="disp" style="font-size:92px;line-height:.92;">1,460</div>
+          <div class="lbl" style="font-size:13px;color:var(--d-mut);padding-bottom:8px;">/ 2,200<br>kcal</div>
+        </div>
+        <div style="height:14px"></div>
+        <div class="lp" style="animation-name:s1;height:2px;background:#1C1C20;border-radius:1px;overflow:hidden;"><div class="nufill" style="--w:66%;background:var(--d-accent);"></div></div>
+        <div style="height:16px"></div>
+        <div class="lp" style="animation-name:s2;display:flex;gap:18px;">
+          <div class="na-macro"><div class="v" style="color:#A855F7;">96</div><div class="lbl u">Protein · 140g</div><div class="b"><div class="nufill" style="--w:69%;background:#A855F7;"></div></div></div>
+          <div class="na-macro"><div class="v" style="color:#06B6D4;">142</div><div class="lbl u">Carbs · 220g</div><div class="b"><div class="nufill" style="--w:64%;background:#06B6D4;"></div></div></div>
+          <div class="na-macro"><div class="v" style="color:#F97316;">48</div><div class="lbl u">Fat · 73g</div><div class="b"><div class="nufill" style="--w:66%;background:#F97316;"></div></div></div>
+        </div>
+        <div style="height:18px"></div><div class="rule lp" style="animation-name:s2;"></div><div style="height:10px"></div>
+        <!-- meals -->
+        <div class="lp" style="animation-name:s3;">
+          <div class="lbl na-mlbl"><span class="mk">Breakfast</span><span>— 340 kcal</span></div>
+          <div class="na-foodrow"><span class="food3d nufloat" style="font-size:46px;text-align:center;">🥣</span><div><div class="nm">Greek Yogurt with Honey</div><div class="sv">1 BOWL · 170 G</div></div><div class="kc"><b>220</b></div></div>
+          <div class="na-foodrow" style="padding-top:0;"><span class="food3d nufloat" style="font-size:42px;text-align:center;animation-delay:.6s;">☕</span><div><div class="nm">Cappuccino</div><div class="sv">12 OZ · WHOLE MILK</div></div><div class="kc"><b>120</b></div></div>
+        </div>
+        <div class="rule lp" style="animation-name:s4;"></div><div style="height:9px"></div>
+        <div class="lp" style="animation-name:s4;">
+          <div class="lbl na-mlbl"><span class="mk">Lunch</span><span>— 730 kcal</span></div>
+          <div class="na-foodrow"><span class="food3d nufloat" style="font-size:50px;text-align:center;animation-delay:.3s;">🍣</span><div><div class="nm">Salmon Poke Bowl</div><div class="sv">1 BOWL · 42P 38C 24F</div></div><div class="kc"><b>640</b></div></div>
+          <div class="na-foodrow" style="padding-top:0;"><span class="food3d nufloat" style="font-size:42px;text-align:center;animation-delay:.9s;">🍵</span><div><div class="nm">Iced Matcha</div><div class="sv">16 OZ · OAT MILK</div></div><div class="kc"><b>90</b></div></div>
+        </div>
+        <div class="rule lp" style="animation-name:s5;"></div><div style="height:9px"></div>
+        <div class="lp" style="animation-name:s5;">
+          <div class="lbl na-mlbl"><span class="mk">Snack</span><span>— 410 kcal</span></div>
+          <div class="na-foodrow"><span class="food3d nufloat" style="font-size:46px;text-align:center;animation-delay:1.2s;">🥐</span><div><div class="nm">Almond Croissant</div><div class="sv">1 PASTRY · 95 G</div></div><div class="kc"><b>410</b></div></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="lp" style="animation-name:s6;display:flex;align-items:center;gap:10px;">
+          <div class="lbl" style="font-size:10.5px;color:var(--d-faint);">Water 1.4 / 2.5 L</div>
+          <div style="flex:1;height:2px;background:#1C1C20;border-radius:1px;overflow:hidden;"><div class="nufill" style="--w:56%;background:#3F4A50;"></div></div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="na-cta lp" style="animation-name:s7;">+ Log</div>
+        <div style="height:26px"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">A</span>Editorial Athletic — the box score</div>
+      <div class="cap-why">The day as a sports-magazine stat spread: one giant Anton total, macro numerals with hairline rules, and the renders sitting in strict columns like product photography on newsprint. Dark surfaces make each render the only "image" on the page.</div>
+      <div class="cap-risk"><b>Risk:</b> uppercase serving lines + condensed labels read intense; long food names ("Grandma's chicken casserole") will fight the column grid.</div>
+    </div>
+  </div>
+
+  <!-- ============ B · INSTRUMENT PANEL ============ -->
+  <div class="cell" id="b-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dB">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad scan" style="padding:58px 16px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:baseline;">
+          <div class="lbl" style="font-size:11px;color:var(--d-mut);">Nutrition / Daily Log</div>
+          <div class="data" style="margin-left:auto;font-size:10px;color:var(--d-faint);">2026-06-11</div>
+        </div>
+        <div style="height:10px"></div>
+        <div style="display:flex;gap:8px;">
+          <!-- energy -->
+          <div class="panel lp" style="animation-name:s1;flex:1.35;padding:11px 12px;">
+            <div class="lbl pnl-lbl">Energy</div>
+            <div class="data" style="font-size:29px;font-weight:700;margin-top:3px;">1460<span style="font-size:11px;color:var(--d-faint);"> /2200</span></div>
+            <div class="nbB-bar" style="margin-top:8px;"><div class="nufill" style="--w:66%;background:var(--d-accent);"></div></div>
+            <div class="data" style="font-size:9px;color:var(--d-faint);margin-top:5px;">66.4% · REM 0740</div>
+          </div>
+          <!-- water -->
+          <div class="panel lp" style="animation-name:s2;flex:1;padding:11px 12px;">
+            <div class="lbl pnl-lbl">Water</div>
+            <div class="data" style="font-size:16px;font-weight:700;margin-top:4px;">1.40<span style="font-size:9.5px;color:var(--d-faint);">/2.50L</span></div>
+            <div class="nbB-tick" style="margin-top:8px;"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="h"></i><i></i><i></i><i></i><i></i></div>
+            <div class="data" style="font-size:9px;color:var(--d-faint);margin-top:5px;">56% · 5.6/10 GL</div>
+          </div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- macro telemetry -->
+        <div class="panel lp" style="animation-name:s3;padding:11px 12px;display:flex;flex-direction:column;gap:8px;">
+          <div class="lbl pnl-lbl">Macro telemetry</div>
+          <div style="display:flex;align-items:center;gap:8px;"><span class="data" style="font-size:10px;color:#A855F7;width:28px;">PRO</span><div class="nbB-bar" style="flex:1;"><div class="nufill" style="--w:69%;background:#A855F7;"></div></div><span class="data" style="font-size:10px;color:var(--d-mut);">096/140g</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span class="data" style="font-size:10px;color:#06B6D4;width:28px;">CHO</span><div class="nbB-bar" style="flex:1;"><div class="nufill" style="--w:64%;background:#06B6D4;"></div></div><span class="data" style="font-size:10px;color:var(--d-mut);">142/220g</span></div>
+          <div style="display:flex;align-items:center;gap:8px;"><span class="data" style="font-size:10px;color:#F97316;width:28px;">FAT</span><div class="nbB-bar" style="flex:1;"><div class="nufill" style="--w:66%;background:#F97316;"></div></div><span class="data" style="font-size:10px;color:var(--d-mut);">048/073g</span></div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- manifest: breakfast -->
+        <div class="panel lp" style="animation-name:s4;padding:10px 12px;">
+          <div style="display:flex;"><div class="lbl pnl-lbl">Manifest · Breakfast</div><div class="data" style="margin-left:auto;font-size:9px;color:var(--d-faint);">0340 KCAL</div></div>
+          <div class="nbB-cols" style="margin-top:8px;"><span></span><span class="data" style="font-size:8px;color:var(--d-faint);">ITEM</span><span class="c" style="color:var(--d-faint);font-size:8px;">KCAL</span><span class="c" style="color:#A855F7;font-size:8px;">P</span><span class="c" style="color:#06B6D4;font-size:8px;">C</span><span class="c" style="color:#F97316;font-size:8px;">F</span></div>
+          <div class="nbB-cols" style="margin-top:6px;"><div class="nbB-thumb"><span class="food3d nufloat">🥣</span></div><div class="nbB-nm">GREEK_YOGURT+HONEY</div><span class="c k">220</span><span class="c">18</span><span class="c">24</span><span class="c">06</span></div>
+          <div class="nbB-cols" style="margin-top:5px;"><div class="nbB-thumb"><span class="food3d nufloat" style="animation-delay:.5s;">☕</span></div><div class="nbB-nm">CAPPUCCINO_12OZ</div><span class="c k">120</span><span class="c">06</span><span class="c">10</span><span class="c">06</span></div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- manifest: lunch -->
+        <div class="panel lp" style="animation-name:s5;padding:10px 12px;">
+          <div style="display:flex;"><div class="lbl pnl-lbl">Manifest · Lunch</div><div class="data" style="margin-left:auto;font-size:9px;color:var(--d-faint);">0730 KCAL</div></div>
+          <div class="nbB-cols" style="margin-top:8px;"><div class="nbB-thumb"><span class="food3d nufloat" style="animation-delay:.2s;">🍣</span></div><div class="nbB-nm">SALMON_POKE_BOWL</div><span class="c k">640</span><span class="c">42</span><span class="c">38</span><span class="c">24</span></div>
+          <div class="nbB-cols" style="margin-top:5px;"><div class="nbB-thumb"><span class="food3d nufloat" style="animation-delay:.8s;">🍵</span></div><div class="nbB-nm">ICED_MATCHA_OAT</div><span class="c k">090</span><span class="c">01</span><span class="c">20</span><span class="c">01</span></div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- manifest: snack -->
+        <div class="panel lp" style="animation-name:s6;padding:10px 12px;">
+          <div style="display:flex;"><div class="lbl pnl-lbl">Manifest · Snack</div><div class="data" style="margin-left:auto;font-size:9px;color:var(--d-faint);">0410 KCAL</div></div>
+          <div class="nbB-cols" style="margin-top:8px;"><div class="nbB-thumb"><span class="food3d nufloat" style="animation-delay:1.1s;">🥐</span></div><div class="nbB-nm">ALMOND_CROISSANT</div><span class="c k">410</span><span class="c">08</span><span class="c">42</span><span class="c">23</span></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="lp" style="animation-name:s7;display:flex;align-items:center;gap:8px;padding-bottom:24px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#5EEAD4;box-shadow:0 0 10px rgba(94,234,212,.6);"></span>
+          <span class="data" style="font-size:9.5px;color:var(--d-mut);">REM 0740 KCAL · 05 ITEMS · LAST LOG 13:42</span>
+          <span class="data" style="margin-left:auto;font-size:9.5px;color:var(--d-accent);font-weight:700;">[+LOG]</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B</span>Instrument Panel — the nutrition bench</div>
+      <div class="cap-why">Macros as telemetry: mono readouts, per-food P/C/F columns like a flight manifest, tick-mark water gauge. The renders become specimen thumbnails in bordered cells — the lab aesthetic makes the food feel measured, not judged.</div>
+      <div class="cap-risk"><b>Risk:</b> the densest direction; zero-padded numbers ("048g") are a vibe people either love or find cosplay. Worst fit for casual loggers.</div>
+    </div>
+  </div>
+
+  <!-- ============ C · SOFT BRUTAL ============ -->
+  <div class="cell" id="c-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dC grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:58px 18px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;">
+          <div class="hed" style="font-size:26px;">Today</div>
+          <div style="margin-left:auto;border:2px solid var(--d-border);border-radius:999px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--d-mut);">Jun 11 ▾</div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- calorie hero: flat orange -->
+        <div class="lp" style="animation-name:s1;background:var(--d-accent);border-radius:26px;padding:16px 18px;color:#160B03;">
+          <div style="display:flex;align-items:baseline;gap:9px;">
+            <div class="hed" style="font-size:50px;line-height:1;letter-spacing:-1.5px;">1,460</div>
+            <div style="font-size:13px;font-weight:700;opacity:.7;">of 2,200 cal</div>
+          </div>
+          <div style="height:9px;background:rgba(0,0,0,.22);border-radius:5px;margin-top:11px;overflow:hidden;"><div class="nufill" style="--w:66%;background:#160B03;"></div></div>
+          <div style="font-size:11px;font-weight:800;margin-top:7px;opacity:.75;">740 LEFT · RIGHT ON PACE</div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- macro trio -->
+        <div class="lp" style="animation-name:s2;display:flex;gap:8px;">
+          <div class="nc-macro" style="background:#C5A8EE;"><div class="v">96<i>/140</i></div><div class="l">PROTEIN</div><div class="t"><div class="nufill" style="--w:69%;background:#3D2363;"></div></div></div>
+          <div class="nc-macro" style="background:#93D7E2;"><div class="v">142<i>/220</i></div><div class="l">CARBS</div><div class="t"><div class="nufill" style="--w:64%;background:#0E4854;"></div></div></div>
+          <div class="nc-macro" style="background:#F5BE93;"><div class="v">48<i>/73</i></div><div class="l">FAT</div><div class="t"><div class="nufill" style="--w:66%;background:#6B3208;"></div></div></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- meal cards -->
+        <div class="card lp" style="animation-name:s3;padding:13px 15px;">
+          <div class="nc-mealhead"><b>Breakfast</b><span class="kc">340 cal</span><span class="nc-add">+ ADD</span></div>
+          <div class="nc-food"><span class="food3d nufloat" style="font-size:42px;">🥣</span><div><div class="nm">Greek Yogurt with Honey</div><div class="sv">1 bowl · 170 g</div></div><div class="kc">220</div></div>
+          <div class="nc-food" style="padding-top:2px;"><span class="food3d nufloat" style="font-size:38px;animation-delay:.6s;">☕</span><div><div class="nm">Cappuccino</div><div class="sv">12 oz · whole milk</div></div><div class="kc">120</div></div>
+        </div>
+        <div style="height:9px"></div>
+        <div class="card lp" style="animation-name:s4;padding:13px 15px;">
+          <div class="nc-mealhead"><b>Lunch</b><span class="kc">730 cal</span><span class="nc-add">+ ADD</span></div>
+          <div class="nc-food"><span class="food3d nufloat" style="font-size:46px;animation-delay:.3s;">🍣</span><div><div class="nm">Salmon Poke Bowl</div><div class="sv">42P · 38C · 24F</div></div><div class="kc">640</div></div>
+          <div class="nc-food" style="padding-top:2px;"><span class="food3d nufloat" style="font-size:38px;animation-delay:.9s;">🍵</span><div><div class="nm">Iced Matcha</div><div class="sv">16 oz · oat milk</div></div><div class="kc">90</div></div>
+        </div>
+        <div style="height:9px"></div>
+        <div class="card lp" style="animation-name:s5;padding:13px 15px;">
+          <div class="nc-mealhead"><b>Snacks</b><span class="kc">410 cal</span><span class="nc-add">+ ADD</span></div>
+          <div class="nc-food"><span class="food3d nufloat" style="font-size:42px;animation-delay:1.2s;">🥐</span><div><div class="nm">Almond Croissant</div><div class="sv">1 pastry · 95 g</div></div><div class="kc">410</div></div>
+        </div>
+        <div style="height:9px"></div>
+        <!-- water block -->
+        <div class="card lp" style="animation-name:s6;padding:12px 15px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:30px;" class="food3d">💧</span>
+          <div style="flex:1;"><div class="hed" style="font-size:14px;">Water</div>
+            <div style="height:8px;background:#26262C;border-radius:4px;margin-top:6px;overflow:hidden;"><div class="nufill" style="--w:56%;background:#06B6D4;"></div></div></div>
+          <div class="hed" style="font-size:14px;">1.4<span style="font-size:10px;color:var(--d-mut);"> /2.5L</span></div>
+        </div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">C</span>Soft Brutal — chunky blocks</div>
+      <div class="cap-why">Calories live in one loud flat-orange slab; macros become three pastel bricks with dark ink; meals are fat radius-26 cards with big renders and an unmissable + ADD pill. Friendly, toy-like, impossible to misread at arm's length on a treadmill.</div>
+      <div class="cap-risk"><b>Risk:</b> pastel macro bricks on a dark frame is the boldest color call in the gallery — needs discipline elsewhere or the screen tips into candy.</div>
+    </div>
+  </div>
+
+  <!-- ============ D · INK & EMBER ============ -->
+  <div class="cell" id="d-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dD grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:62px 26px 0;">
+        <div class="lp" style="animation-name:s0;font-size:10px;letter-spacing:2.5px;color:var(--d-faint);text-transform:uppercase;">Wednesday · June 11</div>
+        <div style="height:10px"></div>
+        <div class="ser lp" style="animation-name:s0;font-size:25px;line-height:1.25;">A good day<br>at the table.</div>
+        <div style="height:20px"></div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:baseline;gap:10px;">
+          <div class="ser" style="font-size:58px;line-height:1;">1,460</div>
+          <div style="font-size:12.5px;color:var(--d-mut);">of 2,200</div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="lp" style="animation-name:s1;height:4px;background:#1D1814;border-radius:2px;overflow:hidden;"><div class="embar nufill" style="--w:66%;"></div></div>
+        <div style="height:16px"></div>
+        <div class="lp" style="animation-name:s2;display:flex;gap:16px;">
+          <div style="flex:1;"><div class="nd-mlbl"><span>Protein</span><b>96g</b></div><div class="nd-mbar"><div class="nufill" style="--w:69%;--tip:#A855F7;"></div></div></div>
+          <div style="flex:1;"><div class="nd-mlbl"><span>Carbs</span><b>142g</b></div><div class="nd-mbar"><div class="nufill" style="--w:64%;--tip:#06B6D4;"></div></div></div>
+          <div style="flex:1;"><div class="nd-mlbl"><span>Fat</span><b>48g</b></div><div class="nd-mbar"><div class="nufill" style="--w:66%;--tip:#F97316;"></div></div></div>
+        </div>
+        <div style="height:20px"></div>
+        <!-- the table -->
+        <div class="nd-row lp" style="animation-name:s3;"><span class="food3d nufloat" style="font-size:40px;">🥣</span><div><div class="nm">Greek yogurt with honey</div><div class="sv">Breakfast · 8:05 am</div></div><div class="kc">220</div></div>
+        <div class="nd-row lp" style="animation-name:s4;"><span class="food3d nufloat" style="font-size:36px;animation-delay:.6s;">☕</span><div><div class="nm">Cappuccino</div><div class="sv">Breakfast · 8:05 am</div></div><div class="kc">120</div></div>
+        <div class="nd-row lp" style="animation-name:s5;"><span class="food3d nufloat" style="font-size:44px;animation-delay:.3s;">🍣</span><div><div class="nm">Salmon poke bowl</div><div class="sv">Lunch · 12:40 pm</div></div><div class="kc">640</div></div>
+        <div class="nd-row lp" style="animation-name:s6;"><span class="food3d nufloat" style="font-size:36px;animation-delay:.9s;">🍵</span><div><div class="nm">Iced matcha</div><div class="sv">Lunch · 12:40 pm</div></div><div class="kc">90</div></div>
+        <div class="nd-row lp" style="animation-name:s7;border-bottom:none;"><span class="food3d nufloat" style="font-size:40px;animation-delay:1.2s;">🥐</span><div><div class="nm">Almond croissant</div><div class="sv">Snack · 3:15 pm</div></div><div class="kc">410</div></div>
+        <div style="flex:1"></div>
+        <div class="lp" style="animation-name:s8;display:flex;align-items:center;gap:9px;">
+          <span style="font-size:11px;color:var(--d-faint);letter-spacing:1.5px;text-transform:uppercase;">Water</span>
+          <span style="display:flex;gap:5px;">
+            <i style="width:9px;height:9px;border-radius:50%;background:#7C2D12;"></i><i style="width:9px;height:9px;border-radius:50%;background:#7C2D12;"></i><i style="width:9px;height:9px;border-radius:50%;background:#7C2D12;"></i><i style="width:9px;height:9px;border-radius:50%;border:1px solid #29241F;"></i><i style="width:9px;height:9px;border-radius:50%;border:1px solid #29241F;"></i>
+          </span>
+          <span style="font-size:11px;color:var(--d-mut);">1.4 of 2.5 L</span>
+        </div>
+        <div style="height:14px"></div>
+        <div class="ser lp" style="animation-name:s9;font-size:15px;color:var(--d-mut);padding-bottom:26px;">740 left for the evening. <span style="color:var(--d-accent);">+ Add to the table</span></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">D</span>Ink &amp; Ember — supper club</div>
+      <div class="cap-why">The log becomes a menu: serif food names, candle-dim warmth, one ember progress bar, macro bars tipped in their semantic color. The renders read like plated dishes on dark linen. Calm enough to make logging feel like keeping a journal, not filing a report.</div>
+      <div class="cap-risk"><b>Risk:</b> meal-type grouping is flattened into one timeline — power users who think in "did I hit breakfast protein?" lose that structure.</div>
+    </div>
+  </div>
+
+  <!-- ============ E · WARM GALLERY (money frame) ============ -->
+  <div class="cell" id="e-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dE">
+      <div class="notch"></div><div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:60px 24px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;">
+          <div class="pill ne-icbtn"><span class="ne-grid"><i></i><i></i><i></i><i></i></span></div>
+          <div class="pill ne-icbtn" style="margin-left:auto;letter-spacing:2px;font-weight:800;">•••</div>
+        </div>
+        <div style="height:16px"></div>
+        <div class="micro lp" style="animation-name:s0;">June 11</div>
+        <div class="lp" style="animation-name:s0;font-family:Archivo,sans-serif;font-weight:700;font-size:46px;letter-spacing:-1.8px;line-height:1.05;">Today</div>
+        <div style="height:14px"></div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:baseline;gap:10px;">
+          <div class="big" style="font-size:84px;line-height:.95;">1,460</div>
+          <div style="font-size:14px;color:var(--d-mut);font-weight:500;">of 2,200 cal</div>
+        </div>
+        <div style="height:14px"></div>
+        <div class="ne-track lp" style="animation-name:s1;"><div class="nufill" style="--w:66%;background:var(--d-accent);"></div></div>
+        <div style="height:14px"></div>
+        <div class="ne-mline lp" style="animation-name:s2;">
+          <div class="g"><i style="background:#A855F7;"></i><b>96</b><span class="micro">Protein</span></div>
+          <div class="g"><i style="background:#06B6D4;"></i><b>142</b><span class="micro">Carbs</span></div>
+          <div class="g"><i style="background:#F97316;"></i><b>48</b><span class="micro">Fat</span></div>
+        </div>
+        <div style="height:18px"></div>
+        <!-- earlier, quietly -->
+        <div class="lp" style="animation-name:s3;display:flex;flex-direction:column;gap:8px;">
+          <div class="micro" style="color:var(--d-faint);">Earlier · 340 cal</div>
+          <div class="ne-small"><span class="food3d nufloat" style="font-size:34px;">🥣</span><div class="nm">Greek Yogurt with Honey</div><div class="kc">220</div></div>
+          <div class="ne-small"><span class="food3d nufloat" style="font-size:31px;animation-delay:.6s;">☕</span><div class="nm">Cappuccino</div><div class="kc">120</div></div>
+          <div class="ne-small"><span class="food3d nufloat" style="font-size:34px;animation-delay:1.1s;">🥐</span><div class="nm">Almond Croissant</div><div class="kc">410</div></div>
+        </div>
+        <div style="height:16px"></div>
+        <!-- the conversation -->
+        <div style="display:flex;flex-direction:column;gap:13px;">
+          <div class="ne-bub lp" style="animation-name:s4;">Salmon poke bowl and an iced matcha</div>
+          <div class="ne-entry lp" style="animation-name:s5;">
+            <span class="food3d nufloat" style="font-size:62px;animation-delay:.2s;">🍣</span>
+            <div><div class="nm">Salmon Poke Bowl</div><div class="sv">1 bowl · 420 g</div><div class="dt">640 cal<span>42P · 38C · 24F</span></div></div>
+          </div>
+          <div class="ne-entry lp" style="animation-name:s6;">
+            <span class="food3d nufloat" style="font-size:50px;animation-delay:.8s;">🍵</span>
+            <div><div class="nm">Iced Matcha</div><div class="sv">16 oz · oat milk</div><div class="dt">90 cal<span>1P · 20C · 1F</span></div></div>
+          </div>
+          <div class="ne-coach lp" style="animation-name:s7;"><i></i>Logged — solid protein day so far. ✨</div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="ne-input lp" style="animation-name:s8;">What did you eat?<div class="ne-send">↑</div></div>
+        <div style="height:26px"></div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">E</span>Warm Gallery — the money frame</div>
+      <div class="cap-why">The full Morsel thesis as Zealova: cream canvas, one editorial numeral, macro line with semantic dots, and logging as a conversation — you say it, the studio render and macros appear, the coach acknowledges. The 3D food is the hero because nothing else competes with it.</div>
+      <div class="cap-risk"><b>Risk:</b> a light theme inside a dark-first app is a real commitment (every sheet, nav and chart needs a cream variant), and the chat-log layout buries day-old meals fastest.</div>
+    </div>
+  </div>
+
+  <!-- ============ F · VOLT STADIUM ============ -->
+  <div class="cell" id="f-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dF grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:58px 20px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;">
+          <div class="nf-live lbl" style="font-size:10px;color:var(--d-accent);"><i></i>LIVE · FUEL DAY</div>
+          <div class="lbl" style="margin-left:auto;font-size:10px;color:var(--d-faint);">Wed Jun 11</div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:flex-end;gap:14px;">
+          <div class="disp" style="font-size:76px;line-height:.9;letter-spacing:2px;">1,460</div>
+          <div style="padding-bottom:7px;">
+            <div class="lbl" style="font-size:10px;color:var(--d-mut);">of 2,200 kcal</div>
+            <div class="voltchip" style="display:inline-block;font-size:11px;letter-spacing:1px;padding:4px 10px;margin-top:5px;">740 LEFT</div>
+          </div>
+        </div>
+        <div style="height:14px"></div>
+        <!-- macro scoreboard -->
+        <div class="lp" style="animation-name:s2;display:flex;gap:7px;">
+          <div class="nf-stat"><div class="v" style="color:#A855F7;text-shadow:0 0 14px rgba(168,85,247,.5);">96<i>/140</i></div><div class="lbl" style="font-size:8px;color:var(--d-faint);margin-top:4px;">Protein g</div><div class="b"><div class="nufill" style="--w:69%;background:#A855F7;"></div></div></div>
+          <div class="nf-stat"><div class="v" style="color:#06B6D4;text-shadow:0 0 14px rgba(6,182,212,.5);">142<i>/220</i></div><div class="lbl" style="font-size:8px;color:var(--d-faint);margin-top:4px;">Carbs g</div><div class="b"><div class="nufill" style="--w:64%;background:#06B6D4;"></div></div></div>
+          <div class="nf-stat"><div class="v" style="color:#F97316;text-shadow:0 0 14px rgba(249,115,22,.5);">48<i>/73</i></div><div class="lbl" style="font-size:8px;color:var(--d-faint);margin-top:4px;">Fat g</div><div class="b"><div class="nufill" style="--w:66%;background:#F97316;"></div></div></div>
+        </div>
+        <div style="height:15px"></div>
+        <!-- meals -->
+        <div class="lp" style="animation-name:s3;">
+          <div class="nf-mealhead"><span class="lbl" style="font-size:11px;color:var(--d-text);">Breakfast</span><span class="lbl" style="margin-left:auto;font-size:9.5px;color:var(--d-faint);">340 kcal</span></div>
+          <div class="nf-row"><span class="food3d nufloat" style="font-size:38px;">🥣</span><div><div class="nm">Greek Yogurt with Honey</div><div class="sv">1 BOWL · 170 G</div></div><div class="kc">220</div></div>
+          <div class="nf-row"><span class="food3d nufloat" style="font-size:34px;animation-delay:.6s;">☕</span><div><div class="nm">Cappuccino</div><div class="sv">12 OZ · WHOLE MILK</div></div><div class="kc">120</div></div>
+        </div>
+        <div style="height:9px"></div>
+        <div class="lp" style="animation-name:s4;">
+          <div class="nf-mealhead"><span class="lbl" style="font-size:11px;color:var(--d-text);">Lunch</span><span class="lbl" style="margin-left:auto;font-size:9.5px;color:var(--d-faint);">730 kcal</span></div>
+          <div class="nf-row"><span class="food3d nufloat" style="font-size:42px;animation-delay:.3s;">🍣</span><div><div class="nm">Salmon Poke Bowl</div><div class="sv">42P · 38C · 24F</div></div><div class="kc">640</div></div>
+          <div class="nf-row"><span class="food3d nufloat" style="font-size:34px;animation-delay:.9s;">🍵</span><div><div class="nm">Iced Matcha</div><div class="sv">16 OZ · OAT MILK</div></div><div class="kc">90</div></div>
+        </div>
+        <div style="height:9px"></div>
+        <div class="lp" style="animation-name:s5;">
+          <div class="nf-mealhead"><span class="lbl" style="font-size:11px;color:var(--d-text);">Snack</span><span class="lbl" style="margin-left:auto;font-size:9.5px;color:var(--d-faint);">410 kcal</span></div>
+          <div class="nf-row" style="border-bottom:none;"><span class="food3d nufloat" style="font-size:38px;animation-delay:1.2s;">🥐</span><div><div class="nm">Almond Croissant</div><div class="sv">1 PASTRY · 95 G</div></div><div class="kc">410</div></div>
+        </div>
+        <div style="flex:1"></div>
+        <!-- navy water block -->
+        <div class="lp" style="animation-name:s6;background:#15275C;border-radius:14px;padding:12px 14px;">
+          <div style="display:flex;align-items:baseline;">
+            <span class="lbl" style="font-size:10px;color:#9DB4E8;">Hydration</span>
+            <span class="disp" style="margin-left:auto;font-size:18px;color:#E3ECFF;">1.4<span class="lbl" style="font-size:9px;color:#9DB4E8;"> / 2.5 L</span></span>
+          </div>
+          <div style="height:6px;background:rgba(0,0,0,.35);border-radius:3px;margin-top:8px;overflow:hidden;"><div class="nufill" style="--w:56%;background:#7FA4F4;"></div></div>
+        </div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">F</span>Volt Stadium — the night scoreboard</div>
+      <div class="cap-why">The shareables language moved in-app: Anton calorie total under a blinking LIVE chip, macros as three glowing stadium stat boxes in their semantic colors, Barlow meal headers, and a navy hydration block anchoring the bottom. Volt is rationed to two elements (live dot + 740 LEFT chip) so the renders pop on near-black.</div>
+      <div class="cap-risk"><b>Risk:</b> volt + the P/C/F semantic colors is a lot of saturated hue in one frame — and acid lime is a debatable appetite color; food may read better next to E's cream than F's lime.</div>
+    </div>
+  </div>
+
+  <!-- ============ G · DEPTH FIELD ============ -->
+  <div class="cell" id="g-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dG">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <!-- drifting orbs (behind everything) -->
+      <div class="ng-orbwrap">
+        <div class="orb" style="width:190px;height:190px;left:-60px;top:90px;background:rgba(168,85,247,.32);animation:orbDrift 11s ease-in-out infinite;"></div>
+        <div class="orb" style="width:160px;height:160px;right:-50px;top:330px;background:rgba(6,182,212,.26);animation:orbDrift 13s ease-in-out infinite reverse;"></div>
+        <div class="orb" style="width:200px;height:200px;left:60px;bottom:-70px;background:rgba(249,115,22,.3);animation:orbDrift 15s ease-in-out infinite;"></div>
+      </div>
+      <div class="nupad ng-lift" style="padding:58px 20px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:baseline;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:2.5px;color:var(--d-mut);">June 11 · Nutrition</div>
+          <div style="margin-left:auto;font-size:11px;color:var(--d-faint);">Wed</div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- closest panel: kcal hero -->
+        <div class="glass glass-hi lp" style="animation-name:s1;padding:16px 18px 15px;">
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <div style="font-family:Archivo,sans-serif;font-weight:700;font-size:54px;letter-spacing:-2px;line-height:1;">1,460</div>
+            <div style="font-size:12px;color:var(--d-mut);">of 2,200 cal</div>
+          </div>
+          <div style="height:4px;background:rgba(255,255,255,.09);border-radius:2px;margin-top:12px;overflow:hidden;"><div class="nufill" style="--w:66%;background:var(--d-accent);"></div></div>
+          <div style="height:12px"></div>
+          <div class="ng-mline">
+            <div class="g"><i style="background:#A855F7;box-shadow:0 0 8px rgba(168,85,247,.6);"></i><b>96</b><span>P/140</span></div>
+            <div class="g"><i style="background:#06B6D4;box-shadow:0 0 8px rgba(6,182,212,.6);"></i><b>142</b><span>C/220</span></div>
+            <div class="g"><i style="background:#F97316;box-shadow:0 0 8px rgba(249,115,22,.6);"></i><b>48</b><span>F/73</span></div>
+          </div>
+        </div>
+        <div style="height:44px"></div>
+        <!-- shelves: meals as glass exhibits -->
+        <div class="glass ng-shelf lp" style="animation-name:s3;margin-right:26px;">
+          <div class="ng-exhibit"><span class="food3d ng-food" style="font-size:58px;">🥣</span><span class="food3d ng-food" style="font-size:42px;animation-delay:.7s;">☕</span></div>
+          <div><div class="mk">Breakfast</div><div class="fi">Greek Yogurt + Honey<span>220</span></div><div class="fi">Cappuccino<span>120</span></div></div>
+          <div class="kc"><i>KCAL</i>340</div>
+        </div>
+        <div style="height:34px"></div>
+        <div class="glass ng-shelf lp" style="animation-name:s4;margin-left:26px;">
+          <div class="ng-exhibit"><span class="food3d ng-food" style="font-size:70px;animation-delay:.3s;">🍣</span><span class="food3d ng-food" style="font-size:44px;animation-delay:1s;">🍵</span></div>
+          <div><div class="mk">Lunch</div><div class="fi">Salmon Poke Bowl<span>640</span></div><div class="fi">Iced Matcha<span>90</span></div></div>
+          <div class="kc"><i>KCAL</i>730</div>
+        </div>
+        <div style="height:34px"></div>
+        <div class="glass ng-shelf lp" style="animation-name:s5;margin-right:54px;">
+          <div class="ng-exhibit"><span class="food3d ng-food" style="font-size:56px;animation-delay:.5s;">🥐</span></div>
+          <div><div class="mk">Snack · 3:15 pm</div><div class="fi">Almond Croissant<span>410</span></div></div>
+          <div class="kc"><i>KCAL</i>410</div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="glass lp" style="animation-name:s7;padding:11px 15px;display:flex;align-items:center;gap:12px;">
+          <span style="font-size:20px;" class="food3d">💧</span>
+          <div style="flex:1;height:4px;background:rgba(255,255,255,.09);border-radius:2px;overflow:hidden;"><div class="nufill" style="--w:56%;background:#38BDF8;"></div></div>
+          <span style="font-size:11px;color:var(--d-mut);font-weight:600;">1.4 / 2.5 L</span>
+        </div>
+        <div style="height:24px"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">G</span>Depth Field — the dining table in space</div>
+      <div class="cap-why">The 3D showcase: drifting macro-colored orbs give the void depth, meals become frosted glass shelves staggered left/right at different elevations, and the renders sit ON the shelves like museum exhibits — oversized (56–70px), floating, casting studio shadows. The kcal hero rides the closest, brightest panel. Nothing else on screen is allowed to be an image.</div>
+      <div class="cap-risk"><b>Risk:</b> this direction lives or dies on render quality — a mediocre generated image on a pedestal is worse than no image; and stacked backdrop-blur panels are the priciest paint in the gallery.</div>
+    </div>
+  </div>
+
+  <!-- ============ H · KINETIC COLLAGE ============ -->
+  <div class="cell" id="h-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dH">
+      <div class="notch"></div><div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:58px 20px 0;">
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;">
+          <div class="disp nh-stamp">Today</div>
+          <div class="mono-stamp" style="margin-left:auto;font-size:9.5px;color:var(--d-mut);transform:rotate(1.5deg);">WED·JUN·11</div>
+        </div>
+        <div style="height:18px"></div>
+        <!-- kcal circled in marker -->
+        <div class="lp" style="animation-name:s1;display:flex;align-items:baseline;gap:16px;">
+          <span class="nh-circle"><span style="font-family:Archivo,sans-serif;font-weight:800;font-size:46px;letter-spacing:-2px;">1,460</span></span>
+          <span class="mono-stamp" style="font-size:10px;color:var(--d-mut);">of 2,200 cal<br>740 to go</span>
+        </div>
+        <div style="height:16px"></div>
+        <!-- macro stamp chips -->
+        <div class="lp" style="animation-name:s2;display:flex;gap:9px;">
+          <span class="nh-chip" style="background:rgba(168,85,247,.16);transform:rotate(-1.5deg);"><i style="background:#A855F7;"></i>P 96/140</span>
+          <span class="nh-chip" style="background:rgba(6,182,212,.15);transform:rotate(1deg);"><i style="background:#06B6D4;"></i>C 142/220</span>
+          <span class="nh-chip" style="background:rgba(249,115,22,.15);transform:rotate(-1deg);"><i style="background:#F97316;"></i>F 48/73</span>
+        </div>
+        <div style="height:22px"></div>
+        <!-- meal stickers -->
+        <div class="lp" style="animation-name:s3;margin-right:14px;">
+          <div class="sticker nh-stk" style="transform:rotate(-2deg);">
+            <div class="tape nh-tape"></div>
+            <span class="nh-time">08:12</span>
+            <span class="food3d nufloat" style="font-size:46px;">🥣</span>
+            <div><div class="nm">Greek Yogurt + Honey</div><div class="sv">+ Cappuccino ☕ · 2 items</div></div>
+            <div class="kc">340</div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+        <div class="lp" style="animation-name:s4;margin-left:14px;">
+          <div class="sticker nh-stk" style="transform:rotate(1.5deg);">
+            <div class="tape nh-tape" style="left:auto;right:18px;transform:rotate(4deg);"></div>
+            <span class="nh-time">12:40</span>
+            <span class="food3d nufloat" style="font-size:52px;animation-delay:.4s;">🍣</span>
+            <div><div class="nm">Salmon Poke Bowl</div><div class="sv">+ Iced Matcha 🍵 · 42P 38C 24F</div></div>
+            <div class="kc">730</div>
+          </div>
+        </div>
+        <!-- grid break: snack overlaps the lunch sticker -->
+        <div class="lp" style="animation-name:s5;margin:-7px 34px 0 2px;position:relative;z-index:2;">
+          <div class="sticker nh-stk" style="transform:rotate(-2.5deg);">
+            <div class="tape nh-tape" style="width:42px;"></div>
+            <span class="nh-time">15:15</span>
+            <span class="food3d nufloat" style="font-size:44px;animation-delay:.8s;">🥐</span>
+            <div><div class="nm">Almond Croissant</div><div class="sv">snack attack · 95 g</div></div>
+            <div class="kc">410</div>
+          </div>
+        </div>
+        <div style="height:20px"></div>
+        <!-- water strip -->
+        <div class="lp" style="animation-name:s6;"><div class="sticker" style="transform:rotate(.8deg);padding:10px 13px;display:flex;align-items:center;gap:10px;">
+          <span class="mono-stamp" style="font-size:9.5px;font-weight:700;">WATER</span>
+          <span style="display:flex;gap:4px;font-size:13px;letter-spacing:1px;">💧💧💧<span style="opacity:.22;">💧💧</span></span>
+          <span class="mono-stamp" style="margin-left:auto;font-size:9.5px;color:var(--d-mut);">1.4/2.5L</span>
+        </div></div>
+        <div style="flex:1"></div>
+        <div class="lp" style="animation-name:s7;display:flex;justify-content:center;padding-bottom:26px;">
+          <span class="disp" style="background:var(--d-border);color:var(--d-volt);font-size:15px;letter-spacing:2px;padding:9px 26px;border-radius:6px;box-shadow:3px 3px 0 rgba(20,18,16,.25);transform:rotate(-1deg);">+ STICK A MEAL ON</span>
+        </div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">H</span>Kinetic Collage — the scrapbook log</div>
+      <div class="cap-why">The food diary as a zine page: each meal is a white sticker rotated ±2° with the render taped on under a volt strip, mono-stamp timestamps, an Anton TODAY stamp, the 1,460 circled in orange marker, and macro totals as three semantic-color stamped chips. The snack sticker deliberately breaks the grid and overlaps lunch — the day reads as something you made, not something you filed.</div>
+      <div class="cap-risk"><b>Risk:</b> cute-fatigue is real at meal 4 of day 90; and once real food renders replace emoji, photographic dishes compete with the sticker chrome — the tape/rotation has to defer or it turns into noise.</div>
+    </div>
+  </div>
+
+</div>
+</div>

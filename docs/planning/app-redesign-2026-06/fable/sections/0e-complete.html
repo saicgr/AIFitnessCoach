@@ -1,0 +1,672 @@
+<div class="sx-cp">
+<style>
+/* ================= WORKOUT COMPLETE — section-scoped (.sx-cp) ================= */
+
+/* ---------- shared bits ---------- */
+.sx-cp .cp-pad { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 16px; }
+
+/* ---------- BEFORE: faithful current screen ---------- */
+.sx-cp .bf-conf { position:absolute; top:-14px; width:7px; height:11px; border-radius:2px; z-index:5; animation:cpFall 3.4s linear infinite; }
+@keyframes cpFall { 0%{ transform:translateY(0) rotate(0deg); opacity:1; } 82%{ opacity:1; } 100%{ transform:translateY(430px) rotate(560deg); opacity:0; } }
+.sx-cp .bf-check { width:38px; height:38px; border-radius:50%; flex:0 0 auto;
+  background:linear-gradient(135deg,#F97316,#A855F7); display:flex; align-items:center; justify-content:center;
+  font-size:20px; color:#fff; font-weight:800; box-shadow:0 0 14px rgba(249,115,22,.35); }
+.sx-cp .bf-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.sx-cp .bf-stat { background:var(--d-surface); border:1px solid var(--d-border); border-radius:14px; padding:9px 11px; }
+.sx-cp .bf-stat .ic { font-size:12px; color:var(--d-accent); }
+.sx-cp .bf-stat .lb { font-size:10px; color:var(--d-mut); margin-top:1px; }
+.sx-cp .bf-stat .vl { font-size:17px; font-weight:800; margin-top:1px; }
+.sx-cp .bf-stat .vl small { font-size:10.5px; font-weight:600; color:var(--d-mut); margin-left:2px; }
+.sx-cp .bf-card { background:var(--d-surface); border:1px solid var(--d-border); border-radius:var(--d-radius); padding:11px 12px; }
+.sx-cp .bf-prchip { display:inline-flex; align-items:center; gap:3px; background:#FCD34D; color:#7A5C00;
+  font-size:8.5px; font-weight:900; padding:2px 6px; border-radius:6px; letter-spacing:.5px; }
+.sx-cp .bf-exrow { display:flex; justify-content:space-between; align-items:center; padding:5px 0; }
+.sx-cp .bf-exrow .nm { font-size:12px; font-weight:700; }
+.sx-cp .bf-exrow .sm { font-size:10.5px; color:var(--d-mut); }
+.sx-cp .bf-troph { display:flex; align-items:center; gap:11px; padding:11px 12px; border-radius:14px;
+  background:linear-gradient(135deg, rgba(249,115,22,.20), rgba(168,85,247,.15));
+  border:1.5px solid rgba(249,115,22,.5); box-shadow:0 0 12px rgba(249,115,22,.15); }
+.sx-cp .bf-tico { position:relative; width:38px; height:38px; border-radius:11px; flex:0 0 auto;
+  background:linear-gradient(135deg,#F97316,#A855F7); display:flex; align-items:center; justify-content:center; font-size:19px; }
+.sx-cp .bf-tbadge { position:absolute; top:-5px; right:-5px; width:17px; height:17px; border-radius:50%;
+  background:linear-gradient(135deg,#FFD700,#FFA500); border:2px solid #1A1A1A; color:#fff;
+  font-size:9px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+.sx-cp .bf-acts { display:flex; justify-content:center; gap:12px; font-size:11px; font-weight:600; }
+.sx-cp .bf-btnrow { display:flex; gap:10px; }
+.sx-cp .bf-share { flex:1; border:1px solid rgba(249,115,22,.5); color:#F97316; border-radius:10px;
+  display:flex; align-items:center; justify-content:center; gap:6px; font-size:13px; font-weight:600; height:42px; }
+.sx-cp .bf-done { flex:2; border-radius:12px; background:linear-gradient(90deg,#F97316,#A855F7);
+  display:flex; align-items:center; justify-content:center; color:#fff; font-size:14.5px; font-weight:800; height:42px;
+  box-shadow:0 4px 8px rgba(249,115,22,.3); }
+
+/* ---------- A: editorial athletic poster ---------- */
+@keyframes cpSlam0 { 0%,2%{ opacity:0; transform:translateY(56px); } 6%{ opacity:1; transform:translateY(-4px); } 9%,96%{ opacity:1; transform:none; } 100%{ opacity:0; } }
+@keyframes cpSlam1 { 0%,9%{ opacity:0; transform:translateY(56px); } 13%{ opacity:1; transform:translateY(-4px); } 16%,96%{ opacity:1; transform:none; } 100%{ opacity:0; } }
+@keyframes cpSlam2 { 0%,16%{ opacity:0; transform:translateY(64px); } 20%{ opacity:1; transform:translateY(-5px); } 23%,96%{ opacity:1; transform:none; } 100%{ opacity:0; } }
+.sx-cp .pa-led { display:flex; justify-content:space-between; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--d-rule); }
+.sx-cp .pa-led:first-of-type { border-top:1px solid var(--d-rule); }
+.sx-cp .pa-led .k { font-size:12px; color:var(--d-mut); }
+.sx-cp .pa-led .v { font-size:25px; line-height:1; letter-spacing:.5px; }
+.sx-cp .pa-led .v small { font-size:12px; color:var(--d-mut); letter-spacing:1px; margin-left:3px; }
+.sx-cp .pa-pr { display:flex; align-items:center; gap:11px; padding:11px 0 11px 13px; border-left:3px solid var(--d-accent); margin-top:14px; }
+.sx-cp .pa-prtag { background:var(--d-accent); color:#160b03; font-family:'Barlow Condensed',sans-serif; font-weight:800;
+  font-size:11.5px; letter-spacing:2px; padding:3px 8px; border-radius:3px; }
+.sx-cp .pa-cta { height:50px; border-radius:5px; background:var(--d-accent); color:#160b03;
+  font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; letter-spacing:2.5px; text-transform:uppercase;
+  display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 10px 28px rgba(249,115,22,.3); }
+
+/* ---------- B: instrument-panel debrief ---------- */
+@keyframes cpBlink { 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
+.sx-cp .pb-cur { display:inline-block; width:9px; height:17px; background:var(--d-data); vertical-align:-2px; margin-left:3px; animation:cpBlink 1.1s steps(1) infinite; }
+.sx-cp .pb-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.sx-cp .pb-cell { padding:9px 11px; position:relative; }
+.sx-cp .pb-cell .k { font-size:9.5px; color:var(--d-faint); }
+.sx-cp .pb-cell .v { font-size:20px; color:var(--d-data); margin-top:2px; }
+.sx-cp .pb-cell .v small { font-size:10px; color:var(--d-mut); }
+.sx-cp .pb-roll { display:inline-block; height:24px; overflow:hidden; vertical-align:bottom; }
+.sx-cp .pb-roll-in { display:flex; flex-direction:column; animation:cpRoll 10s cubic-bezier(.7,0,.3,1) infinite; }
+.sx-cp .pb-roll-in span { display:block; height:24px; line-height:24px; }
+@keyframes cpRoll { 0%,30%{ transform:translateY(0); } 38%,46%{ transform:translateY(-24px); } 54%,62%{ transform:translateY(-48px); } 70%,96%{ transform:translateY(-72px); } 100%{ transform:translateY(-72px); } }
+.sx-cp .pb-share { display:flex; align-items:center; justify-content:center; gap:9px; height:44px;
+  border:1px solid var(--d-accent); border-radius:var(--d-radius); color:var(--d-accent);
+  font-family:'Space Mono',monospace; font-size:13px; letter-spacing:2px; }
+
+/* ---------- C: soft brutal trophy pop ---------- */
+@keyframes cpPop0 { 0%,2%{ opacity:0; transform:scale(.55); } 6%{ opacity:1; transform:scale(1.07); } 9%,96%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+@keyframes cpPop1 { 0%,10%{ opacity:0; transform:scale(.55); } 14%{ opacity:1; transform:scale(1.07); } 17%,96%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+@keyframes cpPop2 { 0%,18%{ opacity:0; transform:scale(.55); } 22%{ opacity:1; transform:scale(1.07); } 25%,96%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+@keyframes cpPop3 { 0%,26%{ opacity:0; transform:scale(.55); } 30%{ opacity:1; transform:scale(1.07); } 33%,96%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+@keyframes cpPop4 { 0%,34%{ opacity:0; transform:scale(.55); } 38%{ opacity:1; transform:scale(1.07); } 41%,96%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+@keyframes cpPop5 { 0%,42%{ opacity:0; transform:scale(.55); } 46%{ opacity:1; transform:scale(1.07); } 49%,96%{ opacity:1; transform:scale(1); } 100%{ opacity:0; } }
+.sx-cp .pc-hero { background:var(--d-accent); color:#160b03; border-radius:var(--d-radius); padding:20px 20px 18px; }
+.sx-cp .pc-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.sx-cp .pc-stat { padding:11px 13px; }
+.sx-cp .pc-stat .v { font-size:24px; line-height:1; }
+.sx-cp .pc-stat .v small { font-size:11px; color:var(--d-mut); font-weight:700; }
+.sx-cp .pc-stat .k { font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); margin-top:4px; }
+.sx-cp .pc-pr { display:flex; align-items:center; gap:10px; padding:11px 14px; border:3px solid #FFD54A;
+  border-radius:18px; background:rgba(255,213,74,.07); }
+.sx-cp .pc-share { height:54px; border-radius:999px; background:var(--d-accent); color:#160b03;
+  display:flex; align-items:center; justify-content:center; gap:9px; font-size:17px; font-weight:800;
+  font-family:Archivo,sans-serif; letter-spacing:-.3px; }
+
+/* ---------- D: ink & ember exhale ---------- */
+@keyframes cpRingDraw { 0%,6%{ stroke-dashoffset:415; } 72%,96%{ stroke-dashoffset:8; } 100%{ stroke-dashoffset:415; } }
+.sx-cp .pd-ring { animation:cpRingDraw 10s cubic-bezier(.4,0,.2,1) infinite; }
+.sx-cp .pd-row { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--d-border); }
+.sx-cp .pd-row .k { font-size:12px; color:var(--d-mut); }
+.sx-cp .pd-row .v { font-size:16px; font-weight:600; letter-spacing:.2px; }
+.sx-cp .pd-row .v small { font-size:11px; color:var(--d-mut); font-weight:500; }
+
+/* ---------- E: warm gallery, morning-after ---------- */
+.sx-cp .pe-row { display:flex; justify-content:space-between; align-items:center; padding:11px 16px; font-size:13px; }
+.sx-cp .pe-row .k { color:var(--d-mut); font-weight:600; }
+.sx-cp .pe-row .v { font-weight:700; }
+.sx-cp .pe-streak { height:6px; border-radius:3px; background:var(--d-surface2); overflow:hidden; }
+.sx-cp .pe-streak i { display:block; height:100%; border-radius:3px; background:var(--d-accent); animation:fillBar 2.4s cubic-bezier(.4,0,.2,1) both; }
+.sx-cp .pe-share { height:52px; border-radius:999px; background:var(--d-accent); color:#FDF6EE;
+  display:flex; align-items:center; justify-content:center; gap:8px; font-size:15px; font-weight:700;
+  font-family:Archivo,sans-serif; box-shadow:0 10px 24px rgba(194,65,12,.28); }
+
+/* ---------- F: volt stadium, floodlit finish ---------- */
+@keyframes cpXSlamF { 0%,4%{ opacity:0; transform:translateY(72px) scale(.97); } 9%{ opacity:1; transform:translateY(-5px) scale(1.01); } 12%,96%{ opacity:1; transform:none; } 100%{ opacity:0; } }
+@keyframes cpXFlood { 0%,100%{ opacity:.45; } 50%{ opacity:.85; } }
+.sx-cp .pf-flood { position:absolute; top:-70px; left:-40px; right:-40px; height:330px; pointer-events:none;
+  background:radial-gradient(55% 62% at 50% 0%, rgba(216,255,58,.17), transparent 72%);
+  animation:cpXFlood 6s ease-in-out infinite; }
+.sx-cp .pf-led { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid var(--d-border); }
+.sx-cp .pf-led:first-of-type { border-top:1px solid var(--d-border); }
+.sx-cp .pf-led .k { font-size:11.5px; color:var(--d-mut); }
+.sx-cp .pf-led .v { font-size:23px; line-height:1; letter-spacing:.5px; }
+.sx-cp .pf-led .v small { font-size:11px; color:var(--d-mut); letter-spacing:1px; margin-left:3px; }
+.sx-cp .pf-pr { display:flex; align-items:center; gap:10px; padding:11px 12px; margin-top:13px;
+  border:1px solid rgba(216,255,58,.45); border-radius:var(--d-radius); background:rgba(216,255,58,.06); }
+.sx-cp .pf-chip { font-family:'Barlow Condensed',sans-serif; font-size:11.5px; letter-spacing:2px; padding:3px 8px; }
+.sx-cp .pf-navy { background:var(--d-navy); border-radius:var(--d-radius); padding:13px 16px;
+  display:flex; align-items:center; justify-content:space-between; box-shadow:0 14px 30px -12px rgba(21,39,92,.8); }
+
+/* ---------- G: depth field, trophy room ---------- */
+@keyframes cpXTroph { 0%,6%{ opacity:0; transform:translateY(30px) scale(.78); } 12%{ opacity:1; transform:translateY(-6px) scale(1.05); } 15%,96%{ opacity:1; transform:none; } 100%{ opacity:0; } }
+.sx-cp .pg-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 8px; }
+.sx-cp .pg-stat .v { font-size:22px; font-weight:700; letter-spacing:-.5px; }
+.sx-cp .pg-stat .v small { font-size:11px; font-weight:600; color:var(--d-mut); letter-spacing:0; }
+.sx-cp .pg-stat .k { font-size:9.5px; font-weight:600; text-transform:uppercase; letter-spacing:1.8px; color:var(--d-mut); margin-top:3px; }
+.sx-cp .pg-plinth { padding:12px 14px; text-align:center; }
+.sx-cp .pg-engrave { font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:#C9D2E0;
+  text-shadow:0 1px 0 rgba(255,255,255,.10), 0 -1px 1px rgba(0,0,0,.65); }
+.sx-cp .pg-recess { background:var(--d-surface2); border:1px solid rgba(255,255,255,.06); border-radius:var(--d-radius);
+  box-shadow:inset 0 2px 8px rgba(0,0,0,.55); }
+
+/* ---------- H: kinetic collage, scrapbook page ---------- */
+@keyframes cpXStamp { 0%,4%{ opacity:0; transform:rotate(-2deg) scale(1.55); } 8%{ opacity:1; transform:rotate(-2deg) scale(.96); } 11%,96%{ opacity:1; transform:rotate(-2deg) scale(1); } 100%{ opacity:0; } }
+@keyframes cpXDraw { 0%,44%{ stroke-dashoffset:265; } 60%,96%{ stroke-dashoffset:0; } 100%{ stroke-dashoffset:265; } }
+.sx-cp .ph-stamp { display:inline-block; border:3px solid var(--d-border); border-radius:8px; padding:9px 16px 6px;
+  font-size:42px; line-height:1; letter-spacing:1px; }
+.sx-cp .ph-stk { padding:9px 11px; }
+.sx-cp .ph-stk .v { font-family:Anton,sans-serif; font-size:22px; line-height:1; }
+.sx-cp .ph-stk .k { font-family:'Space Mono',monospace; font-size:8px; letter-spacing:.5px; color:var(--d-mut); margin-top:4px; text-transform:uppercase; }
+.sx-cp .ph-tkt { position:relative; border:2px dashed var(--d-border); background:var(--d-surface); border-radius:4px; padding:9px 14px; }
+.sx-cp .ph-tape { position:absolute; top:-9px; right:-13px; width:58px; height:20px; }
+.sx-cp .ph-scrawl { font-family:Archivo,sans-serif; font-weight:800; font-style:italic; color:#F97316; letter-spacing:.5px; }
+.sx-cp .ph-tg { position:relative; display:flex; gap:3.5px; }
+.sx-cp .ph-tg i { width:2.5px; height:21px; background:var(--d-text); border-radius:1.5px; display:block; }
+.sx-cp .ph-tg .x { position:absolute; left:-3px; right:-3px; top:9px; height:2.5px; background:#F97316; transform:rotate(-22deg); border-radius:1.5px; }
+.sx-cp .ph-shr { background:var(--d-text); color:var(--d-volt); border-radius:6px; box-shadow:4px 4px 0 rgba(20,18,16,.25);
+  height:48px; display:flex; align-items:center; justify-content:center; gap:8px;
+  font-family:Anton,sans-serif; font-size:16px; letter-spacing:1.5px; text-transform:uppercase; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Probe 5 of 5</div>
+  <div class="sec-title">WORKOUT COMPLETE</div>
+  <div class="sec-desc">The emotional peak — and the screenshot users actually share. Today's screen is a dense receipt with generic confetti; every metric is there but no single moment lands. Same session in all six frames: Push Day · 52:18 · 9,840 lb · 24 sets · 386 kcal · 1 PR (Incline DB Press 60×8) · +240 XP · 24-day streak. Each direction celebrates in its own voice — a poster, a debrief, a trophy cabinet, an exhale, a journal entry.</div>
+</section>
+
+<div class="row">
+
+  <!-- ============ BEFORE ============ -->
+  <div class="cell" id="before-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <!-- generic confetti, honestly representing today -->
+      <i class="bf-conf" style="left:8%; background:#F97316; animation-delay:0s;"></i>
+      <i class="bf-conf" style="left:20%; background:#A855F7; animation-delay:.7s;"></i>
+      <i class="bf-conf" style="left:33%; background:#FFD54A; animation-delay:1.5s;"></i>
+      <i class="bf-conf" style="left:47%; background:#06B6D4; animation-delay:.3s;"></i>
+      <i class="bf-conf" style="left:60%; background:#F97316; animation-delay:2.1s;"></i>
+      <i class="bf-conf" style="left:72%; background:#2ECC71; animation-delay:1.1s;"></i>
+      <i class="bf-conf" style="left:84%; background:#A855F7; animation-delay:1.8s;"></i>
+      <i class="bf-conf" style="left:93%; background:#FFD54A; animation-delay:.5s;"></i>
+      <div class="cp-pad" style="padding:54px 18px 12px;">
+        <!-- title row -->
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="bf-check">✓</div>
+          <div>
+            <div style="font-size:17px; font-weight:800;">Workout Complete</div>
+            <div style="font-size:11.5px; color:var(--d-mut);">Push Day — Chest &amp; Triceps</div>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- 2x2 stats page (of the 8-stat carousel) -->
+        <div class="bf-grid">
+          <div class="bf-stat"><span class="ic">⏱</span><div class="lb">Duration</div><div class="vl">52 min 18 sec</div></div>
+          <div class="bf-stat"><span class="ic">🔥</span><div class="lb">Energy</div><div class="vl">386<small>kcal</small></div></div>
+          <div class="bf-stat"><span class="ic">🏋️</span><div class="lb">Volume</div><div class="vl">9,840<small>lb</small></div></div>
+          <div class="bf-stat"><span class="ic">▤</span><div class="lb">Sets</div><div class="vl">24</div></div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:5px; margin-top:7px;">
+          <span style="width:16px; height:5px; border-radius:3px; background:var(--d-accent);"></span>
+          <span style="width:5px; height:5px; border-radius:3px; background:#3f3f46;"></span>
+        </div>
+        <div style="height:9px"></div>
+        <!-- merged coach recap card -->
+        <div class="bf-card">
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:700;">🤖 Coach's Recap <span style="margin-left:auto; color:var(--d-faint); font-size:13px;">⌄</span></div>
+          <div style="font-size:11px; color:var(--d-mut); margin-top:5px; line-height:1.45;">Strong pressing session — incline strength is trending up. Chest + triceps fully covered.</div>
+          <div style="display:flex; gap:5px; margin-top:7px;">
+            <span style="font-size:9.5px; background:rgba(249,115,22,.14); color:var(--d-accent); padding:2px 8px; border-radius:99px;">Chest</span>
+            <span style="font-size:9.5px; background:rgba(249,115,22,.14); color:var(--d-accent); padding:2px 8px; border-radius:99px;">Triceps</span>
+            <span style="font-size:9.5px; background:rgba(168,85,247,.16); color:#C084FC; padding:2px 8px; border-radius:99px;">+240 XP</span>
+          </div>
+        </div>
+        <div style="height:9px"></div>
+        <!-- exercises -->
+        <div class="bf-card" style="padding:9px 12px;">
+          <div style="font-size:12px; font-weight:800;">≡ Exercises</div>
+          <div class="bf-exrow"><div><span class="nm">Incline DB Press</span> <span class="bf-prchip">🏆 PR</span><div class="sm">4×8 · 60 lb avg</div></div><span style="color:var(--d-faint);">⌄</span></div>
+          <div class="bf-exrow"><div><span class="nm">Bench Press</span><div class="sm">4×8 · 185 lb avg</div></div><span style="color:var(--d-faint);">⌄</span></div>
+          <div class="bf-exrow" style="padding-bottom:0;"><div><span class="nm">Cable Fly</span><div class="sm">3×12 · 42.5 lb avg</div></div><span style="color:var(--d-faint);">⌄</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- rating -->
+        <div style="text-align:center; font-size:12.5px; font-weight:700;">How was your workout?</div>
+        <div style="text-align:center; font-size:22px; letter-spacing:5px; margin-top:3px;"><span style="color:var(--d-accent);">★★★★</span><span style="color:#3f3f46;">★</span></div>
+        <div style="height:9px"></div>
+        <!-- trophies card -->
+        <div class="bf-troph">
+          <div class="bf-tico">🏆<span class="bf-tbadge">1</span></div>
+          <div style="flex:1;">
+            <div style="font-size:12.5px; font-weight:800; background:linear-gradient(90deg,#FFD700,#F97316); -webkit-background-clip:text; background-clip:text; color:transparent;">Trophies Earned!</div>
+            <div style="font-size:10.5px; color:rgba(249,115,22,.85); margin-top:1px;">1 PR · 24-day streak — Tap to view</div>
+          </div>
+          <span style="color:var(--d-accent);">›</span>
+        </div>
+        <div style="height:7px"></div>
+        <div class="bf-acts">
+          <span style="color:#A855F7;">＋ Do More</span><span style="color:#E65100;">♨ Sauna</span><span style="color:var(--d-accent);">▤ Summary</span><span style="color:var(--d-mut);">⋮</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="bf-btnrow">
+          <div class="bf-share">⇪ Share</div>
+          <div class="bf-done">Done</div>
+        </div>
+        <div style="text-align:center; font-size:11px; color:var(--d-mut); margin-top:6px;">Skip rating</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current — the dense receipt</div>
+      <div class="cap-why">Faithful to today: gradient check circle, 2×2 stat carousel, coach recap, expandable exercise rows with the gold PR chip, star rating, orange-purple trophies card, Share + Done bar — and generic multicolor confetti on top.</div>
+      <div class="cap-risk"><b>Honest read:</b> every datum is present but nothing is the moment. The PR — the single most shareable fact — is a 9px chip. Confetti is the same as every other app's.</div>
+    </div>
+  </div>
+
+  <!-- ============ A: EDITORIAL ATHLETIC ============ -->
+  <div class="cell" id="a-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dA grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="cp-pad" style="padding:58px 24px 16px;">
+        <div class="lbl lp" style="animation-name:s0; font-size:12px; color:var(--d-mut);">THU JUN 11 · CHEST &amp; TRICEPS</div>
+        <div style="height:10px"></div>
+        <div class="disp lp" style="animation-name:cpSlam0; font-size:46px; line-height:.96; color:var(--d-mut);">PUSH DAY</div>
+        <div class="disp lp" style="animation-name:cpSlam1; font-size:104px; line-height:.92; margin-top:2px;">DONE<span style="color:var(--d-accent);">.</span></div>
+        <div style="height:20px"></div>
+        <!-- stat ledger -->
+        <div class="pa-led lp" style="animation-name:s3;"><span class="k lbl">Time</span><span class="v disp">52:18</span></div>
+        <div class="pa-led lp" style="animation-name:s4;"><span class="k lbl">Volume</span><span class="v disp">9,840<small>LB</small></span></div>
+        <div class="pa-led lp" style="animation-name:s5;"><span class="k lbl">Sets</span><span class="v disp">24</span></div>
+        <div class="pa-led lp" style="animation-name:s6;"><span class="k lbl">Burn</span><span class="v disp">386<small>KCAL</small></span></div>
+        <div class="pa-led lp" style="animation-name:s7;"><span class="k lbl">Streak</span><span class="v disp" style="color:var(--d-accent);">24<small>DAYS</small></span></div>
+        <!-- PR callout -->
+        <div class="pa-pr lp" style="animation-name:cpSlam2;">
+          <span class="pa-prtag">PR</span>
+          <div>
+            <div style="font-size:13.5px; font-weight:700;">Incline DB Press</div>
+            <div class="lbl" style="font-size:11px; color:var(--d-mut);">60 LB × 8 · +240 XP</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="pa-cta lp" style="animation-name:s9;">Share the poster →</div>
+        <div class="lbl lp" style="animation-name:s9; text-align:center; font-size:12px; color:var(--d-faint); margin-top:10px;">Done</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">A</span>Editorial Athletic — the finisher poster</div>
+      <div class="cap-why">No confetti at all: the celebration is 104px Anton slamming "DONE." onto the screen, then a hairline-ruled stat ledger like a meet result sheet. The PR gets the only orange rule on the page. This IS the share image.</div>
+      <div class="cap-risk"><b>Risk:</b> rating stars, coach recap and secondary actions must live behind a swipe-up — the poster only works if it stays empty.</div>
+    </div>
+  </div>
+
+  <!-- ============ B: INSTRUMENT PANEL ============ -->
+  <div class="cell" id="b-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dB grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="cp-pad scan" style="padding:58px 20px 16px;">
+        <div class="data lp" style="animation-name:s0; font-size:17px; letter-spacing:1px;">» SESSION COMPLETE<span class="pb-cur"></span></div>
+        <div class="lbl lp" style="animation-name:s0; font-size:10.5px; color:var(--d-faint); margin-top:4px;">PUSH DAY · LOG #0142 · SIGNED 09:41:07</div>
+        <div style="height:14px"></div>
+        <!-- telemetry bento -->
+        <div class="pb-grid">
+          <div class="panel pb-cell lp" style="animation-name:s1;"><div class="k lbl">Elapsed</div><div class="v data">52:18</div></div>
+          <div class="panel pb-cell lp" style="animation-name:s2;"><div class="k lbl">Volume</div><div class="v data">9840<small> LB</small></div></div>
+          <div class="panel pb-cell lp" style="animation-name:s3;"><div class="k lbl">Sets</div><div class="v data">24</div></div>
+          <div class="panel pb-cell lp" style="animation-name:s4;"><div class="k lbl">Burn</div><div class="v data">386<small> KCAL</small></div></div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- PR flag -->
+        <div class="panel pb-cell lp" style="animation-name:s5; border-left:3px solid var(--d-accent);">
+          <div class="lbl" style="font-size:10px; color:var(--d-accent);">▲ NEW MAX</div>
+          <div class="data" style="font-size:15px; margin-top:3px;">INCLINE DB PRESS 60LB × 8</div>
+          <div class="data" style="font-size:10px; color:var(--d-mut); margin-top:2px;">prev 55LB × 8 · Δ +9.1%</div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- XP ticker + streak -->
+        <div style="display:flex; gap:8px;">
+          <div class="panel pb-cell lp" style="animation-name:s6; flex:1;">
+            <div class="k lbl">XP Awarded</div>
+            <div class="v data" style="font-size:20px;">
+              <span class="pb-roll"><span class="pb-roll-in"><span>+000</span><span>+080</span><span>+160</span><span style="color:var(--d-accent);">+240</span></span></span>
+            </div>
+          </div>
+          <div class="panel pb-cell lp" style="animation-name:s6; flex:1;">
+            <div class="k lbl">Streak</div>
+            <div class="v data" style="font-size:20px;">24<small> D</small> <span style="font-size:10px; color:#2ECC71;">●</span></div>
+          </div>
+        </div>
+        <div style="height:8px"></div>
+        <!-- session sparkline -->
+        <div class="panel pb-cell lp" style="animation-name:s7;">
+          <div class="k lbl">Set intensity · 24 logged</div>
+          <svg width="100%" height="34" viewBox="0 0 300 34" preserveAspectRatio="none" style="margin-top:4px;">
+            <polyline points="0,26 14,22 28,24 42,16 56,19 70,12 84,15 98,9 112,13 126,7 140,11 154,5 168,10 182,8 196,14 210,6 224,12 238,9 252,16 266,11 280,18 300,14"
+              fill="none" stroke="#5EEAD4" stroke-width="1.6"/>
+            <circle cx="154" cy="5" r="3" fill="#F97316"/>
+            <text x="162" y="7" fill="#F97316" font-size="8" font-family="'Space Mono',monospace">PR</text>
+          </svg>
+        </div>
+        <div style="flex:1"></div>
+        <div class="data lp" style="animation-name:s8; font-size:10.5px; color:#2ECC71;">✓ LOG SAVED · SYNCED TO HEALTH · COACH NOTIFIED</div>
+        <div style="height:9px"></div>
+        <div class="pb-share lp" style="animation-name:s9;">⇪ TRANSMIT / SHARE ▸</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B</span>Instrument Panel — the mission debrief</div>
+      <div class="cap-why">Signing off a flight log: blinking cursor, teal telemetry in Space Mono, the PR flagged "▲ NEW MAX" with its delta, XP odometer ticking 000→240, a per-set intensity sparkline with the PR set marked. Calm, factual pride.</div>
+      <div class="cap-risk"><b>Risk:</b> zero warmth — the rating prompt and coach voice feel off-register here and need their own "debrief questions" framing.</div>
+    </div>
+  </div>
+
+  <!-- ============ C: SOFT BRUTAL ============ -->
+  <div class="cell" id="c-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dC grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="cp-pad" style="padding:58px 20px 16px;">
+        <!-- giant flat orange hero -->
+        <div class="pc-hero lp" style="animation-name:cpPop0;">
+          <div class="hed" style="font-size:54px; line-height:.95;">DONE 💪</div>
+          <div style="font-size:13px; font-weight:800; letter-spacing:1px; margin-top:6px; opacity:.8;">PUSH DAY · CRUSHED IN 52:18</div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- chunky stat blocks -->
+        <div class="pc-grid">
+          <div class="card pc-stat lp" style="animation-name:cpPop1;"><div class="v hed">9,840<small> lb</small></div><div class="k">Volume</div></div>
+          <div class="card pc-stat lp" style="animation-name:cpPop2;"><div class="v hed">24</div><div class="k">Sets</div></div>
+          <div class="card pc-stat lp" style="animation-name:cpPop3;"><div class="v hed">386</div><div class="k">kcal</div></div>
+          <div class="card pc-stat lp" style="animation-name:cpPop4;"><div class="v hed" style="color:#C084FC;">+240</div><div class="k">XP</div></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- fat gold PR chip -->
+        <div class="pc-pr lp" style="animation-name:cpPop5;">
+          <span style="font-size:26px;">🏆</span>
+          <div>
+            <div class="hed" style="font-size:15px; color:#FFD54A;">NEW PR</div>
+            <div style="font-size:12.5px; font-weight:700; margin-top:1px;">Incline DB Press · 60 lb × 8</div>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- oversized streak -->
+        <div class="card lp" style="animation-name:s7; display:flex; align-items:center; gap:14px; padding:10px 16px; border-color:var(--d-field-c);">
+          <div class="hed" style="font-size:58px; line-height:1; color:var(--d-field-c);">24</div>
+          <div>
+            <div class="hed" style="font-size:14px;">DAY STREAK</div>
+            <div style="font-size:11px; color:var(--d-mut); font-weight:600; margin-top:2px;">Longest one yet. Don't blink.</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="pc-share lp" style="animation-name:s9;">SHARE IT →</div>
+        <div class="lp" style="animation-name:s9; text-align:center; font-size:12.5px; font-weight:700; color:var(--d-mut); margin-top:9px;">Done</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">C</span>Soft Brutal — the trophy cabinet</div>
+      <div class="cap-why">Loud but flat: a solid orange "DONE 💪" slab (no gradient anywhere), chunky 2px-border stat blocks bouncing in with overshoot, a fat gold-bordered PR chip, and the streak as a 58px cyan numeral. Reads in one glance from across the gym.</div>
+      <div class="cap-risk"><b>Risk:</b> the bounce-in choreography must be ~1.2s total in Flutter — any slower and "loud" becomes "clowny." Gold + orange + cyan needs strict rationing.</div>
+    </div>
+  </div>
+
+  <!-- ============ D: INK & EMBER ============ -->
+  <div class="cell" id="d-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dD grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="cp-pad" style="padding:60px 26px 18px;">
+        <div class="lp" style="animation-name:s0; font-size:11px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--d-faint);">Push Day · Complete</div>
+        <div style="height:12px"></div>
+        <div class="ser lp" style="animation-name:s1; font-size:31px; line-height:1.22; font-weight:500;">That's twenty-four<br>days <em style="color:var(--d-accent); font-style:italic;">straight.</em></div>
+        <div style="height:22px"></div>
+        <!-- ember ring around 52:18 -->
+        <div class="lp" style="animation-name:s2; display:flex; justify-content:center;">
+          <div style="position:relative; width:158px; height:158px;">
+            <svg width="158" height="158" viewBox="0 0 158 158">
+              <defs>
+                <linearGradient id="cpEmberGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#7C2D12"/><stop offset="100%" stop-color="#F97316"/>
+                </linearGradient>
+              </defs>
+              <circle cx="79" cy="79" r="66" fill="none" stroke="var(--d-border)" stroke-width="5"/>
+              <circle class="pd-ring" cx="79" cy="79" r="66" fill="none" stroke="url(#cpEmberGrad)" stroke-width="5"
+                stroke-linecap="round" stroke-dasharray="415" stroke-dashoffset="415" transform="rotate(-90 79 79)"/>
+            </svg>
+            <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+              <div class="ser" style="font-size:30px; font-weight:600;">52:18</div>
+              <div style="font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); margin-top:2px;">under the bar</div>
+            </div>
+          </div>
+        </div>
+        <div style="height:20px"></div>
+        <!-- quiet matte column -->
+        <div class="pd-row lp" style="animation-name:s4; border-top:1px solid var(--d-border);"><span class="k">Moved</span><span class="v">9,840 <small>lb</small></span></div>
+        <div class="pd-row lp" style="animation-name:s5;"><span class="k">Sets</span><span class="v">24</span></div>
+        <div class="pd-row lp" style="animation-name:s6;"><span class="k">Burned</span><span class="v">386 <small>kcal</small></span></div>
+        <div style="height:16px"></div>
+        <div class="ser lp" style="animation-name:s7; font-style:italic; font-size:15.5px; line-height:1.5; color:var(--d-mut);">A first: <span style="color:var(--d-text);">Incline Dumbbell Press, 60 lb for 8.</span></div>
+        <div style="flex:1"></div>
+        <div class="lp" style="animation-name:s9; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:13px; color:var(--d-mut);">Done for today</span>
+          <span class="ser" style="font-size:15px; color:var(--d-accent);">Share this one →</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">D</span>Ink &amp; Ember — the exhale</div>
+      <div class="cap-why">The restraint IS the celebration: a serif sentence about the streak, one ember arc (the page's only gradient) drawing slowly around 52:18, three matte rows, the PR named in italic like a journal line. For the lifter who finds fireworks embarrassing.</div>
+      <div class="cap-risk"><b>Risk:</b> first-workout and big-milestone moments may deserve more than this whisper — needs an escalation rule (e.g. 100th workout earns a louder page).</div>
+    </div>
+  </div>
+
+  <!-- ============ E: WARM GALLERY ============ -->
+  <div class="cell" id="e-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dE grain">
+      <div class="notch"></div>
+      <div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="cp-pad" style="padding:60px 24px 18px;">
+        <div class="micro lp" style="animation-name:s0;">Thursday · Push Day</div>
+        <div class="big lp" style="animation-name:s1; font-size:62px; line-height:1; margin-top:4px;">Done.</div>
+        <div style="height:18px"></div>
+        <div class="micro lp" style="animation-name:s2;">Total volume</div>
+        <div class="big lp" style="animation-name:s2; font-size:54px; line-height:1; margin-top:2px; color:var(--d-accent);">9,840 <span style="font-size:22px; letter-spacing:-1px; color:var(--d-mut);">lb</span></div>
+        <div style="height:16px"></div>
+        <!-- soft pill stat rows -->
+        <div class="pill pe-row lp" style="animation-name:s3;"><span class="k">⏱ Duration</span><span class="v">52:18</span></div>
+        <div style="height:8px"></div>
+        <div class="pill pe-row lp" style="animation-name:s4;"><span class="k">▦ Sets</span><span class="v">24</span></div>
+        <div style="height:8px"></div>
+        <div class="pill pe-row lp" style="animation-name:s5;"><span class="k">🔥 Energy</span><span class="v">386 kcal</span></div>
+        <div style="height:8px"></div>
+        <!-- PR row with floating trophy -->
+        <div class="pill pe-row lp" style="animation-name:s6; border-color:#E8C97A; background:#FFFDF6;">
+          <span style="display:flex; align-items:center; gap:9px;">
+            <span class="food3d" style="font-size:22px; animation:floaty 4.5s ease-in-out infinite;">🏆</span>
+            <span><span style="font-weight:700; font-size:13px;">Incline DB Press</span><br><span style="font-size:11px; color:var(--d-mut);">60 lb × 8 — new record</span></span>
+          </span>
+          <span class="v" style="color:#B98A1E; font-size:12px;">PR</span>
+        </div>
+        <div style="height:18px"></div>
+        <!-- streak bar -->
+        <div class="lp" style="animation-name:s7;">
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+            <span class="micro">24-day streak</span>
+            <span class="micro" style="color:var(--d-accent);">+240 XP</span>
+          </div>
+          <div class="pe-streak"><i style="width:80%; animation-delay:1.2s;"></i></div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="pe-share lp" style="animation-name:s9;">Share today's work</div>
+        <div class="lp" style="animation-name:s9; text-align:center; font-size:13px; font-weight:600; color:var(--d-mut); margin-top:10px;">Done</div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">E</span>Warm Gallery — the morning-after journal</div>
+      <div class="cap-why">Calm pride on cream: "Done." in 62px Archivo, the volume number as the hero, white pill rows settling in gently, a small floating trophy on a gold-tinted PR row, and a thin rust bar for the streak. The share is an invitation, not a demand.</div>
+      <div class="cap-risk"><b>Risk:</b> a light screen right after a sweaty dark-gym session is a hard context switch — likely needs a dark twin or a sunset-tinted variant for evening completions.</div>
+    </div>
+  </div>
+
+  <!-- ============ F: VOLT STADIUM ============ -->
+  <div class="cell" id="f-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dF grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="pf-flood"></div>
+      <div class="cp-pad" style="padding:58px 24px 16px;">
+        <div class="lbl lp" style="animation-name:s0; font-size:12px; color:var(--d-mut);">THU JUN 11 · CHEST &amp; TRICEPS</div>
+        <div style="height:8px"></div>
+        <div class="disp lp" style="animation-name:s0; font-size:38px; line-height:.96;">PUSH DAY</div>
+        <div class="disp voltglow lp" style="animation-name:cpXSlamF; font-size:106px; line-height:.9; color:var(--d-accent); margin-top:2px;">DONE.</div>
+        <div style="height:18px"></div>
+        <!-- scoreboard ledger -->
+        <div class="pf-led lp" style="animation-name:s2;"><span class="k lbl">Time</span><span class="v disp">52:18</span></div>
+        <div class="pf-led lp" style="animation-name:s3;"><span class="k lbl">Volume</span><span class="v disp">9,840<small>LB</small></span></div>
+        <div class="pf-led lp" style="animation-name:s4;"><span class="k lbl">Sets</span><span class="v disp">24</span></div>
+        <div class="pf-led lp" style="animation-name:s5;"><span class="k lbl">Burn</span><span class="v disp">386<small>KCAL</small></span></div>
+        <div class="pf-led lp" style="animation-name:s6;"><span class="k lbl">Streak</span><span class="v disp" style="color:var(--d-accent);">24<small>DAYS</small></span></div>
+        <!-- PR row -->
+        <div class="pf-pr lp" style="animation-name:s7;">
+          <span class="voltchip pf-chip">NEW MAX</span>
+          <div>
+            <div style="font-size:13.5px; font-weight:700;">Incline DB Press · 60 lb × 8</div>
+            <div class="lbl" style="font-size:10.5px; color:var(--d-mut); margin-top:1px;">PREV 55 × 8 · +240 XP</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <!-- navy share block -->
+        <div class="pf-navy lp" style="animation-name:s9;">
+          <div>
+            <div class="lbl" style="font-size:10px; color:rgba(245,246,248,.6);">This screen is the poster</div>
+            <div class="disp" style="font-size:19px; color:var(--d-accent); margin-top:2px;">SHARE IT →</div>
+          </div>
+          <span style="font-size:24px; color:var(--d-accent);">⚡</span>
+        </div>
+        <div class="lbl lp" style="animation-name:s9; text-align:center; font-size:12px; color:var(--d-faint); margin-top:10px;">Done</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">F</span>Volt Stadium — the floodlit finish</div>
+      <div class="cap-why">The shareables proofs.html language brought in-app: a volt floodlight wash from the top of frame, 106px Anton "DONE." glowing acid lime — the one screen where volt goes LOUD — a Barlow scoreboard ledger, the PR flying a volt NEW MAX chip with its delta, and the share CTA as a navy #15275C block. The screen and the share image are the same artifact, so tapping share feels native, not bolted on.</div>
+      <div class="cap-risk"><b>Risk:</b> if everything is volt nothing is — volt must stay rationed to DONE., the chip, the streak numeral and the CTA; the ledger stays white or the scoreboard reads like a glow-stick rave.</div>
+    </div>
+  </div>
+
+  <!-- ============ G: DEPTH FIELD ============ -->
+  <div class="cell" id="g-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dG grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <!-- warm celebration orbs -->
+      <div class="orb" style="width:230px; height:230px; top:-60px; left:-70px; background:rgba(249,115,22,.30); animation:orbDrift 13s ease-in-out infinite;"></div>
+      <div class="orb" style="width:190px; height:190px; top:170px; right:-80px; background:rgba(251,191,36,.22); animation:orbDrift 17s ease-in-out infinite reverse;"></div>
+      <div class="orb" style="width:160px; height:160px; bottom:70px; left:-50px; background:rgba(194,65,12,.20); animation:orbDrift 15s ease-in-out infinite;"></div>
+      <div class="cp-pad" style="padding:58px 22px 16px;">
+        <div class="lp" style="animation-name:s0; font-size:11px; font-weight:600; letter-spacing:2.5px; text-transform:uppercase; color:var(--d-mut); text-align:center;">Push Day · Complete</div>
+        <div style="height:5px"></div>
+        <div class="lp" style="animation-name:s0; text-align:center; font-size:24px; font-weight:700; letter-spacing:-.5px;">Into the trophy room.</div>
+        <div style="height:28px"></div>
+        <!-- trophy floats above the closest slab -->
+        <div class="lp" style="animation-name:cpXTroph; display:flex; justify-content:center; position:relative; z-index:6; margin-bottom:-36px;">
+          <span class="food3d" style="font-size:76px; animation:glassFloat 4.5s ease-in-out infinite; filter:drop-shadow(12px 22px 18px rgba(0,0,0,.55));">🏆</span>
+        </div>
+        <!-- closest layer: frosted stat slab -->
+        <div class="glass glass-hi lp" style="animation-name:s2; padding:48px 20px 18px; position:relative; z-index:5;">
+          <div class="pg-grid">
+            <div class="pg-stat"><div class="v">52:18</div><div class="k">Duration</div></div>
+            <div class="pg-stat" style="text-align:right;"><div class="v">9,840<small> lb</small></div><div class="k">Volume</div></div>
+            <div class="pg-stat"><div class="v">24</div><div class="k">Sets</div></div>
+            <div class="pg-stat" style="text-align:right;"><div class="v">386<small> kcal</small></div><div class="k">Burned</div></div>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- PR engraved on its own plinth -->
+        <div class="glass pg-plinth lp" style="animation-name:s5;">
+          <div style="font-size:9.5px; letter-spacing:3px; color:var(--d-accent); font-weight:700;">NEW RECORD</div>
+          <div class="pg-engrave" style="font-size:13.5px; margin-top:5px;">Incline DB Press · 60 lb × 8</div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- recessed layer: XP + streak -->
+        <div class="pg-recess lp" style="animation-name:s7; display:flex; justify-content:space-between; align-items:center; padding:12px 18px;">
+          <span style="font-size:12px; color:var(--d-mut); font-weight:600;">24-day streak · longest yet</span>
+          <span style="font-size:15px; font-weight:700; color:var(--d-accent);">+240 XP</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="glass lp" style="animation-name:s9; height:52px; display:flex; align-items:center; justify-content:center; gap:9px; font-size:15px; font-weight:700;">⇪ Share the trophy</div>
+        <div class="lp" style="animation-name:s9; text-align:center; font-size:13px; font-weight:600; color:var(--d-mut); margin-top:10px;">Done</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">G</span>Depth Field — the trophy room</div>
+      <div class="cap-why">Celebration as physical space: warm orange-gold orbs drift behind the glass, a 76px trophy bobs (glassFloat) above the closest frosted slab carrying the stat grid, the PR is engraved letterpress-style into its own small plinth, and XP + streak sit one layer down on a recessed inset panel. Light reads from top-left and every shadow agrees, so the trophy feels like an object you earned, not an icon.</div>
+      <div class="cap-risk"><b>Risk:</b> the emotional weight rides entirely on the object's render quality — a flat emoji trophy reads cheap, and glass + celebration is one gold flare away from kitsch. Needs a real 3D asset in Flutter, not a glyph.</div>
+    </div>
+  </div>
+
+  <!-- ============ H: KINETIC COLLAGE ============ -->
+  <div class="cell" id="h-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dH grain">
+      <div class="notch"></div>
+      <div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="cp-pad" style="padding:56px 22px 16px;">
+        <div class="mono-stamp lp" style="animation-name:s0; font-size:10.5px; color:var(--d-mut); text-align:right;">06.11.2026 · LOG #142</div>
+        <div style="height:8px"></div>
+        <!-- rubber stamp -->
+        <div class="lp" style="animation-name:cpXStamp; align-self:flex-start;">
+          <div class="disp ph-stamp">PUSH DAY ✓</div>
+        </div>
+        <div style="height:18px"></div>
+        <!-- ticket stub w/ volt tape -->
+        <div class="lp" style="animation-name:s2; align-self:flex-start;">
+          <div class="ph-tkt" style="transform:rotate(1.6deg); width:208px;">
+            <span class="tape ph-tape"></span>
+            <div class="mono-stamp" style="font-size:8.5px; color:var(--d-mut);">ADMIT ONE · EVENING SESSION</div>
+            <div class="disp" style="font-size:30px; line-height:1; margin-top:3px;">52:18</div>
+          </div>
+        </div>
+        <div style="height:16px"></div>
+        <!-- stat stickers, scattered-but-aligned -->
+        <div style="display:flex; gap:10px;">
+          <div class="lp" style="animation-name:s3; flex:1.2;"><div class="sticker ph-stk" style="transform:rotate(-1.5deg);"><div class="v">9,840</div><div class="k">lb moved</div></div></div>
+          <div class="lp" style="animation-name:s4; flex:1;"><div class="sticker ph-stk" style="transform:rotate(1.2deg);"><div class="v">24</div><div class="k">sets</div></div></div>
+          <div class="lp" style="animation-name:s4; flex:1;"><div class="sticker ph-stk" style="transform:rotate(-.8deg);"><div class="v">386</div><div class="k">kcal</div></div></div>
+        </div>
+        <div style="height:20px"></div>
+        <!-- PR circled in marker -->
+        <div class="lp" style="animation-name:s5; position:relative; align-self:flex-start; padding:10px 18px;">
+          <div style="font-size:15px; font-weight:800;">Incline DB Press <span style="color:var(--d-mut); font-weight:600;">60 lb × 8</span></div>
+          <svg viewBox="0 0 240 64" preserveAspectRatio="none" style="position:absolute; left:-12px; right:-12px; top:-10px; bottom:-6px; overflow:visible;">
+            <ellipse cx="120" cy="32" rx="112" ry="26" fill="none" stroke="#F97316" stroke-width="3.5" stroke-linecap="round"
+              stroke-dasharray="265" stroke-dashoffset="265" style="animation:cpXDraw 10s ease-in-out infinite;" transform="rotate(-2 120 32)"/>
+          </svg>
+          <div class="ph-scrawl" style="position:absolute; top:-15px; right:-24px; font-size:16px; transform:rotate(8deg);">NEW!</div>
+        </div>
+        <div style="height:20px"></div>
+        <!-- streak as tally marks -->
+        <div class="lp" style="animation-name:s7;">
+          <div class="mono-stamp" style="font-size:9.5px; letter-spacing:2px; color:var(--d-mut); text-transform:uppercase;">Streak — 24 days</div>
+          <div style="display:flex; gap:13px; margin-top:9px; align-items:flex-end;">
+            <span class="ph-tg"><i></i><i></i><i></i><i></i><span class="x"></span></span>
+            <span class="ph-tg"><i></i><i></i><i></i><i></i><span class="x"></span></span>
+            <span class="ph-tg"><i></i><i></i><i></i><i></i><span class="x"></span></span>
+            <span class="ph-tg"><i></i><i></i><i></i><i></i><span class="x"></span></span>
+            <span class="ph-tg"><i></i><i></i><i></i><i></i></span>
+            <span class="ph-scrawl" style="font-size:13px; transform:rotate(-2deg); margin-left:4px;">don't break it</span>
+          </div>
+        </div>
+        <!-- XP sticker -->
+        <div class="lp" style="animation-name:s8; align-self:flex-end; margin-top:16px;">
+          <div class="sticker" style="transform:rotate(2deg); background:var(--d-volt); padding:6px 12px; font-family:Anton,sans-serif; font-size:15px;">+240 XP</div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="ph-shr lp" style="animation-name:s9;">⇪ Share this page</div>
+        <div class="lp" style="animation-name:s9; text-align:center; font-size:12.5px; font-weight:700; color:var(--d-mut); margin-top:9px;">Done</div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">H</span>Kinetic Collage — the scrapbook page</div>
+      <div class="cap-why">The page you'd make after a great session: a rotated "PUSH DAY ✓" rubber stamp slams down, hard-shadow stat stickers land scattered-but-aligned, the 52:18 ticket stub is taped down with volt washi, the PR gets circled in orange marker with a "NEW!" scrawl, the date is a Space Mono stamp and the 24-day streak is 24 actual tally strokes — the diagonal cross in orange.</div>
+      <div class="cap-risk"><b>Risk:</b> novelty halo fades — the 40th time you see the stamp it's wallpaper. Share-ability is the highest on the row, premium-feel is debatable; needs per-session layout shuffles (sticker positions, scrawl phrases) to stay alive.</div>
+    </div>
+  </div>
+
+</div>
+</div>

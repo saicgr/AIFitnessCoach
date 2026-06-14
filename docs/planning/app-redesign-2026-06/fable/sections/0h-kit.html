@@ -1,0 +1,345 @@
+<div class="sx-kt">
+<style>
+/* ===== NOTHING-LOST KIT section (sx-kt) — all selectors prefixed, keyframes kt-prefixed ===== */
+.sx-kt .kt-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+.sx-kt .kt-rule { height:1px; background:var(--d-rule); }
+.sx-kt .kt-mlabel { font-family:'Barlow Condensed',sans-serif; font-weight:700; text-transform:uppercase; letter-spacing:2.5px; font-size:11px; color:var(--d-mut); }
+
+/* loop-synced keyframes (10s, matches s0..s9 cadence) */
+/* kit-log demo sequence: 0-15% plain nutrition screen → tap ripple lands on composer → dim + sheet rises at ~23% */
+@keyframes ktDim { 0%,16%{opacity:1} 22%,96%{opacity:.35} 100%{opacity:1} }
+@keyframes ktScrim { 0%,16%{opacity:0} 22%,96%{opacity:1} 100%{opacity:0} }
+@keyframes ktTap { 0%,11%{opacity:0;transform:scale(.4)} 14%{opacity:.55;transform:scale(.8)} 19%,100%{opacity:0;transform:scale(1.5)} }
+@keyframes ktSheet { 0%,16%{transform:translateY(106%)} 23%,96%{transform:translateY(0)} 100%{transform:translateY(106%)} }
+@keyframes ktPh { 0%,27%{opacity:1} 28%,95%{opacity:0} 96%,100%{opacity:1} }
+@keyframes ktType { 0%,29%{clip-path:inset(-2px 100% -2px 0)} 44%,56%{clip-path:inset(-2px -2px -2px 0)} 58%,100%{clip-path:inset(-2px 100% -2px 0)} }
+@keyframes ktTypeB { 0%,61%{clip-path:inset(-2px 100% -2px 0)} 74%,96%{clip-path:inset(-2px -2px -2px 0)} 100%{clip-path:inset(-2px 100% -2px 0)} }
+@keyframes ktCaret { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+@keyframes ktSlide { 0%,34%{opacity:0;transform:translateX(-14px)} 40%,96%{opacity:1;transform:none} 100%{opacity:0} }
+@keyframes ktPress { 0%,84%{transform:scale(1)} 87%{transform:scale(.97)} 90%,100%{transform:scale(1)} }
+@keyframes ktFillA { 0%,10%{width:0} 30%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes ktFillB { 0%,14%{width:0} 34%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes ktFillC { 0%,18%{width:0} 38%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes ktFillD { 0%,22%{width:0} 42%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes ktDraw { 0%,14%{stroke-dashoffset:1} 44%,96%{stroke-dashoffset:0} 100%{stroke-dashoffset:1} }
+@keyframes ktDrawB { 0%,22%{stroke-dashoffset:1} 52%,96%{stroke-dashoffset:0} 100%{stroke-dashoffset:1} }
+@keyframes ktDot { 0%,42%{opacity:0} 45%,96%{opacity:1} 100%{opacity:0} }
+@keyframes ktDotB { 0%,50%{opacity:0} 53%,96%{opacity:1} 100%{opacity:0} }
+
+/* ---- KIT 1: food-logging sheet (dark) — starts as the live nutrition screen, tap → dim → sheet ---- */
+.sx-kt .kt-dim { display:flex; flex-direction:column; flex:1; animation:ktDim 10s ease-out infinite; }
+.sx-kt .kt-scrim { position:absolute; inset:0; background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.55)); z-index:5; opacity:0; animation:ktScrim 10s ease-out infinite; pointer-events:none; }
+.sx-kt .kt-bgled { display:flex; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px solid var(--d-rule); font-size:12.5px; color:var(--d-mut); }
+.sx-kt .kt-bgled .nm { color:var(--d-text); font-weight:600; }
+.sx-kt .kt-bgled .cl { margin-left:auto; font-variant-numeric:tabular-nums; }
+.sx-kt .kt-comp { display:flex; align-items:center; gap:8px; height:50px; border-radius:999px; background:var(--d-surface2); border:1px solid var(--d-border); box-shadow:0 10px 26px rgba(0,0,0,.45); padding:0 16px; font-size:13.5px; color:var(--d-faint); }
+.sx-kt .kt-comp .cam { margin-left:auto; color:var(--d-mut); font-size:13px; letter-spacing:3px; white-space:nowrap; }
+.sx-kt .kt-tap { position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px; border-radius:50%; background:rgba(249,115,22,.45); opacity:0; transform:scale(.4); animation:ktTap 10s ease-out infinite; pointer-events:none; }
+.sx-kt .kt-sheet { position:absolute; left:0; right:0; bottom:0; z-index:10; background:#141416; border:1px solid var(--d-rule); border-bottom:none; border-radius:22px 22px 0 0; box-shadow:0 -18px 50px rgba(0,0,0,.6); padding:13px 20px 38px; animation:ktSheet 10s cubic-bezier(.32,.72,.24,1) infinite; }
+.sx-kt .kt-grab { width:36px; height:4px; border-radius:2px; background:var(--d-rule); margin:0 auto 13px; }
+.sx-kt .kt-sh-title { font-family:Anton,sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:.5px; font-size:20px; color:var(--d-text); }
+.sx-kt .kt-field { position:relative; display:flex; align-items:center; height:52px; border-radius:999px; background:var(--d-surface2); border:1px solid var(--d-border); padding:0 18px; margin-top:12px; font-size:14px; }
+.sx-kt .kt-ph { color:var(--d-faint); animation:ktPh 10s steps(1) infinite; }
+.sx-kt .kt-typed, .sx-kt .kt-typed2 { position:absolute; left:18px; top:50%; transform:translateY(-50%); color:var(--d-text); font-weight:500; white-space:nowrap; clip-path:inset(-2px 100% -2px 0); }
+.sx-kt .kt-typed { animation:ktType 10s steps(18) infinite; }
+.sx-kt .kt-typed2 { animation:ktTypeB 10s steps(15) infinite; }
+.sx-kt .kt-typed::after, .sx-kt .kt-typed2::after { content:''; display:inline-block; width:2px; height:15px; background:var(--d-accent); margin-left:3px; vertical-align:-2px; animation:ktCaret 1s steps(1) infinite; }
+.sx-kt .kt-modes { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+.sx-kt .kt-mode { display:inline-flex; align-items:center; justify-content:center; gap:5px; height:32px; padding:0 6px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.3px; text-transform:uppercase; color:var(--d-mut); white-space:nowrap; }
+.sx-kt .kt-mode i { font-style:normal; font-size:11px; line-height:1; }
+.sx-kt .kt-recent { display:flex; align-items:center; gap:12px; border:1px solid var(--d-border); border-radius:14px; padding:7px 13px; margin-top:8px; background:var(--d-surface2); }
+.sx-kt .kt-recent .nm { font-weight:700; font-size:13.5px; color:var(--d-text); letter-spacing:-.2px; }
+.sx-kt .kt-recent .cl { font-size:11px; color:var(--d-mut); margin-top:2px; font-variant-numeric:tabular-nums; }
+.sx-kt .kt-recent .plus { margin-left:auto; width:30px; height:30px; border-radius:50%; border:1.5px solid var(--d-accent); color:var(--d-accent); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; flex:none; }
+.sx-kt .kt-logit { height:52px; border-radius:999px; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:16px; letter-spacing:2.5px; text-transform:uppercase; margin-top:16px; animation:ktPress 10s ease-out infinite; }
+
+/* ---- KIT 2: nutrient panel (dark) ---- */
+.sx-kt .kt-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+.sx-kt .kt-tile { background:var(--d-surface2); border:1px solid var(--d-border); border-radius:10px; padding:11px 13px 12px; }
+.sx-kt .kt-tile .tr { display:flex; justify-content:space-between; align-items:baseline; }
+.sx-kt .kt-tile .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1.8px; color:var(--d-mut); text-transform:uppercase; }
+.sx-kt .kt-tile .pc { font-family:Archivo,sans-serif; font-weight:700; font-size:16px; letter-spacing:-.5px; color:var(--d-text); font-variant-numeric:tabular-nums; }
+.sx-kt .kt-tile .pc small { font-size:10px; font-weight:600; color:var(--d-faint); margin-left:1px; }
+.sx-kt .kt-bar { height:3px; border-radius:2px; background:var(--d-rule); margin-top:9px; overflow:hidden; }
+.sx-kt .kt-bar i { display:block; height:100%; border-radius:2px; background:var(--d-accent); }
+.sx-kt .kt-tile.warn .pc { color:#F59E0B; }
+.sx-kt .kt-tile.warn .kt-bar i { background:#D97706; }
+.sx-kt .kt-fa i { animation:ktFillA 10s ease-out infinite; }
+.sx-kt .kt-fb i { animation:ktFillB 10s ease-out infinite; }
+.sx-kt .kt-fc i { animation:ktFillC 10s ease-out infinite; }
+.sx-kt .kt-fd i { animation:ktFillD 10s ease-out infinite; }
+.sx-kt .kt-led { display:flex; justify-content:space-between; align-items:center; padding:10px 2px; border-bottom:1px solid var(--d-rule); }
+.sx-kt .kt-led .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-text); }
+.sx-kt .kt-led .vl { font-size:12px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.sx-kt .kt-foot { text-align:center; font-size:11.5px; color:var(--d-faint); margin-top:16px; }
+
+/* ---- KIT 3: custom trends (dark) ---- */
+.sx-kt .kt-tr-mast { font-size:42px; line-height:.96; margin-top:6px; }
+.sx-kt .kt-tr-kick { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:2.5px; text-transform:uppercase; color:var(--d-mut); margin-top:7px; }
+.sx-kt .kt-chiprow { display:flex; align-items:center; gap:8px; margin-top:15px; }
+.sx-kt .kt-mchip { flex:1; display:flex; align-items:center; gap:7px; height:38px; padding:0 12px; border:1px solid var(--d-border); border-radius:6px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12.5px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-text); }
+.sx-kt .kt-mchip i { width:7px; height:7px; border-radius:50%; flex:none; }
+.sx-kt .kt-mchip .car { margin-left:auto; color:var(--d-faint); font-size:10px; }
+.sx-kt .kt-swap { width:30px; height:30px; border:1px solid var(--d-border); border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--d-mut); font-size:13px; flex:none; }
+.sx-kt .kt-line1 { fill:none; stroke:#F97316; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; animation:ktDraw 10s ease-out infinite; }
+.sx-kt .kt-line2 { fill:none; stroke:#06B6D4; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:1; animation:ktDrawB 10s ease-out infinite; }
+.sx-kt .kt-dot1 { fill:#F97316; animation:ktDot 10s steps(1) infinite; }
+.sx-kt .kt-dot2 { fill:#06B6D4; animation:ktDotB 10s steps(1) infinite; }
+.sx-kt .kt-ax { font-family:'Barlow Condensed',sans-serif; font-weight:600; font-size:9.5px; letter-spacing:1.5px; fill:#5C5C64; }
+.sx-kt .kt-vlab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1px; }
+.sx-kt .kt-insight { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:15px; line-height:1.5; color:#CBB9A4; }
+.sx-kt .kt-strow { display:flex; align-items:center; gap:10px; padding:11px 2px; border-bottom:1px solid var(--d-rule); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-text); }
+.sx-kt .kt-strow .rv { margin-left:auto; font-family:Inter,sans-serif; font-weight:500; font-size:10.5px; letter-spacing:.3px; text-transform:none; color:var(--d-faint); font-variant-numeric:tabular-nums; }
+.sx-kt .kt-strow .ar { color:var(--d-faint); }
+
+/* ---- KIT 4: food detail (dark) ---- */
+.sx-kt .kt-dt-hero { text-align:center; margin-top:12px; }
+.sx-kt .kt-dt-title { font-family:Archivo,Inter,sans-serif; font-weight:700; font-size:24px; letter-spacing:-.5px; color:var(--d-text); text-align:center; margin-top:10px; }
+.sx-kt .kt-dt-serv { text-align:center; margin-top:8px; font-size:12.5px; color:var(--d-mut); }
+.sx-kt .kt-dt-serv .ed { border-bottom:1px dashed var(--d-faint); padding-bottom:1px; }
+.sx-kt .kt-dt-serv .hint { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-faint); margin-left:8px; }
+.sx-kt .kt-dt-macros { display:flex; justify-content:center; gap:18px; margin-top:11px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-mut); }
+.sx-kt .kt-dt-macros i { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:6px; vertical-align:1px; }
+.sx-kt .kt-dt-prov { display:flex; align-items:center; gap:8px; padding:13px 0 0; opacity:0; animation:ktSlide 10s ease-out infinite; }
+.sx-kt .kt-dt-badge { display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); white-space:nowrap; }
+.sx-kt .kt-dt-thumb { width:32px; height:32px; border-radius:8px; border:1px solid var(--d-border); background:linear-gradient(135deg,#3B2E25,#6B4A33 55%,#2A3A2E); display:flex; align-items:center; justify-content:center; font-size:11px; flex:none; }
+.sx-kt .kt-dt-thumb.t2 { background:linear-gradient(135deg,#2A3038,#52606E 55%,#3A4A3E); margin-left:-2px; }
+.sx-kt .kt-dt-act { display:flex; gap:8px; }
+.sx-kt .kt-dt-act .pill { flex:1; display:flex; align-items:center; justify-content:center; height:38px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-text); }
+.sx-kt .kt-dt-act .pill.rm { color:#C97070; border-color:rgba(239,68,68,.3); }
+.sx-kt .kt-dt-save { text-align:center; margin-top:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">System proof</div>
+  <div class="sec-title">NOTHING LOST</div>
+  <div class="sec-desc">The redesign keeps every job the current app does — these four frames show the food-logging surface (opened live from the nutrition composer in the loop), the micronutrient panel, custom trends, and the logged-food detail with its stored provenance, all in the Signature language, benchmarked against Cal AI's multi-modal logging and MacroFactor's Nutrient Explorer.</div>
+</section>
+
+<div class="row">
+
+  <!-- ════════ KIT 1: THE FOOD-LOGGING SHEET (dark) ════════ -->
+  <div class="cell" id="kit-log">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="kt-body" style="padding-top:58px;padding-bottom:30px;">
+        <!-- the live nutrition screen — starts undimmed, dims when the composer is tapped -->
+        <div class="kt-dim">
+          <div class="lbl" style="display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>Fuel</span><span>June 11</span></div>
+          <div class="disp" style="font-size:40px;line-height:.96;margin-top:8px;">TODAY</div>
+          <div style="height:12px;"></div>
+          <div style="display:flex;align-items:baseline;gap:9px;">
+            <span class="disp" style="font-size:64px;line-height:.95;">1,460</span>
+            <span class="lbl" style="font-size:10px;color:var(--d-mut);">of 2,200 kcal</span>
+          </div>
+          <div style="height:13px;"></div>
+          <div style="height:3px;border-radius:2px;background:var(--d-rule);overflow:hidden;"><i style="display:block;height:100%;width:66%;border-radius:2px;background:var(--d-rust);"></i></div>
+          <div class="lbl" style="display:flex;gap:16px;font-size:10.5px;color:var(--d-mut);margin-top:10px;">
+            <span><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#A855F7;margin-right:5px;vertical-align:1px;"></i>P 96</span>
+            <span><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#06B6D4;margin-right:5px;vertical-align:1px;"></i>C 142</span>
+            <span><i style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#F97316;margin-right:5px;vertical-align:1px;"></i>F 48</span>
+          </div>
+          <div style="height:18px;"></div>
+          <div class="kt-bgled"><span>🥣</span><span class="nm">Greek Yogurt with Honey</span><span class="cl">220</span></div>
+          <div class="kt-bgled"><span>☕</span><span class="nm">Cappuccino</span><span class="cl">120</span></div>
+          <!-- the composer — the access path being demonstrated -->
+          <div style="margin-top:auto;position:relative;">
+            <div class="kt-comp">Log food, water, anything…<span class="cam">📷·▥·🎤</span></div>
+            <div class="kt-tap"></div>
+          </div>
+        </div>
+      </div>
+      <div class="kt-scrim"></div>
+      <!-- the sheet — rises after the composer tap -->
+      <div class="kt-sheet">
+        <div class="kt-grab"></div>
+        <div class="kt-sh-title lp" style="animation-name:s2;">Log food</div>
+        <!-- describe-first field, typewriter alternates a meal and a water log -->
+        <div class="kt-field lp" style="animation-name:s2;">
+          <span class="kt-ph">What did you eat?</span>
+          <span class="kt-typed">salmon poke bowl…</span>
+          <span class="kt-typed2">had 500ml water</span>
+        </div>
+        <!-- six capture modes, two rows of three -->
+        <div class="kt-modes">
+          <span class="kt-mode lp" style="animation-name:s3;"><i>📷</i>Scan food</span>
+          <span class="kt-mode lp" style="animation-name:s3;"><i>🍽</i>Scan menu</span>
+          <span class="kt-mode lp" style="animation-name:s3;"><i>▥</i>Barcode</span>
+          <span class="kt-mode lp" style="animation-name:s4;"><i>🏷</i>Label</span>
+          <span class="kt-mode lp" style="animation-name:s4;"><i>🎤</i>Voice</span>
+          <span class="kt-mode lp" style="animation-name:s4;"><i>🔖</i>Saved</span>
+        </div>
+        <div style="height:16px;"></div>
+        <div class="kt-mlabel lp" style="animation-name:s5;">Recent</div>
+        <div class="kt-recent lp" style="animation-name:s5;">
+          <span class="food3d" style="font-size:44px;animation:foodFloat 4.5s ease-in-out infinite;">🥣</span>
+          <div><div class="nm">Greek Yogurt with Honey</div><div class="cl">220 cal</div></div>
+          <div class="plus">+</div>
+        </div>
+        <div class="kt-recent lp" style="animation-name:s6;">
+          <span class="food3d" style="font-size:44px;animation:foodFloat 4.5s ease-in-out .7s infinite;">☕</span>
+          <div><div class="nm">Cappuccino</div><div class="cl">120 cal</div></div>
+          <div class="plus">+</div>
+        </div>
+        <div class="kt-logit lp" style="animation-name:s6;">Log it</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">KIT 1/4</span>Food logging — the access path, demonstrated</div>
+      <div class="cap-why">The loop answers "how do I get to it" instead of assuming it: the frame starts as the plain nutrition screen with the composer ("Log food, water, anything…") prominent at the bottom; a tap ripple lands on it, the screen dims, and the dark sheet rises — composer-tap → sheet, watched rather than described. Inside, the describe-first field (the typewriter alternates "salmon poke bowl…" and "had 500ml water" — water logs through the same path), six modes as hairline chips — every Cal AI camera mode (Scan Food, Barcode, Food Label) plus first-class Scan Menu, voice and saved; Cal AI's multi-modal logging with its correction loop is the category benchmark, and Zealova runs corrections in the same conversational thread. Alternate entries: the Home quick-actions sheet via the global "+", or the composer's 📷/▥/🎤 glyphs jumping straight into that mode.</div>
+      <div class="cap-risk"><b>Risk:</b> six modes in two chip rows risks clutter — order must follow real usage frequency (describe and scan first), the grid must never grow a third row, and correction-after-log must stay one tap, not a re-log.</div>
+    </div>
+  </div>
+
+  <!-- ════════ KIT 2: THE NUTRIENT PANEL (dark) ════════ -->
+  <div class="cell" id="kit-micros">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="kt-body" style="padding-top:58px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>← Nutrition</span><span>June 11</span></div>
+        <div class="disp lp" style="animation-name:s0;font-size:42px;line-height:.96;margin-top:6px;">MICROS</div>
+        <div class="kt-tr-kick lp" style="animation-name:s0;">8 pinned · 54 tracked</div>
+        <div class="kt-rule" style="margin-top:13px;"></div>
+        <div style="height:14px;"></div>
+        <div class="kt-mlabel lp" style="animation-name:s1;">Pinned</div>
+        <div class="kt-grid">
+          <div class="kt-tile kt-fa lp" style="animation-name:s1;"><div class="tr"><span class="nm">Iron</span><span class="pc">62<small>%</small></span></div><div class="kt-bar"><i style="--w:62%;"></i></div></div>
+          <div class="kt-tile kt-fa lp" style="animation-name:s1;"><div class="tr"><span class="nm">Magnesium</span><span class="pc">78<small>%</small></span></div><div class="kt-bar"><i style="--w:78%;"></i></div></div>
+          <div class="kt-tile kt-fb lp" style="animation-name:s2;"><div class="tr"><span class="nm">Vit D</span><span class="pc">41<small>%</small></span></div><div class="kt-bar"><i style="--w:41%;"></i></div></div>
+          <div class="kt-tile kt-fb lp" style="animation-name:s2;"><div class="tr"><span class="nm">Potassium</span><span class="pc">55<small>%</small></span></div><div class="kt-bar"><i style="--w:55%;"></i></div></div>
+          <div class="kt-tile kt-fc warn lp" style="animation-name:s3;"><div class="tr"><span class="nm">Sodium</span><span class="pc">84<small>%</small></span></div><div class="kt-bar"><i style="--w:84%;"></i></div></div>
+          <div class="kt-tile kt-fc lp" style="animation-name:s3;"><div class="tr"><span class="nm">Fiber</span><span class="pc">70<small>%</small></span></div><div class="kt-bar"><i style="--w:70%;"></i></div></div>
+          <div class="kt-tile kt-fd lp" style="animation-name:s4;"><div class="tr"><span class="nm">Calcium</span><span class="pc">66<small>%</small></span></div><div class="kt-bar"><i style="--w:66%;"></i></div></div>
+          <div class="kt-tile kt-fd lp" style="animation-name:s4;"><div class="tr"><span class="nm">Zinc</span><span class="pc">49<small>%</small></span></div><div class="kt-bar"><i style="--w:49%;"></i></div></div>
+        </div>
+        <div style="height:20px;"></div>
+        <div class="kt-mlabel lp" style="animation-name:s5;">Full panel</div>
+        <div style="height:4px;"></div>
+        <div class="lp" style="animation-name:s5;">
+          <div class="kt-led"><span class="nm">Vitamin B12</span><span class="vl">88%</span></div>
+          <div class="kt-led"><span class="nm">Folate</span><span class="vl">61%</span></div>
+        </div>
+        <div class="lp" style="animation-name:s6;">
+          <div class="kt-led"><span class="nm">Vitamin C</span><span class="vl">93%</span></div>
+          <div class="kt-led"><span class="nm">Omega-3</span><span class="vl">37%</span></div>
+        </div>
+        <div class="kt-foot lp" style="animation-name:s7;">54 nutrients tracked ›</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">KIT 2/4</span>Micros — pinned panel + full explorer</div>
+      <div class="cap-why">MacroFactor's Nutrient Explorer — 54 tracked nutrients, up to 8 pinned to the dashboard — is the micros benchmark, and this keeps Zealova's /nutrition/micros at full parity: eight pinned hairline tiles with thin orange fill bars, a quiet full-panel ledger beneath, and the 54-nutrient depth one tap away — restyled into the editorial dark ledger instead of a data dump. Sodium's amber bar shows semantic color spent only where it means something.</div>
+      <div class="cap-risk"><b>Risk:</b> percent-of-target bars imply a precision the food data rarely has — sparse-entry days need confidence states, and the amber must read as a heads-up, never a scold.</div>
+    </div>
+  </div>
+
+  <!-- ════════ KIT 3: CUSTOM TRENDS (dark) ════════ -->
+  <div class="cell" id="kit-trends">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="kt-body" style="padding-top:54px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>← Stats</span><span>June 11</span></div>
+        <div class="disp kt-tr-mast lp" style="animation-name:s0;">TRENDS</div>
+        <div class="kt-tr-kick lp" style="animation-name:s0;">Custom · Any two metrics</div>
+        <div class="kt-rule" style="margin-top:13px;"></div>
+        <!-- builder -->
+        <div class="kt-chiprow lp" style="animation-name:s1;">
+          <div class="kt-mchip"><i style="background:#F97316;"></i>Body weight<span class="car">▾</span></div>
+          <div class="kt-swap">⇄</div>
+          <div class="kt-mchip"><i style="background:#06B6D4;"></i>Sleep<span class="car">▾</span></div>
+        </div>
+        <div style="height:14px;"></div>
+        <!-- dual-line overlay, 5 weeks -->
+        <div class="lp" style="animation-name:s1;">
+          <svg width="100%" viewBox="0 0 342 178" style="display:block;">
+            <line x1="0" y1="24" x2="342" y2="24" stroke="#1C1C20" stroke-width="1"/>
+            <line x1="0" y1="66" x2="342" y2="66" stroke="#1C1C20" stroke-width="1"/>
+            <line x1="0" y1="108" x2="342" y2="108" stroke="#1C1C20" stroke-width="1"/>
+            <line x1="0" y1="150" x2="342" y2="150" stroke="#1C1C20" stroke-width="1"/>
+            <polyline class="kt-line1" pathLength="1" points="16,40 94,52 172,46 250,62 328,72"/>
+            <polyline class="kt-line2" pathLength="1" points="16,140 94,126 172,132 250,108 328,94"/>
+            <circle class="kt-dot1" cx="328" cy="72" r="3.5"/>
+            <circle class="kt-dot2" cx="328" cy="94" r="3.5"/>
+            <text class="kt-vlab" x="16" y="28" fill="#F97316" text-anchor="start">84.1</text>
+            <text class="kt-vlab" x="328" y="60" fill="#F97316" text-anchor="end">82.4</text>
+            <text class="kt-vlab" x="16" y="157" fill="#06B6D4" text-anchor="start">6:40</text>
+            <text class="kt-vlab" x="328" y="84" fill="#06B6D4" text-anchor="end">7:12</text>
+            <text class="kt-ax" x="16" y="174" text-anchor="start">MAY 11</text>
+            <text class="kt-ax" x="94" y="174" text-anchor="middle">MAY 18</text>
+            <text class="kt-ax" x="172" y="174" text-anchor="middle">MAY 25</text>
+            <text class="kt-ax" x="250" y="174" text-anchor="middle">JUN 1</text>
+            <text class="kt-ax" x="328" y="174" text-anchor="end">JUN 8</text>
+          </svg>
+        </div>
+        <div style="height:14px;"></div>
+        <div class="kt-insight lp" style="animation-name:s5;">Better sleep weeks track lighter weigh-ins — r&nbsp;=&nbsp;−0.42.</div>
+        <div class="kt-rule" style="margin:15px 0 4px;"></div>
+        <div class="lbl lp" style="animation-name:s6;font-size:10.5px;color:var(--d-mut);margin-top:9px;">Saved trends</div>
+        <div class="lp" style="animation-name:s6;">
+          <div class="kt-strow"><i style="width:7px;height:7px;border-radius:50%;background:#A855F7;flex:none;"></i>Protein × Strength score<span class="rv">r = +0.51</span><span class="ar">›</span></div>
+          <div class="kt-strow"><i style="width:7px;height:7px;border-radius:50%;background:#2ECC71;flex:none;"></i>Steps × Readiness<span class="rv">r = +0.33</span><span class="ar">›</span></div>
+        </div>
+        <div style="flex:1;"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">KIT 3/4</span>Custom trends — any two metrics, kept</div>
+      <div class="cap-why">The /trends/custom power feature survives whole: overlay any two metrics, swap them in place, read the correlation — now in the editorial chart voice. Hairline grid, Barlow axis micro-labels, orange × cyan lines drawing in, and the correlation spoken in the coach's Fraunces serif instead of a stats tooltip. Saved pairs keep their r-values as quiet ledger rows.</div>
+      <div class="cap-risk"><b>Risk:</b> r-values need guardrails — small samples and confounders make spurious correlations easy, so below a data threshold the serif line should hedge ("early signal") rather than assert causation.</div>
+    </div>
+  </div>
+
+  <!-- ════════ KIT 4: FOOD DETAIL (dark) ════════ -->
+  <div class="cell" id="kit-food">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="kt-body" style="padding-top:58px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>← Today</span><span>Lunch · 12:40</span></div>
+        <!-- hero render -->
+        <div class="kt-dt-hero lp" style="animation-name:s0;"><span class="food3d" style="font-size:84px;animation:foodFloat 4.5s ease-in-out infinite;">🍣</span></div>
+        <div class="kt-dt-title lp" style="animation-name:s1;">Salmon Poke Bowl</div>
+        <div class="kt-dt-serv lp" style="animation-name:s1;"><span class="ed">1 bowl · 420 g</span><span class="hint">tap to edit serving</span></div>
+        <div style="height:14px;"></div>
+        <div class="lp" style="animation-name:s2;display:flex;align-items:baseline;justify-content:center;gap:8px;">
+          <span class="disp" style="font-size:54px;line-height:.95;">640</span>
+          <span class="lbl" style="font-size:11px;color:var(--d-mut);">cal</span>
+        </div>
+        <div class="kt-dt-macros lp" style="animation-name:s3;">
+          <span><i style="background:#A855F7;"></i>P 42</span>
+          <span><i style="background:#06B6D4;"></i>C 38</span>
+          <span><i style="background:#F97316;"></i>F 24</span>
+        </div>
+        <div class="kt-rule" style="margin-top:16px;"></div>
+        <!-- micros mini-row -->
+        <div class="lp" style="animation-name:s4;display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid var(--d-rule);">
+          <span class="kt-mlabel">Micros</span>
+          <span style="font-size:12px;color:var(--d-mut);font-variant-numeric:tabular-nums;">Iron 18% · Na 32%</span>
+          <span class="lbl" style="margin-left:auto;font-size:10.5px;color:var(--d-faint);">Full ›</span>
+        </div>
+        <!-- log provenance: type-of-log + stored photos are first-class data -->
+        <div class="kt-dt-prov">
+          <span class="kt-dt-badge">🍽 Logged via menu scan · 12:40</span>
+          <div class="kt-dt-thumb"><span>🖼</span></div>
+          <div class="kt-dt-thumb t2"><span>🖼</span></div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="kt-dt-act lp" style="animation-name:s6;">
+          <span class="pill">Edit</span><span class="pill">Duplicate</span><span class="pill rm">Remove</span>
+        </div>
+        <div class="kt-dt-save lp" style="animation-name:s7;">Add to saved 🔖</div>
+        <div style="height:30px;"></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">KIT 4/4</span>Food detail — provenance kept</div>
+      <div class="cap-why">Tap any food row anywhere — Today, recents, search — and it opens this: the floating 3D render as hero, a dotted tap-to-edit serving line, the Anton calorie poster with semantic macro dots, and a micros mini-row one tap from the full panel. The part most apps throw away is first-class here: how the entry was logged (text, photo, menu scan, barcode, label) and the original photos are stored data, surfaced as the provenance chip and thumbnails — nothing the current app records is dropped in the redesign.</div>
+      <div class="cap-risk"><b>Risk:</b> photo thumbnails of real user food sit next to the stylized 3D render — two visual languages on one screen; the thumbnails must stay small, square and quiet (and expandable on tap) or the hero loses its authority.</div>
+    </div>
+  </div>
+
+</div>
+</div>

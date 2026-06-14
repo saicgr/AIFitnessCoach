@@ -1,0 +1,508 @@
+<div class="sx-mr">
+<style>
+/* ===== System proof section (sx-mr) — all selectors prefixed, keyframes mr-prefixed ===== */
+.sx-mr .mr-sub { padding:36px 0 0 48px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:3.5px; text-transform:uppercase; font-size:13.5px; color:#6b6b73; }
+.sx-mr .mr-sub b { color:var(--orange); font-weight:700; }
+.sx-mr .mr-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+.sx-mr .mr-rule { height:1px; background:#2A2A2E; }
+
+/* loop-synced fill (10s, matches s0..s9 cadence) */
+@keyframes mrFill { 0%,14%{width:0} 32%,96%{width:var(--w,60%)} 100%{width:0} }
+.sx-mr .mr-fill { display:block; height:100%; border-radius:2px; animation:mrFill 10s ease-out infinite; }
+
+/* ── Signature pinned nav (tab roots): 64px opaque, top hairline, glyph + Barlow label ── */
+.sx-mr .mr-nav { position:absolute; left:0; right:0; bottom:0; height:64px; background:#0A0A0B; border-top:1px solid #2A2A2E; display:flex; justify-content:space-around; align-items:flex-start; padding-top:9px; z-index:30; }
+.sx-mr .mr-nav .it { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.sx-mr .mr-nav .gl { font-size:15px; line-height:1; filter:grayscale(1); opacity:.5; }
+.sx-mr .mr-nav .lb { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:#5C5C64; }
+.sx-mr .mr-nav .it.on .gl { opacity:.95; }
+.sx-mr .mr-nav .it.on .lb { color:#F97316; }
+.sx-mr .mr-nav .it.on::after { content:''; width:18px; height:2px; border-radius:1px; background:#F97316; margin-top:2px; }
+.sx-mr .mr-plus { position:absolute; right:24px; bottom:80px; width:44px; height:44px; border:1px solid #26262B; border-radius:6px; background:#0F0F11; display:flex; align-items:center; justify-content:center; z-index:31; color:#F97316; font-size:24px; font-weight:300; line-height:1; box-shadow:0 10px 24px rgba(0,0,0,.45); }
+
+/* Barlow data line w/ semantic macro colors */
+.sx-mr .mr-data { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; letter-spacing:1.5px; text-transform:uppercase; color:#9D9DA6; }
+.sx-mr .mr-data .p { color:#A855F7; } .sx-mr .mr-data .c { color:#06B6D4; } .sx-mr .mr-data .f { color:#F97316; }
+
+/* ── BEFORE shared bits (faithful current chrome) ── */
+.sx-mr .mrb-card { background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:16px; padding:12px; }
+.sx-mr .mrb-nav { position:absolute; left:0; right:0; bottom:0; height:70px; background:rgba(16,16,16,.96); border-top:1px solid rgba(38,38,38,.55); display:flex; justify-content:space-around; align-items:center; padding-bottom:10px; z-index:30; }
+.sx-mr .mrb-nav-it { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:16px; color:#71717A; }
+.sx-mr .mrb-nav-it span { font-size:9.5px; font-weight:600; }
+.sx-mr .mrb-nav-ai { width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#F97316,#C2410C); display:flex; align-items:center; justify-content:center; font-size:19px; color:#fff; margin-top:-16px; box-shadow:0 8px 20px rgba(249,115,22,.35); }
+.sx-mr .mrb-seg { display:flex; background:#161616; border:1px solid rgba(38,38,38,.55); border-radius:999px; padding:4px; gap:4px; }
+.sx-mr .mrb-seg span { flex:1; display:flex; align-items:center; justify-content:center; gap:5px; height:30px; border-radius:999px; font-size:11px; font-weight:600; color:#A1A1AA; }
+.sx-mr .mrb-seg span.on { background:rgba(249,115,22,.16); color:#F97316; }
+
+/* ── BEFORE · You hub ── */
+.sx-mr .yb-hdr { display:flex; align-items:center; gap:11px; }
+.sx-mr .yb-av { width:40px; height:40px; border-radius:50%; background:linear-gradient(135deg,#FDBA74,#F97316); display:flex; align-items:center; justify-content:center; font-size:17px; color:#fff; }
+.sx-mr .yb-title { font-size:25px; font-weight:800; }
+.sx-mr .yb-ic { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; color:#A1A1AA; }
+.sx-mr .yb-stat { flex:1; text-align:center; }
+.sx-mr .yb-stat b { display:block; font-size:14.5px; font-weight:800; }
+.sx-mr .yb-stat span { font-size:9px; color:#71717A; font-weight:600; }
+.sx-mr .yb-tile { background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:14px; padding:11px 12px; }
+.sx-mr .yb-tile .tt { font-size:9px; font-weight:800; letter-spacing:1.4px; color:#71717A; }
+.sx-mr .yb-tile .vv { font-size:14px; font-weight:800; margin-top:3px; }
+.sx-mr .yb-hab { display:flex; gap:3px; margin-top:8px; }
+.sx-mr .yb-hab i { width:11px; height:11px; border-radius:3px; background:#262626; }
+.sx-mr .yb-hab i.on { background:#2ECC71; }
+.sx-mr .yb-bar { height:7px; background:#262626; border-radius:4px; overflow:hidden; margin-top:8px; }
+
+/* ── RECO · You hub ── */
+.sx-mr .yr-mast { font-size:42px; line-height:.95; margin-top:6px; }
+.sx-mr .yr-avatar { width:46px; height:46px; border:1px solid #3A3A40; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:Anton,sans-serif; font-size:19px; color:#FAFAFA; flex:0 0 auto; }
+.sx-mr .yr-lvl { display:inline-flex; align-items:center; height:20px; padding:0 8px; border:1px solid #26262B; border-radius:3px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:10px; letter-spacing:2px; color:#9D9DA6; text-transform:uppercase; }
+.sx-mr .yr-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13.5px; letter-spacing:2.5px; text-transform:uppercase; color:#5C5C64; padding-bottom:6px; }
+.sx-mr .yr-tab.on { color:#FAFAFA; border-bottom:2px solid #F97316; }
+.sx-mr .yr-led { display:flex; align-items:center; gap:9px; height:47px; border-bottom:1px solid #1E1E22; }
+.sx-mr .yr-led .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; text-transform:uppercase; color:#FAFAFA; flex:1; }
+.sx-mr .yr-led .vl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#9D9DA6; font-variant-numeric:tabular-nums; }
+.sx-mr .yr-led .ch { color:#5C5C64; font-size:14px; }
+
+/* ── BEFORE · Settings ── */
+.sx-mr .sb-pill { height:40px; background:#1C1C1E; border-radius:20px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,.4); }
+.sx-mr .sb-lbl { font-size:12px; font-weight:600; letter-spacing:.5px; color:#A1A1AA; padding-left:4px; }
+.sx-mr .sb-card { background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:14px; overflow:hidden; }
+.sx-mr .sb-row { display:flex; align-items:center; gap:11px; padding:10px 13px; border-bottom:1px solid rgba(38,38,38,.55); }
+.sx-mr .sb-row:last-child { border-bottom:none; }
+.sx-mr .sb-ic { width:30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:14px; flex:0 0 auto; }
+.sx-mr .sb-row .ti { flex:1; font-size:13.5px; font-weight:500; }
+.sx-mr .sb-row .va { font-size:11px; color:#A1A1AA; max-width:108px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sx-mr .sb-row .ch { color:#71717A; font-size:13px; }
+.sx-mr .sb-fab { position:absolute; right:18px; bottom:24px; width:52px; height:52px; border-radius:50%; background:#1C1C1E; border:1px solid rgba(38,38,38,.55); display:flex; align-items:center; justify-content:center; font-size:18px; z-index:31; box-shadow:0 8px 20px rgba(0,0,0,.5); }
+
+/* ── RECO · Settings (the ~40-route archetype) ── */
+.sx-mr .sr-mast { font-size:36px; line-height:1; margin-top:8px; }
+.sx-mr .sr-kick { display:flex; align-items:center; gap:11px; margin-top:15px; margin-bottom:2px; }
+.sx-mr .sr-kick span { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2.5px; text-transform:uppercase; color:#5C5C64; flex:0 0 auto; }
+.sx-mr .sr-kick i { flex:1; height:1px; background:#2A2A2E; }
+.sx-mr .sr-row { display:flex; align-items:center; gap:11px; height:37px; border-bottom:1px solid #1A1A1E; }
+.sx-mr .sr-row .gl { font-size:12px; filter:grayscale(1); opacity:.65; width:16px; text-align:center; flex:0 0 auto; }
+.sx-mr .sr-row .ti { flex:1; font-size:13.5px; font-weight:450; color:#FAFAFA; }
+.sx-mr .sr-row .va { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#9D9DA6; }
+.sx-mr .sr-row .ch { color:#5C5C64; font-size:13px; }
+.sx-mr .sr-tog { width:44px; height:26px; border:1px solid #3A3A40; border-radius:13px; position:relative; flex:0 0 auto; }
+.sx-mr .sr-tog i { position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%; background:#5C5C64; }
+.sx-mr .sr-tog.on i { left:auto; right:3px; background:#F97316; }
+.sx-mr .sr-chip { display:inline-flex; align-items:center; height:18px; padding:0 7px; border:1px solid #26262B; border-radius:3px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:9px; letter-spacing:2px; color:#9D9DA6; text-transform:uppercase; margin-left:7px; }
+
+/* ── BEFORE · Recipes ── */
+.sx-mr .rb-date { display:flex; align-items:center; justify-content:space-between; font-size:12px; font-weight:700; }
+.sx-mr .rb-date span { color:#71717A; font-size:14px; }
+.sx-mr .rb-mini { flex:1; background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:14px; padding:10px 11px; }
+.sx-mr .rb-mini .k { font-size:8.5px; font-weight:800; letter-spacing:1.3px; color:#71717A; }
+.sx-mr .rb-mini .n { font-size:12px; font-weight:700; margin-top:3px; }
+.sx-mr .rb-mini .s { font-size:10px; color:#A1A1AA; margin-top:2px; }
+.sx-mr .rb-qa { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.sx-mr .rb-qa-it { background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:12px; height:54px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; }
+.sx-mr .rb-qa-it i { font-size:15px; font-style:normal; }
+.sx-mr .rb-qa-it span { font-size:9.5px; font-weight:600; color:#A1A1AA; }
+.sx-mr .rb-search { display:flex; align-items:center; gap:8px; height:42px; background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:21px; padding:0 14px; font-size:12px; color:#71717A; }
+.sx-mr .rb-search .fl { margin-left:auto; font-size:11px; font-weight:600; color:#A1A1AA; }
+.sx-mr .rb-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.sx-mr .rb-rc { background:#1A1A1A; border:1px solid rgba(38,38,38,.55); border-radius:14px; overflow:hidden; }
+.sx-mr .rb-rc .im { height:74px; background:#141414; display:flex; align-items:center; justify-content:center; font-size:30px; }
+.sx-mr .rb-rc .bd { padding:9px 11px; }
+.sx-mr .rb-rc .n { font-size:11.5px; font-weight:700; }
+.sx-mr .rb-rc .s { font-size:9.5px; color:#A1A1AA; margin-top:2px; }
+.sx-mr .rb-fab { position:absolute; right:18px; bottom:150px; height:46px; border-radius:23px; background:linear-gradient(135deg,#F97316,#EA580C); display:flex; align-items:center; gap:7px; padding:0 18px; font-size:13px; font-weight:700; color:#fff; z-index:31; box-shadow:0 8px 18px rgba(0,0,0,.35); }
+
+/* ── RECO · Recipes ── */
+.sx-mr .rr-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13.5px; letter-spacing:2.5px; text-transform:uppercase; color:#5C5C64; padding-bottom:6px; }
+.sx-mr .rr-tab.on { color:#FAFAFA; border-bottom:2px solid #F97316; }
+.sx-mr .rr-mast { font-size:34px; line-height:1; margin-top:5px; }
+.sx-mr .rr-hero { border-top:1px solid #2A2A2E; border-bottom:1px solid #2A2A2E; padding:14px 2px; display:flex; align-items:center; gap:15px; }
+.sx-mr .rr-hero .nm { font-size:17.5px; font-weight:700; letter-spacing:-.2px; }
+.sx-mr .rr-note { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:13.5px; color:#CBB9A4; margin-top:6px; }
+.sx-mr .rr-sug { display:flex; align-items:center; gap:13px; height:46px; border-bottom:1px solid #1E1E22; }
+.sx-mr .rr-sug .nm { font-size:13.5px; font-weight:600; }
+.sx-mr .rr-search { display:flex; align-items:center; gap:9px; height:34px; border-bottom:1px solid #2A2A2E; font-size:11.5px; color:#5C5C64; }
+.sx-mr .rr-fchip { margin-left:auto; display:inline-flex; align-items:center; gap:4px; height:20px; padding:0 8px; border:1px solid #26262B; border-radius:3px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:#9D9DA6; }
+.sx-mr .rr-left { display:flex; align-items:center; gap:10px; height:36px; border-bottom:1px solid #1E1E22; font-size:13px; }
+.sx-mr .rr-left b { font-weight:600; color:#FAFAFA; }
+.sx-mr .rr-left .dl { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:#C9842A; margin-left:auto; }
+.sx-mr .rr-chips { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.sx-mr .rr-chip { height:29px; border:1px solid #26262B; border-radius:5px; display:flex; align-items:center; justify-content:center; gap:6px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; color:#9D9DA6; }
+.sx-mr .rr-chip i { font-size:11px; font-style:normal; filter:grayscale(1); opacity:.7; }
+.sx-mr .rr-sav { display:flex; align-items:center; gap:10px; height:32px; border-bottom:1px solid #1A1A1E; font-size:13px; color:#9D9DA6; }
+.sx-mr .rr-sav b { font-weight:600; color:#C9C9CF; flex:1; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">System proof</div>
+  <div class="sec-title">YOU · SETTINGS · RECIPES</div>
+  <div class="sec-desc">Three more rooms in the Signature language, paired against today's screens — the profile hub, the settings archetype that restyles ~40 routes, and the recipes surface.</div>
+</section>
+
+<!-- ════════════════ YOU HUB ════════════════ -->
+<div class="mr-sub">You hub — <b>current → recommended</b></div>
+<div class="row">
+
+  <div class="cell" id="before-you">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="mr-body" style="padding:56px 16px 0;">
+        <!-- header: avatar + title + stats/settings icons -->
+        <div class="yb-hdr lp" style="animation-name:s0;">
+          <div class="yb-av">👤</div>
+          <div class="yb-title">You</div>
+          <div style="margin-left:auto;display:flex;gap:4px;"><div class="yb-ic">📊</div><div class="yb-ic">⚙️</div></div>
+        </div>
+        <!-- top segmented control: Overview | Profile | Stats & Rewards -->
+        <div class="mrb-seg lp" style="animation-name:s1;margin-top:8px;">
+          <span class="on">⌂ Overview</span><span>👤 Profile</span><span>🏆 Rewards</span>
+        </div>
+        <!-- user card -->
+        <div class="mrb-card lp" style="animation-name:s2;margin-top:10px;display:flex;align-items:center;gap:11px;">
+          <div class="yb-av" style="width:44px;height:44px;font-size:18px;">👤</div>
+          <div style="flex:1;"><div style="font-size:14.5px;font-weight:800;">Chetan</div><div style="font-size:10.5px;color:#A1A1AA;margin-top:1px;">Member since 2025 · 23d 🔥</div></div>
+          <div style="color:#71717A;font-size:13px;">✎</div>
+        </div>
+        <!-- health overview composite -->
+        <div class="mrb-card lp" style="animation-name:s3;margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-size:9.5px;font-weight:800;letter-spacing:1.6px;color:#71717A;">TODAY'S HEALTH</div><div style="font-size:11px;color:#71717A;">↻</div></div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <div class="yb-stat">👟<b>6,840</b><span>Steps</span></div>
+            <div style="width:1px;background:rgba(38,38,38,.55);"></div>
+            <div class="yb-stat">🔥<b>612</b><span>Active kcal</span></div>
+            <div style="width:1px;background:rgba(38,38,38,.55);"></div>
+            <div class="yb-stat">😴<b>7h 12m</b><span>Sleep</span></div>
+          </div>
+        </div>
+        <!-- weight tracking -->
+        <div class="mrb-card lp" style="animation-name:s4;margin-top:8px;display:flex;align-items:center;gap:10px;">
+          <div style="font-size:15px;">⚖️</div>
+          <div style="flex:1;"><div style="font-size:9.5px;font-weight:800;letter-spacing:1.4px;color:#71717A;">WEIGHT</div><div style="font-size:14px;font-weight:800;margin-top:2px;">82.4 kg <span style="font-size:10px;font-weight:700;color:#2ECC71;">▼ 0.6 this month</span></div></div>
+          <div style="color:#71717A;font-size:13px;">›</div>
+        </div>
+        <!-- gamification 2×2 grid -->
+        <div class="lp" style="animation-name:s5;margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="yb-tile"><div class="tt">🏆 TROPHIES</div><div class="vv">12 of 48</div></div>
+          <div class="yb-tile"><div class="tt">🎖 ACHIEVEMENTS</div><div class="vv">18 earned</div></div>
+          <div class="yb-tile"><div class="tt">🤸 SKILLS</div><div class="vv">Push-up · Step 4</div></div>
+          <div class="yb-tile"><div class="tt">📊 LEADERBOARD</div><div class="vv">Top 18%</div></div>
+        </div>
+        <!-- habits heatmap strip -->
+        <div class="mrb-card lp" style="animation-name:s6;margin-top:8px;padding:10px 12px;">
+          <div style="font-size:9.5px;font-weight:800;letter-spacing:1.4px;color:#71717A;">HABITS</div>
+          <div class="yb-hab"><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i></div>
+        </div>
+        <!-- weekly recap teaser -->
+        <div class="mrb-card lp" style="animation-name:s7;margin-top:8px;display:flex;align-items:center;gap:10px;padding:10px 12px;">
+          <div style="width:30px;height:30px;border-radius:9px;background:rgba(249,115,22,.15);display:flex;align-items:center;justify-content:center;font-size:13px;">✨</div>
+          <div style="flex:1;"><div style="font-size:9px;font-weight:800;letter-spacing:1.3px;color:#71717A;">LAST WEEK</div><div style="font-size:12.5px;font-weight:700;margin-top:1px;">4 workouts • 2 PRs</div></div>
+          <div style="color:#71717A;font-size:13px;">›</div>
+        </div>
+        <!-- XP hero tile — cut by nav, scroll implied -->
+        <div class="mrb-card lp" style="animation-name:s8;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;"><div style="font-size:13.5px;font-weight:800;">Level 12</div><div style="font-size:10.5px;color:#A1A1AA;">8,420 / 10,000 XP</div></div>
+          <div class="yb-bar"><i class="mr-fill" style="background:linear-gradient(90deg,#F97316,#FDBA74);--w:84%;"></i></div>
+        </div>
+      </div>
+      <nav class="mrb-nav">
+        <div class="mrb-nav-it">🏠<span>Home</span></div>
+        <div class="mrb-nav-it">🏋️<span>Workouts</span></div>
+        <div class="mrb-nav-ai">✦</div>
+        <div class="mrb-nav-it">🍽️<span>Nutrition</span></div>
+        <div class="mrb-nav-it" style="color:#F97316;">👤<span>You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current You hub — Overview tab</div>
+      <div class="cap-why">Faithful to the shipped screen: avatar header with stats + settings icons, the Overview/Profile/Rewards segmented pill, then eight stacked glass cards — user card, Today's Health composite, weight, the gamification 2×2, habits heatmap, weekly recap, XP tile (cut by the nav, scroll implied). Every card is the same gray box; the hub reads as a feed, not an identity.</div>
+      <div class="cap-risk"><b>Risk:</b> none — this is the control. Note how the level, streak and trophies all compete at identical visual weight.</div>
+    </div>
+  </div>
+
+  <!-- ★ RECO YOU -->
+  <div class="cell" id="reco-you">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="mr-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span>Day 23</span></div>
+        <div class="disp yr-mast lp" style="animation-name:s0;">YOU</div>
+        <!-- identity ledger -->
+        <div class="lp" style="animation-name:s1;display:flex;align-items:center;gap:13px;margin-top:13px;">
+          <div class="yr-avatar">C</div>
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:9px;"><span style="font-size:17px;font-weight:600;">Chetan</span><span class="yr-lvl">Level 12</span></div>
+            <div style="height:3px;background:var(--d-rule);border-radius:2px;margin-top:9px;overflow:hidden;"><i class="mr-fill" style="background:var(--d-rust);--w:84%;"></i></div>
+            <div class="lbl" style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--d-faint);margin-top:5px;"><span>XP</span><span style="color:var(--d-mut);">8,420 / 10,000</span></div>
+          </div>
+        </div>
+        <!-- sub-tabs -->
+        <div class="lp" style="animation-name:s2;display:flex;gap:20px;margin-top:18px;border-bottom:1px solid var(--d-rule);">
+          <div class="yr-tab on">Overview</div><div class="yr-tab">Profile</div><div class="yr-tab">Rewards</div>
+        </div>
+        <!-- hub ledger -->
+        <div class="yr-led lp" style="animation-name:s3;"><span class="nm">Stats</span><span class="vl">742 workouts</span><span class="ch">›</span></div>
+        <div class="yr-led lp" style="animation-name:s4;"><span class="nm">Streak</span><span class="vl" style="color:var(--d-text);">23 days 🔥</span><span class="ch">›</span></div>
+        <div class="yr-led lp" style="animation-name:s5;"><span class="nm">Achievements</span><span class="food3d" style="font-size:18px;animation:foodFloat 4.5s ease-in-out infinite;">🏆</span><span class="vl">18 earned</span><span class="ch">›</span></div>
+        <div class="yr-led lp" style="animation-name:s6;"><span class="nm">Measurements</span><span class="vl">82.4 kg</span><span class="ch">›</span></div>
+        <div class="yr-led lp" style="animation-name:s7;"><span class="nm">Wrapped</span><span class="vl">May ready</span><span class="ch">›</span></div>
+        <div class="yr-led lp" style="animation-name:s8;border-bottom:none;"><span class="nm">Referrals</span><span class="ch">›</span></div>
+        <div style="flex:1;"></div>
+        <div class="lbl lp" style="animation-name:s9;text-align:center;font-size:10px;color:var(--d-faint);padding-bottom:84px;">Premium · Renews Jan 2027</div>
+      </div>
+      <div class="mr-plus">+</div>
+      <nav class="mr-nav lp" style="animation-name:s9;">
+        <div class="it"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it on"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature You — identity ledger</div>
+      <div class="cap-why">The Anton "YOU" masthead and an identity row (hairline avatar, Level 12 chip, a thin rust XP rule) replace the card pile; Overview/Profile/Rewards become Barlow text-tabs with the single orange underline; and every hub destination collapses into one hairline ledger — Stats, Streak, Achievements (with its floating trophy), Measurements, Wrapped, Referrals — each a quiet line with a value, not a box. Subscription state demotes to a muted footer. The pinned nav and outlined "+" complete the tab-root chrome.</div>
+      <div class="cap-risk"><b>Risk:</b> the ledger hides the gamification dopamine the 2×2 grid surfaced — streak and trophies must keep their numbers loud enough in the row values, or retention scaffold becomes invisible scaffold.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ SETTINGS ROOT ════════════════ -->
+<div class="mr-sub">Settings root — <b>current → recommended</b></div>
+<div class="row">
+
+  <div class="cell" id="before-set">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="mr-body" style="padding:56px 16px 0;">
+        <!-- pill top bar: back circle + title pill + help circle -->
+        <div class="lp" style="animation-name:s0;display:flex;gap:10px;align-items:center;">
+          <div class="sb-pill" style="width:40px;flex:0 0 auto;">‹</div>
+          <div class="sb-pill" style="flex:1;font-size:14px;font-weight:600;">Settings</div>
+          <div class="sb-pill" style="width:40px;flex:0 0 auto;color:#EF4444;">?</div>
+        </div>
+        <!-- TRAINING group -->
+        <div class="sb-lbl lp" style="animation-name:s1;margin-top:16px;">Training</div>
+        <div class="sb-card lp" style="animation-name:s1;margin-top:7px;">
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(249,115,22,.15);">🎛</div><div class="ti">Workout Mode</div><div class="va">Easy · Full tracking</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(249,115,22,.15);">⚡</div><div class="ti">Workout Settings</div><div class="va">PPL · 4 days</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(46,204,113,.15);">🏪</div><div class="ti">My Gyms</div><div class="va">Home Gym</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(168,85,247,.15);">🏋️</div><div class="ti">Exercise Preferences</div><div class="va">Favorites, avoided…</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(6,182,212,.15);">📈</div><div class="ti">Training Methods</div><div class="va">Set progression</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(46,204,113,.15);">🛠</div><div class="ti">Equipment</div><div class="va">Home Gym</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(6,182,212,.15);">📤</div><div class="ti">Imports</div><div class="va">Shared with me</div><div class="ch">›</div></div>
+        </div>
+        <!-- PERSONALIZATION group (cut by frame — scroll implied) -->
+        <div class="sb-lbl lp" style="animation-name:s2;margin-top:18px;">Personalization</div>
+        <div class="sb-card lp" style="animation-name:s2;margin-top:7px;">
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(168,85,247,.15);">✨</div><div class="ti">AI Coach</div><div class="va">Voice &amp; personality</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(168,85,247,.15);">🧠</div><div class="ti">Coach memory</div><div class="va">View &amp; manage…</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(6,182,212,.15);">🎨</div><div class="ti">Appearance</div><div class="va">Auto · Light · Dark</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(46,204,113,.15);">🌐</div><div class="ti">App Language</div><div class="va">English</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(6,182,212,.15);">🔔</div><div class="ti">Sound &amp; Notifications</div><div class="va">Voice, audio…</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(79,195,247,.15);">🏖</div><div class="ti">Vacation Mode</div><div class="va">Off</div><div class="ch">›</div></div>
+          <div class="sb-row"><div class="sb-ic" style="background:rgba(249,115,22,.15);">⏰</div><div class="ti">Meal Reminders</div><div class="va">Schedules, sharing</div><div class="ch">›</div></div>
+        </div>
+      </div>
+      <div class="sb-fab lp" style="animation-name:s3;">🔍</div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current settings — grouped glass cards</div>
+      <div class="cap-why">Faithful: pill top bar (back, title, red help), then six grouped card sections — Training (7 rows), Personalization (10), Connections, Account, Help, About — each row a colored icon square + label + value + chevron, with a floating search FAB. ~30 rows of rainbow icon chips; the same template every settings screen in every app ships.</div>
+      <div class="cap-risk"><b>Risk:</b> none — control. But note this archetype repeats across ~40 sub-routes, so whatever replaces it gets multiplied.</div>
+    </div>
+  </div>
+
+  <!-- ★ RECO SETTINGS -->
+  <div class="cell" id="reco-set">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="mr-body">
+        <div class="lbl lp" style="animation-name:s0;font-size:12px;color:var(--d-mut);">‹ Back</div>
+        <div class="disp sr-mast lp" style="animation-name:s0;">SETTINGS</div>
+
+        <div class="lp" style="animation-name:s1;">
+          <div class="sr-kick"><span>Training</span><i></i></div>
+          <div class="sr-row"><span class="gl">🎛</span><span class="ti">Workout mode</span><span class="va">Easy</span><span class="ch">›</span></div>
+          <div class="sr-row"><span class="gl">⚖️</span><span class="ti">Weight units</span><span class="va">LB</span><span class="ch">›</span></div>
+          <div class="sr-row"><span class="gl">🏪</span><span class="ti">My gyms</span><span class="va">Home Gym</span><span class="ch">›</span></div>
+        </div>
+
+        <div class="lp" style="animation-name:s2;">
+          <div class="sr-kick"><span>AI Coach</span><i></i></div>
+          <div class="sr-row"><span class="gl">✦</span><span class="ti">Personality</span><span class="va">Supportive</span><span class="ch">›</span></div>
+          <div class="sr-row"><span class="gl">🧠</span><span class="ti">Coach memory</span><span class="va">12 memories</span><span class="ch">›</span></div>
+        </div>
+
+        <div class="lp" style="animation-name:s3;">
+          <div class="sr-kick"><span>Appearance</span><i></i></div>
+          <div class="sr-row"><span class="gl">🌗</span><span class="ti">Theme</span><span class="va">Dark</span><span class="ch">›</span></div>
+          <div class="sr-row"><span class="gl">📳</span><span class="ti">Haptics</span><div class="sr-tog on"><i></i></div></div>
+        </div>
+
+        <div class="lp" style="animation-name:s4;">
+          <div class="sr-kick"><span>Notifications</span><i></i></div>
+          <div class="sr-row"><span class="gl">🔔</span><span class="ti">Workout reminders</span><div class="sr-tog on"><i></i></div></div>
+          <div class="sr-row"><span class="gl">🌙</span><span class="ti">Quiet hours</span><span class="va">10 PM – 7 AM</span><span class="ch">›</span></div>
+        </div>
+
+        <div class="lp" style="animation-name:s5;">
+          <div class="sr-kick"><span>Data &amp; Privacy</span><i></i></div>
+          <div class="sr-row"><span class="gl">❤️</span><span class="ti">Connected apps</span><span class="va">Apple Health</span><span class="ch">›</span></div>
+          <div class="sr-row"><span class="gl">📦</span><span class="ti">Export my data</span><span class="ch">›</span></div>
+        </div>
+
+        <div class="lp" style="animation-name:s6;">
+          <div class="sr-kick"><span>Subscription</span><i></i></div>
+          <div class="sr-row" style="border-bottom:none;"><span class="gl">◆</span><span class="ti">Zealova<span class="sr-chip">Premium</span></span><span class="va">Renews Jan 2027</span><span class="ch">›</span></div>
+        </div>
+
+        <div style="flex:1;"></div>
+        <div class="lbl lp" style="animation-name:s7;text-align:center;font-size:11px;color:var(--d-faint);padding-bottom:30px;">Sign out</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature settings — the 40-route archetype</div>
+      <div class="cap-why">Boring-proof on purpose: back chevron + Anton "SETTINGS", Barlow group kickers riding hairline rules (Training / AI Coach / Appearance / Notifications / Data &amp; Privacy / Subscription), and rows reduced to a quiet ledger line — small grayscale glyph, Inter label, Barlow value, › or the one toggle style (hairline track, orange thumb when on). Premium is a hairline chip, Sign out a muted whisper, no red until tapped. The list-row + group-kicker spec IS the long-tail strategy — if this looks designed, 40 screens come along for free.</div>
+      <div class="cap-risk"><b>Risk:</b> dropping the colored icon squares removes the scan-by-color affordance on a 30-row list — the grayscale glyphs and kicker rules have to carry wayfinding alone, and search becomes non-optional.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ RECIPES ════════════════ -->
+<div class="mr-sub">Recipes — <b>current → recommended</b></div>
+<div class="row">
+
+  <div class="cell" id="before-rec">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="mr-body" style="padding:56px 16px 0;">
+        <div class="mrb-seg lp" style="animation-name:s0;"><span>Daily</span><span class="on">Recipes</span><span>Patterns</span></div>
+        <div class="rb-date lp" style="animation-name:s0;margin-top:10px;"><span>‹</span><b>Today · Thu, Jun 11</b><span>›</span></div>
+        <!-- coming-up carousel: upcoming schedule + leftovers -->
+        <div class="lp" style="animation-name:s1;display:flex;gap:8px;margin-top:10px;">
+          <div class="rb-mini"><div class="k">⏰ 18:30 · DINNER</div><div class="n">Chicken Tikka Bowl</div><div class="s">1 serving</div></div>
+          <div class="rb-mini"><div class="k">🍲 LEFTOVERS</div><div class="n">Beef Chili</div><div class="s">2 of 4 left · eat by Fri</div></div>
+        </div>
+        <!-- quick action chips -->
+        <div class="rb-qa lp" style="animation-name:s2;margin-top:10px;">
+          <div class="rb-qa-it"><i>📷</i><span>Fridge</span></div>
+          <div class="rb-qa-it"><i>🔗</i><span>Import</span></div>
+          <div class="rb-qa-it"><i>📅</i><span>Plan day</span></div>
+          <div class="rb-qa-it"><i>🛒</i><span>Lists</span></div>
+          <div class="rb-qa-it"><i>❤️</i><span>Favorites</span></div>
+          <div class="rb-qa-it"><i>🧭</i><span>Discover</span></div>
+        </div>
+        <!-- search / filter / sort bar -->
+        <div class="rb-search lp" style="animation-name:s3;margin-top:12px;">🔍 Search recipes<span class="fl">⛛ Filters · Recent ⌄</span></div>
+        <!-- my recipes grid (cut by nav — scroll implied) -->
+        <div class="rb-grid lp" style="animation-name:s4;margin-top:12px;">
+          <div class="rb-rc"><div class="im">🍛</div><div class="bd"><div class="n">Chicken Tikka Bowl</div><div class="s">620 cal · 4 servings</div></div></div>
+          <div class="rb-rc"><div class="im">🥣</div><div class="bd"><div class="n">Overnight Oats</div><div class="s">410 cal · 1 serving</div></div></div>
+          <div class="rb-rc"><div class="im">🍲</div><div class="bd"><div class="n">Beef Chili</div><div class="s">540 cal · 6 servings</div></div></div>
+          <div class="rb-rc"><div class="im">🥗</div><div class="bd"><div class="n">Halloumi Salad</div><div class="s">480 cal · 2 servings</div></div></div>
+        </div>
+      </div>
+      <div class="rb-fab lp" style="animation-name:s5;">✨ Build</div>
+      <nav class="mrb-nav">
+        <div class="mrb-nav-it">🏠<span>Home</span></div>
+        <div class="mrb-nav-it">🏋️<span>Workouts</span></div>
+        <div class="mrb-nav-ai">✦</div>
+        <div class="mrb-nav-it" style="color:#F97316;">🍽️<span>Nutrition</span></div>
+        <div class="mrb-nav-it">👤<span>You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current recipes tab — chips + grid</div>
+      <div class="cap-why">Faithful: Daily/Recipes/Patterns segmented pill, the coming-up carousel (scheduled dinner + leftover portions), six quick-action chips (Fridge, Import, Plan day, Lists, Favorites, Discover), the combined search/filter/sort bar, then the My Recipes grid with emoji-placeholder image slots — plus the orange "✨ Build" FAB stacked above the glass tab bar and nav. Three layers of chrome before the first recipe.</div>
+      <div class="cap-risk"><b>Risk:</b> none — control. The grid's gray image slots are the tell: a food surface with no appetite.</div>
+    </div>
+  </div>
+
+  <!-- ★ RECO RECIPES -->
+  <div class="cell" id="reco-rec">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="mr-body">
+        <!-- nutrition sub-tabs, RECIPES active -->
+        <div class="lp" style="animation-name:s0;display:flex;gap:20px;border-bottom:1px solid var(--d-rule);">
+          <div class="rr-tab">Daily</div><div class="rr-tab on">Recipes</div><div class="rr-tab">Patterns</div>
+          <div style="margin-left:auto;font-size:13px;color:var(--d-faint);">🔖</div>
+        </div>
+        <div class="lbl lp" style="animation-name:s1;font-size:11px;color:var(--d-mut);margin-top:14px;">Recipes · For your macros tonight</div>
+        <div class="disp rr-mast lp" style="animation-name:s1;">WHAT TO COOK</div>
+        <!-- quiet search affordance -->
+        <div class="rr-search lp" style="animation-name:s1;margin-top:8px;">🔍 Search recipes<span class="rr-fchip">Filters ▾</span></div>
+        <!-- tonight: next planned meal from the meal planner -->
+        <div class="sr-kick lp" style="animation-name:s2;margin-top:8px;margin-bottom:0;"><span>Tonight · 18:30 · Dinner</span><i></i></div>
+        <div class="rr-left lp" style="animation-name:s2;">
+          <span class="food3d" style="font-size:18px;animation:foodFloat 4.5s ease-in-out infinite;">🍛</span><b>Chicken Tikka Bowl</b>
+          <span class="mr-data" style="font-size:10px;">1 serving</span>
+          <span style="margin-left:auto;color:var(--d-faint);font-size:14px;">›</span>
+        </div>
+        <!-- hero suggestion -->
+        <div class="rr-hero lp" style="animation-name:s3;border-top:none;padding:9px 2px;">
+          <span class="food3d" style="font-size:70px;animation:foodFloat 4.5s ease-in-out infinite;">🥩</span>
+          <div style="flex:1;">
+            <div class="nm">Garlic Steak &amp; Rice</div>
+            <div class="mr-data" style="margin-top:5px;">640 cal · <span class="p">54P</span> · <span class="c">50C</span> · <span class="f">20F</span></div>
+            <div class="ser rr-note">fits your remaining 740 kcal</div>
+          </div>
+          <span style="color:var(--d-faint);font-size:15px;">›</span>
+        </div>
+        <!-- two smaller suggestions -->
+        <div class="rr-sug lp" style="animation-name:s4;">
+          <span class="food3d" style="font-size:32px;animation:foodFloat 5s ease-in-out infinite;">🥗</span>
+          <div style="flex:1;"><div class="nm">Halloumi Grain Salad</div><div class="mr-data" style="font-size:10.5px;margin-top:2px;">480 cal · <span class="p">31P</span> · <span class="c">42C</span> · <span class="f">21F</span></div></div>
+          <span style="color:var(--d-faint);font-size:14px;">›</span>
+        </div>
+        <div class="rr-sug lp" style="animation-name:s4;">
+          <span class="food3d" style="font-size:32px;animation:foodFloat 5.5s ease-in-out infinite;">🍳</span>
+          <div style="flex:1;"><div class="nm">Shakshuka &amp; Sourdough</div><div class="mr-data" style="font-size:10.5px;margin-top:2px;">390 cal · <span class="p">24P</span> · <span class="c">30C</span> · <span class="f">19F</span></div></div>
+          <span style="color:var(--d-faint);font-size:14px;">›</span>
+        </div>
+        <!-- leftovers — batch cooking is first-class -->
+        <div class="sr-kick lp" style="animation-name:s5;margin-top:10px;"><span>Leftovers</span><i></i></div>
+        <div class="rr-left lp" style="animation-name:s5;">
+          <span class="food3d" style="font-size:18px;animation:foodFloat 5s ease-in-out infinite;">🍲</span><b>Beef Chili</b>
+          <span class="mr-data" style="font-size:10px;">2 of 4 portions</span>
+          <span class="dl">eat by Fri</span>
+          <span style="color:var(--d-faint);font-size:14px;">›</span>
+        </div>
+        <!-- action chips: the current tab's six entries, kept -->
+        <div class="rr-chips lp" style="animation-name:s6;margin-top:11px;">
+          <div class="rr-chip"><i>🧊</i>Fridge</div>
+          <div class="rr-chip"><i>🔗</i>Import</div>
+          <div class="rr-chip"><i>📅</i>Plan day</div>
+          <div class="rr-chip"><i>🛒</i>Lists</div>
+          <div class="rr-chip"><i>❤</i>Favorites</div>
+          <div class="rr-chip"><i>🧭</i>Discover</div>
+        </div>
+        <!-- saved -->
+        <div class="sr-kick lp" style="animation-name:s7;margin-top:11px;"><span>Saved</span><i></i></div>
+        <div class="rr-sav lp" style="animation-name:s7;"><span style="font-size:12px;">🔖</span><b>Overnight Oats</b><span class="mr-data" style="font-size:10px;">410 cal</span></div>
+        <div class="rr-sav lp" style="animation-name:s7;border-bottom:none;"><span style="font-size:12px;">🔖</span><b>Beef Chili</b><span class="mr-data" style="font-size:10px;">2 portions left</span></div>
+        <div style="flex:1;"></div>
+      </div>
+      <nav class="mr-nav lp" style="animation-name:s8;">
+        <div class="it"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it on"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature recipes — tonight's render gallery</div>
+      <div class="cap-why">Recipes become the food-render gallery's second home, with the current tab's full kit retained: the planner's next meal surfaces as a TONIGHT ledger row (18:30 · Dinner · Chicken Tikka Bowl), a floating 3D render leads the hero suggestion keyed to remaining macros (the Fraunces "fits your remaining 740 kcal" is the AI doing the math), two quieter render rows follow, then a LEFTOVERS ledger keeps batch cooking first-class (Beef Chili, 2 of 4 portions, amber eat-by-Fri), all six actions survive as a hairline chip grid (Fridge · Import · Plan day · Lists · Favorites · Discover), search stays as a quiet field with a Filters chip, and saved recipes settle into bookmark lines.</div>
+      <div class="cap-risk"><b>Risk:</b> render quality gates appetite appeal — a bad 3D render of tikka masala is worse than no image — and at this density the screen is one row away from losing the ledger calm; anything new must replace, not append.</div>
+    </div>
+  </div>
+
+</div>
+
+</div>

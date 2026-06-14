@@ -1,0 +1,725 @@
+<div class="sx-home">
+<style>
+/* ===== HOME section (sx-home) — all selectors prefixed ===== */
+.sx-home .hm-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+
+/* looped data-viz animations (10s, synced with s0..s9 loop) */
+@keyframes hmFill { 0%,8%{width:0} 22%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes hmRing { 0%,8%{stroke-dashoffset:var(--c,239)} 24%,96%{stroke-dashoffset:var(--dash,60)} 100%{stroke-dashoffset:var(--c,239)} }
+@keyframes hmBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+.sx-home .hm-fill { animation:hmFill 10s ease-out infinite; }
+.sx-home .hm-ring { animation:hmRing 10s ease-out infinite; }
+
+/* ---- BEFORE ---- */
+.sx-home .bf-hdr { display:flex; align-items:center; gap:11px; }
+.sx-home .bf-av { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#3a3a40,#222226); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px; color:#d4d4d8; }
+.sx-home .bf-greet { font-size:12px; color:var(--d-mut); }
+.sx-home .bf-name { font-size:16.5px; font-weight:700; }
+.sx-home .bf-name span { font-size:12.5px; font-weight:600; color:var(--d-mut); }
+.sx-home .bf-ic { width:34px; height:34px; border-radius:50%; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:14px; }
+.sx-home .bf-card { background:var(--d-surface); border:1px solid var(--d-border); border-radius:var(--d-radius); padding:14px; }
+.sx-home .bf-tile { display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--d-mut); }
+.sx-home .bf-tile b { margin-left:auto; font-size:12.5px; color:var(--d-text); font-weight:700; }
+.sx-home .bf-qa { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
+.sx-home .bf-qa-it { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.sx-home .bf-qa-ic { width:44px; height:44px; border-radius:14px; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:17px; }
+.sx-home .bf-qa-lb { font-size:8.5px; color:var(--d-faint); }
+.sx-home .bf-mbar { height:5px; border-radius:3px; background:#27272a; overflow:hidden; }
+.sx-home .bf-nav { position:absolute; left:18px; right:18px; bottom:22px; height:62px; background:rgba(20,20,20,.96); border:1px solid var(--d-border); border-radius:31px; display:flex; align-items:center; justify-content:space-around; z-index:30; box-shadow:0 12px 30px rgba(0,0,0,.6); }
+.sx-home .bf-nav-it { display:flex; flex-direction:column; align-items:center; gap:1px; font-size:15px; color:var(--d-faint); }
+.sx-home .bf-nav-it span { font-size:8.5px; font-weight:600; }
+.sx-home .bf-nav-ai { width:46px; height:46px; border-radius:50%; background:linear-gradient(135deg,#FFB366,#F97316); display:flex; align-items:center; justify-content:center; font-size:19px; color:#fff; box-shadow:0 6px 18px rgba(249,115,22,.45); }
+
+/* ---- A · EDITORIAL ATHLETIC ---- */
+.sx-home .a-top { display:flex; justify-content:space-between; font-size:11px; color:var(--d-mut); }
+.sx-home .a-mast { font-size:60px; line-height:.92; margin-top:10px; }
+.sx-home .a-mast .mo { color:var(--d-faint); }
+.sx-home .a-rule { height:1px; background:var(--d-rule); margin:17px 0; }
+.sx-home .a-slbl { font-size:11px; color:var(--d-mut); }
+.sx-home .a-cta { display:flex; align-items:center; justify-content:center; height:52px; border-radius:4px; background:var(--d-accent); color:#160b03; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; letter-spacing:2.5px; text-transform:uppercase; margin-top:14px; }
+.sx-home .a-sq { display:inline-block; width:7px; height:7px; margin-right:6px; }
+.sx-home .a-nav { position:absolute; left:24px; right:24px; bottom:26px; display:flex; justify-content:space-between; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); z-index:30; }
+.sx-home .a-nav .on { color:var(--d-text); border-bottom:2px solid var(--d-accent); padding-bottom:3px; }
+
+/* ---- B · INSTRUMENT PANEL ---- */
+.sx-home .b-body { padding:56px 14px 0; }
+.sx-home .b-hd { display:flex; justify-content:space-between; font-size:9.5px; color:var(--d-faint); padding:0 2px 8px; }
+.sx-home .b-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px; }
+.sx-home .b-p { padding:12px 13px; position:relative; }
+.sx-home .b-plbl { font-size:9px; color:var(--d-mut); display:flex; justify-content:space-between; }
+.sx-home .b-num { font-size:24px; font-weight:700; margin-top:4px; letter-spacing:-.5px; }
+.sx-home .b-num i { font-style:normal; font-size:11px; color:var(--d-faint); font-weight:400; }
+.sx-home .b-un { font-size:8.5px; color:var(--d-faint); margin-top:3px; }
+.sx-home .b-bar { height:4px; background:#161B1F; border-radius:2px; margin-top:8px; overflow:hidden; }
+.sx-home .b-mrow { display:flex; align-items:center; gap:6px; font-size:9px; margin-top:7px; }
+.sx-home .b-mrow b { width:34px; font-weight:700; }
+.sx-home .b-mrow .tr { flex:1; height:4px; background:#161B1F; border-radius:2px; overflow:hidden; }
+.sx-home .b-cta { display:flex; align-items:center; justify-content:center; height:40px; border-radius:6px; background:var(--d-accent); color:#0B0500; font-family:'Space Mono',monospace; font-weight:700; font-size:12.5px; letter-spacing:2px; margin-top:12px; }
+.sx-home .b-nav { position:absolute; left:14px; right:14px; bottom:22px; display:grid; grid-template-columns:repeat(5,1fr); gap:6px; z-index:30; }
+.sx-home .b-nav-it { height:42px; border-radius:8px; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-family:'Space Mono',monospace; font-size:9px; letter-spacing:1px; color:var(--d-faint); }
+.sx-home .b-nav-it.on { border-color:var(--d-accent); color:var(--d-accent); }
+.sx-home .b-cur { display:inline-block; width:6px; height:11px; background:var(--d-data); vertical-align:-1px; animation:hmBlink 1s steps(1) infinite; }
+
+/* ---- C · SOFT BRUTAL ---- */
+.sx-home .c-sub { font-size:13px; color:var(--d-mut); font-weight:500; margin-top:4px; }
+.sx-home .c-hero { background:var(--d-accent); border-radius:var(--d-radius); padding:20px 20px 18px; color:#0C0C0E; }
+.sx-home .c-hero .k { font-size:10.5px; font-weight:800; letter-spacing:2px; text-transform:uppercase; opacity:.72; }
+.sx-home .c-cta { display:flex; align-items:center; justify-content:center; gap:8px; height:58px; border-radius:999px; background:#0C0C0E; color:var(--d-accent); font-weight:800; font-size:15.5px; letter-spacing:.5px; margin-top:16px; }
+.sx-home .c-chip { border:2px solid var(--d-border); border-radius:999px; padding:6px 12px; font-size:12px; font-weight:800; }
+.sx-home .c-nav { position:absolute; left:20px; right:20px; bottom:22px; height:62px; background:var(--d-surface); border:2px solid var(--d-border); border-radius:999px; display:flex; align-items:center; justify-content:space-between; padding:6px; z-index:30; }
+.sx-home .c-nav-on { height:48px; border-radius:999px; background:var(--d-accent); color:#0C0C0E; font-weight:800; font-size:13px; display:flex; align-items:center; padding:0 18px; gap:6px; }
+.sx-home .c-nav-it { width:44px; text-align:center; font-size:17px; opacity:.5; }
+
+/* ---- D · INK & EMBER ---- */
+.sx-home .d-body { padding:62px 28px 0; }
+.sx-home .d-date { font-size:11.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); font-weight:600; }
+.sx-home .d-card { background:var(--d-surface); border-radius:var(--d-radius); padding:22px; }
+.sx-home .d-meta { font-size:12.5px; color:var(--d-mut); margin-top:6px; }
+.sx-home .d-cta { display:inline-flex; align-items:center; gap:8px; margin-top:18px; padding:13px 22px; border:1px solid var(--d-border); border-radius:999px; font-size:13.5px; font-weight:600; color:var(--d-text); }
+.sx-home .d-bar { height:7px; border-radius:4px; background:#1D1916; overflow:hidden; margin-top:12px; }
+.sx-home .d-bar i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,var(--d-ember),var(--d-accent)); box-shadow:0 0 16px rgba(249,115,22,.4); }
+.sx-home .d-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.sx-home .d-nav { position:absolute; left:0; right:0; bottom:24px; display:flex; justify-content:space-evenly; z-index:30; }
+.sx-home .d-nav-it { display:flex; flex-direction:column; align-items:center; gap:5px; font-size:17px; opacity:.38; filter:grayscale(1); }
+.sx-home .d-nav-it.on { opacity:1; filter:none; }
+.sx-home .d-nav-it.on::after { content:''; width:5px; height:5px; border-radius:50%; background:linear-gradient(90deg,var(--d-ember),var(--d-accent)); box-shadow:0 0 8px rgba(249,115,22,.6); }
+
+/* ---- E · WARM GALLERY ---- */
+.sx-home .e-body { padding:58px 26px 0; }
+.sx-home .e-bar { height:4px; border-radius:2px; background:#E3DED5; overflow:hidden; margin-top:14px; }
+.sx-home .e-bar i { display:block; height:100%; border-radius:2px; background:var(--d-accent); }
+.sx-home .e-cap { display:flex; align-items:center; gap:14px; background:var(--d-surface); border:1px solid var(--d-border); border-radius:999px; padding:12px 20px 12px 14px; box-shadow:0 2px 10px rgba(28,26,23,.05); }
+.sx-home .e-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.sx-home .e-nav { position:absolute; left:54px; right:54px; bottom:24px; height:58px; background:#fff; border-radius:999px; box-shadow:0 14px 34px rgba(28,26,23,.14); display:flex; align-items:center; justify-content:space-evenly; font-size:17px; z-index:30; }
+.sx-home .e-nav span { opacity:.32; filter:grayscale(1); }
+.sx-home .e-nav .on { opacity:1; filter:none; }
+
+/* ---- F · VOLT STADIUM ---- */
+@keyframes hmXFlood { 0%,100%{ text-shadow:0 0 16px rgba(216,255,58,.28); } 50%{ text-shadow:0 0 36px rgba(216,255,58,.6); } }
+.sx-home .f-body { padding:56px 22px 0; }
+.sx-home .f-hd { display:flex; justify-content:space-between; align-items:baseline; }
+.sx-home .f-cta { display:flex; align-items:center; justify-content:center; gap:8px; height:50px; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17.5px; letter-spacing:3px; margin-top:16px; box-shadow:0 12px 32px rgba(216,255,58,.22); }
+.sx-home .f-navy { background:var(--d-navy); border-radius:var(--d-radius); padding:16px 17px; margin-top:16px; }
+.sx-home .f-nbar { height:6px; border-radius:3px; background:rgba(255,255,255,.14); overflow:hidden; margin-top:10px; }
+.sx-home .f-srow { display:flex; justify-content:space-between; margin-top:20px; padding:0 2px; }
+.sx-home .f-nav { position:absolute; left:22px; right:22px; bottom:26px; display:flex; justify-content:space-between; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); z-index:30; }
+.sx-home .f-nav .on { color:var(--d-text); border-bottom:2px solid #F5F6F8; padding-bottom:3px; }
+
+/* ---- G · DEPTH FIELD ---- */
+.sx-home .g-body { padding:56px 22px 0; position:relative; z-index:5; }
+.sx-home .g-kick { font-size:9.5px; font-weight:700; letter-spacing:2.2px; text-transform:uppercase; color:var(--d-mut); }
+.sx-home .g-hero { padding:17px 18px; position:relative; }
+.sx-home .g-obj { position:absolute; top:-20px; right:14px; font-size:42px; filter:drop-shadow(7px 12px 9px rgba(0,0,0,.5)); }
+.sx-home .g-cta { display:flex; align-items:center; justify-content:center; gap:7px; height:46px; border-radius:999px; background:var(--d-accent); color:#fff; font-weight:800; font-size:13.5px; margin-top:14px; box-shadow:0 14px 28px -10px rgba(249,115,22,.55); }
+.sx-home .g-bar { height:6px; border-radius:3px; background:rgba(255,255,255,.1); overflow:hidden; margin-top:10px; }
+.sx-home .g-lo { box-shadow:0 10px 20px -12px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.1); }
+.sx-home .g-chip { padding:13px 15px; display:flex; align-items:center; gap:10px; flex:1; }
+.sx-home .g-nav { position:absolute; left:42px; right:42px; bottom:22px; height:56px; border-radius:999px; display:flex; align-items:center; justify-content:space-evenly; font-size:17px; z-index:30; }
+.sx-home .g-nav span { opacity:.4; }
+.sx-home .g-nav .on { opacity:1; }
+
+/* ---- H · KINETIC COLLAGE ---- */
+@keyframes hmXStamp { 0%,6%{opacity:0; transform:rotate(-2deg) scale(1.55);} 10%{opacity:1; transform:rotate(-2deg) scale(.94);} 13%,96%{opacity:1; transform:rotate(-2deg) scale(1);} 100%{opacity:0;} }
+@keyframes hmXCircle { 0%,26%{opacity:0; transform:rotate(-4deg) scale(1.18);} 31%,96%{opacity:1; transform:rotate(-4deg) scale(1);} 100%{opacity:0;} }
+.sx-home .h-body { padding:58px 22px 0; }
+.sx-home .h-stamp { font-size:52px; line-height:.92; transform-origin:left bottom; }
+.sx-home .h-stamp .hl { background:linear-gradient(transparent 16%, var(--d-volt) 16% 88%, transparent 88%); padding:0 5px; }
+.sx-home .h-card { padding:15px 16px; position:relative; }
+.sx-home .h-tape { position:absolute; top:-11px; left:50%; width:96px; height:22px; margin-left:-48px; z-index:2; }
+.sx-home .h-cta { display:inline-flex; align-items:center; gap:7px; background:#141210; color:var(--d-volt); font-family:'Space Mono',monospace; font-weight:700; font-size:12px; letter-spacing:1px; padding:10px 16px; box-shadow:3px 3px 0 rgba(20,18,16,.25); margin-top:12px; transform:rotate(.6deg); border-radius:4px; }
+.sx-home .h-circ { position:relative; display:inline-block; }
+.sx-home .h-circ::after { content:''; position:absolute; inset:-9px -16px -7px -13px; border:3.5px solid var(--d-accent); border-radius:46% 54% 48% 52% / 60% 42% 58% 40%; transform:rotate(-4deg); animation:hmXCircle 10s ease-out infinite; pointer-events:none; }
+.sx-home .h-mchip { border:2px solid var(--d-border); background:var(--d-surface); box-shadow:3px 3px 0 var(--d-border); padding:6px 10px; font-family:'Space Mono',monospace; font-size:10.5px; font-weight:700; border-radius:4px; }
+.sx-home .h-badge { position:absolute; right:4px; top:-30px; width:76px; height:76px; border:3px solid var(--d-accent); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:var(--d-accent); transform:rotate(9deg); background:rgba(239,234,224,.72); z-index:6; }
+.sx-home .h-nav { position:absolute; left:22px; right:22px; bottom:22px; height:58px; background:var(--d-surface); border:2px solid var(--d-border); box-shadow:4px 4px 0 var(--d-border); border-radius:8px; display:flex; align-items:center; justify-content:space-evenly; font-size:17px; z-index:30; }
+.sx-home .h-nav span { opacity:.45; filter:grayscale(1); }
+.sx-home .h-nav .on { opacity:1; filter:none; background:var(--d-volt); border:2px solid var(--d-border); padding:3px 10px; border-radius:6px; font-size:14px; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Probe 1 of 5</div>
+  <div class="sec-title">HOME</div>
+  <div class="sec-desc">The screen users see 5+ times a day. Same data in every frame — Thursday June 11, Push Day (8 exercises · 52 min), 1,460 of 2,200 kcal, 96P/142C/48F, 6,840 steps, 23-day streak — so only the design language changes.</div>
+</section>
+<div class="row">
+
+  <!-- ============ BEFORE ============ -->
+  <div class="cell" id="before-home">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body" style="padding:56px 18px 0;">
+        <!-- header -->
+        <div class="bf-hdr lp" style="animation-name:s0;">
+          <div class="bf-av">C</div>
+          <div><div class="bf-greet">Good evening,</div><div class="bf-name">Chetan <span>· 23d 🔥</span></div></div>
+          <div style="margin-left:auto;display:flex;gap:8px;"><div class="bf-ic">🔔</div><div class="bf-ic">⚙️</div></div>
+        </div>
+        <!-- Today score deck -->
+        <div class="bf-card lp" style="animation-name:s1;display:flex;gap:14px;align-items:center;margin-top:12px;">
+          <svg width="92" height="92" viewBox="0 0 96 96" style="flex:0 0 auto;">
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#262626" stroke-width="9"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#F97316" stroke-width="9" stroke-linecap="round" stroke-dasharray="86 152.8" transform="rotate(-90 48 48)" class="hm-ring" style="--c:239;--dash:0;stroke-dashoffset:0;"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#06B6D4" stroke-width="9" stroke-linecap="round" stroke-dasharray="56 182.8" stroke-dashoffset="-92" transform="rotate(-90 48 48)"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#2ECC71" stroke-width="9" stroke-linecap="round" stroke-dasharray="38 200.8" stroke-dashoffset="-156" transform="rotate(-90 48 48)"/>
+            <text x="48" y="46" text-anchor="middle" fill="#FAFAFA" font-size="20" font-weight="800" font-family="Inter">72</text>
+            <text x="48" y="60" text-anchor="middle" fill="#71717A" font-size="8" font-weight="600" font-family="Inter">TODAY</text>
+          </svg>
+          <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+            <div class="bf-tile">👟 Steps <b>6,840</b></div>
+            <div style="height:1px;background:var(--d-border);"></div>
+            <div class="bf-tile">🔥 Active kcal <b>612</b></div>
+            <div style="height:1px;background:var(--d-border);"></div>
+            <div class="bf-tile">😴 Sleep <b>7h 12m</b></div>
+          </div>
+        </div>
+        <!-- quick actions 2×5 -->
+        <div class="bf-qa lp" style="animation-name:s2;margin-top:12px;">
+          <div class="bf-qa-it"><div class="bf-qa-ic">🍽️</div><div class="bf-qa-lb">Log food</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">💧</div><div class="bf-qa-lb">Water</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">⚖️</div><div class="bf-qa-lb">Weight</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">📷</div><div class="bf-qa-lb">Scan food</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">⏱️</div><div class="bf-qa-lb">Fasting</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">🏃</div><div class="bf-qa-lb">Activity</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">📏</div><div class="bf-qa-lb">Measure</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">🧘</div><div class="bf-qa-lb">Mood</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">📋</div><div class="bf-qa-lb">Scan menu</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">⋯</div><div class="bf-qa-lb">More</div></div>
+        </div>
+        <!-- coach insight -->
+        <div class="bf-card lp" style="animation-name:s3;margin-top:12px;display:flex;gap:11px;align-items:flex-start;">
+          <div style="font-size:16px;">✨</div>
+          <div style="flex:1;">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:1.8px;color:#F97316;">COACH INSIGHT</div>
+            <div style="font-size:12.5px;color:#c9c9cf;line-height:1.45;margin-top:4px;">Solid push volume Tuesday. Keep protein at 160g+ today to lock in recovery before tomorrow's legs.</div>
+          </div>
+          <div style="color:var(--d-faint);font-size:13px;">›</div>
+        </div>
+        <!-- workout hero (orange/brown gradient) -->
+        <div class="lp" style="animation-name:s4;margin-top:12px;border-radius:16px;padding:16px;height:162px;display:flex;flex-direction:column;background:linear-gradient(135deg,#E89A3E,#C96E18);box-shadow:0 10px 26px rgba(201,110,24,.3);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:700;letter-spacing:1px;color:#fff;">TODAY · PUSH</div>
+            <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,.85);">52 min</div>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="font-size:20px;font-weight:800;color:#fff;">Push Day — Chest &amp; Triceps</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px;">8 exercises · Dumbbell + Cable</div>
+          </div>
+          <div style="margin-top:12px;height:42px;border-radius:21px;background:#fff;color:#1A1A1A;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;">▶ Start workout</div>
+        </div>
+        <!-- nutrition card (cut by nav — scroll implied) -->
+        <div class="bf-card lp" style="animation-name:s5;margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:1.8px;color:var(--d-mut);">NUTRITION</div>
+            <div style="font-size:12px;color:var(--d-mut);"><b style="color:var(--d-text);font-size:15px;">1,460</b> / 2,200 kcal</div>
+          </div>
+          <div class="bf-mbar" style="margin-top:10px;"><i class="hm-fill" style="display:block;height:100%;background:#F97316;border-radius:3px;--w:66%;"></i></div>
+          <div style="display:flex;gap:12px;margin-top:11px;font-size:10.5px;color:var(--d-mut);">
+            <div style="flex:1;">P 96g<div class="bf-mbar" style="margin-top:4px;"><i class="hm-fill" style="display:block;height:100%;background:#A855F7;border-radius:3px;--w:60%;"></i></div></div>
+            <div style="flex:1;">C 142g<div class="bf-mbar" style="margin-top:4px;"><i class="hm-fill" style="display:block;height:100%;background:#06B6D4;border-radius:3px;--w:58%;"></i></div></div>
+            <div style="flex:1;">F 48g<div class="bf-mbar" style="margin-top:4px;"><i class="hm-fill" style="display:block;height:100%;background:#F97316;border-radius:3px;--w:65%;"></i></div></div>
+          </div>
+        </div>
+      </div>
+      <nav class="bf-nav">
+        <div class="bf-nav-it" style="color:#F97316;">🏠<span>Home</span></div>
+        <div class="bf-nav-it">🏋️<span>Workouts</span></div>
+        <div class="bf-nav-ai">✦</div>
+        <div class="bf-nav-it">🍽️<span>Nutrition</span></div>
+        <div class="bf-nav-it">👤<span>You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current home — v34 default order</div>
+      <div class="cap-why">The honest baseline: six identical glass boxes stacked top to bottom, emoji icon grid, a stock orange-brown gradient hero, system-font everything. Functional, but it's the same screen every AI fitness template ships.</div>
+      <div class="cap-risk"><b>Risk:</b> none — this is the control. Judge every direction against it.</div>
+    </div>
+  </div>
+
+  <!-- ============ A · EDITORIAL ATHLETIC ============ -->
+  <div class="cell" id="a-home">
+    <div class="fwrap"><div class="phone"><div class="screen dA grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body">
+        <div class="a-top lbl lp" style="animation-name:s0;"><span>Good evening, Chetan</span><span>Day 23</span></div>
+        <div class="a-mast disp lp" style="animation-name:s0;">THURSDAY<br><span class="mo">JUNE 11</span></div>
+        <div class="lp" style="animation-name:s1;font-size:12.5px;color:var(--d-mut);line-height:1.5;margin-top:14px;max-width:92%;">Quads ran light last week — today's pressing volume nudges the balance back.</div>
+        <div class="a-rule"></div>
+        <!-- session -->
+        <div class="lp" style="animation-name:s2;">
+          <div class="a-slbl lbl">Today's session</div>
+          <div class="disp" style="font-size:44px;line-height:1;margin-top:7px;">PUSH DAY</div>
+          <div style="font-size:13px;color:var(--d-mut);margin-top:7px;">Chest &amp; Triceps — 8 exercises · 52 min</div>
+          <div class="a-cta">Start workout →</div>
+        </div>
+        <div class="a-rule"></div>
+        <!-- fuel -->
+        <div class="lp" style="animation-name:s3;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;">
+            <span class="disp" style="font-size:58px;line-height:.95;">1,460</span>
+            <span class="a-slbl lbl">of 2,200 kcal</span>
+          </div>
+          <div style="height:2px;background:var(--d-rule);margin-top:12px;overflow:hidden;"><i class="hm-fill" style="display:block;height:100%;background:var(--d-text);--w:66%;"></i></div>
+          <div class="lbl lp" style="animation-name:s4;display:flex;gap:20px;font-size:11px;color:var(--d-mut);margin-top:11px;">
+            <span><i class="a-sq" style="background:#A855F7;"></i>P 96</span>
+            <span><i class="a-sq" style="background:#06B6D4;"></i>C 142</span>
+            <span><i class="a-sq" style="background:#F97316;"></i>F 48</span>
+          </div>
+        </div>
+        <div class="a-rule"></div>
+        <!-- movement -->
+        <div class="lp" style="animation-name:s5;display:flex;justify-content:space-between;">
+          <div><div class="disp" style="font-size:27px;">6,840</div><div class="a-slbl lbl" style="font-size:10px;margin-top:3px;">Steps</div></div>
+          <div><div class="disp" style="font-size:27px;">23</div><div class="a-slbl lbl" style="font-size:10px;margin-top:3px;">Day streak</div></div>
+          <div><div class="disp" style="font-size:27px;">7:12</div><div class="a-slbl lbl" style="font-size:10px;margin-top:3px;">Sleep</div></div>
+        </div>
+      </div>
+      <nav class="a-nav">
+        <span class="on">Home</span><span>Workouts</span><span>Coach</span><span>Nutrition</span><span>You</span>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">A</span>Editorial Athletic — sport-magazine front page</div>
+      <div class="cap-why">Kills the box-stack: zero cards, sections cut by hairlines, Anton numerals carry the hierarchy. Orange appears once, on the only action that matters. Reads designed, not generated.</div>
+      <div class="cap-risk"><b>Risk:</b> austere — low tap-affordance (rules aren't buttons), and giant type leaves no room for a 7th section. Long locale strings will fight the masthead.</div>
+    </div>
+  </div>
+
+  <!-- ============ B · INSTRUMENT PANEL ============ -->
+  <div class="cell" id="b-home">
+    <div class="fwrap"><div class="phone"><div class="screen dB grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body b-body scan" style="position:absolute;">
+        <div class="b-hd data lp" style="animation-name:s0;"><span>ZEALOVA // HOME</span><span>THU 11 JUN · 18:42</span></div>
+        <!-- session panel -->
+        <div class="panel b-p lp" style="animation-name:s1;padding:15px 16px;">
+          <div class="b-plbl lbl"><span>Session — Day 23</span><span style="color:var(--d-accent);">● ARMED</span></div>
+          <div class="data" style="font-size:29px;font-weight:700;margin-top:6px;letter-spacing:-1px;">PUSH DAY</div>
+          <div class="data" style="font-size:9.5px;color:var(--d-mut);margin-top:4px;">08 EX · 52 MIN · CHEST/TRI · EST 6,420 LB</div>
+          <svg width="100%" height="14" viewBox="0 0 320 14" preserveAspectRatio="none" style="margin-top:9px;">
+            <g stroke="#1E2328" stroke-width="1"><line x1="0" y1="12" x2="320" y2="12"/><line x1="0" y1="4" x2="0" y2="12"/><line x1="40" y1="7" x2="40" y2="12"/><line x1="80" y1="4" x2="80" y2="12"/><line x1="120" y1="7" x2="120" y2="12"/><line x1="160" y1="4" x2="160" y2="12"/><line x1="200" y1="7" x2="200" y2="12"/><line x1="240" y1="4" x2="240" y2="12"/><line x1="280" y1="7" x2="280" y2="12"/><line x1="320" y1="4" x2="320" y2="12"/></g>
+            <text x="2" y="9" fill="#4D565C" font-size="6.5" font-family="Space Mono">0</text>
+            <text x="306" y="9" fill="#4D565C" font-size="6.5" font-family="Space Mono">52M</text>
+          </svg>
+          <div class="b-cta">▶ START</div>
+        </div>
+        <div class="b-grid">
+          <!-- kcal -->
+          <div class="panel b-p lp" style="animation-name:s2;">
+            <div class="b-plbl lbl"><span>KCAL IN</span><span>18:42</span></div>
+            <div class="b-num data">1460<i>/2200</i></div>
+            <div class="b-bar"><i class="hm-fill" style="display:block;height:100%;background:var(--d-accent);--w:66%;"></i></div>
+            <div class="b-un data">REMAIN 740 · ON PACE</div>
+          </div>
+          <!-- macros -->
+          <div class="panel b-p lp" style="animation-name:s3;">
+            <div class="b-plbl lbl"><span>MACROS</span><span>G</span></div>
+            <div class="b-mrow data"><b style="color:#A855F7;">P 96</b><div class="tr"><i class="hm-fill" style="display:block;height:100%;background:#A855F7;--w:60%;"></i></div></div>
+            <div class="b-mrow data"><b style="color:#06B6D4;">C 142</b><div class="tr"><i class="hm-fill" style="display:block;height:100%;background:#06B6D4;--w:58%;"></i></div></div>
+            <div class="b-mrow data"><b style="color:#F97316;">F 48</b><div class="tr"><i class="hm-fill" style="display:block;height:100%;background:#F97316;--w:65%;"></i></div></div>
+            <div class="b-un data">TGT 160/240/74</div>
+          </div>
+          <!-- steps -->
+          <div class="panel b-p lp" style="animation-name:s4;">
+            <div class="b-plbl lbl"><span>STEPS</span><span>Δ24H</span></div>
+            <div class="b-num data">6840</div>
+            <svg width="100%" height="22" viewBox="0 0 130 22" preserveAspectRatio="none" style="margin-top:5px;">
+              <polyline points="0,18 16,16 32,17 48,12 64,13 80,9 96,10 112,5 130,4" fill="none" stroke="#5EEAD4" stroke-width="1.5"/>
+            </svg>
+            <div class="b-un data">GOAL 10K · 68%</div>
+          </div>
+          <!-- streak -->
+          <div class="panel b-p lp" style="animation-name:s5;">
+            <div class="b-plbl lbl"><span>STREAK</span><span>DAYS</span></div>
+            <div class="b-num data">23</div>
+            <div style="display:flex;gap:3px;margin-top:8px;">
+              <i style="width:11px;height:11px;background:var(--d-accent);border-radius:2px;"></i><i style="width:11px;height:11px;background:var(--d-accent);border-radius:2px;"></i><i style="width:11px;height:11px;background:var(--d-accent);border-radius:2px;"></i><i style="width:11px;height:11px;background:var(--d-accent);border-radius:2px;"></i><i style="width:11px;height:11px;background:var(--d-accent);border-radius:2px;"></i><i style="width:11px;height:11px;background:var(--d-accent);border-radius:2px;"></i><i style="width:11px;height:11px;border:1px solid #1E2328;border-radius:2px;"></i>
+            </div>
+            <div class="b-un data">WK 4/7 · BEST 31</div>
+          </div>
+          <!-- sleep -->
+          <div class="panel b-p lp" style="animation-name:s6;">
+            <div class="b-plbl lbl"><span>SLEEP</span><span>HRS</span></div>
+            <div class="b-num data">7:12</div>
+            <div class="b-un data">EFF 92% · DEEP 1:48</div>
+          </div>
+          <!-- recovery -->
+          <div class="panel b-p lp" style="animation-name:s6;">
+            <div class="b-plbl lbl"><span>RECOVERY</span><span>HOOPER</span></div>
+            <div class="b-num data" style="color:var(--d-data);">82</div>
+            <div class="b-un data" style="color:var(--d-data);">GREEN — TRAIN HARD</div>
+          </div>
+        </div>
+        <!-- coach strip -->
+        <div class="panel b-p lp" style="animation-name:s7;margin-top:8px;padding:10px 13px;">
+          <div class="data" style="font-size:9.5px;color:var(--d-mut);line-height:1.5;">» COACH: QUADS UNDERLOADED LAST WK — PRESS VOLUME +8% TODAY <span class="b-cur"></span></div>
+        </div>
+      </div>
+      <nav class="b-nav">
+        <div class="b-nav-it on">HOME</div><div class="b-nav-it">WRKT</div><div class="b-nav-it">COACH</div><div class="b-nav-it">NUTR</div><div class="b-nav-it">YOU</div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B</span>Instrument Panel — flight-deck bento</div>
+      <div class="cap-why">Replaces vague glass cards with a disciplined instrument grid: every number has units, a timestamp, and an axis. Mono type + teal data lines read as engineering, the opposite of generated gradient mush.</div>
+      <div class="cap-risk"><b>Risk:</b> coldest of the five — casual users may find it intimidating, and the density only stays premium if Flutter nails 8px rhythm everywhere. Sloppy alignment = instant "hacker theme."</div>
+    </div>
+  </div>
+
+  <!-- ============ C · SOFT BRUTAL ============ -->
+  <div class="cell" id="c-home">
+    <div class="fwrap"><div class="phone"><div class="screen dC grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body" style="padding:56px 20px 0;">
+        <div class="lp" style="animation-name:s0;">
+          <div class="hed" style="font-size:29px;">Evening, Chetan.</div>
+          <div class="c-sub">Thursday, June 11 · day 23 of your streak</div>
+        </div>
+        <!-- flat orange hero -->
+        <div class="c-hero lp" style="animation-name:s1;margin-top:16px;">
+          <div class="k">Today · Push Day</div>
+          <div class="hed" style="font-size:33px;line-height:1.02;margin-top:7px;">Chest &amp;<br>Triceps</div>
+          <div style="font-size:13px;font-weight:700;opacity:.72;margin-top:8px;">8 exercises · 52 min</div>
+          <div class="c-cta">START WORKOUT <span style="font-size:17px;">→</span></div>
+        </div>
+        <!-- stat blocks -->
+        <div class="lp" style="animation-name:s2;display:flex;gap:12px;margin-top:12px;">
+          <div style="flex:1;background:var(--d-field-c);border-radius:26px;padding:18px;color:#0C0C0E;">
+            <div class="hed" style="font-size:30px;">6,840</div>
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.5px;margin-top:3px;opacity:.7;">STEPS TODAY</div>
+          </div>
+          <div class="card" style="flex:1;padding:18px;">
+            <div class="hed" style="font-size:30px;">23 <span style="font-size:16px;">🔥</span></div>
+            <div style="font-size:10.5px;font-weight:800;letter-spacing:1.5px;margin-top:3px;color:var(--d-mut);">DAY STREAK</div>
+          </div>
+        </div>
+        <!-- fuel card -->
+        <div class="card lp" style="animation-name:s3;margin-top:12px;padding:18px;">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <div class="hed" style="font-size:30px;">1,460</div>
+            <div style="font-size:13px;font-weight:700;color:var(--d-mut);">/ 2,200 kcal</div>
+          </div>
+          <div style="height:14px;border-radius:999px;background:#26262C;margin-top:12px;overflow:hidden;"><i class="hm-fill" style="display:block;height:100%;border-radius:999px;background:var(--d-accent);--w:66%;"></i></div>
+          <div class="lp" style="animation-name:s4;display:flex;gap:8px;margin-top:13px;">
+            <div class="c-chip" style="color:#A855F7;">P 96</div>
+            <div class="c-chip" style="color:#06B6D4;">C 142</div>
+            <div class="c-chip" style="color:#F97316;">F 48</div>
+            <div class="c-chip" style="margin-left:auto;color:var(--d-mut);">740 left</div>
+          </div>
+        </div>
+        <!-- coach -->
+        <div class="card lp" style="animation-name:s5;margin-top:12px;padding:14px 18px;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:17px;">🧠</span>
+          <div style="font-size:12px;font-weight:600;color:var(--d-mut);line-height:1.4;">Keep protein at 160g+ today — recovery before tomorrow's legs.</div>
+        </div>
+      </div>
+      <nav class="c-nav">
+        <div class="c-nav-on">🏠 HOME</div>
+        <div class="c-nav-it">🏋️</div>
+        <div class="c-nav-it">✦</div>
+        <div class="c-nav-it">🍽️</div>
+        <div class="c-nav-it">👤</div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">C</span>Soft Brutal — chunky flat confidence</div>
+      <div class="cap-why">Anti-gradient by force: the hero is one solid orange field with black type, stats are flat color blocks with 2px strokes. Nothing glows, nothing blurs — it can't be mistaken for template glassmorphism.</div>
+      <div class="cap-risk"><b>Risk:</b> the loudest direction. The flat orange field dominates the screen and squeezes long workout names; bold-and-flat is polarizing and dates faster than type-led systems.</div>
+    </div>
+  </div>
+
+  <!-- ============ D · INK & EMBER ============ -->
+  <div class="cell" id="d-home">
+    <div class="fwrap"><div class="phone"><div class="screen dD grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body d-body">
+        <div class="lp" style="animation-name:s0;">
+          <div class="d-date">Thursday · June 11</div>
+          <div class="ser" style="font-size:33px;font-weight:500;margin-top:10px;">Evening, Chetan.</div>
+        </div>
+        <!-- workout -->
+        <div class="d-card lp" style="animation-name:s1;margin-top:30px;">
+          <div class="ser" style="font-size:23px;font-weight:500;">Push day is ready.</div>
+          <div class="d-meta">Chest &amp; triceps · 8 exercises · 52 minutes</div>
+          <div class="d-cta">Begin session <span style="opacity:.6;">→</span></div>
+        </div>
+        <!-- fuel -->
+        <div class="lp" style="animation-name:s2;margin-top:32px;">
+          <div class="d-date" style="font-size:10.5px;">Fuel</div>
+          <div style="display:flex;align-items:baseline;gap:9px;margin-top:8px;">
+            <span style="font-size:38px;font-weight:600;letter-spacing:-1px;">1,460</span>
+            <span style="font-size:13px;color:var(--d-mut);">of 2,200 calories</span>
+          </div>
+          <div class="d-bar"><i class="hm-fill" style="--w:66%;"></i></div>
+          <div class="lp" style="animation-name:s3;display:flex;gap:18px;font-size:12px;color:var(--d-mut);margin-top:12px;">
+            <span><i class="d-dot" style="background:#A855F7;"></i>Protein 96</span>
+            <span><i class="d-dot" style="background:#06B6D4;"></i>Carbs 142</span>
+            <span><i class="d-dot" style="background:#F97316;"></i>Fat 48</span>
+          </div>
+        </div>
+        <!-- streak + movement -->
+        <div class="lp" style="animation-name:s4;display:flex;align-items:center;gap:18px;margin-top:34px;">
+          <svg width="58" height="58" viewBox="0 0 60 60" style="flex:0 0 auto;">
+            <defs><linearGradient id="hmEmberGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#7C2D12"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs>
+            <circle cx="30" cy="30" r="24" fill="none" stroke="#1D1916" stroke-width="5"/>
+            <circle cx="30" cy="30" r="24" fill="none" stroke="url(#hmEmberGrad)" stroke-width="5" stroke-linecap="round" stroke-dasharray="151" transform="rotate(-90 30 30)" class="hm-ring" style="--c:151;--dash:38;filter:drop-shadow(0 0 5px rgba(249,115,22,.5));"/>
+            <text x="30" y="35" text-anchor="middle" fill="#F4EFE9" font-size="15" font-weight="600" font-family="Inter">23</text>
+          </svg>
+          <div>
+            <div style="font-size:13.5px;font-weight:600;">Twenty-three days steady.</div>
+            <div style="font-size:12px;color:var(--d-mut);margin-top:3px;">6,840 steps · 7h 12m slept</div>
+          </div>
+        </div>
+      </div>
+      <nav class="d-nav">
+        <div class="d-nav-it on">🏠</div>
+        <div class="d-nav-it">🏋️</div>
+        <div class="d-nav-it">✦</div>
+        <div class="d-nav-it">🍽️</div>
+        <div class="d-nav-it">👤</div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">D</span>Ink &amp; Ember — quiet warm luxury</div>
+      <div class="cap-why">Fixes slop by subtraction: four sections instead of seven, serif sentences instead of labels, and the ember gradient is rationed to data-viz only. Feels like a private club, not a dashboard.</div>
+      <div class="cap-risk"><b>Risk:</b> restraint hides data — power users lose at-a-glance tiles, and the serif voice must be tuned per locale or it drifts into "meditation app." Whitespace is expensive on small screens.</div>
+    </div>
+  </div>
+
+  <!-- ============ E · WARM GALLERY ============ -->
+  <div class="cell" id="e-home">
+    <div class="fwrap"><div class="phone"><div class="screen dE">
+      <div class="notch"></div><div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body e-body">
+        <div class="lp" style="animation-name:s0;">
+          <div class="micro">Thursday · June 11</div>
+          <div class="big" style="font-size:56px;margin-top:4px;">Today</div>
+        </div>
+        <!-- hero stat -->
+        <div class="lp" style="animation-name:s1;margin-top:26px;">
+          <div style="display:flex;align-items:baseline;gap:10px;">
+            <span class="big" style="font-size:82px;line-height:.95;">1,460</span>
+            <span style="font-size:14px;color:var(--d-mut);font-weight:500;">of 2,200 cal</span>
+          </div>
+          <div class="e-bar"><i class="hm-fill" style="--w:66%;"></i></div>
+          <div class="lp" style="animation-name:s2;display:flex;gap:18px;font-size:12.5px;font-weight:600;margin-top:12px;">
+            <span><i class="e-dot" style="background:#A855F7;"></i>P 96</span>
+            <span><i class="e-dot" style="background:#06B6D4;"></i>C 142</span>
+            <span><i class="e-dot" style="background:#F97316;"></i>F 48</span>
+          </div>
+        </div>
+        <!-- workout capsule -->
+        <div class="e-cap lp" style="animation-name:s3;margin-top:28px;">
+          <span class="food3d" style="font-size:50px;animation:foodFloat 4.5s ease-in-out infinite;">🏋️</span>
+          <div style="flex:1;">
+            <div style="font-size:16.5px;font-weight:700;">Push Day</div>
+            <div style="font-size:12px;color:var(--d-mut);margin-top:2px;">Chest &amp; Triceps · 52 min</div>
+          </div>
+          <div style="width:40px;height:40px;border-radius:50%;background:var(--d-accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;">→</div>
+        </div>
+        <!-- steps + streak capsules -->
+        <div class="lp" style="animation-name:s4;display:flex;gap:12px;margin-top:12px;">
+          <div class="e-cap" style="flex:1;padding:14px 18px;gap:10px;">
+            <span style="font-size:22px;">👟</span>
+            <div><div style="font-size:17px;font-weight:700;">6,840</div><div style="font-size:10.5px;color:var(--d-mut);">steps</div></div>
+          </div>
+          <div class="e-cap" style="flex:1;padding:14px 18px;gap:10px;">
+            <span style="font-size:22px;">🔥</span>
+            <div><div style="font-size:17px;font-weight:700;">23</div><div style="font-size:10.5px;color:var(--d-mut);">day streak</div></div>
+          </div>
+        </div>
+        <!-- coach whisper -->
+        <div class="lp" style="animation-name:s5;text-align:center;font-size:12.5px;color:var(--d-mut);margin-top:26px;padding:0 18px;line-height:1.5;">Protein is the lever today — 96 of 160g so far.</div>
+      </div>
+      <nav class="e-nav">
+        <span class="on">🏠</span><span>🏋️</span><span>✦</span><span>🍽️</span><span>👤</span>
+      </nav>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">E</span>Warm Gallery — Morsel-inspired light editorial</div>
+      <div class="cap-why">The only light frame in the category: cream gallery wall, one giant numeral, white capsules, a floating 3D object instead of an illustration. Ruthlessly fewer elements — calm where competitors shout.</div>
+      <div class="cap-risk"><b>Risk:</b> biggest break from Zealova's dark identity (and from frames A–D — hybrid theming is real work). Cream glares in a dim gym, and the 3D objects only land with real renders, not emoji.</div>
+    </div>
+  </div>
+
+  <!-- ============ F · VOLT STADIUM ============ -->
+  <div class="cell" id="f-home">
+    <div class="fwrap"><div class="phone"><div class="screen dF grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body f-body">
+        <div class="f-hd lp" style="animation-name:s0;">
+          <span class="disp" style="font-size:17px;letter-spacing:1px;">⚡ ZEALOVA</span>
+          <span class="lbl" style="font-size:10.5px;color:var(--d-mut);">THU · JUN 11 · DAY 23</span>
+        </div>
+        <!-- hero: the floodlit board -->
+        <div class="lp" style="animation-name:s1;margin-top:20px;">
+          <div class="lbl" style="font-size:10.5px;color:var(--d-mut);">● Tonight's session — chest / triceps</div>
+          <div class="disp voltglow" style="font-size:66px;line-height:.9;color:var(--d-accent);margin-top:9px;animation:hmXFlood 4s ease-in-out infinite;">PUSH<br>DAY</div>
+          <div class="lbl" style="font-size:11px;color:var(--d-mut);margin-top:11px;">08 exercises · 52 min · Chetan vs yesterday</div>
+          <div class="f-cta voltchip">▶ START WORKOUT</div>
+        </div>
+        <!-- navy fuel block -->
+        <div class="f-navy lp" style="animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;">
+            <span class="lbl" style="font-size:10px;color:rgba(255,255,255,.55);">Fuel — kcal</span>
+            <span class="lbl" style="font-size:10px;color:rgba(255,255,255,.55);">Remain 740</span>
+          </div>
+          <div style="display:flex;align-items:baseline;gap:7px;margin-top:5px;">
+            <span class="disp" style="font-size:35px;">1,460</span>
+            <span style="font-size:12px;color:rgba(255,255,255,.6);">/ 2,200</span>
+          </div>
+          <div class="f-nbar"><i class="hm-fill" style="display:block;height:100%;background:#fff;border-radius:3px;--w:66%;"></i></div>
+          <div class="lbl" style="display:flex;gap:18px;font-size:10.5px;color:rgba(255,255,255,.75);margin-top:10px;">
+            <span>P 96</span><span>C 142</span><span>F 48</span>
+          </div>
+        </div>
+        <!-- scoreboard stat row -->
+        <div class="f-srow lp" style="animation-name:s3;">
+          <div><div class="disp" style="font-size:26px;">6,840</div><div class="lbl" style="font-size:9.5px;color:var(--d-faint);margin-top:3px;">Steps</div></div>
+          <div><div class="disp" style="font-size:26px;">23</div><div class="lbl" style="font-size:9.5px;color:var(--d-faint);margin-top:3px;">Day streak</div></div>
+          <div><div class="disp" style="font-size:26px;">7:12</div><div class="lbl" style="font-size:9.5px;color:var(--d-faint);margin-top:3px;">Sleep</div></div>
+        </div>
+        <!-- coach ticker -->
+        <div class="lp" style="animation-name:s4;margin-top:18px;border-top:1px solid var(--d-border);padding-top:11px;">
+          <div class="lbl" style="font-size:10px;color:var(--d-mut);line-height:1.6;">» Coach — quads ran light last wk · press volume +8% tonight</div>
+        </div>
+      </div>
+      <nav class="f-nav">
+        <span class="on">Home</span><span>Workouts</span><span>Coach</span><span>Nutrition</span><span>You</span>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">F</span>Volt Stadium — the share graphic becomes the app</div>
+      <div class="cap-why">Brand coherence play: users already meet Zealova through the volt-on-black share cards, and this makes Home the place those images visibly come from. Volt is rationed to the floodlit headline and the START chip; navy carries fuel as the second surface; everything else is Anton numerals and Barlow labels on grain.</div>
+      <div class="cap-risk"><b>Risk:</b> volt fatigue and accessibility — acid lime vibrates on black at small sizes and fails contrast as a text color, so it must stay display-only. A whole app at scoreboard volume can exhaust users by week two.</div>
+    </div>
+  </div>
+
+  <!-- ============ G · DEPTH FIELD ============ -->
+  <div class="cell" id="g-home">
+    <div class="fwrap"><div class="phone"><div class="screen dG">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <!-- deep background orbs -->
+      <div class="orb" style="width:240px;height:240px;left:-70px;top:80px;background:#F97316;opacity:.16;animation:orbDrift 16s ease-in-out infinite;"></div>
+      <div class="orb" style="width:210px;height:210px;right:-65px;top:330px;background:#06B6D4;opacity:.13;animation:orbDrift 21s ease-in-out -7s infinite;"></div>
+      <div class="orb" style="width:190px;height:190px;left:50px;bottom:30px;background:#A78BFA;opacity:.14;animation:orbDrift 25s ease-in-out -13s infinite;"></div>
+      <div class="hm-body g-body">
+        <div class="lp" style="animation-name:s0;">
+          <div class="g-kick">Thursday · June 11 · Day 23</div>
+          <div style="font-size:25px;font-weight:700;letter-spacing:-.5px;margin-top:6px;">Evening, Chetan</div>
+        </div>
+        <!-- hero glass (elevation 1) -->
+        <div class="lp" style="animation-name:s1;margin-top:26px;">
+          <div class="glass glass-hi g-hero" style="animation:glassFloat 7s ease-in-out infinite;">
+            <span class="g-obj food3d">🏋️</span>
+            <div class="g-kick" style="color:var(--d-accent);">Today · Push</div>
+            <div style="font-size:23px;font-weight:800;margin-top:6px;">Chest &amp; Triceps</div>
+            <div style="font-size:12px;color:var(--d-mut);margin-top:3px;">8 exercises · 52 min</div>
+            <div class="g-cta">Start workout →</div>
+          </div>
+        </div>
+        <!-- nutrition glass (elevation 2) -->
+        <div class="lp" style="animation-name:s2;margin-top:22px;">
+          <div class="glass" style="padding:16px 17px;position:relative;animation:glassFloat 8s ease-in-out -2.5s infinite;">
+            <span class="g-obj food3d" style="font-size:36px;top:-16px;right:18px;">🥣</span>
+            <div class="g-kick">Fuel</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin-top:6px;">
+              <span style="font-size:30px;font-weight:800;letter-spacing:-1px;">1,460</span>
+              <span style="font-size:12.5px;color:var(--d-mut);">/ 2,200 kcal</span>
+            </div>
+            <div class="g-bar"><i class="hm-fill" style="display:block;height:100%;background:var(--d-accent);border-radius:3px;--w:66%;"></i></div>
+            <div style="display:flex;gap:16px;font-size:11px;color:var(--d-mut);margin-top:10px;">
+              <span style="color:#C4B5FD;">P 96</span><span style="color:#67E8F9;">C 142</span><span style="color:#FDBA74;">F 48</span>
+            </div>
+          </div>
+        </div>
+        <!-- stat chips (elevation 3, static) -->
+        <div class="lp" style="animation-name:s3;display:flex;gap:12px;margin-top:16px;">
+          <div class="glass g-lo g-chip">
+            <span style="font-size:20px;">👟</span>
+            <div><div style="font-size:16px;font-weight:800;">6,840</div><div style="font-size:10px;color:var(--d-mut);">steps</div></div>
+          </div>
+          <div class="glass g-lo g-chip">
+            <span style="font-size:20px;">🔥</span>
+            <div><div style="font-size:16px;font-weight:800;">23</div><div style="font-size:10px;color:var(--d-mut);">day streak</div></div>
+          </div>
+        </div>
+        <!-- coach whisper directly on the field — no blur behind dense text -->
+        <div class="lp" style="animation-name:s4;text-align:center;font-size:12.5px;color:var(--d-mut);margin-top:24px;padding:0 16px;line-height:1.5;">Protein is the lever today — 96 of 160 g.</div>
+      </div>
+      <nav class="g-nav glass g-lo">
+        <span class="on">🏠</span><span>🏋️</span><span>✦</span><span>🍽️</span><span>👤</span>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">G</span>Depth Field — spatial glass at engineered depth</div>
+      <div class="cap-why">The visionOS take: three drifting color orbs give the black actual depth, frosted cards float at exactly three fixed elevations, and 3D objects perch ON the glass with one consistent top-left light. Depth is a system (elevation scale + shadow ramp), not decoration — no fitness competitor ships spatial UI.</div>
+      <div class="cap-risk"><b>Risk:</b> one lazy execution and it reads as 2021 glassmorphism slop. Backdrop blur is the most expensive effect on low-end Android GPUs, and the discipline (max 3 elevations, no blur behind dense text) must survive 180 screens of contributors.</div>
+    </div>
+  </div>
+
+  <!-- ============ H · KINETIC COLLAGE ============ -->
+  <div class="cell" id="h-home">
+    <div class="fwrap"><div class="phone"><div class="screen dH">
+      <div class="notch"></div><div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body h-body">
+        <div class="lp" style="animation-name:s0;">
+          <div class="mono-stamp" style="font-size:10px;color:var(--d-mut);">ZEALOVA TRAINING JOURNAL — THU 06.11 — VOL.23</div>
+        </div>
+        <div class="h-stamp disp lp" style="animation-name:hmXStamp;margin-top:12px;">PUSH <span class="hl">DAY</span></div>
+        <!-- workout sticker, taped -->
+        <div class="lp" style="animation-name:s1;margin-top:24px;">
+          <div class="sticker h-card" style="transform:rotate(-1.2deg);">
+            <div class="tape h-tape"></div>
+            <div class="mono-stamp" style="font-size:9px;color:var(--d-mut);">TODAY'S SESSION</div>
+            <div style="font-size:20px;font-weight:800;letter-spacing:-.3px;margin-top:5px;">Chest &amp; Triceps</div>
+            <div style="font-size:12px;color:var(--d-mut);margin-top:3px;">8 exercises · 52 min · dumbbell + cable</div>
+            <div class="h-cta">▶ START WORKOUT</div>
+          </div>
+        </div>
+        <!-- fuel: marker-circled number + grid-breaking streak stamp -->
+        <div class="lp" style="animation-name:s2;margin-top:26px;position:relative;">
+          <div class="h-badge"><div class="disp" style="font-size:23px;line-height:1;">23</div><div class="mono-stamp" style="font-size:6.5px;margin-top:2px;">DAY STREAK</div></div>
+          <div class="mono-stamp" style="font-size:9.5px;color:var(--d-mut);">FUEL LOG</div>
+          <div style="display:flex;align-items:baseline;gap:11px;margin-top:13px;">
+            <span class="h-circ disp" style="font-size:46px;">1,460</span>
+            <span class="mono-stamp" style="font-size:11px;color:var(--d-mut);">/ 2,200 kcal</span>
+          </div>
+          <div class="lp" style="animation-name:s3;display:flex;gap:10px;margin-top:17px;">
+            <div class="h-mchip" style="transform:rotate(-1.5deg);color:#7C3AED;">P·96</div>
+            <div class="h-mchip" style="transform:rotate(1deg);color:#0E7490;">C·142</div>
+            <div class="h-mchip" style="transform:rotate(-.8deg);color:#C2410C;">F·48</div>
+          </div>
+        </div>
+        <!-- steps sticker -->
+        <div class="lp" style="animation-name:s4;margin-top:20px;">
+          <div class="sticker h-card" style="transform:rotate(1.4deg);display:flex;align-items:center;gap:11px;padding:12px 16px;">
+            <span style="font-size:21px;">👟</span>
+            <div style="font-size:16px;font-weight:800;">6,840 <span style="font-size:11px;font-weight:600;color:var(--d-mut);">steps</span></div>
+            <div class="mono-stamp" style="margin-left:auto;font-size:10px;color:var(--d-mut);">68% OF 10K ↗</div>
+          </div>
+        </div>
+        <!-- margin note -->
+        <div class="lp" style="animation-name:s5;font-family:Fraunces,Georgia,serif;font-style:italic;font-size:13px;color:#5A544A;margin-top:18px;padding-left:6px;">protein is the lever today — 160 g locks recovery.</div>
+      </div>
+      <nav class="h-nav">
+        <span class="on">🏠</span><span>🏋️</span><span>✦</span><span>🍽️</span><span>👤</span>
+      </nav>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">H</span>Kinetic Collage — the training journal as a zine</div>
+      <div class="cap-why">Wrapped-collage energy made daily: paper ground, sticker cards with hard offset shadows, a volt tape strip holding the session, the calorie count circled in marker, and the streak stamp deliberately breaking the grid. The only direction with humor — it makes a Thursday feel like a page worth keeping.</div>
+      <div class="cap-risk"><b>Risk:</b> the most trend-bound frame here — zine collage ages fast and screams "2026". Rotations, tape, and marker blobs resist systematization across 180 screens, and the light paper glares in a dim gym.</div>
+    </div>
+  </div>
+
+</div>
+</div>

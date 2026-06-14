@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — Full-App Redesign · Gate A: Pick a Direction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="base.css">
+</head>
+<body>
+<header class="hd">
+  <div class="hd-row">
+    <img src="assets/app_icon.png" class="hd-icon" alt="">
+    <div>
+      <div class="hd-title">FULL-APP REDESIGN · GATE A</div>
+      <div class="hd-sub">5 probe screens &nbsp;·&nbsp; faithful BEFORE + 8 design directions each + ★ recommended &nbsp;·&nbsp; nothing implemented yet</div>
+    </div>
+  </div>
+  <nav class="hd-nav">
+    <a href="#sec-home">1 · Home</a>
+    <a href="#sec-workout">2 · Active workout</a>
+    <a href="#sec-nutrition">3 · Nutrition + 3D food</a>
+    <a href="#sec-stats">4 · Stats hub</a>
+    <a href="#sec-complete">5 · Workout complete</a>
+    <a href="#sec-reco" style="color:#fafafa;">★ Recommended</a>
+    <a href="#sec-nav" style="color:#fafafa;">6 · One nav, five rooms</a>
+    <a href="#sec-kit" style="color:#fafafa;">7 · Nothing lost</a>
+    <a href="#sec-more" style="color:#fafafa;">8 · You / Settings / Recipes</a>
+    <a href="#sec-verdict" style="color:#fafafa;">How to pick</a>
+  </nav>
+  <div class="hd-note">Every row: leftmost frame is the CURRENT app recreated faithfully, then the same screen in each direction —
+    <b style="color:#fafafa">A&nbsp;Editorial&nbsp;Athletic</b> ·
+    <b style="color:#fafafa">B&nbsp;Instrument&nbsp;Panel</b> ·
+    <b style="color:#fafafa">C&nbsp;Soft&nbsp;Brutal</b> ·
+    <b style="color:#fafafa">D&nbsp;Ink&nbsp;&amp;&nbsp;Ember</b> ·
+    <b style="color:#fafafa">E&nbsp;Warm&nbsp;Gallery</b> (Morsel-inspired light, 3D food) ·
+    <b style="color:#D8FF3A">F&nbsp;Volt&nbsp;Stadium</b> (the shareables volt language in-app) ·
+    <b style="color:#fafafa">G&nbsp;Depth&nbsp;Field</b> (spatial 3D — layered glass, floating objects, real light) ·
+    <b style="color:#fafafa">H&nbsp;Kinetic&nbsp;Collage</b> (scrapbook punk).
+    Then the <b style="color:#FFD54A">★ Recommended</b> section pairs each current screen with a curated "Zealova Signature" synthesis.
+    All frames are 390×844 live HTML/CSS; animations loop. Scroll rows horizontally. Pick one direction (or a hybrid) and the full before/after gallery gets built in that language.</div>
+</header>
+
+<main>
+  <div id="sec-home" data-src="sections/0a-home.html"></div>
+  <div id="sec-workout" data-src="sections/0b-workout.html"></div>
+  <div id="sec-nutrition" data-src="sections/0c-nutrition.html"></div>
+  <div id="sec-stats" data-src="sections/0d-stats.html"></div>
+  <div id="sec-complete" data-src="sections/0e-complete.html"></div>
+  <div id="sec-reco" data-src="sections/0f-recommended.html"></div>
+  <div id="sec-nav" data-src="sections/0g-nav.html"></div>
+  <div id="sec-kit" data-src="sections/0h-kit.html"></div>
+  <div id="sec-more" data-src="sections/0i-more.html"></div>
+</main>
+
+<section class="sec" id="sec-verdict">
+  <div class="sec-kick">Gate A</div>
+  <div class="sec-title">HOW TO PICK</div>
+  <div class="sec-desc" style="max-width:760px">
+    Judge each direction across all five rows, not one frame. Questions that matter:
+    which one still looks good on the 40th screen (settings, a chart detail)? Which one do you want
+    in a screenshot on the App Store page? Which one kills the "AI slop" read hardest?
+    Hybrids are fair game — e.g. "E for nutrition surfaces, A for training" or "G's depth with F's volt."
+    The ★ Recommended section shows one such synthesis already curated.
+    Reply with a direction letter (A–H), "recommended", or your own mix + tweaks, and the full ~25-screen
+    before/after gallery gets built in that language.
+  </div>
+</section>
+
+<footer class="ft">Zealova internal design proofs · app-redesign-2026-06 · Gate A · no app code touched</footer>
+
+<script>
+document.querySelectorAll('[data-src]').forEach(async (el) => {
+  const r = await fetch(el.dataset.src);
+  el.innerHTML = await r.text();
+});
+</script>
+</body>
+</html>

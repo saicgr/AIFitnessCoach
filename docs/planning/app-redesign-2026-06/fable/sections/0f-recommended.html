@@ -1,0 +1,1218 @@
+<div class="sx-rc">
+<style>
+/* ===== ★ RECOMMENDED section (sx-rc) — all selectors prefixed, keyframes rc-prefixed ===== */
+.sx-rc .rc-sub { padding:36px 0 0 48px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:3.5px; text-transform:uppercase; font-size:13.5px; color:#6b6b73; }
+.sx-rc .rc-sub b { color:var(--orange); font-weight:700; }
+.sx-rc .rc-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+
+/* loop-synced data viz (10s, matches s0..s9 cadence) */
+@keyframes rcFill { 0%,12%{width:0} 30%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes rcGrow { 0%,16%{transform:scaleY(0)} 36%,96%{transform:scaleY(1)} 100%{transform:scaleY(0)} }
+@keyframes rcRing { 0%,16%{stroke-dashoffset:var(--c,300)} 38%,96%{stroke-dashoffset:var(--dash,80)} 100%{stroke-dashoffset:var(--c,300)} }
+@keyframes rcBlink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+@keyframes rcDone { 0%,74%{opacity:0} 78%,96%{opacity:1} 100%{opacity:0} }
+@keyframes rcPress { 0%,28%{opacity:0;transform:translateY(8px)} 33%,63%{opacity:1;transform:none} 66%{opacity:1;transform:scale(.96)} 69%,96%{opacity:1;transform:none} 100%{opacity:0;transform:none} }
+@keyframes rcPressLate { 0%,76%{opacity:0;transform:translateY(8px)} 80%,87%{opacity:1;transform:none} 90%{opacity:1;transform:scale(.96)} 92%,96%{opacity:1;transform:none} 100%{opacity:0;transform:none} }
+@keyframes rcSlam { 0%,6%{opacity:0;transform:scale(1.22)} 11%,96%{opacity:1;transform:scale(1)} 100%{opacity:0} }
+@keyframes rcSheetUp { 0%,36%{transform:translateY(108%)} 41%,58%{transform:translateY(0)} 63%,100%{transform:translateY(108%)} }
+@keyframes rcPlusPress { 0%,34%{transform:none} 37%{transform:scale(.88)} 40%,100%{transform:none} }
+@keyframes rcRest { 0%,70%{opacity:0;transform:translateY(6px)} 75%,96%{opacity:1;transform:none} 100%{opacity:0} }
+@keyframes rcStripOut { 0%,38%{max-height:0;opacity:0} 45%,96%{max-height:100px;opacity:1} 100%{max-height:0;opacity:0} }
+@keyframes rcGhostA { 0%,44%{opacity:1} 48%,76%{opacity:0} 80%,100%{opacity:1} }
+@keyframes rcGhostB { 0%,46%{opacity:0} 50%,74%{opacity:1} 78%,100%{opacity:0} }
+.sx-rc .rc-fill { display:block; height:100%; border-radius:2px; animation:rcFill 10s ease-out infinite; }
+.sx-rc .rc-ring { animation:rcRing 10s ease-out infinite; }
+.sx-rc .rc-cta-anim { animation:rcPress 10s ease-out infinite; }
+.sx-rc .rc-cta-anim-late { animation:rcPressLate 10s ease-out infinite; }
+
+/* shared dark-frame bits */
+.sx-rc .rc-rule { height:1px; background:var(--d-rule); }
+.sx-rc .rc-slbl { font-size:11px; color:var(--d-mut); }
+.sx-rc .rc-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.sx-rc .rc-coachbtn { width:24px; height:24px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:11px; color:var(--d-mut); }
+.sx-rc .rc-nav { position:absolute; left:24px; right:24px; bottom:26px; display:flex; justify-content:space-between; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); z-index:30; }
+.sx-rc .rc-nav .on { color:var(--d-text); border-bottom:2px solid var(--d-accent); padding-bottom:3px; }
+/* Signature nav spec: 64px opaque bar + top hairline, tiny glyph above Barlow label, active underline */
+.sx-rc .rc-nav2 { position:absolute; left:0; right:0; bottom:0; height:74px; background:#0A0A0B; border-top:1px solid #2A2A2E; display:flex; justify-content:space-around; align-items:flex-start; padding-top:11px; z-index:30; }
+.sx-rc .rc-nav2 .it { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.sx-rc .rc-nav2 .gl { font-size:12px; line-height:1; filter:grayscale(1); opacity:.5; }
+.sx-rc .rc-nav2 .lb { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:#5C5C64; }
+.sx-rc .rc-nav2 .it.on .gl { opacity:.95; }
+.sx-rc .rc-nav2 .it.on .lb { color:#F97316; }
+.sx-rc .rc-nav2 .it.on::after { content:''; width:18px; height:2px; border-radius:1px; background:#F97316; margin-top:2px; }
+
+/* ---- HOME ---- */
+.sx-rc .rh-mast { font-size:40px; line-height:.94; margin-top:8px; }
+.sx-rc .rh-mast .mo { color:var(--d-faint); }
+.sx-rc .rh-greet { font-family:Fraunces,Georgia,serif; font-size:17px; font-style:italic; color:#CBB9A4; margin-top:9px; }
+.sx-rc .rh-cta { display:flex; align-items:center; justify-content:center; height:50px; border-radius:6px; background:var(--d-accent); color:#160B03; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:16.5px; letter-spacing:2.5px; text-transform:uppercase; margin-top:13px; }
+.sx-rc .rh-coach { display:flex; align-items:flex-start; gap:10px; }
+.sx-rc .rh-coach .tx { flex:1; font-size:12.5px; color:#C9C9CF; line-height:1.45; }
+.sx-rc .rh-coach .ch { color:var(--d-faint); font-size:15px; margin-top:2px; }
+.sx-rc .rh-bell { position:relative; font-size:13px; filter:grayscale(1); opacity:.85; }
+.sx-rc .rh-bell::after { content:''; position:absolute; top:-2px; right:-4px; width:6px; height:6px; border-radius:50%; background:var(--d-accent); }
+.sx-rc .rh-note { display:flex; align-items:center; gap:8px; border:1px solid var(--d-border); border-radius:8px; padding:8px 11px; margin-top:11px; font-size:11.5px; color:#C9C9CF; }
+.sx-rc .rh-note .x { margin-left:auto; color:var(--d-faint); font-size:13px; }
+.sx-rc .rh-task { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.sx-rc .rh-task i { font-style:normal; font-size:11px; color:var(--d-faint); }
+.sx-rc .rh-plus { position:absolute; right:24px; bottom:88px; width:44px; height:44px; border:1px solid var(--d-border); border-radius:6px; background:var(--d-surface2); display:flex; align-items:center; justify-content:center; z-index:31; color:var(--d-accent); font-size:24px; font-weight:300; line-height:1; box-shadow:0 10px 24px rgba(0,0,0,.45); animation:rcPlusPress 10s ease-in-out infinite; }
+/* the ONE sanctioned glass surface in Signature: sheets (recipe borrowed from .dG .glass) */
+.sx-rc .rh-bsheet { position:absolute; left:0; right:0; bottom:0; padding:13px 24px 22px; background:rgba(255,255,255,.06); backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px); border:1px solid rgba(255,255,255,.12); border-bottom:none; border-radius:22px 22px 0 0; box-shadow:0 -24px 48px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.14); z-index:36; transform:translateY(108%); animation:rcSheetUp 10s cubic-bezier(.4,0,.2,1) infinite; }
+.sx-rc .rh-grab { width:34px; height:3px; border-radius:2px; background:rgba(255,255,255,.22); margin:0 auto 12px; }
+.sx-rc .rh-qa { display:grid; grid-template-columns:repeat(5,1fr); gap:11px 6px; margin-top:10px; }
+.sx-rc .rh-qa-it { display:flex; flex-direction:column; align-items:center; gap:5px; }
+.sx-rc .rh-qa-ic { width:40px; height:40px; border:1px solid var(--d-border); border-radius:6px; background:var(--d-surface2); display:flex; align-items:center; justify-content:center; font-size:15px; }
+.sx-rc .rh-qa-lb { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.2px; text-transform:uppercase; color:var(--d-mut); }
+
+/* ---- ACTIVE WORKOUT ---- */
+.sx-rc .rw-mast { font-size:33px; line-height:.98; margin-top:6px; }
+.sx-rc .rw-poster { font-size:84px; line-height:.92; letter-spacing:0; }
+.sx-rc .rw-poster small { font-size:24px; letter-spacing:1px; color:var(--d-mut); margin-left:4px; }
+.sx-rc .rw-poster .x { color:var(--d-faint); font-size:54px; margin:0 2px; }
+.sx-rc .rw-whisper { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:16.5px; color:#CBB9A4; margin-top:10px; }
+.sx-rc .rw-srow { display:flex; align-items:center; gap:12px; margin-top:7px; }
+.sx-rc .rw-srow .k { width:46px; flex:0 0 auto; font-size:10px; color:var(--d-faint); }
+.sx-rc .rw-srow .val { flex:1; text-align:center; font-size:28px; line-height:1; }
+.sx-rc .rw-srow .val small { font-size:13px; letter-spacing:1px; color:var(--d-mut); margin-left:3px; }
+.sx-rc .rw-sq2 { width:52px; height:52px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:22px; color:var(--d-text); }
+/* scrub affordance: numeral rides a dotted drag track (±5 snaps) AND is tap-to-type */
+.sx-rc .rw-track { position:relative; width:96px; height:7px; margin:6px auto 0; border-top:2px dotted #3F3F46; }
+.sx-rc .rw-track i { position:absolute; left:50%; top:-5px; transform:translateX(-50%); width:9px; height:9px; border-radius:50%; background:var(--d-rust); }
+.sx-rc .rw-edit { border-bottom:2.5px dotted #3F3F46; padding-bottom:2px; }
+.sx-rc .rw-rail { display:flex; gap:7px; }
+.sx-rc .rw-cell { width:28px; height:28px; border:1px solid var(--d-border); border-radius:6px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11.5px; color:var(--d-faint); position:relative; }
+.sx-rc .rw-cell.dn { color:#5BE49B; border-color:#234034; background:rgba(91,228,155,.07); }
+.sx-rc .rw-cell.cur { color:var(--d-text); }
+.sx-rc .rw-cell.cur::after { content:''; position:absolute; left:4px; right:4px; bottom:-5px; height:2px; background:var(--d-accent); border-radius:1px; }
+.sx-rc .rw-cta { height:56px; border-radius:999px; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:17px; letter-spacing:2.5px; text-transform:uppercase; margin-top:14px; }
+.sx-rc .rw-led { display:flex; align-items:center; gap:10px; padding:8px 2px; border-bottom:1px solid var(--d-rule); font-size:12.5px; color:var(--d-mut); font-variant-numeric:tabular-nums; position:relative; }
+.sx-rc .rw-led b { font-weight:700; color:var(--d-text); }
+.sx-rc .rw-led .ck { margin-left:auto; color:#5BE49B; font-weight:700; }
+.sx-rc .rw-led.act { color:var(--d-text); }
+.sx-rc .rw-led.act .cu { color:var(--d-accent); animation:rcBlink 1.1s steps(1) infinite; }
+.sx-rc .rw-led.act .dn { position:absolute; right:2px; top:8px; color:#5BE49B; font-weight:700; background:var(--d-bg); padding-left:10px; opacity:0; animation:rcDone 10s steps(1) infinite; }
+.sx-rc .rw-chip { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 13px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.sx-rc .rw-chips { display:flex; gap:7px; margin-top:11px; }
+.sx-rc .rw-lkchip { height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); white-space:nowrap; }
+.sx-rc .rw-poster .ed { border-bottom:3px dotted #3F3F46; padding-bottom:3px; }
+.sx-rc .rw-pencil { font-size:14px; color:var(--d-faint); vertical-align:46px; margin-left:6px; font-family:Inter,sans-serif; }
+.sx-rc .rw-rest { display:flex; align-items:center; gap:10px; height:38px; margin-top:11px; animation:rcRest 10s ease-out infinite; }
+
+/* ---- NUTRITION (dark .dR frame) ---- */
+.sx-rc .rn-kick { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px; letter-spacing:3px; text-transform:uppercase; color:var(--d-mut); }
+.sx-rc .rn-track { height:3px; border-radius:2px; background:var(--d-rule); overflow:hidden; }
+.sx-rc .rn-mline { display:flex; gap:15px; align-items:center; }
+.sx-rc .rn-mline .g { display:flex; align-items:baseline; gap:5px; }
+.sx-rc .rn-mline .g i { width:7px; height:7px; border-radius:50%; align-self:center; }
+.sx-rc .rn-mline .g b { font-family:Anton,sans-serif; font-weight:400; font-size:15px; letter-spacing:.5px; }
+.sx-rc .rn-mline .g b u { text-decoration:none; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:.5px; color:var(--d-mut); }
+.sx-rc .rn-mline .g .mk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.sx-rc .rn-chev { width:24px; height:24px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:var(--d-mut); }
+.sx-rc .rn-bub { align-self:flex-end; max-width:78%; background:#1F1F24; border:1px solid var(--d-border); color:var(--d-text); border-radius:18px 18px 4px 18px; padding:10px 14px; font-size:13px; line-height:1.4; }
+.sx-rc .rn-entry { display:flex; align-items:center; gap:13px; background:var(--d-surface); border:1px solid var(--d-border); border-radius:16px; padding:11px 15px; box-shadow:0 10px 26px rgba(0,0,0,.4); }
+.sx-rc .rn-entry .nm { font-weight:700; font-size:14.5px; letter-spacing:-.2px; }
+.sx-rc .rn-entry .sv { font-size:11px; color:var(--d-mut); margin-top:1px; }
+.sx-rc .rn-entry .dt { font-size:12.5px; font-weight:700; margin-top:4px; }
+.sx-rc .rn-entry .dt span { font-weight:600; font-size:10.5px; color:var(--d-mut); margin-left:7px; }
+.sx-rc .rn-coach { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:14.5px; color:#CBB9A4; padding-left:4px; }
+.sx-rc .rn-input { display:flex; align-items:center; gap:8px; height:50px; border-radius:999px; background:var(--d-surface); border:1px solid var(--d-border); padding:0 7px 0 16px; font-size:13px; color:var(--d-faint); }
+.sx-rc .rn-input .cam { font-size:13px; filter:grayscale(1); opacity:.85; }
+.sx-rc .rn-input .ph { position:relative; flex:1; height:18px; overflow:hidden; }
+.sx-rc .rn-input .ph i { position:absolute; left:0; top:1px; font-style:normal; white-space:nowrap; }
+.sx-rc .rn-input .ph .p1 { animation:rcGhostA 10s ease-in-out infinite; }
+.sx-rc .rn-input .ph .p2 { color:var(--d-text); opacity:0; animation:rcGhostB 10s ease-in-out infinite; }
+.sx-rc .rn-send { margin-left:2px; width:38px; height:38px; flex:0 0 auto; border-radius:50%; background:var(--d-accent); color:#160B03; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+.sx-rc .rn-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding-bottom:5px; }
+.sx-rc .rn-tab.on { color:var(--d-text); border-bottom:2px solid var(--d-accent); }
+.sx-rc .rn-led { display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid var(--d-rule); }
+.sx-rc .rn-led .lk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); width:64px; flex:0 0 auto; }
+.sx-rc .rn-chip { height:24px; padding:0 10px; border:1px solid var(--d-border); border-radius:999px; display:inline-flex; align-items:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:1px; color:var(--d-text); }
+
+/* ---- ACTIVE WORKOUT · ADVANCED — faithful before (av-) ---- */
+.sx-rc .av-body { position:absolute; inset:0; display:flex; flex-direction:column; padding:50px 0 0; font-size:12px; }
+.sx-rc .av-top { display:flex; align-items:center; gap:10px; padding:6px 14px; }
+.sx-rc .av-tpill { display:flex; align-items:center; gap:6px; height:30px; padding:0 13px; border-radius:15px; background:var(--d-surface); border:1px solid var(--d-border); font-weight:700; font-size:13px; font-variant-numeric:tabular-nums; }
+.sx-rc .av-ic { width:30px; height:30px; border-radius:50%; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:12px; color:var(--d-mut); }
+.sx-rc .av-stats { display:flex; border-top:1px solid var(--d-border); border-bottom:1px solid var(--d-border); padding:7px 14px; gap:18px; }
+.sx-rc .av-stats div { flex:1; }
+.sx-rc .av-stats b { display:block; font-size:13px; font-weight:700; }
+.sx-rc .av-stats span { font-size:9px; color:var(--d-faint); }
+.sx-rc .av-chips { display:flex; gap:6px; padding:8px 14px 0; overflow:hidden; }
+.sx-rc .av-chip { height:28px; padding:0 10px; border-radius:14px; background:var(--d-surface); border:1px solid var(--d-border); display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:600; color:#c9c9cf; white-space:nowrap; }
+.sx-rc .av-prog { display:flex; gap:6px; padding:8px 14px 0; }
+.sx-rc .av-ppill { height:30px; padding:0 9px; border-radius:8px; background:var(--d-surface2); border:1px solid var(--d-border); display:inline-flex; flex-direction:column; justify-content:center; font-size:8.5px; color:var(--d-faint); }
+.sx-rc .av-ppill b { font-size:10px; color:var(--d-mut); font-weight:700; }
+.sx-rc .av-ppill.tg { border-color:#2563EB; }
+.sx-rc .av-ppill.tg b { color:#60A5FA; }
+.sx-rc .av-th { display:flex; align-items:center; padding:8px 14px 6px; border-bottom:1px solid var(--d-border); font-size:9px; font-weight:700; letter-spacing:.8px; color:var(--d-faint); }
+.sx-rc .av-tr { display:flex; align-items:center; padding:7px 14px; border-bottom:1px solid rgba(38,38,38,.35); font-size:11.5px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.sx-rc .av-tr.done { color:var(--d-text); }
+.sx-rc .av-tr.act { background:rgba(249,115,22,.07); color:var(--d-text); }
+.sx-rc .av-c1 { width:26px; } .sx-rc .av-c2 { flex:3; } .sx-rc .av-c3 { flex:3; color:#60A5FA; } .sx-rc .av-c4 { width:46px; text-align:center; } .sx-rc .av-c5 { width:46px; text-align:center; } .sx-rc .av-c6 { width:24px; text-align:center; font-size:9.5px; } .sx-rc .av-c7 { width:26px; text-align:center; }
+.sx-rc .av-inp { display:inline-block; width:40px; padding:4px 0; border-radius:6px; background:var(--d-surface); border:1px solid #3A3A42; text-align:center; font-weight:700; color:var(--d-text); }
+.sx-rc .av-foot { display:flex; gap:6px; padding:8px 14px; align-items:center; }
+.sx-rc .av-aipill { width:36px; height:36px; border-radius:18px; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; color:#FFB366; font-size:15px; }
+.sx-rc .av-qa { flex:1; height:36px; border-radius:18px; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:space-evenly; font-size:10px; color:var(--d-mut); }
+.sx-rc .av-thumbs { display:flex; gap:6px; padding:8px 14px 10px; background:var(--d-surface2); border-top:1px solid var(--d-border); }
+.sx-rc .av-thumb { width:40px; height:40px; border-radius:10px; background:var(--d-surface); border:1px solid var(--d-border); display:flex; align-items:center; justify-content:center; font-size:15px; position:relative; }
+.sx-rc .av-thumb.cur { border-color:#F97316; }
+.sx-rc .av-thumb.dn::after { content:'✓'; position:absolute; top:-3px; right:-3px; width:13px; height:13px; border-radius:50%; background:#2ECC71; color:#fff; font-size:8px; display:flex; align-items:center; justify-content:center; }
+
+/* ---- ACTIVE WORKOUT · ADVANCED — Signature reco (ra-), full cockpit ---- */
+.sx-rc .ra-th { display:flex; align-items:center; padding:0 2px 5px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); border-bottom:1px solid var(--d-rule); }
+.sx-rc .ra-tr { display:flex; align-items:center; padding:6px 2px; border-bottom:1px solid var(--d-rule); font-size:11.5px; color:var(--d-mut); font-variant-numeric:tabular-nums; position:relative; }
+.sx-rc .ra-tr.done { color:var(--d-text); }
+.sx-rc .ra-tr.act { color:var(--d-text); border-left:3px solid var(--d-accent); padding-left:9px; margin-left:-12px; }
+.sx-rc .ra-tr.dim { color:var(--d-faint); }
+.sx-rc .ra-c1 { width:24px; font-family:'Barlow Condensed',sans-serif; font-weight:700; } .sx-rc .ra-c2 { flex:2; } .sx-rc .ra-c3 { flex:2.6; text-align:center; } .sx-rc .ra-c4 { flex:2.2; text-align:center; } .sx-rc .ra-c5 { flex:1.8; text-align:center; } .sx-rc .ra-c6 { width:22px; text-align:center; } .sx-rc .ra-c7 { width:20px; text-align:right; }
+.sx-rc .ra-tg { color:var(--d-rust); }
+.sx-rc .ra-tr .ck { color:#5BE49B; font-weight:700; }
+.sx-rc .ra-val b { font-family:Anton,sans-serif; font-weight:400; font-size:14px; letter-spacing:.5px; }
+.sx-rc .ra-add { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding:6px 2px; }
+/* edit strip: slides out beneath the active row — drag bar + custom input, never chip buttons */
+.sx-rc .ra-strip { overflow:hidden; border-bottom:1px solid var(--d-rule); max-height:0; animation:rcStripOut 10s ease-in-out infinite; }
+.sx-rc .ra-strip .inner { padding:8px 0 9px; }
+.sx-rc .ra-lane { display:flex; align-items:center; gap:10px; }
+.sx-rc .ra-big { width:48px; height:40px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:19px; color:var(--d-text); }
+.sx-rc .ra-big.sm { width:34px; height:24px; font-size:13px; border-radius:6px; }
+.sx-rc .ra-scrub { flex:1; position:relative; height:32px; }
+.sx-rc .ra-scrub.sm { height:22px; }
+.sx-rc .ra-scrub .tk { position:absolute; left:2px; right:2px; top:50%; border-top:2px dotted #3F3F46; }
+.sx-rc .ra-scrub .gh { position:absolute; top:50%; transform:translateY(-50%); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; color:var(--d-faint); background:var(--d-bg); padding:0 5px; }
+.sx-rc .ra-scrub .th { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); border:1px solid var(--d-accent); border-radius:999px; padding:3px 11px; background:var(--d-bg); font-family:Anton,sans-serif; font-size:13px; letter-spacing:.5px; color:var(--d-text); white-space:nowrap; }
+.sx-rc .ra-scrub.sm .th { font-size:11px; padding:2px 9px; }
+.sx-rc .ra-hist { display:flex; gap:6px; }
+.sx-rc .ra-hpill { height:24px; padding:0 9px; border:1px solid var(--d-border); border-radius:6px; display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1px; color:var(--d-mut); text-transform:uppercase; white-space:nowrap; }
+.sx-rc .ra-hpill.tg { color:var(--d-text); border-color:var(--d-accent); }
+.sx-rc .ra-util { display:flex; gap:6px; }
+.sx-rc .ra-util .rw-lkchip { flex:1; justify-content:center; padding:0 6px; }
+
+/* ---- STATS ---- */
+.sx-rc .rs-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding-bottom:7px; }
+.sx-rc .rs-tab.on { color:var(--d-text); border-bottom:2px solid var(--d-accent); }
+.sx-rc .rs-chart { display:flex; align-items:flex-end; gap:9px; height:88px; }
+.sx-rc .rs-col { flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; }
+.sx-rc .rs-bar { background:#4A4A52; border-radius:1px; transform-origin:bottom; animation:rcGrow 10s ease-out infinite; }
+.sx-rc .rs-bar.hi { background:var(--d-accent); }
+.sx-rc .rs-led { display:flex; align-items:center; gap:10px; padding:9px 2px; border-bottom:1px solid var(--d-rule); }
+.sx-rc .rs-led .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:1.5px; text-transform:uppercase; flex:1; }
+.sx-rc .rs-led .vl { font-size:12px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.sx-rc .rs-led .dtx { font-size:10px; color:var(--d-faint); font-variant-numeric:tabular-nums; }
+
+/* ---- COMPLETE ---- */
+.sx-rc .rp-led { display:flex; justify-content:space-between; align-items:baseline; padding:9px 2px; border-bottom:1px solid var(--d-rule); }
+.sx-rc .rp-led .k { font-size:11px; color:var(--d-mut); }
+.sx-rc .rp-led .v { font-size:23px; line-height:1; }
+.sx-rc .rp-led .v small { font-size:11px; color:var(--d-mut); letter-spacing:1px; margin-left:3px; }
+.sx-rc .rp-pr { display:flex; align-items:center; gap:11px; border-top:2px solid var(--d-accent); border-bottom:1px solid var(--d-rule); padding:11px 2px; margin-top:14px; }
+.sx-rc .rp-prtag { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:11px; letter-spacing:2px; background:var(--d-accent); color:#160B03; border-radius:3px; padding:3px 7px; }
+.sx-rc .rp-xp { display:inline-flex; align-items:center; height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:2px; color:var(--d-mut); text-transform:uppercase; }
+.sx-rc .rp-cta { height:54px; border-radius:999px; background:var(--d-rust); color:#FFF7F0; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; letter-spacing:.2px; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">★ Recommended</div>
+  <div class="sec-title">ZEALOVA SIGNATURE</div>
+  <div class="sec-desc">The synthesis, all-dark: A — Editorial Athletic's type spine (Anton numerals, Barlow labels, hairline rules, orange spent once) kills the AI-slop read hardest and is already brand-coherent with the share images and onboarding v7. E's contribution survives as the ingredient, not the room: big 3D food renders ride on the dark canvas — where they pop even harder — and carry the warmth, alongside D's Fraunces serif at the emotional beats (the greeting, the mid-set whisper, the post-workout exhale). One mood, one type system, six screens that read as one designed app.</div>
+</section>
+
+<!-- ════════════════ HOME ════════════════ -->
+<div class="rc-sub">Home — <b>current → recommended</b></div>
+<div class="row">
+
+<div class="sx-home" style="display:contents">
+<div class="cell" id="before-home-rc">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="hm-body" style="padding:56px 18px 0;">
+        <!-- header -->
+        <div class="bf-hdr lp" style="animation-name:s0;">
+          <div class="bf-av">C</div>
+          <div><div class="bf-greet">Good evening,</div><div class="bf-name">Chetan <span>· 23d 🔥</span></div></div>
+          <div style="margin-left:auto;display:flex;gap:8px;"><div class="bf-ic">🔔</div><div class="bf-ic">⚙️</div></div>
+        </div>
+        <!-- Today score deck -->
+        <div class="bf-card lp" style="animation-name:s1;display:flex;gap:14px;align-items:center;margin-top:12px;">
+          <svg width="92" height="92" viewBox="0 0 96 96" style="flex:0 0 auto;">
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#262626" stroke-width="9"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#F97316" stroke-width="9" stroke-linecap="round" stroke-dasharray="86 152.8" transform="rotate(-90 48 48)" class="hm-ring" style="--c:239;--dash:0;stroke-dashoffset:0;"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#06B6D4" stroke-width="9" stroke-linecap="round" stroke-dasharray="56 182.8" stroke-dashoffset="-92" transform="rotate(-90 48 48)"/>
+            <circle cx="48" cy="48" r="38" fill="none" stroke="#2ECC71" stroke-width="9" stroke-linecap="round" stroke-dasharray="38 200.8" stroke-dashoffset="-156" transform="rotate(-90 48 48)"/>
+            <text x="48" y="46" text-anchor="middle" fill="#FAFAFA" font-size="20" font-weight="800" font-family="Inter">72</text>
+            <text x="48" y="60" text-anchor="middle" fill="#71717A" font-size="8" font-weight="600" font-family="Inter">TODAY</text>
+          </svg>
+          <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+            <div class="bf-tile">👟 Steps <b>6,840</b></div>
+            <div style="height:1px;background:var(--d-border);"></div>
+            <div class="bf-tile">🔥 Active kcal <b>612</b></div>
+            <div style="height:1px;background:var(--d-border);"></div>
+            <div class="bf-tile">😴 Sleep <b>7h 12m</b></div>
+          </div>
+        </div>
+        <!-- quick actions 2×5 -->
+        <div class="bf-qa lp" style="animation-name:s2;margin-top:12px;">
+          <div class="bf-qa-it"><div class="bf-qa-ic">🍽️</div><div class="bf-qa-lb">Log food</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">💧</div><div class="bf-qa-lb">Water</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">⚖️</div><div class="bf-qa-lb">Weight</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">📷</div><div class="bf-qa-lb">Scan food</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">⏱️</div><div class="bf-qa-lb">Fasting</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">🏃</div><div class="bf-qa-lb">Activity</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">📏</div><div class="bf-qa-lb">Measure</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">🧘</div><div class="bf-qa-lb">Mood</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">📋</div><div class="bf-qa-lb">Scan menu</div></div>
+          <div class="bf-qa-it"><div class="bf-qa-ic">⋯</div><div class="bf-qa-lb">More</div></div>
+        </div>
+        <!-- coach insight -->
+        <div class="bf-card lp" style="animation-name:s3;margin-top:12px;display:flex;gap:11px;align-items:flex-start;">
+          <div style="font-size:16px;">✨</div>
+          <div style="flex:1;">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:1.8px;color:#F97316;">COACH INSIGHT</div>
+            <div style="font-size:12.5px;color:#c9c9cf;line-height:1.45;margin-top:4px;">Solid push volume Tuesday. Keep protein at 160g+ today to lock in recovery before tomorrow's legs.</div>
+          </div>
+          <div style="color:var(--d-faint);font-size:13px;">›</div>
+        </div>
+        <!-- workout hero (orange/brown gradient) -->
+        <div class="lp" style="animation-name:s4;margin-top:12px;border-radius:16px;padding:16px;height:162px;display:flex;flex-direction:column;background:linear-gradient(135deg,#E89A3E,#C96E18);box-shadow:0 10px 26px rgba(201,110,24,.3);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 11px;font-size:10px;font-weight:700;letter-spacing:1px;color:#fff;">TODAY · PUSH</div>
+            <div style="font-size:11.5px;font-weight:700;color:rgba(255,255,255,.85);">52 min</div>
+          </div>
+          <div style="margin-top:auto;">
+            <div style="font-size:20px;font-weight:800;color:#fff;">Push Day — Chest &amp; Triceps</div>
+            <div style="font-size:12px;color:rgba(255,255,255,.8);margin-top:2px;">8 exercises · Dumbbell + Cable</div>
+          </div>
+          <div style="margin-top:12px;height:42px;border-radius:21px;background:#fff;color:#1A1A1A;font-weight:800;font-size:13.5px;display:flex;align-items:center;justify-content:center;gap:7px;">▶ Start workout</div>
+        </div>
+        <!-- nutrition card (cut by nav — scroll implied) -->
+        <div class="bf-card lp" style="animation-name:s5;margin-top:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-size:9.5px;font-weight:800;letter-spacing:1.8px;color:var(--d-mut);">NUTRITION</div>
+            <div style="font-size:12px;color:var(--d-mut);"><b style="color:var(--d-text);font-size:15px;">1,460</b> / 2,200 kcal</div>
+          </div>
+          <div class="bf-mbar" style="margin-top:10px;"><i class="hm-fill" style="display:block;height:100%;background:#F97316;border-radius:3px;--w:66%;"></i></div>
+          <div style="display:flex;gap:12px;margin-top:11px;font-size:10.5px;color:var(--d-mut);">
+            <div style="flex:1;">P 96g<div class="bf-mbar" style="margin-top:4px;"><i class="hm-fill" style="display:block;height:100%;background:#A855F7;border-radius:3px;--w:60%;"></i></div></div>
+            <div style="flex:1;">C 142g<div class="bf-mbar" style="margin-top:4px;"><i class="hm-fill" style="display:block;height:100%;background:#06B6D4;border-radius:3px;--w:58%;"></i></div></div>
+            <div style="flex:1;">F 48g<div class="bf-mbar" style="margin-top:4px;"><i class="hm-fill" style="display:block;height:100%;background:#F97316;border-radius:3px;--w:65%;"></i></div></div>
+          </div>
+        </div>
+      </div>
+      <nav class="bf-nav">
+        <div class="bf-nav-it" style="color:#F97316;">🏠<span>Home</span></div>
+        <div class="bf-nav-it">🏋️<span>Workouts</span></div>
+        <div class="bf-nav-ai">✦</div>
+        <div class="bf-nav-it">🍽️<span>Nutrition</span></div>
+        <div class="bf-nav-it">👤<span>You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current home — v34 default order</div>
+      <div class="cap-why">The honest baseline: six identical glass boxes stacked top to bottom, emoji icon grid, a stock orange-brown gradient hero, system-font everything. Functional, but it's the same screen every AI fitness template ships.</div>
+      <div class="cap-risk"><b>Risk:</b> none — this is the control. Judge every direction against it.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- ★ RECO HOME -->
+  <div class="cell" id="reco-home">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span style="display:inline-flex;align-items:center;gap:9px;">6,840 steps · 23 🔥<span class="rh-bell">🔔</span><span class="rc-coachbtn">✦</span></span></div>
+        <div class="disp rh-mast lp" style="animation-name:s0;">THURSDAY<br><span class="mo">JUNE 11</span></div>
+        <!-- notification banner -->
+        <div class="rh-note lp" style="animation-name:s1;"><span>🏆</span><span>2 trophies earned yesterday ›</span><span class="x">×</span></div>
+        <div class="ser rh-greet lp" style="animation-name:s1;">Evening, Chetan.</div>
+        <div class="rc-rule" style="margin:15px 0 13px;"></div>
+        <!-- session -->
+        <div class="lp" style="animation-name:s2;">
+          <div class="rc-slbl lbl">Today's session</div>
+          <div class="disp" style="font-size:36px;line-height:1;margin-top:6px;">PUSH DAY</div>
+          <div style="font-size:12.5px;color:var(--d-mut);margin-top:5px;">Chest &amp; Triceps · 8 exercises · 52 min</div>
+          <div class="rh-cta rc-cta-anim">Start workout →</div>
+        </div>
+        <div class="rc-rule" style="margin:15px 0 13px;"></div>
+        <!-- fuel -->
+        <div class="lp" style="animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="flex:1;">
+              <div class="rc-slbl lbl">Fuel</div>
+              <div style="display:flex;align-items:baseline;gap:9px;margin-top:4px;">
+                <span class="disp" style="font-size:46px;line-height:.95;">1,460</span>
+                <span class="rc-slbl lbl" style="font-size:10px;">of 2,200 kcal</span>
+              </div>
+              <div style="height:3px;background:var(--d-rule);border-radius:2px;margin-top:11px;overflow:hidden;"><i class="rc-fill" style="background:var(--d-rust);--w:66%;"></i></div>
+              <div class="lbl lp" style="animation-name:s4;display:flex;gap:16px;font-size:10.5px;color:var(--d-mut);margin-top:9px;">
+                <span><i class="rc-dot" style="background:#A855F7;"></i>P 96</span>
+                <span><i class="rc-dot" style="background:#06B6D4;"></i>C 142</span>
+                <span><i class="rc-dot" style="background:#F97316;"></i>F 48</span>
+              </div>
+            </div>
+            <span class="food3d" style="font-size:46px;margin:10px 2px 0 12px;animation:s4 10s ease-out infinite, foodFloat 4.5s ease-in-out infinite;">🥣</span>
+          </div>
+        </div>
+        <div class="rc-rule" style="margin:15px 0 13px;"></div>
+        <!-- coach: full tip (never truncated) + tasks -->
+        <div class="lp" style="animation-name:s5;">
+          <div class="rh-coach">
+            <span class="rc-slbl lbl">Coach</span>
+            <span class="tx">Quads ran light last week — keep protein at 160g+ today and press volume tonight to lock in recovery.</span>
+            <span class="ch">›</span>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:9px;">
+            <div class="rh-task"><i>☐</i>160g protein</div>
+            <div class="rh-task"><i>☐</i>10 min mobility</div>
+          </div>
+        </div>
+      </div>
+      <!-- universal quick-log: outlined square, orange glyph only; press demo mid-loop -->
+      <div class="rh-plus">+</div>
+      <!-- bottom glass sheet — rises from the "+" during the 41–58% loop window -->
+      <div class="rh-bsheet">
+        <div class="rh-grab"></div>
+        <div class="lbl" style="font-size:10.5px;color:var(--d-mut);">Quick actions</div>
+        <div class="rh-qa">
+          <div class="rh-qa-it"><div class="rh-qa-ic">🍽️</div><div class="rh-qa-lb">Log food</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">💧</div><div class="rh-qa-lb">Water</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">⚖️</div><div class="rh-qa-lb">Weight</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">📷</div><div class="rh-qa-lb">Scan food</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">⏱️</div><div class="rh-qa-lb">Fasting</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">🏃</div><div class="rh-qa-lb">Activity</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">📏</div><div class="rh-qa-lb">Measure</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">🧘</div><div class="rh-qa-lb">Mood</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">📋</div><div class="rh-qa-lb">Scan menu</div></div>
+          <div class="rh-qa-it"><div class="rh-qa-ic">⋯</div><div class="rh-qa-lb">More</div></div>
+        </div>
+        <div style="height:1px;background:rgba(255,255,255,.1);margin:14px 0 10px;"></div>
+        <div class="lbl" style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--d-mut);">
+          <span>Recovery</span><span style="color:var(--d-text);">Readiness 82% · Sleep 7:12 · HR 52</span>
+        </div>
+      </div>
+      <nav class="rc-nav2 lp" style="animation-name:s6;">
+        <div class="it on"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature home — front page + one warm line</div>
+      <div class="cap-why">A's masthead, hairline ledger and single-orange CTA carry the four-section spread (date, session, fuel, coach) with the bell + trophy banner and the full coach tip with task chips. The triage mechanism is shown, not promised: mid-loop the "+" presses and a bottom glass sheet rises — the 2×5 quick-action grid plus the recovery line. Sheets are the ONE sanctioned glass surface in Signature; everything else stays matte hairlines, so the glass reads as elevation, not decoration. The quiet ✦ in the masthead cluster opens the coach overlay carrying the current tab's context — it lives in every tab's masthead, never floating, so it can't collide with the "+" or a composer.</div>
+      <div class="cap-risk"><b>Risk:</b> glass discipline must hold — the moment a card or nav borrows the blur, the language slides back toward template slop; and the "+" sheet must never grow past 2×5 + recovery or it becomes the junk drawer.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ ACTIVE WORKOUT ════════════════ -->
+<div class="rc-sub">Active workout — <b>current → recommended</b></div>
+<div class="row">
+
+<div class="sx-wo" style="display:contents">
+<div class="cell" id="before-wo-rc">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="wo-bf-body">
+        <div class="wo-bf-top">
+          <div class="wo-bf-back">‹</div>
+          <div class="wo-bf-tier"><span class="on">Easy</span><span>S</span><span>A</span></div>
+          <div class="wo-bf-icons"><span>♡</span><span>⧉</span><span>⋮</span></div>
+        </div>
+        <div class="wo-bf-stats">
+          <div><b><i>●</i><span class="wo-tk"></span></b><span>Duration</span></div>
+          <div><b><span class="wo-kcal"></span> kcal</b><span>Calories</span></div>
+          <div><b><span class="wo-vol"></span> lb</b><span>Volume</span></div>
+        </div>
+        <div class="wo-bf-name">Incline Dumbbell Press</div>
+        <div class="wo-bf-setrow"><i>−</i> Set 3 of 4 <i>+</i></div>
+        <div class="wo-bf-thumb">🏋️</div>
+        <div class="wo-bf-chips"><span>▶ Video</span><span>📖 Instructions</span><span>📋 Plan</span><span>📝 Note</span><span>⋯ More</span></div>
+        <div class="wo-bf-dots">Set 1 ✓ 55×10<span class="dv">·</span>Set 2 ✓ 60×8<span class="dv">·</span><span class="nw">Set 3 now</span><span class="dv">·</span><span class="up">Set 4</span></div>
+        <div class="wo-bf-chip">🕐 Last time: 55 lb × 8 · 5 days ago</div>
+        <div class="wo-bf-score">⚡ Hit <b>80 lb × 8</b> to level up Chest · 10 pts</div>
+        <div class="wo-bf-lbl">Weight <span class="unit">kg | <b>lb</b></span></div>
+        <div class="wo-bf-step"><div class="btn">−</div><div class="num">60 <i>lb</i></div><div class="btn">+</div></div>
+        <div class="wo-bf-lbl">Reps</div>
+        <div class="wo-bf-step"><div class="btn">−</div><div class="num">8 <i>reps</i></div><div class="btn">+</div></div>
+        <div class="wo-bf-log">✓ Log set</div>
+        <div class="wo-bf-bot">
+          <div class="wo-bf-upnext"><div class="im">🏋️</div>Up next: Cable Fly <span style="margin-left:auto;">⏭</span></div>
+          <div class="wo-bf-ask">✨ Ask coach</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current Easy tier — faithful</div>
+      <div class="cap-why">What ships today: ~22 interactive elements share one column — tier pill, 5 link chips, 3 stat columns, score pill, two steppers, two bottom pills — and the number that actually matters (60 lb) is 30 pt, visually equal to everything around it.</div>
+      <div class="cap-risk"><b>Risk:</b> kept honest — the 124 pt thumbnail and the chip rows eat half the screen users stare at for 50 minutes; nothing here is glanceable from a bench.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- ★ RECO WORKOUT -->
+  <div class="cell" id="reco-wo">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 26px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:12px;color:var(--d-mut);">
+          <span>← Exit</span><span style="font-variant-numeric:tabular-nums;color:var(--d-text);">22:41</span>
+        </div>
+        <div class="rc-rule" style="margin-top:11px;"></div>
+        <div class="lbl lp" style="animation-name:s1;font-size:11.5px;color:var(--d-accent);margin-top:11px;">Set 3 of 4 · Exercise 4 of 8</div>
+        <div class="disp rw-mast lp" style="animation-name:s1;">INCLINE<br>DUMBBELL PRESS</div>
+        <!-- live-screen utilities: ⋯ holds Swap / Superset / Adjust on Easy -->
+        <div class="rw-chips lp" style="animation-name:s2;margin-top:9px;">
+          <div class="rw-lkchip">▶ Video</div>
+          <div class="rw-lkchip">Plan</div>
+          <div class="rw-lkchip">✎ Note</div>
+          <div class="rw-lkchip">🫁 Breathe</div>
+          <div class="rw-lkchip">⋯</div>
+        </div>
+        <div style="flex:.5;"></div>
+        <!-- tap-to-edit numerals (dotted underline + pencil) with ± nudge below -->
+        <div class="disp rw-poster lp" style="animation-name:s2;font-size:72px;"><span class="ed">60</span><small>LB</small><span class="rw-pencil" style="vertical-align:38px;">✎</span><span class="x">×</span><span class="ed">8</span></div>
+        <div class="ser rw-whisper lp" style="animation-name:s3;margin-top:7px;font-size:15.5px;">Last time you did 55. Push.</div>
+        <div class="lp" style="animation-name:s4;">
+          <div class="rw-srow">
+            <span class="k lbl">Weight</span>
+            <div class="rw-sq2">−</div>
+            <div class="val"><div class="disp" style="font-size:28px;line-height:1;">60<small style="font-family:'Barlow Condensed',sans-serif;font-weight:700;">LB</small><span class="rw-pencil" style="vertical-align:11px;font-size:11px;">✎</span></div><div class="rw-track"><i></i></div></div>
+            <div class="rw-sq2">+</div>
+          </div>
+          <div class="rw-srow">
+            <span class="k lbl">Reps</span>
+            <div class="rw-sq2">−</div>
+            <div class="val"><div class="disp" style="font-size:28px;line-height:1;">8<span class="rw-pencil" style="vertical-align:11px;font-size:11px;">✎</span></div><div class="rw-track" style="width:72px;"><i></i></div></div>
+            <div class="rw-sq2">+</div>
+          </div>
+        </div>
+        <div class="rw-cta rc-cta-anim" style="height:52px;margin-top:12px;">Log set — 60 × 8</div>
+        <!-- rest moment after the log press: ember rest ring + quick water (water also lives below, always) -->
+        <div class="rw-rest" style="height:32px;margin-top:9px;">
+          <svg width="26" height="26" viewBox="0 0 30 30">
+            <circle cx="15" cy="15" r="12" fill="none" stroke="var(--d-rule)" stroke-width="2.5"/>
+            <circle cx="15" cy="15" r="12" fill="none" stroke="var(--d-rust)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="75.4" stroke-dashoffset="26" transform="rotate(-90 15 15)"/>
+          </svg>
+          <span class="lbl" style="font-size:11.5px;color:var(--d-text);">Rest 1:30</span>
+          <div class="rw-lkchip" style="margin-left:auto;">💧 +250 ml</div>
+        </div>
+        <div style="flex:1;"></div>
+        <!-- set ledger: persistently visible -->
+        <div class="lp" style="animation-name:s5;">
+          <div class="rw-led" style="padding:7px 2px;"><b>1</b><span>55 × 10</span><span class="ck">✓</span></div>
+          <div class="rw-led" style="padding:7px 2px;"><b>2</b><span>60 × 8</span><span class="ck">✓</span></div>
+          <div class="rw-led act" style="padding:7px 2px;"><b>3</b><span>60 × <span class="cu">—</span></span><span class="dn" style="top:7px;">60 × 8 ✓</span></div>
+        </div>
+        <!-- persistent utilities: coach + water never depend on rest state -->
+        <div class="lp" style="animation-name:s6;display:flex;gap:7px;margin-top:11px;">
+          <div class="rw-lkchip" style="flex:1;justify-content:center;height:32px;font-size:11px;">✦ Ask coach</div>
+          <div class="rw-lkchip" style="justify-content:center;height:32px;font-size:11px;padding:0 16px;">💧 Drink</div>
+        </div>
+        <!-- exercise rail: tap-to-jump, superset via long-press -->
+        <div class="rw-rail lp" style="animation-name:s7;margin-top:12px;justify-content:space-between;">
+          <div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div>
+          <div class="rw-cell cur">4</div>
+          <div class="rw-cell">5</div><div class="rw-cell">6</div><div class="rw-cell">7</div><div class="rw-cell">8</div>
+        </div>
+        <div class="lp" style="animation-name:s8;display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+          <div class="rw-chip" style="height:28px;font-size:10.5px;padding:0 11px;">Next · Cable Fly</div>
+          <span class="lbl" style="font-size:10.5px;color:var(--d-faint);">312 KCAL · 8,420 LB</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature workout — the poster and the whisper</div>
+      <div class="cap-why">Per the product rule — increment pickers are drag bar + custom input, never small chip buttons: each numeral rides a dotted scrub track (rust thumb, ±5 / ±1 snaps) AND is tap-to-type via the ✎, with 52px ± squares for single nudges. Numbers arrive prefilled from last session (the whisper cites 55). The live screen keeps its whole kit: ▶Video/Plan/✎Note/🫁Breathe chips (⋯ holds Swap·Superset·Adjust on Easy), a persistent ✦ Ask-coach + 💧 Drink row independent of rest state, the post-log ember rest moment, the always-visible set ledger, and the 1–8 exercise rail with up-next.</div>
+      <div class="cap-risk"><b>Risk:</b> three input affordances on one value (scrub, type, ±) need one obvious primary in usability testing — and the ⋯ menu hides Swap/Superset one tap deeper than power users may tolerate; the tier switch must stay one obvious gesture away.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ ACTIVE WORKOUT · ADVANCED ════════════════ -->
+<div class="rc-sub">Active workout · Advanced — <b>current → recommended</b></div>
+<div class="row">
+
+  <!-- BEFORE · ADVANCED (faithful to active_workout_screen_refactored.dart V2) -->
+  <div class="cell" id="before-adv">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="av-body">
+        <div class="av-top lp" style="animation-name:s0;">
+          <div class="av-ic">☰</div>
+          <div class="av-tpill">⏸ 22:41</div>
+          <div style="margin-left:auto;display:flex;gap:6px;"><div class="av-ic">♡</div><div class="av-ic">⌄</div><div class="av-ic">✕</div></div>
+        </div>
+        <div class="av-stats lp" style="animation-name:s0;">
+          <div><b>22:41</b><span>DURATION</span></div>
+          <div><b>312 kcal</b><span>CALORIES</span></div>
+          <div><b>8,420 lb</b><span>VOLUME</span></div>
+        </div>
+        <div class="lp" style="animation-name:s1;padding:8px 14px 0;display:flex;align-items:flex-start;">
+          <div style="flex:1;">
+            <div style="font-size:19px;font-weight:800;color:var(--d-text);">Incline Dumbbell Press</div>
+            <div style="font-size:10.5px;color:var(--d-faint);margin-top:2px;">Progression: Pyramid · +5 lb per set</div>
+          </div>
+          <div style="font-size:11.5px;color:var(--d-mut);white-space:nowrap;padding-top:3px;">♥ 132 · 🔥 312</div>
+        </div>
+        <div class="lp" style="animation-name:s1;padding:5px 14px 0;display:flex;align-items:center;">
+          <span style="font-size:11.5px;color:var(--d-mut);">Set 3 of 4</span>
+          <span class="av-chip" style="margin-left:auto;height:24px;">🌬 Breathing</span>
+        </div>
+        <div class="av-chips lp" style="animation-name:s2;">
+          <span class="av-chip">⇆ Swap</span><span class="av-chip">🎛 Adjust</span><span class="av-chip">📈 Pyramid</span><span class="av-chip">⛓ Superset</span><span class="av-chip">⇋ L·R</span><span class="av-chip">±5 lb</span><span class="av-chip">⋯</span>
+        </div>
+        <div class="av-prog lp" style="animation-name:s2;">
+          <div class="av-ppill">JUN 4<b>55×8</b></div>
+          <div class="av-ppill">JUN 6<b>55×10</b></div>
+          <div class="av-ppill">JUN 9<b>60×8</b></div>
+          <div class="av-ppill tg">TODAY<b>60×8</b></div>
+        </div>
+        <div class="av-th lp" style="animation-name:s3;">
+          <span class="av-c1">SET</span><span class="av-c2">PREVIOUS</span><span class="av-c3">TARGET</span><span class="av-c4">⇄ LB</span><span class="av-c5">REPS</span><span class="av-c6">RIR</span><span class="av-c7">☑</span>
+        </div>
+        <div class="av-tr done lp" style="animation-name:s3;">
+          <span class="av-c1">1</span><span class="av-c2">50 lb × 10</span><span class="av-c3">55 × 10 · R3</span><span class="av-c4">55</span><span class="av-c5">10</span><span class="av-c6">3</span><span class="av-c7" style="color:#2ECC71;">✓</span>
+        </div>
+        <div class="av-tr done lp" style="animation-name:s4;">
+          <span class="av-c1">2</span><span class="av-c2">55 lb × 8</span><span class="av-c3">60 × 8 · R2</span><span class="av-c4">60</span><span class="av-c5">8</span><span class="av-c6">2</span><span class="av-c7" style="color:#2ECC71;">✓</span>
+        </div>
+        <div class="av-tr act lp" style="animation-name:s5;">
+          <span class="av-c1">3</span><span class="av-c2">55 lb × 8</span><span class="av-c3">60 × 8 · R1</span><span class="av-c4"><span class="av-inp">60</span></span><span class="av-c5"><span class="av-inp">8</span></span><span class="av-c6">1</span><span class="av-c7">☐</span>
+        </div>
+        <div class="av-tr lp" style="animation-name:s5;">
+          <span class="av-c1">4</span><span class="av-c2">55 lb × 6</span><span class="av-c3">60 × 8 · R1</span><span class="av-c4">—</span><span class="av-c5">—</span><span class="av-c6">1</span><span class="av-c7">☐</span>
+        </div>
+        <div class="lp" style="animation-name:s6;padding:6px 14px;font-size:10.5px;color:var(--d-faint);">+ Add set</div>
+        <div style="flex:1;"></div>
+        <div class="av-foot lp" style="animation-name:s7;">
+          <div class="av-aipill">✦</div>
+          <div class="av-qa"><span>📖 Instructions</span><span>▶ Video</span><span>💧 Hydration</span><span>📝 Note</span></div>
+        </div>
+        <div class="av-thumbs lp" style="animation-name:s8;">
+          <div class="av-thumb dn">🏋️</div><div class="av-thumb dn">🏋️</div><div class="av-thumb dn">🏋️</div><div class="av-thumb cur">🏋️</div><div class="av-thumb">🏋️</div><div class="av-thumb">🏋️</div><div class="av-thumb">🏋️</div><div class="av-thumb" style="color:#71717A;">＋</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current Advanced tier — faithful</div>
+      <div class="cap-why">What ships today (V2 builder): top bar + Duration/Calories/Volume strip, title with live ♥/🔥, progression subtitle, breathing chip, a 7-chip action row, last-3-sessions progression strip, then the SET·PREVIOUS·TARGET·LB·REPS·RIR·☑ table with inline editable inputs, + Add set, the compact ✦ AI pill, the Instructions/Video/Hydration/Note row and the thumbnail strip.</div>
+      <div class="cap-risk"><b>Honest read:</b> the spreadsheet power is real (Strong/Hevy users expect exactly this) but ten stacked zones share one screen — the table the lifter actually reads gets barely a third of it.</div>
+    </div>
+  </div>
+
+  <!-- ★ RECO · ADVANCED -->
+  <div class="cell" id="reco-adv">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:52px 24px 22px;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:12px;color:var(--d-mut);">
+          <span>← Exit</span><span style="font-variant-numeric:tabular-nums;color:var(--d-text);">22:41</span>
+        </div>
+        <div class="rc-rule" style="margin-top:9px;"></div>
+        <div class="lp" style="animation-name:s1;display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;">
+          <span class="lbl" style="font-size:11px;color:var(--d-accent);">Exercise 4 of 8 · Advanced</span>
+          <span class="lbl" style="font-size:10.5px;color:var(--d-mut);"><span style="color:#EF4444;animation:rcBlink 1.1s steps(1) infinite;">♥</span> 132 · 🔥 312</span>
+        </div>
+        <div class="disp rw-mast lp" style="animation-name:s1;font-size:23px;margin-top:5px;">INCLINE DUMBBELL PRESS</div>
+        <div class="lbl lp" style="animation-name:s1;font-size:10px;color:var(--d-mut);margin-top:3px;">Pyramid · +5 lb per set</div>
+        <!-- the tier's power tools -->
+        <div class="rw-chips lp" style="animation-name:s2;margin-top:9px;">
+          <div class="rw-lkchip">Swap</div>
+          <div class="rw-lkchip">Adjust</div>
+          <div class="rw-lkchip">Pyramid</div>
+          <div class="rw-lkchip">Superset</div>
+          <div class="rw-lkchip">L·R</div>
+        </div>
+        <!-- last sessions + today's target -->
+        <div class="ra-hist lp" style="animation-name:s2;margin-top:9px;">
+          <span class="ra-hpill">Jun 4 · 55×8</span>
+          <span class="ra-hpill">Jun 6 · 55×10</span>
+          <span class="ra-hpill">Jun 9 · 60×8</span>
+          <span class="ra-hpill tg">Today · 60×8</span>
+        </div>
+        <div style="height:8px"></div>
+        <!-- full set table on hairlines: every V2 column kept -->
+        <div class="ra-th lp" style="animation-name:s3;">
+          <span class="ra-c1">Set</span><span class="ra-c2">Prev</span><span class="ra-c3">Target</span><span class="ra-c4">LB</span><span class="ra-c5">Reps</span><span class="ra-c6">RIR</span><span class="ra-c7">✓</span>
+        </div>
+        <div class="ra-tr done lp" style="animation-name:s3;">
+          <span class="ra-c1">1</span><span class="ra-c2">50 × 10</span><span class="ra-c3 ra-tg">55×10·R3</span><span class="ra-c4">55</span><span class="ra-c5">10</span><span class="ra-c6">3</span><span class="ra-c7 ck">✓</span>
+        </div>
+        <div class="ra-tr done lp" style="animation-name:s4;">
+          <span class="ra-c1">2</span><span class="ra-c2">55 × 8</span><span class="ra-c3 ra-tg">60×8·R2</span><span class="ra-c4">60</span><span class="ra-c5">8</span><span class="ra-c6">2</span><span class="ra-c7 ck">✓</span>
+        </div>
+        <div class="ra-tr act lp" style="animation-name:s5;">
+          <span class="ra-c1">3</span><span class="ra-c2">55 × 8</span><span class="ra-c3 ra-tg">60×8·R1</span>
+          <span class="ra-c4"><span class="ra-val"><b class="rw-edit">60</b></span></span>
+          <span class="ra-c5"><span class="ra-val"><b class="rw-edit">8</b></span></span>
+          <span class="ra-c6">1</span>
+          <span class="ra-c7" style="color:var(--d-faint);">☐</span>
+        </div>
+        <!-- edit strip: slides out beneath the active row mid-loop — big targets, scrub to adjust, tap numeral to type -->
+        <div class="ra-strip">
+          <div class="inner">
+            <div class="ra-lane">
+              <div class="ra-big">−</div>
+              <div class="ra-scrub"><i class="tk"></i><span class="gh" style="left:13%;">55</span><span class="th">60 LB</span><span class="gh" style="right:13%;">65</span></div>
+              <div class="ra-big">+</div>
+            </div>
+            <div class="ra-lane" style="margin-top:6px;">
+              <div class="ra-big sm">−</div>
+              <div class="ra-scrub sm"><i class="tk"></i><span class="gh" style="left:13%;">7</span><span class="th">8 REPS</span><span class="gh" style="right:13%;">9</span></div>
+              <div class="ra-big sm">+</div>
+            </div>
+          </div>
+        </div>
+        <div class="ra-tr dim lp" style="animation-name:s6;">
+          <span class="ra-c1">4</span><span class="ra-c2">55 × 6</span><span class="ra-c3 ra-tg">60×8·R1</span><span class="ra-c4">60</span><span class="ra-c5">8</span><span class="ra-c6">1</span><span class="ra-c7">—</span>
+        </div>
+        <div class="ra-add lp" style="animation-name:s6;">+ Add set</div>
+        <div class="rw-cta rc-cta-anim" style="height:46px;margin-top:8px;">Log set — 60 × 8</div>
+        <!-- utilities: breathing, water, notes, coach — all live on the page -->
+        <div class="ra-util lp" style="animation-name:s7;margin-top:9px;">
+          <div class="rw-lkchip">🫁 Breathe</div>
+          <div class="rw-lkchip">💧 Drink</div>
+          <div class="rw-lkchip">✎ Note</div>
+          <div class="rw-lkchip">✦ Ask coach</div>
+        </div>
+        <div style="flex:1;"></div>
+        <!-- exercise rail: tap-to-jump -->
+        <div class="rw-rail lp" style="animation-name:s8;justify-content:space-between;">
+          <div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div><div class="rw-cell dn">✓</div>
+          <div class="rw-cell cur">4</div>
+          <div class="rw-cell">5</div><div class="rw-cell">6</div><div class="rw-cell">7</div><div class="rw-cell">8</div>
+        </div>
+        <div class="lp" style="animation-name:s9;display:flex;justify-content:space-between;align-items:center;margin-top:11px;">
+          <div class="rw-chip" style="height:28px;font-size:10.5px;padding:0 11px;">Next · Cable Fly</div>
+          <span class="lbl" style="font-size:10.5px;color:var(--d-faint);">22:41 · 312 KCAL · 8,420 LB</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature Advanced — the full cockpit, composed</div>
+      <div class="cap-why">Every capability of the current V2 builder is present, restyled not removed: live ♥/🔥 telemetry, Pyramid progression subtitle, the Swap·Adjust·Pyramid·Superset·L·R power chips, the last-3-sessions strip with today's target, the complete SET·PREV·TARGET·LB·REPS·RIR·✓ table, + Add set, Breathe/Drink/Note/Ask-coach utilities, the numbered exercise rail, and session telemetry. Editing follows the product rule — drag bar + custom input, never tiny chips: the active row highlights on the orange rule and an EDIT STRIP slides out beneath it — 48px ± squares flanking a dotted scrub track (±5 snaps, ghost 55‥60‥65, tap the thumb to type) with a thin REPS lane at ±1.</div>
+      <div class="cap-risk"><b>Risk:</b> the slide-out strip adds ~90px when open — on SE-class screens the rail may dip under the fold during editing; the strip must collapse on log to give the space back.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ NUTRITION ════════════════ -->
+<div class="rc-sub">Nutrition — <b>current → recommended</b></div>
+<div class="row">
+
+<div class="sx-nu" style="display:contents">
+<div class="cell" id="before-nu-rc">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nupad" style="padding:56px 16px 0;">
+        <div class="nb-seg lp" style="animation-name:s0;"><span class="on">Daily</span><span>Recipes</span><span>Patterns</span></div>
+        <div style="height:10px"></div>
+        <div class="nb-date lp" style="animation-name:s0;"><span>‹</span><b>Today · Wed, Jun 11</b><span>›</span></div>
+        <div style="height:10px"></div>
+        <!-- hero: calorie ring + macro pills -->
+        <div class="nb-card lp" style="animation-name:s1;padding:12px;display:flex;gap:12px;align-items:center;">
+          <svg width="106" height="106" viewBox="0 0 106 106" style="flex:none;">
+            <circle cx="53" cy="53" r="44" fill="none" stroke="#262626" stroke-width="8"/>
+            <circle class="nuring" cx="53" cy="53" r="44" fill="none" stroke="#F97316" stroke-width="8" stroke-linecap="round"
+              stroke-dasharray="276.5" stroke-dashoffset="276.5" style="--off:94;" transform="rotate(-90 53 53)"/>
+            <text x="53" y="51" text-anchor="middle" fill="#FAFAFA" font-size="16.5" font-weight="800" font-family="Inter">1,460</text>
+            <text x="53" y="66" text-anchor="middle" fill="#71717A" font-size="8.5" font-weight="600" font-family="Inter">of 2,200 kcal</text>
+          </svg>
+          <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+            <div class="nb-pill" style="background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.22);">
+              <div class="chip" style="background:rgba(168,85,247,.24);">🍖</div><div class="plbl">PROTEIN</div>
+              <div class="pval" style="color:#A855F7;">96 <i>/ 140g</i></div>
+            </div>
+            <div class="nb-pill" style="background:rgba(6,182,212,.13);border:1px solid rgba(6,182,212,.22);">
+              <div class="chip" style="background:rgba(6,182,212,.22);">🍞</div><div class="plbl">CARBS</div>
+              <div class="pval" style="color:#06B6D4;">142 <i>/ 220g</i></div>
+            </div>
+            <div class="nb-pill" style="background:rgba(249,115,22,.13);border:1px solid rgba(249,115,22,.22);">
+              <div class="chip" style="background:rgba(249,115,22,.22);">🧈</div><div class="plbl">FAT</div>
+              <div class="pval" style="color:#F97316;">48 <i>/ 73g</i></div>
+            </div>
+          </div>
+        </div>
+        <div style="height:13px"></div>
+        <!-- meals -->
+        <div class="lp" style="animation-name:s2;display:flex;flex-direction:column;gap:6px;">
+          <div class="nb-mealhead"><span>🍳</span>Breakfast<span class="sum">340 cal</span><span class="add">+ Add</span></div>
+          <div class="nb-food"><div><div class="fn">Greek Yogurt with Honey</div><div class="fs">1 bowl · 170 g</div></div><div class="fc">220 cal</div></div>
+          <div class="nb-food"><div><div class="fn">Cappuccino</div><div class="fs">12 oz · whole milk</div></div><div class="fc">120 cal</div></div>
+        </div>
+        <div style="height:11px"></div>
+        <div class="lp" style="animation-name:s3;display:flex;flex-direction:column;gap:6px;">
+          <div class="nb-mealhead"><span>🥗</span>Lunch<span class="sum">730 cal</span><span class="add">+ Add</span></div>
+          <div class="nb-food"><div><div class="fn">Salmon Poke Bowl</div><div class="fs">1 bowl · 420 g</div></div><div class="fc">640 cal</div></div>
+          <div class="nb-food"><div><div class="fn">Iced Matcha</div><div class="fs">16 oz · oat milk</div></div><div class="fc">90 cal</div></div>
+        </div>
+        <div style="height:11px"></div>
+        <div class="lp" style="animation-name:s4;display:flex;flex-direction:column;gap:6px;">
+          <div class="nb-mealhead"><span>🍎</span>Snacks<span class="sum">410 cal</span><span class="add">+ Add</span></div>
+          <div class="nb-food"><div><div class="fn">Almond Croissant</div><div class="fs">1 pastry · 95 g</div></div><div class="fc">410 cal</div></div>
+        </div>
+        <div style="height:12px"></div>
+        <!-- hydration -->
+        <div class="nb-card lp" style="animation-name:s5;padding:11px 12px;">
+          <div style="display:flex;align-items:center;font-size:12.5px;font-weight:700;"><span style="margin-right:7px;">💧</span>Water
+            <span style="margin-left:auto;font-size:11px;color:#A1A1AA;font-weight:600;">1.4 of 2.5 L</span></div>
+          <div style="height:6px;background:#262626;border-radius:3px;margin-top:8px;overflow:hidden;"><div class="nufill" style="--w:56%;background:#38BDF8;"></div></div>
+          <div style="display:flex;gap:6px;margin-top:8px;">
+            <span style="font-size:10px;font-weight:700;color:#38BDF8;border:1px solid rgba(56,189,248,.3);border-radius:99px;padding:3px 9px;">+ 250 ml</span>
+            <span style="font-size:10px;font-weight:700;color:#38BDF8;border:1px solid rgba(56,189,248,.3);border-radius:99px;padding:3px 9px;">+ 500 ml</span>
+            <span style="font-size:10px;font-weight:700;color:#A1A1AA;border:1px solid #262626;border-radius:99px;padding:3px 9px;">Custom</span>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="nb-nav"><div><i>⌂</i>Home</div><div><i>🏋</i>Workouts</div><div class="on"><i>🍽</i>Nutrition</div><div><i>✦</i>Discover</div><div><i>👤</i>Profile</div></div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current Daily tab — faithful</div>
+      <div class="cap-why">What ships today: glass cards on OLED black, calorie ring + emoji macro pills, plain-text food rows, inline water card. Functional, dense, zero food imagery — every row looks identical regardless of what was eaten.</div>
+      <div class="cap-risk"><b>Honest read:</b> nothing here is broken; it's just anonymous. The log of a great food day looks exactly like a spreadsheet.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- ★ RECO NUTRITION (dark) -->
+  <div class="cell" id="reco-nu">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:54px 24px 0;">
+        <!-- segmented tabs + saved hub -->
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:16px;">
+          <div class="rn-tab on">Daily</div>
+          <div class="rn-tab">Recipes</div>
+          <div class="rn-tab">Patterns</div>
+          <span class="rn-chip" style="margin-left:auto;gap:4px;"><span style="filter:grayscale(1);font-size:11px;">🔖</span>Saved</span>
+          <span class="rc-coachbtn" style="margin-left:-8px;">✦</span>
+        </div>
+        <div style="height:9px"></div>
+        <!-- date nav: tappable chevrons swap dates -->
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:12px;">
+          <span class="rn-chev">‹</span>
+          <span class="rn-kick" style="flex:1;text-align:center;">Today — June 11</span>
+          <span class="rn-chev">›</span>
+        </div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:center;gap:11px;margin-top:4px;">
+          <div class="disp" style="font-size:54px;line-height:.95;">1,460</div>
+          <span class="rn-chip">Targets · 2,200 kcal ▸</span>
+        </div>
+        <div style="height:8px"></div>
+        <div class="rn-track lp" style="animation-name:s1;"><i class="rc-fill" style="background:var(--d-accent);--w:66%;"></i></div>
+        <div style="height:8px"></div>
+        <!-- consumed / target + remaining at a glance -->
+        <div class="rn-mline lp" style="animation-name:s2;">
+          <div class="g"><i style="background:#A855F7;"></i><b>96<u>/160</u></b><span class="mk">P</span></div>
+          <div class="g"><i style="background:#06B6D4;"></i><b>142<u>/220</u></b><span class="mk">C</span></div>
+          <div class="g"><i style="background:#F97316;"></i><b>48<u>/73</u></b><span class="mk">F</span></div>
+        </div>
+        <div class="lbl lp" style="animation-name:s2;font-size:10px;color:var(--d-rust);margin-top:6px;">64g protein left · 740 kcal left</div>
+        <div style="height:9px"></div>
+        <!-- meal ledger: tap a row to expand its foods -->
+        <div class="rn-led lp" style="animation-name:s3;border-top:1px solid var(--d-rule);padding:7px 2px;">
+          <span class="lk">Breakfast</span><b style="font-size:12px;font-weight:700;color:var(--d-text);">340 cal</b><span style="margin-left:auto;color:var(--d-faint);">›</span>
+        </div>
+        <div class="rn-led lp" style="animation-name:s3;padding:7px 2px;">
+          <span class="lk">Lunch</span><b style="font-size:12px;font-weight:700;color:var(--d-text);">730 cal</b><span style="margin-left:auto;color:var(--d-faint);">›</span>
+        </div>
+        <div class="rn-led lp" style="animation-name:s4;padding:7px 2px;">
+          <span class="lk">Snacks</span><b style="font-size:12px;font-weight:700;color:var(--d-text);">410 cal</b><span style="margin-left:auto;color:var(--d-faint);">›</span>
+        </div>
+        <div style="height:9px"></div>
+        <!-- the conversation: renders pop harder on dark -->
+        <div class="rn-kick lp" style="animation-name:s5;font-size:10px;">Log</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:7px;">
+          <div class="rn-bub lp" style="animation-name:s5;">Salmon poke bowl and an iced matcha</div>
+          <div class="rn-entry lp" style="animation-name:s6;">
+            <span class="food3d" style="font-size:56px;animation:foodFloat 4.5s ease-in-out infinite;filter:drop-shadow(0 16px 20px rgba(0,0,0,.55));">🍣</span>
+            <div><div class="nm">Salmon Poke Bowl + Iced Matcha</div><div class="sv">1 bowl · 16 oz oat-milk matcha</div><div class="dt">730 cal<span>43P · 58C · 25F</span></div></div>
+          </div>
+          <div class="rn-coach lp" style="animation-name:s6;">Solid protein day so far.</div>
+        </div>
+        <div style="height:9px"></div>
+        <!-- the rest of the daily kit: water · fasting · micros -->
+        <div class="rn-led lp" style="animation-name:s7;border-top:1px solid var(--d-rule);padding:7px 2px;">
+          <span class="lk">Water</span>
+          <b style="font-size:12px;font-weight:700;color:var(--d-text);">1.4 / 2.5 L</b>
+          <span class="rn-chip" style="margin-left:auto;">+250</span><span class="rn-chip">+500</span>
+        </div>
+        <div class="rn-led lp" style="animation-name:s7;padding:7px 2px;">
+          <span class="lk">Fasting</span>
+          <b style="font-size:12px;font-weight:700;color:var(--d-text);">14:10 since dinner</b>
+          <span style="margin-left:auto;color:var(--d-faint);">›</span>
+        </div>
+        <div class="rn-led lp" style="animation-name:s8;padding:7px 2px;">
+          <span class="lk">Micros</span>
+          <b style="font-size:11px;font-weight:600;color:var(--d-text);">Iron 62% · Mg 78% · Vit D 41%</b>
+          <span style="margin-left:auto;color:var(--d-faint);font-size:10.5px;white-space:nowrap;">full panel ›</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="rn-input lp" style="animation-name:s9;">
+          <span class="ph"><i class="p1">Log food, water, anything…</i><i class="p2">had 500ml water 💧</i></span>
+          <span class="cam">📷</span><span class="cam">▥</span><span class="cam">🎤</span>
+          <div class="rn-send">↑</div>
+        </div>
+        <div style="height:84px"></div>
+      </div>
+      <nav class="rc-nav2 lp" style="animation-name:s9;">
+        <div class="it"><span class="gl">🏠</span><span class="lb">Home</span></div>
+        <div class="it"><span class="gl">🏋️</span><span class="lb">Workouts</span></div>
+        <div class="it"><span class="gl">✦</span><span class="lb">Coach</span></div>
+        <div class="it on"><span class="gl">🍽️</span><span class="lb">Nutrition</span></div>
+        <div class="it"><span class="gl">👤</span><span class="lb">You</span></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature nutrition — all-dark, kit complete</div>
+      <div class="cap-why">Every daily question has an on-screen answer: ‹ › chevrons swap dates; "TARGETS · 2,200 KCAL ▸" by the numeral opens program/targets editing; macros read consumed/target with the rust "left" line; the meal ledger answers "what did I eat at breakfast." The composer is a LOG-ANYTHING bar — "Log food, water, anything…" with 📷/▥/🎤 jumping straight to camera, barcode or voice, the field itself opening the full log sheet, and a cycling ghost example ("had 500ml water") demoing the shipped water-in-text path. 🔖 SAVED is now a labeled chip (saved foods, menus, recipes); ✦ is the tab's coach entry; tapping any logged food opens the food detail (log-type badge, photos, edit — see the kit frames).</div>
+      <div class="cap-risk"><b>Risk:</b> the composer now carries four affordances (text, camera, barcode, mic) — icon order must match real usage frequency or it reads as clutter; and the frame still runs at its vertical budget on shorter screens.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ STATS ════════════════ -->
+<div class="rc-sub">Stats — <b>current → recommended</b></div>
+<div class="row">
+
+<div class="sx-st" style="display:contents">
+<div class="cell" id="before-st-rc">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:58px 16px 0;">
+        <!-- PillAppBar -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="stbf-circ">‹</div>
+          <div style="flex:1;text-align:center;font-size:16px;font-weight:700;">Stats &amp; Scores</div>
+          <div class="stbf-circ" style="font-size:12px;">📅</div>
+          <div class="stbf-circ" style="font-size:12px;">⬇️</div>
+          <div class="stbf-circ" style="font-size:12px;">⬆️</div>
+        </div>
+        <!-- pill tab bar -->
+        <div style="display:flex;gap:8px;margin-top:12px;overflow:hidden;">
+          <div class="stbf-pill on"><span style="font-size:11px;">▦</span>Overview</div>
+          <div class="stbf-pill"><span style="font-size:11px;">🏆</span>Strength</div>
+          <div class="stbf-pill"><span style="font-size:11px;">💪</span>Muscle</div>
+          <div class="stbf-pill"><span style="font-size:11px;">⚡</span>Readine…</div>
+        </div>
+        <!-- 2-up score cards -->
+        <div style="display:flex;gap:12px;margin-top:14px;">
+          <div class="stbf-card lp" style="flex:1;padding:14px;text-align:center;animation-name:s0;">
+            <div class="stbf-hexw" style="display:flex;justify-content:center;"><div class="stbf-hex"><div class="stbf-hexin">742</div></div></div>
+            <div style="font-size:14px;font-weight:700;margin-top:8px;">Advanced</div>
+            <div style="font-size:11px;color:var(--d-mut);margin-top:2px;">Strength Score</div>
+            <div style="font-size:10.5px;color:#2ECC71;font-weight:600;margin-top:4px;">▲ +18 this week</div>
+          </div>
+          <div class="stbf-card lp" style="flex:1;padding:14px;text-align:center;animation-name:s1;">
+            <svg width="58" height="58" viewBox="0 0 60 60" style="display:block;margin:0 auto;">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="#27272A" stroke-width="5"/>
+              <circle cx="30" cy="30" r="26" fill="none" stroke="#2ECC71" stroke-width="5" stroke-linecap="round"
+                transform="rotate(-90 30 30)" stroke-dasharray="163.4"
+                style="--dash:163.4;--off:29.4;animation:stArc 10s ease-out infinite;"/>
+              <text x="30" y="35" text-anchor="middle" fill="#FAFAFA" font-size="15" font-weight="800" font-family="Inter">82%</text>
+            </svg>
+            <div style="font-size:14px;font-weight:700;margin-top:8px;">Recovered</div>
+            <div style="font-size:11px;color:var(--d-mut);margin-top:2px;">Readiness</div>
+            <div style="font-size:10.5px;color:var(--d-faint);margin-top:4px;">Train hard today</div>
+          </div>
+        </div>
+        <!-- weekly volume card -->
+        <div class="stbf-card lp" style="margin-top:12px;padding:14px;animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-size:13.5px;font-weight:700;">Weekly Volume</div>
+            <div style="font-size:12px;font-weight:700;color:#3B82F6;">42.8k lb</div>
+          </div>
+          <div style="position:relative;height:104px;margin-top:12px;">
+            <div style="position:absolute;left:0;right:0;top:0;border-top:1px dashed #27272A;"></div>
+            <div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed #27272A;"></div>
+            <div class="st-chart" style="position:absolute;inset:0;">
+              <div class="st-col"><div class="st-bar" style="height:77px;background:linear-gradient(180deg,#60A5FA,#3B82F6);"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="background:#27272A;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:85px;background:linear-gradient(180deg,#60A5FA,#3B82F6);animation-delay:.08s;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:65px;background:linear-gradient(180deg,#60A5FA,#3B82F6);animation-delay:.16s;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="background:#27272A;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:104px;background:linear-gradient(180deg,#93C5FD,#3B82F6);animation-delay:.24s;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:63px;background:linear-gradient(180deg,#60A5FA,#3B82F6);animation-delay:.32s;"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;margin-top:6px;">
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Mon</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Tue</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Wed</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Thu</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Fri</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:#A1A1AA;font-weight:600;">Sat</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Sun</div>
+          </div>
+        </div>
+        <!-- recent PRs card -->
+        <div class="stbf-card lp" style="margin-top:12px;padding:12px 14px;animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-size:13.5px;font-weight:700;">Recent PRs</div>
+            <div style="font-size:11px;color:#F97316;font-weight:600;">See all ›</div>
+          </div>
+          <div style="margin-top:4px;">
+            <div class="stbf-prrow lp" style="animation-name:s4;">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:13px;">🏆</div>
+              <div style="flex:1;"><div style="font-size:12.5px;font-weight:600;">Bench Press</div><div style="font-size:10px;color:var(--d-faint);">Jun 9</div></div>
+              <div style="font-size:12.5px;font-weight:700;">185 lb × 5</div>
+              <div style="font-size:9.5px;font-weight:700;color:#2ECC71;background:rgba(46,204,113,.12);padding:3px 7px;border-radius:8px;">+5</div>
+            </div>
+            <div class="stbf-prrow lp" style="animation-name:s5;">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:13px;">🏆</div>
+              <div style="flex:1;"><div style="font-size:12.5px;font-weight:600;">Squat</div><div style="font-size:10px;color:var(--d-faint);">Jun 6</div></div>
+              <div style="font-size:12.5px;font-weight:700;">245 lb × 3</div>
+              <div style="font-size:9.5px;font-weight:700;color:#2ECC71;background:rgba(46,204,113,.12);padding:3px 7px;border-radius:8px;">+10</div>
+            </div>
+            <div class="stbf-prrow lp" style="animation-name:s6;">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:13px;">🏆</div>
+              <div style="flex:1;"><div style="font-size:12.5px;font-weight:600;">Barbell Row</div><div style="font-size:10px;color:var(--d-faint);">Jun 4</div></div>
+              <div style="font-size:12.5px;font-weight:700;">165 lb × 8</div>
+              <div style="font-size:9.5px;font-weight:700;color:#2ECC71;background:rgba(46,204,113,.12);padding:3px 7px;border-radius:8px;">+5</div>
+            </div>
+          </div>
+        </div>
+        <!-- compact stats strip -->
+        <div class="stbf-card lp" style="margin-top:12px;padding:12px 8px;display:flex;animation-name:s7;">
+          <div style="flex:1;text-align:center;"><div style="font-size:16px;font-weight:800;">14</div><div style="font-size:9.5px;color:var(--d-faint);">Workouts</div></div>
+          <div style="width:1px;background:rgba(38,38,38,.6);"></div>
+          <div style="flex:1;text-align:center;"><div style="font-size:16px;font-weight:800;">3</div><div style="font-size:9.5px;color:var(--d-faint);">PRs</div></div>
+          <div style="width:1px;background:rgba(38,38,38,.6);"></div>
+          <div style="flex:1;text-align:center;"><div style="font-size:16px;font-weight:800;">82%</div><div style="font-size:9.5px;color:var(--d-faint);">Readiness</div></div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current stats hub — glass cards + colored pills</div>
+      <div class="cap-why">Faithful: PillAppBar with calendar/export/share, scrollable colored icon-pills (blue active, glow), hexagon strength badge, glass cards, blue gradient bars. Competent but generic — every element is a rounded dark card.</div>
+      <div class="cap-risk"><b>Tell:</b> six surfaces, six identical card treatments; the score, the chart and a stat strip all carry the same visual weight.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- ★ RECO STATS -->
+  <div class="cell" id="reco-st">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:58px 24px 0;">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--d-mut);"><span>Week 24 — June 2026</span><span style="display:inline-flex;align-items:center;gap:8px;"><span style="color:var(--d-faint);">Export ↗</span><span class="rc-coachbtn">✦</span></span></div>
+        <div class="disp lp" style="animation-name:s0;font-size:46px;line-height:1;margin-top:4px;">STATS</div>
+        <div style="display:flex;gap:20px;margin-top:11px;">
+          <div class="rs-tab on">Overview</div><div class="rs-tab">Strength</div><div class="rs-tab">Muscle</div><div class="rs-tab">Readiness</div>
+        </div>
+        <div class="rc-rule"></div>
+        <!-- score -->
+        <div class="lp" style="animation-name:s1;display:flex;align-items:flex-end;gap:14px;margin-top:12px;">
+          <div class="disp" style="font-size:96px;line-height:.92;">742</div>
+          <div style="padding-bottom:8px;">
+            <div class="lbl" style="font-size:11px;color:var(--d-accent);">+18 this week</div>
+            <div class="lbl" style="font-size:10.5px;color:var(--d-mut);margin-top:4px;">Advanced</div>
+          </div>
+          <div style="margin-left:auto;position:relative;width:64px;height:64px;">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="27" fill="none" stroke="var(--d-rule)" stroke-width="3"/>
+              <circle class="rc-ring" cx="32" cy="32" r="27" fill="none" stroke="var(--d-rust)" stroke-width="3" stroke-linecap="round" stroke-dasharray="170" transform="rotate(-90 32 32)" style="--c:170;--dash:31;"/>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div class="disp" style="font-size:17px;">82</div>
+              <div class="lbl" style="font-size:7px;color:var(--d-faint);letter-spacing:1.5px;">RDNS</div>
+            </div>
+          </div>
+        </div>
+        <!-- volume -->
+        <div class="lp" style="animation-name:s2;margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div class="lbl" style="font-size:11px;color:var(--d-mut);">Volume — WK 24</div>
+            <div class="lbl" style="font-size:11px;">42.8K LB</div>
+          </div>
+          <div class="rs-chart" style="margin-top:11px;">
+            <div class="rs-col"><div class="rs-bar" style="height:62px;"></div></div>
+            <div class="rs-col"><div class="rs-bar" style="height:2px;background:var(--d-rule);animation:none;"></div></div>
+            <div class="rs-col"><div class="rs-bar" style="height:68px;animation-delay:.07s;"></div></div>
+            <div class="rs-col"><div class="rs-bar" style="height:53px;animation-delay:.14s;"></div></div>
+            <div class="rs-col"><div class="rs-bar" style="height:2px;background:var(--d-rule);animation:none;"></div></div>
+            <div class="rs-col"><div class="rs-bar hi" style="height:84px;animation-delay:.21s;"></div></div>
+            <div class="rs-col"><div class="rs-bar" style="height:50px;animation-delay:.28s;"></div></div>
+          </div>
+          <div class="rc-rule"></div>
+          <div style="display:flex;margin-top:4px;">
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">M</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">T</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">W</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">T</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">F</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-text);">S</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">S</div>
+          </div>
+        </div>
+        <!-- PR ledger -->
+        <div class="lp" style="animation-name:s3;margin-top:14px;">
+          <div class="lbl" style="font-size:11px;color:var(--d-mut);">Personal records — June</div>
+          <div class="rs-led lp" style="animation-name:s4;">
+            <span class="nm">Bench Press <span class="food3d" style="font-size:15px;display:inline-block;animation:foodFloat 4.5s ease-in-out infinite;">🏆</span></span>
+            <span class="vl">185 LB × 5</span><span class="dtx">06.09</span>
+          </div>
+          <div class="rs-led lp" style="animation-name:s5;"><span class="nm">Squat</span><span class="vl">245 × 3</span><span class="dtx">06.06</span></div>
+          <div class="rs-led lp" style="animation-name:s6;"><span class="nm">Barbell Row</span><span class="vl">165 × 8</span><span class="dtx">06.04</span></div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="lbl lp" style="animation-name:s7;font-size:10px;color:var(--d-faint);padding-bottom:20px;">14 sessions this month · top day Sat 11.3K</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature stats — the annual report</div>
+      <div class="cap-why">A's ledger logic verbatim: Anton 96pt score, Barlow text-tabs, precise gray bars with the max day as the page's loudest orange, PRs as typographic rows. D's readiness arc renders in rust as a thin instrument, and E contributes the tiny 3D trophy that marks the newest PR — the one playful object on a serious page.</div>
+      <div class="cap-risk"><b>Risk:</b> rule-only structure demands pixel-perfect baseline discipline in Flutter — one misaligned hairline and the spread reads broken; budget real layout QA time per locale.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════════════════ WORKOUT COMPLETE ════════════════ -->
+<div class="rc-sub">Workout complete — <b>current → recommended</b></div>
+<div class="row">
+
+<div class="sx-cp" style="display:contents">
+<div class="cell" id="before-cp-rc">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <!-- generic confetti, honestly representing today -->
+      <i class="bf-conf" style="left:8%; background:#F97316; animation-delay:0s;"></i>
+      <i class="bf-conf" style="left:20%; background:#A855F7; animation-delay:.7s;"></i>
+      <i class="bf-conf" style="left:33%; background:#FFD54A; animation-delay:1.5s;"></i>
+      <i class="bf-conf" style="left:47%; background:#06B6D4; animation-delay:.3s;"></i>
+      <i class="bf-conf" style="left:60%; background:#F97316; animation-delay:2.1s;"></i>
+      <i class="bf-conf" style="left:72%; background:#2ECC71; animation-delay:1.1s;"></i>
+      <i class="bf-conf" style="left:84%; background:#A855F7; animation-delay:1.8s;"></i>
+      <i class="bf-conf" style="left:93%; background:#FFD54A; animation-delay:.5s;"></i>
+      <div class="cp-pad" style="padding:54px 18px 12px;">
+        <!-- title row -->
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="bf-check">✓</div>
+          <div>
+            <div style="font-size:17px; font-weight:800;">Workout Complete</div>
+            <div style="font-size:11.5px; color:var(--d-mut);">Push Day — Chest &amp; Triceps</div>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- 2x2 stats page (of the 8-stat carousel) -->
+        <div class="bf-grid">
+          <div class="bf-stat"><span class="ic">⏱</span><div class="lb">Duration</div><div class="vl">52 min 18 sec</div></div>
+          <div class="bf-stat"><span class="ic">🔥</span><div class="lb">Energy</div><div class="vl">386<small>kcal</small></div></div>
+          <div class="bf-stat"><span class="ic">🏋️</span><div class="lb">Volume</div><div class="vl">9,840<small>lb</small></div></div>
+          <div class="bf-stat"><span class="ic">▤</span><div class="lb">Sets</div><div class="vl">24</div></div>
+        </div>
+        <div style="display:flex; justify-content:center; gap:5px; margin-top:7px;">
+          <span style="width:16px; height:5px; border-radius:3px; background:var(--d-accent);"></span>
+          <span style="width:5px; height:5px; border-radius:3px; background:#3f3f46;"></span>
+        </div>
+        <div style="height:9px"></div>
+        <!-- merged coach recap card -->
+        <div class="bf-card">
+          <div style="display:flex; align-items:center; gap:7px; font-size:12px; font-weight:700;">🤖 Coach's Recap <span style="margin-left:auto; color:var(--d-faint); font-size:13px;">⌄</span></div>
+          <div style="font-size:11px; color:var(--d-mut); margin-top:5px; line-height:1.45;">Strong pressing session — incline strength is trending up. Chest + triceps fully covered.</div>
+          <div style="display:flex; gap:5px; margin-top:7px;">
+            <span style="font-size:9.5px; background:rgba(249,115,22,.14); color:var(--d-accent); padding:2px 8px; border-radius:99px;">Chest</span>
+            <span style="font-size:9.5px; background:rgba(249,115,22,.14); color:var(--d-accent); padding:2px 8px; border-radius:99px;">Triceps</span>
+            <span style="font-size:9.5px; background:rgba(168,85,247,.16); color:#C084FC; padding:2px 8px; border-radius:99px;">+240 XP</span>
+          </div>
+        </div>
+        <div style="height:9px"></div>
+        <!-- exercises -->
+        <div class="bf-card" style="padding:9px 12px;">
+          <div style="font-size:12px; font-weight:800;">≡ Exercises</div>
+          <div class="bf-exrow"><div><span class="nm">Incline DB Press</span> <span class="bf-prchip">🏆 PR</span><div class="sm">4×8 · 60 lb avg</div></div><span style="color:var(--d-faint);">⌄</span></div>
+          <div class="bf-exrow"><div><span class="nm">Bench Press</span><div class="sm">4×8 · 185 lb avg</div></div><span style="color:var(--d-faint);">⌄</span></div>
+          <div class="bf-exrow" style="padding-bottom:0;"><div><span class="nm">Cable Fly</span><div class="sm">3×12 · 42.5 lb avg</div></div><span style="color:var(--d-faint);">⌄</span></div>
+        </div>
+        <div style="height:10px"></div>
+        <!-- rating -->
+        <div style="text-align:center; font-size:12.5px; font-weight:700;">How was your workout?</div>
+        <div style="text-align:center; font-size:22px; letter-spacing:5px; margin-top:3px;"><span style="color:var(--d-accent);">★★★★</span><span style="color:#3f3f46;">★</span></div>
+        <div style="height:9px"></div>
+        <!-- trophies card -->
+        <div class="bf-troph">
+          <div class="bf-tico">🏆<span class="bf-tbadge">1</span></div>
+          <div style="flex:1;">
+            <div style="font-size:12.5px; font-weight:800; background:linear-gradient(90deg,#FFD700,#F97316); -webkit-background-clip:text; background-clip:text; color:transparent;">Trophies Earned!</div>
+            <div style="font-size:10.5px; color:rgba(249,115,22,.85); margin-top:1px;">1 PR · 24-day streak — Tap to view</div>
+          </div>
+          <span style="color:var(--d-accent);">›</span>
+        </div>
+        <div style="height:7px"></div>
+        <div class="bf-acts">
+          <span style="color:#A855F7;">＋ Do More</span><span style="color:#E65100;">♨ Sauna</span><span style="color:var(--d-accent);">▤ Summary</span><span style="color:var(--d-mut);">⋮</span>
+        </div>
+        <div style="flex:1"></div>
+        <div class="bf-btnrow">
+          <div class="bf-share">⇪ Share</div>
+          <div class="bf-done">Done</div>
+        </div>
+        <div style="text-align:center; font-size:11px; color:var(--d-mut); margin-top:6px;">Skip rating</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current — the dense receipt</div>
+      <div class="cap-why">Faithful to today: gradient check circle, 2×2 stat carousel, coach recap, expandable exercise rows with the gold PR chip, star rating, orange-purple trophies card, Share + Done bar — and generic multicolor confetti on top.</div>
+      <div class="cap-risk"><b>Honest read:</b> every datum is present but nothing is the moment. The PR — the single most shareable fact — is a 9px chip. Confetti is the same as every other app's.</div>
+    </div>
+  </div>
+</div>
+
+  <!-- ★ RECO COMPLETE -->
+  <div class="cell" id="reco-cp">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="rc-body" style="padding:58px 24px 18px;">
+        <div class="lbl lp" style="animation-name:s0;font-size:11.5px;color:var(--d-mut);">THU JUN 11 · PUSH DAY · CHEST &amp; TRICEPS</div>
+        <div class="disp lp" style="animation-name:rcSlam;font-size:96px;line-height:.92;margin-top:8px;">DONE<span style="color:var(--d-accent);">.</span></div>
+        <div class="ser lp" style="animation-name:s2;font-style:italic;font-size:18px;color:#CBB9A4;margin-top:10px;">That's twenty-four days straight.</div>
+        <div style="height:16px"></div>
+        <!-- stat ledger -->
+        <div class="rp-led lp" style="animation-name:s3;"><span class="k lbl">Time</span><span class="v disp">52:18</span></div>
+        <div class="rp-led lp" style="animation-name:s4;"><span class="k lbl">Volume</span><span class="v disp">9,840<small>LB</small></span></div>
+        <div class="rp-led lp" style="animation-name:s5;"><span class="k lbl">Sets</span><span class="v disp">24</span></div>
+        <div class="rp-led lp" style="animation-name:s6;"><span class="k lbl">Burn</span><span class="v disp">386<small>KCAL</small></span></div>
+        <!-- PR callout -->
+        <div class="rp-pr lp" style="animation-name:s7;">
+          <span class="rp-prtag">PR</span>
+          <div style="flex:1;">
+            <div style="font-size:13.5px;font-weight:700;">Incline Dumbbell Press</div>
+            <div class="lbl" style="font-size:10.5px;color:var(--d-mut);margin-top:2px;">60 LB × 8 — first time</div>
+          </div>
+          <span class="food3d" style="font-size:30px;animation:foodFloat 4.5s ease-in-out infinite;">🏆</span>
+        </div>
+        <div class="lp" style="animation-name:s8;margin-top:12px;"><span class="rp-xp">+240 XP</span></div>
+        <div style="flex:1"></div>
+        <div class="rp-cta rc-cta-anim-late">Share today's work →</div>
+        <div class="lbl lp" style="animation-name:s9;text-align:center;font-size:11.5px;color:var(--d-faint);margin-top:11px;">Done</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">★ RECO</span>Signature complete — the poster and the exhale</div>
+      <div class="cap-why">A's 96pt "DONE." slam is the celebration — no confetti — and the meet-sheet ledger makes the numbers feel official; D's Fraunces line turns the streak into a sentence you feel; E's floating 3D trophy gives the PR row its object. The rust share pill is the page's exit and the share image is this exact layout.</div>
+      <div class="cap-risk"><b>Risk:</b> rating, coach recap and per-exercise breakdown all move behind a swipe-up — if product ever insists they return to page one, the poster collapses back into the receipt.</div>
+    </div>
+  </div>
+
+</div>
+</div>

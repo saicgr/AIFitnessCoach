@@ -1,0 +1,474 @@
+<div class="sx-nv">
+<style>
+/* ===== NAVIGATION SYSTEM proof (sx-nv) — all selectors prefixed, keyframes nv-prefixed ===== */
+
+/* loop-synced viz (10s, matches s0..s9 cadence) */
+@keyframes nvFill { 0%,12%{width:0} 30%,96%{width:var(--w,60%)} 100%{width:0} }
+@keyframes nvUl   { 0%,6%{transform:scaleX(0)} 11%,96%{transform:scaleX(1)} 100%{transform:scaleX(0)} }
+@keyframes nvBlink{ 0%,49%{opacity:1} 50%,100%{opacity:.25} }
+
+/* ---------- THE PINNED NAV — written once, byte-identical in all five frames ----------
+   Every room is dark (.dR): bar #0A0A0B, top hairline #2A2A2E, active label + underline #F97316 */
+.sx-nv .nv-bar { position:absolute; left:0; right:0; bottom:0; height:94px; z-index:30;
+  background:var(--d-bg); border-top:1px solid var(--d-rule);
+  display:flex; align-items:flex-start; padding:11px 8px 0; }
+.sx-nv .nv-it { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.sx-nv .nv-gl { font-size:15px; line-height:1; color:var(--d-mut); filter:grayscale(1); opacity:.55; }
+.sx-nv .nv-lb { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.sx-nv .nv-ul { width:18px; height:2px; border-radius:1px; background:var(--d-accent); transform:scaleX(0); }
+.sx-nv .nv-it.on .nv-gl { filter:none; opacity:1; color:var(--d-accent); }
+.sx-nv .nv-it.on .nv-lb { color:var(--d-accent); }
+.sx-nv .nv-it.on .nv-ul { animation:nvUl 10s ease-out infinite; }
+/* global quick-log "+" — outlined square, docked above the bar ONLY on tabs without a composer
+   (Home, Workouts, You); Coach and Nutrition's composers ARE the entry point, so no "+" there */
+.sx-nv .nv-plus { position:absolute; right:24px; bottom:110px; width:44px; height:44px; z-index:31;
+  border:1px solid var(--d-border); border-radius:6px; background:var(--d-surface2);
+  display:flex; align-items:center; justify-content:center; color:var(--d-accent);
+  font-size:24px; font-weight:300; line-height:1; box-shadow:0 10px 24px rgba(0,0,0,.45); }
+
+/* ---------- shared frame chrome ---------- */
+.sx-nv .nv-body { position:absolute; left:0; right:0; top:0; bottom:94px;
+  display:flex; flex-direction:column; padding:56px 24px 0; overflow:hidden; }
+.sx-nv .nv-rule { height:1px; background:var(--d-rule); }
+.sx-nv .nv-slbl { font-size:11px; color:var(--d-mut); }
+.sx-nv .nv-mast { font-size:40px; line-height:.94; margin-top:8px; }
+.sx-nv .nv-mast .mo { color:var(--d-faint); }
+.sx-nv .nv-fill { display:block; height:100%; border-radius:2px; animation:nvFill 10s ease-out infinite; }
+.sx-nv .nv-dot { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:5px; vertical-align:1px; }
+.sx-nv .nv-cta { display:flex; align-items:center; justify-content:center; height:48px; border-radius:6px;
+  background:var(--d-accent); color:#160B03; font-family:'Barlow Condensed',sans-serif; font-weight:800;
+  font-size:16px; letter-spacing:2.5px; text-transform:uppercase; }
+.sx-nv .nv-chip { display:inline-flex; align-items:center; gap:6px; height:34px; padding:0 14px;
+  border:1px solid var(--d-border); border-radius:6px; font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; font-size:11.5px; letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+/* masthead top-right cluster: quiet ✦ ask-coach on every non-coach tab (never floating, never near + or a composer) */
+.sx-nv .nv-tcl { display:flex; gap:8px; align-items:center; }
+.sx-nv .nv-ask { width:30px; height:30px; border:1px solid var(--d-border); border-radius:6px;
+  background:var(--d-surface2); display:flex; align-items:center; justify-content:center;
+  font-size:12px; color:var(--d-mut); }
+.sx-nv .nv-mchip { display:inline-flex; align-items:center; gap:5px; height:26px; padding:0 10px;
+  border:1px solid var(--d-border); border-radius:6px; font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; font-size:10px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-mut); }
+
+/* ---------- HOME (exact mirror of reco-home) ---------- */
+.sx-nv .nh-greet { font-family:Fraunces,Georgia,serif; font-size:17px; font-style:italic; color:#CBB9A4; margin-top:9px; }
+.sx-nv .nh-coach { display:flex; align-items:baseline; gap:10px; }
+.sx-nv .nh-coach .tx { flex:1; font-size:12.5px; color:#C9C9CF; line-height:1.45; }
+.sx-nv .nh-coach .ch { color:var(--d-faint); font-size:15px; align-self:center; }
+.sx-nv .nh-bell { position:relative; font-size:13px; filter:grayscale(1); opacity:.85; }
+.sx-nv .nh-bell::after { content:''; position:absolute; top:-2px; right:-4px; width:6px; height:6px; border-radius:50%; background:var(--d-accent); }
+.sx-nv .nh-note { display:flex; align-items:center; gap:8px; border:1px solid var(--d-border); border-radius:8px; padding:8px 11px; margin-top:11px; font-size:11.5px; color:#C9C9CF; }
+.sx-nv .nh-note .x { margin-left:auto; color:var(--d-faint); font-size:13px; }
+.sx-nv .nh-task { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 11px; border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--d-mut); }
+.sx-nv .nh-task i { font-style:normal; font-size:11px; color:var(--d-faint); }
+
+/* ---------- WORKOUTS ---------- */
+.sx-nv .nw-wk { display:flex; margin-top:10px; }
+.sx-nv .nw-wd { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.sx-nv .nw-wd .d { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px;
+  letter-spacing:1.5px; color:var(--d-faint); }
+.sx-nv .nw-wd .mk { height:14px; display:flex; align-items:center; font-size:11px; color:var(--d-faint); }
+.sx-nv .nw-wd .mk.ck { color:#5BE49B; font-weight:700; }
+.sx-nv .nw-wd .mk.td i { width:7px; height:7px; border-radius:50%; background:var(--d-accent);
+  display:block; animation:nvBlink 1.4s steps(1) infinite; }
+.sx-nv .nw-wd .nm { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:8.5px;
+  letter-spacing:1.4px; text-transform:uppercase; color:var(--d-mut); }
+.sx-nv .nw-wd.td .d, .sx-nv .nw-wd.td .nm { color:var(--d-accent); }
+.sx-nv .nw-led { display:flex; align-items:baseline; gap:10px; padding:9px 2px;
+  border-bottom:1px solid var(--d-rule); font-size:12px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.sx-nv .nw-led b { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12.5px;
+  letter-spacing:1.5px; text-transform:uppercase; color:var(--d-text); }
+
+/* ---------- COACH ---------- */
+.sx-nv .nc-sub { font-family:Fraunces,Georgia,serif; font-style:italic; font-size:15.5px; color:#CBB9A4; margin-top:8px; }
+.sx-nv .nc-cb { align-self:flex-start; max-width:82%; background:#141416; border:1px solid var(--d-border);
+  border-radius:14px 14px 14px 4px; padding:10px 13px; font-size:12.5px; line-height:1.45; color:#C9C9CF; }
+.sx-nv .nc-ub { align-self:flex-end; max-width:74%; background:rgba(249,115,22,.07);
+  border:1px solid rgba(249,115,22,.4); border-radius:14px 14px 4px 14px; padding:10px 13px;
+  font-size:12.5px; line-height:1.45; color:var(--d-text); }
+.sx-nv .nc-act { display:inline-flex; align-items:center; gap:8px; margin-top:9px; padding:7px 11px;
+  border:1px solid var(--d-border); border-top:2px solid var(--d-accent); border-radius:4px;
+  font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:2px;
+  text-transform:uppercase; color:var(--d-text); }
+.sx-nv .nc-act i { color:#5BE49B; font-style:normal; font-weight:700; }
+.sx-nv .nc-sg { display:inline-flex; align-items:center; height:30px; padding:0 13px;
+  border:1px solid var(--d-border); border-radius:999px; font-family:'Barlow Condensed',sans-serif;
+  font-weight:700; font-size:11px; letter-spacing:1.8px; text-transform:uppercase; color:var(--d-mut); }
+.sx-nv .nc-comp { display:flex; align-items:center; height:46px; border:1px solid var(--d-border);
+  border-radius:8px; background:var(--d-surface2); padding:0 6px 0 14px; font-size:13px; color:var(--d-faint); }
+.sx-nv .nc-comp .att { font-size:13px; opacity:.6; margin-right:9px; }
+.sx-nv .nc-send { margin-left:auto; width:34px; height:34px; border:1px solid var(--d-border); border-radius:6px;
+  display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--d-mut); }
+
+/* ---------- NUTRITION (exact mirror of reco-nu) ---------- */
+.sx-nv .nn-tabs { display:flex; align-items:center; gap:18px; }
+.sx-nv .nn-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--d-faint); padding-bottom:5px; }
+.sx-nv .nn-tab.on { color:var(--d-text); border-bottom:2px solid var(--d-accent); }
+.sx-nv .nn-kick { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:12px;
+  letter-spacing:3px; text-transform:uppercase; color:var(--d-mut); }
+.sx-nv .nn-chev { width:24px; height:24px; flex:0 0 auto; border:1px solid var(--d-border); border-radius:6px;
+  display:inline-flex; align-items:center; justify-content:center; font-size:12px; color:var(--d-mut); }
+.sx-nv .nn-track { height:4px; border-radius:2px; background:var(--d-rule); overflow:hidden; }
+.sx-nv .nn-mline { display:flex; gap:15px; align-items:center; }
+.sx-nv .nn-mline .g { display:flex; align-items:baseline; gap:5px; }
+.sx-nv .nn-mline .g i { width:7px; height:7px; border-radius:50%; align-self:center; }
+.sx-nv .nn-mline .g b { font-family:Anton,sans-serif; font-weight:400; font-size:15px; letter-spacing:.5px; }
+.sx-nv .nn-mline .g b u { text-decoration:none; font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:10.5px; letter-spacing:.5px; color:var(--d-mut); }
+.sx-nv .nn-mline .g .mk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); }
+.sx-nv .nn-entry { display:flex; align-items:center; gap:13px; background:var(--d-surface);
+  border:1px solid var(--d-border); border-radius:16px; padding:11px 15px; box-shadow:0 10px 26px rgba(0,0,0,.4); }
+.sx-nv .nn-entry .nm { font-weight:700; font-size:14.5px; letter-spacing:-.2px; }
+.sx-nv .nn-entry .sv { font-size:11px; color:var(--d-mut); margin-top:1px; }
+.sx-nv .nn-entry .dt { font-size:12.5px; font-weight:700; margin-top:4px; }
+.sx-nv .nn-entry .dt span { font-weight:600; font-size:10.5px; color:var(--d-mut); margin-left:7px; }
+.sx-nv .nn-led { display:flex; align-items:center; gap:10px; padding:8px 2px;
+  border-bottom:1px solid var(--d-rule); }
+.sx-nv .nn-led .lk { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10.5px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--d-mut); width:64px; flex:0 0 auto; }
+.sx-nv .nn-led b { font-size:12px; font-weight:700; color:var(--d-text); font-variant-numeric:tabular-nums; }
+.sx-nv .nn-chip { height:24px; padding:0 10px; border:1px solid var(--d-border); border-radius:999px;
+  display:inline-flex; align-items:center; font-family:'Barlow Condensed',sans-serif; font-weight:700;
+  font-size:10.5px; letter-spacing:1px; color:var(--d-text); }
+.sx-nv .nn-input { display:flex; align-items:center; gap:9px; height:50px; border-radius:999px;
+  background:var(--d-surface); border:1px solid var(--d-border);
+  padding:0 7px 0 16px; font-size:13.5px; color:var(--d-faint); }
+.sx-nv .nn-input .cam { font-size:14px; filter:grayscale(1); opacity:.85; }
+.sx-nv .nn-send { margin-left:auto; width:38px; height:38px; border-radius:50%; background:var(--d-accent);
+  color:#160B03; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+
+/* ---------- YOU ---------- */
+.sx-nv .ny-av { width:46px; height:46px; border:1px solid var(--d-border); border-radius:50%;
+  background:var(--d-surface2); display:flex; align-items:center; justify-content:center;
+  font-family:Anton,sans-serif; font-size:19px; color:var(--d-accent); }
+.sx-nv .ny-lv { display:inline-flex; align-items:center; height:22px; padding:0 9px;
+  border:1px solid var(--d-border); border-radius:3px; font-family:'Barlow Condensed',sans-serif;
+  font-weight:800; font-size:10.5px; letter-spacing:2px; color:var(--d-accent); }
+.sx-nv .ny-led { display:flex; align-items:center; gap:10px; padding:11px 2px;
+  border-bottom:1px solid var(--d-rule); position:relative; }
+.sx-nv .ny-led .k { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px;
+  letter-spacing:2px; text-transform:uppercase; color:var(--d-text); flex:1; }
+.sx-nv .ny-led .v { font-size:12px; color:var(--d-mut); font-variant-numeric:tabular-nums; }
+.sx-nv .ny-led .ch { color:var(--d-faint); font-size:14px; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">System proof</div>
+  <div class="sec-title">ONE NAV, FIVE ROOMS</div>
+  <div class="sec-desc">The five tab roots in the Signature language with a single pinned nav spec, identical in every room; only the active item changes. The outlined quick-log "+" docks only on tabs without a composer — on Coach and Nutrition the composer is the entry. Debuts the Workouts, Coach and You tabs.</div>
+</section>
+
+<div class="row">
+
+  <!-- ════════ TAB 1 — HOME ════════ -->
+  <div class="cell" id="nav-home">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span class="nv-tcl"><span>6,840 steps · 23 🔥</span><span class="nh-bell">🔔</span><span class="nv-ask">✦</span></span></div>
+        <div class="disp nv-mast lp" style="animation-name:s0;">THURSDAY<br><span class="mo">JUNE 11</span></div>
+        <!-- notification banner -->
+        <div class="nh-note lp" style="animation-name:s1;"><span>🏆</span><span>2 trophies earned yesterday ›</span><span class="x">×</span></div>
+        <div class="ser nh-greet lp" style="animation-name:s1;">Evening, Chetan.</div>
+        <div class="nv-rule" style="margin:14px 0 12px;"></div>
+        <!-- session -->
+        <div class="lp" style="animation-name:s2;">
+          <div class="nv-slbl lbl">Today's session</div>
+          <div class="disp" style="font-size:34px;line-height:1;margin-top:6px;">PUSH DAY</div>
+          <div style="font-size:12.5px;color:var(--d-mut);margin-top:5px;">Chest &amp; Triceps · 8 exercises · 52 min</div>
+          <div class="nv-cta" style="margin-top:12px;">Start workout →</div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 12px;"></div>
+        <!-- fuel -->
+        <div class="lp" style="animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="flex:1;">
+              <div class="nv-slbl lbl">Fuel</div>
+              <div style="display:flex;align-items:baseline;gap:9px;margin-top:4px;">
+                <span class="disp" style="font-size:42px;line-height:.95;">1,460</span>
+                <span class="nv-slbl lbl" style="font-size:10px;">of 2,200 kcal</span>
+              </div>
+              <div style="height:3px;background:var(--d-rule);border-radius:2px;margin-top:10px;overflow:hidden;"><i class="nv-fill" style="background:var(--d-rust);--w:66%;"></i></div>
+              <div class="lbl lp" style="animation-name:s4;display:flex;gap:16px;font-size:10.5px;color:var(--d-mut);margin-top:8px;">
+                <span><i class="nv-dot" style="background:#A855F7;"></i>P 96</span>
+                <span><i class="nv-dot" style="background:#06B6D4;"></i>C 142</span>
+                <span><i class="nv-dot" style="background:#F97316;"></i>F 48</span>
+              </div>
+            </div>
+            <span class="food3d" style="font-size:42px;margin:10px 2px 0 12px;animation:s4 10s ease-out infinite, foodFloat 4.5s ease-in-out infinite;">🥣</span>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 12px;"></div>
+        <!-- coach: full tip (never truncated) + tasks -->
+        <div class="lp" style="animation-name:s5;">
+          <div class="nh-coach">
+            <span class="nv-slbl lbl">Coach</span>
+            <span class="tx">Quads ran light last week — keep protein at 160g+ today and press volume tonight to lock in recovery.</span>
+            <span class="ch">›</span>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:9px;">
+            <div class="nh-task"><i>☐</i>160g protein</div>
+            <div class="nh-task"><i>☐</i>10 min mobility</div>
+          </div>
+        </div>
+      </div>
+      <div class="nv-plus lp" style="animation-name:s7;">+</div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it on"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 1/5</span>Home — exact mirror of the recommended frame</div>
+      <div class="cap-why">Identically composed to reco-home, by design — same screen, same composition, everywhere: steps + streak in the header with the bell + ✦ ask-coach cluster, masthead, 🏆 trophies banner, Fraunces greeting, SESSION / FUEL (with the floating 3D bowl) and the full multi-line coach tip with its two task chips. The only delta is this section's subject: the pinned 64px nav (glyph over Barlow label, 2px orange underline on HOME) and the outlined "+" docked above it. Solid orange still spent exactly once (START WORKOUT).</div>
+      <div class="cap-risk"><b>Risk:</b> text-forward nav trades icon recognition for editorial coherence — the 10.5px labels must survive localization (German "TRAININGSPLÄNE" won't fit) and the glyphs carry more weight than this English mock admits.</div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB 2 — WORKOUTS ════════ -->
+  <div class="cell" id="nav-workouts">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span class="nv-tcl"><span>Week 3</span><span class="nv-ask">✦</span></span></div>
+        <div class="disp nv-mast lp" style="animation-name:s0;">WORKOUTS</div>
+        <div class="nv-rule" style="margin:14px 0 12px;"></div>
+        <!-- today -->
+        <div class="lp" style="animation-name:s1;">
+          <div class="nv-slbl lbl">Today</div>
+          <div class="disp" style="font-size:30px;line-height:1;margin-top:6px;">PUSH DAY</div>
+          <div style="font-size:12.5px;color:var(--d-mut);margin-top:5px;">Chest &amp; Triceps · 8 exercises · 52 min</div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <div class="nv-cta" style="flex:1;">Start workout →</div>
+            <div class="nv-chip" style="height:48px;">Preview ›</div>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:15px 0 11px;"></div>
+        <!-- this week -->
+        <div class="lp" style="animation-name:s2;">
+          <div class="nv-slbl lbl">This week</div>
+          <div class="nw-wk">
+            <div class="nw-wd"><span class="d">M</span><span class="mk ck">✓</span><span class="nm">Pull</span></div>
+            <div class="nw-wd"><span class="d">T</span><span class="mk ck">✓</span><span class="nm">Legs</span></div>
+            <div class="nw-wd"><span class="d">W</span><span class="mk">–</span><span class="nm">Rest</span></div>
+            <div class="nw-wd td"><span class="d">T</span><span class="mk td"><i></i></span><span class="nm">Push</span></div>
+            <div class="nw-wd"><span class="d">F</span><span class="mk">–</span><span class="nm">Rest</span></div>
+            <div class="nw-wd"><span class="d">S</span><span class="mk">·</span><span class="nm">Upper</span></div>
+            <div class="nw-wd"><span class="d">S</span><span class="mk">–</span><span class="nm">Rest</span></div>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 11px;"></div>
+        <!-- program -->
+        <div class="lp" style="animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <span class="lbl" style="font-size:12.5px;color:var(--d-text);">PPL Program</span>
+            <span class="nv-slbl lbl" style="font-size:10px;">Week 3 of 6</span>
+          </div>
+          <div style="height:3px;background:var(--d-rule);border-radius:2px;margin-top:9px;overflow:hidden;"><i class="nv-fill" style="background:var(--d-accent);--w:50%;"></i></div>
+          <div class="lp" style="animation-name:s4;display:flex;gap:10px;margin-top:11px;">
+            <div class="nv-chip">Library ›</div>
+            <div class="nv-chip">Builder ›</div>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 4px;"></div>
+        <!-- history -->
+        <div class="lp" style="animation-name:s5;">
+          <div class="nv-slbl lbl" style="padding:6px 0 2px;">History</div>
+          <div class="nw-led"><b>Tue</b><span>Pull Day</span><span style="margin-left:auto;">48:12 · 9,120 LB</span></div>
+          <div class="nw-led"><b>Mon</b><span>Legs</span><span style="margin-left:auto;">55:30 · 11,300 LB</span></div>
+        </div>
+      </div>
+      <div class="nv-plus lp" style="animation-name:s7;">+</div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 2/5</span>Workouts — first appearance</div>
+      <div class="cap-why">The training room as a ledger, not a card stack: TODAY repeats Home's session block (solid orange START — this screen's one shout — with a hairline PREVIEW chip), THIS WEEK is a seven-column strip where done days earn a quiet ✓ and today a pulsing orange dot, PROGRAM is one labeled progress rule with hairline Library/Builder links, and HISTORY is two tabular rows. Everything aligns to the same hairline grid as Home, so switching tabs feels like turning a page of the same paper.</div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB 3 — COACH ════════ -->
+  <div class="cell" id="nav-coach">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span>Day 23</span></div>
+        <div class="lp" style="animation-name:s0;display:flex;align-items:flex-end;justify-content:space-between;">
+          <div class="disp nv-mast">COACH</div>
+          <div class="nv-tcl" style="padding-bottom:5px;">
+            <div class="nv-mchip">⌛ History</div>
+            <div class="nv-mchip">+ New</div>
+          </div>
+        </div>
+        <div class="ser nc-sub lp" style="animation-name:s0;">Your corner, always open.</div>
+        <div class="nv-rule" style="margin:13px 0 0;"></div>
+        <!-- conversation -->
+        <div style="display:flex;flex-direction:column;gap:11px;margin-top:14px;">
+          <div class="nc-cb lp" style="animation-name:s1;">Quads ran light last week — want me to press volume tonight?</div>
+          <div class="nc-ub lp" style="animation-name:s2;">Can I swap incline press?</div>
+          <div class="nc-cb lp" style="animation-name:s3;">Sure — machine press keeps the same chest stimulus with less shoulder strain. Swapped it in.
+            <br><span class="nc-act lp" style="animation-name:s4;">Swap → Machine Press <i>✓</i></span>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <!-- suggestions + composer -->
+        <div class="lp" style="animation-name:s5;display:flex;gap:9px;">
+          <div class="nc-sg">Adjust today</div>
+          <div class="nc-sg">Why this plan?</div>
+        </div>
+        <div class="nc-comp lp" style="animation-name:s6;margin-top:11px;">Ask anything…<span style="flex:1;"></span><span class="att">📎</span><span class="att">🎤</span><div class="nc-send">↑</div></div>
+        <div style="height:14px;"></div>
+      </div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 3/5</span>Coach — first appearance</div>
+      <div class="cap-why">Chat in the Signature voice with the full chat kit retained: ⌛ HISTORY opens the sessions list (past conversations with AI titles), + NEW starts a fresh session, coach memory lives in Settings, and the composer accepts media — 📎 attach for photos/videos/screenshots and 🎤 voice sit inside the hairline field. Matte bubbles, the user's turn marked by an orange-tinted border, and the point of the room: the "SWAP → MACHINE PRESS ✓" action chip showing the coach acting on the plan, not just talking about it.</div>
+      <div class="cap-risk"><b>Risk:</b> an in-bubble action chip implies one-tap plan mutation — it needs an undo affordance and a clear pending→confirmed state, or a misfired tap silently rewrites tonight's session.</div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB 4 — NUTRITION ════════ -->
+  <div class="cell" id="nav-nutrition">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body" style="padding-top:54px;">
+        <!-- segmented tabs + saved hub + ask coach -->
+        <div class="nn-tabs lp" style="animation-name:s0;">
+          <div class="nn-tab on">Daily</div>
+          <div class="nn-tab">Recipes</div>
+          <div class="nn-tab">Patterns</div>
+          <div style="flex:1;"></div>
+          <div class="nv-mchip">🔖 Saved</div>
+          <span class="nv-ask">✦</span>
+        </div>
+        <!-- date nav: tappable chevrons swap dates -->
+        <div class="lp" style="animation-name:s0;display:flex;align-items:center;gap:12px;margin-top:11px;">
+          <span class="nn-chev">‹</span>
+          <span class="nn-kick" style="flex:1;text-align:center;">Today — June 11</span>
+          <span class="nn-chev">›</span>
+        </div>
+        <div class="lp" style="animation-name:s1;display:flex;align-items:baseline;gap:10px;margin-top:4px;">
+          <div class="disp" style="font-size:54px;line-height:.95;">1,460</div>
+          <div class="nv-slbl lbl" style="font-size:10.5px;">of 2,200 kcal</div>
+        </div>
+        <div class="nn-track lp" style="animation-name:s1;margin-top:8px;"><i class="nv-fill" style="background:var(--d-accent);--w:66%;"></i></div>
+        <!-- consumed / target + remaining at a glance -->
+        <div class="nn-mline lp" style="animation-name:s2;margin-top:8px;">
+          <div class="g"><i style="background:#A855F7;"></i><b>96<u>/160</u></b><span class="mk">P</span></div>
+          <div class="g"><i style="background:#06B6D4;"></i><b>142<u>/220</u></b><span class="mk">C</span></div>
+          <div class="g"><i style="background:#F97316;"></i><b>48<u>/73</u></b><span class="mk">F</span></div>
+        </div>
+        <div class="lbl lp" style="animation-name:s2;font-size:10px;color:var(--d-rust);margin-top:6px;">64g protein left · 740 kcal left</div>
+        <div style="height:9px;"></div>
+        <!-- meal ledger -->
+        <div class="nn-led lp" style="animation-name:s3;border-top:1px solid var(--d-rule);"><span class="lk">Breakfast</span><b>340 cal</b><span style="margin-left:auto;color:var(--d-faint);">›</span></div>
+        <div class="nn-led lp" style="animation-name:s3;"><span class="lk">Lunch</span><b>730 cal</b><span style="margin-left:auto;color:var(--d-faint);">›</span></div>
+        <div class="nn-led lp" style="animation-name:s4;"><span class="lk">Snacks</span><b>410 cal</b><span style="margin-left:auto;color:var(--d-faint);">›</span></div>
+        <div style="height:9px;"></div>
+        <!-- the conversational log, compressed to one render row -->
+        <div class="nn-kick lp" style="animation-name:s5;font-size:10px;">Log</div>
+        <div class="nn-entry lp" style="animation-name:s5;margin-top:7px;">
+          <span class="food3d" style="font-size:56px;animation:foodFloat 4.5s ease-in-out infinite;filter:drop-shadow(0 16px 20px rgba(0,0,0,.55));">🍣</span>
+          <div><div class="nm">Salmon Poke Bowl + Iced Matcha</div><div class="sv">1 bowl · 16 oz oat-milk matcha</div><div class="dt">730 cal<span>43P · 58C · 25F</span></div></div>
+        </div>
+        <div style="height:9px;"></div>
+        <!-- the rest of the daily kit: water · fasting · micros -->
+        <div class="nn-led lp" style="animation-name:s6;border-top:1px solid var(--d-rule);"><span class="lk">Water</span><b>1.4 / 2.5 L</b><span class="nn-chip" style="margin-left:auto;">+250</span><span class="nn-chip">+500</span></div>
+        <div class="nn-led lp" style="animation-name:s7;"><span class="lk">Fasting</span><b>14:10 since dinner</b><span style="margin-left:auto;color:var(--d-faint);">›</span></div>
+        <div class="nn-led lp" style="animation-name:s8;"><span class="lk">Micros</span><b style="font-size:11px;font-weight:600;">Iron 62% · Mg 78% · Vit D 41%</b><span style="margin-left:auto;color:var(--d-faint);font-size:10.5px;white-space:nowrap;">full panel ›</span></div>
+        <div style="flex:1;"></div>
+        <div class="nn-input lp" style="animation-name:s9;">Log food, water, anything…<span style="flex:1;"></span><span class="cam">📷</span><span class="cam">▥</span><span class="cam">🎤</span><div class="nn-send">↑</div></div>
+        <div style="height:14px;"></div>
+      </div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 4/5</span>Nutrition — exact mirror of the recommended frame</div>
+      <div class="cap-why">Identically composed to reco-nu — same screen, same kit, everywhere: DAILY/RECIPES/PATTERNS tabs with the 🔖 SAVED chip and ✦ ask-coach, ‹ › date chevrons, the 54pt numeral with consumed/target macros ("96/160 P") and the rust "64g protein left · 740 kcal left" line, the BREAKFAST/LUNCH/SNACKS meal ledger, the LOG render row (compressed to one here), and the WATER +250/+500, FASTING › and MICROS "full panel ›" rows. The "Log food, water, anything…" composer with its 📷·▥·🎤 cluster IS the logging entry, so the floating "+" is absent by rule — no overlap, no duplicate affordance.</div>
+      <div class="cap-risk"><b>Risk:</b> all-dark gives up the warm-cream food appeal — the 3D renders must carry appetite on near-black, and that needs real render tests, not emoji stand-ins.</div>
+    </div>
+  </div>
+
+  <!-- ════════ TAB 5 — YOU ════════ -->
+  <div class="cell" id="nav-you">
+    <div class="fwrap"><div class="phone"><div class="screen dR grain">
+      <div class="notch"></div><div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="nv-body">
+        <div class="lbl lp" style="animation-name:s0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--d-mut);"><span>Zealova</span><span class="nv-tcl"><span>Day 23</span><span class="nv-ask">✦</span></span></div>
+        <div class="disp nv-mast lp" style="animation-name:s0;">YOU</div>
+        <div class="nv-rule" style="margin:14px 0 0;"></div>
+        <!-- identity ledger -->
+        <div class="lp" style="animation-name:s1;display:flex;align-items:center;gap:13px;padding:14px 0 0;">
+          <div class="ny-av">C</div>
+          <div style="flex:1;">
+            <div style="font-size:16.5px;font-weight:700;letter-spacing:-.2px;">Chetan</div>
+            <div class="nv-slbl" style="font-size:10.5px;margin-top:2px;">Member since 2025</div>
+          </div>
+          <div class="ny-lv">Level 12</div>
+        </div>
+        <div class="lp" style="animation-name:s2;margin-top:12px;">
+          <div style="height:3px;background:var(--d-rule);border-radius:2px;overflow:hidden;"><i class="nv-fill" style="background:var(--d-accent);--w:84%;"></i></div>
+          <div class="lbl" style="display:flex;justify-content:space-between;font-size:10px;color:var(--d-mut);margin-top:6px;">
+            <span>XP</span><span style="font-variant-numeric:tabular-nums;">8,420 / 10,000</span>
+          </div>
+        </div>
+        <div class="nv-rule" style="margin:14px 0 0;"></div>
+        <!-- hub ledger -->
+        <div class="ny-led lp" style="animation-name:s3;"><span class="k">Stats</span><span class="v">742</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s4;"><span class="k">Streak</span><span class="v">23 days 🔥</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s5;"><span class="k">Achievements</span>
+          <span class="food3d" style="font-size:26px;margin-right:2px;animation:foodFloat 4.5s ease-in-out infinite;">🏆</span>
+          <span class="v">18 earned</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s6;"><span class="k">Measurements</span><span class="v">82.4 kg</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s7;"><span class="k">Wrapped</span><span class="v">May ready</span><span class="ch">›</span></div>
+        <div class="ny-led lp" style="animation-name:s8;"><span class="k">Settings</span><span class="ch">›</span></div>
+        <div style="flex:1;"></div>
+        <div class="lbl lp" style="animation-name:s9;font-size:10px;color:var(--d-faint);text-align:center;padding-bottom:14px;">Premium · Renews Jan 2027</div>
+      </div>
+      <div class="nv-plus lp" style="animation-name:s7;">+</div>
+      <nav class="nv-bar lp" style="animation-name:s7;">
+        <div class="nv-it"><span class="nv-gl">⌂</span><span class="nv-lb">Home</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🏋</span><span class="nv-lb">Workouts</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">✦</span><span class="nv-lb">Coach</span><i class="nv-ul"></i></div>
+        <div class="nv-it"><span class="nv-gl">🍽</span><span class="nv-lb">Nutrition</span><i class="nv-ul"></i></div>
+        <div class="nv-it on"><span class="nv-gl">👤</span><span class="nv-lb">You</span><i class="nv-ul"></i></div>
+      </nav>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">TAB 5/5</span>You — first appearance</div>
+      <div class="cap-why">Profile as an identity ledger instead of a settings dump: avatar, name and a LEVEL 12 chip over one thin XP rule, then six hairline hub rows — STATS, STREAK, ACHIEVEMENTS (with a floating 3D trophy as the room's single object), MEASUREMENTS, WRAPPED, SETTINGS — each a label, a tabular value and a chevron. The gamification scaffold reads as quiet bookkeeping, and the muted PREMIUM footer keeps subscription state visible without selling to a paying user.</div>
+    </div>
+  </div>
+
+</div>
+</div>

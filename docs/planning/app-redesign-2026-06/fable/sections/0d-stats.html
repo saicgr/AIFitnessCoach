@@ -1,0 +1,1094 @@
+<div class="sx-st">
+<style>
+/* ===== STATS HUB section (st-) — all selectors scoped under .sx-st ===== */
+
+/* --- shared chart machinery --- */
+.sx-st .st-chart { display:flex; align-items:flex-end; gap:0; }
+.sx-st .st-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; }
+.sx-st .st-bar { width:12px; border-radius:3px 3px 0 0; transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .st-rest { width:12px; height:4px; border-radius:2px; }
+@keyframes stBarUp { 0%,16%{transform:scaleY(0)} 30%,96%{transform:scaleY(1)} 100%{transform:scaleY(0)} }
+@keyframes stArc { 0%,14%{stroke-dashoffset:var(--dash,300)} 48%,96%{stroke-dashoffset:var(--off,0)} 100%{stroke-dashoffset:var(--dash,300)} }
+@keyframes stFill { 0%,18%{width:0} 50%,96%{width:var(--w,70%)} 100%{width:0} }
+@keyframes stBlink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+/* score odometer roll: 4 stacked values, settles on 742 */
+.sx-st .st-roll { display:inline-block; overflow:hidden; vertical-align:bottom; }
+.sx-st .st-rollin { display:flex; flex-direction:column;
+  animation: stRoll 10s cubic-bezier(.76,0,.24,1) infinite; }
+.sx-st .st-rollin span { display:block; line-height:1; }
+@keyframes stRoll {
+  0%,4%{transform:translateY(0)} 10%,15%{transform:translateY(-25%)}
+  21%,26%{transform:translateY(-50%)} 32%,96%{transform:translateY(-75%)}
+  100%{transform:translateY(0)} }
+
+/* --- BEFORE: faithful current app --- */
+.sx-st .stbf-circ { width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; font-size:14px; color:#D4D4D8; }
+.sx-st .stbf-pill { display:flex; align-items:center; gap:6px; padding:8px 14px; border-radius:20px;
+  background:rgba(255,255,255,.06); color:#A1A1AA; font-size:12.5px; font-weight:500; white-space:nowrap; }
+.sx-st .stbf-pill.on { background:#3B82F6; color:#fff; font-weight:600; box-shadow:0 2px 8px rgba(59,130,246,.4); }
+.sx-st .stbf-card { background:var(--d-surface); border:1px solid var(--d-border); border-radius:var(--d-radius); }
+.sx-st .stbf-hexw { filter: drop-shadow(0 0 14px rgba(249,115,22,.45)); }
+.sx-st .stbf-hex { width:58px; height:58px; background:#F97316;
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display:flex; align-items:center; justify-content:center; }
+.sx-st .stbf-hexin { width:52px; height:52px; background:#241407;
+  clip-path:polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%); display:flex; align-items:center; justify-content:center;
+  font-size:19px; font-weight:800; color:#FDBA74; }
+.sx-st .stbf-prrow { display:flex; align-items:center; gap:10px; padding:8px 0; }
+.sx-st .stbf-prrow + .stbf-prrow { border-top:1px solid rgba(38,38,38,.5); }
+
+/* --- A: EDITORIAL ATHLETIC --- */
+.sx-st .sta-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; text-transform:uppercase;
+  letter-spacing:2.5px; font-size:13.5px; color:var(--d-faint); padding-bottom:7px; }
+.sx-st .sta-tab.on { color:var(--d-text); box-shadow:inset 0 -2px 0 var(--d-accent); }
+.sx-st .sta-bar { width:6px; border-radius:1px; background:#E8E8EA; transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .sta-led { display:flex; align-items:baseline; gap:10px; padding:9px 0; }
+.sx-st .sta-led + .sta-led { border-top:1px solid var(--d-rule); }
+
+/* --- B: INSTRUMENT PANEL --- */
+.sx-st .stb-grid { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+.sx-st .stb-tab { font-family:'Space Mono',monospace; font-size:10.5px; letter-spacing:.5px;
+  padding:5px 9px; border:1px solid transparent; border-radius:6px; color:var(--d-faint); }
+.sx-st .stb-tab.on { color:var(--d-data); border-color:rgba(94,234,212,.4); background:rgba(94,234,212,.06); }
+.sx-st .stb-bar { width:10px; border-radius:2px 2px 0 0; background:#2DD4BF; opacity:.9; transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .stb-pr { display:flex; align-items:baseline; gap:8px; font-family:'Space Mono',monospace; font-size:10.5px; padding:6px 0; }
+.sx-st .stb-pr + .stb-pr { border-top:1px dashed #1A2025; }
+.sx-st .stb-dot { width:5px; height:5px; border-radius:50%; background:#2DD4BF; animation: stBlink 2.4s ease-in-out infinite; }
+
+/* --- C: SOFT BRUTAL --- */
+.sx-st .stc-seg { display:flex; gap:4px; padding:4px; border:2px solid var(--d-border); border-radius:999px; background:var(--d-surface2); }
+.sx-st .stc-seg span { flex:1; text-align:center; padding:7px 0; border-radius:999px; font-size:11.5px; font-weight:700; color:var(--d-mut); }
+.sx-st .stc-seg span.on { background:var(--d-accent); color:#160B03; font-weight:800; }
+.sx-st .stc-bar { width:18px; border-radius:9px 9px 3px 3px; background:var(--d-field-c); transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .stc-chip { display:flex; align-items:center; gap:10px; padding:11px 14px;
+  background:var(--d-surface); border:2px solid var(--d-border); border-radius:18px; }
+
+/* --- D: INK & EMBER --- */
+.sx-st .std-tab { font-size:12px; font-weight:500; color:var(--d-faint); padding-bottom:8px; letter-spacing:.4px; }
+.sx-st .std-tab.on { color:var(--d-text); position:relative; }
+.sx-st .std-tab.on::after { content:''; position:absolute; left:0; bottom:0; width:18px; height:2px; border-radius:1px;
+  background:linear-gradient(90deg,#7C2D12,#F97316); }
+.sx-st .std-bar { width:9px; border-radius:2px 2px 0 0; background:#3A332B; transform-origin:bottom; position:relative;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .std-pr { display:flex; align-items:baseline; justify-content:space-between; padding:11px 0; }
+.sx-st .std-pr + .std-pr { border-top:1px solid var(--d-border); }
+
+/* --- E: WARM GALLERY --- */
+.sx-st .ste-tab { font-size:12.5px; font-weight:600; color:var(--d-mut); padding-bottom:7px; }
+.sx-st .ste-tab.on { color:var(--d-text); box-shadow:inset 0 -2px 0 var(--d-text); }
+.sx-st .ste-bar { width:9px; border-radius:3px 3px 1px 1px; background:#1C1A17; transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .ste-pr { display:flex; align-items:center; gap:10px; padding:10px 14px; font-size:12.5px; }
+
+/* --- F: VOLT STADIUM --- */
+.sx-st .stf-tab { font-family:'Barlow Condensed',sans-serif; font-weight:700; text-transform:uppercase;
+  letter-spacing:2.5px; font-size:13px; color:var(--d-faint); padding-bottom:7px; }
+.sx-st .stf-tab.on { color:var(--d-text); box-shadow:inset 0 -2px 0 var(--d-accent); }
+.sx-st .stf-bar { width:11px; border-radius:2px 2px 0 0; background:#26262D; transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .stf-bar.max { background:var(--d-accent); box-shadow:0 0 20px rgba(216,255,58,.35); }
+.sx-st .stf-pr { display:flex; align-items:center; gap:10px; padding:9px 0; }
+.sx-st .stf-pr + .stf-pr { border-top:1px solid var(--d-border); }
+
+/* --- G: DEPTH FIELD --- */
+.sx-st .stg-tab { font-size:11.5px; font-weight:600; color:var(--d-faint); padding:6px 13px; border-radius:999px; }
+.sx-st .stg-tab.on { background:rgba(255,255,255,.08); border:1px solid var(--d-border); color:var(--d-text); }
+.sx-st .stg-bar { width:14px; border-radius:5px 5px 2px 2px; transform-origin:bottom;
+  background:linear-gradient(160deg, rgba(255,255,255,.34), rgba(255,255,255,.10) 55%, rgba(255,255,255,.045));
+  border:1px solid rgba(255,255,255,.16); border-bottom:none;
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.22);
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .stg-bar.max { background:linear-gradient(160deg, rgba(249,115,22,.9), rgba(249,115,22,.3));
+  border-color:rgba(249,115,22,.45);
+  box-shadow:0 8px 22px -6px rgba(249,115,22,.55), inset 1px 1px 0 rgba(255,255,255,.35); }
+.sx-st .stg-pr { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:12px; }
+.sx-st .stg-pr + .stg-pr { border-top:1px solid rgba(255,255,255,.07); }
+.sx-st .stg-f1 { animation: glassFloat 7s ease-in-out infinite; }
+.sx-st .stg-f2 { animation: glassFloat 9s ease-in-out infinite; animation-delay:1.4s; }
+.sx-st .stg-f3 { animation: glassFloat 11s ease-in-out infinite; animation-delay:2.6s; }
+
+/* --- H: KINETIC COLLAGE --- */
+.sx-st .sth-tab { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.5px; color:var(--d-mut); padding:5px 9px; }
+.sx-st .sth-tab.on { background:var(--d-volt); border:2px solid var(--d-border); border-radius:4px;
+  box-shadow:3px 3px 0 var(--d-border); color:var(--d-text); font-weight:700; transform:rotate(-2deg); }
+.sx-st .sth-bar { background:var(--d-text); transform-origin:bottom;
+  animation: stBarUp 10s cubic-bezier(.22,1,.36,1) infinite; }
+.sx-st .sth-pr { display:flex; align-items:center; gap:10px; padding:10px 14px; position:relative; }
+</style>
+
+<section class="sec">
+  <div class="sec-kick">Probe 4 of 5</div>
+  <div class="sec-title">STATS HUB</div>
+  <div class="sec-desc">The "40th screen" test — /stats with tabs, a headline score, a weekly volume chart, a PR ledger and readiness, all on one phone. A direction that only works on a hero screen dies here: charts, axis labels and data density expose weak systems fast. Identical data in all nine frames (score 742 · +18, Mon–Sun volume, 3 PRs, 14 sessions, readiness 82%) so only the design language changes.</div>
+</section>
+<div class="row">
+
+  <!-- ============ BEFORE ============ -->
+  <div class="cell" id="before-st">
+    <div class="fwrap"><div class="phone"><div class="screen dBEFORE grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:58px 16px 0;">
+        <!-- PillAppBar -->
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="stbf-circ">‹</div>
+          <div style="flex:1;text-align:center;font-size:16px;font-weight:700;">Stats &amp; Scores</div>
+          <div class="stbf-circ" style="font-size:12px;">📅</div>
+          <div class="stbf-circ" style="font-size:12px;">⬇️</div>
+          <div class="stbf-circ" style="font-size:12px;">⬆️</div>
+        </div>
+        <!-- pill tab bar -->
+        <div style="display:flex;gap:8px;margin-top:12px;overflow:hidden;">
+          <div class="stbf-pill on"><span style="font-size:11px;">▦</span>Overview</div>
+          <div class="stbf-pill"><span style="font-size:11px;">🏆</span>Strength</div>
+          <div class="stbf-pill"><span style="font-size:11px;">💪</span>Muscle</div>
+          <div class="stbf-pill"><span style="font-size:11px;">⚡</span>Readine…</div>
+        </div>
+        <!-- 2-up score cards -->
+        <div style="display:flex;gap:12px;margin-top:14px;">
+          <div class="stbf-card lp" style="flex:1;padding:14px;text-align:center;animation-name:s0;">
+            <div class="stbf-hexw" style="display:flex;justify-content:center;"><div class="stbf-hex"><div class="stbf-hexin">742</div></div></div>
+            <div style="font-size:14px;font-weight:700;margin-top:8px;">Advanced</div>
+            <div style="font-size:11px;color:var(--d-mut);margin-top:2px;">Strength Score</div>
+            <div style="font-size:10.5px;color:#2ECC71;font-weight:600;margin-top:4px;">▲ +18 this week</div>
+          </div>
+          <div class="stbf-card lp" style="flex:1;padding:14px;text-align:center;animation-name:s1;">
+            <svg width="58" height="58" viewBox="0 0 60 60" style="display:block;margin:0 auto;">
+              <circle cx="30" cy="30" r="26" fill="none" stroke="#27272A" stroke-width="5"/>
+              <circle cx="30" cy="30" r="26" fill="none" stroke="#2ECC71" stroke-width="5" stroke-linecap="round"
+                transform="rotate(-90 30 30)" stroke-dasharray="163.4"
+                style="--dash:163.4;--off:29.4;animation:stArc 10s ease-out infinite;"/>
+              <text x="30" y="35" text-anchor="middle" fill="#FAFAFA" font-size="15" font-weight="800" font-family="Inter">82%</text>
+            </svg>
+            <div style="font-size:14px;font-weight:700;margin-top:8px;">Recovered</div>
+            <div style="font-size:11px;color:var(--d-mut);margin-top:2px;">Readiness</div>
+            <div style="font-size:10.5px;color:var(--d-faint);margin-top:4px;">Train hard today</div>
+          </div>
+        </div>
+        <!-- weekly volume card -->
+        <div class="stbf-card lp" style="margin-top:12px;padding:14px;animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-size:13.5px;font-weight:700;">Weekly Volume</div>
+            <div style="font-size:12px;font-weight:700;color:#3B82F6;">42.8k lb</div>
+          </div>
+          <div style="position:relative;height:104px;margin-top:12px;">
+            <div style="position:absolute;left:0;right:0;top:0;border-top:1px dashed #27272A;"></div>
+            <div style="position:absolute;left:0;right:0;top:50%;border-top:1px dashed #27272A;"></div>
+            <div class="st-chart" style="position:absolute;inset:0;">
+              <div class="st-col"><div class="st-bar" style="height:77px;background:linear-gradient(180deg,#60A5FA,#3B82F6);"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="background:#27272A;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:85px;background:linear-gradient(180deg,#60A5FA,#3B82F6);animation-delay:.08s;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:65px;background:linear-gradient(180deg,#60A5FA,#3B82F6);animation-delay:.16s;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="background:#27272A;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:104px;background:linear-gradient(180deg,#93C5FD,#3B82F6);animation-delay:.24s;"></div></div>
+              <div class="st-col"><div class="st-bar" style="height:63px;background:linear-gradient(180deg,#60A5FA,#3B82F6);animation-delay:.32s;"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;margin-top:6px;">
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Mon</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Tue</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Wed</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Thu</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Fri</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:#A1A1AA;font-weight:600;">Sat</div>
+            <div style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">Sun</div>
+          </div>
+        </div>
+        <!-- recent PRs card -->
+        <div class="stbf-card lp" style="margin-top:12px;padding:12px 14px;animation-name:s3;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div style="font-size:13.5px;font-weight:700;">Recent PRs</div>
+            <div style="font-size:11px;color:#F97316;font-weight:600;">See all ›</div>
+          </div>
+          <div style="margin-top:4px;">
+            <div class="stbf-prrow lp" style="animation-name:s4;">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:13px;">🏆</div>
+              <div style="flex:1;"><div style="font-size:12.5px;font-weight:600;">Bench Press</div><div style="font-size:10px;color:var(--d-faint);">Jun 9</div></div>
+              <div style="font-size:12.5px;font-weight:700;">185 lb × 5</div>
+              <div style="font-size:9.5px;font-weight:700;color:#2ECC71;background:rgba(46,204,113,.12);padding:3px 7px;border-radius:8px;">+5</div>
+            </div>
+            <div class="stbf-prrow lp" style="animation-name:s5;">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:13px;">🏆</div>
+              <div style="flex:1;"><div style="font-size:12.5px;font-weight:600;">Squat</div><div style="font-size:10px;color:var(--d-faint);">Jun 6</div></div>
+              <div style="font-size:12.5px;font-weight:700;">245 lb × 3</div>
+              <div style="font-size:9.5px;font-weight:700;color:#2ECC71;background:rgba(46,204,113,.12);padding:3px 7px;border-radius:8px;">+10</div>
+            </div>
+            <div class="stbf-prrow lp" style="animation-name:s6;">
+              <div style="width:30px;height:30px;border-radius:8px;background:rgba(249,115,22,.14);display:flex;align-items:center;justify-content:center;font-size:13px;">🏆</div>
+              <div style="flex:1;"><div style="font-size:12.5px;font-weight:600;">Barbell Row</div><div style="font-size:10px;color:var(--d-faint);">Jun 4</div></div>
+              <div style="font-size:12.5px;font-weight:700;">165 lb × 8</div>
+              <div style="font-size:9.5px;font-weight:700;color:#2ECC71;background:rgba(46,204,113,.12);padding:3px 7px;border-radius:8px;">+5</div>
+            </div>
+          </div>
+        </div>
+        <!-- compact stats strip -->
+        <div class="stbf-card lp" style="margin-top:12px;padding:12px 8px;display:flex;animation-name:s7;">
+          <div style="flex:1;text-align:center;"><div style="font-size:16px;font-weight:800;">14</div><div style="font-size:9.5px;color:var(--d-faint);">Workouts</div></div>
+          <div style="width:1px;background:rgba(38,38,38,.6);"></div>
+          <div style="flex:1;text-align:center;"><div style="font-size:16px;font-weight:800;">3</div><div style="font-size:9.5px;color:var(--d-faint);">PRs</div></div>
+          <div style="width:1px;background:rgba(38,38,38,.6);"></div>
+          <div style="flex:1;text-align:center;"><div style="font-size:16px;font-weight:800;">82%</div><div style="font-size:9.5px;color:var(--d-faint);">Readiness</div></div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">BEFORE</span>Current stats hub — glass cards + colored pills</div>
+      <div class="cap-why">Faithful: PillAppBar with calendar/export/share, scrollable colored icon-pills (blue active, glow), hexagon strength badge, glass cards, blue gradient bars. Competent but generic — every element is a rounded dark card.</div>
+      <div class="cap-risk"><b>Tell:</b> six surfaces, six identical card treatments; the score, the chart and a stat strip all carry the same visual weight.</div>
+    </div>
+  </div>
+
+  <!-- ============ A: EDITORIAL ATHLETIC ============ -->
+  <div class="cell" id="a-st">
+    <div class="fwrap"><div class="phone"><div class="screen dA grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 24px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div class="lbl" style="font-size:12px;color:var(--d-mut);">Week 24 — June 2026</div>
+          <div class="lbl" style="font-size:11.5px;color:var(--d-faint);">Export ↗</div>
+        </div>
+        <div class="disp lp" style="font-size:54px;line-height:1;margin-top:4px;animation-name:s0;">STATS</div>
+        <div class="rule" style="margin-top:10px;"></div>
+        <!-- text tabs -->
+        <div style="display:flex;gap:22px;margin-top:12px;">
+          <div class="sta-tab on">Overview</div>
+          <div class="sta-tab">Strength</div>
+          <div class="sta-tab">Muscle</div>
+          <div class="sta-tab">Readiness</div>
+        </div>
+        <div class="rule"></div>
+        <!-- score block -->
+        <div class="lp" style="margin-top:16px;animation-name:s1;">
+          <div class="lbl" style="font-size:11.5px;color:var(--d-mut);">Strength score</div>
+          <div style="display:flex;align-items:flex-end;gap:14px;">
+            <div class="st-roll disp" style="font-size:110px;height:110px;line-height:1;letter-spacing:1px;">
+              <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+            </div>
+            <div style="flex:1;padding-bottom:14px;">
+              <div class="rule"></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;"><span class="lbl" style="font-size:10.5px;color:var(--d-accent);">+18 this week</span></div>
+              <div class="rule"></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;"><span class="lbl" style="font-size:10.5px;color:var(--d-mut);">Level</span><span class="lbl" style="font-size:10.5px;">Advanced</span></div>
+              <div class="rule"></div>
+              <div style="display:flex;justify-content:space-between;padding:6px 0;"><span class="lbl" style="font-size:10.5px;color:var(--d-mut);">Rdns</span><span class="lbl" style="font-size:10.5px;">82</span></div>
+              <div class="rule"></div>
+            </div>
+          </div>
+        </div>
+        <!-- volume -->
+        <div class="lp" style="margin-top:18px;animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div class="lbl" style="font-size:11.5px;color:var(--d-mut);">Volume — WK 24</div>
+            <div class="lbl" style="font-size:11.5px;">42.8K LB</div>
+          </div>
+          <div style="position:relative;height:92px;margin-top:12px;">
+            <div class="lbl" style="position:absolute;right:56px;top:-6px;font-size:9.5px;color:var(--d-mut);">11.3K</div>
+            <div class="st-chart" style="position:absolute;inset:0;">
+              <div class="st-col"><div class="sta-bar" style="height:68px;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="sta-bar" style="height:3px;background:var(--d-rule);animation:none;"></div></div>
+              <div class="st-col"><div class="sta-bar" style="height:75px;animation-delay:.07s;"></div></div>
+              <div class="st-col"><div class="sta-bar" style="height:58px;animation-delay:.14s;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="sta-bar" style="height:3px;background:var(--d-rule);animation:none;"></div></div>
+              <div class="st-col"><div class="sta-bar" style="height:92px;animation-delay:.21s;"></div></div>
+              <div class="st-col"><div class="sta-bar" style="height:55px;background:#6E6E76;animation-delay:.28s;"></div></div>
+            </div>
+          </div>
+          <div class="rule" style="margin-top:0;"></div>
+          <div style="display:flex;margin-top:5px;">
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">M</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">T</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">W</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">T</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">F</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-text);">S</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9.5px;color:var(--d-faint);">S</div>
+          </div>
+        </div>
+        <!-- PR ledger -->
+        <div class="lp" style="margin-top:18px;animation-name:s3;">
+          <div class="lbl" style="font-size:11.5px;color:var(--d-mut);">Personal records — June</div>
+          <div style="margin-top:4px;">
+            <div class="sta-led lp" style="animation-name:s4;">
+              <span class="lbl" style="font-size:14px;flex:1;">Bench Press</span>
+              <span class="mono" style="font-size:11px;color:var(--d-mut);">185 × 5</span>
+              <span class="mono" style="font-size:10px;color:var(--d-faint);">06.09</span>
+            </div>
+            <div class="sta-led lp" style="animation-name:s5;">
+              <span class="lbl" style="font-size:14px;flex:1;">Squat</span>
+              <span class="mono" style="font-size:11px;color:var(--d-mut);">245 × 3</span>
+              <span class="mono" style="font-size:10px;color:var(--d-faint);">06.06</span>
+            </div>
+            <div class="sta-led lp" style="animation-name:s6;">
+              <span class="lbl" style="font-size:14px;flex:1;">Barbell Row</span>
+              <span class="mono" style="font-size:11px;color:var(--d-mut);">165 × 8</span>
+              <span class="mono" style="font-size:10px;color:var(--d-faint);">06.04</span>
+            </div>
+            <div class="rule"></div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="lp" style="padding-bottom:22px;animation-name:s7;">
+          <div class="lbl" style="font-size:10.5px;color:var(--d-faint);">14 sessions this month · top lift Sat 11.3K</div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">A</span>Editorial Athletic — the annual report</div>
+      <div class="cap-why">Anton masthead, Barlow text-tabs, the score as a 110px numeral against hairline context rules, PRs as a typographic ledger. No card boxes anywhere — rules do all the structuring. Orange spent exactly once (+18).</div>
+      <div class="cap-risk"><b>Risk:</b> rule-only structure demands perfect alignment discipline in Flutter; one misaligned baseline and the spread looks broken, not designed.</div>
+    </div>
+  </div>
+
+  <!-- ============ B: INSTRUMENT PANEL ============ -->
+  <div class="cell" id="b-st">
+    <div class="fwrap"><div class="phone"><div class="screen dB grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div class="scan" style="position:absolute;inset:0;display:flex;flex-direction:column;padding:58px 18px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="lbl" style="font-size:11px;color:var(--d-mut);">Zealova // Telemetry</div>
+          <div style="display:flex;align-items:center;gap:6px;"><div class="stb-dot"></div><div class="data" style="font-size:10px;color:var(--d-data);">WK 24</div></div>
+        </div>
+        <!-- bracket tabs -->
+        <div style="display:flex;gap:6px;margin-top:10px;">
+          <div class="stb-tab on">[OVR]</div>
+          <div class="stb-tab">STR</div>
+          <div class="stb-tab">MUS</div>
+          <div class="stb-tab">RDN</div>
+        </div>
+        <div class="stb-grid" style="margin-top:10px;">
+          <!-- score gauge panel -->
+          <div class="panel lp" style="grid-column:span 2;padding:12px 14px;display:flex;align-items:center;gap:14px;animation-name:s0;">
+            <svg width="92" height="92" viewBox="0 0 96 96">
+              <circle cx="48" cy="48" r="40" fill="none" stroke="#1A2025" stroke-width="2" stroke-dasharray="2 5.85"/>
+              <circle cx="48" cy="48" r="40" fill="none" stroke="#2DD4BF" stroke-width="3.5" stroke-linecap="round"
+                transform="rotate(-90 48 48)" stroke-dasharray="251.3"
+                style="--dash:251.3;--off:64.8;animation:stArc 10s ease-out infinite;"/>
+              <text x="48" y="46" text-anchor="middle" fill="#E8EDEF" font-size="21" font-weight="700" font-family="'Space Mono',monospace">742</text>
+              <text x="48" y="62" text-anchor="middle" fill="#4D565C" font-size="8" font-family="'Space Mono',monospace">/1000</text>
+            </svg>
+            <div style="flex:1;">
+              <div class="lbl" style="font-size:10.5px;color:var(--d-mut);">Strength index</div>
+              <div class="data" style="font-size:15px;color:var(--d-accent);margin-top:3px;">Δ+18</div>
+              <div class="data" style="font-size:9px;color:var(--d-faint);margin-top:7px;">LVL ADVANCED</div>
+              <div class="data" style="font-size:9px;color:var(--d-faint);margin-top:2px;">CAL 06.11 · UNITS LB</div>
+            </div>
+          </div>
+          <!-- volume panel -->
+          <div class="panel lp" style="grid-column:span 2;padding:12px 14px;animation-name:s1;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <div class="lbl" style="font-size:10.5px;color:var(--d-mut);">Volume / session</div>
+              <div class="data" style="font-size:11px;color:var(--d-data);">Σ 42.8K</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <div style="display:flex;flex-direction:column;justify-content:space-between;height:96px;">
+                <div class="data" style="font-size:7.5px;color:var(--d-faint);">12K</div>
+                <div class="data" style="font-size:7.5px;color:var(--d-faint);">8K</div>
+                <div class="data" style="font-size:7.5px;color:var(--d-faint);">4K</div>
+                <div class="data" style="font-size:7.5px;color:var(--d-faint);">0</div>
+              </div>
+              <div style="flex:1;position:relative;height:96px;">
+                <div style="position:absolute;left:0;right:0;top:0;border-top:1px dashed #1A2025;"></div>
+                <div style="position:absolute;left:0;right:0;top:33%;border-top:1px dashed #1A2025;"></div>
+                <div style="position:absolute;left:0;right:0;top:66%;border-top:1px dashed #1A2025;"></div>
+                <div style="position:absolute;left:0;right:0;bottom:0;border-top:1px solid #1E2328;"></div>
+                <div class="data" style="position:absolute;right:36px;top:-4px;font-size:7.5px;color:var(--d-accent);">MAX 11.3K</div>
+                <div class="st-chart" style="position:absolute;inset:0 0 1px;">
+                  <div class="st-col"><div class="stb-bar" style="height:71px;"></div></div>
+                  <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:10px;background:#1A2025;"></div></div>
+                  <div class="st-col"><div class="stb-bar" style="height:78px;animation-delay:.06s;"></div></div>
+                  <div class="st-col"><div class="stb-bar" style="height:60px;animation-delay:.12s;"></div></div>
+                  <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:10px;background:#1A2025;"></div></div>
+                  <div class="st-col"><div class="stb-bar" style="height:96px;background:#5EEAD4;animation-delay:.18s;"></div></div>
+                  <div class="st-col"><div class="stb-bar" style="height:58px;animation-delay:.24s;"></div></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;margin-top:5px;margin-left:24px;">
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-faint);">MO</div>
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-faint);">TU</div>
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-faint);">WE</div>
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-faint);">TH</div>
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-faint);">FR</div>
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-data);">SA</div>
+              <div class="data" style="flex:1;text-align:center;font-size:7.5px;color:var(--d-faint);">SU</div>
+            </div>
+          </div>
+          <!-- PR log panel -->
+          <div class="panel lp" style="grid-column:span 2;padding:10px 14px;animation-name:s2;">
+            <div style="display:flex;justify-content:space-between;">
+              <div class="lbl" style="font-size:10.5px;color:var(--d-mut);">PR log</div>
+              <div class="data" style="font-size:9px;color:var(--d-faint);">N=3 / 30D</div>
+            </div>
+            <div class="stb-pr lp" style="animation-name:s3;">
+              <span style="color:var(--d-faint);">06.09 14:32</span>
+              <span style="color:var(--d-text);flex:1;">BENCH</span>
+              <span style="color:var(--d-data);">185×5</span>
+              <span style="color:var(--d-accent);">▲+5</span>
+            </div>
+            <div class="stb-pr lp" style="animation-name:s4;">
+              <span style="color:var(--d-faint);">06.06 07:58</span>
+              <span style="color:var(--d-text);flex:1;">SQUAT</span>
+              <span style="color:var(--d-data);">245×3</span>
+              <span style="color:var(--d-accent);">▲+10</span>
+            </div>
+            <div class="stb-pr lp" style="animation-name:s5;">
+              <span style="color:var(--d-faint);">06.04 18:11</span>
+              <span style="color:var(--d-text);flex:1;">ROW</span>
+              <span style="color:var(--d-data);">165×8</span>
+              <span style="color:var(--d-accent);">▲+5</span>
+            </div>
+          </div>
+          <!-- readiness gauge -->
+          <div class="panel lp" style="padding:12px;text-align:center;animation-name:s6;">
+            <svg width="58" height="58" viewBox="0 0 56 56" style="display:block;margin:0 auto;">
+              <circle cx="28" cy="28" r="22" fill="none" stroke="#1A2025" stroke-width="2" stroke-dasharray="1.5 4.26"/>
+              <circle cx="28" cy="28" r="22" fill="none" stroke="#2DD4BF" stroke-width="3" stroke-linecap="round"
+                transform="rotate(-90 28 28)" stroke-dasharray="138.2"
+                style="--dash:138.2;--off:24.9;animation:stArc 10s ease-out infinite;"/>
+              <text x="28" y="32" text-anchor="middle" fill="#E8EDEF" font-size="12" font-weight="700" font-family="'Space Mono',monospace">82%</text>
+            </svg>
+            <div class="lbl" style="font-size:9.5px;color:var(--d-mut);margin-top:6px;">Recovery</div>
+            <div class="data" style="font-size:8px;color:var(--d-faint);margin-top:2px;">HRV NOMINAL</div>
+          </div>
+          <!-- sessions counter -->
+          <div class="panel lp" style="padding:12px;display:flex;flex-direction:column;justify-content:center;text-align:center;animation-name:s7;">
+            <div class="data" style="font-size:30px;color:var(--d-text);">14</div>
+            <div class="lbl" style="font-size:9.5px;color:var(--d-mut);margin-top:2px;">Sess / month</div>
+            <div class="data" style="font-size:8px;color:var(--d-faint);margin-top:4px;">STREAK 06 · ON TGT</div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="data lp" style="font-size:8px;color:var(--d-faint);padding-bottom:20px;text-align:center;animation-name:s8;">SYS OK · LAST SYNC 09:41:07 · SRC HEALTHKIT</div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">B</span>Instrument Panel — mission telemetry</div>
+      <div class="cap-why">This direction's home turf. Tick-ring gauges, mono readouts, dotted y-axis grid, timestamped PR log, Δ annotations, scanlines. Density isn't a compromise here — it's the aesthetic, so the 40th screen is the easiest one.</div>
+      <div class="cap-risk"><b>Risk:</b> if every screen is this loud, nothing is. Needs a strict "one gauge per screen" budget elsewhere or the app reads as a flight-sim mod.</div>
+    </div>
+  </div>
+
+  <!-- ============ C: SOFT BRUTAL ============ -->
+  <div class="cell" id="c-st">
+    <div class="fwrap"><div class="phone"><div class="screen dC grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:58px 20px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="hed" style="font-size:32px;">Stats</div>
+          <div style="width:38px;height:38px;border-radius:50%;border:2px solid var(--d-border);display:flex;align-items:center;justify-content:center;font-size:14px;">⬆️</div>
+        </div>
+        <!-- segmented control -->
+        <div class="stc-seg" style="margin-top:12px;">
+          <span class="on">Overview</span><span>Strength</span><span>Muscle</span><span>Ready</span>
+        </div>
+        <!-- flat orange score card -->
+        <div class="card lp" style="margin-top:14px;padding:18px 20px 16px;background:var(--d-accent);border-color:var(--d-accent);color:#160B03;animation-name:s0;">
+          <div style="font-size:11px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;opacity:.75;">Strength score</div>
+          <div style="display:flex;align-items:flex-end;gap:14px;">
+            <div class="st-roll hed" style="font-size:78px;height:78px;line-height:1;font-weight:800;letter-spacing:-2px;">
+              <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;padding-bottom:8px;">
+              <div style="background:rgba(0,0,0,.18);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;">▲ +18 this week</div>
+              <div style="background:rgba(0,0,0,.18);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;">ADVANCED</div>
+            </div>
+          </div>
+        </div>
+        <!-- fat bar chart -->
+        <div class="card lp" style="margin-top:12px;padding:14px 18px;animation-name:s1;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div class="hed" style="font-size:16px;">Weekly volume</div>
+            <div class="hed" style="font-size:13px;color:var(--d-field-c);">42.8k lb</div>
+          </div>
+          <div class="st-chart" style="height:110px;margin-top:12px;">
+            <div class="st-col"><div class="stc-bar" style="height:82px;"></div></div>
+            <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:18px;height:6px;border-radius:3px;background:var(--d-border);"></div></div>
+            <div class="st-col"><div class="stc-bar" style="height:90px;animation-delay:.07s;"></div></div>
+            <div class="st-col"><div class="stc-bar" style="height:69px;animation-delay:.14s;"></div></div>
+            <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:18px;height:6px;border-radius:3px;background:var(--d-border);"></div></div>
+            <div class="st-col"><div class="stc-bar" style="height:110px;background:var(--d-field-g);animation-delay:.21s;"></div></div>
+            <div class="st-col"><div class="stc-bar" style="height:66px;animation-delay:.28s;"></div></div>
+          </div>
+          <div style="display:flex;margin-top:7px;">
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-mut);">M</div>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-faint);">T</div>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-mut);">W</div>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-mut);">T</div>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-faint);">F</div>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-field-g);">S</div>
+            <div style="flex:1;text-align:center;font-size:10px;font-weight:800;color:var(--d-mut);">S</div>
+          </div>
+        </div>
+        <!-- PR chips -->
+        <div class="hed lp" style="font-size:16px;margin-top:14px;animation-name:s2;">New PRs 🏆</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          <div class="stc-chip lp" style="animation-name:s3;">
+            <span style="font-size:13px;font-weight:800;flex:1;">Bench Press</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--d-mut);">185 × 5</span>
+            <span style="font-size:10.5px;font-weight:800;color:var(--d-accent);">+5</span>
+          </div>
+          <div class="stc-chip lp" style="animation-name:s4;">
+            <span style="font-size:13px;font-weight:800;flex:1;">Squat</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--d-mut);">245 × 3</span>
+            <span style="font-size:10.5px;font-weight:800;color:var(--d-accent);">+10</span>
+          </div>
+          <div class="stc-chip lp" style="animation-name:s5;">
+            <span style="font-size:13px;font-weight:800;flex:1;">Barbell Row</span>
+            <span style="font-size:12.5px;font-weight:700;color:var(--d-mut);">165 × 8</span>
+            <span style="font-size:10.5px;font-weight:800;color:var(--d-accent);">+5</span>
+          </div>
+        </div>
+        <!-- bottom 2-up -->
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <div class="card lp" style="flex:1;padding:13px 16px;background:var(--d-field-g);border-color:var(--d-field-g);color:#06250F;animation-name:s6;">
+            <div class="hed" style="font-size:26px;">82%</div>
+            <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.75;">Readiness</div>
+          </div>
+          <div class="card lp" style="flex:1;padding:13px 16px;animation-name:s7;">
+            <div class="hed" style="font-size:26px;">14</div>
+            <div style="font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--d-mut);">Workouts / June</div>
+          </div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">C</span>Soft Brutal — scoreboard energy</div>
+      <div class="cap-why">The score lives in a solid flat orange slab with black text; bars are FAT 18px cyan with rounded tops; PRs are chunky 2px-border chips; tabs become a real segmented control. Data reads from across the gym floor.</div>
+      <div class="cap-risk"><b>Risk:</b> flat color fields eat space fast — at higher densities (Muscle tab heatmaps) the chunk has to shrink, and shrunken brutalism turns into ordinary cards.</div>
+    </div>
+  </div>
+
+  <!-- ============ D: INK & EMBER ============ -->
+  <div class="cell" id="d-st">
+    <div class="fwrap"><div class="phone"><div class="screen dD grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 26px 0;">
+        <div class="lp" style="animation-name:s0;">
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--d-faint);font-weight:600;">June · Week 24</div>
+          <div class="ser" style="font-size:27px;line-height:1.2;margin-top:8px;">Your strongest<br><i>month yet.</i></div>
+        </div>
+        <!-- quiet tabs -->
+        <div style="display:flex;gap:20px;margin-top:20px;">
+          <div class="std-tab on">Overview</div>
+          <div class="std-tab">Strength</div>
+          <div class="std-tab">Muscle</div>
+          <div class="std-tab">Readiness</div>
+        </div>
+        <!-- score -->
+        <div class="lp" style="margin-top:26px;animation-name:s1;">
+          <div style="display:flex;align-items:baseline;gap:12px;">
+            <div class="st-roll ser" style="font-size:92px;height:92px;line-height:1;font-weight:500;letter-spacing:-2px;">
+              <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+            </div>
+            <div style="font-size:12px;color:var(--d-mut);padding-bottom:10px;">strength<br>score</div>
+          </div>
+          <div style="height:3px;border-radius:2px;background:var(--d-surface);margin-top:14px;position:relative;overflow:hidden;">
+            <div class="embar" style="position:absolute;left:0;top:0;bottom:0;border-radius:2px;--w:74.2%;width:74.2%;animation:stFill 10s cubic-bezier(.22,1,.36,1) infinite;"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;">
+            <span style="font-size:11.5px;color:var(--d-mut);">Advanced — 742 of 1,000</span>
+            <span style="font-size:11.5px;color:var(--d-accent);">+18 this week</span>
+          </div>
+        </div>
+        <!-- restrained chart -->
+        <div class="lp" style="margin-top:30px;animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div class="ser" style="font-size:16px;">Volume this week</div>
+            <div style="font-size:11.5px;color:var(--d-mut);">42.8k lb</div>
+          </div>
+          <div class="st-chart" style="height:84px;margin-top:14px;">
+            <div class="st-col"><div class="std-bar" style="height:62px;"></div></div>
+            <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:9px;height:3px;background:#241F1A;"></div></div>
+            <div class="st-col"><div class="std-bar" style="height:68px;animation-delay:.07s;"></div></div>
+            <div class="st-col"><div class="std-bar" style="height:53px;animation-delay:.14s;"></div></div>
+            <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:9px;height:3px;background:#241F1A;"></div></div>
+            <div class="st-col"><div class="std-bar" style="height:84px;animation-delay:.21s;"><div style="position:absolute;left:0;right:0;top:0;height:5px;border-radius:2px 2px 0 0;background:var(--d-accent);"></div></div></div>
+            <div class="st-col"><div class="std-bar" style="height:51px;animation-delay:.28s;"></div></div>
+          </div>
+          <div style="border-top:1px solid var(--d-border);margin-top:0;"></div>
+          <div style="display:flex;margin-top:6px;">
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">Mon</div>
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">Tue</div>
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">Wed</div>
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">Thu</div>
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">Fri</div>
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-mut);">Sat</div>
+            <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">Sun</div>
+          </div>
+        </div>
+        <!-- serif PR rows -->
+        <div class="lp" style="margin-top:26px;animation-name:s3;">
+          <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--d-faint);font-weight:600;">Records this month</div>
+          <div style="margin-top:4px;">
+            <div class="std-pr lp" style="animation-name:s4;">
+              <span class="ser" style="font-size:16px;">Bench Press</span>
+              <span style="font-size:12px;color:var(--d-mut);">185 lb × 5</span>
+            </div>
+            <div class="std-pr lp" style="animation-name:s5;">
+              <span class="ser" style="font-size:16px;">Squat</span>
+              <span style="font-size:12px;color:var(--d-mut);">245 lb × 3</span>
+            </div>
+            <div class="std-pr lp" style="animation-name:s6;">
+              <span class="ser" style="font-size:16px;">Barbell Row</span>
+              <span style="font-size:12px;color:var(--d-mut);">165 lb × 8</span>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="lp" style="display:flex;align-items:center;gap:8px;padding-bottom:26px;animation-name:s7;">
+          <div style="width:6px;height:6px;border-radius:50%;background:var(--d-accent);"></div>
+          <span style="font-size:12px;color:var(--d-mut);">14 sessions · readiness 82% · rest tomorrow</span>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">D</span>Ink &amp; Ember — the private ledger</div>
+      <div class="cap-why">Fraunces speaks first ("Your strongest month yet"), the score is a matte serif numeral over the section's single ember gradient, PRs are quiet serif rows. Half the elements of every other frame; warmth instead of dashboard.</div>
+      <div class="cap-risk"><b>Risk:</b> restraint caps density — when a power user wants 12 metrics at once, this language has nowhere to put them without breaking its own vow of quiet.</div>
+    </div>
+  </div>
+
+  <!-- ============ E: WARM GALLERY ============ -->
+  <div class="cell" id="e-st">
+    <div class="fwrap"><div class="phone"><div class="screen dE grain">
+      <div class="notch"></div>
+      <div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:64px 24px 0;">
+        <div class="lp" style="animation-name:s0;">
+          <div class="micro">June · Week 24</div>
+          <div class="arch" style="font-size:46px;font-weight:700;letter-spacing:-1.5px;line-height:1.05;margin-top:6px;">Strength</div>
+        </div>
+        <!-- quiet text tabs -->
+        <div style="display:flex;gap:20px;margin-top:16px;border-bottom:1px solid var(--d-border);">
+          <div class="ste-tab on">Overview</div>
+          <div class="ste-tab">Strength</div>
+          <div class="ste-tab">Muscle</div>
+          <div class="ste-tab">Readiness</div>
+        </div>
+        <!-- score -->
+        <div class="lp" style="margin-top:20px;animation-name:s1;">
+          <div style="display:flex;align-items:flex-end;gap:14px;">
+            <div class="st-roll big" style="font-size:88px;height:88px;line-height:1;">
+              <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+            </div>
+            <div style="padding-bottom:12px;">
+              <div style="font-size:13px;font-weight:700;color:var(--d-accent);">+18 this week</div>
+              <div style="font-size:11.5px;color:var(--d-mut);margin-top:2px;">Advanced · top tier soon</div>
+            </div>
+          </div>
+          <div style="height:4px;border-radius:2px;background:var(--d-surface2);margin-top:12px;position:relative;overflow:hidden;">
+            <div style="position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--d-accent);--w:74.2%;width:74.2%;animation:stFill 10s cubic-bezier(.22,1,.36,1) infinite;"></div>
+          </div>
+        </div>
+        <!-- ink bars on cream -->
+        <div class="lp" style="margin-top:24px;animation-name:s2;">
+          <div class="micro">Weekly volume — 42.8k lb</div>
+          <div style="position:relative;height:96px;margin-top:14px;">
+            <div class="micro" style="position:absolute;right:44px;top:-8px;font-size:9px;color:var(--d-accent);">11.3k</div>
+            <div class="st-chart" style="position:absolute;inset:0;">
+              <div class="st-col"><div class="ste-bar" style="height:71px;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:9px;height:3px;background:var(--d-border);"></div></div>
+              <div class="st-col"><div class="ste-bar" style="height:78px;animation-delay:.07s;"></div></div>
+              <div class="st-col"><div class="ste-bar" style="height:60px;animation-delay:.14s;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:9px;height:3px;background:var(--d-border);"></div></div>
+              <div class="st-col"><div class="ste-bar" style="height:96px;background:var(--d-accent);animation-delay:.21s;"></div></div>
+              <div class="st-col"><div class="ste-bar" style="height:58px;animation-delay:.28s;"></div></div>
+            </div>
+          </div>
+          <div style="display:flex;margin-top:6px;">
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;">M</div>
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;color:var(--d-faint);">T</div>
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;">W</div>
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;">T</div>
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;color:var(--d-faint);">F</div>
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;color:var(--d-accent);">S</div>
+            <div class="micro" style="flex:1;text-align:center;font-size:8.5px;">S</div>
+          </div>
+        </div>
+        <!-- PR pills -->
+        <div class="micro lp" style="margin-top:20px;animation-name:s3;">Personal records</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+          <div class="pill ste-pr lp" style="animation-name:s4;">
+            <span class="food3d" style="font-size:17px;">🏆</span>
+            <span style="font-weight:600;flex:1;">Bench Press — 185 lb × 5</span>
+            <span style="font-size:11px;font-weight:700;color:var(--d-accent);">+5</span>
+          </div>
+          <div class="pill ste-pr lp" style="animation-name:s5;">
+            <span class="food3d" style="font-size:17px;">🏆</span>
+            <span style="font-weight:600;flex:1;">Squat — 245 lb × 3</span>
+            <span style="font-size:11px;font-weight:700;color:var(--d-accent);">+10</span>
+          </div>
+          <div class="pill ste-pr lp" style="animation-name:s6;">
+            <span class="food3d" style="font-size:17px;">🏆</span>
+            <span style="font-weight:600;flex:1;">Barbell Row — 165 lb × 8</span>
+            <span style="font-size:11px;font-weight:700;color:var(--d-accent);">+5</span>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="lp" style="display:flex;gap:8px;padding-bottom:24px;animation-name:s7;">
+          <div class="pill" style="padding:8px 14px;font-size:11.5px;font-weight:600;">14 sessions</div>
+          <div class="pill" style="padding:8px 14px;font-size:11.5px;font-weight:600;">Readiness 82%</div>
+        </div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">E</span>Warm Gallery — light editorial data</div>
+      <div class="cap-why">Cream canvas, "742" as an 88px editorial numeral, ink bars straight on the background (no chart card), PRs as soft white pills with a 3D-shadowed trophy. Proves the light direction survives data density without going clinical.</div>
+      <div class="cap-risk"><b>Risk:</b> the only one demanding a full light theme; ink-on-cream charts limit color encoding (rust is the single data accent), and a true dark-mode twin still has to be designed.</div>
+    </div>
+  </div>
+
+  <!-- ============ F: VOLT STADIUM ============ -->
+  <div class="cell" id="f-st">
+    <div class="fwrap"><div class="phone"><div class="screen dF grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 22px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <div class="lbl" style="font-size:11.5px;color:var(--d-mut);">Season · Week 24</div>
+          <div class="lbl" style="font-size:10.5px;color:var(--d-accent);">● Live</div>
+        </div>
+        <div class="disp lp" style="font-size:42px;line-height:1;margin-top:6px;animation-name:s0;">SCOREBOARD</div>
+        <!-- Barlow tabs, volt underline -->
+        <div style="display:flex;gap:20px;margin-top:12px;border-bottom:1px solid var(--d-border);">
+          <div class="stf-tab on">Overview</div>
+          <div class="stf-tab">Strength</div>
+          <div class="stf-tab">Muscle</div>
+          <div class="stf-tab">Readiness</div>
+        </div>
+        <!-- score: huge Anton volt -->
+        <div class="lp" style="margin-top:14px;animation-name:s1;">
+          <div class="lbl" style="font-size:11px;color:var(--d-mut);">Strength score</div>
+          <div style="display:flex;align-items:flex-end;gap:16px;">
+            <div class="st-roll disp voltglow" style="font-size:96px;height:96px;line-height:1;color:var(--d-accent);">
+              <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;padding-bottom:10px;">
+              <div class="voltchip lbl" style="font-size:10px;padding:4px 10px;letter-spacing:1.5px;align-self:flex-start;">▲ +18 WK</div>
+              <div class="lbl" style="font-size:10px;color:var(--d-mut);">Advanced · /1000</div>
+            </div>
+          </div>
+        </div>
+        <!-- gray-first volume, volt only on max day -->
+        <div class="lp" style="margin-top:16px;animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;">
+            <div class="lbl" style="font-size:11px;color:var(--d-mut);">Volume — WK 24</div>
+            <div class="lbl" style="font-size:11px;">42.8K LB</div>
+          </div>
+          <div style="position:relative;height:96px;margin-top:14px;">
+            <div class="lbl" style="position:absolute;right:46px;top:-8px;font-size:9px;color:var(--d-accent);">11.3K</div>
+            <div class="st-chart" style="position:absolute;inset:0;">
+              <div class="st-col"><div class="stf-bar" style="height:71px;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:11px;background:#1A1A20;"></div></div>
+              <div class="st-col"><div class="stf-bar" style="height:78px;animation-delay:.07s;"></div></div>
+              <div class="st-col"><div class="stf-bar" style="height:60px;animation-delay:.14s;"></div></div>
+              <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:11px;background:#1A1A20;"></div></div>
+              <div class="st-col"><div class="stf-bar max" style="height:96px;animation-delay:.21s;"></div></div>
+              <div class="st-col"><div class="stf-bar" style="height:58px;animation-delay:.28s;"></div></div>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--d-border);"></div>
+          <div style="display:flex;margin-top:5px;">
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">MON</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">TUE</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">WED</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">THU</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">FRI</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-accent);">SAT</div>
+            <div class="lbl" style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">SUN</div>
+          </div>
+        </div>
+        <!-- PR ledger with volt delta chips -->
+        <div class="lp" style="margin-top:16px;animation-name:s3;">
+          <div class="lbl" style="font-size:11px;color:var(--d-mut);">PR ledger — June</div>
+          <div style="margin-top:2px;">
+            <div class="stf-pr lp" style="animation-name:s4;">
+              <span class="lbl" style="font-size:13.5px;flex:1;">Bench Press</span>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--d-mut);">185×5</span>
+              <span class="voltchip" style="font-size:9.5px;padding:3px 8px;">+5</span>
+            </div>
+            <div class="stf-pr lp" style="animation-name:s5;">
+              <span class="lbl" style="font-size:13.5px;flex:1;">Squat</span>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--d-mut);">245×3</span>
+              <span class="voltchip" style="font-size:9.5px;padding:3px 8px;">+10</span>
+            </div>
+            <div class="stf-pr lp" style="animation-name:s6;">
+              <span class="lbl" style="font-size:13.5px;flex:1;">Barbell Row</span>
+              <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--d-mut);">165×8</span>
+              <span class="voltchip" style="font-size:9.5px;padding:3px 8px;">+5</span>
+            </div>
+          </div>
+        </div>
+        <!-- navy readiness block + sessions -->
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <div class="lp" style="flex:1.25;background:var(--d-navy);border-radius:var(--d-radius);padding:13px 16px;animation-name:s7;">
+            <div class="disp" style="font-size:32px;line-height:1;">82%</div>
+            <div class="lbl" style="font-size:9px;color:rgba(255,255,255,.6);margin-top:5px;">Readiness — Train hard</div>
+            <div style="height:3px;border-radius:2px;background:rgba(255,255,255,.16);margin-top:8px;position:relative;overflow:hidden;">
+              <div style="position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--d-accent);--w:82%;width:82%;animation:stFill 10s cubic-bezier(.22,1,.36,1) infinite;"></div>
+            </div>
+          </div>
+          <div class="lp" style="flex:1;background:var(--d-surface);border:1px solid var(--d-border);border-radius:var(--d-radius);padding:13px 16px;animation-name:s8;">
+            <div class="disp" style="font-size:32px;line-height:1;">14</div>
+            <div class="lbl" style="font-size:9px;color:var(--d-mut);margin-top:5px;">Sessions / June</div>
+          </div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">F</span>Volt Stadium — the season scoreboard</div>
+      <div class="cap-why">The proofs.html shareables language living in-app: Anton "742" in volt with a stadium glow, gray-first bars where ONLY the 11.3k Saturday earns volt, Barlow axis labels, navy readiness block, PR ledger paid in volt +5/+10 chips. Brand and product finally speak one voice.</div>
+      <div class="cap-risk"><b>Risk:</b> a wall of volt charts strains fast — this survives only with gray-first charting and a strict one-volt-highlight-per-chart budget; two volt bars and it's a rave, not a scoreboard.</div>
+    </div>
+  </div>
+
+  <!-- ============ G: DEPTH FIELD ============ -->
+  <div class="cell" id="g-st">
+    <div class="fwrap"><div class="phone"><div class="screen dG grain">
+      <div class="notch"></div>
+      <div class="sbar"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <!-- deep orbs -->
+      <div class="orb" style="width:250px;height:250px;left:-70px;top:80px;background:radial-gradient(circle,rgba(249,115,22,.5),transparent 70%);animation:orbDrift 16s ease-in-out infinite;"></div>
+      <div class="orb" style="width:220px;height:220px;right:-70px;top:420px;background:radial-gradient(circle,rgba(99,102,241,.45),transparent 70%);animation:orbDrift 21s ease-in-out infinite reverse;"></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:60px 20px 0;">
+        <div class="lp" style="animation-name:s0;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--d-mut);">June · Week 24</div>
+          <div style="font-size:30px;font-weight:700;letter-spacing:-1px;margin-top:3px;">Stats</div>
+        </div>
+        <!-- glass pill tabs -->
+        <div style="display:flex;gap:6px;margin-top:12px;">
+          <div class="stg-tab on">Overview</div>
+          <div class="stg-tab">Strength</div>
+          <div class="stg-tab">Muscle</div>
+          <div class="stg-tab">Readiness</div>
+        </div>
+        <!-- closest layer: score on glass-hi -->
+        <div class="lp" style="margin-top:14px;animation-name:s1;">
+          <div class="glass glass-hi stg-f1" style="padding:16px 20px 18px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--d-mut);">Strength score</div>
+            <div style="display:flex;align-items:flex-end;gap:14px;">
+              <div class="st-roll" style="font-family:Archivo,sans-serif;font-size:84px;height:84px;font-weight:700;letter-spacing:-3px;">
+                <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+              </div>
+              <div style="padding-bottom:12px;">
+                <div style="font-size:12.5px;font-weight:700;color:var(--d-accent);">+18 this week</div>
+                <div style="font-size:11px;color:var(--d-mut);margin-top:2px;">Advanced</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- mid layer: frosted volume columns -->
+        <div class="lp" style="margin-top:14px;animation-name:s2;">
+          <div class="glass stg-f2" style="padding:14px 16px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;">
+              <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--d-mut);">Weekly volume</div>
+              <div style="font-size:11.5px;font-weight:700;">42.8k lb</div>
+            </div>
+            <div style="position:relative;height:88px;margin-top:12px;">
+              <div style="position:absolute;right:40px;top:-7px;font-size:9px;font-weight:700;color:var(--d-accent);">11.3k</div>
+              <div class="st-chart" style="position:absolute;inset:0;">
+                <div class="st-col"><div class="stg-bar" style="height:65px;"></div></div>
+                <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:14px;background:rgba(255,255,255,.08);"></div></div>
+                <div class="st-col"><div class="stg-bar" style="height:72px;animation-delay:.07s;"></div></div>
+                <div class="st-col"><div class="stg-bar" style="height:55px;animation-delay:.14s;"></div></div>
+                <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:14px;background:rgba(255,255,255,.08);"></div></div>
+                <div class="st-col"><div class="stg-bar max" style="height:88px;animation-delay:.21s;"></div></div>
+                <div class="st-col"><div class="stg-bar" style="height:53px;animation-delay:.28s;"></div></div>
+              </div>
+            </div>
+            <div style="display:flex;margin-top:6px;">
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">M</div>
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">T</div>
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">W</div>
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">T</div>
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">F</div>
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-accent);font-weight:700;">S</div>
+              <div style="flex:1;text-align:center;font-size:9px;color:var(--d-faint);">S</div>
+            </div>
+          </div>
+        </div>
+        <!-- deepest layer: recessed PRs with trophy on the edge -->
+        <div class="lp" style="margin-top:14px;animation-name:s3;">
+          <div class="glass stg-f3" style="padding:12px 16px;position:relative;background:var(--d-surface2);box-shadow:0 10px 22px -16px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);">
+            <span class="food3d" style="position:absolute;top:-16px;right:16px;font-size:30px;">🏆</span>
+            <div style="font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--d-mut);">Personal records</div>
+            <div style="margin-top:2px;">
+              <div class="stg-pr lp" style="animation-name:s4;">
+                <span style="font-weight:600;flex:1;">Bench Press</span>
+                <span style="color:var(--d-mut);">185 lb × 5</span>
+                <span style="font-size:10.5px;font-weight:700;color:var(--d-accent);">+5</span>
+              </div>
+              <div class="stg-pr lp" style="animation-name:s5;">
+                <span style="font-weight:600;flex:1;">Squat</span>
+                <span style="color:var(--d-mut);">245 lb × 3</span>
+                <span style="font-size:10.5px;font-weight:700;color:var(--d-accent);">+10</span>
+              </div>
+              <div class="stg-pr lp" style="animation-name:s6;">
+                <span style="font-weight:600;flex:1;">Barbell Row</span>
+                <span style="color:var(--d-mut);">165 lb × 8</span>
+                <span style="font-size:10.5px;font-weight:700;color:var(--d-accent);">+5</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <!-- floor chips -->
+        <div style="display:flex;gap:10px;padding-bottom:24px;">
+          <div class="glass lp" style="flex:1;padding:11px 14px;display:flex;align-items:center;gap:10px;animation-name:s7;">
+            <svg width="36" height="36" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="15" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="3.5"/>
+              <circle cx="20" cy="20" r="15" fill="none" stroke="#F97316" stroke-width="3.5" stroke-linecap="round"
+                transform="rotate(-90 20 20)" stroke-dasharray="94.2"
+                style="--dash:94.2;--off:17;animation:stArc 10s ease-out infinite;"/>
+              <text x="20" y="24" text-anchor="middle" fill="#F2F4F8" font-size="10" font-weight="700" font-family="Archivo">82</text>
+            </svg>
+            <div><div style="font-size:12.5px;font-weight:700;">Readiness</div><div style="font-size:10px;color:var(--d-mut);">Train hard</div></div>
+          </div>
+          <div class="glass lp" style="flex:1;padding:11px 14px;display:flex;flex-direction:column;justify-content:center;animation-name:s8;">
+            <div style="font-size:19px;font-weight:700;line-height:1;">14</div>
+            <div style="font-size:10px;color:var(--d-mut);margin-top:3px;">Sessions / June</div>
+          </div>
+        </div>
+      </div>
+      <div class="homebar"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">G</span>Depth Field — data with depth of field</div>
+      <div class="cap-why">Three honest z-layers: orbs drifting deep behind, the 84px Archivo score on the closest high-elevation glass, frosted volume columns lit from top-left on the mid plane, PRs recessed below with a 3D trophy resting on the panel edge. Parallax sold by shadow weight + staggered glassFloat, not gimmick transforms.</div>
+      <div class="cap-risk"><b>Risk:</b> charts behind frosted glass flirt with contrast failure — bars over a drifting orange orb can drop below legibility; needs a hard luminance floor under every data surface. Discipline or die.</div>
+    </div>
+  </div>
+
+  <!-- ============ H: KINETIC COLLAGE ============ -->
+  <div class="cell" id="h-st">
+    <div class="fwrap"><div class="phone"><div class="screen dH grain">
+      <div class="notch"></div>
+      <div class="sbar dk"><span>09:41</span><span class="sigs">▂▄▆█ ⏻</span></div>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;padding:58px 20px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="mono-stamp" style="font-size:10px;color:var(--d-mut);">WK 24 · JUN 2026</div>
+          <div class="mono-stamp" style="font-size:9.5px;border:2px solid var(--d-border);padding:2px 8px;transform:rotate(2deg);">SEASON FILE ⚡</div>
+        </div>
+        <div class="disp lp" style="font-size:38px;line-height:1;margin-top:8px;animation-name:s0;">THE RECEIPTS</div>
+        <!-- stamp tabs -->
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center;">
+          <div class="sth-tab on">OVERVIEW</div>
+          <div class="sth-tab">STRENGTH</div>
+          <div class="sth-tab">MUSCLE</div>
+          <div class="sth-tab">READY</div>
+        </div>
+        <!-- 742 stamp on a big rotated sticker -->
+        <div class="lp" style="margin-top:16px;animation-name:s1;">
+          <div class="sticker" style="transform:rotate(-2deg);padding:14px 18px 12px;position:relative;">
+            <div class="tape" style="position:absolute;top:-10px;left:26px;width:76px;height:20px;"></div>
+            <div style="display:flex;align-items:flex-end;gap:16px;">
+              <div class="st-roll disp" style="font-size:72px;height:72px;line-height:1;letter-spacing:1px;">
+                <div class="st-rollin"><span>184</span><span>437</span><span>658</span><span>742</span></div>
+              </div>
+              <div style="padding-bottom:6px;">
+                <div class="mono-stamp" style="font-size:9px;color:var(--d-mut);">STRENGTH SCORE · ADVANCED</div>
+                <div style="display:inline-block;background:var(--d-accent);color:#fff;font-weight:800;font-size:11px;padding:3px 9px;border:2px solid var(--d-border);box-shadow:3px 3px 0 var(--d-border);transform:rotate(2deg);margin-top:7px;">▲ +18 WK</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- marker-stroke bars — THE grid break: chart tilts off-grid -->
+        <div class="lp" style="margin-top:20px;margin-left:-4px;margin-right:-2px;transform:rotate(-1.4deg);animation-name:s2;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;padding:0 6px;">
+            <div class="mono-stamp" style="font-size:10px;font-weight:700;">VOLUME — 42.8K LB</div>
+            <div class="mono-stamp" style="font-size:9px;color:var(--d-accent);">SAT 11.3K ★</div>
+          </div>
+          <div class="st-chart" style="height:92px;margin-top:12px;padding:0 6px;">
+            <div class="st-col"><div class="sth-bar" style="height:68px;width:13px;border-radius:6px 2px 0 0;"></div></div>
+            <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:13px;background:#D8D2C4;"></div></div>
+            <div class="st-col"><div class="sth-bar" style="height:75px;width:14px;border-radius:2px 7px 0 0;animation-delay:.07s;"></div></div>
+            <div class="st-col"><div class="sth-bar" style="height:58px;width:12px;border-radius:5px 3px 0 0;animation-delay:.14s;"></div></div>
+            <div class="st-col" style="justify-content:flex-end;"><div class="st-rest" style="width:13px;background:#D8D2C4;"></div></div>
+            <div class="st-col"><div class="sth-bar" style="height:92px;width:15px;border-radius:7px 3px 0 0;background:var(--d-accent);animation-delay:.21s;"></div></div>
+            <div class="st-col"><div class="sth-bar" style="height:55px;width:13px;border-radius:3px 6px 0 0;animation-delay:.28s;"></div></div>
+          </div>
+          <div style="height:3px;background:var(--d-text);border-radius:2px;margin:0 3px;"></div>
+          <div style="display:flex;margin-top:5px;padding:0 6px;">
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-mut);">MO</div>
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-faint);">TU</div>
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-mut);">WE</div>
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-mut);">TH</div>
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-faint);">FR</div>
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-accent);font-weight:700;">SA</div>
+            <div class="mono-stamp" style="flex:1;text-align:center;font-size:8px;color:var(--d-mut);">SU</div>
+          </div>
+        </div>
+        <!-- award stickers -->
+        <div class="mono-stamp lp" style="font-size:10px;font-weight:700;margin-top:18px;animation-name:s3;">PERSONAL RECORDS</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+          <div class="sticker sth-pr lp" style="transform:rotate(-1deg);animation-name:s4;">
+            <div class="tape" style="position:absolute;top:-9px;right:22px;width:54px;height:16px;"></div>
+            <span style="font-size:17px;">🥇</span>
+            <span style="font-weight:800;flex:1;">Bench Press</span>
+            <span class="mono-stamp" style="font-size:10.5px;">185×5</span>
+            <span class="mono-stamp" style="font-size:10px;font-weight:700;color:var(--d-accent);">+5</span>
+          </div>
+          <div class="sticker sth-pr lp" style="transform:rotate(1.2deg);margin-left:10px;animation-name:s5;">
+            <span style="font-size:17px;">🥇</span>
+            <span style="font-weight:800;flex:1;">Squat</span>
+            <span class="mono-stamp" style="font-size:10.5px;">245×3</span>
+            <span class="mono-stamp" style="font-size:10px;font-weight:700;color:var(--d-accent);">+10</span>
+          </div>
+          <div class="sticker sth-pr lp" style="transform:rotate(-.6deg);animation-name:s6;">
+            <span style="font-size:17px;">🥇</span>
+            <span style="font-weight:800;flex:1;">Barbell Row</span>
+            <span class="mono-stamp" style="font-size:10.5px;">165×8</span>
+            <span class="mono-stamp" style="font-size:10px;font-weight:700;color:var(--d-accent);">+5</span>
+          </div>
+        </div>
+        <div style="flex:1;"></div>
+        <!-- hand-drawn readiness arc + sessions stamp -->
+        <div style="display:flex;align-items:center;gap:14px;padding-bottom:24px;">
+          <div class="lp" style="display:flex;align-items:center;gap:10px;animation-name:s7;">
+            <svg width="62" height="62" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="25" fill="none" stroke="#D8D2C4" stroke-width="5" stroke-dasharray="3 4"/>
+              <circle cx="32" cy="32" r="25" fill="none" stroke="#141210" stroke-width="5" stroke-linecap="round"
+                transform="rotate(-90 32 32)" stroke-dasharray="157.1"
+                style="--dash:157.1;--off:28.3;animation:stArc 10s ease-out infinite;"/>
+              <circle cx="32" cy="32" r="21.5" fill="none" stroke="#141210" stroke-width="1.5" stroke-linecap="round" opacity=".4"
+                transform="rotate(-84 32 32)" stroke-dasharray="135.1"
+                style="--dash:135.1;--off:24.3;animation:stArc 10s ease-out infinite;"/>
+              <text x="32" y="37" text-anchor="middle" fill="#141210" font-size="14" font-family="Anton">82%</text>
+            </svg>
+            <div><div style="font-size:12px;font-weight:800;">Readiness</div><div class="mono-stamp" style="font-size:9px;color:var(--d-mut);">TRAIN HARD</div></div>
+          </div>
+          <div class="lp" style="flex:1;animation-name:s8;">
+            <div class="sticker" style="padding:9px 14px;transform:rotate(1.5deg);display:flex;align-items:baseline;gap:8px;">
+              <span class="disp" style="font-size:22px;line-height:1;">14</span>
+              <span class="mono-stamp" style="font-size:9px;color:var(--d-mut);">SESSIONS / JUNE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="homebar dk"></div>
+    </div></div></div>
+    <div class="cap">
+      <div class="cap-name"><span class="tag">H</span>Kinetic Collage — the season scrapbook</div>
+      <div class="cap-why">Stats as keepsakes: "742" stamped in Anton on a big taped, rotated sticker; volume drawn as marker strokes with uneven tops (ink bars, orange Saturday) on a tilted off-grid chart; PRs as gold-medal award stickers with hard shadows; readiness as a hand-drawn double-stroke arc. "WK 24 · JUN 2026" mono-stamps keep the file-folder fiction.</div>
+      <div class="cap-risk"><b>Risk:</b> data credibility — playful charts can read unserious; precision must survive the style. Bar proportions, the ink baseline and exact ×reps values are the credibility anchors; wobble those and the scrapbook becomes a toy.</div>
+    </div>
+  </div>
+
+</div>
+</div>
