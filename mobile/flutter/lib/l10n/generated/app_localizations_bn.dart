@@ -3823,6 +3823,23 @@ class AppLocalizationsBn extends AppLocalizations {
   String get chatScreenTyping => 'টাইপ করছেন...';
 
   @override
+  String get chatScreenMastheadTitle => 'Coach';
+
+  @override
+  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+
+  @override
+  String get chatScreenMastheadHistory => 'History';
+
+  @override
+  String get chatScreenMastheadNew => 'New';
+
+  @override
+  String chatScreenMastheadDay(int count) {
+    return 'Day $count';
+  }
+
+  @override
   String get chatScreenUiConnectionDropped => 'সংযোগ বিচ্ছিন্ন হয়েছে';
 
   @override

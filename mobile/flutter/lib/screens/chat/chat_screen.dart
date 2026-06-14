@@ -14,6 +14,7 @@ import 'dart:ui';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/app_typography.dart';
+import '../../widgets/design_system/zealova_rule.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../data/models/chat_message.dart';
@@ -872,6 +873,175 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     });
   }
 
+  /// Signature masthead for the embedded Coach tab (2026-06 redesign — maps to
+  /// the signature-v2 "nav-coach" frame). Composition, top → bottom:
+  ///   • eyebrow row — "Zealova" (brand) ··· "Day N" (login-streak day count)
+  ///   • Anton "COACH" display + the ⌛ History / + New session chip pair
+  ///   • Fraunces serif subtitle — "Your corner, always open."
+  ///   • a hairline rule that separates the masthead from the thread
+  ///
+  /// Every affordance is wired to the SAME logic the old floating pill used:
+  /// History → `/chat/sessions`, New → `startNewChat()`. No streaming / session
+  /// / media logic is touched — this is presentation only.
+  Widget _buildSignatureMasthead(
+    BuildContext context,
+    CoachPersona coach,
+    String coachName,
+    Color statusColor,
+  ) {
+    final l10n = AppLocalizations.of(context)!;
+    final tc = ThemeColors.of(context);
+    final dayCount = ref.watch(xpCurrentStreakProvider);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 10,
+        20,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Eyebrow — brand on the left, the program day-count on the right.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                Branding.appName,
+                style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
+              ),
+              if (dayCount > 0)
+                Text(
+                  l10n.chatScreenMastheadDay(dayCount),
+                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          // Anton display masthead + the History / New chip pair.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.chatScreenMastheadTitle.toUpperCase(),
+                  style: ZType.disp(38, color: tc.textPrimary, letterSpacing: 0.5),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _MastheadChip(
+                      icon: Icons.history_rounded,
+                      label: l10n.chatScreenMastheadHistory,
+                      onTap: () {
+                        HapticService.light();
+                        context.push('/chat/sessions');
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _MastheadChip(
+                      icon: Icons.add_rounded,
+                      label: l10n.chatScreenMastheadNew,
+                      onTap: () {
+                        HapticService.selection();
+                        ref
+                            .read(chatMessagesProvider.notifier)
+                            .startNewChat();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Fraunces serif subtitle — the "human line". Tapping the row still
+          // opens the coach switcher (preserves the old header-pill shortcut),
+          // with a live status dot so online/offline/typing stays visible.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticService.selection();
+              context.push('/coach-selection?fromSettings=true');
+            },
+            child: Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.only(right: 7, bottom: 1),
+                  decoration: BoxDecoration(
+                    color: statusColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    l10n.chatScreenMastheadSubtitle,
+                    style: ZType.ser(14.5, color: tc.textSecondary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // 3-dot overflow (usage info, change coach, clear, about) +
+                // the "messages running low" warning dot — relocated here from
+                // the old floating pill so nothing is lost in embedded mode.
+                GestureDetector(
+                  onTap: () {
+                    HapticService.light();
+                    _showOptionsMenuWithUsageInfo(context);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(Icons.more_horiz_rounded,
+                          color: tc.textMuted, size: 20),
+                      Builder(builder: (context) {
+                        final remaining = ref
+                            .watch(usageTrackingProvider)
+                            .limits[_kAiChatMessages];
+                        final left =
+                            remaining?.remaining ?? remaining?.limit;
+                        if (left != null && left <= 5 && left > 0) {
+                          return Positioned(
+                            top: -2,
+                            right: -2,
+                            child: Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: AppColors.warning,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      }),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 13),
+          const ZealovaRule(),
+          const SizedBox(height: 6),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -945,7 +1115,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
           // Main chat content — padded below the top bar
           Column(
             children: [
-              SizedBox(height: MediaQuery.of(context).padding.top + 60),
+              // Embedded (Coach tab) mode renders the Signature masthead INLINE
+              // at the top of the column (Anton "COACH" display, Zealova/Day N
+              // eyebrow, History + New chips, serif subtitle, hairline rule).
+              // Pushed /chat overlay mode keeps its floating coach-name pill, so
+              // it only needs the spacer that clears that pill.
+              if (widget.embedded)
+                _buildSignatureMasthead(context, coach, coachName, statusColor)
+              else
+                SizedBox(height: MediaQuery.of(context).padding.top + 60),
           // Pinned message bar
           if (messagesState.valueOrNull != null)
             Builder(builder: (context) {
@@ -1384,7 +1562,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         ],
       ),
 
-      // Floating pill top bar — matches workout detail screen style
+      // Floating pill top bar — matches workout detail screen style.
+      // Only the pushed /chat OVERLAY renders this; the embedded Coach tab uses
+      // the inline Signature masthead built at the top of the content column.
+      if (!widget.embedded)
       Positioned(
         top: MediaQuery.of(context).padding.top + 8,
         left: 16,
@@ -1936,6 +2117,50 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 }
 
 // _MediaUploadOverlay and _FoodAnalysisSummaryCard extracted to widgets/chat_media_widgets.dart
+
+/// Signature masthead affordance chip — a matte hairline pill with a real
+/// [Icons] glyph + a Barlow uppercase label. Used by the embedded Coach tab's
+/// masthead for "⌛ History" and "+ New" (signature-v2 `nv-mchip`). Real icons,
+/// never emoji-as-UI, per the redesign chrome rule.
+class _MastheadChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _MastheadChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+        decoration: BoxDecoration(
+          color: tc.surface,
+          border: Border.all(color: tc.cardBorder),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 13, color: tc.textSecondary),
+            const SizedBox(width: 5),
+            Text(
+              label.toUpperCase(),
+              style: ZType.lbl(10.5, color: tc.textSecondary, letterSpacing: 1.2),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // ─────────────────────────────────────────────────────────────────
 // Slow "Coach is thinking…" cue

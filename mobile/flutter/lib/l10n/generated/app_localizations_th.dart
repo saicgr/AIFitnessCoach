@@ -3807,6 +3807,23 @@ class AppLocalizationsTh extends AppLocalizations {
   String get chatScreenTyping => 'กำลังพิมพ์...';
 
   @override
+  String get chatScreenMastheadTitle => 'Coach';
+
+  @override
+  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+
+  @override
+  String get chatScreenMastheadHistory => 'History';
+
+  @override
+  String get chatScreenMastheadNew => 'New';
+
+  @override
+  String chatScreenMastheadDay(int count) {
+    return 'Day $count';
+  }
+
+  @override
   String get chatScreenUiConnectionDropped => 'การเชื่อมต่อหลุด';
 
   @override

@@ -3833,6 +3833,23 @@ class AppLocalizationsOr extends AppLocalizations {
   String get chatScreenTyping => 'ଟାଇପ୍ କରୁଛନ୍ତି...';
 
   @override
+  String get chatScreenMastheadTitle => 'Coach';
+
+  @override
+  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+
+  @override
+  String get chatScreenMastheadHistory => 'History';
+
+  @override
+  String get chatScreenMastheadNew => 'New';
+
+  @override
+  String chatScreenMastheadDay(int count) {
+    return 'Day $count';
+  }
+
+  @override
   String get chatScreenUiConnectionDropped => 'ସଂଯୋଗ ବିଚ୍ଛିନ୍ନ ହୋଇଛି';
 
   @override

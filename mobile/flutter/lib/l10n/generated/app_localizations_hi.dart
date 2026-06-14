@@ -3818,6 +3818,23 @@ class AppLocalizationsHi extends AppLocalizations {
   String get chatScreenTyping => 'टाइप कर रहे हैं...';
 
   @override
+  String get chatScreenMastheadTitle => 'Coach';
+
+  @override
+  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+
+  @override
+  String get chatScreenMastheadHistory => 'History';
+
+  @override
+  String get chatScreenMastheadNew => 'New';
+
+  @override
+  String chatScreenMastheadDay(int count) {
+    return 'Day $count';
+  }
+
+  @override
   String get chatScreenUiConnectionDropped => 'कनेक्शन टूट गया';
 
   @override

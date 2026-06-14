@@ -16825,6 +16825,16 @@
   "chatScreenRouteNotRegistered": "Route not registered: {route}",
   "chatScreenSomethingWentWrongLoading": "Something went wrong loading your chat.",
   "chatScreenTyping": "Typing...",
+  "chatScreenMastheadTitle": "Coach",
+  "chatScreenMastheadSubtitle": "Your corner, always open.",
+  "chatScreenMastheadHistory": "History",
+  "chatScreenMastheadNew": "New",
+  "chatScreenMastheadDay": "Day {count}",
+  "@chatScreenMastheadDay": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
   "chatScreenUiConnectionDropped": "Connection dropped",
   "chatScreenUiTyping": "typing…",
   "chatSearchOverlayNoResultsFound": "No results found",

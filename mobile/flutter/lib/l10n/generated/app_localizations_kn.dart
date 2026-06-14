@@ -3849,6 +3849,23 @@ class AppLocalizationsKn extends AppLocalizations {
   String get chatScreenTyping => 'ಟೈಪ್ ಮಾಡುತ್ತಿದ್ದಾರೆ...';
 
   @override
+  String get chatScreenMastheadTitle => 'Coach';
+
+  @override
+  String get chatScreenMastheadSubtitle => 'Your corner, always open.';
+
+  @override
+  String get chatScreenMastheadHistory => 'History';
+
+  @override
+  String get chatScreenMastheadNew => 'New';
+
+  @override
+  String chatScreenMastheadDay(int count) {
+    return 'Day $count';
+  }
+
+  @override
   String get chatScreenUiConnectionDropped => 'ಸಂಪರ್ಕ ಕಡಿತಗೊಂಡಿದೆ';
 
   @override

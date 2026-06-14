@@ -138,11 +138,15 @@ class _InputBarState extends State<_InputBar> {
   void initState() {
     super.initState();
     widget.controller.addListener(_onTextChanged);
+    // Repaint the hairline field's border when focus changes (Signature
+    // composer: focused = accent-tinted hairline, idle = plain hairline).
+    widget.focusNode.addListener(_onFocusChanged);
   }
 
   @override
   void dispose() {
     widget.controller.removeListener(_onTextChanged);
+    widget.focusNode.removeListener(_onFocusChanged);
     super.dispose();
   }
 
@@ -151,6 +155,10 @@ class _InputBarState extends State<_InputBar> {
     if (hasText != _hasText) {
       setState(() => _hasText = hasText);
     }
+  }
+
+  void _onFocusChanged() {
+    if (mounted) setState(() {});
   }
 
   void _pickMedia() async {
@@ -180,107 +188,6 @@ class _InputBarState extends State<_InputBar> {
     }
   }
 
-  void _pickImageFromCamera() async {
-    debugPrint('🔍 [_InputBar] _pickImageFromCamera called');
-    try {
-      final media = await MediaPickerHelper.pickImage(ImageSource.camera, context: context);
-      if (media != null && mounted) {
-        setState(() {
-          final combined = [..._selectedMedia, media];
-          _selectedMedia = combined.take(5).toList();
-        });
-      }
-    } on MediaValidationException catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    }
-  }
-
-  void _pickVideo() {
-    debugPrint('🔍 [_InputBar] _pickVideo called');
-    final colors = ThemeColors.of(context);
-    final isDark = colors.isDark;
-
-    showGlassSheet<void>(
-      context: context,
-      builder: (ctx) => GlassSheet(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              Text(
-                AppLocalizations.of(context).chatScreenPartAddVideo,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _VideoPickerOption(
-                icon: Icons.videocam_outlined,
-                label: AppLocalizations.of(context).mediaPickerHelperRecordVideo,
-                subtitle: AppLocalizations.of(context).mediaPickerHelperUseCameraMax60s,
-                color: const Color(0xFFF97316),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  HapticService.selection();
-                  try {
-                    final media = await MediaPickerHelper.pickVideo(ImageSource.camera);
-                    if (media != null && mounted) {
-                      setState(() {
-                        final combined = [..._selectedMedia, media];
-                        _selectedMedia = combined.take(5).toList();
-                      });
-                    }
-                  } on MediaValidationException catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
-                      );
-                    }
-                  }
-                },
-              ),
-              const SizedBox(height: 8),
-              _VideoPickerOption(
-                icon: Icons.video_library_outlined,
-                label: AppLocalizations.of(context).mediaPickerHelperChooseVideo,
-                subtitle: AppLocalizations.of(context).mediaPickerHelperFromGalleryMax60s,
-                color: const Color(0xFFA855F7),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  HapticService.selection();
-                  try {
-                    final media = await MediaPickerHelper.pickVideo(ImageSource.gallery);
-                    if (media != null && mounted) {
-                      setState(() {
-                        final combined = [..._selectedMedia, media];
-                        _selectedMedia = combined.take(5).toList();
-                      });
-                    }
-                  } on MediaValidationException catch (e) {
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
-                      );
-                    }
-                  }
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        ),
-      );
-  }
 
   void _handleSend() {
     if (_selectedMedia.isNotEmpty) {
@@ -356,122 +263,88 @@ class _InputBarState extends State<_InputBar> {
                       ],
                     ),
                   ),
+                // Signature composer — one hairline field holding the text
+                // input with 📎 attach + 🎤 voice INLINE on the right, then the
+                // accent send button outside it. Restructured to the v2
+                // `nc-comp` composition; all media/voice/send wiring preserved.
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    // Camera button (quick image)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: widget.isLoading ? null : _pickImageFromCamera,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          border: Border.all(color: colors.cardBorder),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.camera_alt_outlined,
-                          size: 18,
-                          color: widget.isLoading
-                              ? colors.textMuted
-                              : colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-
-                    // Video button
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: widget.isLoading ? null : _pickVideo,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          border: Border.all(color: colors.cardBorder),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.videocam_outlined,
-                          size: 18,
-                          color: widget.isLoading
-                              ? colors.textMuted
-                              : colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-
-                    // Media picker button (gallery + video)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: widget.isLoading ? null : _pickMedia,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          border: Border.all(color: colors.cardBorder),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.attach_file_outlined,
-                          size: 18,
-                          color: widget.isLoading
-                              ? colors.textMuted
-                              : colors.textSecondary,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-
-                    // Text field
+                    // The hairline field: text + inline attach + inline voice.
                     Expanded(
-                      child: TextField(
-                        controller: widget.controller,
-                        focusNode: widget.focusNode,
-                        enabled: true,
-                        textCapitalization: TextCapitalization.sentences,
-                        maxLines: 4,
-                        minLines: 1,
-                        decoration: InputDecoration(
-                          hintText: _selectedMedia.isNotEmpty
-                              ? AppLocalizations.of(context).inlineWorkoutChatAddAMessage
-                              : (widget.isLoading ? 'Type next message...' : 'Ask AI coach...'),
-                          hintMaxLines: 1,
-                          hintStyle: TextStyle(
-                            color: colors.textMuted,
-                            overflow: TextOverflow.ellipsis,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: colors.surface,
+                          border: Border.all(
+                            color: widget.focusNode.hasFocus
+                                ? colors.accent.withValues(alpha: 0.9)
+                                : colors.cardBorder,
+                            width: widget.focusNode.hasFocus ? 1.4 : 1,
                           ),
-                          filled: true,
-                          fillColor: colors.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colors.cardBorder),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colors.cardBorder),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: colors.accent, width: 1.4),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        onSubmitted: (_) => _handleSend(),
+                        padding: const EdgeInsets.only(left: 16, right: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: widget.controller,
+                                focusNode: widget.focusNode,
+                                enabled: true,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                maxLines: 4,
+                                minLines: 1,
+                                style: TextStyle(color: colors.textPrimary),
+                                decoration: InputDecoration(
+                                  isCollapsed: true,
+                                  hintText: _selectedMedia.isNotEmpty
+                                      ? AppLocalizations.of(context)
+                                          .inlineWorkoutChatAddAMessage
+                                      : (widget.isLoading
+                                          ? 'Type next message...'
+                                          : 'Ask anything…'),
+                                  hintMaxLines: 1,
+                                  hintStyle: TextStyle(
+                                    color: colors.textMuted,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 13,
+                                  ),
+                                ),
+                                onSubmitted: (_) => _handleSend(),
+                              ),
+                            ),
+                            // Inline 📎 attach — opens the full media picker
+                            // (camera photo / gallery / gallery video / record
+                            // video), preserving every media path the old
+                            // left-side button cluster reached.
+                            _InlineComposerIcon(
+                              icon: Icons.attach_file_rounded,
+                              tooltip: AppLocalizations.of(context)
+                                  .chatScreenPartAddVideo,
+                              onTap: widget.isLoading ? null : _pickMedia,
+                              color: widget.isLoading
+                                  ? colors.textMuted
+                                  : colors.textSecondary,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
 
-                    // Send or Voice button
+                    // Send (accent) / live-send spinner / Voice recorder —
+                    // the action glyph sits OUTSIDE the hairline field.
                     if (_hasText || _selectedMedia.isNotEmpty || widget.isLoading)
                       Container(
+                        width: 46,
+                        height: 46,
                         decoration: BoxDecoration(
                           color: widget.isLoading
                               ? colors.surface
@@ -479,9 +352,10 @@ class _InputBarState extends State<_InputBar> {
                           border: widget.isLoading
                               ? Border.all(color: colors.cardBorder)
                               : null,
-                          borderRadius: BorderRadius.circular(12),
+                          shape: BoxShape.circle,
                         ),
                         child: IconButton(
+                          padding: EdgeInsets.zero,
                           onPressed: widget.isLoading ? null : _handleSend,
                           icon: widget.isLoading
                               ? SizedBox(
@@ -517,74 +391,35 @@ class _InputBarState extends State<_InputBar> {
 
 
 // ─────────────────────────────────────────────────────────────────
-// Video Picker Option (for _InputBar video button)
+// Inline composer icon (📎 attach inside the hairline field)
 // ─────────────────────────────────────────────────────────────────
 
-class _VideoPickerOption extends StatelessWidget {
+/// A flat icon-only button that lives INSIDE the Signature composer's hairline
+/// field (signature-v2 `nc-comp` inline glyphs). Real [Icons], no emoji-as-UI;
+/// disabled when [onTap] is null (loading).
+class _InlineComposerIcon extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String subtitle;
+  final String tooltip;
+  final VoidCallback? onTap;
   final Color color;
-  final VoidCallback onTap;
 
-  const _VideoPickerOption({
+  const _InlineComposerIcon({
     required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.color,
+    required this.tooltip,
     required this.onTap,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colors = ThemeColors.of(context);
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.15)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, size: 18, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: colors.textMuted, size: 20),
-          ],
-        ),
+    return Tooltip(
+      message: tooltip,
+      child: IconButton(
+        onPressed: onTap,
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(minWidth: 40, minHeight: 44),
+        visualDensity: VisualDensity.compact,
+        icon: Icon(icon, size: 20, color: color),
       ),
     );
   }

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -187,7 +187,9 @@ class ChatActionConfirmCardState
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = AppColors.cyan;
+    // Signature: the in-bubble action chip ("SWAP → MACHINE PRESS ✓") is the
+    // ONE place the reserved gym-aware accent is allowed in the thread.
+    final accent = ThemeColors.of(context).accent;
     final muted = theme.textTheme.bodySmall?.color?.withOpacity(0.7);
 
     return Container(

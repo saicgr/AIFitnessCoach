@@ -6504,6 +6504,36 @@ abstract class AppLocalizations {
   /// **'Typing...'**
   String get chatScreenTyping;
 
+  /// No description provided for @chatScreenMastheadTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach'**
+  String get chatScreenMastheadTitle;
+
+  /// No description provided for @chatScreenMastheadSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your corner, always open.'**
+  String get chatScreenMastheadSubtitle;
+
+  /// No description provided for @chatScreenMastheadHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get chatScreenMastheadHistory;
+
+  /// No description provided for @chatScreenMastheadNew.
+  ///
+  /// In en, this message translates to:
+  /// **'New'**
+  String get chatScreenMastheadNew;
+
+  /// No description provided for @chatScreenMastheadDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day {count}'**
+  String chatScreenMastheadDay(int count);
+
   /// No description provided for @chatScreenUiConnectionDropped.
   ///
   /// In en, this message translates to:
