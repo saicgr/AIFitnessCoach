@@ -10,12 +10,15 @@ class AppColors {
   static const Color electricBlue = Color(0xFFB0B0B0);
   static const Color teal = Color(0xFFC0C0C0);
 
-  // Dark Theme (OLED Optimized)
-  static const Color pureBlack = Color(0xFF000000);
+  // Dark Theme — SIGNATURE V2 elevation ladder. The flagship "AI slop" tell
+  // was a flat #000000 scaffold; v2 uses a tinted near-black (#0A0A0B) with a
+  // luminance-stepped ladder (bg < surface < elevated) instead of pure black +
+  // shadows. Tokens mirror signature-v2.html: --d-bg / --d-surface / --d-border.
+  static const Color pureBlack = Color(0xFF0A0A0B);   // --d-bg (tinted near-black)
   static const Color nearBlack = Color(0xFF0A0A0A);
-  static const Color elevated = Color(0xFF141414);
+  static const Color elevated = Color(0xFF1A1A1C);    // raised: sheets / dialogs
   static const Color glassSurface = Color(0xFF1A1A1A);
-  static const Color cardBorder = Color(0xFF262626);
+  static const Color cardBorder = Color(0xFF26262B);  // --d-border (warm hairline)
   // Signature hairline — the 1px rule that replaces boxed cards in the redesign
   static const Color hairline = Color(0xFF1A1A1A);
   static const Color hairlineStrong = Color(0xFF2A2A2E);
@@ -58,9 +61,10 @@ class AppColors {
   static const Color macroCarbs = Color(0xFF06B6D4);   // Vivid cyan
   static const Color macroFat = Color(0xFFF97316);     // Orange
 
-  // Surface colors
-  static const Color surface = Color(0xFF121212);
-  static const Color background = Color(0xFF000000);
+  // Surface colors — v2 --d-surface (the standard card fill) over the tinted
+  // near-black --d-bg scaffold.
+  static const Color surface = Color(0xFF141416);   // --d-surface
+  static const Color background = Color(0xFF0A0A0B); // --d-bg
 
   // Semantic Colors
   static const Color success = Color(0xFF22C55E);
