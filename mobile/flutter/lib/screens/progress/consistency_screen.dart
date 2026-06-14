@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/posthog_service.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/consistency.dart';
 import '../../widgets/app_loading.dart';
@@ -75,6 +74,7 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
       backgroundColor: tc.background,
       appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).scoreBreakdownConsistency,
+        kicker: 'Progress',
       ),
       body: _isLoading || _userId == null
           ? AppLoading.fullScreen()
@@ -87,35 +87,37 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   ? _buildErrorState(state.error!, colorScheme)
                   : SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 80),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Big Streak Counter
-                          _buildStreakCard(state, colorScheme),
-                          const SizedBox(height: 16),
+                          // ★ FLAME + NUMBER hero
+                          _buildStreakHero(state, colorScheme),
+                          const SizedBox(height: 22),
+
+                          // ★ WEEKLY MOMENTUM dots
+                          _buildWeeklyMomentum(state, colorScheme),
+
+                          // ★ Stat pair on hairline bars
+                          _buildStreakStatPair(state, colorScheme),
 
                           // Calendar Heatmap
                           _buildCalendarHeatmap(state, colorScheme),
-                          const SizedBox(height: 16),
 
                           // Day Patterns
-                          _buildDayPatternsCard(state, colorScheme),
-                          const SizedBox(height: 16),
+                          _buildDayPatternsSection(state, colorScheme),
 
                           // Monthly Stats
-                          _buildMonthlyStatsCard(state, colorScheme),
-                          const SizedBox(height: 16),
+                          _buildMonthlyStatsSection(state, colorScheme),
 
                           // Weekly Trend
-                          _buildWeeklyTrendCard(state, colorScheme),
-                          const SizedBox(height: 16),
+                          _buildWeeklyTrendSection(state, colorScheme),
 
                           // Recovery Card (if needed)
-                          if (state.needsRecovery)
+                          if (state.needsRecovery) ...[
+                            const SizedBox(height: 24),
                             _buildRecoveryCard(state, colorScheme),
-
-                          const SizedBox(height: 80), // Bottom padding
+                          ],
                         ],
                       ),
                     ),
@@ -162,80 +164,286 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   }
 
   // ============================================
-  // Streak Card with Fire Animation
+  // ★ FLAME + NUMBER hero (no boxed card)
   // ============================================
 
-  Widget _buildStreakCard(ConsistencyState state, ColorScheme colorScheme) {
+  Widget _buildStreakHero(ConsistencyState state, ColorScheme colorScheme) {
     final tc = ThemeColors.of(context);
     final currentStreak = state.currentStreak;
     final longestStreak = state.longestStreak;
     final isActive = state.isStreakActive;
-    final fireColor = isActive ? tc.accent : tc.textMuted;
+    final flameColor = isActive ? tc.accent : tc.textMuted;
 
-    return ZealovaCard(
-      variant: isActive ? ZealovaCardVariant.hero : ZealovaCardVariant.outlined,
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          // Fire Icon with Animation
-          AnimatedBuilder(
-            animation: _fireAnimationController,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: 1.0 + (_fireAnimationController.value * 0.1),
-                child: Icon(
-                  Icons.local_fire_department,
-                  size: 80,
-                  color: fireColor,
-                ),
-              );
-            },
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Flickering flame — the ONE accent
+        AnimatedBuilder(
+          animation: _fireAnimationController,
+          builder: (context, child) {
+            return Transform.scale(
+              scale: 1.0 + (_fireAnimationController.value * 0.1),
+              child: Icon(
+                Icons.local_fire_department,
+                size: 64,
+                color: flameColor,
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '$currentStreak',
+                    style: ZType.disp(64,
+                        color: isActive ? tc.accent : tc.textPrimary,
+                        height: 0.82),
+                  ),
+                  const SizedBox(width: 10),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      AppLocalizations.of(context)
+                          .statsStreakFireDayStreak
+                          .toUpperCase(),
+                      style:
+                          ZType.lbl(13, color: tc.textMuted, letterSpacing: 2),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                AppLocalizations.of(context).consistencyStartFreshToday,
+                style: ZType.ser(14, color: tc.textSecondary),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-
-          // Streak Count
-          Text(
-            '$currentStreak',
-            style: ZType.disp(64,
-                color: isActive ? tc.accent : tc.textPrimary, height: 1),
+        ),
+        // Best-streak chip — utility, top-right
+        Container(
+          margin: const EdgeInsets.only(top: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+          decoration: BoxDecoration(
+            color: tc.surface,
+            border: Border.all(color: AppColors.hairlineStrong),
+            borderRadius: BorderRadius.circular(20),
           ),
-          Text(
-            (currentStreak == 1 ? AppLocalizations.of(context).statsStreakFireDayStreak : AppLocalizations.of(context).statsStreakFireDayStreak).toUpperCase(),
-            style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.emoji_events_outlined, size: 14, color: tc.textMuted),
+              const SizedBox(width: 5),
+              Text(
+                '$longestStreak',
+                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-
-          // Longest Streak Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: tc.surface,
-              border: Border.all(color: AppColors.hairlineStrong),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.emoji_events,
-                  size: 18,
-                  color: tc.textSecondary,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Longest: $longestStreak days'.toUpperCase(),
-                  style: ZType.lbl(12, color: tc.textSecondary, letterSpacing: 1),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0);
   }
 
   // ============================================
-  // Calendar Heatmap
+  // ★ WEEKLY MOMENTUM dots (derived from calendar)
+  // ============================================
+
+  /// Builds the current Mon–Sun completion map from the existing calendar
+  /// heatmap data already read into [state] — no new provider reads.
+  List<CalendarStatus?> _currentWeekStatuses(ConsistencyState state) {
+    final result = List<CalendarStatus?>.filled(7, null);
+    final data = state.calendarData?.data;
+    if (data == null || data.isEmpty) return result;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Monday-anchored start of the current week.
+    final monday = today.subtract(Duration(days: today.weekday - 1));
+
+    for (final day in data) {
+      final d = day.dateTime;
+      final dd = DateTime(d.year, d.month, d.day);
+      final idx = dd.difference(monday).inDays;
+      if (idx >= 0 && idx < 7) {
+        result[idx] = day.statusEnum;
+      }
+    }
+    return result;
+  }
+
+  int _currentWeekday() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day).weekday - 1; // 0..6 (Mon..Sun)
+  }
+
+  Widget _buildWeeklyMomentum(ConsistencyState state, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
+    final statuses = _currentWeekStatuses(state);
+    final todayIdx = _currentWeekday();
+    final completedThisWeek =
+        statuses.where((s) => s == CalendarStatus.completed).length;
+    const weekdayLabels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ZealovaSectionKicker(
+          '${AppLocalizations.of(context).nutritionStreakCardThisWeek} · $completedThisWeek / 7',
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: List.generate(7, (i) {
+            final status = statuses[i];
+            final isCompleted = status == CalendarStatus.completed;
+            final isToday = i == todayIdx;
+
+            Color boxColor;
+            Color borderColor;
+            Widget glyph;
+
+            if (isCompleted) {
+              boxColor = tc.accent;
+              borderColor = tc.accent;
+              glyph = Icon(Icons.check, size: 13, color: tc.accentContrast);
+            } else if (isToday) {
+              boxColor = tc.surface;
+              borderColor = tc.accent;
+              glyph = Container(
+                width: 5,
+                height: 5,
+                decoration:
+                    BoxDecoration(color: tc.accent, shape: BoxShape.circle),
+              );
+            } else {
+              boxColor = tc.surface;
+              borderColor = AppColors.hairlineStrong;
+              glyph = const SizedBox.shrink();
+            }
+
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: i == 6 ? 0 : 7),
+                child: Column(
+                  children: [
+                    Container(
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: boxColor,
+                        border: Border.all(color: borderColor),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(child: glyph),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      weekdayLabels[i],
+                      style: ZType.lbl(10,
+                          color: isToday ? tc.accent : tc.textMuted,
+                          letterSpacing: 1),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 18),
+      ],
+    ).animate().fadeIn(delay: 80.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+  }
+
+  // ============================================
+  // ★ Stat pair on hairline bars
+  // ============================================
+
+  Widget _buildStreakStatPair(ConsistencyState state, ColorScheme colorScheme) {
+    final insights = state.insights;
+    if (insights == null) {
+      return const SizedBox.shrink();
+    }
+    final completed = insights.monthWorkoutsCompleted;
+    final scheduled = insights.monthWorkoutsScheduled;
+    final wkFraction = scheduled > 0 ? completed / scheduled : 0.0;
+
+    return Column(
+      children: [
+        const ZealovaRule(),
+        _buildHairlineBar(
+          label: AppLocalizations.of(context).consistencyThisMonth,
+          fraction: wkFraction.clamp(0.0, 1.0),
+          valueText: '$completed/$scheduled',
+          accentFill: false,
+        ),
+        const ZealovaRule(),
+        _buildHairlineBar(
+          label: AppLocalizations.of(context).statsStreakFireDayStreak,
+          fraction: 1.0,
+          valueText: '${state.longestStreak}',
+          accentFill: true,
+        ),
+        const ZealovaRule(),
+        const SizedBox(height: 18),
+      ],
+    ).animate().fadeIn(delay: 160.ms, duration: 400.ms);
+  }
+
+  Widget _buildHairlineBar({
+    required String label,
+    required double fraction,
+    required String valueText,
+    required bool accentFill,
+  }) {
+    final tc = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.4),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: LinearProgressIndicator(
+                value: fraction,
+                backgroundColor: AppColors.hairlineStrong,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                    accentFill ? tc.accent : tc.textMuted),
+                minHeight: 4,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 44,
+            child: Text(
+              valueText,
+              textAlign: TextAlign.right,
+              style: ZType.disp(15,
+                  color: accentFill ? tc.accent : tc.textPrimary, height: 1),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================
+  // Calendar Heatmap (hairline-led)
   // ============================================
 
   Widget _buildCalendarHeatmap(
@@ -246,57 +454,52 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     }
 
     final tc = ThemeColors.of(context);
-    return ZealovaCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.calendar_today, size: 18, color: tc.textMuted),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).consistencyLast4Weeks.toUpperCase(),
-                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ZealovaSectionKicker(
+          AppLocalizations.of(context).consistencyLast4Weeks,
+        ),
+        const SizedBox(height: 14),
 
-          // Day labels
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-                .map((d) => SizedBox(
-                      width: 36,
-                      child: Text(
-                        d,
-                        textAlign: TextAlign.center,
-                        style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1),
-                      ),
-                    ))
-                .toList(),
-          ),
-          const SizedBox(height: 8),
+        // Day labels
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+              .map((d) => SizedBox(
+                    width: 36,
+                    child: Text(
+                      d,
+                      textAlign: TextAlign.center,
+                      style:
+                          ZType.lbl(11, color: tc.textMuted, letterSpacing: 1),
+                    ),
+                  ))
+              .toList(),
+        ),
+        const SizedBox(height: 8),
 
-          // Calendar grid
-          _buildCalendarGrid(calendarData.data, colorScheme),
+        // Calendar grid
+        _buildCalendarGrid(calendarData.data, colorScheme),
 
-          const SizedBox(height: 16),
+        const SizedBox(height: 14),
 
-          // Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegendItem('Completed', tc.accent, colorScheme),
-              const SizedBox(width: 16),
-              _buildLegendItem('Missed', tc.textMuted, colorScheme),
-              const SizedBox(width: 16),
-              _buildLegendItem('Rest', AppColors.hairlineStrong, colorScheme),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 100.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+        // Legend
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildLegendItem('Completed', tc.accent, colorScheme),
+            const SizedBox(width: 16),
+            _buildLegendItem('Missed', tc.textMuted, colorScheme),
+            const SizedBox(width: 16),
+            _buildLegendItem('Rest', AppColors.hairlineStrong, colorScheme),
+          ],
+        ),
+        const SizedBox(height: 8),
+        const ZealovaRule(margin: EdgeInsets.only(top: 14)),
+        const SizedBox(height: 18),
+      ],
+    ).animate().fadeIn(delay: 240.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildCalendarGrid(
@@ -414,65 +617,56 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   }
 
   // ============================================
-  // Day Patterns Card
+  // Day Patterns (hairline rows)
   // ============================================
 
-  Widget _buildDayPatternsCard(
+  Widget _buildDayPatternsSection(
       ConsistencyState state, ColorScheme colorScheme) {
     final tc = ThemeColors.of(context);
     final insights = state.insights;
     if (insights == null) return const SizedBox.shrink();
 
-    return ZealovaCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.insights, size: 18, color: tc.textMuted),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).consistencyWorkoutPatterns.toUpperCase(),
-                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ZealovaSectionKicker(
+          AppLocalizations.of(context).consistencyWorkoutPatterns,
+        ),
+        const SizedBox(height: 6),
+
+        // Best Day
+        if (insights.bestDay != null)
+          _buildPatternRow(
+            'Your best day',
+            insights.bestDayDisplay ?? 'N/A',
+            Icons.thumb_up_outlined,
+            tc.accent,
+            colorScheme,
           ),
-          const SizedBox(height: 16),
 
-          // Best Day
-          if (insights.bestDay != null)
-            _buildPatternRow(
-              'Your best day',
-              insights.bestDayDisplay ?? 'N/A',
-              Icons.thumb_up,
-              tc.accent,
-              colorScheme,
-            ),
-          const SizedBox(height: 12),
+        // Worst Day
+        if (insights.worstDay != null)
+          _buildPatternRow(
+            'You tend to skip',
+            insights.worstDayDisplay ?? 'N/A',
+            Icons.warning_amber_outlined,
+            tc.textMuted,
+            colorScheme,
+          ),
 
-          // Worst Day
-          if (insights.worstDay != null)
-            _buildPatternRow(
-              'You tend to skip',
-              insights.worstDayDisplay ?? 'N/A',
-              Icons.warning_amber,
-              tc.textMuted,
-              colorScheme,
-            ),
-          const SizedBox(height: 12),
+        // Preferred Time
+        if (insights.preferredTime != null)
+          _buildPatternRow(
+            'Preferred time',
+            _formatTimeOfDay(insights.preferredTime!),
+            Icons.schedule_outlined,
+            tc.textSecondary,
+            colorScheme,
+          ),
 
-          // Preferred Time
-          if (insights.preferredTime != null)
-            _buildPatternRow(
-              'Preferred time',
-              _formatTimeOfDay(insights.preferredTime!),
-              Icons.schedule,
-              tc.textSecondary,
-              colorScheme,
-            ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 200.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+        const SizedBox(height: 18),
+      ],
+    ).animate().fadeIn(delay: 320.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildPatternRow(
@@ -483,28 +677,28 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     ColorScheme colorScheme,
   ) {
     final tc = ThemeColors.of(context);
-    return Row(
+    return Column(
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: tc.surface,
-            border: Border.all(color: AppColors.hairlineStrong),
-            borderRadius: BorderRadius.circular(8),
+        const ZealovaRule(),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: iconColor),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.2),
+                ),
+              ),
+              Text(
+                value,
+                style:
+                    ZType.lbl(14, color: tc.textPrimary, letterSpacing: 0.5),
+              ),
+            ],
           ),
-          child: Icon(icon, size: 18, color: iconColor),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label.toUpperCase(),
-            style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 0.8),
-          ),
-        ),
-        Text(
-          value,
-          style: ZType.lbl(14, color: tc.textPrimary, letterSpacing: 0.5),
         ),
       ],
     );
@@ -523,10 +717,10 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   }
 
   // ============================================
-  // Monthly Stats Card
+  // Monthly Stats (Anton numeral + hairline)
   // ============================================
 
-  Widget _buildMonthlyStatsCard(
+  Widget _buildMonthlyStatsSection(
       ConsistencyState state, ColorScheme colorScheme) {
     final insights = state.insights;
     if (insights == null) return const SizedBox.shrink();
@@ -536,71 +730,66 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     final scheduled = insights.monthWorkoutsScheduled;
     final rate = insights.monthCompletionRate;
 
-    return ZealovaCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.calendar_month, size: 18, color: tc.textMuted),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).consistencyThisMonth.toUpperCase(),
-                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.5),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ZealovaRule(),
+        const SizedBox(height: 16),
+        ZealovaSectionKicker(
+          AppLocalizations.of(context).consistencyThisMonth,
+        ),
+        const SizedBox(height: 12),
 
-          // Big number display
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '$completed',
-                style: ZType.disp(48, color: tc.accent, height: 1),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'of $scheduled workouts'.toUpperCase(),
-                style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 1),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Progress bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: scheduled > 0 ? completed / scheduled : 0,
-              backgroundColor: AppColors.hairlineStrong,
-              valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
-              minHeight: 8,
+        // Big number display
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              '$completed',
+              style: ZType.disp(48, color: tc.accent, height: 1),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(width: 8),
+            Text(
+              'of $scheduled workouts'.toUpperCase(),
+              style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 1),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
 
-          // Completion rate
-          Text(
-            '${rate.toStringAsFixed(0)}% completion rate'.toUpperCase(),
-            style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1),
+        // Progress bar
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: scheduled > 0 ? completed / scheduled : 0,
+            backgroundColor: AppColors.hairlineStrong,
+            valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
+            minHeight: 4,
           ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 300.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+        ),
+        const SizedBox(height: 8),
+
+        // Completion rate
+        Text(
+          '${rate.toStringAsFixed(0)}% completion rate'.toUpperCase(),
+          style: ZType.lbl(12, color: tc.textMuted, letterSpacing: 1),
+        ),
+        const SizedBox(height: 18),
+      ],
+    ).animate().fadeIn(delay: 400.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
   }
 
   // ============================================
-  // Weekly Trend Card
+  // Weekly Trend (thin precise bars)
   // ============================================
 
-  Widget _buildWeeklyTrendCard(
+  Widget _buildWeeklyTrendSection(
       ConsistencyState state, ColorScheme colorScheme) {
     final insights = state.insights;
     if (insights == null) return const SizedBox.shrink();
 
+    final tc = ThemeColors.of(context);
     final weeklyRates = insights.weeklyCompletionRates;
     final avgRate = insights.averageWeeklyRate;
     final trend = insights.weeklyTrendEnum;
@@ -612,93 +801,60 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     switch (trend) {
       case WeeklyTrend.improving:
         trendIcon = Icons.trending_up;
-        trendColor = Colors.green;
+        trendColor = tc.success;
         trendText = 'Improving';
         break;
       case WeeklyTrend.declining:
         trendIcon = Icons.trending_down;
-        trendColor = Colors.red;
+        trendColor = tc.error;
         trendText = 'Needs attention';
         break;
       case WeeklyTrend.stable:
         trendIcon = Icons.trending_flat;
-        trendColor = Colors.blue;
+        trendColor = tc.textSecondary;
         trendText = 'Stable';
         break;
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.show_chart,
-                  size: 20, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 8),
-              Text(
-                AppLocalizations.of(context).consistencyWeeklyTrend,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: trendColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(trendIcon, size: 16, color: trendColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      trendText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: trendColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Mini bar chart
-          if (weeklyRates.isNotEmpty) _buildWeeklyBars(weeklyRates, colorScheme),
-
-          const SizedBox(height: 12),
-
-          // Average
-          Center(
-            child: Text(
-              'Average: ${avgRate.toStringAsFixed(0)}% weekly completion',
-              style: TextStyle(
-                fontSize: 13,
-                color: colorScheme.onSurfaceVariant,
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const ZealovaRule(),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            ZealovaSectionKicker(
+              AppLocalizations.of(context).consistencyWeeklyTrend,
             ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 400.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+            const Spacer(),
+            Icon(trendIcon, size: 15, color: trendColor),
+            const SizedBox(width: 5),
+            Text(
+              trendText.toUpperCase(),
+              style: ZType.lbl(11, color: trendColor, letterSpacing: 1.2),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // Thin precise bars
+        if (weeklyRates.isNotEmpty) _buildWeeklyBars(weeklyRates, colorScheme),
+
+        const SizedBox(height: 12),
+
+        Text(
+          'Average: ${avgRate.toStringAsFixed(0)}% weekly completion'
+              .toUpperCase(),
+          style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1),
+        ),
+        const SizedBox(height: 4),
+      ],
+    ).animate().fadeIn(delay: 480.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
   }
 
   Widget _buildWeeklyBars(
       List<WeeklyConsistencyMetric> weeks, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     // Reverse to show oldest first
     final reversedWeeks = weeks.reversed.toList();
 
@@ -722,25 +878,26 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   child: Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
-                      width: 40,
+                      width: 18,
                       height: math.max(4, rate * 50),
                       decoration: BoxDecoration(
                         color: isLatest
-                            ? colorScheme.primary
-                            : colorScheme.primary.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(4),
+                            ? tc.accent
+                            : AppColors.hairlineStrong,
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 // Label
                 Text(
-                  isLatest ? AppLocalizations.of(context).nutritionStreakCardThisWeek : 'Wk ${index + 1}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  isLatest
+                      ? AppLocalizations.of(context).nutritionStreakCardThisWeek
+                      : 'Wk ${index + 1}',
+                  style: ZType.lbl(9,
+                      color: isLatest ? tc.accent : tc.textMuted,
+                      letterSpacing: 0.8),
                 ),
               ],
             ),
@@ -755,35 +912,19 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   // ============================================
 
   Widget _buildRecoveryCard(ConsistencyState state, ColorScheme colorScheme) {
-    return Container(
+    final tc = ThemeColors.of(context);
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primaryContainer,
-            colorScheme.secondaryContainer,
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.restart_alt,
-                  color: colorScheme.primary,
-                  size: 28,
-                ),
+              Icon(
+                Icons.restart_alt,
+                color: tc.accent,
+                size: 26,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -792,20 +933,14 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
                   children: [
                     Text(
                       AppLocalizations.of(context).consistencyStartFreshToday,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onPrimaryContainer,
-                      ),
+                      style: ZType.lbl(16,
+                          color: tc.textPrimary, letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       state.insights?.recoverySuggestion ??
                           'Every day is a new opportunity to build your streak.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                      ),
+                      style: ZType.ser(13, color: tc.textSecondary),
                     ),
                   ],
                 ),
@@ -816,25 +951,26 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
           Row(
             children: [
               Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => _startRecovery('standard'),
-                  icon: const Icon(Icons.fitness_center, size: 18),
-                  label: Text(AppLocalizations.of(context).consistencyFullWorkout),
+                child: ZealovaButton(
+                  label: AppLocalizations.of(context).consistencyFullWorkout,
+                  onTap: () => _startRecovery('standard'),
+                  trailingIcon: Icons.fitness_center,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _startRecovery('quick_recovery'),
-                  icon: const Icon(Icons.timer, size: 18),
-                  label: Text(AppLocalizations.of(context).consistencyQuick15min),
+                child: ZealovaButton(
+                  label: AppLocalizations.of(context).consistencyQuick15min,
+                  onTap: () => _startRecovery('quick_recovery'),
+                  trailingIcon: Icons.timer,
+                  variant: ZealovaButtonVariant.ghost,
                 ),
               ),
             ],
           ),
         ],
       ),
-    ).animate().fadeIn(delay: 500.ms, duration: 400.ms).scale(begin: const Offset(0.95, 0.95));
+    ).animate().fadeIn(delay: 560.ms, duration: 400.ms).scale(begin: const Offset(0.95, 0.95));
   }
 
   Future<void> _startRecovery(String type) async {

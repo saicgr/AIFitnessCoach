@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../data/models/muscle_status.dart';
 import '../../../data/models/scores.dart';
@@ -13,16 +12,12 @@ import 'body_score_overlay.dart';
 import 'gym_progress_filter.dart';
 import 'share_strength_sheet.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'strength_overview_card_ui.dart';
 
-
-// Muted gradient palette for score grids
-const _gradientStart = Color(0xFFD4726A); // dusty rose
-const _gradientMid1 = Color(0xFFD4956A); // soft peach
-const _gradientMid2 = Color(0xFFD4C36A); // warm sand
-const _gradientEnd = Color(0xFF6AAD7B); // sage green
 
 /// Card showing overall strength score and muscle group breakdown
 class StrengthOverviewCard extends ConsumerStatefulWidget {
@@ -45,7 +40,6 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
   static const _viewModeKey = 'strength_view_mode'; // 0=body, 1=muscle
   static const _muscleOrderKey = 'strength_muscle_order';
 
-  bool _readinessExpanded = false;
   Set<String> _pinnedMuscles = {};
   int _viewMode = 0; // 0 = body diagram, 1 = muscle cards
   List<String>? _customMuscleOrder; // persisted drag order
@@ -134,42 +128,28 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
         ? (gymScoresAsync?.isLoading ?? false)
         : combinedLoading;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    final tc = ThemeColors.of(context);
+
+    return ZealovaCard(
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with info + refresh buttons
+          // Header — Barlow section kicker + info / refresh affordances.
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 4),
             child: Row(
               children: [
-                Icon(Icons.fitness_center, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  AppLocalizations.of(context).strengthOverviewCardStrengthScore,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
+                Expanded(
+                  child: ZealovaSectionKicker(
+                    AppLocalizations.of(context).strengthOverviewCardStrengthScore,
                   ),
                 ),
-                const Spacer(),
                 IconButton(
                   onPressed: () => _showScoreInfoSheet(context),
                   icon: const Icon(Icons.info_outline),
                   iconSize: 20,
+                  color: tc.textMuted,
                   tooltip: AppLocalizations.of(context).strengthOverviewCardHowScoresWork,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -187,6 +167,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
                     },
                     icon: const Icon(Icons.refresh),
                     iconSize: 20,
+                    color: tc.textMuted,
                     tooltip: AppLocalizations.of(context).strengthOverviewCardRecalculate,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
@@ -214,135 +195,6 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0);
-  }
-
-  // ─── Readiness / Fatigue Strip ─────────────────────────────────────
-
-  Widget _buildReadinessStrip(BuildContext context, ColorScheme colorScheme) {
-    // Select just the readiness slices — avoids rebuilds on unrelated
-    // scores mutations.
-    final (hasCheckedIn, readiness) = ref.watch(scoresProvider.select((s) => (
-          s.hasCheckedInToday,
-          s.todayReadiness ?? s.overview?.todayReadiness,
-        )));
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: hasCheckedIn && readiness != null
-          ? _buildReadinessContent(readiness, colorScheme)
-          : _buildCheckInPrompt(context, colorScheme),
-    );
-  }
-
-  Widget _buildReadinessContent(ReadinessScore readiness, ColorScheme colorScheme) {
-    final score = readiness.readinessScore;
-    final levelColor = Color(readiness.levelColor);
-    final levelName = readiness.readinessLevel[0].toUpperCase() +
-        readiness.readinessLevel.substring(1);
-
-    return Column(
-      children: [
-        // Top row: label + progress bar + score + level + collapse toggle
-        GestureDetector(
-          onTap: () => setState(() => _readinessExpanded = !_readinessExpanded),
-          behavior: HitTestBehavior.opaque,
-          child: Row(
-            children: [
-              Text(
-                AppLocalizations.of(context).strengthOverviewCardReadiness,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: score / 100,
-                    minHeight: 6,
-                    backgroundColor: colorScheme.outline.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation<Color>(levelColor),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '$score',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: levelColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  levelName,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: levelColor,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              AnimatedRotation(
-                turns: _readinessExpanded ? 0.5 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: Icon(Icons.keyboard_arrow_down, size: 18, color: colorScheme.onSurfaceVariant),
-              ),
-            ],
-          ),
-        ),
-        // Collapsible detail: Hooper chips + navigate arrow
-        AnimatedCrossFade(
-          firstChild: Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: GestureDetector(
-              onTap: () => context.push('/stats/readiness'),
-              behavior: HitTestBehavior.opaque,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        _buildHooperChip('Sleep', readiness.sleepQuality, colorScheme),
-                        const SizedBox(width: 6),
-                        _buildHooperChip('Fatigue', readiness.fatigueLevel, colorScheme),
-                        const SizedBox(width: 6),
-                        _buildHooperChip('Stress', readiness.stressLevel, colorScheme),
-                        const SizedBox(width: 6),
-                        _buildHooperChip('Sore', readiness.muscleSoreness, colorScheme),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(Icons.chevron_right, size: 16, color: colorScheme.onSurfaceVariant),
-                ],
-              ),
-            ),
-          ),
-          secondChild: const SizedBox.shrink(),
-          crossFadeState: _readinessExpanded
-              ? CrossFadeState.showFirst
-              : CrossFadeState.showSecond,
-          duration: const Duration(milliseconds: 200),
-        ),
-      ],
-    );
   }
 
   // ─── Empty State ───────────────────────────────────────────────────
@@ -389,17 +241,27 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
 
   Widget _buildContent(AllStrengthScores scores, ColorScheme colorScheme) {
     final levelColor = _getLevelColor(scores.level);
+    final tc = ThemeColors.of(context);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
-        // Compact hero row: ring + level + share + toggle
-        _buildCompactHeroRow(scores, levelColor, colorScheme),
+        // Hero Anton numeral + Barlow delta line + share/toggle row.
+        _buildHeroNumeralRow(scores, levelColor, colorScheme),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
-        // Animated content swap
+        // PUSH / PULL / LEGS style sub-scores on hairline bars (.pg-hb).
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildSubScoreBars(scores, tc),
+        ),
+
+        const SizedBox(height: 14),
+
+        // Animated content swap (body diagram / muscle list)
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
           switchInCurve: Curves.easeOut,
@@ -544,52 +406,7 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
     );
   }
 
-  Widget _buildScoreGridWithOverlay(int score, bool isDark, {String? approxLabel}) {
-    // FEATURE 4: while calibrating, show the approximate range label (e.g. "~62")
-    // instead of a hard number so the score reads as an estimate, not a verdict.
-    final overlayText = approxLabel ?? '$score';
-    return Stack(
-      children: [
-        _buildScoreGrid(score, isDark),
-        Positioned(
-          bottom: 0,
-          right: 0,
-          child: Text(
-            overlayText,
-            style: TextStyle(
-              fontSize: 14 + (score / 100 * 14),
-              fontWeight: FontWeight.bold,
-              color: _scoreOverlayColor(score),
-              shadows: [
-                Shadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.7)
-                      : Colors.white.withValues(alpha: 0.8),
-                  blurRadius: 4,
-                ),
-                Shadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.5)
-                      : Colors.white.withValues(alpha: 0.6),
-                  blurRadius: 8,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   // ─── Color Helpers ─────────────────────────────────────────────────
-
-  Color _boxColor(int boxIndex, int filledCount) {
-    if (filledCount <= 0) return Colors.transparent;
-    final t = boxIndex / filledCount;
-    if (t < 0.33) return Color.lerp(_gradientStart, _gradientMid1, t / 0.33)!;
-    if (t < 0.66) return Color.lerp(_gradientMid1, _gradientMid2, (t - 0.33) / 0.33)!;
-    return Color.lerp(_gradientMid2, _gradientEnd, (t - 0.66) / 0.34)!;
-  }
 
   Color _scoreOverlayColor(int score) {
     if (score >= 80) return const Color(0xFF4A8B5C); // deep sage

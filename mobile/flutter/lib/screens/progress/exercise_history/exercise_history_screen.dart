@@ -14,6 +14,9 @@ import '../widgets/gym_progress_filter.dart';
 import '../../../data/services/api_client.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../reports/widgets/report_share_sheet.dart';
 
@@ -96,9 +99,15 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
         children: [
           TabBar(
             controller: _tabController,
+            indicatorColor: ThemeColors.of(context).accent,
+            indicatorWeight: 2,
+            labelColor: ThemeColors.of(context).textPrimary,
+            unselectedLabelColor: ThemeColors.of(context).textMuted,
+            labelStyle: ZType.lbl(13, letterSpacing: 1.5),
+            unselectedLabelStyle: ZType.lbl(13, letterSpacing: 1.5),
             tabs: const [
-              Tab(icon: Icon(Icons.fitness_center), text: 'Exercises'),
-              Tab(icon: Icon(Icons.emoji_events), text: 'PRs'),
+              Tab(icon: Icon(Icons.fitness_center_outlined), text: 'EXERCISES'),
+              Tab(icon: Icon(Icons.emoji_events_outlined), text: 'PRS'),
             ],
           ),
           Expanded(
@@ -260,23 +269,20 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
           children: [
             Icon(
               Icons.fitness_center_outlined,
-              size: 80,
-              color: theme.colorScheme.outline,
+              size: 64,
+              color: ThemeColors.of(context).textMuted,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
-              AppLocalizations.of(context).exerciseHistoryNoExerciseHistoryYet,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              AppLocalizations.of(context).exerciseHistoryNoExerciseHistoryYet.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.lbl(18, color: ThemeColors.of(context).textPrimary, letterSpacing: 1.2),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               AppLocalizations.of(context).exerciseHistoryCompleteSomeWorkoutsTo,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: ZType.ser(14, color: ThemeColors.of(context).textSecondary),
             ),
           ],
         ),
@@ -403,19 +409,14 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
           _buildSummaryCard(theme, prStats),
           const SizedBox(height: 16),
 
-          // Recent PRs header
+          // Recent PRs header — Barlow kicker over a hairline ledger.
           if (recentPrs.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                AppLocalizations.of(context).strengthRecentPersonalRecords,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            ZealovaSectionKicker(
+              AppLocalizations.of(context).strengthRecentPersonalRecords,
+              padding: const EdgeInsets.only(bottom: 4),
             ),
 
-            // PR items
+            // PR ledger rows (hairline-divided, Anton lift numerals).
             ...recentPrs.map((pr) => _buildPRItem(theme, pr)),
           ],
 
@@ -430,47 +431,37 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
   }
 
   Widget _buildSummaryCard(ThemeData theme, PRStats prStats) {
-    return Card(
-      color: Colors.amber.withOpacity(0.12),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: Colors.amber.withOpacity(0.3),
-        ),
+    // v2 closing tiles row: hairline-divided Anton numerals. Exactly one
+    // accent cell (the live PR streak) — the rest stay matte.
+    final tc = ThemeColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: tc.cardBorder),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      child: IntrinsicHeight(
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _SummaryStatItem(
-              value: prStats.totalPrs.toString(),
-              label: AppLocalizations.of(context).exerciseHistoryTotalPrs,
-              icon: Icons.emoji_events,
-              color: Colors.amber,
+            Expanded(
+              child: _SummaryStatItem(
+                value: prStats.totalPrs.toString(),
+                label: AppLocalizations.of(context).exerciseHistoryTotalPrs,
+              ),
             ),
-            Container(
-              width: 1,
-              height: 40,
-              color: Colors.amber.withOpacity(0.3),
+            VerticalDivider(width: 1, thickness: 1, color: AppColors.hairline),
+            Expanded(
+              child: _SummaryStatItem(
+                value: prStats.prsThisPeriod.toString(),
+                label: AppLocalizations.of(context).habitCardLast30Days,
+              ),
             ),
-            _SummaryStatItem(
-              value: prStats.prsThisPeriod.toString(),
-              label: AppLocalizations.of(context).habitCardLast30Days,
-              icon: Icons.calendar_month,
-              color: Colors.amber.shade700,
-            ),
-            Container(
-              width: 1,
-              height: 40,
-              color: Colors.amber.withOpacity(0.3),
-            ),
-            _SummaryStatItem(
-              value: prStats.currentPrStreak.toString(),
-              label: AppLocalizations.of(context).exerciseHistoryPrStreak,
-              icon: Icons.local_fire_department,
-              color: Colors.deepOrange,
+            VerticalDivider(width: 1, thickness: 1, color: AppColors.hairline),
+            Expanded(
+              child: _SummaryStatItem(
+                value: prStats.currentPrStreak.toString(),
+                label: AppLocalizations.of(context).exerciseHistoryPrStreak,
+                accent: true,
+              ),
             ),
           ],
         ),
@@ -479,8 +470,12 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
   }
 
   Widget _buildPRItem(ThemeData theme, PersonalRecordScore pr) {
+    // v2 PR ledger row (.pg-pr): desaturated trophy · Barlow uppercase name
+    // with a date·muscle telemetry subline · Anton lift numeral · green +%
+    // delta. Hairline-divided rows, never boxed. The trophy stays matte so it
+    // does not read as a second accent against the green deltas.
+    final tc = ThemeColors.of(context);
     final isAllTime = pr.isAllTimePr;
-    final trophyColor = isAllTime ? Colors.amber : theme.colorScheme.primary;
 
     String formattedDate;
     try {
@@ -490,109 +485,68 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
       formattedDate = pr.achievedAt;
     }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            // Trophy icon
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: trophyColor.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.emoji_events,
-                color: trophyColor,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 14),
+    final muscle = pr.muscleGroup
+        ?.replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+    final subline = [
+      formattedDate,
+      if (muscle != null && muscle.isNotEmpty) muscle,
+      if (isAllTime) AppLocalizations.of(context).workoutSummaryScreenAllTime,
+    ].join(' · ');
 
-            // Exercise info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pr.exerciseDisplayName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  if (pr.muscleGroup != null)
-                    Text(
-                      pr.muscleGroup!
-                          .replaceAll('_', ' ')
-                          .split(' ')
-                          .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
-                          .join(' '),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  const SizedBox(height: 4),
-                  Text(
-                    pr.liftDescription,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Icon(
+            isAllTime ? Icons.military_tech_outlined : Icons.emoji_events_outlined,
+            size: 20,
+            color: tc.textMuted,
+          ),
+          const SizedBox(width: 12),
 
-            // Improvement badge + date column
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+          // Exercise name (Barlow uppercase) + telemetry subline (Space Mono).
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (pr.improvementPercent != null && pr.improvementPercent! > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: Colors.green.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      '+${pr.improvementPercent!.toStringAsFixed(1)}%',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 6),
                 Text(
-                  formattedDate,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 11,
-                  ),
+                  pr.exerciseDisplayName.toUpperCase(),
+                  style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 1),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                if (isAllTime)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Text(
-                      AppLocalizations.of(context).workoutSummaryScreenAllTime,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: Colors.amber.shade700,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 9,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 3),
+                Text(
+                  subline,
+                  style: ZType.data(10, color: tc.textMuted),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
+          ),
+          const SizedBox(width: 10),
+
+          // Anton lift numeral + green improvement delta.
+          Text(
+            pr.liftDescription,
+            style: ZType.disp(18, color: tc.textPrimary, letterSpacing: 0.5),
+          ),
+          if (pr.improvementPercent != null && pr.improvementPercent! > 0) ...[
+            const SizedBox(width: 9),
+            Text(
+              '+${pr.improvementPercent!.toStringAsFixed(0)}%',
+              style: ZType.lbl(11, color: tc.success, letterSpacing: 0.5),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -606,23 +560,20 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
           children: [
             Icon(
               Icons.emoji_events_outlined,
-              size: 80,
-              color: theme.colorScheme.outline,
+              size: 64,
+              color: ThemeColors.of(context).textMuted,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
             Text(
-              AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.lbl(18, color: ThemeColors.of(context).textPrimary, letterSpacing: 1.2),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Text(
               AppLocalizations.of(context).exerciseHistoryKeepTrainingAndPushing,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: ZType.ser(14, color: ThemeColors.of(context).textSecondary),
             ),
           ],
         ),
@@ -631,44 +582,42 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
   }
 }
 
-/// Summary stat item for the PR summary card
+/// Summary stat tile for the PR summary row — Anton numeral over a Barlow
+/// label, hairline-divided. One tile may set [accent] (the single screen
+/// accent); the rest stay matte.
 class _SummaryStatItem extends StatelessWidget {
   final String value;
   final String label;
-  final IconData icon;
-  final Color color;
+  final bool accent;
 
   const _SummaryStatItem({
     required this.value,
     required this.label,
-    required this.icon,
-    required this.color,
+    this.accent = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            value,
+            style: ZType.disp(24,
+                color: accent ? tc.accent : tc.textPrimary, height: 1),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: 6),
+          Text(
+            label.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -687,49 +636,47 @@ class _ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // v2 leaderboard row (.pg-lb): Anton rank numeral (top-3 accent) · Barlow
+    // exercise name + telemetry stat chips · Anton max-lift numeral. Hairline
+    // divider, no boxed card.
+    final tc = ThemeColors.of(context);
+    final isTop = rank <= 3;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          ),
           child: Row(
             children: [
-              // Rank badge
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: _getRankColor(rank, theme),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(
-                    '#$rank',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: rank <= 3 ? Colors.white : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+              // Rank numeral (Anton) — top-3 accent, rest muted.
+              SizedBox(
+                width: 30,
+                child: Text(
+                  '$rank',
+                  textAlign: TextAlign.center,
+                  style: ZType.disp(16,
+                      color: isTop ? tc.accent : tc.textMuted),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 10),
 
-              // Exercise info
+              // Exercise name (Barlow uppercase) + telemetry stat chips.
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      exercise.exerciseName,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      exercise.exerciseName.toUpperCase(),
+                      style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 1),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 3),
                     Row(
                       children: [
                         if (exercise.muscleGroup != null) ...[
@@ -737,7 +684,7 @@ class _ExerciseCard extends StatelessWidget {
                             icon: Icons.fitness_center,
                             label: exercise.formattedMuscleGroup,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 12),
                         ],
                         _StatChip(
                           icon: Icons.repeat,
@@ -749,51 +696,30 @@ class _ExerciseCard extends StatelessWidget {
                 ),
               ),
 
-              // Stats column
+              // Max-lift Anton numeral + last-performed telemetry.
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (exercise.maxWeightKg != null && exercise.maxWeightKg! > 0)
                     Text(
                       exercise.formattedMaxWeight,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                      ),
+                      style: ZType.disp(17, color: tc.textPrimary, letterSpacing: 0.5),
                     ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
                   Text(
                     exercise.formattedLastPerformed,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: ZType.data(10, color: tc.textMuted),
                   ),
                 ],
               ),
 
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              const SizedBox(width: 6),
+              Icon(Icons.chevron_right, size: 18, color: tc.textMuted),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Color _getRankColor(int rank, ThemeData theme) {
-    switch (rank) {
-      case 1:
-        return Colors.amber;
-      case 2:
-        return Colors.grey.shade400;
-      case 3:
-        return Colors.brown.shade300;
-      default:
-        return theme.colorScheme.surfaceContainerHighest;
-    }
   }
 }
 
@@ -808,22 +734,16 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 14,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+        Icon(icon, size: 12, color: tc.textMuted),
         const SizedBox(width: 4),
         Text(
           label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+          style: ZType.data(10, color: tc.textMuted),
         ),
       ],
     );

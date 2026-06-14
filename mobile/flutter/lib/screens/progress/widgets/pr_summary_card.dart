@@ -4,9 +4,16 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/providers/scores_provider.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
-/// Card showing personal records summary
+/// Card showing personal records summary.
+///
+/// STATS HUB redesign: the PR ledger renders as hairline rows
+/// (`.pg-pr` in signature-v2) — a desaturated trophy, the exercise name in
+/// Barlow uppercase with a date·equipment subtext, an Anton lift numeral with
+/// `×reps`, and a green `+%` delta. Hairline dividers, not boxed cards.
 class PRSummaryCard extends ConsumerStatefulWidget {
   final String userId;
 
@@ -30,285 +37,224 @@ class _PRSummaryCardState extends ConsumerState<PRSummaryCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
     // Select just the slices read here — avoids rebuilds on unrelated
     // scores mutations (readiness, nutrition, strength).
     final (prStats, isLoading) = ref.watch(
       scoresProvider.select((s) => (s.prStats, s.isLoading)),
     );
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return ZealovaCard(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                const Icon(Icons.emoji_events, color: Color(0xFFFFD700)),
-                const SizedBox(width: 8),
-                Text(
-                  AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
+          // Section kicker (Barlow) — no boxed header bar.
+          ZealovaSectionKicker(
+            AppLocalizations.of(context).workoutSummaryGeneralPersonalRecords,
           ),
+          const SizedBox(height: 12),
 
           if (isLoading && prStats == null)
             const Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(child: CircularProgressIndicator()),
             )
           else if (prStats == null || prStats.totalPrs == 0)
-            _buildEmptyState(colorScheme)
+            _buildEmptyState(tc)
           else
-            _buildContent(prStats, colorScheme),
+            _buildContent(prStats, tc),
         ],
       ),
     ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.05, end: 0);
   }
 
-  Widget _buildEmptyState(ColorScheme colorScheme) {
+  Widget _buildEmptyState(ThemeColors tc) {
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: [
           Icon(
             Icons.emoji_events_outlined,
-            size: 48,
-            color: colorScheme.outline,
+            size: 40,
+            color: tc.textMuted,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
+            style: ZType.lbl(15, color: tc.textPrimary, letterSpacing: 0.5),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             AppLocalizations.of(context).prSummaryCardLogYourWorkoutsAnd,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 13, color: tc.textSecondary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildContent(PRStats stats, ColorScheme colorScheme) {
+  Widget _buildContent(PRStats stats, ThemeColors tc) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Stats Row
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFD700).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem(
-                '${stats.totalPrs}',
-                'Total PRs',
-                Icons.emoji_events,
-                const Color(0xFFFFD700),
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: colorScheme.outline.withOpacity(0.2),
-              ),
-              _buildStatItem(
-                '${stats.prsThisPeriod}',
-                'Last 30 Days',
-                Icons.calendar_today,
-                Colors.green,
-              ),
-              Container(
-                width: 1,
-                height: 40,
-                color: colorScheme.outline.withOpacity(0.2),
-              ),
-              _buildStatItem(
-                '${stats.currentPrStreak}',
-                'PR Streak',
-                Icons.local_fire_department,
-                Colors.orange,
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Recent PRs
+        // Recent PRs — hairline ledger rows (.pg-pr).
         if (stats.recentPrs.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text(
-                  AppLocalizations.of(context).prSummaryCardRecentPrs,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
+          Text(
+            AppLocalizations.of(context).prSummaryCardRecentPrs,
+            style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.8),
           ),
-          const SizedBox(height: 8),
-          ...stats.recentPrs.take(5).map((pr) => _buildPRItem(pr, colorScheme)),
+          const SizedBox(height: 4),
+          ...() {
+            final prs = stats.recentPrs.take(5).toList();
+            return List.generate(prs.length, (i) {
+              return Column(
+                children: [
+                  _buildPRRow(prs[i], tc),
+                  if (i < prs.length - 1)
+                    const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 0)),
+                ],
+              );
+            });
+          }(),
+          const SizedBox(height: 14),
         ],
 
-        const SizedBox(height: 8),
+        // Closing tiles row — hairline-divided cells (.pg-tiles).
+        _buildStatTilesRow(stats, tc),
       ],
     );
   }
 
-  Widget _buildStatItem(
-    String value,
-    String label,
-    IconData icon,
-    Color iconColor,
-  ) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: iconColor),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPRItem(PersonalRecordScore pr, ColorScheme colorScheme) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
-      ),
+  /// A single PR ledger row (.pg-pr): desaturated trophy · Barlow uppercase
+  /// name + date·equipment subtext · Anton lift numeral with ×reps · green +%.
+  Widget _buildPRRow(PersonalRecordScore pr, ThemeColors tc) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
         children: [
-          // Trophy icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: pr.isAllTimePr
-                  ? const Color(0xFFFFD700).withOpacity(0.2)
-                  : colorScheme.primaryContainer,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              pr.isAllTimePr ? Icons.emoji_events : Icons.trending_up,
-              color: pr.isAllTimePr
-                  ? const Color(0xFFFFD700)
-                  : colorScheme.primary,
-              size: 20,
-            ),
+          // Trophy — desaturated, never accent. All-time PRs read slightly
+          // brighter (textSecondary) than incremental ones (textMuted).
+          Icon(
+            pr.isAllTimePr
+                ? Icons.emoji_events_outlined
+                : Icons.trending_up,
+            size: 18,
+            color: pr.isAllTimePr ? tc.textSecondary : tc.textMuted,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 11),
+          // Exercise name + subtext.
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  pr.exerciseDisplayName,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+                  pr.exerciseDisplayName.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(13,
+                      color: tc.textPrimary,
+                      weight: FontWeight.w800,
+                      letterSpacing: 1),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  pr.liftDescription,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  _subText(pr),
+                  style: ZType.data(10, color: tc.textMuted)
+                      .copyWith(fontWeight: FontWeight.w400),
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (pr.improvementPercent != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.prSummaryCardValue(pr.improvementPercent!.toStringAsFixed(1)),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 4),
-              Text(
-                _formatDate(pr.achievedAt),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: colorScheme.outline,
-                ),
-              ),
-            ],
+          const SizedBox(width: 8),
+          // Anton lift numeral with ×reps.
+          _buildLiftNumeral(pr, tc),
+          // Green improvement delta.
+          if (pr.improvementPercent != null) ...[
+            const SizedBox(width: 9),
+            Text(
+              AppLocalizations.of(context)
+                  .prSummaryCardValue(pr.improvementPercent!.toStringAsFixed(1)),
+              style: ZType.lbl(10,
+                  color: tc.success,
+                  weight: FontWeight.w800,
+                  letterSpacing: 0.5),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLiftNumeral(PersonalRecordScore pr, ThemeColors tc) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: pr.weightKg.toStringAsFixed(pr.weightKg % 1 == 0 ? 0 : 1),
+            style: ZType.disp(18, color: tc.textPrimary, letterSpacing: 0.5),
+          ),
+          TextSpan(
+            text: ' ×${pr.reps}',
+            style: ZType.lbl(10,
+                color: tc.textMuted,
+                weight: FontWeight.w700,
+                letterSpacing: 0.5),
           ),
         ],
       ),
     );
+  }
+
+  /// Closing tiles row (.pg-tiles): Total · 30d · Streak, hairline-divided
+  /// cells. Exactly one accent (the running PR streak earns it here).
+  Widget _buildStatTilesRow(PRStats stats, ThemeColors tc) {
+    final divider = Container(width: 1, height: 30, color: tc.cardBorder);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: [
+        Expanded(
+          child: Center(
+            child: ZealovaStatTile(
+              value: '${stats.totalPrs}',
+              label: 'Total PRs',
+              align: CrossAxisAlignment.center,
+            ),
+          ),
+        ),
+        divider,
+        Expanded(
+          child: Center(
+            child: ZealovaStatTile(
+              value: '${stats.prsThisPeriod}',
+              label: 'Last 30d',
+              align: CrossAxisAlignment.center,
+            ),
+          ),
+        ),
+        divider,
+        Expanded(
+          child: Center(
+            child: ZealovaStatTile(
+              value: '${stats.currentPrStreak}',
+              label: 'PR Streak',
+              accentValue: true,
+              align: CrossAxisAlignment.center,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _subText(PersonalRecordScore pr) {
+    final date = _formatDate(pr.achievedAt);
+    final equip = (pr.setType.isNotEmpty && pr.setType != 'working')
+        ? ' · ${pr.setType}'
+        : '';
+    return '$date$equip';
   }
 
   String _formatDate(String dateString) {

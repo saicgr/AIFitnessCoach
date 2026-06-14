@@ -82,122 +82,25 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
     );
   }
 
-  Widget _buildHooperChip(String label, int value, ColorScheme colorScheme) {
-    // 1 = best, 7 = worst → color green→red
-    final t = ((value - 1) / 6).clamp(0.0, 1.0);
-    final chipColor = Color.lerp(
-      const Color(0xFF4CAF50), // green
-      const Color(0xFFF44336), // red
-      t,
-    )!;
-
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        decoration: BoxDecoration(
-          color: chipColor.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Column(
-          children: [
-            Text(
-              '$value',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: chipColor,
-              ),
-            ),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 9,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-
-  Widget _buildCheckInPrompt(BuildContext context, ColorScheme colorScheme) {
-    return InkWell(
-      onTap: () => context.push('/stats/readiness'),
-      borderRadius: BorderRadius.circular(12),
-      child: Row(
-        children: [
-          Icon(Icons.self_improvement, size: 20, color: colorScheme.primary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              AppLocalizations.of(context).strengthOverviewCardHowAreYouFeeling,
-              style: TextStyle(
-                fontSize: 13,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              AppLocalizations.of(context).strengthOverviewCardCheckIn,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-  // ─── Compact Hero Row (ring + level + share + toggle) ─────────────────
-
-  Widget _buildCompactHeroRow(AllStrengthScores scores, Color levelColor, ColorScheme colorScheme) {
+  // ─── Hero numeral row (Anton score + Barlow delta + share + toggle) ────
+  //
+  // STATS HUB FRAME 1: the strength score reads as a hero Anton numeral with a
+  // small Barlow delta line beside it ("LEVEL · N muscle groups") — not boxed
+  // in a ring card.
+  Widget _buildHeroNumeralRow(AllStrengthScores scores, Color levelColor, ColorScheme colorScheme) {
+    final tc = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Mini circular progress ring with score
-          SizedBox(
-            width: 44,
-            height: 44,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: CircularProgressIndicator(
-                    value: scores.overallScore / 100,
-                    strokeWidth: 5,
-                    backgroundColor: colorScheme.outline.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation<Color>(levelColor),
-                    strokeCap: StrokeCap.round,
-                  ),
-                ),
-                Text(
-                  '${scores.overallScore}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
+          // Hero Anton numeral.
+          Text(
+            '${scores.overallScore}',
+            style: ZType.disp(62, color: tc.textPrimary, height: 0.86),
           ),
-          const SizedBox(width: 10),
-          // Level name + muscle count
+          const SizedBox(width: 13),
+          // Barlow delta line: level (semantic tint) + muscle-group count.
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -205,18 +108,19 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
               children: [
                 Text(
                   scores.overallLevel.toUpperCase(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: levelColor,
-                  ),
+                  style: ZType.lbl(13,
+                      color: levelColor,
+                      weight: FontWeight.w800,
+                      letterSpacing: 1.4),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  AppLocalizations.of(context)!.strengthOverviewCardUiMuscleGroups(scores.muscleScores.length),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  AppLocalizations.of(context)
+                      .strengthOverviewCardUiMuscleGroups(scores.muscleScores.length),
+                  style: ZType.lbl(10.5,
+                      color: tc.textMuted,
+                      weight: FontWeight.w600,
+                      letterSpacing: 0.8),
                 ),
               ],
             ),
@@ -232,7 +136,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
               child: Icon(
                 Icons.ios_share_rounded,
                 size: 20,
-                color: colorScheme.onSurfaceVariant,
+                color: tc.textMuted,
               ),
             ),
           ),
@@ -255,6 +159,66 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
           ),
         ],
       ),
+    );
+  }
+
+  // ─── Sub-score hairline bars (.pg-hb) ──────────────────────────────────
+  //
+  // Top muscle groups rendered as the v2 .pg-hb row: Barlow uppercase label
+  // (left, fixed width) · 4px hairline track with fill · Anton numeral (right).
+  // No boxed tiles. The single peak muscle's fill carries the accent.
+  Widget _buildSubScoreBars(AllStrengthScores scores, ThemeColors tc) {
+    final top = scores.sortedMuscleScores.take(3).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    final peakScore = top.first.strengthScore;
+
+    return Column(
+      children: List.generate(top.length, (i) {
+        final m = top[i];
+        final isPeak = m.strengthScore == peakScore;
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 60,
+                child: Text(
+                  m.muscleGroupDisplayName.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(10,
+                      color: tc.textMuted, letterSpacing: 1.8),
+                ),
+              ),
+              const SizedBox(width: 9),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: SizedBox(
+                    height: 4,
+                    child: LinearProgressIndicator(
+                      value: (m.strengthScore / 100).clamp(0.0, 1.0),
+                      backgroundColor: tc.cardBorder,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        isPeak ? tc.accent : tc.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 9),
+              SizedBox(
+                width: 30,
+                child: Text(
+                  '${m.strengthScore}',
+                  textAlign: TextAlign.right,
+                  style: ZType.disp(15, color: tc.textPrimary),
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 
@@ -432,10 +396,14 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
             },
             itemBuilder: (context, index) {
               final muscle = muscles[index];
-              return Padding(
+              final isLast = index == muscles.length - 1;
+              return Column(
                 key: ValueKey(muscle.muscleGroup),
-                padding: const EdgeInsets.only(bottom: 8),
-                child: _buildMuscleCard(muscle, colorScheme, index: index, status: statuses[muscle.muscleGroup]),
+                children: [
+                  _buildMuscleCard(muscle, colorScheme,
+                      index: index, status: statuses[muscle.muscleGroup]),
+                  if (!isLast) const ZealovaRule(),
+                ],
               );
             },
           ),
@@ -445,86 +413,106 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
   }
 
 
-  // ─── Muscle Card with Score Grid ───────────────────────────────────
-
+  // ─── Muscle hairline row (.pg-hb derived) ──────────────────────────────
+  //
+  // STATS HUB: each muscle is a hairline row — thumbnail · Barlow name (+ status
+  // bar / calibrating badge) · 4px hairline score track · Anton numeral · pin +
+  // drag. No boxed surfaceContainerLow tile; the hairline divider between rows
+  // is drawn by the list builder.
   Widget _buildMuscleCard(StrengthScoreData muscle, ColorScheme colorScheme, {required int index, MuscleStatus? status}) {
+    final tc = ThemeColors.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final displayName = muscle.muscleGroupDisplayName;
     final assetPath = muscleGroupAssets[displayName];
     final score = muscle.strengthScore;
     final isPinned = _pinnedMuscles.contains(muscle.muscleGroup);
+    final scoreColor = _scoreOverlayColor(score);
+    final numeralLabel = muscle.hasRange ? muscle.rangeLabel : '$score';
 
     return InkWell(
       onTap: () => widget.onTapMuscleGroup?.call(muscle.muscleGroup),
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-        ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 9),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Left: image + name + status bar
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: assetPath != null
-                      ? Image.asset(
-                          assetPath,
-                          width: 40,
-                          height: 40,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              _buildImageFallback(displayName, score, isDark),
-                        )
-                      : _buildImageFallback(displayName, score, isDark),
-                ),
-                const SizedBox(height: 4),
-                SizedBox(
-                  width: 48,
-                  child: Text(
-                    displayName,
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
+            // Thumbnail
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: assetPath != null
+                  ? Image.asset(
+                      assetPath,
+                      width: 38,
+                      height: 38,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          _buildImageFallback(displayName, score, isDark),
+                    )
+                  : _buildImageFallback(displayName, score, isDark),
+            ),
+            const SizedBox(width: 11),
+            // Name + status bar + delta badge + hairline score track
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          displayName.toUpperCase(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: ZType.lbl(12,
+                              color: tc.textPrimary,
+                              weight: FontWeight.w800,
+                              letterSpacing: 1),
+                        ),
+                      ),
+                      if (status != null) ...[
+                        const SizedBox(width: 8),
+                        _buildMuscleStatusBar(status, colorScheme),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 5),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: SizedBox(
+                      height: 4,
+                      child: LinearProgressIndicator(
+                        value: (score / 100).clamp(0.0, 1.0),
+                        backgroundColor: tc.cardBorder,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(scoreColor),
+                      ),
                     ),
                   ),
-                ),
-                if (status != null) ...[
-                  const SizedBox(height: 3),
-                  _buildMuscleStatusBar(status, colorScheme),
+                  // FEATURE 4: score-delta / calibrating badge.
+                  Builder(builder: (_) {
+                    final badge = _buildScoreDeltaBadge(muscle, colorScheme);
+                    if (badge == null) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: badge,
+                    );
+                  }),
                 ],
-                // FEATURE 4: score-delta / calibrating badge under the name.
-                Builder(builder: (_) {
-                  final badge = _buildScoreDeltaBadge(muscle, colorScheme);
-                  if (badge == null) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: SizedBox(width: 56, child: badge),
-                  );
-                }),
-              ],
+              ),
             ),
             const SizedBox(width: 10),
-            // Center: score grid. While calibrating, overlay the approximate
-            // range label (e.g. "~62") instead of a hard number.
-            Expanded(
-              child: _buildScoreGridWithOverlay(
-                score,
-                isDark,
-                approxLabel: muscle.hasRange ? muscle.rangeLabel : null,
+            // Anton score numeral
+            SizedBox(
+              width: 34,
+              child: Text(
+                numeralLabel,
+                textAlign: TextAlign.right,
+                style: ZType.disp(18, color: tc.textPrimary),
               ),
             ),
             // Right: pin + drag handle
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -536,7 +524,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
                     child: Icon(
                       isPinned ? Icons.push_pin : Icons.push_pin_outlined,
                       size: 16,
-                      color: isPinned ? colorScheme.primary : colorScheme.outline.withValues(alpha: 0.5),
+                      color: isPinned ? tc.accent : tc.textMuted,
                     ),
                   ),
                 ),
@@ -546,7 +534,7 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
                   child: Icon(
                     Icons.drag_handle,
                     size: 20,
-                    color: colorScheme.outline.withValues(alpha: 0.4),
+                    color: tc.textMuted,
                   ),
                 ),
               ],
@@ -555,45 +543,6 @@ extension _StrengthOverviewCardStateUI on _StrengthOverviewCardState {
         ),
       ),
     );
-  }
-
-
-  Widget _buildScoreGrid(int score, bool isDark) {
-    final emptyColor = isDark
-        ? Colors.white.withValues(alpha: 0.1)
-        : Colors.black.withValues(alpha: 0.1);
-    const rows = 5;
-
-    return LayoutBuilder(builder: (context, constraints) {
-      const boxSize = 8.0;
-      const spacing = 2.0;
-      final cols = (constraints.maxWidth / (boxSize + spacing)).floor();
-      final totalBoxes = rows * cols;
-      final filledCount = (score / 100 * totalBoxes).round().clamp(0, totalBoxes);
-
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: List.generate(rows, (row) {
-          return Row(
-            children: List.generate(cols, (col) {
-              final index = col * rows + row; // column-first fill
-              final filled = index < filledCount;
-              return Container(
-                width: boxSize,
-                height: boxSize,
-                margin: const EdgeInsets.all(spacing / 2),
-                decoration: BoxDecoration(
-                  color: filled
-                      ? _boxColor(index, filledCount)
-                      : emptyColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              );
-            }),
-          );
-        }),
-      );
-    });
   }
 
 

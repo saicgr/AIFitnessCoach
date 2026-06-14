@@ -334,36 +334,142 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
     final isPositive = data.percentChange >= 0;
     final trendColor = isPositive ? tc.success : tc.error;
 
-    return ZealovaCard(
-      variant: ZealovaCardVariant.outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardHeader(Icons.trending_up,
-              AppLocalizations.of(context).progressChartsVolumeTrend),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildTrendStat(
-                'Change',
-                '${isPositive ? '+' : ''}${data.percentChange.toStringAsFixed(1)}%',
-                trendColor,
+    // CURRENT VALUE hero (v2 archetype): the headline metric reads as a big
+    // Anton numeral + small Barlow unit, with a semantic verdict line under it.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heroValue(
+          kicker: AppLocalizations.of(context).progressChartsVolumeTrend,
+          value: data.avgWeeklyVolumeKg.toStringAsFixed(0),
+          unit: 'kg/wk',
+          verdict:
+              '${isPositive ? '↑' : '↓'} ${data.percentChange.abs().toStringAsFixed(1)}% vs start',
+          verdictColor: trendColor,
+        ),
+        const SizedBox(height: 16),
+        // MIN / AVG / MAX-style hairline stat row (.pg-stat3).
+        _statRow([
+          _StatCell(
+            value: '${isPositive ? '+' : ''}${data.percentChange.toStringAsFixed(1)}%',
+            label: 'Change',
+            color: trendColor,
+          ),
+          _StatCell(
+            value: data.avgWeeklyVolumeKg.toStringAsFixed(0),
+            unit: 'kg',
+            label: 'Avg Weekly',
+            color: tc.textPrimary,
+          ),
+          _StatCell(
+            value: data.peakVolumeKg.toStringAsFixed(0),
+            unit: 'kg',
+            label: 'Peak',
+            color: tc.error,
+          ),
+        ]),
+      ],
+    );
+  }
+
+  /// CURRENT VALUE hero — Anton numeral + Barlow unit + colored verdict line.
+  Widget _heroValue({
+    required String kicker,
+    required String value,
+    required String unit,
+    required String verdict,
+    required Color verdictColor,
+  }) {
+    final tc = ThemeColors.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ZealovaSectionKicker(kicker),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(value, style: ZType.disp(52, color: tc.textPrimary)),
+            const SizedBox(width: 6),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                unit,
+                style: ZType.lbl(14, color: tc.textMuted, letterSpacing: 1.0),
               ),
-              _buildTrendStat(
-                'Avg Weekly',
-                '${data.avgWeeklyVolumeKg.toStringAsFixed(0)} kg',
-                tc.accent,
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          verdict,
+          style: ZType.data(11.5, color: verdictColor),
+        ),
+      ],
+    );
+  }
+
+  /// Hairline-divided Anton stat row (v2 `.pg-stat3`).
+  Widget _statRow(List<_StatCell> cells) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.hairline),
+          bottom: BorderSide(color: AppColors.hairline),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < cells.length; i++) ...[
+              if (i > 0) Container(width: 1, color: AppColors.hairline),
+              Expanded(child: _buildStatCell(cells[i])),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCell(_StatCell cell) {
+    final tc = ThemeColors.of(context);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Flexible(
+              child: Text(
+                cell.value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.disp(18, color: cell.color),
               ),
-              _buildTrendStat(
-                'Peak',
-                '${data.peakVolumeKg.toStringAsFixed(0)} kg',
-                tc.textPrimary,
+            ),
+            if (cell.unit != null) ...[
+              const SizedBox(width: 2),
+              Text(
+                cell.unit!,
+                style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 0.5),
               ),
             ],
-          ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 5),
+        Text(
+          cell.label.toUpperCase(),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: ZType.lbl(8.5, color: tc.textMuted, letterSpacing: 1.5),
+        ),
+      ],
     );
   }
 
@@ -377,23 +483,6 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
         Text(
           title.toUpperCase(),
           style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 1.5),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTrendStat(String label, String value, Color color) {
-    final tc = ThemeColors.of(context);
-    return Column(
-      children: [
-        Text(
-          value,
-          style: ZType.disp(18, color: color),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label.toUpperCase(),
-          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
         ),
       ],
     );
@@ -440,65 +529,57 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
   Widget _buildStrengthSummaryCard(StrengthProgressionData data) {
     final tc = ThemeColors.of(context);
 
-    return ZealovaCard(
-      variant: ZealovaCardVariant.outlined,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _cardHeader(Icons.fitness_center,
-              AppLocalizations.of(context).progressChartsStrengthSummary),
-          const SizedBox(height: 16),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _heroValue(
+          kicker: AppLocalizations.of(context).progressChartsStrengthSummary,
+          value: (data.totalVolumeKg / 1000).toStringAsFixed(1),
+          unit: 't total',
+          verdict:
+              '↑ ${data.avgWeeklyVolumeKg.toStringAsFixed(0)} kg avg weekly',
+          verdictColor: tc.success,
+        ),
+        const SizedBox(height: 16),
+        _statRow([
+          _StatCell(
+            value: '${(data.totalVolumeKg / 1000).toStringAsFixed(1)}t',
+            label: 'Total Volume',
+            color: tc.accent,
+          ),
+          _StatCell(
+            value: '${data.totalSets}',
+            label: 'Total Sets',
+            color: tc.textPrimary,
+          ),
+          _StatCell(
+            value: data.avgWeeklyVolumeKg.toStringAsFixed(0),
+            unit: 'kg',
+            label: 'Avg Weekly',
+            color: tc.textPrimary,
+          ),
+        ]),
+        if (data.topMuscleGroup != null) ...[
+          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTrendStat(
-                'Total Volume',
-                '${(data.totalVolumeKg / 1000).toStringAsFixed(1)}t',
-                tc.accent,
+              Icon(Icons.star_outline, color: tc.accent, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                AppLocalizations.of(context)
+                    .progressChartsTopMuscle
+                    .toUpperCase(),
+                style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.2),
               ),
-              _buildTrendStat(
-                'Total Sets',
-                '${data.totalSets}',
-                tc.textPrimary,
-              ),
-              _buildTrendStat(
-                'Avg Weekly',
-                '${data.avgWeeklyVolumeKg.toStringAsFixed(0)} kg',
-                tc.textPrimary,
+              const SizedBox(width: 6),
+              Text(
+                _formatMuscleGroup(data.topMuscleGroup!).toUpperCase(),
+                style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.2),
               ),
             ],
           ),
-          if (data.topMuscleGroup != null) ...[
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: tc.surface,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.hairlineStrong),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.star, color: tc.accent, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    AppLocalizations.of(context)
-                        .progressChartsTopMuscle
-                        .toUpperCase(),
-                    style:
-                        ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.2),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    _formatMuscleGroup(data.topMuscleGroup!).toUpperCase(),
-                    style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.2),
-                  ),
-                ],
-              ),
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 
@@ -577,4 +658,18 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
             word.isEmpty ? word : '${word[0].toUpperCase()}${word.substring(1)}')
         .join(' ');
   }
+}
+
+/// A single cell in the hairline-divided Anton stat row (v2 `.pg-stat3`).
+class _StatCell {
+  final String value;
+  final String? unit;
+  final String label;
+  final Color color;
+  const _StatCell({
+    required this.value,
+    this.unit,
+    required this.label,
+    required this.color,
+  });
 }

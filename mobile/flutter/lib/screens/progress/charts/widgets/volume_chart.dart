@@ -50,26 +50,21 @@ class VolumeChart extends ConsumerWidget {
                     const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
                 child: Column(
                   children: [
-                    Icon(Icons.fitness_center,
+                    Icon(Icons.fitness_center_outlined,
                         size: 36,
                         color: colors.textMuted.withValues(alpha: 0.5)),
                     const SizedBox(height: 12),
                     Text(
-                      l10n.volumeChartNoWeightedVolumeYet,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colors.textPrimary,
-                      ),
+                      l10n.volumeChartNoWeightedVolumeYet.toUpperCase(),
+                      textAlign: TextAlign.center,
+                      style: ZType.lbl(13,
+                          color: colors.textPrimary, letterSpacing: 1.2),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       l10n.volumeChartLogAFewWeighted,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textSecondary,
-                      ),
+                      style: ZType.data(12, color: colors.textSecondary),
                     ),
                   ],
                 ),
@@ -116,7 +111,7 @@ class VolumeChart extends ConsumerWidget {
   Widget _header(ThemeColors colors, AppLocalizations l10n) {
     return Row(
       children: [
-        Icon(Icons.bar_chart, color: colors.accent, size: 18),
+        Icon(Icons.show_chart, color: colors.accent, size: 18),
         const SizedBox(width: 8),
         Text(
           l10n.volumeChartVolumeTrends.toUpperCase(),

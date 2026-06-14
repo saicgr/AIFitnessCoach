@@ -22,6 +22,8 @@ import '../../data/repositories/progress_photos_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_sheet.dart';
 import '../reports/widgets/report_share_sheet.dart';
 import '../../widgets/pill_app_bar.dart';

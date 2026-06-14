@@ -10,6 +10,9 @@ import '../../../utils/share_report_helper.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../widgets/gym_progress_filter.dart';
 import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
@@ -222,37 +225,26 @@ class _HeatmapTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Summary cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        title: l10n.muscleAnalyticsMostTrained,
-                        value: _formatMuscleName(sorted.first.muscleId),
-                        icon: Icons.local_fire_department,
-                        color: Colors.orange,
-                      ),
+                // Summary tiles — hairline-divided Anton numerals.
+                _StatTileRow(
+                  tiles: [
+                    _StatTileData(
+                      label: l10n.muscleAnalyticsMostTrained,
+                      value: _formatMuscleName(sorted.first.muscleId),
+                      icon: Icons.local_fire_department_outlined,
+                      accentValue: true,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatCard(
-                        title: l10n.muscleAnalyticsLeastTrained,
-                        value: _formatMuscleName(sorted.last.muscleId),
-                        icon: Icons.warning_outlined,
-                        color: Colors.blue,
-                      ),
+                    _StatTileData(
+                      label: l10n.muscleAnalyticsLeastTrained,
+                      value: _formatMuscleName(sorted.last.muscleId),
+                      icon: Icons.trending_down_outlined,
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
                 // Muscle heatmap visualization
-                Text(
-                  l10n.muscleAnalyticsTrainingIntensity,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ZealovaSectionKicker(l10n.muscleAnalyticsTrainingIntensity),
                 const SizedBox(height: 16),
                 MuscleHeatmapWidget(
                   heatmap: heatmap,
@@ -264,12 +256,7 @@ class _HeatmapTab extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Top muscles list
-                Text(
-                  l10n.muscleAnalyticsMuscleBreakdown,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ZealovaSectionKicker(l10n.muscleAnalyticsMuscleBreakdown),
                 const SizedBox(height: 12),
                 ...sorted.map((muscle) => _MuscleListItem(
                   muscle: muscle,
@@ -334,39 +321,27 @@ class _FrequencyTab extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Summary cards
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        title: l10n.muscleAnalyticsUndertrained,
-                        value: '${undertrained.length}',
-                        subtitle: 'muscles',
-                        icon: Icons.arrow_downward,
-                        color: Colors.orange,
-                      ),
+                // Summary tiles — hairline-divided Anton numerals.
+                _StatTileRow(
+                  tiles: [
+                    _StatTileData(
+                      label: l10n.muscleAnalyticsUndertrained,
+                      value: '${undertrained.length}',
+                      unit: 'muscles',
+                      icon: Icons.arrow_downward,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _StatCard(
-                        title: l10n.muscleAnalyticsOvertrained,
-                        value: '${overtrained.length}',
-                        subtitle: 'muscles',
-                        icon: Icons.arrow_upward,
-                        color: Colors.red,
-                      ),
+                    _StatTileData(
+                      label: l10n.muscleAnalyticsOvertrained,
+                      value: '${overtrained.length}',
+                      unit: 'muscles',
+                      icon: Icons.arrow_upward,
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
 
                 // Frequency chart
-                Text(
-                  l10n.muscleAnalyticsWeeklyTrainingFrequency,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ZealovaSectionKicker(l10n.muscleAnalyticsWeeklyTrainingFrequency),
                 const SizedBox(height: 16),
                 MuscleFrequencyChart(frequency: frequency),
 
@@ -374,26 +349,21 @@ class _FrequencyTab extends ConsumerWidget {
 
                 // Recommendations
                 if (undertrained.isNotEmpty || overtrained.isNotEmpty) ...[
-                  Text(
-                    l10n.muscleAnalyticsRecommendations,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  ZealovaSectionKicker(l10n.muscleAnalyticsRecommendations),
                   const SizedBox(height: 12),
                   if (undertrained.isNotEmpty)
                     _RecommendationCard(
                       title: l10n.muscleAnalyticsTrainMore,
                       muscles: undertrained.map((f) => f.formattedMuscleGroup).toList(),
                       icon: Icons.add_circle_outline,
-                      color: Colors.orange,
+                      semantic: _RecSemantic.under,
                     ),
                   if (overtrained.isNotEmpty)
                     _RecommendationCard(
                       title: l10n.muscleAnalyticsAllowRecovery,
                       muscles: overtrained.map((f) => f.formattedMuscleGroup).toList(),
                       icon: Icons.remove_circle_outline,
-                      color: Colors.red,
+                      semantic: _RecSemantic.over,
                     ),
                 ],
               ],
@@ -451,12 +421,7 @@ class _BalanceTab extends ConsumerWidget {
                 const SizedBox(height: 24),
 
                 // Balance ratios
-                Text(
-                  l10n.muscleAnalyticsBalanceRatios,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                ZealovaSectionKicker(l10n.muscleAnalyticsBalanceRatios),
                 const SizedBox(height: 16),
                 MuscleBalanceChart(balance: balance),
 
@@ -486,20 +451,9 @@ class _BalanceTab extends ConsumerWidget {
                 // Recommendations
                 if (balance.recommendations != null && balance.recommendations!.isNotEmpty) ...[
                   const SizedBox(height: 24),
-                  Text(
-                    l10n.muscleAnalyticsRecommendations,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  ZealovaSectionKicker(l10n.muscleAnalyticsRecommendations),
                   const SizedBox(height: 12),
-                  ...balance.recommendations!.map((rec) => Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      leading: const Icon(Icons.lightbulb_outline, color: Colors.amber),
-                      title: Text(rec),
-                    ),
-                  )),
+                  ...balance.recommendations!.map((rec) => _RecommendationRow(text: rec)),
                 ],
               ],
             ),
@@ -514,59 +468,101 @@ class _BalanceTab extends ConsumerWidget {
 // Helper Widgets
 // ============================================================================
 
-class _StatCard extends StatelessWidget {
-  final String title;
+/// Immutable spec for one hairline stat tile in [_StatTileRow].
+class _StatTileData {
+  final String label;
   final String value;
-  final String? subtitle;
+  final String? unit;
   final IconData icon;
-  final Color color;
+  final bool accentValue;
 
-  const _StatCard({
-    required this.title,
+  const _StatTileData({
+    required this.label,
     required this.value,
-    this.subtitle,
     required this.icon,
-    required this.color,
+    this.unit,
+    this.accentValue = false,
   });
+}
+
+/// Two summary stats laid out as hairline-outlined tiles (Anton numeral over a
+/// Barlow uppercase label) split by a vertical hairline — the v2 STATS HUB
+/// tile language, replacing the old boxed Material `Card` pair.
+class _StatTileRow extends StatelessWidget {
+  final List<_StatTileData> tiles;
+
+  const _StatTileRow({required this.tiles});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final tc = ThemeColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: tc.surface,
+        border: Border.all(color: tc.cardBorder),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: color),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            if (subtitle != null)
-              Text(
-                subtitle!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i > 0) Container(width: 1, color: AppColors.hairline),
+              Expanded(child: _StatTile(data: tiles[i])),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  final _StatTileData data;
+
+  const _StatTile({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: [
+              Icon(data.icon,
+                  size: 16,
+                  color: data.accentValue ? tc.accent : tc.textMuted),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  data.label.toUpperCase(),
+                  style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.4),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            data.value,
+            style: ZType.disp(22,
+                color: data.accentValue ? tc.accent : tc.textPrimary),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (data.unit != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              data.unit!.toUpperCase(),
+              style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -585,63 +581,60 @@ class _MuscleListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final progress = maxIntensity > 0 ? muscle.intensity / maxIntensity : 0.0;
+    final tc = ThemeColors.of(context);
+    final progress =
+        maxIntensity > 0 ? (muscle.intensity / maxIntensity).clamp(0.0, 1.0) : 0.0;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+    return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: AppColors.hairline)),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // pg-hb row: Barlow label · 4px hairline track + accent fill · Anton numeral.
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    muscle.formattedMuscleName,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                  Expanded(
+                    child: Text(
+                      muscle.formattedMuscleName.toUpperCase(),
+                      style: ZType.lbl(12,
+                          color: tc.textPrimary, letterSpacing: 1.4),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 4,
+                        backgroundColor: AppColors.hairlineStrong,
+                        valueColor: AlwaysStoppedAnimation(tc.accent),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
                   Text(
                     muscle.formattedVolume,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
-                    ),
+                    style: ZType.disp(15, color: tc.textPrimary),
                   ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.chevron_right, size: 18, color: tc.textMuted),
                 ],
               ),
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 8,
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    '${muscle.workoutCount ?? 0} workouts',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    muscle.formattedLastTrained,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 6),
+              Text(
+                '${muscle.workoutCount ?? 0} workouts · ${muscle.formattedLastTrained}',
+                style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.0),
               ),
             ],
           ),
@@ -651,50 +644,99 @@ class _MuscleListItem extends StatelessWidget {
   }
 }
 
+enum _RecSemantic { under, over }
+
 class _RecommendationCard extends StatelessWidget {
   final String title;
   final List<String> muscles;
   final IconData icon;
-  final Color color;
+  final _RecSemantic semantic;
 
   const _RecommendationCard({
     required this.title,
     required this.muscles,
     required this.icon,
-    required this.color,
+    required this.semantic,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
+    // Semantic tint (under/over) is NOT the screen accent — warning/error.
+    final semColor = semantic == _RecSemantic.under ? tc.warning : tc.error;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(icon, color: color),
+                Icon(icon, size: 18, color: semColor),
                 const SizedBox(width: 8),
                 Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  title.toUpperCase(),
+                  style: ZType.lbl(12, color: tc.textPrimary, letterSpacing: 1.4),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: muscles.map((m) => Chip(label: Text(m))).toList(),
+              children: muscles
+                  .map((m) => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: tc.cardBorder),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          m.toUpperCase(),
+                          style: ZType.lbl(10,
+                              color: tc.textSecondary, letterSpacing: 1.2),
+                        ),
+                      ))
+                  .toList(),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Single balance-recommendation line — hairline-led, outlined `lightbulb`
+/// icon + Fraunces body, no boxed Material `ListTile`.
+class _RecommendationRow extends StatelessWidget {
+  final String text;
+
+  const _RecommendationRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lightbulb_outline, size: 18, color: tc.accent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: ZType.ser(14, color: tc.textPrimary),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -711,58 +753,78 @@ class _BalanceScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
     final isGood = score >= 75;
+    // Good/needs-work is semantic (success/warning), not the screen accent.
+    final semColor = isGood ? tc.success : tc.warning;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Row(
-          children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: (isGood ? Colors.green : Colors.orange).withOpacity(0.1),
-                border: Border.all(
-                  color: isGood ? Colors.green : Colors.orange,
-                  width: 4,
-                ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Hero balance score — Anton numeral over a Barlow kicker, with a
+          // hairline-thin readiness ring routed through the semantic color.
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${score.toInt()}',
+                style: ZType.disp(54, color: tc.textPrimary, height: 0.9),
               ),
-              child: Center(
-                child: Text(
-                  '${score.toInt()}',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: isGood ? Colors.green : Colors.orange,
-                  ),
-                ),
+              const SizedBox(height: 2),
+              Text(
+                AppLocalizations.of(context)!.muscleAnalyticsBalanceScore
+                    .toUpperCase(),
+                style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.6),
               ),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.muscleAnalyticsBalanceScore,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+            ],
+          ),
+          const SizedBox(width: 20),
+          Container(width: 1, height: 56, color: AppColors.hairline),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      isGood
+                          ? Icons.check_circle_outline
+                          : Icons.warning_amber_outlined,
+                      size: 18,
+                      color: semColor,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    status,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: isGood ? Colors.green : Colors.orange,
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        status.toUpperCase(),
+                        style: ZType.lbl(13,
+                            color: semColor, letterSpacing: 1.4),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(
+                    value: (score / 100).clamp(0.0, 1.0),
+                    minHeight: 4,
+                    backgroundColor: AppColors.hairlineStrong,
+                    valueColor: AlwaysStoppedAnimation(semColor),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -789,10 +851,14 @@ class _RatioCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
+    // Balanced/imbalanced is semantic (success/warning), not the screen accent.
+    final semColor = isBalanced ? tc.success : tc.warning;
 
-    return Card(
-      child: Padding(
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -801,63 +867,47 @@ class _RatioCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  title.toUpperCase(),
+                  style: ZType.lbl(12, color: tc.textPrimary, letterSpacing: 1.4),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: (isBalanced ? Colors.green : Colors.orange).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: semColor),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    isBalanced ? AppLocalizations.of(context)!.muscleAnalyticsBalanced : AppLocalizations.of(context)!.muscleAnalyticsImbalanced,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: isBalanced ? Colors.green : Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    (isBalanced
+                            ? AppLocalizations.of(context)!.muscleAnalyticsBalanced
+                            : AppLocalizations.of(context)!
+                                .muscleAnalyticsImbalanced)
+                        .toUpperCase(),
+                    style: ZType.lbl(9, color: semColor, letterSpacing: 1.2),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(side1Label, style: theme.textTheme.bodySmall),
-                      Text(
-                        side1Value,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  child: _RatioSide(
+                    label: side1Label,
+                    value: side1Value,
+                    align: CrossAxisAlignment.start,
                   ),
                 ),
                 Text(
                   ratio,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
+                  style: ZType.disp(26, color: tc.accent),
                 ),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(side2Label, style: theme.textTheme.bodySmall),
-                      Text(
-                        side2Value,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  child: _RatioSide(
+                    label: side2Label,
+                    value: side2Value,
+                    align: CrossAxisAlignment.end,
                   ),
                 ),
               ],
@@ -865,6 +915,38 @@ class _RatioCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RatioSide extends StatelessWidget {
+  final String label;
+  final String value;
+  final CrossAxisAlignment align;
+
+  const _RatioSide({
+    required this.label,
+    required this.value,
+    required this.align,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Column(
+      crossAxisAlignment: align,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1.2),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: ZType.disp(18, color: tc.textPrimary),
+        ),
+      ],
     );
   }
 }
@@ -917,7 +999,7 @@ class _EmptyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     return Center(
       child: Padding(
@@ -925,16 +1007,20 @@ class _EmptyWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: theme.colorScheme.outline),
+            Icon(icon, size: 56, color: tc.textMuted),
+            const SizedBox(height: 12),
+            ZealovaRule(margin: const EdgeInsets.symmetric(horizontal: 48)),
             const SizedBox(height: 16),
-            Text(title, style: theme.textTheme.titleLarge),
+            Text(
+              title.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.lbl(15, color: tc.textPrimary, letterSpacing: 1.6),
+            ),
             const SizedBox(height: 8),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+              style: ZType.ser(15, color: tc.textSecondary),
             ),
           ],
         ),
@@ -954,7 +1040,7 @@ class _ErrorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tc = ThemeColors.of(context);
 
     return Center(
       child: Padding(
@@ -962,14 +1048,21 @@ class _ErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
+            Icon(Icons.error_outline, size: 56, color: tc.error),
+            const SizedBox(height: 12),
+            ZealovaRule(margin: const EdgeInsets.symmetric(horizontal: 48)),
             const SizedBox(height: 16),
-            Text(message, style: theme.textTheme.titleMedium),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: ZType.ser(15, color: tc.textPrimary),
+            ),
             const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+            ZealovaButton(
+              label: 'Retry',
+              trailingIcon: Icons.refresh,
+              expand: false,
+              onTap: onRetry,
             ),
           ],
         ),

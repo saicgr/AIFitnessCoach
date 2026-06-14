@@ -4,7 +4,6 @@ part of 'milestones_screen.dart';
 extension _MilestonesScreenStateUI on _MilestonesScreenState {
 
   Widget _buildMilestonesTab(bool isDark, MilestonesState state) {
-    final tc = ThemeColors.of(context);
     final categories = MilestoneCategory.values;
 
     return RefreshIndicator(
@@ -33,23 +32,23 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
           if (state.achieved.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  AppLocalizations.of(context)!.milestonesScreenUiAchieved(state.totalAchieved).toUpperCase(),
-                  style: ZType.lbl(12, color: tc.textSecondary, letterSpacing: 1.6),
+                padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+                child: ZealovaSectionKicker(
+                  AppLocalizations.of(context)!.milestonesScreenUiAchieved(state.totalAchieved),
+                  fontSize: 12,
                 ),
               ),
             ),
 
           // Achieved milestones grid
           SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                childAspectRatio: 0.85,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+                childAspectRatio: 1.15,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -66,27 +65,23 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
           if (state.upcoming.isNotEmpty)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                child: Text(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+                child: ZealovaSectionKicker(
                   AppLocalizations.of(context).workoutsUpcoming,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  ),
+                  fontSize: 12,
                 ),
               ),
             ),
 
           // Upcoming milestones grid
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                childAspectRatio: 0.85,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+                childAspectRatio: 1.15,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -150,11 +145,11 @@ extension _MilestonesScreenStateUI on _MilestonesScreenState {
         }
       },
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
         children: [
           if (roi != null) ...[
             _buildROIHeader(isDark, roi),
-            const SizedBox(height: 16),
+            const SizedBox(height: 4),
             _buildROIMetricCard(
               isDark,
               'Time Invested',

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/providers/scores_provider.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Card for daily readiness check-in using Hooper Index
@@ -52,38 +54,19 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
       scoresProvider.select((s) => (s.hasCheckedInToday, s.todayReadiness)),
     );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          colors: hasCheckedIn
-              ? [
-                  Color(todayReadiness?.levelColor ?? 0xFF4CAF50)
-                      .withOpacity(0.2),
-                  Color(todayReadiness?.levelColor ?? 0xFF4CAF50)
-                      .withOpacity(0.1),
-                ]
-              : [
-                  colorScheme.primaryContainer,
-                  colorScheme.primaryContainer.withOpacity(0.7),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: hasCheckedIn
-              ? Color(todayReadiness?.levelColor ?? 0xFF4CAF50).withOpacity(0.3)
-              : colorScheme.outline.withOpacity(0.2),
-        ),
-      ),
+    // Checked-in readiness leads with an accent left-edge hero card; the
+    // pre-check-in prompt stays a plain hairline-outlined card.
+    return ZealovaCard(
+      variant: hasCheckedIn
+          ? ZealovaCardVariant.hero
+          : ZealovaCardVariant.outlined,
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           // Header (always visible)
           InkWell(
             onTap: hasCheckedIn ? null : () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(14),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: hasCheckedIn
@@ -101,127 +84,90 @@ class _ReadinessCheckinCardState extends ConsumerState<ReadinessCheckinCard> {
   }
 
   Widget _buildCheckedInHeader(ReadinessScore readiness) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
+    // Readiness level color is a SEMANTIC status tint (good/poor), not the
+    // screen accent — kept only on the level word + check glyph.
     final levelColor = Color(readiness.levelColor);
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Score circle
-        Container(
-          width: 64,
-          height: 64,
-          decoration: BoxDecoration(
-            color: levelColor,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: levelColor.withOpacity(0.4),
-                blurRadius: 12,
-                spreadRadius: 2,
-              ),
-            ],
-          ),
-          child: Center(
-            child: Text(
+        ZealovaSectionKicker(
+          AppLocalizations.of(context).readinessCheckinCardTodaySReadiness,
+        ),
+        const SizedBox(height: 8),
+        // Hero Anton numeral + Barlow level/recommendation line.
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
               '${readiness.readinessScore}',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              style: ZType.disp(54, color: tc.textPrimary, height: 0.86),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    readiness.readinessLevel.toUpperCase(),
+                    style: ZType.lbl(15,
+                        color: levelColor,
+                        weight: FontWeight.w800,
+                        letterSpacing: 1.5),
+                  ),
+                  if (readiness.aiWorkoutRecommendation != null) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      readiness.aiWorkoutRecommendation!,
+                      style: TextStyle(fontSize: 12, color: tc.textSecondary),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context).readinessCheckinCardTodaySReadiness,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                readiness.readinessLevel.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: levelColor,
-                ),
-              ),
-              if (readiness.aiWorkoutRecommendation != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  readiness.aiWorkoutRecommendation!,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ],
-          ),
-        ),
-        Icon(
-          Icons.check_circle,
-          color: levelColor,
-          size: 28,
+            const SizedBox(width: 8),
+            Icon(Icons.check_circle_outline, color: levelColor, size: 24),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildCheckInPromptHeader() {
-    final colorScheme = Theme.of(context).colorScheme;
+    final tc = ThemeColors.of(context);
 
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.wb_sunny_outlined,
-            color: colorScheme.primary,
-            size: 28,
-          ),
-        ),
-        const SizedBox(width: 16),
+        Icon(Icons.wb_sunny_outlined, color: tc.accent, size: 24),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                AppLocalizations.of(context).strengthOverviewCardHowAreYouFeeling,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
+                AppLocalizations.of(context).strengthOverviewCardHowAreYouFeeling.toUpperCase(),
+                style: ZType.lbl(14,
+                    color: tc.textPrimary,
+                    weight: FontWeight.w800,
+                    letterSpacing: 1),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 2),
               Text(
                 AppLocalizations.of(context).readinessCheckinCardQuickCheckInHelps,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: TextStyle(fontSize: 12, color: tc.textSecondary),
               ),
             ],
           ),
         ),
         Icon(
           _isExpanded ? Icons.expand_less : Icons.expand_more,
-          color: colorScheme.primary,
+          color: tc.textMuted,
         ),
       ],
     );

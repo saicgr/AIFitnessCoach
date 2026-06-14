@@ -95,13 +95,17 @@ class StrengthChart extends ConsumerWidget {
             isStrokeCapRound: true,
             dotData: FlDotData(
               show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                radius: 4,
-                color: color,
-                strokeWidth: 2,
-                strokeColor: colors.background,
-              ),
+              getDotPainter: (spot, percent, barData, index) {
+                // v2 archetype: the latest point glows — render the final spot
+                // of each series larger with a thicker halo ring.
+                final isLast = index == spots.length - 1;
+                return FlDotCirclePainter(
+                  radius: isLast ? 5.5 : 4,
+                  color: color,
+                  strokeWidth: isLast ? 3 : 2,
+                  strokeColor: colors.background,
+                );
+              },
             ),
             belowBarData: BarAreaData(
               show: true,
