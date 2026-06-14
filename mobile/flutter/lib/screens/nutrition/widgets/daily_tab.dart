@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/chrome_constants.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/nutrition.dart';
 import 'nutrition_catalog_view.dart';
@@ -16,6 +15,7 @@ import '../../fasting/widgets/fasting_stage_model.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
@@ -497,14 +497,36 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 //     Only appears when the user has batch-cooked recipes remaining.
                 _LeftoversCarousel(userId: widget.userId, isDark: widget.isDark),
 
-                // 2. HERO — swipeable Google-Fit-style nutrition card (macros +
-                //    micronutrient pages + living mascot). Renders on EVERY date
-                //    (Bug 1): it reads the date-scoped nutrition family via
-                //    `selectedDate`, so past days get the same swipeable carousel
-                //    instead of the old static calorie-ring fallback.
-                // Embedded mode self-sizes (fixed-height carousel + intrinsic
-                // footer) and drops its own horizontal padding so it aligns
-                // with the meal cards below. No external height bound needed.
+                // 2. HEADLINE — signature-v2 fuel ledger lead. A big Anton
+                //    calorie numeral + targets chip, a hairline consumed/target
+                //    track, the three SEMANTIC macro rows (protein violet /
+                //    carbs cyan / fat orange) in the `rn-mline` shape, a muted
+                //    "Xg protein left · Y kcal left" line, and a Fraunces coach
+                //    whisper. This replaces the ring-card's role as the visual
+                //    hero (the v2 frame is flat, hairline-led — no ring).
+                //    Pure presentation: reads `widget.summary` + the prefs
+                //    targets; no new mutation, no provider write.
+                _NutritionHeadline(
+                  summary: widget.summary,
+                  isViewingToday: widget.isViewingToday,
+                  onEditTargets:
+                      widget.calmMode ? null : () => _showEditTargetsSheet(context),
+                ),
+
+                // 2b. FUEL DETAIL — the swipeable Google-Fit-style nutrition
+                //    card (living mascot + micronutrient pages + the Log Meal
+                //    button that carries the first-run tour anchor). Demoted
+                //    BELOW the headline now that the headline owns the hero
+                //    numeral; kept mounted so its mascot/micros wiring and the
+                //    `nutritionLogMeal` tour anchor are preserved 1:1. Renders
+                //    on EVERY date (reads the date-scoped family via
+                //    `selectedDate`). Embedded mode self-sizes + drops its own
+                //    horizontal padding so it aligns with the meal cards below.
+                const SizedBox(height: 14),
+                ZealovaSectionKicker(
+                  'Fuel',
+                  padding: const EdgeInsets.only(left: 2, bottom: 6),
+                ),
                 HeroNutritionCard(
                   embedded: true,
                   isToday: widget.isViewingToday,
@@ -1107,6 +1129,310 @@ class _FastingProgressDots extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+/// ═══════════════════════════════════════════════════════════════════════
+/// _NutritionHeadline — the signature-v2 "fuel ledger" lead composition.
+///
+/// Maps 1:1 to Section C · Nutrition frame 1 (`#nutrition`) of
+/// `docs/planning/app-redesign-2026-06/signature-v2.html`:
+///   • a big Anton calorie numeral (`disp 54`) + a "Targets · N kcal ▸" chip
+///     (`.rn-chip`, tap → edit-targets sheet),
+///   • a 3px hairline consumed/target track (`.rn-track`),
+///   • the three SEMANTIC macro rows (`.rn-mline`): a colored dot + `eaten/goal`
+///     + a P/C/F mark — protein violet, carbs cyan, fat orange (kept semantic),
+///   • a muted "Xg protein left · Y kcal left" line (`.lbl` mut),
+///   • a Fraunces coach whisper (`.rn-coach`).
+///
+/// Pure presentation — reads [summary] and the nutrition-preferences targets;
+/// it performs no mutation and no provider write. When the user has not
+/// configured targets the chip reads "Set a target" and the remaining-line is
+/// suppressed (we never present the 2000 fallback as a real plan).
+class _NutritionHeadline extends ConsumerWidget {
+  final DailyNutritionSummary? summary;
+  final bool isViewingToday;
+  final VoidCallback? onEditTargets;
+
+  const _NutritionHeadline({
+    required this.summary,
+    required this.isViewingToday,
+    required this.onEditTargets,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final prefs = ref.watch(nutritionPreferencesProvider);
+    final configured = prefs.hasConfiguredTargets;
+
+    final eatenCal = summary?.totalCalories ?? 0;
+    final eatenP = (summary?.totalProteinG ?? 0).round();
+    final eatenC = (summary?.totalCarbsG ?? 0).round();
+    final eatenF = (summary?.totalFatG ?? 0).round();
+
+    final calTarget = configured ? prefs.currentCalorieTarget : 0;
+    final pTarget = configured ? prefs.currentProteinTarget : 0;
+    final cTarget = configured ? prefs.currentCarbsTarget : 0;
+    final fTarget = configured ? prefs.currentFatTarget : 0;
+
+    final calLeft = (calTarget - eatenCal);
+    final pLeft = (pTarget - eatenP);
+    final fraction = (configured && calTarget > 0)
+        ? (eatenCal / calTarget).clamp(0.0, 1.0)
+        : 0.0;
+
+    // The "left" line mirrors the v2 caption ("64g protein left · 740 kcal
+    // left"). Only shown today + when targets are configured + while there's
+    // genuinely something left (an over-budget day flips to a spent line).
+    String? leftLine;
+    if (configured && isViewingToday) {
+      if (calLeft > 0 && pLeft > 0) {
+        leftLine = '${pLeft}g protein left · $calLeft kcal left';
+      } else if (calLeft > 0) {
+        leftLine = '$calLeft kcal left';
+      } else if (calLeft < 0) {
+        leftLine = '${-calLeft} kcal over target';
+      } else if (eatenCal > 0) {
+        leftLine = 'Target reached';
+      }
+    }
+
+    final coachLine = _coachLine(
+      configured: configured,
+      isViewingToday: isViewingToday,
+      eatenCal: eatenCal,
+      calTarget: calTarget,
+      pLeft: pLeft,
+      hasMeals: (summary?.meals ?? const []).isNotEmpty,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Big Anton numeral + targets chip (baseline-aligned).
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Flexible(
+                child: Text(
+                  _formatThousands(eatenCal),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.disp(54, color: tc.textPrimary, height: 0.95),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: _TargetsChip(
+                  label: configured
+                      ? 'Targets · ${_formatThousands(calTarget)} kcal'
+                      : 'Set a target',
+                  onTap: onEditTargets,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Hairline consumed/target track.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: LinearProgressIndicator(
+              value: fraction,
+              minHeight: 3,
+              backgroundColor: tc.cardBorder.withValues(alpha: 0.6),
+              valueColor: AlwaysStoppedAnimation<Color>(tc.textSecondary),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Semantic macro rows — protein violet / carbs cyan / fat orange.
+          Row(
+            children: [
+              _MacroStat(
+                color: AppColors.macroProtein,
+                eaten: eatenP,
+                target: pTarget,
+                mark: 'P',
+                showTarget: configured,
+              ),
+              const SizedBox(width: 18),
+              _MacroStat(
+                color: AppColors.macroCarbs,
+                eaten: eatenC,
+                target: cTarget,
+                mark: 'C',
+                showTarget: configured,
+              ),
+              const SizedBox(width: 18),
+              _MacroStat(
+                color: AppColors.macroFat,
+                eaten: eatenF,
+                target: fTarget,
+                mark: 'F',
+                showTarget: configured,
+              ),
+            ],
+          ),
+          if (leftLine != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              leftLine,
+              style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 0.8),
+            ),
+          ],
+          if (coachLine != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              coachLine,
+              style: ZType.ser(14.5, color: tc.textSecondary),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// The Fraunces coach whisper — a small human line keyed to the day's gap.
+  /// Variant pools keep it from reading robotic (feedback_dynamic_copy).
+  String? _coachLine({
+    required bool configured,
+    required bool isViewingToday,
+    required int eatenCal,
+    required int calTarget,
+    required int pLeft,
+    required bool hasMeals,
+  }) {
+    if (!isViewingToday) return null;
+    if (!configured) {
+      return 'Set your targets and I’ll keep your day on track.';
+    }
+    if (eatenCal == 0 && !hasMeals) {
+      return 'Fresh page. Log your first meal when you’re ready.';
+    }
+    if (pLeft > 30) {
+      return 'Protein’s the long pole today — lean on it next meal.';
+    }
+    if (calTarget > 0 && eatenCal > calTarget) {
+      return 'A touch over — tomorrow’s a clean slate.';
+    }
+    if (pLeft <= 0) {
+      return 'Protein’s handled. Nicely fuelled.';
+    }
+    return 'Steady fuelling. You’re on pace.';
+  }
+
+  static String _formatThousands(int n) {
+    final s = n.abs().toString();
+    final buf = StringBuffer(n < 0 ? '-' : '');
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+}
+
+/// The "Targets · N kcal ▸" chip (`.rn-chip`) — a hairline pill that opens the
+/// edit-targets sheet. Outlined, accent-free (matches the v2 frame's muted
+/// chips). Disabled (no chevron, no tap) when [onTap] is null (calm mode).
+class _TargetsChip extends StatelessWidget {
+  final String label;
+  final VoidCallback? onTap;
+  const _TargetsChip({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+          decoration: BoxDecoration(
+            color: tc.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: tc.cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: ZType.lbl(10.5, color: tc.textSecondary, letterSpacing: 1.0),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 5),
+                Icon(Icons.chevron_right_rounded,
+                    size: 15, color: tc.textMuted),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// One semantic macro stat in the `.rn-mline` shape: a colored dot, an Anton
+/// `eaten` numeral, a small "/target" superscript, and a Barlow P/C/F mark.
+/// The dot color is macro-semantic (protein violet / carbs cyan / fat orange)
+/// and is the ONLY place color is spent in the headline.
+class _MacroStat extends StatelessWidget {
+  final Color color;
+  final int eaten;
+  final int target;
+  final String mark;
+  final bool showTarget;
+
+  const _MacroStat({
+    required this.color,
+    required this.eaten,
+    required this.target,
+    required this.mark,
+    required this.showTarget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text.rich(
+          TextSpan(
+            children: [
+              TextSpan(
+                text: '$eaten',
+                style: ZType.disp(16, color: tc.textPrimary, letterSpacing: 0.5),
+              ),
+              if (showTarget)
+                TextSpan(
+                  text: '/$target',
+                  style: ZType.lbl(10.5,
+                      color: tc.textMuted, letterSpacing: 0.5),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          mark,
+          style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 2.0),
+        ),
+      ],
     );
   }
 }
