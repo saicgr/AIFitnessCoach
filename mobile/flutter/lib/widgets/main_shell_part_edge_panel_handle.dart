@@ -371,14 +371,11 @@ class _ExpandableNavItem extends StatelessWidget {
         duration: kMotionStandard,
         curve: kMotionCurve,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        // Icon over an always-visible label so every tab is named. The icon
-        // still plays the spin + scale pop on selection.
+        // Signature: no pill fill — the accent-tinted icon + Barlow label +
+        // the accent underline carry the active state (reserved accent).
+        decoration: const BoxDecoration(),
+        // Icon over an always-visible Barlow Condensed uppercase label; the
+        // selected tab gets a short accent underline. Icon still spin-pops.
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -392,16 +389,27 @@ class _ExpandableNavItem extends StatelessWidget {
             ),
             const SizedBox(height: 3),
             Text(
-              label,
+              label.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
+                fontFamily: 'Barlow Condensed',
                 color: color,
-                // Caption step of the type ramp — 9.5px was below the app's
-                // legibility floor (2026-06 review, Change 4).
-                fontSize: kTypeCaptionSize,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                fontSize: 10.5,
+                letterSpacing: 1.2,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                 height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 3),
+            AnimatedContainer(
+              duration: kMotionStandard,
+              curve: kMotionCurve,
+              height: 2,
+              width: isSelected ? 16 : 0,
+              decoration: BoxDecoration(
+                color: isSelected ? accentColor : Colors.transparent,
+                borderRadius: BorderRadius.circular(1),
               ),
             ),
           ],
