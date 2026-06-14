@@ -185,20 +185,33 @@ class AppTheme {
       ),
 
       // Text Theme
+      // Signature: Anton activated on the DISPLAY styles (mastheads / hero
+      // numerals). Labels/titles/body opt into Barlow Condensed / Fraunces /
+      // Space Mono surgically via ZType (core/theme/app_typography.dart) as
+      // each screen is restyled — avoids breaking non-uppercase label/button text.
       textTheme: const TextTheme(
         displayLarge: TextStyle(
+          fontFamily: 'Anton',
           fontSize: 32,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.5,
+          height: 0.98,
           color: AppColors.textPrimary,
         ),
         displayMedium: TextStyle(
+          fontFamily: 'Anton',
           fontSize: 28,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.5,
+          height: 0.98,
           color: AppColors.textPrimary,
         ),
         displaySmall: TextStyle(
+          fontFamily: 'Anton',
           fontSize: 24,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w400,
+          letterSpacing: 0.5,
+          height: 1.0,
           color: AppColors.textPrimary,
         ),
         headlineLarge: TextStyle(

@@ -16,6 +16,9 @@ class AppColors {
   static const Color elevated = Color(0xFF141414);
   static const Color glassSurface = Color(0xFF1A1A1A);
   static const Color cardBorder = Color(0xFF262626);
+  // Signature hairline — the 1px rule that replaces boxed cards in the redesign
+  static const Color hairline = Color(0xFF1A1A1A);
+  static const Color hairlineStrong = Color(0xFF2A2A2E);
 
   // Text Colors
   static const Color textPrimary = Color(0xFFFAFAFA);
