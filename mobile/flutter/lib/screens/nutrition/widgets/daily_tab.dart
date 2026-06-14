@@ -6,6 +6,7 @@ import '../../../core/constants/chrome_constants.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/nutrition.dart';
+import 'nutrition_catalog_view.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/repositories/hydration_repository.dart';
@@ -532,6 +533,39 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 //    The HeroNutritionCard carousel above now replaces the old
                 //    in-section calorie-ring hero on EVERY date, so the section
                 //    renders only the meal list (no embedded hero).
+                // Magazine catalog — a grid of the day's food photos (the
+                // user's uploaded images; no AI generation). Opens on tap.
+                if ((widget.summary?.meals ?? const []).isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text("TODAY'S LOG",
+                              style: ZType.lbl(11,
+                                  color: ThemeColors.of(context).textMuted,
+                                  letterSpacing: 2)),
+                        ),
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Catalog view',
+                          onPressed: () {
+                            final meals = widget.summary?.meals ?? const <FoodLog>[];
+                            showNutritionCatalog(
+                              context,
+                              meals: meals,
+                              dateLabel: widget.isViewingToday ? 'Today' : 'Logged',
+                              totalCalories: meals.fold<int>(
+                                  0, (s, m) => s + m.totalCalories),
+                            );
+                          },
+                          icon: Icon(Icons.grid_view_rounded,
+                              size: 19,
+                              color: ThemeColors.of(context).textMuted),
+                        ),
+                      ],
+                    ),
+                  ),
                 Builder(builder: (ctx) {
                   final prefs = ref.watch(nutritionPreferencesProvider);
                   return LoggedMealsSection(
