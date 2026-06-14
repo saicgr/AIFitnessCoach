@@ -325,13 +325,37 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     // OFFLINE chip removed — was a dev-debug indicator visible to end users.
     // The deterministic fallback should read as a normal coach voice; no need
     // to surface "the server is down" to the user.
+    //
+    // SIGNATURE V2 `.chd` header — a framed ✦ avatar, then "COACH" in Barlow
+    // with a muted "· TODAY'S FOCUS" qualifier, then the existing chrome
+    // controls. The avatar + qualifier give the card the coach-as-author
+    // identity from the v2 mockup.
     return Row(
       children: [
-        Icon(Icons.auto_awesome, size: 13, color: c.accent),
-        const SizedBox(width: 7),
+        Container(
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: c.elevated,
+            border: Border.all(color: c.cardBorder),
+          ),
+          child: Icon(Icons.auto_awesome, size: 11, color: c.accent),
+        ),
+        const SizedBox(width: 8),
         Text(
           AppLocalizations.of(context).coachHeroCardYourCoach.toUpperCase(),
-          style: ZType.lbl(10, color: c.accent, letterSpacing: 1.8),
+          style: ZType.lbl(11, color: c.textPrimary, letterSpacing: 1.8),
+        ),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            '· TODAY’S FOCUS',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.4),
+          ),
         ),
         const Spacer(),
         // ⋮ — opens the coach options sheet (change persona / open AI
