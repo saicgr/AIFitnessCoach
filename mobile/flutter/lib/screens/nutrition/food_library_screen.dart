@@ -5,7 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -13,7 +15,6 @@ import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/app_dialog.dart';
-import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
@@ -693,16 +694,14 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
+    final backgroundColor = tc.background;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final elevated = tc.surface;
+    final cardBorder = AppColors.cardBorder;
+    final accentColor = tc.accent;
 
     if (_userId == null) {
       return Scaffold(
@@ -717,9 +716,25 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
+        kicker: 'NUTRITION',
         title: AppLocalizations.of(context).foodLibraryFoodLibrary,
-        actions: [PillAppBarAction(icon: Icons.sort_rounded, onTap: _showSortOptions)],
+        titleSize: 26,
+        actions: [
+          GestureDetector(
+            onTap: _showSortOptions,
+            child: Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.sort_rounded, size: 18, color: textPrimary),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -856,11 +871,11 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateChooser,
         backgroundColor: accentColor,
-        foregroundColor: Colors.white,
+        foregroundColor: tc.accentContrast,
         icon: const Icon(Icons.add_rounded),
         label: Text(
-          AppLocalizations.of(context).tilePickerAdd,
-          style: TextStyle(fontWeight: FontWeight.w600),
+          AppLocalizations.of(context).tilePickerAdd.toUpperCase(),
+          style: ZType.lbl(12, color: tc.accentContrast, letterSpacing: 1.2),
         ),
       ),
     );
@@ -873,7 +888,6 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     HapticService.light();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -981,11 +995,8 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               },
               icon: Icon(Icons.refresh_rounded, color: accentColor),
               label: Text(
-                AppLocalizations.of(context).buttonRetry,
-                style: TextStyle(
-                  color: accentColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                AppLocalizations.of(context).buttonRetry.toUpperCase(),
+                style: ZType.lbl(12, color: accentColor, letterSpacing: 1.5),
               ),
             ),
           ],
@@ -1061,12 +1072,9 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
             ),
             const SizedBox(height: 20),
             Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              title.toUpperCase(),
+              style: ZType.disp(18, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(

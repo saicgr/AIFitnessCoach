@@ -3,13 +3,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/fasting_impact.dart';
 import '../../data/providers/fasting_impact_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
 import '../../data/services/data_cache_service.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import 'widgets/fasting_calendar_widget.dart';
 import 'widgets/fasting_impact_card.dart';
 import 'widgets/weight_fasting_chart.dart';
@@ -168,7 +169,6 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     final state = ref.watch(fastingImpactProvider);
 
@@ -187,16 +187,18 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     final showSkeleton =
         state.data == null && _cachedData == null && state.error == null;
 
+    final tc = ThemeColors.of(context);
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).fastingImpactFastingImpact,
         actions: [
-          PillAppBarAction(
-            icon: Icons.refresh,
-            visible: !state.isLoading && _userId != null,
-            onTap: () => ref.read(fastingImpactProvider.notifier).refresh(_userId!),
-          ),
+          if (!state.isLoading && _userId != null)
+            IconButton(
+              icon: Icon(Icons.refresh, color: tc.textSecondary),
+              onPressed: () =>
+                  ref.read(fastingImpactProvider.notifier).refresh(_userId!),
+            ),
         ],
       ),
       body: showSkeleton
@@ -304,12 +306,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 // Weight Trend Chart
                 Text(
-                  AppLocalizations.of(context).fastingImpactWeightTrend,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
+                  AppLocalizations.of(context).fastingImpactWeightTrend.toUpperCase(),
+                  style: ZType.disp(20, color: textPrimary),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -326,12 +324,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 // Impact Comparison Cards
                 Text(
-                  AppLocalizations.of(context).fastingImpactFastingVsNonFasting,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
+                  AppLocalizations.of(context).fastingImpactFastingVsNonFasting.toUpperCase(),
+                  style: ZType.disp(20, color: textPrimary),
                 ),
                 const SizedBox(height: 16),
 
@@ -383,12 +377,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
                 // Calendar View
                 Text(
-                  AppLocalizations.of(context).fastingImpactActivityCalendar,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
+                  AppLocalizations.of(context).fastingImpactActivityCalendar.toUpperCase(),
+                  style: ZType.disp(20, color: textPrimary),
                 ),
                 const SizedBox(height: 12),
                 FastingCalendarWidget(
@@ -408,12 +398,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                 // AI Insights Section
                 if (data.insights.isNotEmpty) ...[
                   Text(
-                    AppLocalizations.of(context).fastingImpactAiInsights,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
+                    AppLocalizations.of(context).fastingImpactAiInsights.toUpperCase(),
+                    style: ZType.disp(20, color: textPrimary),
                   ),
                   const SizedBox(height: 12),
                   ...data.insights.asMap().entries.map((entry) {
@@ -444,9 +430,10 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     Color elevated,
     bool isDark,
   ) {
+    final tc = ThemeColors.of(context);
     return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: FastingImpactPeriod.values.length,
@@ -454,34 +441,37 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
         itemBuilder: (context, index) {
           final period = FastingImpactPeriod.values[index];
           final isSelected = period == state.selectedPeriod;
+          final bool enabled = _userId != null && !state.isLoading;
 
-          return ChoiceChip(
-            label: Text(period.displayName),
-            selected: isSelected,
-            onSelected: (_userId != null && !state.isLoading)
-                ? (_) {
+          return GestureDetector(
+            onTap: enabled
+                ? () {
                     _logPeriodChanged(period);
                     ref
                         .read(fastingImpactProvider.notifier)
                         .setPeriod(period, _userId!);
                   }
                 : null,
-            selectedColor: purple,
-            labelStyle: TextStyle(
-              color: isSelected
-                  ? Colors.white
-                  : (isDark
-                      ? AppColors.textSecondary
-                      : AppColorsLight.textSecondary),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: isSelected ? tc.accent : tc.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: isSelected ? tc.accent : AppColors.cardBorder,
+                ),
+              ),
+              child: Text(
+                period.displayName.toUpperCase(),
+                style: ZType.lbl(
+                  12,
+                  color: isSelected ? tc.accentContrast : tc.textSecondary,
+                  letterSpacing: 1,
+                ),
+              ),
             ),
-            backgroundColor: elevated,
-            side: BorderSide(
-              color: isSelected
-                  ? purple
-                  : (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
           );
         },
       ),
@@ -489,11 +479,11 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
   }
 
   Widget _buildCorrelationSummary(FastingImpactData data, bool isDark) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final correlation = data.overallCorrelation;
     final score = data.overallCorrelationScore;
@@ -524,20 +514,17 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
       }
     }
 
+    final correlationColor = getCorrelationColor();
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            purple.withOpacity(0.15),
-            purple.withOpacity(0.05),
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: purple.withOpacity(0.3),
+        color: isDark ? AppColors.surface : AppColorsLight.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(color: correlationColor, width: 3),
+          top: BorderSide(color: cardBorder),
+          right: BorderSide(color: cardBorder),
+          bottom: BorderSide(color: cardBorder),
         ),
       ),
       child: Column(
@@ -547,12 +534,12 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: getCorrelationColor().withOpacity(0.15),
+                  color: correlationColor.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   getCorrelationIcon(),
-                  color: getCorrelationColor(),
+                  color: correlationColor,
                   size: 28,
                 ),
               ),
@@ -562,48 +549,37 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      AppLocalizations.of(context).fastingImpactOverallImpactScore,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textMuted,
-                      ),
+                      AppLocalizations.of(context).fastingImpactOverallImpactScore.toUpperCase(),
+                      style: ZType.lbl(11, color: textMuted, letterSpacing: 1.5),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
                           '${(score.abs() * 100).round()}',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
+                          style: ZType.disp(38, color: textPrimary),
                         ),
+                        const SizedBox(width: 2),
                         Text(
                           '%',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: textMuted,
-                          ),
+                          style: ZType.data(16, color: textMuted),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 8,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: getCorrelationColor().withOpacity(0.15),
+                            color: correlationColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            correlation.displayName,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: getCorrelationColor(),
-                            ),
+                            correlation.displayName.toUpperCase(),
+                            style: ZType.lbl(10.5, color: correlationColor,
+                                letterSpacing: 1),
                           ),
                         ),
                       ],
@@ -654,7 +630,6 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     Color getInsightColor() {
       switch (insight.insightType) {
@@ -693,10 +668,16 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+        color: isDark ? AppColors.surface : AppColorsLight.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(color: color, width: 3),
+          top: BorderSide(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+          right: BorderSide(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
+          bottom: BorderSide(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
         ),
       ),
       child: Row(
@@ -772,15 +753,21 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
   }
 
   Widget _buildNotEnoughDataBanner(bool isDark) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.warning.withOpacity(0.3)),
+        color: isDark ? AppColors.surface : AppColorsLight.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: const BorderSide(color: AppColors.warning, width: 3),
+          top: BorderSide(color: cardBorder),
+          right: BorderSide(color: cardBorder),
+          bottom: BorderSide(color: cardBorder),
+        ),
       ),
       child: Row(
         children: [
@@ -795,13 +782,13 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).fastingImpactLimitedDataAvailable,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                  AppLocalizations.of(context).fastingImpactLimitedDataAvailable.toUpperCase(),
+                  style: ZType.lbl(
+                    13,
                     color: isDark
                         ? AppColors.textPrimary
                         : AppColorsLight.textPrimary,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -824,6 +811,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
   Widget _buildErrorState(
       String error, Color textPrimary, Color textMuted, Color purple) {
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -837,12 +825,9 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).strainDashboardFailedToLoadData,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).strainDashboardFailedToLoadData.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(22, color: textPrimary),
             ),
             const SizedBox(height: 8),
             Text(
@@ -860,8 +845,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
               icon: const Icon(Icons.refresh),
               label: Text(AppLocalizations.of(context).buttonRetry),
               style: ElevatedButton.styleFrom(
-                backgroundColor: purple,
-                foregroundColor: Colors.white,
+                backgroundColor: tc.accent,
+                foregroundColor: tc.accentContrast,
               ),
             ),
           ],
@@ -871,6 +856,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
   }
 
   Widget _buildEmptyState(Color textPrimary, Color textMuted, Color purple) {
+    final tc = ThemeColors.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -880,16 +866,13 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
             Icon(
               Icons.analytics_outlined,
               size: 80,
-              color: purple.withOpacity(0.3),
+              color: tc.textMuted.withOpacity(0.4),
             ),
             const SizedBox(height: 24),
             Text(
-              AppLocalizations.of(context).fastingImpactNoImpactDataYet,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).fastingImpactNoImpactDataYet.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: ZType.disp(24, color: textPrimary),
             ),
             const SizedBox(height: 12),
             Text(
@@ -907,8 +890,8 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
               icon: const Icon(Icons.timer),
               label: Text(AppLocalizations.of(context).startFastStartAFast),
               style: ElevatedButton.styleFrom(
-                backgroundColor: purple,
-                foregroundColor: Colors.white,
+                backgroundColor: tc.accent,
+                foregroundColor: tc.accentContrast,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),

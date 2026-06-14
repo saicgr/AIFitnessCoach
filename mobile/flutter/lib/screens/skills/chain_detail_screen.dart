@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/progression_step_card.dart';
@@ -115,10 +117,10 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     UserSkillProgress? progress,
     bool isDark,
   ) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final cyan = tc.accent;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     final isStarted = progress != null;
     final steps = chain.steps ?? [];
@@ -150,15 +152,11 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: FilledButton.icon(
-                        onPressed: () => _startChain(chain.id),
-                        icon: const Icon(Icons.play_arrow_rounded),
-                        label: Text(AppLocalizations.of(context).chainDetailStartThisProgression),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: cyan,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          minimumSize: const Size(double.infinity, 56),
-                        ),
+                      child: ZealovaButton(
+                        label: AppLocalizations.of(context).chainDetailStartThisProgression,
+                        trailingIcon: Icons.play_arrow_rounded,
+                        height: 56,
+                        onTap: () => _startChain(chain.id),
                       ),
                     ),
                   ),
@@ -171,24 +169,18 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                       children: [
                         Icon(
                           Icons.route_rounded,
-                          size: 20,
+                          size: 18,
                           color: cyan,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          AppLocalizations.of(context).chainDetailProgressionPath,
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          AppLocalizations.of(context).chainDetailProgressionPath.toUpperCase(),
+                          style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 1.6),
                         ),
                         const Spacer(),
                         Text(
-                          '${steps.length} steps',
-                          style: TextStyle(
-                            color: textSecondary,
-                            fontSize: 14,
-                          ),
+                          '${steps.length} steps'.toUpperCase(),
+                          style: ZType.lbl(11, color: textSecondary, letterSpacing: 0.8),
                         ),
                       ],
                     ),
@@ -260,7 +252,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     ProgressionChain? chain,
     bool isDark,
   ) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -276,10 +268,9 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              chain?.name ?? AppLocalizations.of(context).weekProgressStripLoading,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              (chain?.name ?? AppLocalizations.of(context).weekProgressStripLoading)
+                  .toUpperCase(),
+              style: ZType.disp(22, color: tc.textPrimary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -295,9 +286,8 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     UserSkillProgress? progress,
     bool isDark,
   ) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final cyan = tc.accent;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
@@ -306,147 +296,117 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
         ? progress.getProgressPercentage(chain.steps?.length ?? 1)
         : 0.0;
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cardBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Description
-          Text(
-            chain.description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: textSecondary,
-                ),
-          ),
-          const SizedBox(height: 16),
-
-          // Metadata row
-          Wrap(
-            spacing: 16,
-            runSpacing: 8,
-            children: [
-              _buildMetaBadge(
-                Icons.category_rounded,
-                chain.category,
-                textSecondary,
-                isDark,
-              ),
-              _buildMetaBadge(
-                Icons.stairs_rounded,
-                '${chain.steps?.length ?? "?"} steps',
-                textSecondary,
-                isDark,
-              ),
-              _buildMetaBadge(
-                Icons.speed_rounded,
-                'Lvl ${chain.difficultyStart}-${chain.difficultyEnd}',
-                textSecondary,
-                isDark,
-              ),
-              if (chain.estimatedWeeks != null)
-                _buildMetaBadge(
-                  Icons.schedule_rounded,
-                  '~${chain.estimatedWeeks} weeks',
-                  textSecondary,
-                  isDark,
-                ),
-            ],
-          ),
-
-          // Progress section
-          if (isStarted) ...[
-            const SizedBox(height: 20),
-            Divider(color: cardBorder),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: ZealovaCard(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Description
+            Text(
+              chain.description,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: textSecondary,
+                  ),
+            ),
             const SizedBox(height: 16),
-            Row(
+
+            // Metadata row
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).skillProgressSummaryYourProgress,
-                        style: TextStyle(
-                          color: textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: progressPercent,
-                          backgroundColor: cardBorder,
-                          color: cyan,
-                          minHeight: 8,
-                        ),
-                      ),
-                    ],
-                  ),
+                _buildMetaBadge(
+                  Icons.category_rounded,
+                  chain.category,
+                  tc.textMuted,
                 ),
-                const SizedBox(width: 16),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cyan.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${(progressPercent * 100).toInt()}%',
-                    style: TextStyle(
-                      color: cyan,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
+                _buildMetaBadge(
+                  Icons.stairs_rounded,
+                  '${chain.steps?.length ?? "?"} steps',
+                  tc.textMuted,
                 ),
+                _buildMetaBadge(
+                  Icons.speed_rounded,
+                  'Lvl ${chain.difficultyStart}-${chain.difficultyEnd}',
+                  tc.textMuted,
+                ),
+                if (chain.estimatedWeeks != null)
+                  _buildMetaBadge(
+                    Icons.schedule_rounded,
+                    '~${chain.estimatedWeeks} weeks',
+                    tc.textMuted,
+                  ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  Icons.fitness_center_rounded,
-                  size: 14,
-                  color: textSecondary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${progress.attemptsAtCurrent} attempts at current step',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 13,
+
+            // Progress section
+            if (isStarted) ...[
+              const SizedBox(height: 20),
+              const ZealovaRule(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context).skillProgressSummaryYourProgress.toUpperCase(),
+                          style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 1.4),
+                        ),
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: progressPercent,
+                            backgroundColor: AppColors.hairlineStrong,
+                            color: cyan,
+                            minHeight: 5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                if (progress.bestRepsAtCurrent > 0) ...[
                   const SizedBox(width: 16),
+                  Text(
+                    '${(progressPercent * 100).toInt()}%',
+                    style: ZType.disp(26, color: cyan),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
                   Icon(
-                    Icons.emoji_events_rounded,
-                    size: 14,
-                    color: AppColors.orange,
+                    Icons.fitness_center_rounded,
+                    size: 13,
+                    color: tc.textMuted,
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Best: ${progress.bestRepsAtCurrent} reps',
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: 13,
-                    ),
+                    '${progress.attemptsAtCurrent} attempts at current step'.toUpperCase(),
+                    style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 0.8),
                   ),
+                  if (progress.bestRepsAtCurrent > 0) ...[
+                    const SizedBox(width: 16),
+                    Icon(
+                      Icons.emoji_events_rounded,
+                      size: 13,
+                      color: tc.textMuted,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Best: ${progress.bestRepsAtCurrent} reps'.toUpperCase(),
+                      style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 0.8),
+                    ),
+                  ],
                 ],
-              ],
-            ),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -455,29 +415,21 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     IconData icon,
     String text,
     Color color,
-    bool isDark,
   ) {
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: cardBorder),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 12, color: color),
           const SizedBox(width: 6),
           Text(
-            text,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            text.toUpperCase(),
+            style: ZType.lbl(10, color: color, letterSpacing: 1),
           ),
         ],
       ),
@@ -494,9 +446,9 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     required bool isStarted,
     required bool isDark,
   }) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final green = isDark ? AppColors.green : AppColorsLight.green;
+    final tc = ThemeColors.of(context);
+    final cyan = tc.accent;
+    final green = tc.success;
 
     return IntrinsicHeight(
       child: Row(
@@ -516,38 +468,33 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                         ? green
                         : isCurrent
                             ? cyan
-                            : isUnlocked
-                                ? cyan.withOpacity(0.2)
-                                : cardBorder,
+                            : tc.surface,
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: isCompleted
                           ? green
                           : isCurrent
                               ? cyan
-                              : cardBorder,
-                      width: 2,
+                              : AppColors.hairlineStrong,
+                      width: isCurrent ? 2 : 1,
                     ),
                   ),
                   child: Center(
                     child: isCompleted
-                        ? const Icon(
+                        ? Icon(
                             Icons.check_rounded,
-                            color: Colors.white,
+                            color: tc.accentContrast,
                             size: 18,
                           )
                         : Text(
                             '${step.stepOrder}',
-                            style: TextStyle(
-                              color: isCurrent || isCompleted
-                                  ? Colors.white
+                            style: ZType.data(
+                              13,
+                              color: isCurrent
+                                  ? tc.accentContrast
                                   : isUnlocked
                                       ? cyan
-                                      : isDark
-                                          ? AppColors.textMuted
-                                          : AppColorsLight.textMuted,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
+                                      : tc.textMuted,
                             ),
                           ),
                   ),
@@ -559,7 +506,7 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 4),
                       decoration: BoxDecoration(
-                        color: isCompleted ? green : cardBorder,
+                        color: isCompleted ? green : AppColors.hairlineStrong,
                         borderRadius: BorderRadius.circular(1),
                       ),
                     ),
@@ -649,10 +596,9 @@ class _StepDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = tc.accent;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
@@ -670,15 +616,18 @@ class _StepDetailSheet extends StatelessWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      width: 48,
+                      height: 48,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: cyan.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        color: tc.surface.withValues(alpha: 0.5),
+                        border: Border.all(color: cardBorder),
+                        borderRadius: BorderRadius.circular(11),
                       ),
                       child: Icon(
                         Icons.fitness_center_rounded,
                         color: cyan,
-                        size: 28,
+                        size: 24,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -687,21 +636,13 @@ class _StepDetailSheet extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            step.exerciseName,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            step.exerciseName.toUpperCase(),
+                            style: ZType.disp(20, color: tc.textPrimary),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Step ${step.stepOrder} - ${step.difficultyLabel}',
-                            style: TextStyle(
-                              color: textSecondary,
-                              fontSize: 14,
-                            ),
+                            'Step ${step.stepOrder} - ${step.difficultyLabel}'.toUpperCase(),
+                            style: ZType.lbl(10, color: textSecondary, letterSpacing: 1.2),
                           ),
                         ],
                       ),
@@ -718,7 +659,8 @@ class _StepDetailSheet extends StatelessWidget {
                     step.unlockCriteriaText,
                     Icons.lock_open_rounded,
                     cyan,
-                    textSecondary,
+                    tc.textMuted,
+                    tc.textPrimary,
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -729,8 +671,9 @@ class _StepDetailSheet extends StatelessWidget {
                     'Tips',
                     step.tips!,
                     Icons.lightbulb_outline_rounded,
-                    AppColors.orange,
-                    textSecondary,
+                    tc.textSecondary,
+                    tc.textMuted,
+                    tc.textPrimary,
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -742,8 +685,9 @@ class _StepDetailSheet extends StatelessWidget {
                     'Prerequisites',
                     step.prerequisites!,
                     Icons.checklist_rounded,
-                    AppColors.purple,
-                    textSecondary,
+                    tc.textSecondary,
+                    tc.textMuted,
+                    tc.textPrimary,
                   ),
                 ],
 
@@ -757,8 +701,14 @@ class _StepDetailSheet extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       side: BorderSide(color: cardBorder),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
                     ),
-                    child: Text(AppLocalizations.of(context).commonClose),
+                    child: Text(
+                      AppLocalizations.of(context).commonClose.toUpperCase(),
+                      style: ZType.lbl(13, color: tc.textPrimary, letterSpacing: 2),
+                    ),
                   ),
                 ),
               ],
@@ -774,29 +724,26 @@ class _StepDetailSheet extends StatelessWidget {
     String content,
     IconData icon,
     Color iconColor,
-    Color textColor,
+    Color labelColor,
+    Color contentColor,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 18, color: iconColor),
+            Icon(icon, size: 16, color: iconColor),
             const SizedBox(width: 8),
             Text(
-              title,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-                color: textColor,
-              ),
+              title.toUpperCase(),
+              style: ZType.lbl(11, color: labelColor, letterSpacing: 1.4),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Text(
           content,
-          style: const TextStyle(fontSize: 15),
+          style: TextStyle(fontSize: 15, color: contentColor),
         ),
       ],
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -89,13 +90,11 @@ class WrappedTimeCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    AppLocalizations.of(context).timeCardYourTime,
-                    style: TextStyle(
-                      color: const Color(0xFF818CF8).withValues(alpha: 0.9),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 6,
-                    ),
+                    AppLocalizations.of(context).timeCardYourTime.toUpperCase(),
+                    style: ZType.lbl(16,
+                        color: const Color(0xFF818CF8).withValues(alpha: 0.9),
+                        weight: FontWeight.w700,
+                        letterSpacing: 6),
                   ),
 
                   const Spacer(),
@@ -111,31 +110,22 @@ class WrappedTimeCard extends StatelessWidget {
                   // Total hours
                   Text(
                     _formattedHours,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 96,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
+                    style: ZType.disp(96,
+                        color: Colors.white, height: 0.86, letterSpacing: 0),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     _hoursLabel,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 6,
-                    ),
+                    style: ZType.lbl(18,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        weight: FontWeight.w600,
+                        letterSpacing: 6),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     AppLocalizations.of(context).timeCardSpentWorkingOut,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: ZType.ser(14,
+                        color: Colors.white.withValues(alpha: 0.4)),
                   ),
 
                   const Spacer(flex: 2),
@@ -199,13 +189,11 @@ class WrappedTimeCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.4),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.5,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(10,
+                color: Colors.white.withValues(alpha: 0.4),
+                weight: FontWeight.w600,
+                letterSpacing: 1.5),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),

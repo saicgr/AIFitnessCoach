@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -71,13 +72,11 @@ class WrappedRecordsCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    AppLocalizations.of(context).weeklyPrsTemplatePersonalRecords,
-                    style: TextStyle(
-                      color: Color(0xFFFFD700),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 6,
-                    ),
+                    AppLocalizations.of(context).weeklyPrsTemplatePersonalRecords.toUpperCase(),
+                    style: ZType.lbl(16,
+                        color: const Color(0xFFFFD700),
+                        weight: FontWeight.w700,
+                        letterSpacing: 6),
                   ),
 
                   const Spacer(),
@@ -116,24 +115,18 @@ class WrappedRecordsCard extends StatelessWidget {
                   // PR count
                   Text(
                     '${data.personalRecordsCount}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 88,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
+                    style: ZType.disp(88,
+                        color: Colors.white, height: 0.86, letterSpacing: 0),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     data.personalRecordsCount == 1
                         ? 'RECORD BROKEN'
                         : 'RECORDS BROKEN',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 3,
-                    ),
+                    style: ZType.lbl(15,
+                        color: Colors.white.withValues(alpha: 0.5),
+                        weight: FontWeight.w600,
+                        letterSpacing: 3),
                   ),
 
                   const Spacer(),
@@ -153,14 +146,12 @@ class WrappedRecordsCard extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            AppLocalizations.of(context).recordsCardBestPr,
-                            style: TextStyle(
-                              color: const Color(0xFFFFD700)
-                                  .withValues(alpha: 0.7),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 3,
-                            ),
+                            AppLocalizations.of(context).recordsCardBestPr.toUpperCase(),
+                            style: ZType.lbl(12,
+                                color: const Color(0xFFFFD700)
+                                    .withValues(alpha: 0.7),
+                                weight: FontWeight.w700,
+                                letterSpacing: 3),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -176,11 +167,10 @@ class WrappedRecordsCard extends StatelessWidget {
                             const SizedBox(height: 4),
                             Text(
                               '$bestPrValue $bestPrUnit',
-                              style: const TextStyle(
-                                color: Color(0xFFFFD700),
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                              ),
+                              style: ZType.disp(24,
+                                  color: const Color(0xFFFFD700),
+                                  height: 0.86,
+                                  letterSpacing: 0),
                             ),
                           ],
                         ],

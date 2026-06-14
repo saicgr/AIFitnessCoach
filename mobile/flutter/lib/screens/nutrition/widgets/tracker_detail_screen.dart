@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'optional_trackers_strip.dart';
@@ -53,23 +54,22 @@ class TrackerDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final m = _meta;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final bg = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final async = ref.watch(trackerHistoryProvider(userId));
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        title: Row(
-          children: [
-            Icon(m.icon, color: m.color, size: 22),
-            const SizedBox(width: 8),
-            Text(m.label, style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700)),
-          ],
-        ),
+      appBar: ZealovaAppBar(
+        kicker: 'TRACKER',
+        title: m.label,
+        titleSize: 24,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Icon(m.icon, color: m.color, size: 22),
+          ),
+        ],
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -111,20 +111,20 @@ class TrackerDetailScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1),
-                                style: TextStyle(
-                                  fontSize: 34,
-                                  fontWeight: FontWeight.w800,
-                                  color: accent,
-                                ),
+                                style: ZType.disp(36, color: accent),
                               ),
-                              Text(m.unit, style: TextStyle(fontSize: 13, color: textMuted)),
+                              Text(m.unit.toUpperCase(),
+                                  style: ZType.lbl(10,
+                                      color: textMuted, letterSpacing: 1.3)),
                             ],
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Text('Today', style: TextStyle(color: textMuted, fontSize: 13)),
+                    Text('TODAY',
+                        style: ZType.lbl(11,
+                            color: textMuted, letterSpacing: 2)),
                   ],
                 ),
               ),
@@ -144,9 +144,8 @@ class TrackerDetailScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.coral.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.coral.withValues(alpha: 0.5)),
                   ),
                   child: Row(
                     children: [
@@ -165,9 +164,7 @@ class TrackerDetailScreen extends ConsumerWidget {
               if (over) const SizedBox(height: 20),
 
               // 7-day history.
-              Text('Last 7 days',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700, color: textPrimary)),
+              const ZealovaSectionKicker('Last 7 days'),
               const SizedBox(height: 16),
               _HistoryChart(
                 series: t.series,
@@ -274,25 +271,26 @@ class _LimitRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     return InkWell(
       onTap: onEdit,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: elevated,
+          color: surface,
           borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
           children: [
             Expanded(
-              child: Text(label,
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w600, color: textPrimary)),
+              child: Text(label.toUpperCase(),
+                  style: ZType.lbl(13,
+                      color: textPrimary, letterSpacing: 1.2)),
             ),
             Text(valueText,
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: accent)),
+                style: ZType.data(14, color: accent)),
             const SizedBox(width: 8),
             Icon(Icons.edit_outlined, size: 18, color: textMuted),
           ],
@@ -361,7 +359,7 @@ class _HistoryChart extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     _dow(series[i].date),
-                    style: TextStyle(fontSize: 10, color: textMuted),
+                    style: ZType.lbl(9, color: textMuted, letterSpacing: 0.5),
                   ),
                 ],
               ),

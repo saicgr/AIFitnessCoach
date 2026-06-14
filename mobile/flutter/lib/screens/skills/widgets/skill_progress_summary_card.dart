@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/skill_progression.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Summary card showing user's overall skill progression stats
@@ -14,51 +16,25 @@ class SkillProgressSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
 
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            cyan.withOpacity(0.15),
-            elevated,
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: cyan.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.trending_up_rounded,
-                  color: cyan,
-                  size: 24,
-                ),
+              Icon(
+                Icons.trending_up_rounded,
+                color: tc.accent,
+                size: 18,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Text(
-                AppLocalizations.of(context).skillProgressSummaryYourProgress,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                AppLocalizations.of(context).skillProgressSummaryYourProgress.toUpperCase(),
+                style: ZType.lbl(12, color: tc.textPrimary, letterSpacing: 1.6),
               ),
             ],
           ),
@@ -96,22 +72,19 @@ class SkillProgressSummaryCard extends StatelessWidget {
 
           if (summary.totalAttempts > 0) ...[
             const SizedBox(height: 16),
-            Divider(color: cardBorder),
+            const ZealovaRule(),
             const SizedBox(height: 12),
             Row(
               children: [
                 Icon(
                   Icons.fitness_center_rounded,
-                  size: 16,
-                  color: textSecondary,
+                  size: 14,
+                  color: tc.textMuted,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   AppLocalizations.of(context)!.skillProgressSummaryCardTotalPracticeSessions(summary.totalAttempts),
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 13,
-                  ),
+                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 0.8),
                 ),
               ],
             ),
@@ -137,38 +110,24 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
 
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
+        Icon(
+          icon,
+          color: color,
+          size: 18,
         ),
         const SizedBox(height: 8),
         Text(
           value,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+          style: ZType.disp(28, color: tc.textPrimary),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
-          label,
-          style: TextStyle(
-            color: textSecondary,
-            fontSize: 11,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9.5, color: tc.textMuted, letterSpacing: 1.2),
           textAlign: TextAlign.center,
         ),
       ],

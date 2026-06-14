@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/providers/antioxidant_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -108,17 +109,13 @@ class _MicrosDetailScreenState extends ConsumerState<MicrosDetailScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.background : AppColorsLight.background;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        title: Text('Vitamins & minerals',
-            style: TextStyle(color: textPrimary, fontWeight: FontWeight.w700)),
-        iconTheme: IconThemeData(color: textPrimary),
+      appBar: const ZealovaAppBar(
+        kicker: 'NUTRIENTS',
+        title: 'Vitamins & minerals',
+        titleSize: 24,
       ),
       body: SafeArea(
         child: _error != null
@@ -172,15 +169,16 @@ class _CoverageBanner extends StatelessWidget {
     final amber = isDark ? AppColors.orange : AppColorsLight.orange;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final foodWord = total == 1 ? 'food' : 'foods';
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: amber.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: amber.withValues(alpha: 0.3)),
+        color: surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
@@ -227,10 +225,12 @@ class _ErrorState extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: textSecondary)),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded, size: 16),
-              label: const Text('Retry'),
+            ZealovaButton(
+              label: 'Retry',
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              trailingIcon: Icons.refresh_rounded,
+              onTap: onRetry,
             ),
           ],
         ),
@@ -276,29 +276,29 @@ class _AntioxidantCard extends ConsumerWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(Icons.shield_moon_rounded, size: 18, color: color),
               const SizedBox(width: 8),
-              Text('Antioxidants',
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary)),
+              Text('Antioxidants'.toUpperCase(),
+                  style: ZType.lbl(13,
+                      color: textPrimary, letterSpacing: 1.5)),
               const Spacer(),
               Text('${d.score}',
-                  style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      color: color)),
-              Text(' /100',
-                  style: TextStyle(fontSize: 12, color: textSecondary)),
+                  style: ZType.disp(30, color: color)),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4, left: 2),
+                child: Text('/100',
+                    style: ZType.lbl(10,
+                        color: textSecondary, letterSpacing: 1)),
+              ),
             ],
           ),
           const SizedBox(height: 10),

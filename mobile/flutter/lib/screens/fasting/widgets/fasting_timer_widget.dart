@@ -2,8 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
+import '../../../widgets/design_system/zealova_button.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Circular timer widget showing fasting progress and current zone
@@ -23,13 +26,13 @@ class FastingTimerWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    // Use monochrome accent instead of purple
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final surface = tc.surface;
+    // Reserved accent — active progress + single primary CTA only.
+    final accentColor = tc.accent;
+    final accentContrast = tc.accentContrast;
 
     // Watch the timer for live updates
     final timerValue = ref.watch(fastingTimerProvider);
@@ -49,18 +52,9 @@ class FastingTimerWidget extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: currentZone.color.withValues(alpha: 0.1),
-            blurRadius: 20,
-            spreadRadius: 2,
-          ),
-        ],
+        color: surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Column(
         children: [
@@ -84,8 +78,7 @@ class FastingTimerWidget extends ConsumerWidget {
                         strokeWidth: screenWidth < 380 ? 8 : 10,
                         backgroundColor: Colors.transparent,
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          (isDark ? AppColors.cardBorder : AppColorsLight.cardBorder)
-                              .withValues(alpha: 0.3),
+                          tc.cardBorder,
                         ),
                       ),
                     ),
@@ -114,43 +107,35 @@ class FastingTimerWidget extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (activeFast != null) ...[
-                          // Time elapsed
+                          // Time elapsed — Anton display numerals.
                           Text(
                             _formatTime(elapsedSeconds),
-                            style: TextStyle(
-                              fontSize: screenWidth < 380 ? 24 : 30,
-                              fontWeight: FontWeight.bold,
+                            style: ZType.disp(
+                              screenWidth < 380 ? 26 : 34,
                               color: textPrimary,
+                              letterSpacing: 0.5,
+                            ).copyWith(
                               fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          // Label
+                          const SizedBox(height: 4),
+                          // Label — Barlow uppercase.
                           Text(
-                            'elapsed',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: textMuted,
-                            ),
+                            'ELAPSED',
+                            style: ZType.lbl(11, color: textMuted),
                           ),
                           const SizedBox(height: 8),
-                          // Remaining time (in seconds for live countdown)
+                          // Remaining time — Space Mono telemetry readout.
                           Text(
                             _formatRemainingTime(
                                 (activeFast!.goalDurationMinutes * 60) - elapsedSeconds),
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: accentColor,
+                            style: ZType.data(14, color: accentColor).copyWith(
                               fontFeatures: const [FontFeature.tabularFigures()],
                             ),
                           ),
                           Text(
-                            'remaining',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: textMuted,
-                            ),
+                            'REMAINING',
+                            style: ZType.lbl(10, color: textMuted),
                           ),
                         ] else ...[
                           // Play button only - text moved to main button below
@@ -162,13 +147,6 @@ class FastingTimerWidget extends ConsumerWidget {
                               decoration: BoxDecoration(
                                 color: accentColor,
                                 shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: accentColor.withValues(alpha: 0.4),
-                                    blurRadius: 20,
-                                    spreadRadius: 4,
-                                  ),
-                                ],
                               ),
                               child: Icon(
                                 Icons.play_arrow_rounded,

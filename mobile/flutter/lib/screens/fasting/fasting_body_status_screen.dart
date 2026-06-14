@@ -5,6 +5,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/fasting_provider.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/fasting_stage_model.dart';
 
@@ -132,15 +133,13 @@ class _FastingBodyStatusScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            l10n.fastingBodyStatusBodyStatus,
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
-          ),
+          ZealovaSectionKicker(isLive ? 'LIVE JOURNEY' : 'METABOLIC JOURNEY'),
           const SizedBox(height: 6),
+          Text(
+            l10n.fastingBodyStatusBodyStatus.toUpperCase(),
+            style: ZType.disp(34, color: colors.textPrimary),
+          ),
+          const SizedBox(height: 8),
           Text(
             isLive
                 ? l10n.fastingBodyStatusLiveSubtitle(_formatElapsed(elapsedHours))
@@ -152,15 +151,11 @@ class _FastingBodyStatusScreenState
             ),
           ),
           if (!isLive) ...[
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: colors.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                    color: colors.accent.withValues(alpha: 0.3)),
-              ),
+            const SizedBox(height: 16),
+            ZealovaCard(
+              variant: ZealovaCardVariant.outlined,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
                   Icon(Icons.info_outline_rounded,
@@ -452,11 +447,11 @@ class _StageCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        stage.name,
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.bold,
+                        stage.name.toUpperCase(),
+                        style: ZType.lbl(
+                          16,
                           color: isCurrent ? stageColor : colors.textPrimary,
+                          letterSpacing: 0.5,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -475,11 +470,7 @@ class _StageCard extends StatelessWidget {
                   children: [
                     Text(
                       _hourMark(stage),
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: stageColor,
-                      ),
+                      style: ZType.data(12, color: stageColor),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -543,12 +534,8 @@ class _StageCard extends StatelessWidget {
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 5),
           Text(
-            text,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            text.toUpperCase(),
+            style: ZType.lbl(10.5, color: color, letterSpacing: 1),
           ),
         ],
       ),
@@ -572,15 +559,7 @@ class _StageCard extends StatelessWidget {
           ),
           if (stage.milestones.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Text(
-              l10n.fastingBodyStatusKeyMoments,
-              style: TextStyle(
-                fontSize: 10.5,
-                letterSpacing: 1,
-                fontWeight: FontWeight.w700,
-                color: colors.textMuted,
-              ),
-            ),
+            ZealovaSectionKicker(l10n.fastingBodyStatusKeyMoments, fontSize: 10.5),
             const SizedBox(height: 8),
             for (final m in stage.milestones)
               _MilestoneRow(

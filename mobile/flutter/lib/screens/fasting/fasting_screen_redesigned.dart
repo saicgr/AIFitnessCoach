@@ -16,6 +16,7 @@ import '../../data/services/data_cache_service.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/fasting_ai_insight_card.dart';
 import 'widgets/fasting_date_strip.dart';
@@ -326,12 +327,8 @@ class _FastingScreenRedesignedState
       child: Row(
         children: [
           Text(
-            AppLocalizations.of(context).unifiedHomeWidgetsFasting,
-            style: TextStyle(
-              color: colors.textPrimary,
-              fontWeight: FontWeight.bold,
-              fontSize: 28,
-            ),
+            AppLocalizations.of(context).unifiedHomeWidgetsFasting.toUpperCase(),
+            style: ZType.disp(30, color: colors.textPrimary),
           ),
           const Spacer(),
           if (streak != null && streak.currentStreak > 0)
@@ -340,21 +337,18 @@ class _FastingScreenRedesignedState
               padding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: colors.accent.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(20),
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: colors.accent.withValues(alpha: 0.4)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('🔥', style: TextStyle(fontSize: 15)),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: 5),
                   Text(
                     '${streak.currentStreak}',
-                    style: TextStyle(
-                      color: colors.accent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                    style: ZType.data(13, color: colors.accent),
                   ),
                 ],
               ),
@@ -501,13 +495,12 @@ class _FastingScreenRedesignedState
             hasFast
                 ? (isPausedNow ? AppLocalizations.of(context).fastingScreenRedesignedFastPaused : AppLocalizations.of(context).unifiedHomeWidgetsFasting)
                 : 'Not Fasting',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+            style: ZType.lbl(
+              13,
               color: hasFast
                   ? (isPausedNow ? colors.warning : stage.color)
                   : colors.textSecondary,
+              letterSpacing: 2.0,
             ),
           ),
           const SizedBox(height: 14),
@@ -530,8 +523,8 @@ class _FastingScreenRedesignedState
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: colors.warning.withValues(alpha: 0.16),
-                      borderRadius: BorderRadius.circular(20),
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(999),
                       border: Border.all(
                         color: colors.warning.withValues(alpha: 0.4),
                       ),
@@ -544,12 +537,8 @@ class _FastingScreenRedesignedState
                         const SizedBox(width: 5),
                         Text(
                           AppLocalizations.of(context).fastingScreenRedesignedPaused,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.3,
-                            color: colors.warning,
-                          ),
+                          style: ZType.lbl(11.5,
+                              color: colors.warning, letterSpacing: 1.5),
                         ),
                       ],
                     ),
@@ -570,9 +559,8 @@ class _FastingScreenRedesignedState
               remainingSeconds > 0
                   ? '${_formatHms(remainingSeconds)} until goal'
                   : 'Goal reached — great work!',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+              style: ZType.data(
+                13,
                 color: remainingSeconds > 0
                     ? colors.textSecondary
                     : colors.success,
@@ -585,21 +573,18 @@ class _FastingScreenRedesignedState
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: colors.accent.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(16),
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                      color: colors.accent.withValues(alpha: 0.3)),
+                      color: colors.accent.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '${_selectedProtocol.displayName} plan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colors.accent,
-                      ),
+                      '${_selectedProtocol.displayName} plan'.toUpperCase(),
+                      style: ZType.lbl(12,
+                          color: colors.accent, letterSpacing: 1.5),
                     ),
                     const SizedBox(width: 6),
                     Icon(Icons.edit_outlined,
@@ -681,14 +666,9 @@ class _FastingScreenRedesignedState
     final isRest = planned == null;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: colors.accent.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
-        ),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.hero,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         child: Row(
           children: [
             Icon(
@@ -700,19 +680,13 @@ class _FastingScreenRedesignedState
             ),
             const SizedBox(width: 8),
             Text(
-              isRest ? AppLocalizations.of(context).fastingScreenRedesignedTodaySPlan : AppLocalizations.of(context).fastingScreenRedesignedTodaySPlan,
-              style: TextStyle(
-                fontSize: 13,
-                color: colors.textSecondary,
-              ),
+              (isRest ? AppLocalizations.of(context).fastingScreenRedesignedTodaySPlan : AppLocalizations.of(context).fastingScreenRedesignedTodaySPlan).toUpperCase(),
+              style: ZType.lbl(11, color: colors.textSecondary),
             ),
+            const SizedBox(width: 6),
             Text(
-              isRest ? AppLocalizations.of(context).scheduleRestDay : planned.displayName,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: colors.accent,
-              ),
+              (isRest ? AppLocalizations.of(context).scheduleRestDay : planned.displayName).toUpperCase(),
+              style: ZType.lbl(11, color: colors.accent),
             ),
           ],
         ),
@@ -733,22 +707,22 @@ class _FastingScreenRedesignedState
   ) {
     final paused = activeFast.isPaused;
     final enabled = !_isProcessing && userId != null;
-    // Tonal secondary: a soft accent fill with an accent label/icon. Reads
-    // unmistakably as a button and pairs cleanly with the primary CTA.
-    final tint = colors.accent;
+    // Hairline-outlined Signature secondary — pairs cleanly with the primary
+    // CTA without borrowing the reserved accent fill.
+    final fg = enabled
+        ? colors.textPrimary
+        : colors.textPrimary.withValues(alpha: 0.4);
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: TextButton(
         onPressed: enabled ? () => _togglePause(userId, paused) : null,
         style: TextButton.styleFrom(
-          backgroundColor: tint.withValues(alpha: 0.12),
-          foregroundColor: tint,
-          disabledBackgroundColor: tint.withValues(alpha: 0.06),
-          disabledForegroundColor: tint.withValues(alpha: 0.4),
+          backgroundColor: Colors.transparent,
+          foregroundColor: fg,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: tint.withValues(alpha: 0.28)),
+            borderRadius: BorderRadius.circular(26),
+            side: const BorderSide(color: AppColors.cardBorder),
           ),
         ),
         child: Row(
@@ -757,14 +731,12 @@ class _FastingScreenRedesignedState
             Icon(
               paused ? Icons.play_arrow_rounded : Icons.pause_rounded,
               size: 21,
+              color: fg,
             ),
             const SizedBox(width: 8),
             Text(
-              paused ? AppLocalizations.of(context).fastingScreenRedesignedResumeFast : AppLocalizations.of(context).fastingScreenRedesignedPauseFast,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
+              (paused ? AppLocalizations.of(context).fastingScreenRedesignedResumeFast : AppLocalizations.of(context).fastingScreenRedesignedPauseFast).toUpperCase(),
+              style: ZType.lbl(14, color: fg, letterSpacing: 2.0),
             ),
           ],
         ),
@@ -791,37 +763,27 @@ class _FastingScreenRedesignedState
               Icon(Icons.history_rounded, size: 18, color: colors.accent),
               const SizedBox(width: 8),
               Text(
-                '$dayLabel · ${DateFormat('MMM d').format(_selectedDay)}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
+                '$dayLabel · ${DateFormat('MMM d').format(_selectedDay)}'
+                    .toUpperCase(),
+                style: ZType.lbl(15, color: colors.textPrimary),
               ),
             ],
           ),
           const SizedBox(height: 14),
           if (fasts.isEmpty)
-            Container(
-              width: double.infinity,
+            ZealovaCard(
               padding: const EdgeInsets.symmetric(vertical: 40),
-              decoration: BoxDecoration(
-                color: colors.elevated,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: colors.cardBorder),
-              ),
+              radius: 16,
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  const SizedBox(width: double.infinity),
                   Icon(Icons.no_meals_rounded,
                       size: 44, color: colors.textMuted),
                   const SizedBox(height: 12),
                   Text(
                     AppLocalizations.of(context).fastingScreenRedesignedNoFastYet,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textSecondary,
-                    ),
+                    style: ZType.lbl(14, color: colors.textSecondary),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -906,13 +868,8 @@ class _FastingScreenRedesignedState
     required String timeLabel,
     required ThemeColors colors,
   }) {
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
       child: Row(
         children: [
           Icon(icon, size: 18, color: colors.accent),
@@ -922,23 +879,14 @@ class _FastingScreenRedesignedState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  caption,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                    color: colors.textMuted,
-                  ),
+                  caption.toUpperCase(),
+                  style: ZType.lbl(10, color: colors.textMuted),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 // Date + time, no ellipsis truncation.
                 Text(
                   '$dateLabel $timeLabel',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: colors.textPrimary,
-                  ),
+                  style: ZType.data(13, color: colors.textPrimary),
                   softWrap: false,
                 ),
               ],
@@ -971,6 +919,7 @@ class _FastingScreenRedesignedState
     ThemeColors colors,
   ) {
     final ctaColor = hasFast ? stage.color : colors.accent;
+    final onCta = colors.accentContrast;
     return SizedBox(
       width: double.infinity,
       height: 56,
@@ -986,19 +935,19 @@ class _FastingScreenRedesignedState
               },
         style: ElevatedButton.styleFrom(
           backgroundColor: ctaColor,
-          foregroundColor: Colors.white,
+          foregroundColor: onCta,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(28),
           ),
           elevation: 0,
           disabledBackgroundColor: ctaColor.withValues(alpha: 0.5),
         ),
         child: _isProcessing
-            ? const SizedBox(
+            ? SizedBox(
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
+                    color: onCta, strokeWidth: 2),
               )
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1007,15 +956,13 @@ class _FastingScreenRedesignedState
                     hasFast
                         ? Icons.stop_circle_outlined
                         : Icons.play_arrow_rounded,
-                    size: 24,
+                    size: 22,
+                    color: onCta,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    hasFast ? AppLocalizations.of(context).heroFastingCardEndFast : AppLocalizations.of(context).heroFastingCardStartFast,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    (hasFast ? AppLocalizations.of(context).heroFastingCardEndFast : AppLocalizations.of(context).heroFastingCardStartFast).toUpperCase(),
+                    style: ZType.lbl(15, color: onCta, letterSpacing: 2.5),
                   ),
                 ],
               ),
@@ -1081,30 +1028,22 @@ class _FastingScreenRedesignedState
     required String label,
     required ThemeColors colors,
   }) {
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 24, color: colors.accent),
+          Icon(icon, size: 22, color: colors.accent),
           const SizedBox(height: 8),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
+            style: ZType.disp(24, color: colors.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
-            label,
-            style: TextStyle(fontSize: 12, color: colors.textMuted),
+            label.toUpperCase(),
+            style: ZType.lbl(10, color: colors.textMuted, letterSpacing: 1.3),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -1113,12 +1052,8 @@ class _FastingScreenRedesignedState
 
   Widget _sectionHeader(String title, ThemeColors colors) {
     return Text(
-      title,
-      style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: colors.textPrimary,
-      ),
+      title.toUpperCase(),
+      style: ZType.disp(18, color: colors.textPrimary),
     );
   }
 
@@ -1150,11 +1085,7 @@ class _FastingScreenRedesignedState
                       const SizedBox(height: 12),
                       Text(
                         AppLocalizations.of(context).fastingScreenRedesignedNoFastingHistoryYet,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: colors.textSecondary,
-                        ),
+                        style: ZType.lbl(14, color: colors.textSecondary),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -1227,9 +1158,14 @@ class _FastingScreenRedesignedState
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: stage.color.withValues(alpha: 0.4)),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(color: stage.color, width: 3),
+          top: const BorderSide(color: AppColors.cardBorder),
+          right: const BorderSide(color: AppColors.cardBorder),
+          bottom: const BorderSide(color: AppColors.cardBorder),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1241,19 +1177,13 @@ class _FastingScreenRedesignedState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${_dayLabel(startTime)} fast',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: colors.textPrimary,
-                      ),
+                      '${_dayLabel(startTime)} fast'.toUpperCase(),
+                      style: ZType.lbl(13, color: colors.textPrimary),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       'Started ${timeFormat.format(startTime)} · Ongoing',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colors.textMuted,
-                      ),
+                      style: ZType.data(11, color: colors.textMuted),
                     ),
                   ],
                 ),
@@ -1262,8 +1192,10 @@ class _FastingScreenRedesignedState
                 padding: const EdgeInsets.symmetric(
                     horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: stage.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                      color: stage.color.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1279,11 +1211,7 @@ class _FastingScreenRedesignedState
                     const SizedBox(width: 5),
                     Text(
                       AppLocalizations.of(context).fastingScreenRedesignedInProgress,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: stage.color,
-                      ),
+                      style: ZType.lbl(10, color: stage.color, letterSpacing: 1.2),
                     ),
                   ],
                 ),
@@ -1307,31 +1235,29 @@ class _FastingScreenRedesignedState
               const SizedBox(width: 4),
               Text(
                 _formatDurationMinutes(elapsedMinutes),
-                style: TextStyle(fontSize: 12, color: colors.textMuted),
+                style: ZType.data(11, color: colors.textMuted),
               ),
               const SizedBox(width: 12),
               Icon(Icons.flag, size: 14, color: colors.textMuted),
               const SizedBox(width: 4),
               Text(
                 'Goal: ${_formatDurationMinutes(goalMinutes)}',
-                style: TextStyle(fontSize: 12, color: colors.textMuted),
+                style: ZType.data(11, color: colors.textMuted),
               ),
               const Spacer(),
               if (activeFast.protocol.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                      horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                        color: colors.accent.withValues(alpha: 0.4)),
                   ),
                   child: Text(
                     activeFast.protocol.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: colors.accent,
-                    ),
+                    style: ZType.lbl(10, color: colors.accent, letterSpacing: 1.2),
                   ),
                 ),
             ],
@@ -1377,20 +1303,18 @@ class _FastingScreenRedesignedState
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: colors.accent.withValues(alpha: 0.15),
+                    color: colors.surface,
                     shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: Icon(Icons.timer_outlined,
                       size: 48, color: colors.accent),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  AppLocalizations.of(context).fastingScreenRedesignedFastingTracker,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: colors.textPrimary,
-                  ),
+                  AppLocalizations.of(context).fastingScreenRedesignedFastingTracker.toUpperCase(),
+                  style: ZType.disp(26, color: colors.textPrimary),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -1404,39 +1328,16 @@ class _FastingScreenRedesignedState
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
+                ZealovaButton(
+                  label: AppLocalizations.of(context).progressSignUpToUnlock,
+                  trailingIcon: Icons.rocket_launch,
                   height: 56,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      await ref
-                          .read(guestModeProvider.notifier)
-                          .exitGuestMode(convertedToSignup: true);
-                      if (mounted) context.go('/pre-auth-quiz');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colors.accent,
-                      foregroundColor: colors.accentContrast,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.rocket_launch, size: 20),
-                        SizedBox(width: 10),
-                        Text(
-                          AppLocalizations.of(context).progressSignUpToUnlock,
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  onTap: () async {
+                    await ref
+                        .read(guestModeProvider.notifier)
+                        .exitGuestMode(convertedToSignup: true);
+                    if (mounted) context.go('/pre-auth-quiz');
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextButton(
@@ -1448,9 +1349,8 @@ class _FastingScreenRedesignedState
                     }
                   },
                   child: Text(
-                    'Back to Home',
-                    style:
-                        TextStyle(fontSize: 15, color: colors.textSecondary),
+                    'Back to Home'.toUpperCase(),
+                    style: ZType.lbl(13, color: colors.textSecondary),
                   ),
                 ),
               ],

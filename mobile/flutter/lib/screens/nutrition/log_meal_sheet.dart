@@ -12,6 +12,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';

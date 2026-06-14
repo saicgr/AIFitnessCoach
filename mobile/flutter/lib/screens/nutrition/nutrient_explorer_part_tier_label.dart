@@ -28,20 +28,12 @@ class _TierLabel extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: color,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(9, color: color, letterSpacing: 1),
         ),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: color,
-          ),
+          style: ZType.data(11, color: color),
         ),
       ],
     );

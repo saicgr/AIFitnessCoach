@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../widgets/liquid_glass_action_bar.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -195,19 +197,16 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (nutrients.isEmpty) return const SizedBox.shrink();
 
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
     // Pink — the cycle feature's accent — distinguishes this from the
     // ordinary vitamin / mineral category cards.
     const accent = Color(0xFFE91E63);
 
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.35)),
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,11 +216,12 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(Icons.favorite_rounded,
                       size: 18, color: accent),
@@ -233,17 +233,13 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
                     children: [
                       Text(
                         AppLocalizations.of(context).nutrientExplorerPrioritisedForYourCycle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: accent,
-                          letterSpacing: 0.8,
-                        ),
+                        style: ZType.lbl(12,
+                            color: accent, letterSpacing: 1.2),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         AppLocalizations.of(context).nutrientExplorerNutrientsThatMatterMost,
-                        style: TextStyle(fontSize: 11, color: textMuted),
+                        style: TextStyle(fontSize: 11, color: tc.textMuted),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -253,6 +249,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
               ],
             ),
           ),
+          const ZealovaRule(margin: EdgeInsets.symmetric(horizontal: 16)),
           ...nutrients.map((nutrient) => _NutrientRow(
                 nutrient: nutrient,
                 categoryColor: accent,
@@ -268,7 +265,7 @@ class _CyclePhaseNutrientSection extends StatelessWidget {
               'advice.',
               style: TextStyle(
                 fontSize: 10,
-                color: textPrimary.withValues(alpha: 0.45),
+                color: tc.textMuted,
               ),
             ),
           ),
@@ -363,13 +360,12 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     final nearBlack = widget.isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
-    final elevated = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary =
-        widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final textSecondary = tc.textSecondary;
+    final teal = tc.accent;
 
     final statusColor = _getStatusColor(widget.nutrient.statusEnum);
 
@@ -405,19 +401,13 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
                   children: [
                     Text(
                       widget.nutrient.displayName,
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: textPrimary,
-                      ),
+                      style: ZType.disp(24, color: textPrimary),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _getCategoryLabel(widget.nutrient.categoryEnum),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: textSecondary,
-                      ),
+                      style: ZType.lbl(12,
+                          color: textSecondary, letterSpacing: 1.2),
                     ),
                   ],
                 ),
@@ -445,16 +435,12 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: statusColor.withOpacity(0.5)),
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
-                  _getStatusLabel(widget.nutrient.statusEnum),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: statusColor,
-                  ),
+                  _getStatusLabel(widget.nutrient.statusEnum).toUpperCase(),
+                  style: ZType.lbl(10, color: statusColor, letterSpacing: 1),
                 ),
               ),
             ],
@@ -466,8 +452,9 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(16),
+              color: tc.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.cardBorder),
             ),
             child: Column(
               children: [
@@ -479,18 +466,12 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
                       children: [
                         Text(
                           widget.nutrient.formattedCurrent,
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
-                          ),
+                          style: ZType.disp(36, color: statusColor),
                         ),
                         Text(
-                          AppLocalizations.of(context).workoutPlanDrawerCurrent,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
+                          AppLocalizations.of(context).workoutPlanDrawerCurrent.toUpperCase(),
+                          style: ZType.lbl(10,
+                              color: textMuted, letterSpacing: 1.3),
                         ),
                       ],
                     ),
@@ -498,28 +479,19 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         '/',
-                        style: TextStyle(
-                          fontSize: 36,
-                          color: textMuted,
-                        ),
+                        style: ZType.disp(36, color: textMuted),
                       ),
                     ),
                     Column(
                       children: [
                         Text(
                           widget.nutrient.formattedTarget,
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                            color: textPrimary,
-                          ),
+                          style: ZType.disp(36, color: textPrimary),
                         ),
                         Text(
-                          'Target ${widget.nutrient.unit}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textMuted,
-                          ),
+                          'TARGET ${widget.nutrient.unit}'.toUpperCase(),
+                          style: ZType.lbl(10,
+                              color: textMuted, letterSpacing: 1.3),
                         ),
                       ],
                     ),
@@ -547,15 +519,8 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
           // Top Contributors (if available)
           if (widget.nutrient.topContributors != null &&
               widget.nutrient.topContributors!.isNotEmpty) ...[
-            Text(
-              AppLocalizations.of(context).nutrientExplorerTopContributors,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: textMuted,
-                letterSpacing: 1,
-              ),
-            ),
+            ZealovaSectionKicker(
+                AppLocalizations.of(context).nutrientExplorerTopContributors),
             const SizedBox(height: 12),
             ...widget.nutrient.topContributors!.take(3).map((contributor) {
               return Padding(
@@ -599,8 +564,9 @@ class _NutrientDetailSheetState extends ConsumerState<NutrientDetailSheet> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(12),
+              color: tc.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.cardBorder),
             ),
             child: Row(
               children: [

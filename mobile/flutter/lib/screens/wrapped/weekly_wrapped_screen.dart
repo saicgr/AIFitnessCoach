@@ -26,6 +26,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/data_cache_service.dart';
+import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 class WeeklyWrappedScreen extends ConsumerStatefulWidget {
@@ -179,20 +180,23 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: AppBar(
-        backgroundColor: bg,
-        elevation: 0,
-        title: Text(AppLocalizations.of(context).weeklyWrappedYourWeek),
-        titleTextStyle:
-            TextStyle(color: fg, fontSize: 18, fontWeight: FontWeight.w700),
-        iconTheme: IconThemeData(color: fg),
+      body: Column(
+        children: [
+          ZealovaAppBar(
+            title: AppLocalizations.of(context).weeklyWrappedYourWeek,
+            kicker: 'RECAP',
+            onBack: () => Navigator.of(context).maybePop(),
+          ),
+          Expanded(
+            child: _loading
+                // Layout-matched skeleton — only on a true cold-cache first open.
+                ? const _WeeklyWrappedSkeleton()
+                : _errorMessage != null
+                    ? _errorView(fg, accent)
+                    : _contentView(fg, accent),
+          ),
+        ],
       ),
-      body: _loading
-          // Layout-matched skeleton — only on a true cold-cache first open.
-          ? const _WeeklyWrappedSkeleton()
-          : _errorMessage != null
-              ? _errorView(fg, accent)
-              : _contentView(fg, accent),
     );
   }
 
@@ -209,7 +213,7 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
               const SizedBox(height: 12),
               Text(
                 _errorMessage!,
-                style: TextStyle(color: fg, fontSize: 14),
+                style: ZType.ser(14, color: fg),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -239,13 +243,9 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
         children: [
           // Week header
           Text(
-            'Week of ${s['week_start'] ?? ''}',
-            style: TextStyle(
-              color: fg.withValues(alpha: 0.5),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.1,
-            ),
+            'Week of ${s['week_start'] ?? ''}'.toUpperCase(),
+            style: ZType.lbl(12,
+                color: fg.withValues(alpha: 0.5), letterSpacing: 2),
           ),
           const SizedBox(height: 20),
 
@@ -265,13 +265,9 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
 
           // Coach-voiced narrative
           if (aiSummary.isNotEmpty) ...[
-            Container(
+            ZealovaCard(
+              variant: ZealovaCardVariant.hero,
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: accent.withValues(alpha: 0.3)),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -279,19 +275,14 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
                     children: [
                       Icon(Icons.auto_awesome_rounded, size: 14, color: accent),
                       const SizedBox(width: 6),
-                      Text(AppLocalizations.of(context).weeklyWrappedFromYourCoach,
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.4,
-                          )),
+                      Text(AppLocalizations.of(context).weeklyWrappedFromYourCoach.toUpperCase(),
+                          style: ZType.lbl(10, color: accent, letterSpacing: 1.6)),
                     ],
                   ),
                   const SizedBox(height: 10),
                   Text(
                     aiSummary,
-                    style: TextStyle(color: fg, fontSize: 14, height: 1.5),
+                    style: ZType.ser(14, color: fg, height: 1.5),
                   ),
                 ],
               ),
@@ -317,7 +308,7 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
           if (_upcoming == null || _upcoming!.isEmpty)
             Text(
               AppLocalizations.of(context).weeklyWrappedNoWorkoutsScheduledYet,
-              style: TextStyle(color: fg.withValues(alpha: 0.6), fontSize: 13),
+              style: ZType.ser(13, color: fg.withValues(alpha: 0.6)),
             )
           else
             Column(
@@ -402,21 +393,14 @@ class _StatTile extends StatelessWidget {
         children: [
           Text(
             value,
-            style: TextStyle(
-              color: highlight ? accent : fg,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-            ),
+            style: ZType.disp(22,
+                color: highlight ? accent : fg, letterSpacing: 0),
           ),
           const SizedBox(height: 4),
           Text(
-            label,
-            style: TextStyle(
-              color: fg.withValues(alpha: 0.55),
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(10,
+                color: fg.withValues(alpha: 0.55), letterSpacing: 1),
           ),
         ],
       ),
@@ -432,13 +416,9 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      label,
-      style: TextStyle(
-        color: fg.withValues(alpha: 0.5),
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 1.3,
-      ),
+      label.toUpperCase(),
+      style: ZType.lbl(11,
+          color: fg.withValues(alpha: 0.5), letterSpacing: 2),
     );
   }
 }

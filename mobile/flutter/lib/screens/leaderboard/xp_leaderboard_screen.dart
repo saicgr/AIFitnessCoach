@@ -13,7 +13,7 @@ import '../../data/repositories/xp_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/leaderboard_service.dart';
 import '../../core/services/posthog_service.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 
@@ -209,8 +209,9 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
 
     return Scaffold(
       backgroundColor: bgColor,
-      appBar: PillAppBar(
+      appBar: ZealovaAppBar(
         title: AppLocalizations.of(context).xpLeaderboardXpLeaderboard,
+        kicker: 'XP & friends',
       ),
       body: Column(
         children: [
@@ -231,29 +232,18 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
   }
 
   Widget _buildTabBar(bool isDark, Color accentColor) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: TabBar(
-        controller: _tabController,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicator: BoxDecoration(
-          color: accentColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accentColor.withValues(alpha: 0.4)),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: AnimatedBuilder(
+          animation: _tabController,
+          builder: (_, __) => ZealovaTextTabs(
+            tabs: const ['XP', 'Streaks', 'Workouts'],
+            activeIndex: _tabController.index,
+            onChanged: (i) => _tabController.animateTo(i),
+          ),
         ),
-        labelColor: accentColor,
-        unselectedLabelColor: textMuted,
-        labelStyle:
-            const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
-        unselectedLabelStyle:
-            const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-        dividerColor: Colors.transparent,
-        tabs: const [
-          Tab(text: '⚡ XP'),
-          Tab(text: '🔥 Streaks'),
-          Tab(text: '🏋️ Workouts'),
-        ],
       ),
     );
   }
@@ -386,7 +376,6 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
   }) {
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accentColor = ref.watch(accentColorProvider).getColor(isDark);
 
@@ -432,11 +421,11 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
                         e,
                         rank,
                         isCurrentUser,
+                        isDark,
                         metricBuilder(e),
                         metricLabel,
                         textColor,
                         textMuted,
-                        elevatedColor,
                         cardBorder,
                         accentColor,
                       ),
@@ -456,11 +445,11 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     Map<String, dynamic> e,
     int rank,
     bool isCurrentUser,
+    bool isDark,
     String metricValue,
     String metricLabel,
     Color textColor,
     Color textMuted,
-    Color elevatedColor,
     Color cardBorder,
     Color accentColor,
   ) {
@@ -468,68 +457,30 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     final strengthScore = (e['strength_score'] as num?)?.toInt();
     final isFriend = e['is_friend'] == true;
 
-    Color? rankColor;
-    IconData? rankIcon;
-    if (rank == 1) {
-      rankColor = const Color(0xFFFFD700);
-      rankIcon = Icons.emoji_events;
-    } else if (rank == 2) {
-      rankColor = const Color(0xFFC0C0C0);
-      rankIcon = Icons.emoji_events;
-    } else if (rank == 3) {
-      rankColor = const Color(0xFFCD7F32);
-      rankIcon = Icons.emoji_events;
-    }
+    final surfaceColor = isDark ? AppColors.surface : AppColorsLight.surface;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       decoration: BoxDecoration(
-        color: isCurrentUser
-            ? accentColor.withValues(alpha: 0.1)
-            : elevatedColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isCurrentUser
-              ? accentColor.withValues(alpha: 0.4)
-              : cardBorder,
-          width: isCurrentUser ? 2 : 1,
+        color: isCurrentUser ? surfaceColor : null,
+        border: Border(
+          bottom: BorderSide(
+            color: isCurrentUser
+                ? AppColors.hairlineStrong
+                : AppColors.hairline,
+          ),
         ),
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 40,
-            child: Center(
-              child: rankIcon != null
-                  ? Icon(rankIcon, color: rankColor, size: 24)
-                  : Text(
-                      '#$rank',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: textMuted,
-                      ),
-                    ),
-            ),
-          ),
+          _buildRankCell(rank, textMuted),
           const SizedBox(width: 12),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                name.isNotEmpty ? name[0].toUpperCase() : '?',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: accentColor,
-                ),
-              ),
-            ),
+          _buildAvatar(
+            label: name.isNotEmpty ? name[0].toUpperCase() : '?',
+            cardBorder: cardBorder,
+            surfaceColor: surfaceColor,
+            textColor: textColor,
+            useDisp: false,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -557,14 +508,14 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
                     ],
                   ],
                 ),
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 // Friend STRENGTH-SCORE badge (B10).
                 if (strengthScore != null && strengthScore > 0)
                   _buildStrengthBadge(strengthScore)
                 else
                   Text(
-                    metricLabel,
-                    style: TextStyle(fontSize: 11, color: textMuted),
+                    metricLabel.toUpperCase(),
+                    style: ZType.lbl(9, color: textMuted, letterSpacing: 1.3),
                   ),
               ],
             ),
@@ -572,13 +523,58 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
           const SizedBox(width: 8),
           Text(
             metricValue,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+            style: ZType.data(
+              14,
               color: isCurrentUser ? accentColor : textColor,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Rank cell — gold/silver/bronze medal for the podium, Space Mono '#N' below.
+  Widget _buildRankCell(int rank, Color textMuted) {
+    Color? rankColor;
+    if (rank == 1) {
+      rankColor = AppColors.rarityGold;
+    } else if (rank == 2) {
+      rankColor = AppColors.raritySilver;
+    } else if (rank == 3) {
+      rankColor = AppColors.rarityBronze;
+    }
+    return SizedBox(
+      width: 36,
+      child: Center(
+        child: rankColor != null
+            ? Icon(Icons.emoji_events, color: rankColor, size: 22)
+            : Text('#$rank', style: ZType.data(13, color: textMuted)),
+      ),
+    );
+  }
+
+  /// Hairline-bordered avatar circle (level number or name initial).
+  Widget _buildAvatar({
+    required String label,
+    required Color cardBorder,
+    required Color surfaceColor,
+    required Color textColor,
+    required bool useDisp,
+  }) {
+    return Container(
+      width: 40,
+      height: 40,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: surfaceColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: cardBorder),
+      ),
+      child: Text(
+        label,
+        style: useDisp
+            ? ZType.disp(15, color: textColor)
+            : ZType.data(14, color: textColor),
       ),
     );
   }
@@ -606,7 +602,6 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
@@ -616,12 +611,8 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
           Icon(Icons.fitness_center_rounded, size: 11, color: color),
           const SizedBox(width: 4),
           Text(
-            'STR $score · $tier',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            'STR $score · $tier'.toUpperCase(),
+            style: ZType.lbl(9, color: color, letterSpacing: 1.2),
           ),
         ],
       ),
@@ -644,105 +635,96 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
   ) {
     final titleColor = Color(userXp.xpTitle.colorValue);
 
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            accentColor.withValues(alpha: 0.15),
-            accentColor.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.4),
-          width: 2,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: accentColor,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '#$rank',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 14),
+          child: Row(
+            children: [
+              // Rank badge — gold rarity ring, no solid fill.
+              Container(
+                width: 52,
+                height: 52,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const RadialGradient(
+                    colors: [Color(0x38FBBF24), Colors.transparent],
+                    stops: [0.0, 0.7],
+                    center: Alignment(-0.3, -0.4),
+                  ),
+                  border: Border.all(
+                    color: AppColors.gamGold.withValues(alpha: 0.55),
+                    width: 1.5,
+                  ),
+                ),
+                child: Text(
+                  '#$rank',
+                  style: ZType.disp(18, color: AppColors.gamGold),
                 ),
               ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).xpLeaderboardYourRank,
-                  style: TextStyle(fontSize: 12, color: textMuted),
-                ),
-                const SizedBox(height: 4),
-                Row(
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Level ${userXp.currentLevel}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
+                      AppLocalizations.of(context)
+                          .xpLeaderboardYourRank
+                          .toUpperCase(),
+                      style: ZType.lbl(10, color: textMuted, letterSpacing: 2),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: titleColor.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        userXp.xpTitle.displayName,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: titleColor,
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        Text(
+                          'Level ${userXp.currentLevel}'.toUpperCase(),
+                          style: ZType.disp(19, color: textColor, height: 0.96),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 7,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: titleColor.withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            userXp.xpTitle.displayName.toUpperCase(),
+                            style: ZType.lbl(9,
+                                color: titleColor, letterSpacing: 1.2),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                userXp.formattedTotalXp,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: accentColor,
-                ),
               ),
-              Text(
-                AppLocalizations.of(context).xpLeaderboardTotalXp,
-                style: TextStyle(fontSize: 11, color: textMuted),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    userXp.formattedTotalXp,
+                    style: ZType.data(18, color: accentColor),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    AppLocalizations.of(context)
+                        .xpLeaderboardTotalXp
+                        .toUpperCase(),
+                    style: ZType.lbl(9, color: textMuted, letterSpacing: 1.3),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        const ZealovaRule(margin: EdgeInsets.symmetric(horizontal: 20)),
+      ],
     );
   }
 
@@ -758,69 +740,30 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
     Color accentColor,
   ) {
     final titleColor = _getTitleColorForLevel(entry.currentLevel);
-
-    Color? rankColor;
-    IconData? rankIcon;
-    if (rank == 1) {
-      rankColor = const Color(0xFFFFD700);
-      rankIcon = Icons.emoji_events;
-    } else if (rank == 2) {
-      rankColor = const Color(0xFFC0C0C0);
-      rankIcon = Icons.emoji_events;
-    } else if (rank == 3) {
-      rankColor = const Color(0xFFCD7F32);
-      rankIcon = Icons.emoji_events;
-    }
+    final surfaceColor = isDark ? AppColors.surface : AppColorsLight.surface;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
       decoration: BoxDecoration(
-        color: isCurrentUser
-            ? accentColor.withValues(alpha: 0.1)
-            : elevatedColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isCurrentUser
-              ? accentColor.withValues(alpha: 0.4)
-              : cardBorder,
-          width: isCurrentUser ? 2 : 1,
+        color: isCurrentUser ? surfaceColor : null,
+        border: Border(
+          bottom: BorderSide(
+            color: isCurrentUser
+                ? AppColors.hairlineStrong
+                : AppColors.hairline,
+          ),
         ),
       ),
       child: Row(
         children: [
-          SizedBox(
-            width: 40,
-            child: Center(
-              child: rankIcon != null
-                  ? Icon(rankIcon, color: rankColor, size: 24)
-                  : Text(
-                      '#$rank',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: textMuted,
-                      ),
-                    ),
-            ),
-          ),
+          _buildRankCell(rank, textMuted),
           const SizedBox(width: 12),
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: titleColor.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                entry.currentLevel.toString(),
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: titleColor,
-                ),
-              ),
-            ),
+          _buildAvatar(
+            label: entry.currentLevel.toString(),
+            cardBorder: cardBorder,
+            surfaceColor: surfaceColor,
+            textColor: textColor,
+            useDisp: true,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -837,31 +780,30 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
-                        vertical: 1,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: titleColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(
+                          color: titleColor.withValues(alpha: 0.4),
+                        ),
                       ),
                       child: Text(
-                        entry.title,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                          color: titleColor,
-                        ),
+                        entry.title.toUpperCase(),
+                        style: ZType.lbl(9,
+                            color: titleColor, letterSpacing: 1.2),
                       ),
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Lvl ${entry.currentLevel}',
-                      style: TextStyle(fontSize: 11, color: textMuted),
+                      'Lvl ${entry.currentLevel}'.toUpperCase(),
+                      style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2),
                     ),
                   ],
                 ),
@@ -870,9 +812,8 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
           ),
           Text(
             _formatXP(entry.totalXp),
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
+            style: ZType.data(
+              14,
               color: isCurrentUser ? accentColor : textColor,
             ),
           ),
@@ -889,8 +830,8 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen>
         children: [
           Icon(
             Icons.leaderboard_outlined,
-            size: 64,
-            color: textMuted.withValues(alpha: 0.5),
+            size: 56,
+            color: textMuted.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 16),
           Text(

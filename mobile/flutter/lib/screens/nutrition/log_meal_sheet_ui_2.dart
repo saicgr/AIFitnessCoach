@@ -56,8 +56,8 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
   // ─── Mode selector ────────────────────────────────────────────
 
   Widget _buildAiModeSelector(bool isDark) {
-    final accent = AccentColorScope.of(context).getColor(isDark);
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     Widget seg(_AiLogMode mode, IconData icon, String label) {
@@ -72,8 +72,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
             duration: const Duration(milliseconds: 180),
             padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 4),
             decoration: BoxDecoration(
+              // The one active state per selector uses the reserved accent.
               color: selected ? accent : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             // 4 segments must not overflow on an iPhone SE — FittedBox
             // scales the icon+label down before it can clip.
@@ -83,15 +84,13 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(icon, size: 16,
-                      color: selected ? Colors.white : textMuted),
+                      color: selected ? tc.accentContrast : textMuted),
                   const SizedBox(width: 5),
                   Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: selected ? Colors.white : textMuted,
-                    ),
+                    label.toUpperCase(),
+                    style: ZType.lbl(12.5,
+                        color: selected ? tc.accentContrast : textMuted,
+                        letterSpacing: 1.2),
                   ),
                 ],
               ),
@@ -104,14 +103,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: glassSurface,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.06),
-          width: 0.5,
-        ),
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(13),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
@@ -252,34 +246,25 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
 
   Widget _snapSecondaryChip(
       bool isDark, IconData icon, String label, VoidCallback onTap) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final tc = ThemeColors.of(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: _isLoading ? null : onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: glassSurface,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.10)
-                : Colors.black.withValues(alpha: 0.07),
-          ),
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 15, color: textPrimary),
+            Icon(icon, size: 15, color: tc.textSecondary),
             const SizedBox(width: 6),
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(11, color: tc.textSecondary, letterSpacing: 1.2),
             ),
           ],
         ),
@@ -293,10 +278,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
   /// one Analyze button → one round trip. Either photos OR text is
   /// enough to analyze (edge case C3).
   Widget _buildDescribePanel(bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final tc = ThemeColors.of(context);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = AccentColorScope.of(context).getColor(isDark);
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final accent = tc.accent;
     final hasPhotos = _describePhotos.isNotEmpty;
     final hasInput = hasPhotos ||
         _describeInstructionController.text.trim().isNotEmpty;
@@ -307,11 +291,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ── Photo picker ───────────────────────────────────────
-          Text(
-            AppLocalizations.of(context).progressPhotos,
-            style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
-          ),
+          ZealovaSectionKicker(AppLocalizations.of(context).progressPhotos),
           const SizedBox(height: 3),
           Text(
             'Add up to 5 photos — the meal, its components, or a menu. '
@@ -337,11 +317,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           const SizedBox(height: 16),
 
           // ── Instruction field ──────────────────────────────────
-          Text(
-            AppLocalizations.of(context).logMealSheetInstructionsOptional,
-            style: TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
-          ),
+          ZealovaSectionKicker(AppLocalizations.of(context).logMealSheetInstructionsOptional),
           const SizedBox(height: 3),
           Text(
             AppLocalizations.of(context).logMealSheetTellTheAiAnything,
@@ -350,13 +326,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: glassSurface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.10)
-                    : Colors.black.withValues(alpha: 0.07),
-              ),
+              color: tc.surface,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.cardBorder),
             ),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: TextField(
@@ -365,7 +337,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
               maxLines: 5,
               onChanged: (_) => setState(() {}),
               textInputAction: TextInputAction.newline,
-              style: TextStyle(color: textPrimary, fontSize: 15, height: 1.4),
+              style: TextStyle(color: tc.textPrimary, fontSize: 15, height: 1.4),
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
@@ -473,7 +445,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
     if (fits == null) return const SizedBox.shrink();
 
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final tc = ThemeColors.of(context);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
@@ -483,14 +455,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
-        color: glassSurface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.06),
-          width: 0.5,
-        ),
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
@@ -647,7 +614,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
   Widget _buildSearchPanel(bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    const orange = Color(0xFFF97316);
+    // Reserved accent for the single active listening state (was a hardcoded
+    // orange literal).
+    final orange = ThemeColors.of(context).accent;
 
     return Column(
       children: [

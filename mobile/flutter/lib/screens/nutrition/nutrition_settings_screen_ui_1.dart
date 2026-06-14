@@ -17,13 +17,11 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
     // (Daily tab) as a top-of-screen engagement card. This settings card
     // now holds ONLY the Weekly Goal toggle so users can flip between
     // "daily streak" and "X days per week" modes.
-    final goalColor = AppColors.purple;
-
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        color: ThemeColors.of(context).surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         children: [
@@ -33,15 +31,17 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: goalColor.withValues(alpha: 0.15),
+                    border: Border.all(color: AppColors.cardBorder),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.calendar_view_week_rounded,
-                    color: goalColor,
-                    size: 20,
+                    color: textPrimary,
+                    size: 19,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -68,34 +68,29 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   ),
                 ),
                 // Weekly Goal Status
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (streak?.weeklyGoalEnabled == true &&
-                            (streak?.daysLoggedThisWeek ?? 0) >=
-                                (streak?.weeklyGoalDays ?? 5))
-                        ? textPrimary.withValues(alpha: 0.15)
-                        : textMuted.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    streak?.weeklyGoalEnabled == true
-                        ? '${streak?.daysLoggedThisWeek ?? 0}/${streak?.weeklyGoalDays ?? 5}'
-                        : 'Daily',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: (streak?.weeklyGoalEnabled == true &&
-                              (streak?.daysLoggedThisWeek ?? 0) >=
-                                  (streak?.weeklyGoalDays ?? 5))
-                          ? textPrimary
-                          : textMuted,
+                Builder(builder: (context) {
+                  final met = streak?.weeklyGoalEnabled == true &&
+                      (streak?.daysLoggedThisWeek ?? 0) >=
+                          (streak?.weeklyGoalDays ?? 5);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
                     ),
-                  ),
-                ),
+                    decoration: BoxDecoration(
+                      color: ThemeColors.of(context).surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.cardBorder),
+                    ),
+                    child: Text(
+                      streak?.weeklyGoalEnabled == true
+                          ? '${streak?.daysLoggedThisWeek ?? 0}/${streak?.weeklyGoalDays ?? 5}'
+                          : 'DAILY',
+                      style: ZType.data(13,
+                          color: met ? textPrimary : textMuted),
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -112,24 +107,23 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
     Color iconColor,
     Color textPrimary,
   ) {
+    // Signature group kicker — Barlow uppercase, framed glyph, hairline-led.
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.15),
+            border: Border.all(color: AppColors.cardBorder),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: iconColor, size: 18),
+          child: Icon(icon, color: textPrimary, size: 15),
         ),
         const SizedBox(width: 12),
         Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: textPrimary,
-          ),
+          title.toUpperCase(),
+          style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.6),
         ),
       ],
     );
@@ -143,11 +137,12 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
     Color cardBorder, {
     required List<Widget> children,
   }) {
+    // Hairline-outlined flat surface (Signature) instead of a boxed glass card.
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        color: ThemeColors.of(context).surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(children: children),
     );
@@ -165,58 +160,66 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
     required Color textPrimary,
     required Color textMuted,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: textPrimary,
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-        ),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(
-          subtitle,
-          style: TextStyle(
-            color: textMuted,
-            fontSize: 13,
+    // Signature framed-glyph hairline row: framed icon + title/subtitle + toggle.
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, color: textPrimary, size: 17),
           ),
-        ),
-      ),
-      trailing: Switch(
-        value: value,
-        onChanged: _isLoading
-            ? null
-            : (newValue) {
-                HapticService.light();
-                onChanged(newValue);
-              },
-        // Use the section's accent so each toggle visually ties to its row
-        // icon (green for Training Day Boost, purple for Rest Day Reduction,
-        // cyan for Weekly Check-in, etc.) instead of the flat white/gray
-        // default that read as "disabled".
-        activeThumbColor: iconColor,
-        activeTrackColor: iconColor.withValues(alpha: 0.5),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: textMuted,
+                    fontSize: 13,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          ZealovaToggle(
+            value: value,
+            onChanged: _isLoading
+                ? null
+                : (newValue) {
+                    HapticService.light();
+                    onChanged(newValue);
+                  },
+          ),
+        ],
       ),
     );
   }
 
 
   Widget _buildDivider(bool isDark) {
-    return Divider(
-      height: 1,
-      indent: 56,
-      color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+    return const Padding(
+      padding: EdgeInsets.only(left: 16),
+      child: ZealovaRule(),
     );
   }
 
@@ -234,28 +237,31 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
     required Color iconColor,
     required VoidCallback onTap,
   }) {
+    // Hairline-led nav row inside a Signature outlined surface.
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        color: ThemeColors.of(context).surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(icon, color: iconColor, size: 24),
+                  child: Icon(icon, color: textPrimary, size: 19),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -311,34 +317,27 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
     // hero card rather than a neutral block — matches the calories ring
     // colour below it.
     final accent = AccentColorScope.of(context).getColor(isDark);
-    // Training Day pill uses green (matches the 'Dynamic Cals' section).
-    final trainingColor = AppColors.green;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        color: ThemeColors.of(context).surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(color: accent, width: 3),
+          top: const BorderSide(color: AppColors.cardBorder),
+          right: const BorderSide(color: AppColors.cardBorder),
+          bottom: const BorderSide(color: AppColors.cardBorder),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.insights_rounded,
-                color: accent,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
               Text(
-                AppLocalizations.of(context).nutritionSettingsScreenCurrentTargets,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
+                AppLocalizations.of(context).nutritionSettingsScreenCurrentTargets.toUpperCase(),
+                style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.6),
               ),
               const Spacer(),
               if (isTrainingDay) ...[
@@ -346,25 +345,22 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: trainingColor.withValues(alpha: 0.15),
+                    color: ThemeColors.of(context).surface,
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.fitness_center,
-                        size: 14,
-                        color: trainingColor,
+                        size: 13,
+                        color: textPrimary,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 5),
                       Text(
-                        AppLocalizations.of(context).nutritionSettingsScreenTrainingDay,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: trainingColor,
-                        ),
+                        AppLocalizations.of(context).nutritionSettingsScreenTrainingDay.toUpperCase(),
+                        style: ZType.lbl(10, color: textPrimary, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -448,18 +444,16 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppColors.yellow.withValues(alpha: 0.12),
+                color: ThemeColors.of(context).surface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.yellow.withValues(alpha: 0.3),
-                ),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.auto_awesome_rounded,
                     size: 14,
-                    color: AppColors.yellow,
+                    color: accent,
                   ),
                   const SizedBox(width: 8),
                   Expanded(

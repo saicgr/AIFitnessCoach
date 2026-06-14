@@ -194,25 +194,20 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
   ///   • empty    → a friendly "log a few meals" message (new user)
   ///   • has data → a horizontally-scrolling row of one-tap chips
   Widget _buildFrequentMealsStrip(bool isDark) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = AccentColorScope.of(context).getColor(isDark);
 
     Widget header(String trailing) => Row(
           children: [
-            Icon(Icons.replay_rounded, size: 15, color: accent),
-            const SizedBox(width: 6),
+            Icon(Icons.replay_rounded, size: 14, color: textMuted),
+            const SizedBox(width: 8),
             Text(
-              AppLocalizations.of(context).logMealSheetFrequentMeals,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: textPrimary),
+              AppLocalizations.of(context).logMealSheetFrequentMeals.toUpperCase(),
+              style: ZType.lbl(11, color: textMuted, letterSpacing: 1.8),
             ),
             const Spacer(),
             if (trailing.isNotEmpty)
-              Text(trailing,
-                  style: TextStyle(fontSize: 11, color: textMuted)),
+              Text(trailing.toUpperCase(),
+                  style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2)),
           ],
         );
 
@@ -236,9 +231,14 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                       child: Container(
                         width: 120,
                         decoration: BoxDecoration(
-                          color: (isDark ? Colors.white : Colors.black)
-                              .withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(20),
+                          color: isDark
+                              ? AppColors.surface
+                              : AppColorsLight.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                              color: isDark
+                                  ? AppColors.cardBorder
+                                  : AppColorsLight.cardBorder),
                         ),
                       ),
                     ),
@@ -283,8 +283,8 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
   Widget _buildFrequentMealChip(bool isDark, _FrequentMeal meal) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accent = AccentColorScope.of(context).getColor(isDark);
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final disabled = _isAnalyzing || _describeAnalyzing || _isLoading;
 
     return Opacity(
@@ -296,9 +296,9 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
           constraints: const BoxConstraints(maxWidth: 220),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: glassSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: accent.withValues(alpha: 0.30)),
+            color: surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: cardBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -319,20 +319,20 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                           fontWeight: FontWeight.w700,
                           color: textPrimary),
                     ),
-                    const SizedBox(height: 1),
+                    const SizedBox(height: 2),
                     Text(
                       meal.calories > 0
-                          ? '~${meal.calories} kcal · ${meal.timesLogged}×'
-                          : 'logged ${meal.timesLogged}×',
+                          ? '~${meal.calories} KCAL · ${meal.timesLogged}×'
+                          : 'LOGGED ${meal.timesLogged}×',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 10.5, color: textMuted),
+                      style: ZType.lbl(9.5, color: textMuted, letterSpacing: 0.8),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 6),
-              Icon(Icons.replay_rounded, size: 15, color: accent),
+              Icon(Icons.replay_rounded, size: 15, color: textMuted),
             ],
           ),
         ),
@@ -356,8 +356,8 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
 
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final accent = AccentColorScope.of(context).getColor(isDark);
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final typical = _typicalFoodsForSlot();
     final busy = _isAnalyzing || _describeAnalyzing || _isLoading;
     // The "Set to X for the time of day" message was removed per user request.
@@ -367,66 +367,54 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: glassSurface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: accent.withValues(alpha: 0.20)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-              Text(
-                'Your usual ${predicted.label.toLowerCase()}',
-                style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: textMuted),
-              ),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  for (final meal in typical)
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: busy ? null : () => _relogFrequentMeal(meal),
-                      child: Container(
-                        constraints: const BoxConstraints(maxWidth: 200),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: accent.withValues(alpha: 0.30)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.bolt_rounded, size: 12, color: accent),
-                            const SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                meal.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'YOUR USUAL ${predicted.label.toUpperCase()}',
+            style: ZType.lbl(10, color: textMuted, letterSpacing: 1.6),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final meal in typical)
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: busy ? null : () => _relogFrequentMeal(meal),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 200),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: surface,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: cardBorder),
                     ),
-                ],
-              ),
-          ],
-        ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.bolt_rounded, size: 12, color: textMuted),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            meal.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -552,7 +540,6 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
     final coral = isDark ? AppColors.coral : AppColorsLight.coral;
     final hasTranscript = _voiceTranscriptController.text.trim().isNotEmpty;
     final busy = _isAnalyzing || _isLoading;
@@ -577,22 +564,8 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 26),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: _voiceCapturing
-                        ? [coral, coral.withValues(alpha: 0.78)]
-                        : [accent, accent.withValues(alpha: 0.78)],
-                  ),
+                  color: _voiceCapturing ? coral : accent,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (_voiceCapturing ? coral : accent)
-                          .withValues(alpha: 0.32),
-                      blurRadius: 18,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
                 ),
                 child: Column(
                   children: [
@@ -601,18 +574,16 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                           ? Icons.stop_circle_outlined
                           : Icons.mic_rounded,
                       size: 44,
-                      color: Colors.white,
+                      color: ThemeColors.of(context).accentContrast,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     Text(
-                      _voiceCapturing ? AppLocalizations.of(context).logMealSheetListening : AppLocalizations.of(context).logMealSheetTapToSpeak,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
+                      (_voiceCapturing ? AppLocalizations.of(context).logMealSheetListening : AppLocalizations.of(context).logMealSheetTapToSpeak).toUpperCase(),
+                      style: ZType.lbl(16,
+                          color: ThemeColors.of(context).accentContrast,
+                          letterSpacing: 2.5),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
                       _voiceCapturing
                           ? AppLocalizations.of(context).logMealSheetTapAgainWhenYou
@@ -620,7 +591,9 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 12.5,
-                        color: Colors.white.withValues(alpha: 0.92),
+                        color: ThemeColors.of(context)
+                            .accentContrast
+                            .withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -637,7 +610,7 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: coral.withValues(alpha: 0.10),
+                  color: isDark ? AppColors.surface : AppColorsLight.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: coral.withValues(alpha: 0.4)),
                 ),
@@ -674,14 +647,12 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.keyboard_alt_outlined,
-                              size: 15, color: accent),
+                              size: 15, color: textPrimary),
                           const SizedBox(width: 6),
                           Text(
-                            AppLocalizations.of(context).logMealSheetTypeItInstead,
-                            style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: accent),
+                            AppLocalizations.of(context).logMealSheetTypeItInstead.toUpperCase(),
+                            style: ZType.lbl(12,
+                                color: textPrimary, letterSpacing: 1.5),
                           ),
                         ],
                       ),
@@ -703,25 +674,23 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                   Row(
                     children: [
                       Icon(Icons.hearing_rounded, size: 14, color: textMuted),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 8),
                       Text(
-                        AppLocalizations.of(context).logMealSheetHeardEditIfNeeded,
-                        style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            color: textPrimary),
+                        AppLocalizations.of(context).logMealSheetHeardEditIfNeeded.toUpperCase(),
+                        style: ZType.lbl(11,
+                            color: textMuted, letterSpacing: 1.5),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
-                      color: glassSurface,
-                      borderRadius: BorderRadius.circular(14),
+                      color: isDark ? AppColors.surface : AppColorsLight.surface,
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
-                            ? Colors.white.withValues(alpha: 0.10)
-                            : Colors.black.withValues(alpha: 0.07),
+                            ? AppColors.cardBorder
+                            : AppColorsLight.cardBorder,
                       ),
                     ),
                     padding:
@@ -771,12 +740,16 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                               },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 12),
+                              horizontal: 14, vertical: 14),
                           decoration: BoxDecoration(
-                            color: glassSurface,
-                            borderRadius: BorderRadius.circular(14),
+                            color: isDark
+                                ? AppColors.surface
+                                : AppColorsLight.surface,
+                            borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: textMuted.withValues(alpha: 0.3)),
+                                color: isDark
+                                    ? AppColors.cardBorder
+                                    : AppColorsLight.cardBorder),
                           ),
                           child: Icon(Icons.refresh_rounded,
                               size: 18, color: textMuted),
@@ -789,29 +762,35 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
                               ? null
                               : _confirmVoiceTranscript,
                           icon: busy
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 16,
                                   height: 16,
                                   child: CircularProgressIndicator(
                                       strokeWidth: 2,
                                       valueColor: AlwaysStoppedAnimation(
-                                          Colors.white)))
+                                          ThemeColors.of(context)
+                                              .accentContrast)))
                               : const Icon(Icons.check_rounded, size: 18),
                           label: Text(
-                            busy ? AppLocalizations.of(context).logMealSheetAnalyzing : AppLocalizations.of(context).logMealSheetConfirmAnalyze,
-                            style: const TextStyle(
-                                fontSize: 14.5, fontWeight: FontWeight.w700),
+                            (busy ? AppLocalizations.of(context).logMealSheetAnalyzing : AppLocalizations.of(context).logMealSheetConfirmAnalyze).toUpperCase(),
+                            style: ZType.lbl(13,
+                                color: ThemeColors.of(context).accentContrast,
+                                letterSpacing: 2),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: accent,
-                            foregroundColor: Colors.white,
+                            foregroundColor:
+                                ThemeColors.of(context).accentContrast,
                             disabledBackgroundColor:
                                 accent.withValues(alpha: 0.3),
-                            disabledForegroundColor: Colors.white54,
+                            disabledForegroundColor: ThemeColors.of(context)
+                                .accentContrast
+                                .withValues(alpha: 0.5),
+                            elevation: 0,
                             padding:
-                                const EdgeInsets.symmetric(vertical: 13),
+                                const EdgeInsets.symmetric(vertical: 15),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14)),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
                       ),

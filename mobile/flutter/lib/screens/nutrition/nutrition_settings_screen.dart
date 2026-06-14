@@ -5,12 +5,13 @@ import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'food_library_screen.dart';
@@ -90,7 +91,11 @@ class _NutritionSettingsScreenState
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: PillAppBar(title: AppLocalizations.of(context).nutritionSettingsNutritionSettings),
+      appBar: ZealovaAppBar(
+        kicker: 'NUTRITION',
+        title: AppLocalizations.of(context).nutritionSettingsNutritionSettings,
+        titleSize: 24,
+      ),
       body: prefsState.isLoading || preferences == null
           ? _buildSkeleton(isDark, elevated, cardBorder)
           : SingleChildScrollView(
@@ -908,31 +913,39 @@ class _NutritionSettingsScreenState
     required Color elevated,
     required ValueChanged<int> onChanged,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: iconColor.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: iconColor, size: 20),
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: textPrimary,
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-        ),
-      ),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-        decoration: BoxDecoration(
-          color: textPrimary.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: DropdownButton<int>(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(9),
+            ),
+            child: Icon(icon, color: textPrimary, size: 17),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                color: textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            decoration: BoxDecoration(
+              color: ThemeColors.of(context).surface,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.cardBorder),
+            ),
+            child: DropdownButton<int>(
           value: hour.clamp(0, 23),
           underline: const SizedBox.shrink(),
           isDense: true,
@@ -957,7 +970,9 @@ class _NutritionSettingsScreenState
                   HapticService.light();
                   onChanged(value);
                 },
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1018,14 +1033,14 @@ class _NutritionSettingsScreenState
 
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        color: ThemeColors.of(context).surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           onTap: () => _showCalorieBiasSheet(
             context,
             isDark,
@@ -1040,12 +1055,14 @@ class _NutritionSettingsScreenState
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: AppColors.yellow.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.tune_rounded, color: AppColors.yellow, size: 24),
+                  child: Icon(Icons.tune_rounded, color: textPrimary, size: 19),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -1072,23 +1089,12 @@ class _NutritionSettingsScreenState
                   ),
                 ),
                 const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: textPrimary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
+                Text(
+                  label.toUpperCase(),
+                  style: ZType.lbl(11, color: textMuted, letterSpacing: 1),
                 ),
-                const SizedBox(width: 4),
-                Icon(Icons.chevron_right, color: textMuted),
+                const SizedBox(width: 6),
+                Icon(Icons.chevron_right, size: 18, color: textMuted),
               ],
             ),
           ),

@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/skill_progression.dart';
 import '../../../data/providers/skill_progression_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Bottom sheet for logging a practice attempt
@@ -65,10 +67,9 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = tc.accent;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
@@ -113,15 +114,18 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        width: 44,
+                        height: 44,
+                        alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: cyan.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
+                          color: tc.surface,
+                          border: Border.all(color: cardBorder),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(
                           Icons.fitness_center_rounded,
                           color: cyan,
-                          size: 24,
+                          size: 22,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -130,13 +134,8 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              AppLocalizations.of(context).practiceAttemptLogPractice,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              AppLocalizations.of(context).practiceAttemptLogPractice.toUpperCase(),
+                              style: ZType.disp(20, color: tc.textPrimary),
                             ),
                             const SizedBox(height: 4),
                             Text(
@@ -159,11 +158,9 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: cyan.withOpacity(0.08),
+                        color: tc.surface.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: cyan.withOpacity(0.2),
-                        ),
+                        border: Border.all(color: AppColors.hairlineStrong),
                       ),
                       child: Row(
                         children: [
@@ -251,12 +248,8 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
 
                   // Quick select buttons for reps
                   Text(
-                    AppLocalizations.of(context).practiceAttemptQuickSelectReps,
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    AppLocalizations.of(context).practiceAttemptQuickSelectReps.toUpperCase(),
+                    style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.4),
                   ),
                   const SizedBox(height: 8),
                   Wrap(
@@ -286,23 +279,23 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
                       style: FilledButton.styleFrom(
                         backgroundColor: cyan,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        disabledBackgroundColor: cyan.withOpacity(0.5),
+                        disabledBackgroundColor: cyan.withValues(alpha: 0.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(26),
+                        ),
                       ),
                       child: _isSubmitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: tc.accentContrast,
                               ),
                             )
                           : Text(
-                              AppLocalizations.of(context).practiceAttemptLogAttempt,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
+                              AppLocalizations.of(context).practiceAttemptLogAttempt.toUpperCase(),
+                              style: ZType.lbl(14, color: tc.accentContrast, letterSpacing: 2.5),
                             ),
                     ),
                   ),
@@ -339,17 +332,14 @@ class _PracticeAttemptSheetState extends ConsumerState<PracticeAttemptSheet> {
     bool fullWidth = false,
   }) {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final cyan = ThemeColors.of(context).accent;
 
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       textAlign: TextAlign.center,
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.bold,
-      ),
+      style: ZType.data(24),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -461,10 +451,8 @@ class _QuickSelectChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final cyan = tc.accent;
 
     return GestureDetector(
       onTap: onTap,
@@ -472,20 +460,16 @@ class _QuickSelectChip extends StatelessWidget {
         duration: const Duration(milliseconds: 150),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? cyan.withOpacity(0.15) : Colors.transparent,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? cyan : cardBorder,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? cyan : AppColors.cardBorder,
+            width: isSelected ? 1.5 : 1,
           ),
         ),
         child: Text(
           label,
-          style: TextStyle(
-            color: isSelected ? cyan : textMuted,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 14,
-          ),
+          style: ZType.data(14, color: isSelected ? cyan : tc.textMuted),
         ),
       ),
     );

@@ -17,6 +17,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -766,13 +767,14 @@ class _AiCoachMealSuggestionSheetState
         Container(
           width: 36,
           height: 36,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [accent.withValues(alpha: 0.85), accent],
-            ),
-            shape: BoxShape.circle,
+            color: colors.surface,
+            border: Border.all(color: AppColors.cardBorder),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.chat_bubble_outline_rounded, size: 18, color: Colors.white),
+          child: Icon(Icons.chat_bubble_outline_rounded,
+              size: 18, color: colors.textPrimary),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -780,13 +782,10 @@ class _AiCoachMealSuggestionSheetState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                AppLocalizations.of(context).authIntroAiCoach,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
+                AppLocalizations.of(context).authIntroAiCoach.toUpperCase(),
+                style: ZType.lbl(16, color: colors.textPrimary, letterSpacing: 1.5),
               ),
+              const SizedBox(height: 2),
               Text(
                 _state == _CoachPopupState.thinking
                     ? AppLocalizations.of(context).aiCoachMealAnalyzingYourDay
@@ -850,13 +849,13 @@ class _AiCoachMealSuggestionSheetState
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.10),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, size: 12, color: Colors.orange),
+          Icon(Icons.info_outline, size: 12, color: colors.textMuted),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -938,12 +937,16 @@ class _AiCoachMealSuggestionSheetState
         Row(
           children: [
             Material(
-              color: colors.textMuted.withValues(alpha: 0.08),
+              color: colors.surface,
               borderRadius: BorderRadius.circular(18),
               child: InkWell(
                 borderRadius: BorderRadius.circular(18),
                 onTap: _closeCuisineChooser,
-                child: Padding(
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
                   padding: const EdgeInsets.all(6),
                   child: Icon(
                     Icons.arrow_back_rounded,
@@ -956,12 +959,8 @@ class _AiCoachMealSuggestionSheetState
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                AppLocalizations.of(context).aiCoachMealWhatAreYouFeeling,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
+                AppLocalizations.of(context).aiCoachMealWhatAreYouFeeling.toUpperCase(),
+                style: ZType.lbl(13, color: colors.textPrimary, letterSpacing: 1.4),
               ),
             ),
           ],
@@ -973,12 +972,16 @@ class _AiCoachMealSuggestionSheetState
           children: [
             for (final opt in options)
               Material(
-                color: opt.color.withValues(alpha: 0.10),
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(20),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: disabled ? null : () => _pickCuisine(opt),
-                  child: Padding(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: AppColors.cardBorder),
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 10,
@@ -986,7 +989,11 @@ class _AiCoachMealSuggestionSheetState
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(opt.icon, size: 16, color: opt.color),
+                        Icon(opt.icon,
+                            size: 16,
+                            color: disabled
+                                ? colors.textMuted
+                                : colors.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           opt.label,
@@ -1016,31 +1023,34 @@ class _AiCoachMealSuggestionSheetState
     required Color accent,
     required bool disabled,
   }) {
+    final glyph = disabled ? colors.textMuted : colors.textPrimary;
     return Material(
-      color: accent.withValues(alpha: 0.14),
+      color: colors.surface,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: disabled ? null : _showMorePillsSheet,
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_rounded, size: 16, color: accent),
+              Icon(Icons.search_rounded, size: 16, color: glyph),
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  AppLocalizations.of(context).homeMore,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: disabled ? colors.textMuted : colors.textPrimary,
-                  ),
+                  AppLocalizations.of(context).homeMore.toUpperCase(),
+                  style: ZType.lbl(12,
+                      color: disabled ? colors.textMuted : colors.textPrimary,
+                      letterSpacing: 1.2),
                 ),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.expand_less_rounded, size: 16, color: accent),
+              Icon(Icons.expand_less_rounded, size: 16, color: glyph),
             ],
           ),
         ),
@@ -1076,10 +1086,15 @@ class _AiCoachMealSuggestionSheetState
     required bool disabled,
     required bool selected,
   }) {
+    final accent = AccentColorScope.of(context).getColor(colors.isDark);
+    // Hairline-led chip: flat surface + hairline border. The reserved accent
+    // marks only the actively-selected pill; everything else is a matte
+    // hairline surface with muted glyph + white label.
+    final glyphColor = disabled
+        ? colors.textMuted
+        : (selected ? accent : colors.textMuted);
     return Material(
-      color: selected
-          ? pill.color.withValues(alpha: 0.18)
-          : pill.color.withValues(alpha: 0.10),
+      color: selected ? accent.withValues(alpha: 0.12) : colors.surface,
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
@@ -1094,12 +1109,17 @@ class _AiCoachMealSuggestionSheetState
                   _sendPrompt(pill.prompt);
                 }
               },
-        child: Padding(
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: selected ? accent : AppColors.cardBorder),
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(pill.icon, size: 16, color: pill.color),
+              Icon(pill.icon, size: 16, color: glyphColor),
               const SizedBox(width: 6),
               // FittedBox shrinks the label to fit before it wraps — keeps
               // every pill on a single line at the cost of a ~1pt size drop
@@ -1128,7 +1148,7 @@ class _AiCoachMealSuggestionSheetState
                 Icon(
                   Icons.expand_more_rounded,
                   size: 14,
-                  color: disabled ? colors.textMuted : pill.color,
+                  color: glyphColor,
                 ),
               ],
             ],
@@ -1195,34 +1215,18 @@ class _AiCoachMealSuggestionSheetState
           ],
           if (suggested != null) ...[
             const SizedBox(height: 12),
-            Material(
-              color: accent,
-              borderRadius: BorderRadius.circular(22),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(22),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ZealovaButton(
+                label: AppLocalizations.of(context).aiCoachMealLogThisMeal,
+                variant: ZealovaButtonVariant.primary,
+                trailingIcon: Icons.add,
+                height: 44,
+                expand: false,
                 onTap: () {
                   widget.onLogSuggestedFood?.call(suggested);
                   Navigator.of(context).pop();
                 },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 8),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.add, size: 16, color: Colors.white),
-                      const SizedBox(width: 6),
-                      Text(
-                        AppLocalizations.of(context).aiCoachMealLogThisMeal,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ],
@@ -1265,8 +1269,9 @@ class _AiCoachMealSuggestionSheetState
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: colors.textMuted.withValues(alpha: 0.06),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1295,11 +1300,19 @@ class _AiCoachMealSuggestionSheetState
                 ),
               ),
               if (calories > 0)
-                Text('$calories kcal',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                        color: colors.textPrimary)),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('$calories',
+                        style: ZType.disp(20, color: colors.textPrimary)),
+                    const SizedBox(width: 3),
+                    Text('KCAL',
+                        style: ZType.lbl(9,
+                            color: colors.textMuted, letterSpacing: 1)),
+                  ],
+                ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1559,12 +1572,9 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
                       size: 18, color: widget.accent),
                   const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context).aiCoachMealAskTheCoach,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+                    AppLocalizations.of(context).aiCoachMealAskTheCoach.toUpperCase(),
+                    style: ZType.lbl(14,
+                        color: colors.textPrimary, letterSpacing: 1.4),
                   ),
                   const Spacer(),
                   Text(
@@ -1608,12 +1618,18 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
                           },
                         ),
                   filled: true,
-                  fillColor: isDark
-                      ? Colors.white.withValues(alpha: 0.04)
-                      : Colors.black.withValues(alpha: 0.04),
+                  fillColor: colors.surface,
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.cardBorder),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: widget.accent),
+                  ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.cardBorder),
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -1645,15 +1661,7 @@ class _MorePillsSheetState extends State<_MorePillsSheet> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.fromLTRB(8, 10, 8, 6),
-                              child: Text(
-                                cat.label,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
-                                  color: colors.textMuted,
-                                ),
-                              ),
+                              child: ZealovaSectionKicker(cat.label),
                             ),
                             ...pills.map((p) => _MorePillRow(
                                   pill: p,
@@ -1704,11 +1712,13 @@ class _MorePillRow extends StatelessWidget {
               Container(
                 width: 34,
                 height: 34,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: pill.color.withValues(alpha: 0.12),
+                  color: colors.surface,
+                  border: Border.all(color: AppColors.cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(pill.icon, size: 18, color: pill.color),
+                child: Icon(pill.icon, size: 18, color: colors.textSecondary),
               ),
               const SizedBox(width: 12),
               Expanded(

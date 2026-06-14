@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/collapsible_intro_card.dart';
 import 'widgets/fasting_timeline_pager.dart';
@@ -133,14 +135,10 @@ class FastingGuideScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.fastingGuideTheFastingTimeline,
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: colors.textPrimary,
-          ),
+          l10n.fastingGuideTheFastingTimeline.toUpperCase(),
+          style: ZType.disp(22, color: colors.textPrimary),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
           l10n.fastingGuideSwipeTimeline,
           style: TextStyle(
@@ -172,12 +170,8 @@ class _CompactHeader extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              l10n.fastingGuideFastingGuide,
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
+              l10n.fastingGuideFastingGuide.toUpperCase(),
+              style: ZType.disp(22, color: colors.textPrimary),
             ),
           ),
         ],
@@ -203,75 +197,62 @@ class _ProtocolExplainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n.fastingGuideCommonProtocols,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
+            l10n.fastingGuideCommonProtocols.toUpperCase(),
+            style: ZType.disp(18, color: colors.textPrimary),
           ),
-          const SizedBox(height: 12),
-          for (final p in _protocols)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 56,
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    decoration: BoxDecoration(
-                      color: colors.accent.withValues(alpha: 0.14),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      p.$1,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: colors.accent,
+          const SizedBox(height: 14),
+          for (int i = 0; i < _protocols.length; i++) ...[
+            if (i > 0)
+              const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 10)),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 60,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Text(
+                    _protocols[i].$1,
+                    textAlign: TextAlign.center,
+                    style: ZType.data(12, color: colors.textPrimary),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _protocols[i].$2.toUpperCase(),
+                        style: ZType.lbl(13, color: colors.textPrimary,
+                            letterSpacing: 0.5),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          p.$2,
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: colors.textPrimary,
-                          ),
+                      const SizedBox(height: 1),
+                      Text(
+                        _protocols[i].$3,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.35,
+                          color: colors.textSecondary,
                         ),
-                        Text(
-                          p.$3,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            height: 1.35,
-                            color: colors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
+          ],
         ],
       ),
     ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.06, end: 0);
@@ -301,25 +282,17 @@ class _BeginnerTips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Container(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            l10n.fastingGuideBeginnerTips,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: colors.textPrimary,
-            ),
+            l10n.fastingGuideBeginnerTips.toUpperCase(),
+            style: ZType.disp(18, color: colors.textPrimary),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           for (final t in _tips)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -396,14 +369,10 @@ class _Faq extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
             child: Text(
-              l10n.fastingGuideFaq,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: colors.textPrimary,
-              ),
+              l10n.fastingGuideFaq.toUpperCase(),
+              style: ZType.disp(22, color: colors.textPrimary),
             ),
           ),
           for (final f in _faqs)
@@ -412,7 +381,7 @@ class _Faq extends StatelessWidget {
               decoration: BoxDecoration(
                 color: colors.surface,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: colors.cardBorder),
+                border: Border.all(color: AppColors.cardBorder),
               ),
               child: Theme(
                 data: Theme.of(context)
@@ -427,12 +396,9 @@ class _Faq extends StatelessWidget {
                   iconColor: colors.accent,
                   collapsedIconColor: colors.textMuted,
                   title: Text(
-                    f.$1,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+                    f.$1.toUpperCase(),
+                    style: ZType.lbl(13.5, color: colors.textPrimary,
+                        letterSpacing: 0.5),
                   ),
                   children: [
                     Align(
@@ -467,9 +433,14 @@ class _SafetyCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.warning.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.warning.withValues(alpha: 0.35)),
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border(
+          left: BorderSide(color: colors.warning, width: 3),
+          top: BorderSide(color: AppColors.cardBorder),
+          right: BorderSide(color: AppColors.cardBorder),
+          bottom: BorderSide(color: AppColors.cardBorder),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -479,12 +450,8 @@ class _SafetyCard extends StatelessWidget {
               Icon(Icons.shield_outlined, size: 20, color: colors.warning),
               const SizedBox(width: 8),
               Text(
-                l10n.fastingGuideStaySafe,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: colors.textPrimary,
-                ),
+                l10n.fastingGuideStaySafe.toUpperCase(),
+                style: ZType.disp(18, color: colors.textPrimary),
               ),
             ],
           ),

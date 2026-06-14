@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_summary.dart';
 import '../../../data/providers/wrapped_provider.dart';
 import '../../../data/services/haptic_service.dart';
@@ -141,34 +142,24 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                     Text(
                       'YOUR $month WRAPPED IS HERE',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1.2,
-                      ),
+                      style: ZType.disp(22, color: Colors.white, letterSpacing: 0),
                     ),
                     const SizedBox(height: 8),
                     // Stats teaser
                     Text(
-                      statsLine,
+                      statsLine.toUpperCase(),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: ZType.lbl(13,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          weight: FontWeight.w600,
+                          letterSpacing: 1),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       AppLocalizations.of(context).wrappedBannerTapToRevealYour,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        fontStyle: FontStyle.italic,
-                      ),
+                      style: ZType.ser(12,
+                          color: Colors.white.withValues(alpha: 0.6)),
                     ),
                     const SizedBox(height: 14),
                     // CTA chip
@@ -183,12 +174,8 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                         ),
                       ),
                       child: Text(
-                        AppLocalizations.of(context).wrappedBannerViewMyWrapped,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                        ),
+                        AppLocalizations.of(context).wrappedBannerViewMyWrapped.toUpperCase(),
+                        style: ZType.lbl(14, color: Colors.white, letterSpacing: 1.5),
                       ),
                     ),
                   ],
@@ -258,21 +245,14 @@ class _WrappedBannerState extends ConsumerState<WrappedBanner> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '$month Wrapped drops in $daysLabel',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    '$month Wrapped drops in $daysLabel'.toUpperCase(),
+                    style: ZType.lbl(13, color: Colors.white, letterSpacing: 1),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${progress.workoutsSoFar} workouts so far  ·  Keep going!',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: ZType.ser(12,
+                        color: Colors.white.withValues(alpha: 0.6)),
                   ),
                 ],
               ),

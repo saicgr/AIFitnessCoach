@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
@@ -71,22 +72,17 @@ class WrappedSummaryCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    AppLocalizations.of(context).wrappedSummaryYourMonthInReview,
-                    style: const TextStyle(
-                      color: Color(0xFFC084FC),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 4,
-                    ),
+                    AppLocalizations.of(context).wrappedSummaryYourMonthInReview.toUpperCase(),
+                    style: ZType.lbl(14,
+                        color: const Color(0xFFC084FC),
+                        weight: FontWeight.w700,
+                        letterSpacing: 4),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${data.monthDisplayName} ${data.yearDisplay}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    '${data.monthDisplayName} ${data.yearDisplay}'.toUpperCase(),
+                    style: ZType.disp(26,
+                        color: Colors.white, height: 0.86, letterSpacing: 0),
                   ),
 
                   const Spacer(),
@@ -119,13 +115,9 @@ class WrappedSummaryCard extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             data.motivationQuote,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.7),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              fontStyle: FontStyle.italic,
-                              height: 1.5,
-                            ),
+                            style: ZType.ser(14,
+                                color: Colors.white.withValues(alpha: 0.7),
+                                height: 1.5),
                             textAlign: TextAlign.center,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -138,13 +130,11 @@ class WrappedSummaryCard extends StatelessWidget {
 
                   // Share CTA
                   Text(
-                    AppLocalizations.of(context).wrappedSummaryShareYourWrapped,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.4),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 1,
-                    ),
+                    AppLocalizations.of(context).wrappedSummaryShareYourWrapped.toUpperCase(),
+                    style: ZType.lbl(14,
+                        color: Colors.white.withValues(alpha: 0.4),
+                        weight: FontWeight.w500,
+                        letterSpacing: 1),
                   ),
 
                   const Spacer(),
@@ -253,20 +243,16 @@ class WrappedSummaryCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             item.value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
+            style: ZType.disp(24,
+                color: Colors.white, height: 0.86, letterSpacing: 0),
           ),
           const SizedBox(height: 2),
           Text(
-            item.label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.5),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+            item.label.toUpperCase(),
+            style: ZType.lbl(12,
+                color: Colors.white.withValues(alpha: 0.5),
+                weight: FontWeight.w500,
+                letterSpacing: 1),
           ),
         ],
       ),

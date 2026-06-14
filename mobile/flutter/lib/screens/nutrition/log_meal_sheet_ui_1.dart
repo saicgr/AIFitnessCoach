@@ -984,7 +984,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                   ),
                 ),
                 trailing: isSelected
-                    ? Icon(Icons.check, color: isDark ? AppColors.teal : AppColorsLight.teal)
+                    ? Icon(Icons.check, color: ThemeColors.of(context).accent)
                     : (showLastUsedBadge ? const LastUsedBadge.static() : null),
                 onTap: () {
                   setState(() => _selectedMealType = type);
@@ -1207,11 +1207,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                       padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
                       child: Text(
                         '$count $noun${count == 1 ? '' : 's'} captured', // TODO(i18n): noun is a runtime-injected English word; migrate at call-site with ICU plural
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: colors.textPrimary,
-                        ),
+                        style: ZType.disp(18, color: colors.textPrimary),
                       ),
                     ),
                     // Optional free-text describing what else is in the photos
@@ -1229,10 +1225,23 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         hintStyle:
                             TextStyle(color: colors.textSecondary, fontSize: 13),
                         isDense: true,
+                        filled: true,
+                        fillColor: colors.surface,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: AppColors.cardBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: colors.accent),
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
+                          borderSide:
+                              const BorderSide(color: AppColors.cardBorder),
                         ),
                       ),
                     ),
@@ -1314,11 +1323,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         Expanded(
                           child: Text(
                             AppLocalizations.of(ctx).logMealSheetScanFood,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                            ),
+                            style: ZType.disp(18, color: colors.textPrimary),
                           ),
                         ),
                       ],
@@ -1404,11 +1409,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         Expanded(
                           child: Text(
                             AppLocalizations.of(ctx).logMealSheetScanMenu,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                            ),
+                            style: ZType.disp(18, color: colors.textPrimary),
                           ),
                         ),
                       ],
@@ -1509,11 +1510,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                         Expanded(
                           child: Text(
                             AppLocalizations.of(ctx).logMealSheetScanImport,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: colors.textPrimary,
-                            ),
+                            style: ZType.disp(18, color: colors.textPrimary),
                           ),
                         ),
                       ],
@@ -1573,11 +1570,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
                     child: Text(
                       title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                      ),
+                      style: ZType.disp(18, color: colors.textPrimary),
                     ),
                   ),
                   _GlassMenuOption(
@@ -1663,26 +1656,35 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: Row(
             children: [
-              Icon(Icons.document_scanner_outlined, color: AppColors.waterBlue),
+              Icon(Icons.document_scanner_outlined, color: colors.textSecondary),
               const SizedBox(width: 10),
-              const Expanded(child: Text('Label cut off')),
+              Expanded(
+                child: Text('Label cut off',
+                    style: ZType.disp(18, color: colors.textPrimary)),
+              ),
             ],
           ),
           content: Text(
             "Looks like part of the label is cut off (this happens when it wraps "
             "around a bottle). Add another photo of the rest and we'll stitch "
             "them together. ($photosSoFar so far)",
-            style: const TextStyle(fontSize: 14.5, height: 1.4),
+            style: TextStyle(
+                fontSize: 14.5, height: 1.4, color: colors.textSecondary),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Use what I have'),
+            ZealovaButton(
+              label: 'Use what I have',
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              height: 44,
+              onTap: () => Navigator.pop(ctx, false),
             ),
-            FilledButton.icon(
-              onPressed: () => Navigator.pop(ctx, true),
-              icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-              label: const Text('Add photo'),
+            ZealovaButton(
+              label: 'Add photo',
+              trailingIcon: Icons.add_a_photo_outlined,
+              expand: false,
+              height: 44,
+              onTap: () => Navigator.pop(ctx, true),
             ),
           ],
         );
@@ -1767,11 +1769,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                       padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
                       child: Text(
                         'How many servings did you eat?',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          color: colors.textPrimary,
-                        ),
+                        style: ZType.disp(18, color: colors.textPrimary),
                       ),
                     ),
                     Padding(
@@ -1813,26 +1811,33 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                               hintStyle: TextStyle(
                                   color: colors.textSecondary, fontSize: 13),
                               isDense: true,
+                              filled: true,
+                              fillColor: colors.surface,
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 12, vertical: 10),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.cardBorder)),
+                              focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: colors.accent)),
                               border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                      color: AppColors.cardBorder)),
                             ),
                           ),
                         ),
                         const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: () {
+                        ZealovaButton(
+                          label: AppLocalizations.of(context).logMealSheetUse,
+                          expand: false,
+                          height: 44,
+                          onTap: () {
                             final v = double.tryParse(customCtrl.text.trim());
                             if (v != null && v > 0) Navigator.pop(ctx, v);
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: cyan,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                          ),
-                          child: Text(AppLocalizations.of(context).logMealSheetUse),
                         ),
                       ],
                     ),
@@ -3120,11 +3125,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (sheetCtx) {
+        final tc = ThemeColors.of(sheetCtx);
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Material(
-              color: Theme.of(sheetCtx).colorScheme.surface,
+              color: tc.surface,
               borderRadius: BorderRadius.circular(20),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
@@ -3136,16 +3142,13 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                       children: [
                         Icon(
                           Icons.qr_code_scanner_outlined,
-                          color: Theme.of(sheetCtx).colorScheme.primary,
+                          color: tc.textSecondary,
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             AppLocalizations.of(sheetCtx).logMealSheetBarcodeScan,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: ZType.disp(18, color: tc.textPrimary),
                           ),
                         ),
                       ],
@@ -3153,15 +3156,18 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                     const SizedBox(height: 12),
                     Text(
                       message,
-                      style: const TextStyle(fontSize: 15, height: 1.35),
+                      style: TextStyle(
+                          fontSize: 15, height: 1.35, color: tc.textSecondary),
                     ),
                     const SizedBox(height: 18),
                     // Gap 3 — primary recovery: snap the nutrition label. The
                     // package is already in the user's hand, so the label is
                     // the highest-accuracy next step when the barcode isn't in
                     // the database. Reuses the existing label-scan pipeline.
-                    FilledButton.icon(
-                      onPressed: () {
+                    ZealovaButton(
+                      label: AppLocalizations.of(sheetCtx).customFoodBuilderScanLabel,
+                      trailingIcon: Icons.document_scanner_outlined,
+                      onTap: () {
                         Navigator.pop(sheetCtx);
                         if (mounted) {
                           setState(() => _error = null);
@@ -3169,24 +3175,23 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                           _scanNutritionLabel();
                         }
                       },
-                      icon: const Icon(Icons.document_scanner_outlined, size: 18),
-                      label: Text(
-                        AppLocalizations.of(sheetCtx).customFoodBuilderScanLabel,
-                      ),
                     ),
                     const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(sheetCtx),
-                            child: Text(AppLocalizations.of(sheetCtx).logMealSheetTryAgain),
+                          child: ZealovaButton(
+                            label: AppLocalizations.of(sheetCtx).logMealSheetTryAgain,
+                            variant: ZealovaButtonVariant.ghost,
+                            onTap: () => Navigator.pop(sheetCtx),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
+                          child: ZealovaButton(
+                            label: AppLocalizations.of(sheetCtx).logMealSheetLogManually,
+                            variant: ZealovaButtonVariant.ghost,
+                            onTap: () {
                               Navigator.pop(sheetCtx);
                               if (mounted) {
                                 setState(() {
@@ -3196,7 +3201,6 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                                 });
                               }
                             },
-                            child: Text(AppLocalizations.of(sheetCtx).logMealSheetLogManually),
                           ),
                         ),
                       ],
@@ -3604,6 +3608,7 @@ class _ServingChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -3612,17 +3617,13 @@ class _ServingChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.18 : 0.12),
+            color: tc.surface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+            style: ZType.disp(18, color: tc.textPrimary, letterSpacing: 0.5),
           ),
         ),
       ),
@@ -3658,15 +3659,9 @@ class _GlassMenuOption extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.black.withValues(alpha: 0.04),
+            color: colors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : Colors.black.withValues(alpha: 0.06),
-            ),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Row(
             children: [
@@ -3674,10 +3669,10 @@ class _GlassMenuOption extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
+                  border: Border.all(color: AppColors.cardBorder),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 20, color: color),
+                child: Icon(icon, size: 18, color: colors.textSecondary),
               ),
               const SizedBox(width: 14),
               Expanded(

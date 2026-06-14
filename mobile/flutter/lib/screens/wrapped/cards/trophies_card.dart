@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/trophy.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -82,13 +83,11 @@ class WrappedTrophiesCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              AppLocalizations.of(context).trophiesCardYourBadges,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.55),
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.6,
-              ),
+              AppLocalizations.of(context).trophiesCardYourBadges.toUpperCase(),
+              style: ZType.lbl(13,
+                  color: Colors.white.withValues(alpha: 0.55),
+                  weight: FontWeight.w800,
+                  letterSpacing: 1.6),
             ),
             const SizedBox(height: 8),
             Text(
@@ -97,12 +96,8 @@ class WrappedTrophiesCard extends ConsumerWidget {
                   : inPeriod.length == 1
                       ? '1 new badge this period'
                       : AppLocalizations.of(context)!.trophiesCardNewBadgesThisPeriod(inPeriod.length),
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                height: 1.15,
-              ),
+              style: ZType.disp(26,
+                  color: Colors.white, height: 0.92, letterSpacing: 0),
             ),
             const SizedBox(height: 28),
             Expanded(
@@ -115,13 +110,11 @@ class WrappedTrophiesCard extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 12),
                   child: Text(
-                    AppLocalizations.of(context)!.trophiesCardWrapped(Branding.appName),
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
+                    AppLocalizations.of(context)!.trophiesCardWrapped(Branding.appName).toUpperCase(),
+                    style: ZType.lbl(12,
+                        color: Colors.white54,
+                        weight: FontWeight.w700,
+                        letterSpacing: 1.2),
                   ),
                 ),
               ),
@@ -219,11 +212,8 @@ class _WrappedTrophiesEmpty extends StatelessWidget {
           Text(
             AppLocalizations.of(context).trophiesCardKeepShowingUpBadges,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.72),
-              fontSize: 14,
-              height: 1.4,
-            ),
+            style: ZType.ser(14,
+                color: Colors.white.withValues(alpha: 0.72), height: 1.4),
           ),
         ],
       ),

@@ -29,9 +29,9 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
 
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        color: ThemeColors.of(context).surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -41,17 +41,17 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: isDue
-                        ? blue.withValues(alpha: 0.15)
-                        : textMuted.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.insights_rounded,
                     color: isDue ? blue : textMuted,
-                    size: 24,
+                    size: 19,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -83,44 +83,27 @@ extension _NutritionSettingsScreenStateUI2 on _NutritionSettingsScreenState {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: blue.withValues(alpha: 0.15),
+                      color: ThemeColors.of(context).surface,
                       borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.cardBorder),
                     ),
                     child: Text(
-                      AppLocalizations.of(context).nutritionSettingsScreenDue,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: blue,
-                      ),
+                      AppLocalizations.of(context).nutritionSettingsScreenDue.toUpperCase(),
+                      style: ZType.lbl(10, color: textPrimary, letterSpacing: 1),
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  HapticService.medium();
-                  showWeeklyCheckinSheet(context, ref);
-                },
-                icon: Icon(Icons.play_arrow_rounded, color: blue),
-                label: Text(
-                  AppLocalizations.of(context).nutritionSettingsScreenRunWeeklyCheckIn,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: blue,
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: blue.withValues(alpha: 0.5)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
+            ZealovaButton(
+              label: AppLocalizations.of(context).nutritionSettingsScreenRunWeeklyCheckIn,
+              variant: ZealovaButtonVariant.ghost,
+              trailingIcon: Icons.play_arrow_rounded,
+              height: 48,
+              onTap: () {
+                HapticService.medium();
+                showWeeklyCheckinSheet(context, ref);
+              },
             ),
           ],
         ),

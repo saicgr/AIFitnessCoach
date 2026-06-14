@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/skill_progression.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Card displaying a single progression step
@@ -24,26 +26,10 @@ class ProgressionStepCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final green = isDark ? AppColors.green : AppColorsLight.green;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final green = tc.success;
 
-    final borderColor = isCompleted
-        ? green.withOpacity(0.4)
-        : isCurrent
-            ? cyan
-            : cardBorder;
-
-    final bgColor = isCompleted
-        ? green.withOpacity(0.05)
-        : isCurrent
-            ? cyan.withOpacity(0.05)
-            : elevated;
+    final borderColor = isCurrent ? tc.accent : AppColors.cardBorder;
 
     return GestureDetector(
       onTap: isUnlocked ? onTap : null,
@@ -51,17 +37,17 @@ class ProgressionStepCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
+          color: tc.surface,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: borderColor,
-            width: isCurrent ? 2 : 1,
+            width: isCurrent ? 1.5 : 1,
           ),
           boxShadow: isCurrent
               ? [
                   BoxShadow(
-                    color: cyan.withOpacity(0.15),
-                    blurRadius: 12,
+                    color: tc.accent.withValues(alpha: 0.18),
+                    blurRadius: 14,
                     offset: const Offset(0, 4),
                   ),
                 ]
@@ -80,14 +66,13 @@ class ProgressionStepCard extends StatelessWidget {
                     children: [
                       Text(
                         step.exerciseName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: isUnlocked
-                                  ? null
-                                  : textMuted,
-                            ),
+                        style: ZType.disp(
+                          16,
+                          color: isUnlocked ? tc.textPrimary : tc.textMuted,
+                          letterSpacing: 0.2,
+                        ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
                           _DifficultyBadge(
@@ -96,34 +81,20 @@ class ProgressionStepCard extends StatelessWidget {
                           ),
                           if (isCompleted) ...[
                             const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: green.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.check_rounded,
-                                    size: 12,
-                                    color: green,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    AppLocalizations.of(context).progressionStepCardCompleted,
-                                    style: TextStyle(
-                                      color: green,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_rounded,
+                                  size: 12,
+                                  color: green,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  AppLocalizations.of(context).progressionStepCardCompleted.toUpperCase(),
+                                  style: ZType.lbl(10, color: green, letterSpacing: 1),
+                                ),
+                              ],
                             ),
                           ],
                         ],
@@ -135,29 +106,26 @@ class ProgressionStepCard extends StatelessWidget {
                 // Lock icon or practice button
                 if (!isUnlocked)
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    width: 36,
+                    height: 36,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: textMuted.withOpacity(0.1),
-                      shape: BoxShape.circle,
+                      color: tc.surface,
+                      border: Border.all(color: AppColors.cardBorder),
+                      borderRadius: BorderRadius.circular(9),
                     ),
                     child: Icon(
                       Icons.lock_rounded,
-                      size: 18,
-                      color: textMuted,
+                      size: 16,
+                      color: tc.textMuted,
                     ),
                   )
                 else if (isCurrent && onPractice != null)
-                  FilledButton.icon(
-                    onPressed: onPractice,
-                    icon: const Icon(Icons.fitness_center_rounded, size: 18),
-                    label: Text(AppLocalizations.of(context).progressionStepCardPractice),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: cyan,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
-                      ),
-                    ),
+                  ZealovaButton(
+                    label: AppLocalizations.of(context).progressionStepCardPractice,
+                    onTap: onPractice,
+                    expand: false,
+                    height: 40,
                   ),
               ],
             ),
@@ -168,25 +136,23 @@ class ProgressionStepCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: cyan.withOpacity(0.08),
+                  color: tc.surface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: cyan.withOpacity(0.2),
-                  ),
+                  border: Border.all(color: AppColors.hairlineStrong),
                 ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.flag_outlined,
                       size: 16,
-                      color: cyan,
+                      color: tc.accent,
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         AppLocalizations.of(context)!.progressionStepCardGoal(step.unlockCriteriaText),
                         style: TextStyle(
-                          color: textSecondary,
+                          color: tc.textSecondary,
                           fontSize: 13,
                         ),
                       ),
@@ -207,14 +173,14 @@ class ProgressionStepCard extends StatelessWidget {
                   Icon(
                     Icons.lightbulb_outline_rounded,
                     size: 14,
-                    color: AppColors.orange,
+                    color: tc.textMuted,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       step.tips!,
                       style: TextStyle(
-                        color: textSecondary,
+                        color: tc.textSecondary,
                         fontSize: 12,
                       ),
                       maxLines: 2,
@@ -231,7 +197,7 @@ class ProgressionStepCard extends StatelessWidget {
               Text(
                 AppLocalizations.of(context).progressionStepCardCompletePreviousStepTo,
                 style: TextStyle(
-                  color: textMuted,
+                  color: tc.textMuted,
                   fontSize: 12,
                   fontStyle: FontStyle.italic,
                 ),
@@ -257,38 +223,27 @@ class _DifficultyBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getDifficultyColor(level);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Difficulty dots
-          ...List.generate(5, (index) {
-            final filled = index < (level / 2).ceil();
-            return Container(
-              width: 6,
-              height: 6,
-              margin: EdgeInsetsDirectional.only(end: index < 4 ? 2 : 6),
-              decoration: BoxDecoration(
-                color: filled ? color : color.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-            );
-          }),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Difficulty dots
+        ...List.generate(5, (index) {
+          final filled = index < (level / 2).ceil();
+          return Container(
+            width: 6,
+            height: 6,
+            margin: EdgeInsetsDirectional.only(end: index < 4 ? 2 : 6),
+            decoration: BoxDecoration(
+              color: filled ? color : color.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
             ),
-          ),
-        ],
-      ),
+          );
+        }),
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(10, color: color, letterSpacing: 1),
+        ),
+      ],
     );
   }
 

@@ -24,8 +24,10 @@ class _RecommendationOptionCard extends StatelessWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final teal = ThemeColors.of(context).accent;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    // Use accent color for selected state
+    // Reserved accent marks the single selected option.
     final optionColor = teal;
 
     return GestureDetector(
@@ -35,17 +37,11 @@ class _RecommendationOptionCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? optionColor.withValues(alpha: 0.15)
-              : isDark
-                  ? Colors.black12
-                  : Colors.grey.shade100,
+              ? optionColor.withValues(alpha: 0.12)
+              : surface,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected
-                ? optionColor
-                : isDark
-                    ? Colors.white10
-                    : Colors.grey.shade300,
+            color: isSelected ? optionColor : cardBorder,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -78,20 +74,15 @@ class _RecommendationOptionCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
-                                vertical: 2,
+                                vertical: 3,
                               ),
                               decoration: BoxDecoration(
-                                color: teal.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(color: teal),
                               ),
                               child: Text(
-                                AppLocalizations.of(context).weeklyCheckinSheetRecommended,
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                  color: teal,
-                                  letterSpacing: 0.5,
-                                ),
+                                AppLocalizations.of(context).weeklyCheckinSheetRecommended.toUpperCase(),
+                                style: ZType.lbl(9, color: teal, letterSpacing: 1),
                               ),
                             ),
                           ],
@@ -107,7 +98,7 @@ class _RecommendationOptionCard extends StatelessWidget {
                           _formatCalorieDelta(currentCalories!, option.calories),
                           style: TextStyle(
                             fontSize: 11,
-                            color: teal,
+                            color: textMuted,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -148,25 +139,25 @@ class _RecommendationOptionCard extends StatelessWidget {
               children: [
                 _MacroChip(
                   label: '${option.calories} cal',
-                  color: teal,
+                  color: textSecondary,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.proteinG}g P',
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.carbsG}g C',
-                  color: isDark ? AppColors.orange : AppColorsLight.orange,
+                  color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,
                   isDark: isDark,
                 ),
                 const SizedBox(width: 8),
                 _MacroChip(
                   label: '${option.fatG}g F',
-                  color: isDark ? AppColors.purple : AppColorsLight.purple,
+                  color: isDark ? AppColors.macroFat : AppColorsLight.macroFat,
                   isDark: isDark,
                 ),
               ],
@@ -206,18 +197,14 @@ class _MacroChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
+        label.toUpperCase(),
+        style: ZType.lbl(10, color: color, letterSpacing: 0.8),
       ),
     );
   }
@@ -250,19 +237,15 @@ class _AdaptiveTdeeCard extends StatelessWidget {
       return _buildInsufficientDataState(textPrimary, textMuted, textSecondary, teal);
     }
 
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            teal.withValues(alpha: 0.15),
-            teal.withValues(alpha: 0.05),
-          ],
-        ),
+        color: elevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: teal.withValues(alpha: 0.3)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,12 +253,15 @@ class _AdaptiveTdeeCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: teal.withValues(alpha: 0.2),
+                  color: isDark ? AppColors.surface : AppColorsLight.surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
                 ),
-                child: Icon(Icons.auto_graph, size: 20, color: teal),
+                child: Icon(Icons.auto_graph, size: 18, color: teal),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -283,13 +269,10 @@ class _AdaptiveTdeeCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Your Adaptive TDEE',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
+                      'YOUR ADAPTIVE TDEE',
+                      style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       'Based on actual intake & weight changes',
                       style: TextStyle(fontSize: 12, color: textMuted),
@@ -305,15 +288,12 @@ class _AdaptiveTdeeCard extends StatelessWidget {
               children: [
                 Text(
                   '${calculation.calculatedTdee}',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: teal,
-                  ),
+                  style: ZType.disp(52, color: textPrimary),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  'calories/day',
-                  style: TextStyle(fontSize: 14, color: textSecondary),
+                  'CALORIES/DAY',
+                  style: ZType.lbl(11, color: textSecondary, letterSpacing: 2),
                 ),
               ],
             ),
@@ -526,12 +506,14 @@ class _RecommendationCard extends StatelessWidget {
 
     final primaryColor = ThemeColors.of(context).accent;
 
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,22 +521,21 @@ class _RecommendationCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.1),
+                  color: isDark ? AppColors.surface : AppColorsLight.surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
                 ),
-                child: Icon(Icons.lightbulb, size: 20, color: primaryColor),
+                child: Icon(Icons.lightbulb, size: 18, color: primaryColor),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Recommended Adjustment',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  'RECOMMENDED ADJUSTMENT',
+                  style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5),
                 ),
               ),
             ],
@@ -564,12 +545,14 @@ class _RecommendationCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.1),
+                color: isDark ? AppColors.surface : AppColorsLight.surface,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.psychology, size: 20, color: primaryColor),
+                  Icon(Icons.psychology, size: 20, color: textMuted),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -583,14 +566,7 @@ class _RecommendationCard extends StatelessWidget {
           const SizedBox(height: 16),
 
           // New targets
-          Text(
-            'New Targets',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textMuted,
-            ),
-          ),
+          ZealovaSectionKicker('New Targets'),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -609,7 +585,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Protein',
                   value: '${recommendation.recommendedProteinG}',
                   unit: 'g',
-                  color: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  color: isDark ? AppColors.macroProtein : AppColorsLight.macroProtein,
                   isDark: isDark,
                 ),
               ),
@@ -623,7 +599,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Carbs',
                   value: '${recommendation.recommendedCarbsG}',
                   unit: 'g',
-                  color: isDark ? AppColors.orange : AppColorsLight.orange,
+                  color: isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs,
                   isDark: isDark,
                 ),
               ),
@@ -633,7 +609,7 @@ class _RecommendationCard extends StatelessWidget {
                   label: 'Fat',
                   value: '${recommendation.recommendedFatG}',
                   unit: 'g',
-                  color: isDark ? AppColors.purple : AppColorsLight.purple,
+                  color: isDark ? AppColors.macroFat : AppColorsLight.macroFat,
                   isDark: isDark,
                 ),
               ),
@@ -666,38 +642,28 @@ class _TargetItem extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: isDark ? AppColors.surface : AppColorsLight.surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(fontSize: 11, color: textMuted)),
-          const SizedBox(height: 4),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: value,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                TextSpan(
-                  text: ' $unit',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
+          Text(label.toUpperCase(),
+              style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2)),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(value, style: ZType.disp(22, color: textPrimary)),
+              const SizedBox(width: 3),
+              Text(unit, style: ZType.lbl(11, color: color, letterSpacing: 0.5)),
+            ],
           ),
         ],
       ),
@@ -721,24 +687,22 @@ class _NoRecommendationCard extends StatelessWidget {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final teal = ThemeColors.of(context).accent;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         children: [
           Icon(Icons.check_circle_outline, size: 48, color: teal),
           const SizedBox(height: 16),
           Text(
-            'You\'re On Track!',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            'YOU\'RE ON TRACK!',
+            style: ZType.disp(22, color: textPrimary),
           ),
           const SizedBox(height: 8),
           Text(

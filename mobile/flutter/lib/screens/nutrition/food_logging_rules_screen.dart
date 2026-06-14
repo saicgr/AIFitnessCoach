@@ -18,9 +18,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/api_constants.dart';
+import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/services/haptic_service.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -185,12 +187,10 @@ class _FoodLoggingRulesScreenState
 
     return Scaffold(
       backgroundColor: colors.background,
-      appBar: AppBar(
-        backgroundColor: colors.background,
-        elevation: 0,
-        title: Text(AppLocalizations.of(context).nutritionSettingsAlwaysRules,
-            style: TextStyle(color: colors.textPrimary)),
-        iconTheme: IconThemeData(color: colors.textPrimary),
+      appBar: ZealovaAppBar(
+        kicker: 'NUTRITION',
+        title: AppLocalizations.of(context).nutritionSettingsAlwaysRules,
+        titleSize: 24,
       ),
       floatingActionButton: (_loading || _error != null)
           ? null
@@ -251,13 +251,8 @@ class _FoodLoggingRulesScreenState
   }
 
   Widget _buildIntro(ThemeColors colors) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.accent.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.accent.withValues(alpha: 0.25)),
-      ),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -326,22 +321,14 @@ class _FoodLoggingRulesScreenState
   }
 
   Widget _buildEmptyState(ThemeColors colors) {
-    return Container(
+    return ZealovaCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colors.elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             AppLocalizations.of(context).foodLoggingRulesNoRulesYet,
-            style: TextStyle(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 16),
+            style: ZType.lbl(15, color: colors.textPrimary, letterSpacing: 1.0),
           ),
           const SizedBox(height: 6),
           Text(
@@ -390,9 +377,9 @@ class _FoodLoggingRulesScreenState
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: colors.elevated,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colors.cardBorder),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Material(
         color: Colors.transparent,
@@ -418,11 +405,11 @@ class _FoodLoggingRulesScreenState
                   ),
                 ),
                 // Enable / disable — C9 stale-rule review without deleting.
-                Switch(
+                ZealovaToggle(
                   value: enabled,
-                  activeThumbColor: colors.accent,
                   onChanged: (v) => _toggleRule(id, v),
                 ),
+                const SizedBox(width: 4),
                 IconButton(
                   icon: Icon(Icons.delete_outline_rounded,
                       color: colors.textMuted, size: 22),

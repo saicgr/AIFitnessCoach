@@ -10,6 +10,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/main_shell.dart';
@@ -88,7 +89,6 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     // Use monochrome accent instead of purple
     final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
-    final accentContrast = isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Check if guest - fasting is disabled for guests
@@ -109,8 +109,9 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.15),
+                      color: isDark ? AppColors.surface : AppColorsLight.surface,
                       shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.cardBorder),
                     ),
                     child: Icon(
                       Icons.timer_outlined,
@@ -120,12 +121,9 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    AppLocalizations.of(context).fastingScreenRedesignedFastingTracker,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: textPrimary,
-                    ),
+                    AppLocalizations.of(context).fastingScreenRedesignedFastingTracker.toUpperCase(),
+                    style: ZType.disp(26, color: textPrimary),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -138,49 +136,23 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
+                  ZealovaButton(
+                    label: AppLocalizations.of(context).progressSignUpToUnlock,
+                    trailingIcon: Icons.rocket_launch,
                     height: 56,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await ref.read(guestModeProvider.notifier).exitGuestMode(convertedToSignup: true);
-                        if (mounted) {
-                          context.go('/pre-auth-quiz');
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: accentContrast,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.rocket_launch, size: 20),
-                          SizedBox(width: 10),
-                          Text(
-                            AppLocalizations.of(context).progressSignUpToUnlock,
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    onTap: () async {
+                      await ref.read(guestModeProvider.notifier).exitGuestMode(convertedToSignup: true);
+                      if (mounted) {
+                        context.go('/pre-auth-quiz');
+                      }
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => context.go('/home'),
                     child: Text(
-                      'Back to Home',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: textSecondary,
-                      ),
+                      'Back to Home'.toUpperCase(),
+                      style: ZType.lbl(13, color: textSecondary),
                     ),
                   ),
                 ],
@@ -218,12 +190,8 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                 pinned: true,
                 floating: true,
                 title: Text(
-                  AppLocalizations.of(context).unifiedHomeWidgetsFasting,
-                  style: TextStyle(
-                    color: textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 24,
-                  ),
+                  AppLocalizations.of(context).unifiedHomeWidgetsFasting.toUpperCase(),
+                  style: ZType.disp(26, color: textPrimary),
                 ),
                 actions: [
                   // Streak indicator
@@ -234,21 +202,19 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(20),
+                        color: isDark ? AppColors.surface : AppColorsLight.surface,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                            color: accentColor.withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text('🔥', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 4),
+                          const Text('🔥', style: TextStyle(fontSize: 15)),
+                          const SizedBox(width: 5),
                           Text(
                             '${fastingState.streak!.currentStreak}',
-                            style: TextStyle(
-                              color: accentColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                            style: ZType.data(13, color: accentColor),
                           ),
                         ],
                       ),
@@ -382,31 +348,30 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
                     backgroundColor: accentColor,
                     foregroundColor: accentContrast,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(28),
                     ),
                     elevation: 0,
                     disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                   ),
                   child: _isStartingFast
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: accentContrast,
                             strokeWidth: 2,
                           ),
                         )
                       : Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.play_arrow_rounded, size: 24),
+                            Icon(Icons.play_arrow_rounded,
+                                size: 22, color: accentContrast),
                             const SizedBox(width: 8),
                             Text(
-                              AppLocalizations.of(context).heroFastingCardStartFast,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              AppLocalizations.of(context).heroFastingCardStartFast.toUpperCase(),
+                              style: ZType.lbl(15,
+                                  color: accentContrast, letterSpacing: 2.5),
                             ),
                           ],
                         ),
@@ -462,16 +427,12 @@ class _FastingScreenState extends ConsumerState<FastingScreen>
             Icon(
               Icons.history,
               size: 64,
-              color: accentColor.withValues(alpha: 0.3),
+              color: textMuted,
             ),
             const SizedBox(height: 16),
             Text(
               AppLocalizations.of(context).fastingScreenRedesignedNoFastingHistoryYet,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              style: ZType.disp(18, color: textPrimary),
             ),
             const SizedBox(height: 8),
             Text(

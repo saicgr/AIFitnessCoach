@@ -37,17 +37,15 @@ class _FrequentFoodChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: 120,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: cardBorder),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,24 +76,17 @@ class _FrequentFoodChip extends StatelessWidget {
               children: [
                 Text(
                   '${food.totalCalories ?? 0}',
-                  style: TextStyle(
-                    color: teal,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: ZType.data(12, color: teal),
                 ),
+                const SizedBox(width: 2),
                 Text(
-                  AppLocalizations.of(context).foodHistoryScreenCal,
-                  style: TextStyle(color: textMuted, fontSize: 11),
+                  AppLocalizations.of(context).foodHistoryScreenCal.toUpperCase(),
+                  style: ZType.lbl(9, color: textMuted, letterSpacing: 0.5),
                 ),
                 const Spacer(),
                 Text(
-                  '${food.timesLogged}x',
-                  style: TextStyle(
-                    color: purple,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  '${food.timesLogged}×',
+                  style: ZType.data(11, color: textMuted),
                 ),
               ],
             ),
@@ -164,11 +155,11 @@ class _FoodLogTile extends StatelessWidget {
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.only(bottom: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
           decoration: BoxDecoration(
             color: cardBg,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: cardBorder),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Row(
             children: [
@@ -218,19 +209,14 @@ class _FoodLogTile extends StatelessWidget {
                       children: [
                         // Meal-type chip (Breakfast/Lunch/Dinner/Snack).
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
-                            color: teal.withValues(alpha: 0.12),
+                            border: Border.all(color: AppColors.cardBorder),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             mealLabel,
-                            style: TextStyle(
-                              color: teal,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.3,
-                            ),
+                            style: ZType.lbl(9, color: teal, letterSpacing: 0.8),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -242,7 +228,7 @@ class _FoodLogTile extends StatelessWidget {
                         Flexible(
                           child: Text(
                             '${log.proteinG.round()}P · ${log.carbsG.round()}C · ${log.fatG.round()}F',
-                            style: TextStyle(color: textMuted, fontSize: 11),
+                            style: ZType.data(11, color: textMuted),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -254,18 +240,12 @@ class _FoodLogTile extends StatelessWidget {
               ),
               Text(
                 '${log.totalCalories}',
-                style: TextStyle(
-                  color: teal,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: ZType.disp(16, color: teal),
               ),
+              const SizedBox(width: 2),
               Text(
-                AppLocalizations.of(context).foodHistoryScreenCal,
-                style: TextStyle(
-                  color: textMuted,
-                  fontSize: 12,
-                ),
+                AppLocalizations.of(context).foodHistoryScreenCal.toUpperCase(),
+                style: ZType.lbl(9, color: textMuted, letterSpacing: 0.5),
               ),
               if (apiClient != null) ...[
                 const SizedBox(width: 4),
@@ -481,18 +461,17 @@ class _LeadingThumbState extends ConsumerState<_LeadingThumb> {
 class _ErrorState extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  final bool isDark;
 
   const _ErrorState({
     required this.message,
     required this.onRetry,
-    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final tc = ThemeColors.of(context);
+    final textMuted = tc.textMuted;
+    final teal = tc.accent;
 
     return Center(
       child: Column(
@@ -510,8 +489,8 @@ class _ErrorState extends StatelessWidget {
             onPressed: onRetry,
             icon: Icon(Icons.refresh, color: teal),
             label: Text(
-              AppLocalizations.of(context).buttonRetry,
-              style: TextStyle(color: teal, fontWeight: FontWeight.w600),
+              AppLocalizations.of(context).buttonRetry.toUpperCase(),
+              style: ZType.lbl(12, color: teal, letterSpacing: 1.5),
             ),
           ),
         ],

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/models/nutrition_preferences.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -268,7 +269,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 18, color: AppColors.orange),
+        Icon(icon, size: 18, color: ThemeColors.of(context).accent),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -389,12 +390,15 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: teal.withValues(alpha: 0.1),
+                    color: isDark ? AppColors.surface : AppColorsLight.surface,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
                   ),
-                  child: Icon(Icons.insights, color: teal, size: 24),
+                  child: Icon(Icons.insights, color: teal, size: 22),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -402,13 +406,10 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context).weeklyCheckinWeeklyCheckIn,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
+                        AppLocalizations.of(context).weeklyCheckinWeeklyCheckIn.toUpperCase(),
+                        style: ZType.disp(24, color: textPrimary),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         AppLocalizations.of(context).weeklyCheckinAppearsOnceAWeek,
                         style: TextStyle(fontSize: 14, color: textMuted),
@@ -435,9 +436,9 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: teal.withValues(alpha: 0.08),
+                      color: elevated,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: teal.withValues(alpha: 0.2)),
+                      border: Border.all(color: cardBorder),
                     ),
                     child: Text(
                       AppLocalizations.of(context)!.weeklyCheckinSheetEveryWeekAnalysesYour(Branding.appName),
@@ -451,13 +452,8 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
 
                   const SizedBox(height: 24),
 
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).weeklyCheckinWhatHappensEachWeek,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
                   ),
                   const SizedBox(height: 16),
 
@@ -525,28 +521,16 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
           // CTA
           Padding(
             padding: EdgeInsets.fromLTRB(24, 12, 24, MediaQuery.of(context).padding.bottom + 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _showIntro = false;
-                    _isLoading = true;
-                  });
-                  _loadData();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: teal,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-                child: Text(
-                  AppLocalizations.of(context).weeklyCheckinGotItShowMy,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
+            child: ZealovaButton(
+              label: AppLocalizations.of(context).weeklyCheckinGotItShowMy,
+              variant: ZealovaButtonVariant.primary,
+              onTap: () {
+                setState(() {
+                  _showIntro = false;
+                  _isLoading = true;
+                });
+                _loadData();
+              },
             ),
           ),
         ],
@@ -574,22 +558,11 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                number,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
+          SizedBox(
+            width: 30,
+            child: Text(
+              number,
+              style: ZType.disp(26, color: color),
             ),
           ),
           const SizedBox(width: 14),
@@ -711,12 +684,15 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: teal.withValues(alpha: 0.1),
+                    color: isDark ? AppColors.surface : AppColorsLight.surface,
                     borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: cardBorder),
                   ),
-                  child: Icon(Icons.insights, color: teal, size: 24),
+                  child: Icon(Icons.insights, color: teal, size: 22),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -724,13 +700,10 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context).weeklyCheckinWeeklyCheckIn,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: textPrimary,
-                        ),
+                        AppLocalizations.of(context).weeklyCheckinWeeklyCheckIn.toUpperCase(),
+                        style: ZType.disp(24, color: textPrimary),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         AppLocalizations.of(context).weeklyCheckinReviewProgressChooseYour,
                         style: TextStyle(fontSize: 14, color: textMuted),
@@ -857,59 +830,31 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (hasMultiOptions) ...[
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _selectedOption != null
-                            ? () => _selectRecommendationOption(_selectedOption!)
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: teal,
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor: teal.withValues(alpha: 0.3),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          _selectedOption != null
-                              ? 'Apply ${_getOptionDisplayName(_selectedOption!)} Plan'
-                              : 'Select a Plan',
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    ZealovaButton(
+                      label: _selectedOption != null
+                          ? 'Apply ${_getOptionDisplayName(_selectedOption!)} Plan'
+                          : 'Select a Plan',
+                      variant: ZealovaButtonVariant.primary,
+                      onTap: _selectedOption != null
+                          ? () => _selectRecommendationOption(_selectedOption!)
+                          : null,
                     ),
                   ] else if (hasLegacyRec) ...[
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: _declineRecommendation,
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              side: BorderSide(color: textMuted),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(AppLocalizations.of(context).weeklyCheckinKeepCurrent,
-                                style: TextStyle(color: textMuted)),
+                          child: ZealovaButton(
+                            label: AppLocalizations.of(context).weeklyCheckinKeepCurrent,
+                            variant: ZealovaButtonVariant.ghost,
+                            onTap: _declineRecommendation,
                           ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: ElevatedButton(
-                            onPressed: _acceptRecommendation,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: teal,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(AppLocalizations.of(context).weeklyCheckinApplyChanges),
+                          child: ZealovaButton(
+                            label: AppLocalizations.of(context).weeklyCheckinApplyChanges,
+                            variant: ZealovaButtonVariant.primary,
+                            onTap: _acceptRecommendation,
                           ),
                         ),
                       ],
@@ -979,16 +924,12 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _loadData,
-              icon: const Icon(Icons.refresh),
-              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: teal,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutStateCardsTryAgain,
+              variant: ZealovaButtonVariant.primary,
+              trailingIcon: Icons.refresh,
+              expand: false,
+              onTap: _loadData,
             ),
           ],
         ),

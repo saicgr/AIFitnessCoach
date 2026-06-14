@@ -6,8 +6,9 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
-import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/widgets/design_system/zealova.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
@@ -491,19 +492,24 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.background : AppColorsLight.background;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final tc = ThemeColors.of(context);
+    final isDark = tc.isDark;
+    final bg = tc.background;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final cardBg = tc.surface;
+    final cardBorder = AppColors.cardBorder;
+    final teal = tc.accent;
     final isSearching = _activeSearchQuery != null && _activeSearchQuery!.isNotEmpty;
 
     return Scaffold(
       backgroundColor: bg,
-      appBar: PillAppBar(title: AppLocalizations.of(context).foodHistoryFoodHistory),
+      appBar: ZealovaAppBar(
+        kicker: 'NUTRITION',
+        title: AppLocalizations.of(context).foodHistoryFoodHistory,
+        titleSize: 26,
+      ),
       body: Column(
         children: [
           // Search bar
@@ -548,7 +554,6 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
                     ? _ErrorState(
                         message: _error!,
                         onRetry: _loadData,
-                        isDark: isDark,
                       )
                     : isSearching
                         ? _SearchResultsView(

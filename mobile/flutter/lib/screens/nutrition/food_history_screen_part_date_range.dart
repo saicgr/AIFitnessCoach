@@ -79,12 +79,11 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
 
   @override
   Widget build(BuildContext context) {
-    final teal = widget.isDark ? AppColors.teal : AppColorsLight.teal;
-    final cyan = widget.isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = widget.isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final accent = tc.accent;
+    final textMuted = tc.textMuted;
+    final textSecondary = tc.textSecondary;
+    final cardBg = tc.surface;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -94,29 +93,33 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
           GestureDetector(
             onTap: () => setState(() => _expanded = !_expanded),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
               decoration: BoxDecoration(
                 color: cardBg,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _hasActiveFilters ? teal : cardBorder),
+                border: Border.all(
+                    color: _hasActiveFilters ? accent : AppColors.cardBorder),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.tune,
                     size: 16,
-                    color: _hasActiveFilters ? teal : textMuted,
+                    color: _hasActiveFilters ? accent : textMuted,
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    '$_dateLabel  ·  $_mealLabel  ·  $_sourceLabel',
-                    style: TextStyle(
-                      color: _hasActiveFilters ? textSecondary : textMuted,
-                      fontSize: 13,
-                      fontWeight: _hasActiveFilters ? FontWeight.w600 : FontWeight.w500,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '$_dateLabel · $_mealLabel · $_sourceLabel',
+                      style: ZType.lbl(
+                        11,
+                        color: _hasActiveFilters ? textSecondary : textMuted,
+                        letterSpacing: 1.2,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Spacer(),
                   AnimatedRotation(
                     turns: _expanded ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
@@ -135,50 +138,34 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
           AnimatedCrossFade(
             firstChild: const SizedBox.shrink(),
             secondChild: Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: 10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Date range chips
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).foodHistoryScreenDateRange,
-                    style: TextStyle(
-                      color: textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
                     children: _DateRange.values.map((range) {
                       final isSelected = widget.selectedDateRange == range;
-                      return _buildChip(
+                      return ZealovaChip(
                         label: range.label,
                         icon: range == _DateRange.custom ? Icons.calendar_today : null,
-                        isSelected: isSelected,
-                        accentColor: cyan,
-                        textMuted: textMuted,
-                        cardBg: cardBg,
-                        cardBorder: cardBorder,
+                        selected: isSelected,
                         onTap: () => widget.onDateRangeChanged(range),
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   // Meal type chips
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).foodHistoryScreenMealType,
-                    style: TextStyle(
-                      color: textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -191,29 +178,20 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                     ].map((filter) {
                       final (value, label, emoji) = filter;
                       final isSelected = widget.selectedMealFilter == value;
-                      return _buildChip(
-                        label: '$emoji $label',
-                        isSelected: isSelected,
-                        accentColor: teal,
-                        textMuted: textMuted,
-                        cardBg: cardBg,
-                        cardBorder: cardBorder,
+                      return ZealovaChip(
+                        label: label,
+                        emoji: emoji,
+                        selected: isSelected,
                         onTap: () => widget.onMealFilterChanged(value),
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   // Database source chips
-                  Text(
+                  ZealovaSectionKicker(
                     AppLocalizations.of(context).foodHistoryScreenDatabase,
-                    style: TextStyle(
-                      color: textMuted,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
                     runSpacing: 6,
@@ -227,13 +205,9 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
                     ].map((filter) {
                       final (value, label) = filter;
                       final isSelected = widget.selectedSourceFilter == value;
-                      return _buildChip(
+                      return ZealovaChip(
                         label: label,
-                        isSelected: isSelected,
-                        accentColor: cyan,
-                        textMuted: textMuted,
-                        cardBg: cardBg,
-                        cardBorder: cardBorder,
+                        selected: isSelected,
                         onTap: () => widget.onSourceFilterChanged(value),
                       );
                     }).toList(),
@@ -247,51 +221,6 @@ class _CollapsibleFilterBarState extends State<_CollapsibleFilterBar> {
             duration: const Duration(milliseconds: 200),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildChip({
-    required String label,
-    IconData? icon,
-    required bool isSelected,
-    required Color accentColor,
-    required Color textMuted,
-    required Color cardBg,
-    required Color cardBorder,
-    required VoidCallback onTap,
-  }) {
-    final bgColor = isSelected ? accentColor : cardBg;
-    final textColor = isSelected ? Colors.white : textMuted;
-    final border = isSelected ? accentColor : cardBorder;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 12, color: textColor),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -319,72 +248,56 @@ class _QuickStats {
 
 class _QuickStatsCard extends StatelessWidget {
   final _QuickStats stats;
-  final bool isDark;
-  final Color textPrimary;
-  final Color textMuted;
   final Color cardBg;
-  final Color cardBorder;
-  final Color teal;
 
   const _QuickStatsCard({
     required this.stats,
-    required this.isDark,
-    required this.textPrimary,
-    required this.textMuted,
     required this.cardBg,
-    required this.cardBorder,
-    required this.teal,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final yellow = AppColors.yellow;
-    final purple = isDark ? AppColors.purple : AppColorsLight.purple;
-
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cardBorder),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
-          _StatItem(
-            icon: Icons.restaurant,
-            value: '${stats.totalMeals}',
-            label: AppLocalizations.of(context).foodHistoryScreenMeals,
-            color: teal,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
+          Expanded(
+            child: ZealovaStatTile(
+              value: '${stats.totalMeals}',
+              label: AppLocalizations.of(context).foodHistoryScreenMeals,
+              align: CrossAxisAlignment.center,
+            ),
           ),
           _statDivider(),
-          _StatItem(
-            icon: Icons.local_fire_department,
-            value: '${stats.avgDailyCals}',
-            label: AppLocalizations.of(context).foodHistoryScreenAvgDay,
-            color: cyan,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
+          Expanded(
+            child: ZealovaStatTile(
+              value: '${stats.avgDailyCals}',
+              label: AppLocalizations.of(context).foodHistoryScreenAvgDay,
+              accentValue: true,
+              align: CrossAxisAlignment.center,
+            ),
           ),
           _statDivider(),
-          _StatItem(
-            icon: Icons.fitness_center,
-            value: '${stats.totalProteinG.round()}g',
-            label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
-            color: purple,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
+          Expanded(
+            child: ZealovaStatTile(
+              value: '${stats.totalProteinG.round()}',
+              unit: 'g',
+              label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
+              align: CrossAxisAlignment.center,
+            ),
           ),
           _statDivider(),
-          _StatItem(
-            icon: Icons.calendar_today,
-            value: '${stats.daysTracked}',
-            label: AppLocalizations.of(context).scheduleMealDays,
-            color: yellow,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
+          Expanded(
+            child: ZealovaStatTile(
+              value: '${stats.daysTracked}',
+              label: AppLocalizations.of(context).scheduleMealDays,
+              align: CrossAxisAlignment.center,
+            ),
           ),
         ],
       ),
@@ -394,56 +307,9 @@ class _QuickStatsCard extends StatelessWidget {
   Widget _statDivider() {
     return Container(
       width: 1,
-      height: 32,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      color: cardBorder,
-    );
-  }
-}
-
-
-class _StatItem extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  final Color color;
-  final Color textPrimary;
-  final Color textMuted;
-
-  const _StatItem({
-    required this.icon,
-    required this.value,
-    required this.label,
-    required this.color,
-    required this.textPrimary,
-    required this.textMuted,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: textPrimary,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: textMuted,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
+      height: 28,
+      margin: const EdgeInsets.symmetric(horizontal: 8),
+      color: AppColors.hairline,
     );
   }
 }
@@ -464,13 +330,14 @@ class _SearchResultsView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
     final searchState = ref.watch(foodSearchStateProvider);
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textMuted = tc.textMuted;
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final cardBg = tc.surface;
+    final cardBorder = AppColors.cardBorder;
+    final teal = tc.accent;
 
     return searchState.when(
       data: (state) {
@@ -578,23 +445,18 @@ class _SearchResultTile extends StatelessWidget {
         border: Border.all(color: cardBorder),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
         leading: Container(
           width: 36,
           height: 36,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: teal.withValues(alpha: 0.15),
+            border: Border.all(color: AppColors.cardBorder),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Center(
-            child: Text(
-              result.source.label.substring(0, 1),
-              style: TextStyle(
-                color: teal,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-              ),
-            ),
+          child: Text(
+            result.source.label.substring(0, 1).toUpperCase(),
+            style: ZType.lbl(13, color: textMuted, letterSpacing: 0.5),
           ),
         ),
         title: Text(
@@ -607,24 +469,27 @@ class _SearchResultTile extends StatelessWidget {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Row(
-          children: [
-            Text(
-              '${result.calories} cal',
-              style: TextStyle(color: teal, fontSize: 12, fontWeight: FontWeight.w500),
-            ),
-            if (result.protein != null) ...[
-              Text('  ', style: TextStyle(color: textMuted, fontSize: 12)),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Row(
+            children: [
               Text(
-                '${result.protein!.round()}g P',
+                '${result.calories} cal',
+                style: ZType.data(12, color: teal),
+              ),
+              if (result.protein != null) ...[
+                Text('  ', style: TextStyle(color: textMuted, fontSize: 12)),
+                Text(
+                  '${result.protein!.round()}g P',
+                  style: ZType.data(12, color: AppColors.macroProtein),
+                ),
+              ],
+              Text(
+                '  ${result.source.label}',
                 style: TextStyle(color: textMuted, fontSize: 12),
               ),
             ],
-            Text(
-              '  ${result.source.label}',
-              style: TextStyle(color: textMuted, fontSize: 12),
-            ),
-          ],
+          ),
         ),
         trailing: Icon(Icons.add_circle_outline, color: teal, size: 22),
         onTap: onTap,
@@ -691,12 +556,9 @@ class _HistoryListView extends StatelessWidget {
             Icon(Icons.restaurant_outlined, color: textMuted, size: 56),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).foodHistoryScreenNoFoodHistoryYet,
-              style: TextStyle(
-                color: textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              AppLocalizations.of(context).foodHistoryScreenNoFoodHistoryYet.toUpperCase(),
+              style: ZType.disp(18, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
@@ -715,12 +577,7 @@ class _HistoryListView extends StatelessWidget {
         if (stats.totalMeals > 0) ...[
           _QuickStatsCard(
             stats: stats,
-            isDark: isDark,
-            textPrimary: textPrimary,
-            textMuted: textMuted,
             cardBg: cardBg,
-            cardBorder: cardBorder,
-            teal: teal,
           ),
           const SizedBox(height: 16),
         ],
@@ -777,34 +634,22 @@ class _HistoryListView extends StatelessWidget {
             return [
               // Date header with day totals
               Padding(
-                padding: const EdgeInsets.only(top: 10, bottom: 6),
+                padding: const EdgeInsets.only(top: 12, bottom: 8),
                 child: Row(
                   children: [
                     Text(
-                      entry.key,
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
+                      entry.key.toUpperCase(),
+                      style: ZType.lbl(12, color: textSecondary, letterSpacing: 1.4),
                     ),
                     const Spacer(),
                     Text(
                       '$dayCals cal',
-                      style: TextStyle(
-                        color: teal,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: ZType.data(12, color: teal),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Text(
                       '${dayProtein.round()}g P',
-                      style: TextStyle(
-                        color: textMuted,
-                        fontSize: 12,
-                      ),
+                      style: ZType.data(12, color: AppColors.macroProtein),
                     ),
                   ],
                 ),
@@ -843,11 +688,8 @@ class _HistoryListView extends StatelessWidget {
                     : TextButton(
                         onPressed: onLoadMore,
                         child: Text(
-                          AppLocalizations.of(context).foodHistoryScreenLoadMore,
-                          style: TextStyle(
-                            color: teal,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          AppLocalizations.of(context).foodHistoryScreenLoadMore.toUpperCase(),
+                          style: ZType.lbl(12, color: teal, letterSpacing: 1.5),
                         ),
                       ),
               ),
@@ -880,15 +722,11 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: teal, size: 18),
-        const SizedBox(width: 6),
+        Icon(icon, color: teal, size: 16),
+        const SizedBox(width: 8),
         Text(
-          title,
-          style: TextStyle(
-            color: textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+          title.toUpperCase(),
+          style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.5),
         ),
       ],
     );

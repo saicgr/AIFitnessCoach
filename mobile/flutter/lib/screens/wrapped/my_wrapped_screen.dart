@@ -10,7 +10,7 @@ import '../../data/providers/wrapped_provider.dart';
 import '../../data/services/data_cache_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/pill_app_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -102,8 +102,9 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            PillAppBar(
+            ZealovaAppBar(
               title: AppLocalizations.of(context).myWrappedMyWrapped,
+              kicker: 'RECAP',
               onBack: () => context.pop(),
             ),
             Expanded(
@@ -182,15 +183,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
         // Past wraps grid
         if (summary.available.length > 1) ...[
           const SizedBox(height: 24),
-          Text(
-            AppLocalizations.of(context).myWrappedPastWraps,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textMuted,
-              letterSpacing: 1.0,
-            ),
-          ),
+          ZealovaSectionKicker(AppLocalizations.of(context).myWrappedPastWraps),
           const SizedBox(height: 10),
           _buildPastWrapsGrid(context, summary.available.sublist(1), elevated, textPrimary, textMuted, accent),
         ],
@@ -213,34 +206,20 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
     Color accent,
     LinearGradient accentGradient,
   ) {
-    return GestureDetector(
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
+      padding: const EdgeInsets.all(20),
       onTap: () {
         HapticService.selection();
         context.push('/wrapped/${latest.period}');
       },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            width: 1.5,
-            color: accent.withValues(alpha: 0.6),
-          ),
-        ),
-        child: Column(
+      child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Period label
             Text(
-              _monthName(latest.period),
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: accent,
-                letterSpacing: 0.5,
-              ),
+              _monthName(latest.period).toUpperCase(),
+              style: ZType.lbl(11, color: accent, letterSpacing: 2),
             ),
             const SizedBox(height: 10),
 
@@ -254,12 +233,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                 ),
                 child: Text(
                   latest.personality!.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
+                  style: ZType.disp(18, color: Colors.white, letterSpacing: 0),
                 ),
               ),
               const SizedBox(height: 14),
@@ -268,7 +242,7 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
             // Stats
             Text(
               '${latest.totalWorkouts} workouts  ·  ${_formatVolume(latest.totalVolumeLbs)}',
-              style: TextStyle(fontSize: 13, color: textMuted),
+              style: ZType.data(13, color: textMuted),
             ),
             const SizedBox(height: 18),
 
@@ -289,12 +263,8 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          AppLocalizations.of(context).myWrappedViewAgain,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
+                          AppLocalizations.of(context).myWrappedViewAgain.toUpperCase(),
+                          style: ZType.lbl(13, color: Colors.white, letterSpacing: 1.5),
                         ),
                       ),
                     ),
@@ -323,12 +293,8 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                             Icon(Icons.share_outlined, size: 15, color: accent),
                             const SizedBox(width: 6),
                             Text(
-                              AppLocalizations.of(context).commonShare,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: accent,
-                              ),
+                              AppLocalizations.of(context).commonShare.toUpperCase(),
+                              style: ZType.lbl(13, color: accent, letterSpacing: 1.5),
                             ),
                           ],
                         ),
@@ -340,7 +306,6 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -355,14 +320,8 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
     final monthName = _monthName(current.period).split(' ').first;
     final workoutsNeeded = 3 - current.workoutsSoFar;
 
-    return Container(
-      width: double.infinity,
+    return ZealovaCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -462,11 +421,11 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
             const SizedBox(height: 4),
             Text(
               value,
-              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
+              style: ZType.disp(15, color: textPrimary, letterSpacing: 0),
             ),
             Text(
-              label,
-              style: TextStyle(fontSize: 10, color: textMuted),
+              label.toUpperCase(),
+              style: ZType.lbl(10, color: textMuted, letterSpacing: 1),
             ),
           ],
         ),
@@ -494,42 +453,25 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
       itemCount: past.length,
       itemBuilder: (context, index) {
         final wrap = past[index];
-        return GestureDetector(
+        return ZealovaCard(
+          padding: const EdgeInsets.all(12),
           onTap: () {
             HapticService.selection();
             context.push('/wrapped/${wrap.period}');
           },
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: accent.withValues(alpha: 0.3),
-              ),
-            ),
-            child: Column(
+          child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  _monthAbbr(wrap.period),
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
+                  _monthAbbr(wrap.period).toUpperCase(),
+                  style: ZType.disp(20, color: textPrimary, letterSpacing: 0),
                 ),
                 if (wrap.personality != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    wrap.personality!,
-                    style: TextStyle(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: accent,
-                      letterSpacing: 0.3,
-                    ),
+                    wrap.personality!.toUpperCase(),
+                    style: ZType.lbl(9, color: accent, letterSpacing: 0.6),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -541,7 +483,6 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
                 ),
               ],
             ),
-          ),
         );
       },
     );
@@ -556,14 +497,8 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
     Color cardBorder,
     Color accent,
   ) {
-    return Container(
-      width: double.infinity,
+    return ZealovaCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cardBorder),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -573,12 +508,8 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
               Row(
                 children: [
                   Text(
-                    AppLocalizations.of(context).myWrappedPersonalities,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
-                    ),
+                    AppLocalizations.of(context).myWrappedPersonalities.toUpperCase(),
+                    style: ZType.lbl(14, color: textPrimary, letterSpacing: 1.5),
                   ),
                   const SizedBox(width: 6),
                   GestureDetector(
@@ -657,17 +588,14 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).myWrappedYourMonthlyWrapped,
-              style: TextStyle(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).myWrappedYourMonthlyWrapped.toUpperCase(),
+              style: ZType.disp(22, color: textPrimary, letterSpacing: 0),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               AppLocalizations.of(context).myWrappedCompleteAtLeast3,
-              style: TextStyle(fontSize: 14, color: textMuted, height: 1.4),
+              style: ZType.ser(14, color: textMuted, height: 1.4),
               textAlign: TextAlign.center,
             ),
           ],
@@ -688,8 +616,8 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
               Icon(Icons.psychology_outlined, size: 40, color: accent),
               const SizedBox(height: 12),
               Text(
-                AppLocalizations.of(context).myWrappedFitnessPersonalities,
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary),
+                AppLocalizations.of(context).myWrappedFitnessPersonalities.toUpperCase(),
+                style: ZType.disp(20, color: textPrimary, letterSpacing: 0),
               ),
               const SizedBox(height: 12),
               Text(

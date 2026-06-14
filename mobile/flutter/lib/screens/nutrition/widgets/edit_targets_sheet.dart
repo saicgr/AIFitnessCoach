@@ -11,6 +11,7 @@ import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../data/repositories/measurements_repository.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
 import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 
@@ -860,12 +861,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             children: [
               Expanded(
                 child: Text(
-                  AppLocalizations.of(context).editTargetsEditDailyTargets,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
+                  AppLocalizations.of(context).editTargetsEditDailyTargets.toUpperCase(),
+                  style: ZType.lbl(18, color: textPrimary, letterSpacing: 1.6),
                 ),
               ),
               // Reset moved up beside the close button (was a footer link).
@@ -964,9 +961,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: elevated,
+                    color: surface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: textMuted.withValues(alpha: 0.2)),
+                    border: Border.all(color: AppColors.cardBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1001,8 +998,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               // Toggle buttons
               Container(
                 decoration: BoxDecoration(
-                  color: elevated,
+                  color: surface,
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
                 padding: const EdgeInsets.all(3),
                 child: Row(
@@ -1140,72 +1138,63 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           // matter how far the form is scrolled. (Reset moved up to the pinned
           // header beside the close button — issue #7.) A hairline rule
           // separates them from the scrolling content above.
-          Container(
-            height: 1,
-            margin: const EdgeInsets.only(top: 4, bottom: 8),
-            color: textMuted.withValues(alpha: 0.12),
+          const ZealovaRule(
+            margin: EdgeInsets.only(top: 4, bottom: 8),
           ),
 
-          // Action buttons
+          // Action buttons. Secondary "Use recommended" is a ghost (hairline
+          // outline); the single primary CTA is Save. Loading states keep the
+          // hairline frame and swap in a spinner.
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: _isLoadingRecommended ? null : _useRecommended,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: accent,
-                    side: BorderSide(color: accent.withValues(alpha: 0.5)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isLoadingRecommended
-                      ? SizedBox(
+                child: _isLoadingRecommended
+                    ? Container(
+                        height: 52,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.cardBorder),
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        child: SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: accent,
                           ),
-                        )
-                      : Text(
-                          AppLocalizations.of(context).editTargetsUseRecommended,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
                         ),
-                ),
+                      )
+                    : ZealovaButton(
+                        label: AppLocalizations.of(context).editTargetsUseRecommended,
+                        variant: ZealovaButtonVariant.ghost,
+                        onTap: _useRecommended,
+                      ),
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: FilledButton(
-                  onPressed:
-                      (_isSaving || !percentOk) ? null : _save,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
+                child: (_isSaving)
+                    ? Container(
+                        height: 52,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: accent,
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        child: SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          AppLocalizations.of(context).editTargetsSaveTargets,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                            color: ThemeColors.of(context).accentContrast,
                           ),
                         ),
-                ),
+                      )
+                    : ZealovaButton(
+                        label: AppLocalizations.of(context).editTargetsSaveTargets,
+                        variant: ZealovaButtonVariant.primary,
+                        onTap: percentOk ? _save : null,
+                      ),
               ),
             ],
           ),
@@ -1235,20 +1224,23 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? accent : Colors.transparent,
+            color: selected ? accent.withValues(alpha: 0.15) : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: selected ? accent : Colors.transparent,
+            ),
           ),
           alignment: Alignment.center,
           child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
+            label.toUpperCase(),
+            style: ZType.lbl(
+              12,
               color: selected
-                  ? Colors.white
+                  ? accent
                   : (onTap != null
                       ? textPrimary.withValues(alpha: 0.6)
                       : textPrimary.withValues(alpha: 0.3)),
+              letterSpacing: 1.2,
             ),
           ),
         ),
@@ -1301,10 +1293,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: textMuted.withValues(alpha: 0.08),
+              color: ThemeColors.of(context).surface,
               borderRadius: BorderRadius.circular(10),
-              border:
-                  Border.all(color: textMuted.withValues(alpha: 0.22)),
+              border: Border.all(color: AppColors.cardBorder),
             ),
             child: Row(
               children: [
@@ -1381,10 +1372,11 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        // Tinted accent wash so the banner reads as the hero context line.
-        color: accent.withValues(alpha: 0.10),
+        // Hairline-bordered flat surface — the accent stays reserved for the
+        // single primary Save CTA.
+        color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: accent.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
@@ -1461,12 +1453,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         decoration: BoxDecoration(
           color: _lockCalories
               ? accent.withValues(alpha: 0.15)
-              : elevated,
+              : ThemeColors.of(context).surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: _lockCalories
                 ? accent
-                : textMuted.withValues(alpha: 0.3),
+                : AppColors.cardBorder,
           ),
         ),
         child: Row(
@@ -1599,13 +1591,22 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               suffixText: suffix,
               suffixStyle: TextStyle(color: textMuted, fontSize: 13),
               filled: true,
-              fillColor: elevated,
+              fillColor: ThemeColors.of(context).surface,
               isDense: true,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: const BorderSide(color: AppColors.cardBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: ThemeColors.of(context).accent),
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide.none,
+                borderSide: const BorderSide(color: AppColors.cardBorder),
               ),
             ),
           ),
@@ -2208,9 +2209,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        ZealovaSectionKicker(
           AppLocalizations.of(context).editTargetsWeeklyRateKgWk,
-          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted),
         ),
         const SizedBox(height: 6),
         Row(
@@ -2242,24 +2242,24 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
                       border: Border.all(
                         color: isSelected
                             ? accent
-                            : textMuted.withValues(alpha: 0.3),
+                            : AppColors.cardBorder,
                       ),
                     ),
                     child: Column(
                       children: [
                         Text(
                           r.$2,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                          style: ZType.disp(
+                            16,
                             color: isSelected ? accent : textPrimary,
                           ),
                         ),
                         Text(
-                          r.$3,
-                          style: TextStyle(
-                            fontSize: 9,
+                          r.$3.toUpperCase(),
+                          style: ZType.lbl(
+                            8,
                             color: isSelected ? accent : textMuted,
+                            letterSpacing: 1,
                           ),
                         ),
                       ],
@@ -2417,13 +2417,8 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        ZealovaSectionKicker(
           AppLocalizations.of(context).editTargetsDietPreset,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: textMuted,
-          ),
         ),
         const SizedBox(height: 6),
         // Horizontally scrollable row so all chips sit on a single line —
@@ -2455,33 +2450,12 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               itemBuilder: (_, i) {
                 final entry = presets[i];
                 final selected = _selectedPreset == entry.$1;
-                return GestureDetector(
-                  onTap: () => _onPresetSelected(entry.$1),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? accent.withValues(alpha: 0.15)
-                          : elevated,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: selected
-                            ? accent
-                            : textMuted.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        entry.$2,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: selected ? accent : textPrimary,
-                        ),
-                      ),
-                    ),
+                return Align(
+                  alignment: Alignment.center,
+                  child: ZealovaChip(
+                    label: entry.$2,
+                    selected: selected,
+                    onTap: () => _onPresetSelected(entry.$1),
                   ),
                 );
               },

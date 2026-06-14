@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -73,13 +74,11 @@ class WrappedConsistencyCard extends StatelessWidget {
 
                   // Header
                   Text(
-                    AppLocalizations.of(context).progressShareTemplatesConsistency,
-                    style: TextStyle(
-                      color: const Color(0xFF4ADE80).withValues(alpha: 0.9),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 6,
-                    ),
+                    AppLocalizations.of(context).progressShareTemplatesConsistency.toUpperCase(),
+                    style: ZType.lbl(16,
+                        color: const Color(0xFF4ADE80).withValues(alpha: 0.9),
+                        weight: FontWeight.w700,
+                        letterSpacing: 6),
                   ),
 
                   const Spacer(),
@@ -87,21 +86,14 @@ class WrappedConsistencyCard extends StatelessWidget {
                   // Consistency percentage
                   Text(
                     '${data.workoutConsistencyPct.round()}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 96,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
+                    style: ZType.disp(96,
+                        color: Colors.white, height: 0.86, letterSpacing: 0),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     AppLocalizations.of(context).consistencyCardOfDaysYouShowed,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 15,
-                      fontWeight: FontWeight.w400,
-                    ),
+                    style: ZType.ser(15,
+                        color: Colors.white.withValues(alpha: 0.5)),
                   ),
 
                   const Spacer(),
@@ -133,21 +125,18 @@ class WrappedConsistencyCard extends StatelessWidget {
                         const SizedBox(width: 12),
                         Text(
                           '${data.streakBest}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                          ),
+                          style: ZType.disp(32,
+                              color: Colors.white,
+                              height: 0.86,
+                              letterSpacing: 0),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          AppLocalizations.of(context).consistencyCardDayBestNstreak,
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.6),
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            height: 1.2,
-                          ),
+                          AppLocalizations.of(context).consistencyCardDayBestNstreak.toUpperCase(),
+                          style: ZType.lbl(13,
+                              color: Colors.white.withValues(alpha: 0.6),
+                              weight: FontWeight.w600,
+                              letterSpacing: 1.2),
                         ),
                       ],
                     ),

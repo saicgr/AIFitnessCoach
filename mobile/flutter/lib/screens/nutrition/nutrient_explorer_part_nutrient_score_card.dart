@@ -16,9 +16,8 @@ class _NutrientScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
+    final textMuted = tc.textMuted;
 
     final score = summary.overallScore;
     final optimalCount = summary.optimalNutrients.length;
@@ -45,91 +44,70 @@ class _NutrientScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scoreColor.withOpacity(0.3)),
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ZealovaSectionKicker(
+              AppLocalizations.of(context).nutrientExplorerPartNutrientScore),
+          const SizedBox(height: 12),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Score Circle
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: scoreColor, width: 4),
-                ),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+              // Hero score numeral (Anton)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${score.toInt()}%',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: scoreColor,
-                        ),
+                        '${score.toInt()}',
+                        style: ZType.disp(56, color: scoreColor),
                       ),
-                      Text(
-                        AppLocalizations.of(context).nutrientExplorerPartScore,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: textMuted,
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text('%',
+                            style: ZType.disp(22, color: scoreColor)),
                       ),
                     ],
                   ),
-                ),
+                  Text(
+                    scoreLabel.toUpperCase(),
+                    style: ZType.lbl(11,
+                        color: scoreColor, letterSpacing: 1.5),
+                  ),
+                ],
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 24),
               // Stats
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).nutrientExplorerPartNutrientScore,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Row(
+                    children: [
+                      _StatChip(
+                        label: AppLocalizations.of(context).strengthOverviewCardOptimal,
+                        count: optimalCount,
+                        color: const Color(0xFF4CAF50), // Green
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      scoreLabel,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: scoreColor,
+                      const SizedBox(width: 8),
+                      _StatChip(
+                        label: AppLocalizations.of(context).scoreExplainLow,
+                        count: lowCount,
+                        color: const Color(0xFFFFC107), // Amber
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _StatChip(
-                          label: AppLocalizations.of(context).strengthOverviewCardOptimal,
-                          count: optimalCount,
-                          color: const Color(0xFF4CAF50), // Green
-                        ),
-                        const SizedBox(width: 8),
-                        _StatChip(
-                          label: AppLocalizations.of(context).scoreExplainLow,
-                          count: lowCount,
-                          color: const Color(0xFFFFC107), // Amber
-                        ),
-                        const SizedBox(width: 8),
-                        _StatChip(
-                          label: AppLocalizations.of(context).scoreExplainHigh,
-                          count: overCount,
-                          color: const Color(0xFFFF9800), // Orange
-                        ),
-                      ],
-                    ),
-                  ],
+                      const SizedBox(width: 8),
+                      _StatChip(
+                        label: AppLocalizations.of(context).scoreExplainHigh,
+                        count: overCount,
+                        color: const Color(0xFFFF9800), // Orange
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -144,9 +122,7 @@ class _NutrientScoreCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: (score / 100).clamp(0.0, 1.0),
                     minHeight: 6,
-                    backgroundColor: isDark
-                        ? AppColors.glassSurface
-                        : AppColorsLight.glassSurface,
+                    backgroundColor: AppColors.hairlineStrong,
                     color: scoreColor,
                   ),
                 ),
@@ -154,10 +130,7 @@ class _NutrientScoreCard extends StatelessWidget {
               const SizedBox(width: 12),
               Text(
                 '$optimalCount/$totalCount optimal',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted,
-                ),
+                style: ZType.data(12, color: textMuted),
               ),
             ],
           ),
@@ -181,34 +154,36 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
+    final tc = ThemeColors.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 4, right: 4),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            '$count',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color,
+            Text(
+              '$count',
+              style: ZType.disp(18, color: tc.textPrimary),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label.toUpperCase(),
+          style: ZType.lbl(8, color: tc.textMuted, letterSpacing: 1),
+        ),
+      ],
     );
   }
 }
@@ -246,59 +221,13 @@ class _CategoryFilterRow extends StatelessWidget {
           final isSelected = selectedCategory == cat.$1;
           return Padding(
             padding: const EdgeInsets.only(right: 8),
-            child: _FilterChip(
+            child: ZealovaChip(
               label: cat.$2,
-              isSelected: isSelected,
+              selected: isSelected,
               onTap: () => onCategoryChanged(cat.$1),
-              isDark: isDark,
             ),
           );
         }).toList(),
-      ),
-    );
-  }
-}
-
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final bool isDark;
-
-  const _FilterChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? teal : elevated,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isSelected ? teal : Colors.transparent,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : textMuted,
-          ),
-        ),
       ),
     );
   }
@@ -330,14 +259,14 @@ class _NutrientSection extends StatelessWidget {
   Widget build(BuildContext context) {
     if (nutrients.isEmpty) return const SizedBox.shrink();
 
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
+        color: tc.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,37 +279,32 @@ class _NutrientSection extends StatelessWidget {
                 Container(
                   width: 32,
                   height: 32,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: categoryColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(9),
                   ),
                   child: Icon(
                     icon,
-                    size: 18,
+                    size: 16,
                     color: categoryColor,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: textMuted,
-                    letterSpacing: 1,
-                  ),
+                  title.toUpperCase(),
+                  style: ZType.lbl(12,
+                      color: tc.textPrimary, letterSpacing: 1.5),
                 ),
                 const Spacer(),
                 Text(
-                  '${nutrients.length} nutrients',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textMuted,
-                  ),
+                  '${nutrients.length} nutrients'.toUpperCase(),
+                  style: ZType.lbl(9, color: tc.textMuted, letterSpacing: 1),
                 ),
               ],
             ),
           ),
+          const ZealovaRule(margin: EdgeInsets.symmetric(horizontal: 16)),
           // Nutrient Items
           ...nutrients.map((nutrient) => _NutrientRow(
                 nutrient: nutrient,
@@ -411,10 +335,9 @@ class _NutrientRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final glassSurface =
-        isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
 
     // Get status color
     final statusColor = _getStatusColor(nutrient.statusEnum);
@@ -424,7 +347,7 @@ class _NutrientRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         child: Row(
           children: [
             // Nutrient name
@@ -443,11 +366,7 @@ class _NutrientRow extends StatelessWidget {
               flex: 2,
               child: Text(
                 '${nutrient.formattedCurrent} ${nutrient.unit}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: statusColor,
-                ),
+                style: ZType.data(12, color: statusColor),
                 textAlign: TextAlign.right,
               ),
             ),
@@ -462,7 +381,7 @@ class _NutrientRow extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: (displayPercentage / 100).clamp(0.0, 1.0),
                       minHeight: 8,
-                      backgroundColor: glassSurface,
+                      backgroundColor: AppColors.hairlineStrong,
                       color: statusColor,
                     ),
                   ),
@@ -488,14 +407,10 @@ class _NutrientRow extends StatelessWidget {
             const SizedBox(width: 8),
             // Percentage
             SizedBox(
-              width: 40,
+              width: 44,
               child: Text(
                 '${percentage.toInt()}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: statusColor,
-                ),
+                style: ZType.disp(14, color: statusColor),
                 textAlign: TextAlign.right,
               ),
             ),
@@ -537,7 +452,12 @@ class _NutrientLoadingSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
+    final skeleton = BoxDecoration(
+      color: tc.surface,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.cardBorder),
+    );
 
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
@@ -545,13 +465,7 @@ class _NutrientLoadingSkeleton extends StatelessWidget {
       child: Column(
         children: [
           // Score card skeleton
-          Container(
-            height: 140,
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(20),
-            ),
-          ),
+          Container(height: 140, decoration: skeleton),
           const SizedBox(height: 16),
           // Filter chips skeleton
           Row(
@@ -560,10 +474,10 @@ class _NutrientLoadingSkeleton extends StatelessWidget {
               (_) => Container(
                 margin: const EdgeInsets.only(right: 8),
                 width: 70,
-                height: 32,
+                height: 28,
                 decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.cardBorder),
                 ),
               ),
             ),
@@ -575,10 +489,7 @@ class _NutrientLoadingSkeleton extends StatelessWidget {
             (_) => Container(
               margin: const EdgeInsets.only(bottom: 16),
               height: 200,
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
-              ),
+              decoration: skeleton,
             ),
           ),
         ],
@@ -603,10 +514,9 @@ class _EmptyNutrientState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
 
     return Center(
       child: Padding(
@@ -617,24 +527,22 @@ class _EmptyNutrientState extends StatelessWidget {
             Container(
               width: 80,
               height: 80,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: teal.withOpacity(0.1),
-                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Icon(
                 Icons.science_outlined,
-                size: 40,
-                color: teal,
+                size: 36,
+                color: tc.accent,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              AppLocalizations.of(context).nutrientExplorerPartNoNutrientData,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
+              AppLocalizations.of(context).nutrientExplorerPartNoNutrientData.toUpperCase(),
+              style: ZType.disp(20, color: textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
@@ -646,19 +554,12 @@ class _EmptyNutrientState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
-            OutlinedButton.icon(
-              onPressed: onRefresh,
-              icon: const Icon(Icons.refresh),
-              label: Text(AppLocalizations.of(context).timelineRefresh),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: teal,
-                side: BorderSide(color: teal),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            ZealovaButton(
+              label: AppLocalizations.of(context).timelineRefresh,
+              variant: ZealovaButtonVariant.ghost,
+              expand: false,
+              trailingIcon: Icons.refresh,
+              onTap: onRefresh,
             ),
           ],
         ),
@@ -903,9 +804,8 @@ class _ThreeTierProgressBar extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: statusColor.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: statusColor.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: statusColor.withOpacity(0.5)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -918,19 +818,12 @@ class _ThreeTierProgressBar extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 'Current: ${currentValue.toStringAsFixed(1)}$unit',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: statusColor,
-                ),
+                style: ZType.data(12, color: statusColor),
               ),
               const SizedBox(width: 8),
               Text(
                 '(${(currentValue / targetValue * 100).toStringAsFixed(0)}%)',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: statusColor.withOpacity(0.8),
-                ),
+                style: ZType.data(11, color: statusColor.withOpacity(0.8)),
               ),
             ],
           ),

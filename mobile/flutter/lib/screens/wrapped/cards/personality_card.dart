@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../workout/widgets/share_templates/app_watermark.dart';
 
@@ -67,12 +68,8 @@ class WrappedPersonalityCard extends StatelessWidget {
                   // Header - dramatic build-up
                   Text(
                     AppLocalizations.of(context).personalityCardYourGymPersonalityIs,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 1,
-                    ),
+                    style: ZType.ser(16,
+                        color: Colors.white.withValues(alpha: 0.5)),
                   ),
 
                   const Spacer(),
@@ -96,13 +93,10 @@ class WrappedPersonalityCard extends StatelessWidget {
                           fit: BoxFit.scaleDown,
                           child: Text(
                             data.fitnessPersonality.toUpperCase(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 40,
-                              fontWeight: FontWeight.w900,
-                              height: 1.1,
-                              letterSpacing: 2,
-                            ),
+                            style: ZType.disp(40,
+                                color: Colors.white,
+                                height: 0.92,
+                                letterSpacing: 2),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                           ),
@@ -111,12 +105,9 @@ class WrappedPersonalityCard extends StatelessWidget {
                           const SizedBox(height: 14),
                           Text(
                             data.personalityDescription,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.6),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w400,
-                              height: 1.5,
-                            ),
+                            style: ZType.ser(15,
+                                color: Colors.white.withValues(alpha: 0.6),
+                                height: 1.5),
                             textAlign: TextAlign.center,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -144,24 +135,19 @@ class WrappedPersonalityCard extends StatelessWidget {
                       child: Column(
                         children: [
                           Text(
-                            AppLocalizations.of(context).personalityCardFunFact,
-                            style: TextStyle(
-                              color: const Color(0xFFF472B6)
-                                  .withValues(alpha: 0.7),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 3,
-                            ),
+                            AppLocalizations.of(context).personalityCardFunFact.toUpperCase(),
+                            style: ZType.lbl(11,
+                                color: const Color(0xFFF472B6)
+                                    .withValues(alpha: 0.7),
+                                weight: FontWeight.w700,
+                                letterSpacing: 3),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             data.funFact,
-                            style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              height: 1.4,
-                            ),
+                            style: ZType.ser(14,
+                                color: Colors.white.withValues(alpha: 0.8),
+                                height: 1.4),
                             textAlign: TextAlign.center,
                             maxLines: 3,
                             overflow: TextOverflow.ellipsis,
@@ -175,13 +161,9 @@ class WrappedPersonalityCard extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       '"${data.motivationQuote}"',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.4),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        fontStyle: FontStyle.italic,
-                        height: 1.4,
-                      ),
+                      style: ZType.ser(13,
+                          color: Colors.white.withValues(alpha: 0.4),
+                          height: 1.4),
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

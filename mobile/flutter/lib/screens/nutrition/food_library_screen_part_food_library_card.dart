@@ -19,18 +19,15 @@ class _FoodLibraryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final accentColor = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
+    final elevated = tc.surface;
+    final cardBorder = AppColors.cardBorder;
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final accentColor = tc.accent;
 
     final isRecipe = item is RecipeLibraryItem;
-    final typeColor = isRecipe
-        ? AppColors.textSecondary // Purple for recipes
-        : AppColors.textPrimary; // Green for saved foods
+    final typeColor = tc.textSecondary;
 
     return Dismissible(
       key: Key(item.id),
@@ -38,14 +35,14 @@ class _FoodLibraryCard extends StatelessWidget {
       background: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.textMuted,
+          color: tc.error.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(16),
         ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 24),
-        child: const Icon(
+        child: Icon(
           Icons.delete_outline_rounded,
-          color: Colors.white,
+          color: tc.error,
           size: 24,
         ),
       ),
@@ -80,7 +77,7 @@ class _FoodLibraryCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: typeColor.withValues(alpha:0.15),
+                      border: Border.all(color: cardBorder),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
@@ -140,25 +137,17 @@ class _FoodLibraryCard extends StatelessWidget {
                             if (item.calories != null) ...[
                               Text(
                                 '${item.calories} cal',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: textMuted,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: ZType.data(12, color: textMuted),
                               ),
                               if (item.protein != null) ...[
                                 Text(
-                                  ' | ',
+                                  '  ·  ',
                                   style:
                                       TextStyle(fontSize: 13, color: textMuted),
                                 ),
                                 Text(
                                   '${item.protein!.round()}g protein',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: textMuted,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                                  style: ZType.data(12, color: AppColors.macroProtein),
                                 ),
                               ],
                             ],
@@ -171,11 +160,8 @@ class _FoodLibraryCard extends StatelessWidget {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                '${item.timesUsed}x',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: textMuted,
-                                ),
+                                '${item.timesUsed}×',
+                                style: ZType.data(11, color: textMuted),
                               ),
                             ],
                           ],
@@ -188,32 +174,32 @@ class _FoodLibraryCard extends StatelessWidget {
 
                   // Quick log button
                   Material(
-                    color: accentColor.withValues(alpha:0.15),
+                    color: Colors.transparent,
                     borderRadius: BorderRadius.circular(10),
                     child: InkWell(
                       onTap: onLog,
                       borderRadius: BorderRadius.circular(10),
-                      child: Padding(
+                      child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 14,
                           vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: accentColor),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
                               Icons.add_rounded,
-                              size: 18,
+                              size: 16,
                               color: accentColor,
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              AppLocalizations.of(context).recipeDetailLog,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: accentColor,
-                              ),
+                              AppLocalizations.of(context).recipeDetailLog.toUpperCase(),
+                              style: ZType.lbl(11, color: accentColor, letterSpacing: 1),
                             ),
                           ],
                         ),

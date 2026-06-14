@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/glass_back_button.dart';
-import '../../widgets/segmented_tab_bar.dart';
+import '../../widgets/design_system/zealova.dart';
 import 'widgets/progression_chain_card.dart';
 import 'widgets/category_filter_chips.dart';
 import 'widgets/skill_progress_summary_card.dart';
@@ -71,9 +71,6 @@ class _SkillProgressionsScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     final state = ref.watch(skillProgressionProvider);
 
@@ -83,10 +80,18 @@ class _SkillProgressionsScreenState
         child: Column(
           children: [
             // Header
-            _buildHeader(context, isDark),
+            ZealovaAppBar(
+              title: AppLocalizations.of(context).skillsSkillProgressions,
+              kicker: AppLocalizations.of(context)
+                  .skillProgressionsMasterBodyweightSkillsStep,
+              onBack: () {
+                HapticService.light();
+                context.pop();
+              },
+            ),
 
             // Tab Bar
-            _buildTabBar(context, elevated, cyan, textMuted, isDark),
+            _buildTabBar(context),
 
             const SizedBox(height: 8),
 
@@ -116,63 +121,25 @@ class _SkillProgressionsScreenState
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isDark) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
+  Widget _buildTabBar(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          // Back button
-          GlassBackButton(
-            onTap: () {
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+      child: AnimatedBuilder(
+        animation: _tabController,
+        builder: (context, _) {
+          return ZealovaTextTabs(
+            tabs: [
+              AppLocalizations.of(context).skillProgressionsMyProgress,
+              AppLocalizations.of(context).skillProgressionsAllSkills,
+            ],
+            activeIndex: _tabController.index,
+            onChanged: (i) {
               HapticService.light();
-              context.pop();
+              _tabController.animateTo(i);
             },
-          ),
-          const SizedBox(width: 12),
-          // Title
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).skillsSkillProgressions,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  AppLocalizations.of(context).skillProgressionsMasterBodyweightSkillsStep,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: isDark
-                            ? AppColors.textSecondary
-                            : AppColorsLight.textSecondary,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          );
+        },
       ),
-    );
-  }
-
-  Widget _buildTabBar(
-    BuildContext context,
-    Color elevated,
-    Color cyan,
-    Color textMuted,
-    bool isDark,
-  ) {
-    return SegmentedTabBar(
-      controller: _tabController,
-      showIcons: false,
-      tabs: [
-        SegmentedTabItem(label: AppLocalizations.of(context).skillProgressionsMyProgress),
-        SegmentedTabItem(label: AppLocalizations.of(context).skillProgressionsAllSkills),
-      ],
     );
   }
 
@@ -199,11 +166,8 @@ class _SkillProgressionsScreenState
           const SizedBox(height: 24),
 
           // Active progressions header
-          Text(
+          ZealovaSectionKicker(
             AppLocalizations.of(context).skillProgressionsActiveProgressions,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
           ),
           const SizedBox(height: 12),
 
@@ -224,11 +188,8 @@ class _SkillProgressionsScreenState
 
           // Discover more section
           if (state.availableChains.isNotEmpty) ...[
-            Text(
+            ZealovaSectionKicker(
               AppLocalizations.of(context).skillProgressionsDiscoverMoreSkills,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
             ),
             const SizedBox(height: 12),
             ...state.availableChains.take(3).map((chain) {
@@ -326,9 +287,7 @@ class _SkillProgressionsScreenState
   }
 
   Widget _buildEmptyProgressState(BuildContext context, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
 
     return Center(
       child: Padding(
@@ -337,47 +296,43 @@ class _SkillProgressionsScreenState
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              width: 72,
+              height: 72,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: cyan.withOpacity(0.1),
-                shape: BoxShape.circle,
+                color: tc.surface,
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Icon(
                 Icons.trending_up_rounded,
-                size: 48,
-                color: cyan,
+                size: 36,
+                color: tc.accent,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              AppLocalizations.of(context).skillProgressionsStartYourJourney,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              AppLocalizations.of(context).skillProgressionsStartYourJourney.toUpperCase(),
+              style: ZType.disp(24, color: tc.textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
               AppLocalizations.of(context).skillProgressionsChooseASkillProgression,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: textSecondary,
+                    color: tc.textSecondary,
                   ),
             ),
-            const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: () {
+            const SizedBox(height: 28),
+            ZealovaButton(
+              label: AppLocalizations.of(context).skillProgressionsBrowseSkills,
+              expand: false,
+              trailingIcon: Icons.explore_rounded,
+              onTap: () {
                 HapticService.light();
                 _tabController.animateTo(1);
               },
-              icon: const Icon(Icons.explore_rounded),
-              label: Text(AppLocalizations.of(context).skillProgressionsBrowseSkills),
-              style: FilledButton.styleFrom(
-                backgroundColor: cyan,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-              ),
             ),
           ],
         ),
@@ -386,8 +341,7 @@ class _SkillProgressionsScreenState
   }
 
   Widget _buildEmptyFilterState(BuildContext context, bool isDark) {
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
 
     return Center(
       child: Column(
@@ -395,15 +349,14 @@ class _SkillProgressionsScreenState
         children: [
           Icon(
             Icons.search_off_rounded,
-            size: 48,
-            color: textSecondary,
+            size: 40,
+            color: tc.textMuted,
           ),
           const SizedBox(height: 16),
           Text(
-            AppLocalizations.of(context).skillProgressionsNoSkillsInThis,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: textSecondary,
-                ),
+            AppLocalizations.of(context).skillProgressionsNoSkillsInThis.toUpperCase(),
+            style: ZType.lbl(13, color: tc.textMuted, letterSpacing: 1.4),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -411,7 +364,7 @@ class _SkillProgressionsScreenState
   }
 
   Widget _buildErrorState(BuildContext context, String error, bool isDark) {
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final tc = ThemeColors.of(context);
 
     return Center(
       child: Padding(
@@ -421,30 +374,29 @@ class _SkillProgressionsScreenState
           children: [
             Icon(
               Icons.error_outline_rounded,
-              size: 48,
+              size: 40,
               color: AppColors.error,
             ),
             const SizedBox(height: 16),
             Text(
-              AppLocalizations.of(context).workoutGenerationSomethingWentWrong,
-              style: Theme.of(context).textTheme.titleMedium,
+              AppLocalizations.of(context).workoutGenerationSomethingWentWrong.toUpperCase(),
+              style: ZType.disp(20, color: tc.textPrimary),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               error,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isDark
-                        ? AppColors.textSecondary
-                        : AppColorsLight.textSecondary,
+                    color: tc.textSecondary,
                   ),
             ),
             const SizedBox(height: 24),
-            FilledButton.icon(
-              onPressed: _loadData,
-              icon: const Icon(Icons.refresh_rounded),
-              label: Text(AppLocalizations.of(context).workoutStateCardsTryAgain),
-              style: FilledButton.styleFrom(backgroundColor: cyan),
+            ZealovaButton(
+              label: AppLocalizations.of(context).workoutStateCardsTryAgain,
+              expand: false,
+              trailingIcon: Icons.refresh_rounded,
+              onTap: _loadData,
             ),
           ],
         ),

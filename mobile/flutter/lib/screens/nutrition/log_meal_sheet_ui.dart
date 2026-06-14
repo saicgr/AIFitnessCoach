@@ -69,61 +69,55 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   // ─── Header ───────────────────────────────────────────────────
 
   Widget _buildHeader(bool isDark) {
+    final tc = ThemeColors.of(context);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     final timeText = _selectedTime.format(context);
+
+    // Hairline-flat selector pill — matte surface + cardBorder, no glass fill.
+    Widget hairlinePill({required Widget leading, required String label, required VoidCallback onTap}) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: tc.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              leading,
+              const SizedBox(width: 6),
+              Text(label.toUpperCase(),
+                  style: ZType.lbl(12, color: textPrimary, letterSpacing: 1.2)),
+              const SizedBox(width: 4),
+              Icon(Icons.expand_more, size: 16, color: textMuted),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
       child: Row(
         children: [
           // Time picker pill
-          GestureDetector(
+          hairlinePill(
+            leading: Icon(Icons.schedule, size: 16, color: textMuted),
+            label: timeText,
             onTap: _showTimePicker,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.schedule, size: 16, color: textMuted),
-                  const SizedBox(width: 6),
-                  Text(timeText, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
-                  const SizedBox(width: 4),
-                  Icon(Icons.expand_more, size: 16, color: textMuted),
-                ],
-              ),
-            ),
           ),
           const SizedBox(width: 8),
 
           // Meal type pill
-          GestureDetector(
+          hairlinePill(
+            leading: Text(_selectedMealType.emoji, style: const TextStyle(fontSize: 14)),
+            label: _selectedMealType.label,
             onTap: _showMealTypePicker,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.06)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(_selectedMealType.emoji, style: const TextStyle(fontSize: 14)),
-                  const SizedBox(width: 6),
-                  Text(_selectedMealType.label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: textPrimary)),
-                  const SizedBox(width: 4),
-                  Icon(Icons.expand_more, size: 16, color: textMuted),
-                ],
-              ),
-            ),
           ),
 
           const Spacer(),
@@ -136,8 +130,6 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   // ─── Bottom Bar ───────────────────────────────────────────────
 
   Widget _buildBottomBar(bool isDark) {
-    final accentEnum = AccentColorScope.of(context);
-    final orange = accentEnum.getColor(isDark);
     final hasText = _descriptionController.text.trim().isNotEmpty;
 
     // Solid footer surface. The capture chips and Analyze pill are themselves
@@ -236,26 +228,13 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
 
           const SizedBox(height: 8),
 
-          // Analyze — primary CTA. Full-width filled accent pill, visually
-          // dominant over the lighter capture chips above.
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: hasText ? _handleAnalyze : null,
-              icon: const Icon(Icons.auto_awesome, size: 18),
-              label: Text(AppLocalizations.of(context).nutritionShowcaseAnalyze,
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: orange.withValues(alpha: 0.3),
-                disabledForegroundColor: Colors.white54,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              ),
-            ),
+          // Analyze — THE one reserved-accent primary CTA for this sheet.
+          ZealovaButton(
+            label: AppLocalizations.of(context).nutritionShowcaseAnalyze,
+            onTap: hasText ? _handleAnalyze : null,
+            variant: ZealovaButtonVariant.primary,
+            trailingIcon: Icons.auto_awesome,
+            height: 48,
           ),
 
           const SizedBox(height: 4),
@@ -434,7 +413,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
         ? ' (${dynamicTargets.calorieAdjustment > 0 ? '+' : ''}${dynamicTargets.calorieAdjustment})'
         : '';
 
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final tc = ThemeColors.of(context);
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -446,7 +425,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color)),
+          Text(label, style: ZType.lbl(13, color: color, letterSpacing: 0.5)),
           const SizedBox(width: 2),
           Text('$value', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary)),
           Text('/$target', style: TextStyle(fontSize: 13, color: textMuted)),
@@ -460,12 +439,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       margin: const EdgeInsets.symmetric(horizontal: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: glassSurface,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
-          width: 0.5,
-        ),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -478,7 +454,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
             Text('$cal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary)),
             Text('/$calTarget', style: TextStyle(fontSize: 13, color: textMuted)),
             if (adjustmentLabel.isNotEmpty)
-              Text(adjustmentLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF26A69A))),
+              Text(adjustmentLabel, style: ZType.lbl(11, color: tc.accent, letterSpacing: 0.5)),
             separator,
             macroSegment('C', carbs, carbsTarget, amber),
             separator,
@@ -497,8 +473,6 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   Widget _buildNutritionPreview(bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final accentEnumPreview = AccentColorScope.of(context);
     final orange = accentEnumPreview.getColor(isDark);
 
@@ -698,7 +672,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   children: [
                     Icon(Icons.auto_awesome, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary, size: 20),
                     const SizedBox(width: 8),
-                    Text(AppLocalizations.of(context).logMealSheetEstimatedNutrition, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: textPrimary)),
+                    Text(AppLocalizations.of(context).logMealSheetEstimatedNutrition.toUpperCase(), style: ZType.lbl(15, color: textPrimary, letterSpacing: 1.5)),
                     if (response.overallMealScore != null) ...[
                       const SizedBox(width: 8),
                       CompactGoalScore(score: response.overallMealScore!, isDark: isDark),
@@ -967,10 +941,14 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   ),
                 const SizedBox(height: 12),
 
-                // Compact macros row
+                // Compact macros row — hairline-bordered matte surface.
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  decoration: BoxDecoration(color: elevated, borderRadius: BorderRadius.circular(12)),
+                  decoration: BoxDecoration(
+                    color: ThemeColors.of(context).surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
                   child: Row(
                     children: [
                       AnimatedCalorieChip(calories: response.totalCalories, color: AppColors.coral),
@@ -1876,42 +1854,35 @@ class _CaptureChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    // Vertical layout (icon over label) so five equal-width chips fit on a
-    // single Row. The label is wrapped in a FittedBox(scaleDown) so even on
-    // the narrowest device ('Barcode' on an iPhone SE) it shrinks to fit
-    // rather than overflowing or wrapping.
+    final tc = ThemeColors.of(context);
+    // Signature re-skin: hairline-flat matte surface with a wayfinding glyph
+    // tint (the per-action color stays only on the icon — never as a fill —
+    // so the reserved accent is preserved). Vertical layout (icon over Barlow
+    // label) keeps five equal-width chips on a single Row; the label scales
+    // down via FittedBox on the narrowest device.
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 9),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: isDark ? 0.14 : 0.10),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withValues(alpha: isDark ? 0.30 : 0.28),
-              width: 0.8,
-            ),
+            color: tc.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 19, color: color),
-              const SizedBox(height: 4),
+              const SizedBox(height: 5),
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
-                  label,
+                  label.toUpperCase(),
                   maxLines: 1,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  style: ZType.lbl(10.5, color: tc.textSecondary, letterSpacing: 1.0),
                 ),
               ),
             ],
