@@ -486,45 +486,50 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     final hasLoggedInToday = streak?.hasLoggedInToday ?? false;
     const dailyLoginXP = 5;
 
+    // v2 strips the boxed orange/teal hero: the streak reads as a hairline
+    // row — a gold-ringed flame disc with an Anton day-count over it, a Barlow
+    // kicker + Fraunces status line, and a gold XP chip on the right. Orange is
+    // reserved for the single CLAIM elsewhere; status colour here is gold.
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.orange.shade400,
-            Colors.deepOrange.shade500,
-          ],
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.hairline),
+          bottom: BorderSide(color: AppColors.hairline),
         ),
-        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
+          // Flame disc — gold rarity ring, no solid gradient fill
           Container(
-            width: 50,
-            height: 50,
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.local_fire_department,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  Text(
-                    '$currentStreak',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
+              gradient: const RadialGradient(
+                colors: [Color(0x33FBBF24), Colors.transparent],
+                stops: [0.0, 0.72],
+                center: Alignment(-0.3, -0.4),
               ),
+              border: Border.all(
+                color: AppColors.gamGold.withValues(alpha: 0.5),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.local_fire_department_outlined,
+                  color: AppColors.gamGold,
+                  size: 17,
+                ),
+                Text(
+                  '$currentStreak',
+                  style: ZType.disp(13, color: AppColors.gamGold, height: 1.0),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 14),
@@ -533,23 +538,34 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context)!.xpGoalsLoginStreak,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  AppLocalizations.of(context)!.xpGoalsLoginStreak.toUpperCase(),
+                  style: ZType.lbl(12, color: textColor, letterSpacing: 1.5),
                 ),
+                const SizedBox(height: 3),
                 Text(
                   hasLoggedInToday
                       ? AppLocalizations.of(context)!.xpGoalsXpEarnedToday(dailyLoginXP)
                       : AppLocalizations.of(context)!.xpGoalsXpAvailable(dailyLoginXP),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
+                  style: ZType.ser(12.5, color: textMuted),
                 ),
               ],
+            ),
+          ),
+          // Gold XP chip — status/earned colour, never orange
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: AppColors.gamGold.withValues(alpha: 0.4),
+              ),
+            ),
+            child: Text(
+              hasLoggedInToday ? '+$dailyLoginXP' : '+$dailyLoginXP XP',
+              style: ZType.lbl(11,
+                  color: AppColors.gamGold,
+                  weight: FontWeight.w800,
+                  letterSpacing: 0.5),
             ),
           ),
         ],
@@ -564,26 +580,21 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     Color textMuted, {
     String? subtitle,
   }) {
+    // v2 `gm-kick`: a Barlow uppercase grey kicker with a leading outlined
+    // glyph, sitting on a hairline rule (no boxed card header).
     return Row(
       children: [
-        Icon(icon, size: 16, color: textMuted),
-        const SizedBox(width: 6),
+        Icon(icon, size: 15, color: textMuted),
+        const SizedBox(width: 7),
         Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: textColor,
-          ),
+          title.toUpperCase(),
+          style: ZType.lbl(11, color: textMuted, letterSpacing: 2.5),
         ),
         if (subtitle != null) ...[
           const Spacer(),
           Text(
             subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: textMuted,
-            ),
+            style: ZType.data(11, color: textMuted),
           ),
         ],
       ],
@@ -660,11 +671,12 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
     Color accentColor,
   ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
+    final hairBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
-    final strongBorder = isDark
-        ? accentColor.withValues(alpha: 0.3)
-        : accentColor.withValues(alpha: 0.5);
-
+    // v2: trophy iconography is GOLD (status domain), not the user accent.
+    // Matched to the Inventory button as a paired hairline tile.
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -673,41 +685,30 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: strongBorder, width: 1.5),
-          boxShadow: isDark ? null : [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: hairBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.emoji_events,
-              color: accentColor,
-              size: 18,
+              Icons.emoji_events_outlined,
+              color: AppColors.gamGold,
+              size: 17,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 7),
             Flexible(
               child: Text(
-                AppLocalizations.of(context)!.xpGoalsTrophyRoom,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? textColor : Colors.black87,
-                ),
+                AppLocalizations.of(context)!.xpGoalsTrophyRoom.toUpperCase(),
+                style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.3),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             const SizedBox(width: 4),
             Icon(
               Icons.chevron_right,
-              color: accentColor,
+              color: textMuted,
               size: 16,
             ),
           ],

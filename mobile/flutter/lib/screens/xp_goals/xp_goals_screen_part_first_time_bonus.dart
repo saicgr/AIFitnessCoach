@@ -141,11 +141,11 @@ class _AllLevelsSheet extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
-                      _buildLegendItem('🎁', AppLocalizations.of(context)!.xpGoalsScreenMilestoneLegend, textMutedStrong),
+                      _buildLegendItem(Icons.card_giftcard_outlined, AppLocalizations.of(context)!.xpGoalsScreenMilestoneLegend, textMutedStrong),
                       const SizedBox(width: 16),
-                      _buildLegendItem('⚡', AppLocalizations.of(context)!.xpGoalsScreenXpBonusLegend, textMutedStrong),
+                      _buildLegendItem(Icons.bolt_outlined, AppLocalizations.of(context)!.xpGoalsScreenXpBonusLegend, textMutedStrong),
                       const SizedBox(width: 16),
-                      _buildLegendItem('🛡️', AppLocalizations.of(context)!.xpGoalsScreenConsumableLegend, textMutedStrong),
+                      _buildLegendItem(Icons.shield_outlined, AppLocalizations.of(context)!.xpGoalsScreenConsumableLegend, textMutedStrong),
                     ],
                   ),
                 ),
@@ -221,13 +221,13 @@ class _AllLevelsSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildLegendItem(String icon, String label, Color textMuted) {
+  Widget _buildLegendItem(IconData icon, String label, Color textMuted) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(icon, style: const TextStyle(fontSize: 12)),
+        Icon(icon, size: 13, color: AppColors.gamGold),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 10, color: textMuted)),
+        Text(label, style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2)),
       ],
     );
   }

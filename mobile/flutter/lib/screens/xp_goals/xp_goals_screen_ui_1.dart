@@ -23,15 +23,22 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     final xpToNextLevel = (userXp?.xpToNextLevel ?? 50).clamp(1, 100000);
     final progressFraction = (userXp?.progressFraction ?? 0.0).clamp(0.0, 1.0);
     final xpTitle = userXp?.xpTitle ?? XPTitle.novice;
+    // Trophy count for the v2 `gm-lvl .tr` cluster (right zone of the level
+    // header). Earned-trophies surfaced beside the level so the header reads
+    // [disc | title+XP | trophies], mirroring the REWARDS·XP frame.
+    final trophySummary = ref.watch(trophySummaryProvider);
+    final earnedTrophies = trophySummary?.earnedTrophies ?? 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // LEVEL header — gold radial-ring badge + Anton level number,
-        // Barlow title, Space Mono XP total, plus the info affordance.
+        // LEVEL header — v2 `gm-lvl`: three zones on one row.
+        //   [gold radial-ring disc + Anton level number]
+        //   [Anton title · Space Mono XP total]
+        //   [trophy cluster: outlined trophy glyph + Anton gold count]
         Row(
           children: [
-            // Level Badge — gold rarity ring, no solid gradient fill
+            // Zone 1 — Level Badge: gold rarity ring, no solid gradient fill
             Container(
               width: 54,
               height: 54,
@@ -55,6 +62,7 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
               ),
             ),
             const SizedBox(width: 14),
+            // Zone 2 — title + total XP
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,7 +79,33 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                 ],
               ),
             ),
-            // Info button
+            // Zone 3 — trophy-count cluster (v2 `gm-lvl .tr`): outlined trophy
+            // glyph over an Anton gold count. Tapping routes to the Trophy Room
+            // (same destination as the footer button) so the count is live.
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.push('/trophy-room');
+              },
+              behavior: HitTestBehavior.opaque,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    size: 22,
+                    color: AppColors.gamGold,
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '$earnedTrophies',
+                    style: ZType.disp(16, color: AppColors.gamGold, height: 1.0),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 14),
+            // Info affordance — the v2 `ⓘ` that sits in the breadcrumb row.
             GestureDetector(
               onTap: () => _showXPInfoDialog(context, isDark),
               child: Icon(
@@ -82,7 +116,8 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+
+        ZealovaRule(margin: const EdgeInsets.symmetric(vertical: 16)),
 
         // LEVEL PROGRESS — pure hairline bar, no ring (the number leads)
         Row(
@@ -408,10 +443,10 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
                       ),
                       child: cp.completed
                           ? const Icon(Icons.check, size: 15, color: Colors.black)
-                          : Text(
-                              cp.icon.isNotEmpty ? cp.icon : '📋',
-                              style: const TextStyle(fontSize: 12),
-                            ),
+                          : cp.icon.isNotEmpty
+                              ? Text(cp.icon, style: const TextStyle(fontSize: 12))
+                              : Icon(Icons.checklist_rounded,
+                                  size: 14, color: textMuted),
                     ),
                     const SizedBox(width: 11),
                     // Name and progress
