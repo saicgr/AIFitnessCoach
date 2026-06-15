@@ -84,7 +84,7 @@ class HabitCard extends ConsumerWidget {
                   // 'auto_water') get a localized label; user-created habits keep
                   // their original (user-typed) name unchanged.
                   Text(
-                    _displayName(context, habit),
+                    displayName(context, habit),
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -212,7 +212,10 @@ class HabitCard extends ConsumerWidget {
   /// Resolve the visible title for a habit. Auto-tracked habits use the
   /// stable id assigned in `habitsProvider` (so non-en locales render
   /// localized strings); custom habits fall back to the user-typed name.
-  static String _displayName(BuildContext context, HabitData habit) {
+  ///
+  /// Public so the Signature v2 [HabitsSection] dot-rows can reuse the exact
+  /// same localized-name resolution.
+  static String displayName(BuildContext context, HabitData habit) {
     final l10n = AppLocalizations.of(context);
     switch (habit.id) {
       case 'auto_workouts': return l10n.habitWorkouts;

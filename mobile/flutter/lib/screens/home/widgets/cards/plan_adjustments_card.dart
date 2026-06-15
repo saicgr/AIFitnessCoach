@@ -19,6 +19,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/providers/deload_status_provider.dart';
 // home_signals_providers → proposedRescheduleSlotProvider; scheduling_provider
@@ -114,12 +115,16 @@ class _PlanAdjustmentsCardState extends ConsumerState<PlanAdjustmentsCard> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      // Signature v2: a slim flat surface with a single hairline border. One
+      // accent element only — a short accent rule + leading tick — instead of
+      // the old accent-tinted box outline / glow. The collapsed default reads
+      // as a slim accent-edged row.
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: c.surface,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: c.accent.withValues(alpha: 0.35)),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -132,17 +137,28 @@ class _PlanAdjustmentsCardState extends ConsumerState<PlanAdjustmentsCard> {
               onTap: () => setState(() => _expanded = !_expanded),
               child: Row(
                 children: [
-                  Icon(Icons.tune_rounded, size: 18, color: c.accent),
-                  const SizedBox(width: 8),
+                  // The one accent: a short vertical rule marking the row.
+                  Container(
+                    width: 3,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      color: c.accent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 11),
+                  Icon(Icons.tune_rounded, size: 17, color: c.accent),
+                  const SizedBox(width: 9),
                   Expanded(
                     child: Text(
-                      rows.length == 1
-                          ? 'Plan adjustment'
-                          : '${rows.length} plan adjustments',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
+                      (rows.length == 1
+                              ? 'Plan adjustment'
+                              : '${rows.length} plan adjustments')
+                          .toUpperCase(),
+                      style: ZType.lbl(
+                        12,
                         color: c.textPrimary,
+                        letterSpacing: 1.2,
                       ),
                     ),
                   ),

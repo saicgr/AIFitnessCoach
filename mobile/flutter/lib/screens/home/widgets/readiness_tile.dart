@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/repositories/readiness_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -60,14 +62,16 @@ class _CheckedInTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = ThemeColors.of(context);
     final light = _trafficLightFor(readiness.level, accent);
     final prescription = _prescriptionFor(readiness);
 
+    // Signature v2: a flat surface with a single hairline border. The traffic
+    // light is the one accent (semantic), rendered as a clean dot — no glow.
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
-        color: theme.cardColor,
+        color: c.surface,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -79,7 +83,7 @@ class _CheckedInTile extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: light.withOpacity(0.30)),
+              border: Border.all(color: c.cardBorder),
             ),
             child: Row(
               children: [
@@ -90,17 +94,18 @@ class _CheckedInTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context).readinessTileRecoveryReadiness,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        AppLocalizations.of(context)
+                            .readinessTileRecoveryReadiness
+                            .toUpperCase(),
+                        style: ZType.lbl(11, color: c.textSecondary),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         prescription,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.75),
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -108,11 +113,7 @@ class _CheckedInTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  size: 20,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
-                ),
+                Icon(Icons.chevron_right, size: 20, color: c.textMuted),
               ],
             ),
           ),
@@ -133,11 +134,11 @@ class _CalibrationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final c = ThemeColors.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Material(
-        color: theme.cardColor,
+        color: c.surface,
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -149,7 +150,7 @@ class _CalibrationTile extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: accent.withOpacity(0.25)),
+              border: Border.all(color: c.cardBorder),
             ),
             child: Row(
               children: [
@@ -157,7 +158,7 @@ class _CalibrationTile extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: accent.withOpacity(0.15),
+                    color: accent.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -172,17 +173,19 @@ class _CalibrationTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context).readinessTileRecoveryReadiness,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        AppLocalizations.of(context)
+                            .readinessTileRecoveryReadiness
+                            .toUpperCase(),
+                        style: ZType.lbl(11, color: c.textSecondary),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        AppLocalizations.of(context).readinessTileBuildingBaselineCheckIn,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.textTheme.bodySmall?.color
-                              ?.withOpacity(0.75),
+                        AppLocalizations.of(context)
+                            .readinessTileBuildingBaselineCheckIn,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: c.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -190,11 +193,7 @@ class _CalibrationTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(
-                  Icons.chevron_right,
-                  size: 20,
-                  color: theme.iconTheme.color?.withOpacity(0.6),
-                ),
+                Icon(Icons.chevron_right, size: 20, color: c.textMuted),
               ],
             ),
           ),
@@ -215,19 +214,15 @@ class _TrafficLight extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Signature v2: a clean semantic dot — flat, no glow. A faint hairline ring
+    // keeps it legible against the surface without the old halo.
     return Container(
-      width: 36,
-      height: 36,
+      width: 18,
+      height: 18,
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.45),
-            blurRadius: 10,
-            spreadRadius: 1,
-          ),
-        ],
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 4),
       ),
     );
   }
