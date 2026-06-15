@@ -28,6 +28,7 @@ import '../screens/ai_settings/ai_settings_screen.dart';
 import '../screens/onboarding/founder_note_sheet.dart';
 import '../data/repositories/auth_repository.dart' show authStateProvider;
 import '../screens/nutrition/quick_log_overlay.dart';
+import '../screens/home/widgets/quick_log_sheet.dart' show showQuickLogSheet;
 import 'coach_avatar.dart';
 import 'app_tour/app_tour_controller.dart';
 import 'floating_chat/floating_chat_bubble.dart';
@@ -532,7 +533,9 @@ class MainShell extends ConsumerWidget {
               child: GestureDetector(
                 onTap: () {
                   HapticFeedback.selectionClick();
-                  showQuickLogOverlay(context, ref);
+                  // The "+" opens the Signature quick-actions grid (Scan menu,
+                  // Log workout, Log water, …), not the bare food-log dialog.
+                  showQuickLogSheet(context, ref);
                 },
                 child: Container(
                   width: 44,

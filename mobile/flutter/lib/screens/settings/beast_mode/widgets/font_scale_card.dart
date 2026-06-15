@@ -55,10 +55,10 @@ class FontScaleCard extends ConsumerWidget {
               trackHeight: 4,
             ),
             child: Slider(
-              value: scale,
-              min: 0.85,
+              value: scale.clamp(0.7, 1.5),
+              min: 0.7,
               max: 1.5,
-              divisions: 13,
+              divisions: 16,
               onChanged: (value) {
                 ref.read(accessibilityProvider.notifier).setFontScale(value);
               },
@@ -69,7 +69,7 @@ class FontScaleCard extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(AppLocalizations.of(context).fontScaleCard085x, style: TextStyle(fontSize: 11, color: theme.textMuted)),
+                Text('0.7x', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('1.0x', style: TextStyle(fontSize: 11, color: theme.textMuted)),
                 Text('1.5x', style: TextStyle(fontSize: 11, color: theme.textMuted)),
               ],

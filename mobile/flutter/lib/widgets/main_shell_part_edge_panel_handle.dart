@@ -185,54 +185,25 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
         ? Colors.grey.shade500
         : Colors.grey.shade400;
 
-    return SizedBox(
-      height: navBarHeight + bottomPadding + fadeHeight,
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Subtle fade gradient
-          Positioned(
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      backgroundColor.withValues(alpha: 0.0),
-                      backgroundColor.withValues(alpha: 0.9),
-                      backgroundColor,
-                    ],
-                    stops: const [0.0, 0.6, 1.0],
-                  ),
-                ),
-              ),
-            ),
+    // Signature v2 nav (.rc-nav2): a DOCKED full-width opaque bar with a
+    // hairline TOP border — flush to the bottom edge, not a floating pill.
+    // The home-indicator inset is padded INSIDE the bar so the bar background
+    // runs to the very bottom.
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder,
+            width: 1,
           ),
-          // Full-width pill nav bar — sits inside a proper screen bezel
-          // gutter so it reads as a balanced bar, not a cramped capsule.
-          Positioned(
-            left: 28,
-            right: 28,
-            bottom: bottomPadding + kMainNavBottomGap,
-            child: Container(
-              height: navBarHeight,
-              padding: const EdgeInsets.symmetric(horizontal: 6),
-              decoration: BoxDecoration(
-                color: pillBarColor,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-              ),
+        ),
+      ),
+      padding: EdgeInsets.only(bottom: bottomPadding),
+      child: SizedBox(
+        height: navBarHeight,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
               // Tab order (2026-06 redesign, Change 1): Home · Workout ·
               // Coach (center — the product's differentiator) · Nutrition ·
               // You. The leaderboard moved to You › Stats & Rewards; selected
@@ -328,9 +299,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
               ),
             ),
           ),
-        ],
-      ),
-    );
+        );
   }
 }
 
