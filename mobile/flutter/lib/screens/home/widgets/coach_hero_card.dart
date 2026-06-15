@@ -19,6 +19,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_typography.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/providers/sleep_score_provider.dart';
+import '../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../data/repositories/nutrition_repository.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/ai_settings_provider.dart';
 import '../../../data/providers/coach_card_visibility_provider.dart';
@@ -135,6 +140,98 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   /// "Show more" / "Show less" toggle. The toggle only appears when the text
   /// actually exceeds 3 lines (measured), so short tips show no link. The full
   /// tip is always reachable inline — nothing is truncated away.
+  /// The "TO DO TODAY" checklist — the day's coach tasks, each wired to real
+  /// provider data (protein intake vs target, today's workout completion, last
+  /// night's sleep). Self-hides if there's nothing actionable to show.
+  Widget _todoSection(ThemeColors c) {
+    final rows = <Widget>[];
+
+    // 1) Protein target progress (nutrition).
+    final prefs = ref.watch(nutritionPreferencesProvider);
+    final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final pTarget = prefs.currentProteinTarget;
+    final pCur = (nut.summary?.totalProteinG ?? 0).round();
+    if (pTarget > 0) {
+      rows.add(_todoRow(c,
+          done: pCur >= pTarget,
+          label: 'Hit ${pTarget}g protein',
+          trailing: '$pCur / $pTarget'));
+    }
+
+    // 2) Today's workout (complete it).
+    final tw = ref.watch(todayWorkoutProvider).valueOrNull?.todayWorkout;
+    final twName = tw?.name ?? '';
+    if (twName.isNotEmpty && twName != 'Generating...') {
+      final done = tw?.isCompleted == true;
+      rows.add(_todoRow(c,
+          done: done,
+          label: twName,
+          trailing: done ? 'done' : '${tw?.exerciseCount ?? 0} ex'));
+    }
+
+    // 3) Last night's sleep (log it).
+    final sleep = ref.watch(sleepScoreProvider).valueOrNull;
+    final logged = sleep?.hasData ?? false;
+    final mins = sleep?.summary.totalMinutes ?? 0;
+    rows.add(_todoRow(c,
+        done: logged,
+        label: "Log last night's sleep",
+        trailing: logged ? '${mins ~/ 60}h ${mins % 60}m' : 'tonight'));
+
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 13),
+        Text('TO DO TODAY',
+            style: ZType.lbl(10.5, color: c.textMuted, letterSpacing: 2)),
+        const SizedBox(height: 9),
+        ...rows,
+      ],
+    );
+  }
+
+  Widget _todoRow(ThemeColors c,
+      {required bool done, required String label, required String trailing}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Row(
+        children: [
+          Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              color: done ? AppColors.green : Colors.transparent,
+              borderRadius: BorderRadius.circular(5),
+              border: Border.all(
+                  color: done ? AppColors.green : c.cardBorder, width: 1.5),
+            ),
+            child: done
+                ? const Icon(Icons.check, size: 13, color: Colors.white)
+                : null,
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: done ? c.textMuted : c.textPrimary,
+                decoration: done ? TextDecoration.lineThrough : null,
+                decorationColor: c.textMuted,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(trailing, style: ZType.data(11, color: c.textMuted)),
+        ],
+      ),
+    );
+  }
+
   Widget _expandableBody(ThemeColors c, String text) {
     final style = TextStyle(
       fontSize: 13,
@@ -254,8 +351,15 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           insight.headline.isEmpty
               ? AppLocalizations.of(context).coachHeroCardYourCoachIsHere
               : insight.headline,
-          // The coach's human line — Fraunces serif, the Signature voice.
-          style: ZType.ser(18, color: c.textPrimary),
+          // The coach message reads as plain text (spec), not the italic serif
+          // — Fraunces is reserved for the masthead greeting only.
+          style: TextStyle(
+            fontSize: 15.5,
+            fontWeight: FontWeight.w700,
+            height: 1.3,
+            letterSpacing: -0.1,
+            color: c.textPrimary,
+          ),
         ),
         if (hasBullets) ...[
           const SizedBox(height: 8),
@@ -274,6 +378,9 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             c, insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
           ),
         ],
+        // TO DO TODAY — the day's coach tasks (protein / workout / sleep),
+        // each wired to real data with live progress + a checkbox (spec).
+        _todoSection(c),
         // Up to 3 compact grounded graphs, the first tied to the tip's leading
         // pillar (server orders them that way). Rendered as a swipeable carousel
         // (one visible + dots) so multiple graphs don't grow the card. Only
