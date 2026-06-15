@@ -64,6 +64,9 @@ class AppColors {
   // Surface colors — v2 --d-surface (the standard card fill) over the tinted
   // near-black --d-bg scaffold.
   static const Color surface = Color(0xFF141416);   // --d-surface
+  // Signature rh-card fill — one luminance step below `surface`. Used by the
+  // workout-card archetype (surface2 background + hairline top border).
+  static const Color surface2 = Color(0xFF0F0F11);  // --d-surface2
   static const Color background = Color(0xFF0A0A0B); // --d-bg
 
   // Semantic Colors

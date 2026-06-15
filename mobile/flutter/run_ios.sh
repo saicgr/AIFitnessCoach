@@ -76,9 +76,8 @@ $FLUTTER_PATH pub get
 
 # flutter_gemma exclusion is handled by the Podfile (strips it from iOS plugins)
 
-# Uninstall existing app
-echo -e "${YELLOW}Uninstalling existing app...${NC}"
-xcrun simctl uninstall booted com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
+# NOTE: we no longer `simctl uninstall` here — installing over the top
+# preserves the app's login/session so you don't get logged out every run.
 
 # RevenueCat keys — paywall throws "Purchase service not configured" without these.
 # Override per-shell: export REVENUECAT_APPLE_KEY=appl_xxx REVENUECAT_GOOGLE_KEY=goog_xxx
@@ -91,8 +90,26 @@ else
   echo -e "${YELLOW}⚠️  REVENUECAT_APPLE_KEY not set — iOS purchases will fail until you export it.${NC}"
 fi
 
-# Build and run
-echo -e "${GREEN}Building and running app on simulator: $DEVICE_ID${NC}"
-$FLUTTER_PATH run -d "$DEVICE_ID" "${DART_DEFINES[@]}"
+# Build for the simulator, then install MANUALLY. flutter run's own install step
+# fails on iOS 26 simulators with "Invalid placeholder attributes / Failed to
+# create app extension placeholder for FitWizLiveActivityExtension.appex". The
+# fix is to strip that Live Activity extension from the SIMULATOR build only
+# (device/release builds keep it) before installing.
+echo -e "${GREEN}Building app for simulator...${NC}"
+$FLUTTER_PATH build ios --simulator --debug "${DART_DEFINES[@]}"
 
-echo -e "${GREEN}=== Done! ===${NC}"
+APP_PATH="$PROJECT_DIR/build/ios/iphonesimulator/Runner.app"
+
+if [ -d "$APP_PATH/PlugIns/FitWizLiveActivityExtension.appex" ]; then
+  echo -e "${YELLOW}Stripping Live Activity extension (simulator install workaround)...${NC}"
+  rm -rf "$APP_PATH/PlugIns/FitWizLiveActivityExtension.appex"
+fi
+
+echo -e "${GREEN}Installing on simulator: $DEVICE_ID${NC}"
+xcrun simctl install "$DEVICE_ID" "$APP_PATH"
+
+echo -e "${GREEN}Launching app...${NC}"
+xcrun simctl launch "$DEVICE_ID" com.zealova.app || true
+
+echo -e "${GREEN}=== Done! App installed & launched (login preserved). ===${NC}"
+echo -e "${YELLOW}Note: this install method has no hot reload — re-run ./run_ios.sh to apply Dart changes.${NC}"

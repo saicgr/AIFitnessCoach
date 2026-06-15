@@ -19,8 +19,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/design_system/section_header.dart';
@@ -551,68 +553,74 @@ class _PrimaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final pct = (progress.clamp(0.0, 1.0) * 100).round();
+    // Signature flagship tile — hairline surface + accent LEFT edge (the
+    // ZealovaCard `hero` grammar), Anton headline percentage, a 3px hairline
+    // progress track. No accent-fill box, no LinearProgressIndicator.
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
         context.push(route);
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
         decoration: BoxDecoration(
-          color: accent.withValues(alpha: isDark ? 0.10 : 0.08),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: accent.withValues(alpha: 0.28)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: accent.withValues(alpha: 0.20),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: accent, size: 22),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: fg,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          color: fg.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
-                      ),
+                      Text(title.toUpperCase(),
+                          style: ZType.lbl(11,
+                              color: AppColors.textMuted, letterSpacing: 2)),
+                      const SizedBox(height: 6),
+                      Text(subtitle,
+                          style: TextStyle(
+                              color: AppColors.textSecondary, fontSize: 12.5)),
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded,
-                    color: fg.withValues(alpha: 0.4)),
+                const SizedBox(width: 12),
+                // Anton numeral carries the hierarchy — replaces the framed
+                // accent-tinted icon chip.
+                Text('$pct',
+                    style: ZType.disp(34, color: accent)),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4, left: 1),
+                  child: Text('%',
+                      style: ZType.lbl(11,
+                          color: AppColors.textMuted, letterSpacing: 0.5)),
+                ),
+                const SizedBox(width: 4),
+                const Icon(Icons.chevron_right,
+                    size: 18, color: AppColors.textMuted),
               ],
             ),
             const SizedBox(height: 12),
+            // 3px hairline track — the spec's `--d-rule` bar with an accent fill.
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: LinearProgressIndicator(
-                value: progress.clamp(0.0, 1.0),
-                minHeight: 6,
-                backgroundColor: fg.withValues(alpha: 0.08),
-                valueColor: AlwaysStoppedAnimation<Color>(accent),
+              borderRadius: BorderRadius.circular(2),
+              child: SizedBox(
+                height: 3,
+                child: Stack(
+                  children: [
+                    Container(color: AppColors.hairlineStrong),
+                    FractionallySizedBox(
+                      widthFactor: progress.clamp(0.0, 1.0),
+                      child: Container(color: accent),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -651,13 +659,9 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.04);
-    final borderColor = highlight
-        ? accent.withValues(alpha: 0.55)
-        : fg.withValues(alpha: 0.08);
-
+    // Signature hairline surface. `highlight` (action-ready, e.g. rewards to
+    // claim) is the ONE place the accent edge appears; otherwise a flat warm
+    // hairline border — no glass-alpha surface, no accent-tinted icon chip.
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -666,13 +670,13 @@ class _MetricTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: bg,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: highlight ? 1.3 : 1),
+          border: highlight
+              ? Border.all(color: AppColors.cardBorder, width: 1)
+              : Border.all(color: AppColors.cardBorder),
         ),
-        child: wide
-            ? _wideLayout()
-            : _compactLayout(),
+        child: wide ? _wideLayout() : _compactLayout(),
       ),
     );
   }
@@ -682,33 +686,27 @@ class _MetricTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Framed hairline glyph (the spec's `.st-gl` 26px box), not an
+        // accent-tinted fill chip.
         Container(
-          padding: const EdgeInsets.all(8),
+          width: 28,
+          height: 28,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.cardBorder),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: accent, size: 18),
+          child: Icon(icon, color: AppColors.textSecondary, size: 16),
         ),
         const SizedBox(height: 10),
-        Text(
-          title,
-          style: TextStyle(
-            color: fg.withValues(alpha: 0.55),
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-          ),
-        ),
-        const SizedBox(height: 4),
+        Text(title.toUpperCase(),
+            style: ZType.lbl(10, color: AppColors.textMuted, letterSpacing: 1.5)),
+        const SizedBox(height: 5),
         _MetricHeadline(headline: headline, fg: fg),
-        const SizedBox(height: 2),
+        const SizedBox(height: 3),
         Text(
           sub,
-          style: TextStyle(
-            color: fg.withValues(alpha: 0.55),
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
@@ -720,12 +718,14 @@ class _MetricTile extends StatelessWidget {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          width: 30,
+          height: 30,
+          alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.cardBorder),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, color: accent, size: 20),
+          child: Icon(icon, color: AppColors.textSecondary, size: 17),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -733,31 +733,22 @@ class _MetricTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: fg.withValues(alpha: 0.55),
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                ),
-              ),
-              const SizedBox(height: 2),
+              Text(title.toUpperCase(),
+                  style: ZType.lbl(10,
+                      color: AppColors.textMuted, letterSpacing: 1.5)),
+              const SizedBox(height: 4),
               _MetricHeadline(headline: headline, fg: fg),
               const SizedBox(height: 2),
               Text(
                 sub,
-                style: TextStyle(
-                  color: fg.withValues(alpha: 0.55),
-                  fontSize: 11,
-                ),
+                style: const TextStyle(color: AppColors.textMuted, fontSize: 11),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
-        Icon(Icons.chevron_right_rounded, color: fg.withValues(alpha: 0.4)),
+        const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 18),
       ],
     );
   }
@@ -804,15 +795,12 @@ class _MetricHeadline extends StatelessWidget {
   Widget build(BuildContext context) {
     final parts = _split(headline);
 
-    // Textual headline — keep the original emphasis exactly.
+    // Textual headline — Signature Anton numeral face at a list-headline size
+    // so it reads as the focal value next to number-led siblings.
     if (parts == null) {
       return Text(
         headline,
-        style: TextStyle(
-          color: fg,
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-        ),
+        style: ZType.disp(17, color: fg, letterSpacing: 0.2),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       );

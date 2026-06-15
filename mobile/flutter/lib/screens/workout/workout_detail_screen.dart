@@ -120,7 +120,7 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   String? _refreshError;
   String? _workoutSummary;
   bool _isLoadingSummary = true;  // Start as true to show loading immediately
-  bool _isWarmupExpanded = false;  // For warmup section
+  bool _isWarmupExpanded = true;  // For warmup section — Signature v2: default open
   bool _isStretchesExpanded = false;  // For stretches section
   bool _isChallengeExpanded = false;  // For challenge exercise section
   bool _isEquipmentExpanded = false;  // For equipment section
@@ -337,6 +337,50 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               // Spacer for top bar
               SliverToBoxAdapter(
                 child: SizedBox(height: safePadding.top + 60),
+              ),
+
+              // HERO MASTHEAD — Signature v2: Anton display name over a Barlow
+              // Condensed muted subtitle (muscle groups · training program).
+              // The whole-brief masthead that leads the pre-start frame.
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (workout.name ??
+                                AppLocalizations.of(context).navWorkout)
+                            .toUpperCase(),
+                        style: ZType.disp(
+                          40,
+                          color: isDark
+                              ? AppColors.textPrimary
+                              : AppColorsLight.textPrimary,
+                          letterSpacing: 0.5,
+                          height: 0.92,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (_workoutMastheadSubtitle(workout) != null) ...[
+                        const SizedBox(height: 5),
+                        Text(
+                          _workoutMastheadSubtitle(workout)!,
+                          style: ZType.lbl(
+                            11,
+                            color: textMuted,
+                            letterSpacing: 1.4,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ],
+                  ),
+                ).animate()
+                  .fadeIn(duration: AppAnimations.fast, curve: AppAnimations.fastOut)
+                  .slideY(begin: 0.05, end: 0, duration: AppAnimations.quick, curve: AppAnimations.decelerate),
               ),
 
               // Inline refresh-error banner: rendered only when a background
@@ -776,7 +820,8 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               child: _buildCollapsibleSectionHeader(
                 title: AppLocalizations.of(context).workoutSummaryGeneralExercises,
                 icon: Icons.fitness_center,
-                color: accentColor,
+                // Neutral so the single solid-accent budget stays on LET'S GO.
+                color: textMuted,
                 isExpanded: true,
                 onTap: () {/* always expanded */},
                 itemCount: exercises.length,

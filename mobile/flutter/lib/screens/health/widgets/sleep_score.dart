@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 
 /// Pure, unit-tested sleep-score computation + its display ring.
 ///
@@ -187,81 +190,95 @@ Color sleepScoreColor(int score) {
   return AppColors.error;
 }
 
-/// Circular sleep-score gauge with the component breakdown beneath it.
+/// The Signature sleep-score frame: ONE deliberate violet progress arc beside
+/// the time-asleep numeral + the three component scores as hairline Barlow
+/// lines. Violet (`AppColors.macroProtein`) is the sleep family accent, used
+/// once here — the arc.
 class SleepScoreRing extends StatelessWidget {
   final SleepScore score;
   final bool isDark;
+
+  /// Total minutes asleep — rendered as the big Anton "7:12" numeral beside
+  /// the arc. Optional so older callers that only pass the score still work.
+  final int? asleepMinutes;
 
   const SleepScoreRing({
     super.key,
     required this.score,
     required this.isDark,
+    this.asleepMinutes,
   });
+
+  static const Color _accent = AppColors.macroProtein; // violet — used once
 
   @override
   Widget build(BuildContext context) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final color = sleepScoreColor(score.total);
+    final track = isDark
+        ? AppColors.hairlineStrong
+        : Colors.black.withValues(alpha: 0.10);
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // ── The one deliberate progress arc.
         SizedBox(
-          width: 92,
-          height: 92,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: 92,
-                height: 92,
-                child: CircularProgressIndicator(
-                  value: score.total / 100,
-                  strokeWidth: 8,
-                  backgroundColor: color.withValues(alpha: 0.15),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
-              ),
-              Column(
+          width: 96,
+          height: 96,
+          child: CustomPaint(
+            painter: _ArcPainter(
+              fraction: score.total / 100,
+              accent: _accent,
+              track: track,
+            ),
+            child: Center(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     '${score.total}',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                      height: 1.0,
-                    ),
+                    style: ZType.disp(32, color: textPrimary, height: 1.0),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    score.label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
+                    score.label.toUpperCase(),
+                    style: ZType.lbl(9, color: _accent, letterSpacing: 1.6),
                   ),
                 ],
               ),
-            ],
+            ),
           ),
         ),
-        const SizedBox(width: 18),
+        const SizedBox(width: 20),
+        // ── Time asleep numeral + component scores.
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (asleepMinutes != null && asleepMinutes! > 0) ...[
+                Text(
+                  'TIME ASLEEP',
+                  style: ZType.lbl(9, color: textMuted, letterSpacing: 1.8),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${asleepMinutes! ~/ 60}:'
+                  '${(asleepMinutes! % 60).toString().padLeft(2, '0')}',
+                  style: ZType.disp(34, color: textPrimary, height: 1.0),
+                ),
+                const SizedBox(height: 12),
+              ],
               _bar('Duration', score.durationPoints, score.durationMax,
-                  textMuted, textPrimary, color),
-              const SizedBox(height: 8),
+                  textMuted, textPrimary, track),
+              const SizedBox(height: 7),
               _bar('Restfulness', score.restfulnessPoints,
-                  score.restfulnessMax, textMuted, textPrimary, color),
+                  score.restfulnessMax, textMuted, textPrimary, track),
               if (score.consistencyPoints != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 7),
                 _bar('Consistency', score.consistencyPoints!,
-                    score.consistencyMax, textMuted, textPrimary, color),
+                    score.consistencyMax, textMuted, textPrimary, track),
               ],
             ],
           ),
@@ -271,7 +288,7 @@ class SleepScoreRing extends StatelessWidget {
   }
 
   Widget _bar(String label, double value, double max, Color labelColor,
-      Color valueColor, Color fill) {
+      Color valueColor, Color track) {
     final frac = max > 0 ? (value / max).clamp(0.0, 1.0) : 0.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,34 +297,73 @@ class SleepScoreRing extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: labelColor,
-              ),
+              label.toUpperCase(),
+              style: ZType.lbl(10, color: labelColor, letterSpacing: 1.2),
             ),
             Text(
               '${value.round()}/${max.round()}',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: valueColor,
-              ),
+              style: ZType.data(10, color: valueColor),
             ),
           ],
         ),
         const SizedBox(height: 4),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(2),
           child: LinearProgressIndicator(
             value: frac,
-            minHeight: 5,
-            backgroundColor: fill.withValues(alpha: 0.12),
-            valueColor: AlwaysStoppedAnimation<Color>(fill),
+            minHeight: 3,
+            backgroundColor: track,
+            valueColor: const AlwaysStoppedAnimation<Color>(_accent),
           ),
         ),
       ],
     );
   }
+}
+
+/// A single deliberate ~270° progress arc — the sleep score's only ring.
+class _ArcPainter extends CustomPainter {
+  final double fraction;
+  final Color accent;
+  final Color track;
+
+  _ArcPainter({
+    required this.fraction,
+    required this.accent,
+    required this.track,
+  });
+
+  // Start at the bottom-left, sweep 270° clockwise (a gauge, not a full ring).
+  static const double _start = math.pi * 0.75;
+  static const double _sweep = math.pi * 1.5;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 6.0;
+    final rect = Offset.zero & size;
+    final center = rect.center;
+    final radius = (size.shortestSide - stroke) / 2;
+    final arcRect = Rect.fromCircle(center: center, radius: radius);
+
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..strokeCap = StrokeCap.round
+      ..color = track;
+    canvas.drawArc(arcRect, _start, _sweep, false, trackPaint);
+
+    final f = fraction.clamp(0.0, 1.0);
+    if (f > 0) {
+      final fillPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = accent;
+      canvas.drawArc(arcRect, _start, _sweep * f, false, fillPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_ArcPainter old) =>
+      old.fraction != fraction || old.accent != accent || old.track != track;
 }

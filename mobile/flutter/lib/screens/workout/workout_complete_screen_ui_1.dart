@@ -76,82 +76,136 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     );
   }
 
-  /// Always-visible Gravl-style 2×N stats grid (DISPLAY UPGRADE — Surface 1).
+  /// Signature v2 stat ledger (Frame 2).
   ///
-  /// Replaces the old 3-primary + 3-behind-a-toggle layout: ALL stats are now
-  /// glanceable at once via the shared [MetricGrid] (big numbers, strong
-  /// hierarchy, no "show all" toggle). Shows Duration, Energy (kcal), Volume,
-  /// Exercises, Sets, Reps, Median rest, and Records (PR count). Volume
-  /// respects the user's workout weight-unit preference (kg→lb conversion when
-  /// `preferredWorkoutWeightUnit=lbs`). Median rest is formatted mm:ss.
+  /// The typographic finish lands on a hairline ledger — one row per metric,
+  /// a Barlow-Condensed muted key on the left and the value on the right, with
+  /// a 1px rule above every row. Time-based readouts (Duration, Median rest)
+  /// use Space Mono; counts/volume use the Anton numeral face. No per-row
+  /// accent — orange is reserved for the DONE CTA (orange-once rule). Shows
+  /// Time · Volume · Sets·Reps · Energy · Median rest · Records. Volume
+  /// respects the user's workout weight-unit preference (kg→lb when
+  /// `preferredWorkoutWeightUnit=lbs`).
   Widget _buildCompactStatsGrid() {
     final useKg = ref.watch(useKgForWorkoutProvider);
     final volumeKg = widget.totalVolumeKg ?? 0;
     final displayVolume = useKg ? volumeKg : WeightUtils.kgToLbs(volumeKg);
     final unit = useKg ? 'kg' : 'lb';
     final c = ThemeColors.of(context);
-    final accent = c.accent;
 
     final prCount = widget.personalRecords?.length ?? 0;
     final medianRest = _effectiveMedianRestSeconds;
+    final l = AppLocalizations.of(context);
 
-    final cells = <MetricCell>[
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralDuration,
-        value: _formatDuration(widget.duration),
-        icon: Icons.timer_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: 'Energy',
-        value: '${widget.calories}',
-        unit: 'kcal',
-        icon: Icons.local_fire_department_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryAdvancedVolume,
-        value: displayVolume.toStringAsFixed(0),
-        unit: unit,
-        icon: Icons.fitness_center,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).authIntroExercises,
-        value: '${widget.workout.exercises.length}',
-        icon: Icons.format_list_bulleted_rounded,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralSets,
-        value: '${widget.totalSets ?? 0}',
-        icon: Icons.layers_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: AppLocalizations.of(context).workoutSummaryGeneralReps,
-        value: '${widget.totalReps ?? 0}',
-        icon: Icons.repeat,
-        accent: accent,
-      ),
-      MetricCell(
-        label: 'Median rest',
-        value: medianRest != null ? _formatMmSs(medianRest) : '--',
-        icon: Icons.av_timer_outlined,
-        accent: accent,
-      ),
-      MetricCell(
-        label: 'Records',
-        value: '$prCount',
-        icon: Icons.emoji_events_outlined,
-        accent: prCount > 0 ? c.success : accent,
-      ),
-    ];
-
-    // 2A — page the 8 stats into two swipeable 2×2 grids (shorter screen).
-    return _StatsCarousel(cells: cells);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _LedgerRow(
+          label: l.workoutSummaryGeneralDuration,
+          value: _formatDuration(widget.duration),
+          mono: true,
+        ),
+        _LedgerRow(
+          label: l.workoutSummaryAdvancedVolume,
+          value: displayVolume.toStringAsFixed(0),
+          unit: unit,
+        ),
+        _LedgerRow(
+          label: '${l.workoutSummaryGeneralSets} · ${l.workoutSummaryGeneralReps}',
+          value: '${widget.totalSets ?? 0} · ${widget.totalReps ?? 0}',
+        ),
+        _LedgerRow(
+          label: 'Energy',
+          value: '${widget.calories}',
+          unit: 'kcal',
+        ),
+        _LedgerRow(
+          label: 'Median rest',
+          value: medianRest != null ? _formatMmSs(medianRest) : '--',
+          mono: true,
+        ),
+        _LedgerRow(
+          label: 'Records',
+          value: '$prCount',
+          valueColor: prCount > 0 ? c.success : null,
+          last: true,
+        ),
+      ],
+    );
   }
 
+
+  /// XP + streak two-cell row (Signature v2 Frame 2). Left cell: XP earned
+  /// this session (from the last XP-earned event). Right cell: the current
+  /// streak with a flame. Renders nothing when neither value is available —
+  /// no placeholder/mock numbers. Numerals stay on the text ladder so the
+  /// single orange budget remains on the DONE CTA.
+  Widget _buildXpStreakRow() {
+    final c = ThemeColors.of(context);
+    final earnedXp = ref.watch(xpProvider).lastXPEarnedEvent?.xpAmount;
+    final streak = _achievements?['streak_days'] as int? ?? 0;
+
+    // Nothing meaningful to show yet — collapse the row entirely.
+    if ((earnedXp == null || earnedXp <= 0) && streak <= 0) {
+      return const SizedBox.shrink();
+    }
+
+    Widget cell(String label, Widget value) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label.toUpperCase(),
+                style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.8),
+              ),
+              const SizedBox(height: 5),
+              value,
+            ],
+          ),
+        );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Row(
+        children: [
+          if (earnedXp != null && earnedXp > 0)
+            cell(
+              'Earned',
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text('+$earnedXp',
+                      style: ZType.disp(24, color: c.textPrimary)),
+                  const SizedBox(width: 4),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 2),
+                    child: Text('XP',
+                        style: ZType.lbl(11,
+                            color: c.textMuted, letterSpacing: 1.2)),
+                  ),
+                ],
+              ),
+            ),
+          if (streak > 0)
+            cell(
+              'Streak',
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text('$streak',
+                      style: ZType.disp(24, color: c.textPrimary)),
+                  const SizedBox(width: 5),
+                  const Text('🔥', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
   /// Heart rate section with enhanced chart, zone breakdown, and fitness metrics
   Widget _buildHeartRateSection(Color elevated) {
@@ -435,17 +489,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           borderRadius: BorderRadius.circular(14),
           // Gold left edge is the sanctioned gamification accent (≤1/screen,
           // distinct from the reserved app accent). Stronger when earned.
-          border: Border(
-            left: BorderSide(
-              color: hasAchievements
-                  ? AppColors.gamGold
-                  : AppColors.cardBorder,
-              width: hasAchievements ? 3 : 1,
-            ),
-            top: const BorderSide(color: AppColors.cardBorder),
-            right: const BorderSide(color: AppColors.cardBorder),
-            bottom: const BorderSide(color: AppColors.cardBorder),
-          ),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Row(
           children: [
@@ -1369,108 +1413,69 @@ class _SetChip extends StatelessWidget {
   }
 }
 
-/// 2A — the 8 completion stats paged into swipeable 2×2 grids with a dot
-/// indicator. Uses a page-snapping HORIZONTAL scroll view (not a PageView) so
-/// it sizes to its content height — a fixed-height PageView inside the
-/// completion screen's vertical scroll view would hit the "unbounded height"
-/// white-screen the result-layout test guards against.
-class _StatsCarousel extends StatefulWidget {
-  final List<MetricCell> cells;
-  const _StatsCarousel({required this.cells});
-
-  @override
-  State<_StatsCarousel> createState() => _StatsCarouselState();
-}
-
-class _StatsCarouselState extends State<_StatsCarousel> {
-  final ScrollController _controller = ScrollController();
-  int _page = 0;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+/// Signature v2 hairline ledger row (Frame 2 completion finish). A 1px rule
+/// sits above each row; the Barlow-Condensed muted key is on the left and the
+/// value on the right. Time-based values pass `mono: true` for Space Mono;
+/// everything else uses the Anton numeral face. The optional `unit` is a small
+/// trailing Barlow tag. No accent unless `valueColor` is given (PR green).
+class _LedgerRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final String? unit;
+  final bool mono;
+  final bool last;
+  final Color? valueColor;
+  const _LedgerRow({
+    required this.label,
+    required this.value,
+    this.unit,
+    this.mono = false,
+    this.last = false,
+    this.valueColor,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Pages of 4 cells → each a 2×2 grid.
-    final pages = <List<MetricCell>>[];
-    for (var i = 0; i < widget.cells.length; i += 4) {
-      final end =
-          (i + 4) > widget.cells.length ? widget.cells.length : i + 4;
-      pages.add(widget.cells.sublist(i, end));
-    }
-    // Nothing to page — render a single grid.
-    if (pages.length <= 1) {
-      return MetricGrid(
-        items: widget.cells,
-        columns: 2,
-        spacing: 10,
-        numberSize: StatType.secondary,
-      );
-    }
-
     final c = ThemeColors.of(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final pageWidth = constraints.maxWidth;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            NotificationListener<ScrollNotification>(
-              onNotification: (n) {
-                if (pageWidth > 0) {
-                  final p = (_controller.offset / pageWidth)
-                      .round()
-                      .clamp(0, pages.length - 1);
-                  if (p != _page) setState(() => _page = p);
-                }
-                return false;
-              },
-              child: SingleChildScrollView(
-                controller: _controller,
-                scrollDirection: Axis.horizontal,
-                physics: const PageScrollPhysics(),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    for (final page in pages)
-                      SizedBox(
-                        width: pageWidth,
-                        child: MetricGrid(
-                          items: page,
-                          columns: 2,
-                          spacing: 10,
-                          numberSize: StatType.secondary,
-                        ),
-                      ),
-                  ],
-                ),
+    final valColor = valueColor ?? c.textPrimary;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(color: AppColors.hairlineStrong, width: 1),
+          bottom: last
+              ? BorderSide(color: AppColors.hairlineStrong, width: 1)
+              : BorderSide.none,
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(vertical: 11),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
+        children: [
+          Expanded(
+            child: Text(
+              label.toUpperCase(),
+              style: ZType.lbl(11, color: c.textMuted, letterSpacing: 1.6),
+            ),
+          ),
+          Text(
+            value,
+            style: mono
+                ? ZType.data(18, color: valColor)
+                : ZType.disp(20, color: valColor),
+          ),
+          if (unit != null) ...[
+            const SizedBox(width: 3),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 1),
+              child: Text(
+                unit!.toUpperCase(),
+                style: ZType.lbl(9, color: c.textMuted, letterSpacing: 0.8),
               ),
             ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < pages.length; i++)
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    width: i == _page ? 18 : 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: i == _page
-                          ? c.accent
-                          : c.textMuted.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                  ),
-              ],
-            ),
           ],
-        );
-      },
+        ],
+      ),
     );
   }
 }

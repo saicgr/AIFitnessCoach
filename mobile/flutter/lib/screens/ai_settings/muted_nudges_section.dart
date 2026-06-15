@@ -13,6 +13,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/contextual_nudge.dart' show NudgeId;
 import '../../data/providers/ai_settings_provider.dart';
@@ -68,12 +69,8 @@ class MutedNudgesSection extends ConsumerWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Hidden nudges',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: c.textPrimary,
-                  ),
+                  'HIDDEN NUDGES',
+                  style: ZType.lbl(11.5, color: c.textMuted, letterSpacing: 2.0),
                 ),
               ),
               TextButton(

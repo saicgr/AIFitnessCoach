@@ -709,6 +709,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         idempotencyKey: idempotencyKey);
     final optimisticLogId = optimisticLog.id;
 
+    // Signature v2 — flash the transient "✓ Added to <Meal>" ghost the moment
+    // the log files into its meal section (the composer is just input; the meal
+    // section is the durable record). Presentation-only; the splice above is
+    // the real persistence path. The Nutrition Daily tab owns the overlay.
+    ref.read(mealLoggedGhostProvider.notifier).show(mealType);
+
     // (WR5) If the analyzed response carries no remote photo URL yet (the S3
     // upload hasn't returned) but we captured a local photo, show the LOCAL
     // image on the meal-list row immediately. The background save's success
@@ -2499,6 +2505,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // (WR6) Show the new meals on Home's timeline too.
     nutritionNotifier.refreshTimeline();
 
+    // Signature v2 — ghost confirms the menu-scan dishes filed into their meal.
+    if (optimisticIds.isNotEmpty) {
+      ref.read(mealLoggedGhostProvider.notifier).show(mealType);
+    }
+
     // Background write — UI already reflects the meals.
     () async {
       try {
@@ -3058,6 +3069,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             );
             // (WR6) Reflect the new meal on Home's timeline.
             nutritionNotifier.refreshTimeline();
+            // Signature v2 — ghost confirms the barcode food filed into its meal.
+            ref.read(mealLoggedGhostProvider.notifier).show(_selectedMealType.value);
             // Reconcile server-derived fields in the background.
             nutritionNotifier.load(widget.userId,
                 forceRefresh: true);

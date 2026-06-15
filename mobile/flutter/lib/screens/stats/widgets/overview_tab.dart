@@ -8,7 +8,6 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/theme/accent_color_provider.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
@@ -933,13 +932,7 @@ class _GoalProgressTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
 
     final exerciseName = goal['exercise_name'] as String? ?? 'Goal';
     final unit = GoalUnitExt.fromString(goal['unit'] as String?);
@@ -950,20 +943,17 @@ class _GoalProgressTile extends StatelessWidget {
         (targetValue > 0 ? currentValue / targetValue * 100 : 0.0);
     final pct = rawPct.clamp(0.0, 100.0);
 
-    // PR-beaten tiles glow in the streak/PR warm accent; in-progress tiles use
-    // the calm cyan, matching the rest of the Overview surface palette.
-    final tileColor = isPrBeaten ? AppColors.orange : AppColors.cyan;
+    // The hero numeral + progress bar carry the resolved accent (the one accent
+    // per surface). A beaten goal upgrades the card to the hero variant (accent
+    // left edge) and shows a green PR flag instead of a second accent color.
+    final accent = tc.accent;
 
-    return Container(
+    return ZealovaCard(
+      variant: isPrBeaten
+          ? ZealovaCardVariant.hero
+          : ZealovaCardVariant.outlined,
+      radius: AppRadius.lg,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isPrBeaten ? tileColor.withValues(alpha: 0.5) : cardBorder,
-          width: isPrBeaten ? 2 : 1,
-        ),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -971,41 +961,27 @@ class _GoalProgressTile extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  exerciseName,
+                  exerciseName.toUpperCase(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textPrimary,
-                  ),
+                  style:
+                      ZType.lbl(13, color: tc.textPrimary, letterSpacing: 0.8),
                 ),
               ),
               if (isPrBeaten) ...[
                 const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: tileColor.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.emoji_events,
-                          size: 12, color: tileColor),
-                      const SizedBox(width: 3),
-                      Text(
-                        'PR',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: tileColor,
-                        ),
-                      ),
-                    ],
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.emoji_events_outlined,
+                        size: 13, color: tc.success),
+                    const SizedBox(width: 4),
+                    Text(
+                      'PR',
+                      style: ZType.lbl(11,
+                          color: tc.success, letterSpacing: 1.2),
+                    ),
+                  ],
                 ),
               ],
             ],
@@ -1019,15 +995,16 @@ class _GoalProgressTile extends StatelessWidget {
                   value: _formatGoalValue(currentValue),
                   unit: unit.label,
                   size: StatType.hero,
-                  color: tileColor,
+                  color: accent,
                 ),
               ),
               const SizedBox(width: 6),
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'of ${unit.format(targetValue)}',
-                  style: TextStyle(fontSize: 13, color: textMuted),
+                  'of ${unit.format(targetValue)}'.toUpperCase(),
+                  style:
+                      ZType.lbl(11, color: tc.textMuted, letterSpacing: 0.8),
                 ),
               ),
             ],
@@ -1037,23 +1014,19 @@ class _GoalProgressTile extends StatelessWidget {
             children: [
               Expanded(
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: (pct / 100).clamp(0.0, 1.0),
-                    backgroundColor: cardBorder,
-                    valueColor: AlwaysStoppedAnimation<Color>(tileColor),
-                    minHeight: 6,
+                    backgroundColor: AppColors.hairlineStrong,
+                    valueColor: AlwaysStoppedAnimation<Color>(accent),
+                    minHeight: 4,
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Text(
                 '${pct.round()}%',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: tileColor,
-                ),
+                style: ZType.data(12, color: tc.textPrimary),
               ),
             ],
           ),
@@ -1071,44 +1044,41 @@ class _GoalProgressTile extends StatelessWidget {
   }
 }
 
+/// Recent-PR ledger (Signature Frame 1 archetype). Hairline-separated rows;
+/// the trophy glyph stays desaturated (muted) so it never reads as a second
+/// accent, and the only color on a row is the green +% improvement delta.
 class PRListWidget extends ConsumerWidget {
   const PRListWidget({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
 
     final prStats = ref.watch(prStatsProvider);
     final recentPrs = prStats?.recentPrs ?? [];
 
     if (recentPrs.isEmpty) {
-      return Container(
+      return ZealovaCard(
+        variant: ZealovaCardVariant.outlined,
+        radius: AppRadius.lg,
         padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.emoji_events_outlined, size: 48, color: textMuted),
+              Icon(Icons.emoji_events_outlined, size: 40, color: tc.textMuted),
               const SizedBox(height: 12),
               Text(
-                AppLocalizations.of(context).prSummaryCardNoPersonalRecordsYet,
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                AppLocalizations.of(context)
+                    .prSummaryCardNoPersonalRecordsYet
+                    .toUpperCase(),
+                textAlign: TextAlign.center,
+                style: ZType.lbl(13, color: tc.textSecondary, letterSpacing: 1.2),
               ),
               const SizedBox(height: 8),
               Text(
                 AppLocalizations.of(context).overviewPersonalRecordsAreTracked,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: textMuted, fontSize: 13),
+                style: ZType.data(11, color: tc.textMuted),
               ),
             ],
           ),
@@ -1116,72 +1086,74 @@ class PRListWidget extends ConsumerWidget {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: elevatedColor,
-        borderRadius: BorderRadius.circular(16),
+    return ZealovaCard(
+      variant: ZealovaCardVariant.outlined,
+      radius: AppRadius.lg,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          for (var index = 0; index < recentPrs.length; index++) ...[
+            if (index > 0) const ZealovaRule(),
+            _PRLedgerRow(pr: recentPrs[index]),
+          ],
+        ],
       ),
-      child: ListView.separated(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: recentPrs.length,
-        separatorBuilder: (_, __) => Divider(
-          height: 1,
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
-        itemBuilder: (context, index) {
-          final pr = recentPrs[index];
-          final date = DateTime.tryParse(pr.achievedAt);
-          final dateStr = date != null
-              ? DateFormat('MMM d').format(date)
-              : '';
+    );
+  }
+}
 
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
+/// One PR ledger row: desaturated trophy · exercise name + lift/date sub ·
+/// green +% improvement chip.
+class _PRLedgerRow extends StatelessWidget {
+  final dynamic pr;
+
+  const _PRLedgerRow({required this.pr});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final date = DateTime.tryParse(pr.achievedAt as String);
+    final dateStr = date != null ? DateFormat('MMM d').format(date) : '';
+    final improvement = pr.improvementPercent as double?;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      child: Row(
+        children: [
+          // Desaturated trophy — never the accent.
+          Icon(Icons.emoji_events_outlined, color: tc.textMuted, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.emoji_events, color: AppColors.orange, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        pr.exerciseDisplayName,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        AppLocalizations.of(context)!.overviewTabValue(pr.liftDescription, dateStr),
-                        style: TextStyle(fontSize: 13, color: textMuted),
-                      ),
-                    ],
-                  ),
+                Text(
+                  pr.exerciseDisplayName as String,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.lbl(14,
+                      color: tc.textPrimary, letterSpacing: 0.5),
                 ),
-                if (pr.improvementPercent != null && pr.improvementPercent! > 0)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      AppLocalizations.of(context)!.overviewTabValue2(pr.improvementPercent!.toStringAsFixed(1)),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.success,
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 3),
+                Text(
+                  AppLocalizations.of(context)
+                      .overviewTabValue(pr.liftDescription as String, dateStr),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.data(11, color: tc.textMuted),
+                ),
               ],
             ),
-          );
-        },
+          ),
+          if (improvement != null && improvement > 0) ...[
+            const SizedBox(width: 10),
+            Text(
+              AppLocalizations.of(context)
+                  .overviewTabValue2(improvement.toStringAsFixed(1)),
+              style: ZType.lbl(12, color: tc.success, letterSpacing: 0.5),
+            ),
+          ],
+        ],
       ),
     );
   }

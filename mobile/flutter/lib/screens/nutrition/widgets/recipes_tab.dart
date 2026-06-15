@@ -351,12 +351,7 @@ class _UpcomingCard extends StatelessWidget {
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
         // Hairline surface with an accent left rail (hero-card cue).
-        border: Border(
-          left: BorderSide(color: accent, width: 3),
-          top: const BorderSide(color: AppColors.cardBorder),
-          right: const BorderSide(color: AppColors.cardBorder),
-          bottom: const BorderSide(color: AppColors.cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Row(
         children: [
@@ -414,12 +409,7 @@ class _LeftoverCard extends StatelessWidget {
         color: tc.surface,
         borderRadius: BorderRadius.circular(14),
         // Hairline surface; status colour rides the left rail only.
-        border: Border(
-          left: BorderSide(color: warningColor, width: 3),
-          top: const BorderSide(color: AppColors.cardBorder),
-          right: const BorderSide(color: AppColors.cardBorder),
-          bottom: const BorderSide(color: AppColors.cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Row(
         children: [

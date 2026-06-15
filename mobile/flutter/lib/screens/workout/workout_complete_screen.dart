@@ -46,7 +46,6 @@ import '../../shareables/shareable_sheet.dart';
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
-import '../../widgets/metric_grid.dart';
 import '../../core/constants/stat_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/app_typography.dart';
@@ -752,26 +751,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         AppLocalizations.of(context).workoutCompleteWorkoutComplete,
                       ),
                       const SizedBox(height: 4),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'DONE.',
-                            style: ZType.disp(
-                              52,
-                              color: ThemeColors.of(context).textPrimary,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Icon(
-                              Icons.check_rounded,
-                              color: ThemeColors.of(context).accent,
-                              size: 28,
-                            ),
-                          ),
-                        ],
+                      // Typographic finish — orange is reserved for the DONE
+                      // CTA, so the masthead is pure Anton on the text ladder
+                      // (no decorative accent check icon competing for it).
+                      Text(
+                        'DONE.',
+                        style: ZType.disp(
+                          52,
+                          color: ThemeColors.of(context).textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 6),
                       Text(
@@ -786,10 +774,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Always-visible Gravl-style 2×N stats grid (Duration /
-                  // Energy / Volume / Exercises / Sets / Reps / Median rest /
-                  // Records). No "show more" toggle — every metric glanceable.
+                  // Signature v2 hairline stat ledger — Time · Volume ·
+                  // Sets·Reps · Energy · Median rest · Records on 1px rules.
                   _buildCompactStatsGrid().animate().fadeIn(delay: 200.ms),
+
+                  // XP + streak — the two-cell earned/streak row (Frame 2).
+                  // Neutral numerals keep the single orange budget on DONE.
+                  _buildXpStreakRow().animate().fadeIn(delay: 240.ms),
 
                   // Heart Rate Section — live watch/BLE capture takes priority;
                   // otherwise the Apple Health / Health Connect backfill (6c).
@@ -867,8 +858,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           child: Icon(
                             starIndex <= _rating ? Icons.star : Icons.star_border,
                             size: 36,
+                            // Neutral filled stars keep the single orange budget
+                            // on the DONE CTA (Signature v2 orange-once rule).
                             color: starIndex <= _rating
-                                ? ThemeColors.of(context).accent
+                                ? ThemeColors.of(context).textPrimary
                                 : AppColors.textMuted,
                           ),
                         ),

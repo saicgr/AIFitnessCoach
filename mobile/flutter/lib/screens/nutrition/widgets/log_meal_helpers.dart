@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Nutrition info row for barcode product details
@@ -796,7 +797,9 @@ class ActionIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = color ?? const Color(0xFFF97316);
+    // Default to the resolved Signature accent (orange) rather than a
+    // hardcoded hex, so a gym-override accent flows through.
+    final c = color ?? ThemeColors.of(context).accent;
 
     return GestureDetector(
       onTap: onTap,

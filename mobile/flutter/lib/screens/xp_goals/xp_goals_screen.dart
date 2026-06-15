@@ -730,7 +730,7 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
         children: [
           Icon(
             Icons.stars_rounded,
-            color: isDark ? const Color(0xFF00D9FF) : const Color(0xFF0099CC),
+            color: AppColors.gamGold,
           ),
           const SizedBox(width: 8),
           Text(
@@ -791,9 +791,9 @@ void _showXPInfoDialog(BuildContext context, bool isDark) {
           onPressed: () => Navigator.pop(context),
           child: Text(
             AppLocalizations.of(context)!.xpGoalsGotIt,
-            style: TextStyle(
+            style: const TextStyle(
               fontWeight: FontWeight.bold,
-              color: isDark ? const Color(0xFF00D9FF) : const Color(0xFF0099CC),
+              color: AppColors.gamGold,
             ),
           ),
         ),

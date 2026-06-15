@@ -5,7 +5,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -18,6 +17,7 @@ import '../../utils/share_report_helper.dart';
 import '../../core/constants/branding.dart';
 import '../../widgets/trends/trend_chart.dart';
 import '../../widgets/trends/trend_correlation.dart';
+import '../../widgets/design_system/zealova.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 part 'measurement_detail_screen_part_stat_item.dart';
@@ -89,14 +89,15 @@ class _MeasurementDetailScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final elevated = isDark ? AppColors.surface : AppColorsLight.surface;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    // Use the user's selected accent so the chart actually has color in light
-    // mode (AppColorsLight.cyan is monochrome grey).
-    final cyan = ref.colors(context).accent;
+    // Signature v2: the measurement family's documented accent exception is
+    // cyan (#06B6D4). It's used on the chart line + the CTA only — never as a
+    // general orange substitute.
+    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
 
     final history = measurementsState.historyByType[_type] ?? [];
     final filteredHistory = _filterByPeriod(history);
@@ -126,60 +127,72 @@ class _MeasurementDetailScreenState
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsetsDirectional.fromSTEB(56, 56, 16, 8),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: Text(
-                              _type.displayName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: textPrimary,
-                              ),
-                            ),
-                          ),
-                          // Custom Trends entry — opens the trends explorer
-                          // pre-selected to this measurement's metric.
-                          IconButton(
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                                minWidth: 36, minHeight: 36),
-                            icon: LineIcon('custom_trend',
-                                color: textMuted, size: 22),
-                            tooltip: AppLocalizations.of(context).measurementDetailViewTrends,
-                            onPressed: () {
-                              HapticService.light();
-                              context.push('/trends/custom',
-                                  extra: _trendMetricForType(_type));
-                            },
-                          ),
-                          const SizedBox(width: 4),
-                          // Unit toggle
-                          GestureDetector(
-                            onTap: () {
-                              setState(() => _isMetric = !_isMetric);
-                              ref.read(authStateProvider.notifier).updateUserProfile({
-                                'measurement_unit': _isMetric ? 'cm' : 'in',
-                              });
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: elevated,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: cardBorder),
-                              ),
-                              child: Text(
-                                _isMetric ? AppLocalizations.of(context).measurementsScreenPartMetric : AppLocalizations.of(context).measurementsScreenPartImperial,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: cyan,
-                                  fontWeight: FontWeight.w600,
+                          // Signature v2 header: "← MEASUREMENTS" breadcrumb on
+                          // the left, unit hint + toggle on the right.
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '← ${AppLocalizations.of(context).measurementsScreenPartMeasurements}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: ZType.lbl(11,
+                                      color: textMuted, letterSpacing: 2.0),
                                 ),
                               ),
-                            ),
+                              // Custom Trends entry — opens the trends explorer
+                              // pre-selected to this measurement's metric.
+                              IconButton(
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                    minWidth: 36, minHeight: 36),
+                                icon: LineIcon('custom_trend',
+                                    color: textMuted, size: 22),
+                                tooltip: AppLocalizations.of(context).measurementDetailViewTrends,
+                                onPressed: () {
+                                  HapticService.light();
+                                  context.push('/trends/custom',
+                                      extra: _trendMetricForType(_type));
+                                },
+                              ),
+                              const SizedBox(width: 4),
+                              // Unit toggle — reads as a "kg · cm ▸" unit hint.
+                              GestureDetector(
+                                onTap: () {
+                                  setState(() => _isMetric = !_isMetric);
+                                  ref.read(authStateProvider.notifier).updateUserProfile({
+                                    'measurement_unit': _isMetric ? 'cm' : 'in',
+                                  });
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: elevated,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(color: cardBorder),
+                                  ),
+                                  child: Text(
+                                    _isMetric
+                                        ? AppLocalizations.of(context).measurementsScreenPartMetric
+                                        : AppLocalizations.of(context).measurementsScreenPartImperial,
+                                    style: ZType.lbl(10,
+                                        color: cyan, letterSpacing: 1.5),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          // Masthead metric name in Anton — the screen's title.
+                          Text(
+                            _type.displayName.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ZType.disp(30, color: textPrimary),
                           ),
                         ],
                       ),
@@ -203,10 +216,11 @@ class _MeasurementDetailScreenState
                 ).animate().fadeIn(delay: 100.ms),
               ),
 
-              // Period selector — scrollable pills
+              // Range chips — scrollable Signature hairline chips. Selected =
+              // cyan (this family's documented accent exception).
               SliverToBoxAdapter(
                 child: SizedBox(
-                  height: 48,
+                  height: 40,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -215,30 +229,31 @@ class _MeasurementDetailScreenState
                     itemBuilder: (context, index) {
                       final period = _periods[index];
                       final isSelected = _selectedPeriod == period['value'];
-                      return GestureDetector(
-                        onTap: () {
-                          HapticService.light();
-                          setState(() => _selectedPeriod = period['value'] as String);
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isSelected ? cyan.withOpacity(0.2) : elevated,
-                            // Full-pill radius — matches the period row on the main
-                            // measurements screen for a unified look.
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                              color: isSelected ? cyan : cardBorder,
-                              width: isSelected ? 1.5 : 1,
+                      return Center(
+                        child: InkWell(
+                          onTap: () {
+                            HapticService.light();
+                            setState(() =>
+                                _selectedPeriod = period['value'] as String);
+                          },
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            height: 28,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 14),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                color: isSelected ? cyan : cardBorder,
+                              ),
+                              borderRadius: BorderRadius.circular(999),
                             ),
-                          ),
-                          child: Center(
                             child: Text(
-                              period['label'] as String,
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              (period['label'] as String).toUpperCase(),
+                              style: ZType.lbl(
+                                10,
                                 color: isSelected ? cyan : textMuted,
+                                letterSpacing: 1.5,
                               ),
                             ),
                           ),
@@ -333,21 +348,13 @@ class _MeasurementDetailScreenState
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      ZealovaSectionKicker(
                         AppLocalizations.of(context).measurementDetailHistory,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: textMuted,
-                          letterSpacing: 1.5,
-                        ),
                       ),
                       Text(
                         AppLocalizations.of(context)!.measurementDetailScreenEntries(filteredHistory.length),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: textMuted,
-                        ),
+                        style: ZType.lbl(10,
+                            color: textMuted, letterSpacing: 1),
                       ),
                     ],
                   ),
@@ -374,6 +381,53 @@ class _MeasurementDetailScreenState
                   textMuted: textMuted,
                   cyan: cyan,
                 ).animate().fadeIn(delay: 320.ms),
+              ),
+
+              // Cyan accent CTA — reuses the existing add-entry sheet (same
+              // callback as the FAB). Cyan is this family's documented accent
+              // exception; here on the CTA + the chart line only.
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showAddMeasurementSheet(context),
+                      borderRadius: BorderRadius.circular(26),
+                      child: Container(
+                        height: 52,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: cyan,
+                          borderRadius: BorderRadius.circular(26),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add,
+                                size: 18,
+                                color: isDark
+                                    ? AppColors.pureBlack
+                                    : Colors.white),
+                            const SizedBox(width: 8),
+                            Text(
+                              AppLocalizations.of(context)
+                                  .measurementDetailScreenLog(_type.displayName),
+                              style: ZType.lbl(
+                                14,
+                                color: isDark
+                                    ? AppColors.pureBlack
+                                    : Colors.white,
+                                letterSpacing: 2.0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ).animate().fadeIn(delay: 340.ms),
               ),
 
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -526,27 +580,25 @@ class _MeasurementDetailScreenState
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
-          colors: [
-            cyan.withValues(alpha: 0.15),
-            cyan.withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cyan.withValues(alpha: 0.3)),
-      ),
+      padding: const EdgeInsets.fromLTRB(2, 8, 2, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Big value + unit on one consistent baseline, swipeable across
-          // Latest / Average / Trend.
+          // Tiny "Body weight · latest" sub-label kicker over the hero.
+          Padding(
+            padding: const EdgeInsetsDirectional.only(start: 2, bottom: 6),
+            child: Text(
+              '${_type.displayName} · ${_rangeLabel()}'.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ZType.lbl(10, color: textMuted, letterSpacing: 2.0),
+            ),
+          ),
+          // Big Anton value + unit on one consistent baseline, swipeable
+          // across Latest / Average / Trend.
           _HeroValueCarousel(
             pages: heroPages,
-            valueColor: cyan,
+            valueColor: textPrimary,
             labelColor: textMuted,
           ),
           if (periodChange != null && periodChange.abs() >= 0.05) ...[
@@ -601,7 +653,10 @@ class _MeasurementDetailScreenState
         _type == MeasurementType.weight || _type == MeasurementType.bodyFat;
     final isGoodChange = isDecreaseGood ? !isUp : isUp;
 
-    final color = isGoodChange ? AppColors.success : AppColors.error;
+    // Signature v2 verdict line: a literal status green/red (not the accent) —
+    // green #5BE49B for a desirable change, red for the rest.
+    const verdictGreen = Color(0xFF5BE49B);
+    final color = isGoodChange ? verdictGreen : AppColors.error;
 
     // Verb pool keeps copy human: weight/fat read "lost/gained"; girths read
     // "down/up". Exact magnitude is substituted, never rounded to theatre.
@@ -612,27 +667,30 @@ class _MeasurementDetailScreenState
       verb = isUp ? 'up' : 'down';
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    // Flat verdict line (no pill) — "↓ 0.8 kg lost over last 30 days".
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(start: 2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            isUp ? Icons.arrow_upward : Icons.arrow_downward,
-            size: 16,
-            color: color,
+          Text(
+            isUp ? '↑' : '↓',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.2,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Flexible(
             child: Text(
               '${_formatValue(change.abs())} $unit $verb over ${_rangeLabel()}',
               maxLines: 2,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 13.5,
+                height: 1.2,
                 fontWeight: FontWeight.w600,
                 color: color,
               ),
@@ -653,70 +711,72 @@ class _MeasurementDetailScreenState
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '${_type.displayName} over time',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+            child: ZealovaSectionKicker(
+              '${_type.displayName} over time',
             ),
           ),
-          const SizedBox(height: 16),
-          if (history.isEmpty)
-            SizedBox(
-              height: 220,
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.show_chart, size: 40, color: textMuted),
-                    const SizedBox(height: 8),
-                    Text(
-                      AppLocalizations.of(context).trendChartNoDataInThis,
-                      style: TextStyle(color: textMuted),
+          const ZealovaRule(margin: EdgeInsets.fromLTRB(12, 10, 12, 4)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            child: history.isEmpty
+                ? SizedBox(
+                    height: 220,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.show_chart, size: 40, color: textMuted),
+                          const SizedBox(height: 8),
+                          Text(
+                            AppLocalizations.of(context).trendChartNoDataInThis,
+                            style: TextStyle(color: textMuted),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            AppLocalizations.of(context)
+                                .measurementDetailTrySelectingAWider,
+                            style: TextStyle(
+                                color: textMuted.withValues(alpha: 0.6),
+                                fontSize: 12),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => _showAddMeasurementSheet(context),
+                            child: Text(
+                                AppLocalizations.of(context)
+                                    .metricsDashboardAddEntry,
+                                style: TextStyle(color: cyan)),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppLocalizations.of(context)
-                          .measurementDetailTrySelectingAWider,
-                      style: TextStyle(
-                          color: textMuted.withValues(alpha: 0.6),
-                          fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => _showAddMeasurementSheet(context),
-                      child: Text(
-                          AppLocalizations.of(context).metricsDashboardAddEntry,
-                          style: TextStyle(color: cyan)),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          else if (history.length < 2)
-            // A single point can't form a trend line. Show the lone value as a
-            // marker with an honest "not enough to chart" affordance rather
-            // than a broken single-tick axis.
-            _buildSinglePointChart(
-              history.first,
-              isDark: isDark,
-              textPrimary: textPrimary,
-              textMuted: textMuted,
-              cyan: cyan,
-            )
-          else
-            _buildChart(history,
-                cyan: cyan, textMuted: textMuted, isDark: isDark),
+                  )
+                : history.length < 2
+                    // A single point can't form a trend line. Show the lone
+                    // value as a marker with an honest "not enough to chart"
+                    // affordance rather than a broken single-tick axis.
+                    ? _buildSinglePointChart(
+                        history.first,
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        textMuted: textMuted,
+                        cyan: cyan,
+                      )
+                    : _buildChart(history,
+                        cyan: cyan, textMuted: textMuted, isDark: isDark),
+          ),
         ],
       ),
     );
@@ -866,42 +926,43 @@ class _MeasurementDetailScreenState
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Row(
         children: [
           Expanded(
-            child: _StatItem(
-              label: AppLocalizations.of(context).syncedWorkoutDetailMin,
-              value: '${_formatValue(min)} $unit',
-              color: AppColors.success,
+            child: Center(
+              child: _StatItem(
+                label: AppLocalizations.of(context).syncedWorkoutDetailMin,
+                // Min reads as a subtle status green.
+                value: '${_formatValue(min)} $unit',
+                color: const Color(0xFF5BE49B),
+              ),
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-          ),
+          Container(width: 1, height: 36, color: AppColors.hairlineStrong),
           Expanded(
-            child: _StatItem(
-              label: AppLocalizations.of(context).syncedWorkoutDetailAvg,
-              value: '${_formatValue(avg)} $unit',
-              color: cyan,
+            child: Center(
+              child: _StatItem(
+                label: AppLocalizations.of(context).syncedWorkoutDetailAvg,
+                value: '${_formatValue(avg)} $unit',
+                color: textPrimary,
+              ),
             ),
           ),
-          Container(
-            width: 1,
-            height: 40,
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-          ),
+          Container(width: 1, height: 36, color: AppColors.hairlineStrong),
           Expanded(
-            child: _StatItem(
-              label: AppLocalizations.of(context).strengthOverviewCardMax,
-              value: '${_formatValue(max)} $unit',
-              color: AppColors.error,
+            child: Center(
+              child: _StatItem(
+                label: AppLocalizations.of(context).strengthOverviewCardMax,
+                // Max reads as a subtle status red.
+                value: '${_formatValue(max)} $unit',
+                color: AppColors.error,
+              ),
             ),
           ),
         ],
@@ -1023,7 +1084,9 @@ class _MeasurementDetailScreenState
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = ref.colors(context).accent;
+    // Cyan — this family's documented accent exception (matches the chart line
+    // + the in-scroll CTA).
+    final cyan = isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
     final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
 
     final valueController = TextEditingController();
@@ -1375,9 +1438,9 @@ class _HeroValueCarouselState extends State<_HeroValueCarousel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Bounded height for the PageView: big number (46) + gap + caption.
+        // Bounded height for the PageView: big Anton number (58) + caption.
         SizedBox(
-          height: 76,
+          height: 88,
           child: PageView.builder(
             controller: _controller,
             itemCount: widget.pages.length,
@@ -1410,29 +1473,25 @@ class _HeroValueCarouselState extends State<_HeroValueCarousel> {
                 p.value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 46,
-                  height: 1.0,
-                  fontWeight: FontWeight.bold,
-                  color: widget.valueColor,
-                ),
+                style: ZType.disp(58, color: widget.valueColor),
               ),
             ),
             Padding(
-              padding: const EdgeInsetsDirectional.only(bottom: 8, start: 6),
+              padding: const EdgeInsetsDirectional.only(bottom: 10, start: 6),
               child: Text(
-                p.unit,
-                style: TextStyle(fontSize: 18, color: widget.labelColor),
+                p.unit.toUpperCase(),
+                style:
+                    ZType.lbl(13, color: widget.labelColor, letterSpacing: 1),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
           p.label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: 13, color: widget.labelColor),
+          style: ZType.lbl(11, color: widget.labelColor, letterSpacing: 1.2),
         ),
       ],
     );

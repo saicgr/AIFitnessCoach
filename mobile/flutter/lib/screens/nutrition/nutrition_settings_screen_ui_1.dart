@@ -323,12 +323,7 @@ extension _NutritionSettingsScreenStateUI1 on _NutritionSettingsScreenState {
       decoration: BoxDecoration(
         color: ThemeColors.of(context).surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(color: accent, width: 3),
-          top: const BorderSide(color: AppColors.cardBorder),
-          right: const BorderSide(color: AppColors.cardBorder),
-          bottom: const BorderSide(color: AppColors.cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

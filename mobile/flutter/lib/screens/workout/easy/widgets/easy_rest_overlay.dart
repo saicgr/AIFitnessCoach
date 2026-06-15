@@ -45,6 +45,12 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
   final VoidCallback onSkip;
   final VoidCallback onDone;
 
+  /// ±15s rest adjustments — wired to WorkoutTimerController.adjustRestTime
+  /// (the tick re-broadcasts through `remainingStream`, so the countdown
+  /// updates in place). Optional so older call-sites still compile.
+  final VoidCallback? onAddTime;
+  final VoidCallback? onSubtractTime;
+
   const EasyRestOverlay({
     super.key,
     required this.initialSeconds,
@@ -57,6 +63,8 @@ class EasyRestOverlay extends ConsumerStatefulWidget {
     required this.useKg,
     required this.onSkip,
     required this.onDone,
+    this.onAddTime,
+    this.onSubtractTime,
   });
 
   @override
@@ -98,112 +106,179 @@ class _EasyRestOverlayState extends ConsumerState<EasyRestOverlay> {
         ? 0.0
         : (_remaining / widget.initialSeconds).clamp(0.0, 1.0);
 
-    // The overlay still sits over a dimmed scrim (pushed opaque:false), but
-    // the composition now mirrors the signature-v2 rest treatment: a Barlow
-    // "REST" kicker, the big Anton countdown numeral, a draining accent bar,
-    // the next-set ledger row (`.rw-led` idiom), and a rounded "Skip" pill
-    // (`.ctl sk`). Wiring is unchanged — same remaining stream, onSkip, onDone.
+    // Signature v2: rest is an INLINE, in-flow strip docked at the bottom —
+    // NOT a full-screen takeover. The route is pushed with a transparent
+    // barrier so the set ledger / targets / next-set stay fully visible above.
+    // The strip carries the Barlow "REST" kicker, the Anton countdown, a
+    // draining accent bar, −15 / Skip / +15 controls, and the next-set ledger.
+    final restLabel =
+        AppLocalizations.of(context).workoutSummaryAdvancedRest.toUpperCase();
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // REST kicker — Barlow Condensed uppercase (`.rl`).
-              Text(
-                AppLocalizations.of(context).workoutSummaryAdvancedRest.toUpperCase(),
-                style: ZType.lbl(
-                  14,
-                  color: Colors.white.withValues(alpha: 0.62),
-                  letterSpacing: 3.0,
-                ),
-              ),
-              const SizedBox(height: 14),
-              // The big Anton countdown numeral — the poster of the rest view.
-              Text(
-                _remaining.toString(),
-                style: ZType.disp(96, color: Colors.white, letterSpacing: 0),
-              ),
-              const SizedBox(height: 18),
-              // Draining accent bar — the `.ir-strip` progress, recolours with
-              // the user's accent.
-              SizedBox(
-                width: 140,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
-                  child: LinearProgressIndicator(
-                    value: frac,
-                    minHeight: 4,
-                    backgroundColor: Colors.white.withValues(alpha: 0.12),
-                    valueColor: AlwaysStoppedAnimation<Color>(accent),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30),
-              // Next-set ledger row (`.rw-led`): the upcoming exercise + its
-              // target, the "what's coming" line that stays visible during rest.
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.arrow_forward_rounded,
-                      size: 16, color: accent),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      widget.nextExercise.name.toUpperCase(),
-                      style: ZType.lbl(13,
-                          color: Colors.white, letterSpacing: 1.0),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+      // The strip itself is the only hit target; the rest of the screen shows
+      // through so the workout never disappears behind a scrim.
+      body: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF161318) : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: accent.withValues(alpha: 0.55)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
-              Text(
-                'SET ${widget.nextSetNumber} OF ${widget.totalSets}'
-                '  ·  '
-                '${_fmtWeight(widget.nextTargetWeightKg)} $unit × ${widget.nextTargetReps}',
-                style: TextStyle(
-                  fontFamily: 'Space Mono',
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.72),
-                  fontFeatures: const [FontFeature.tabularFigures()],
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              // Skip pill — the single rest affordance, styled as a rounded
-              // `.ctl sk` chip (the v2 rest controls' Skip).
-              OutlinedButton(
-                onPressed: () async {
-                  await HapticService.instance.tap();
-                  widget.onSkip();
-                },
-                style: OutlinedButton.styleFrom(
-                  shape: const StadiumBorder(),
-                  side: BorderSide(
-                      color: Colors.white.withValues(alpha: 0.26)),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 12),
-                ),
-                child: Text(
-                  AppLocalizations.of(context).easyRestOverlaySkipRest.toUpperCase(),
-                  style: ZType.lbl(
-                    13,
-                    color: Colors.white.withValues(alpha: 0.88),
-                    weight: FontWeight.w700,
-                    letterSpacing: 2.0,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(restLabel,
+                          style: ZType.lbl(11,
+                              color: isDark
+                                  ? Colors.white70
+                                  : Colors.black54,
+                              letterSpacing: 2.5)),
+                      const SizedBox(width: 12),
+                      Text(_remaining.toString(),
+                          style: ZType.disp(30,
+                                  color: isDark ? Colors.white : Colors.black,
+                                  letterSpacing: 0)
+                              .copyWith(height: 1.0)),
+                      const Spacer(),
+                      if (widget.onSubtractTime != null)
+                        _RestCtl(
+                            label: '−15',
+                            isDark: isDark,
+                            onTap: () async {
+                              await HapticService.instance.tap();
+                              widget.onSubtractTime!();
+                            }),
+                      const SizedBox(width: 8),
+                      _RestCtl(
+                          label: AppLocalizations.of(context)
+                              .easyRestOverlaySkipRest
+                              .toUpperCase(),
+                          isDark: isDark,
+                          emphasized: true,
+                          accent: accent,
+                          onTap: () async {
+                            await HapticService.instance.tap();
+                            widget.onSkip();
+                          }),
+                      if (widget.onAddTime != null) ...[
+                        const SizedBox(width: 8),
+                        _RestCtl(
+                            label: '+15',
+                            isDark: isDark,
+                            onTap: () async {
+                              await HapticService.instance.tap();
+                              widget.onAddTime!();
+                            }),
+                      ],
+                    ],
                   ),
-                ),
+                  const SizedBox(height: 10),
+                  // Draining accent bar — full width (the `.ir-strip` bar).
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(2),
+                    child: LinearProgressIndicator(
+                      value: frac,
+                      minHeight: 3,
+                      backgroundColor: (isDark ? Colors.white : Colors.black)
+                          .withValues(alpha: 0.10),
+                      valueColor: AlwaysStoppedAnimation<Color>(accent),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Next-set ledger — what's coming, stays visible during rest.
+                  Row(
+                    children: [
+                      Icon(Icons.arrow_forward_rounded, size: 15, color: accent),
+                      const SizedBox(width: 7),
+                      Flexible(
+                        child: Text(
+                          widget.nextExercise.name.toUpperCase(),
+                          style: ZType.lbl(11.5,
+                              color: isDark ? Colors.white : Colors.black87,
+                              letterSpacing: 1.0),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        'SET ${widget.nextSetNumber}/${widget.totalSets}'
+                        ' · ${_fmtWeight(widget.nextTargetWeightKg)} $unit'
+                        ' × ${widget.nextTargetReps}',
+                        style: TextStyle(
+                          fontFamily: 'Space Mono',
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: (isDark ? Colors.white : Colors.black)
+                              .withValues(alpha: 0.66),
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// A compact rest-strip control pill (−15 / SKIP / +15). The Skip variant is
+/// accent-emphasized; the ±15 variants are hairline ghosts.
+class _RestCtl extends StatelessWidget {
+  final String label;
+  final bool isDark;
+  final bool emphasized;
+  final Color? accent;
+  final VoidCallback onTap;
+  const _RestCtl({
+    required this.label,
+    required this.isDark,
+    required this.onTap,
+    this.emphasized = false,
+    this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = emphasized
+        ? (accent ?? Colors.white)
+        : (isDark ? Colors.white70 : Colors.black54);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: emphasized
+                ? (accent ?? Colors.white).withValues(alpha: 0.6)
+                : (isDark ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.22),
+          ),
+        ),
+        child: Text(label,
+            style: ZType.lbl(10.5, color: fg, letterSpacing: 1.5)),
       ),
     );
   }

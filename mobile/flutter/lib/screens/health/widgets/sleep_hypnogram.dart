@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/services/health_service.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -53,52 +54,65 @@ class SleepHypnogram extends StatelessWidget {
     final bed = summary.bedTime;
     final wake = summary.wakeTime;
 
+    // Signature stage legend colours: Awake amber, REM cyan, Light a
+    // violet-translucent rung, Deep the full violet (the sleep family hue).
+    const awakeColor = Color(0xFFFFD54A);
+    final remColor = AppColors.macroCarbs; // cyan #06B6D4
+    final lightColor = AppColors.macroProtein.withValues(alpha: 0.55);
+    const deepColor = AppColors.macroProtein; // violet #A855F7
+    final span = _spanTotal(deep, light, rem, awake);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'STAGES',
+          style: ZType.lbl(10, color: textMuted, letterSpacing: 2.0),
+        ),
+        const SizedBox(height: 10),
         // The four stacked stage rows, depth-ordered top → bottom: Awake,
         // REM, Light, Deep. Each row's filled span is proportional to its
         // share of time-in-bed.
         _StageRow(
           label: AppLocalizations.of(context).sleepHypnogramAwake,
-          color: AppColors.warning,
+          color: awakeColor,
           minutes: awake,
-          totalMinutes: _spanTotal(deep, light, rem, awake),
+          totalMinutes: span,
           isDark: isDark,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         _StageRow(
           label: 'REM',
-          color: AppColors.cyan,
+          color: remColor,
           minutes: rem,
-          totalMinutes: _spanTotal(deep, light, rem, awake),
+          totalMinutes: span,
           isDark: isDark,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         _StageRow(
           label: AppLocalizations.of(context).settingsThemeLight,
-          color: AppColors.purple.withValues(alpha: 0.55),
+          color: lightColor,
           minutes: light,
-          totalMinutes: _spanTotal(deep, light, rem, awake),
+          totalMinutes: span,
           isDark: isDark,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         _StageRow(
           label: AppLocalizations.of(context).sleepHypnogramDeep,
-          color: AppColors.purple,
+          color: deepColor,
           minutes: deep,
-          totalMinutes: _spanTotal(deep, light, rem, awake),
+          totalMinutes: span,
           isDark: isDark,
         ),
         if (bed != null && wake != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(fmt.format(bed),
-                  style: TextStyle(fontSize: 11, color: textMuted)),
+                  style: ZType.data(11, color: textMuted)),
               Text(fmt.format(wake),
-                  style: TextStyle(fontSize: 11, color: textMuted)),
+                  style: ZType.data(11, color: textMuted)),
             ],
           ),
         ],
@@ -133,29 +147,25 @@ class _StageRow extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final track = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.04);
+        ? AppColors.hairlineStrong
+        : Colors.black.withValues(alpha: 0.06);
     final frac = (minutes / totalMinutes).clamp(0.0, 1.0);
 
     return Row(
       children: [
         SizedBox(
-          width: 46,
+          width: 52,
           child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: textMuted,
-            ),
+            label.toUpperCase(),
+            style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(2),
             child: SizedBox(
-              height: 14,
+              height: 8,
               child: Stack(
                 children: [
                   Container(color: track),
@@ -168,17 +178,13 @@ class _StageRow extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         SizedBox(
           width: 48,
           child: Text(
             _fmtDur(minutes),
             textAlign: TextAlign.end,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
+            style: ZType.data(11, color: textPrimary),
           ),
         ),
       ],

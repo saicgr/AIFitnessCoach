@@ -24,9 +24,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/stat_typography.dart';
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/providers/xp_provider.dart';
@@ -509,19 +511,24 @@ class _WeeklyRecapTeaser extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: fg.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: fg.withValues(alpha: 0.08)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder),
         ),
         child: Row(
           children: [
+            // Framed hairline glyph — the spec's `.st-gl` box, not an
+            // accent-tinted fill chip.
             Container(
-              padding: const EdgeInsets.all(10),
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.cardBorder),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(Icons.auto_awesome_rounded, color: accent, size: 20),
+              child: const Icon(Icons.auto_awesome_rounded,
+                  color: AppColors.textSecondary, size: 17),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -529,27 +536,24 @@ class _WeeklyRecapTeaser extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context).overviewLastWeek,
-                    style: TextStyle(
-                      color: fg.withValues(alpha: 0.55),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.1,
-                    ),
+                    AppLocalizations.of(context).overviewLastWeek.toUpperCase(),
+                    style: ZType.lbl(10,
+                        color: AppColors.textMuted, letterSpacing: 1.5),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
-                    '$workouts workouts • $prs PRs',
-                    style: TextStyle(
-                      color: fg,
+                    '$workouts workouts · $prs PRs',
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
                       fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: fg.withValues(alpha: 0.3)),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textMuted, size: 18),
           ],
         ),
       ),
@@ -622,9 +626,9 @@ class _StreakHeroTile extends StatelessWidget {
     // version of the type ("login" → "Login streak").
     final heroLabel = _labelFor(hero.type);
 
-    // Serious Mode tones the accent down and drops the glow halo, but the
-    // number stays full-size and fully visible (discoverability requirement).
-    final accentStrength = serious ? 0.18 : 0.32;
+    // Signature hero grammar: hairline surface + accent LEFT edge, an Anton
+    // numeral, NO glow halo, NO accent-tint fill. Serious Mode drops the
+    // accent edge to a plain hairline and renders the numeral in text color.
     final numberColor = serious ? fg : accent;
 
     return GestureDetector(
@@ -633,23 +637,13 @@ class _StreakHeroTile extends StatelessWidget {
         context.push('/streaks');
       },
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.05)
-              : Colors.black.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: accent.withValues(alpha: accentStrength)),
-          boxShadow: serious
-              ? null
-              : [
-                  BoxShadow(
-                    color: accent.withValues(alpha: 0.10),
-                    blurRadius: 20,
-                    spreadRadius: -6,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: serious
+              ? Border.all(color: AppColors.cardBorder)
+              : Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -658,17 +652,19 @@ class _StreakHeroTile extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Flame badge.
+                // Framed hairline flame badge.
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  width: 40,
+                  height: 40,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: accent.withValues(alpha: serious ? 0.10 : 0.16),
-                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.cardBorder),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Text('🔥', style: TextStyle(fontSize: 26)),
+                  child: const Text('🔥', style: TextStyle(fontSize: 20)),
                 ),
                 const SizedBox(width: 14),
-                // Big count-up number + label.
+                // Big Anton count + Barlow label.
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,13 +678,9 @@ class _StreakHeroTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        heroLabel,
-                        style: TextStyle(
-                          color: fg.withValues(alpha: 0.6),
-                          fontSize: StatType.label,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                        ),
+                        heroLabel.toUpperCase(),
+                        style: ZType.lbl(10,
+                            color: AppColors.textMuted, letterSpacing: 1.5),
                       ),
                     ],
                   ),
@@ -698,21 +690,17 @@ class _StreakHeroTile extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'View all',
-                      style: TextStyle(
-                        color: fg.withValues(alpha: 0.55),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      'View all'.toUpperCase(),
+                      style: ZType.lbl(10,
+                          color: AppColors.textMuted, letterSpacing: 1.2),
                     ),
-                    Icon(Icons.chevron_right_rounded,
-                        color: fg.withValues(alpha: 0.4), size: 20),
+                    const Icon(Icons.chevron_right,
+                        color: AppColors.textMuted, size: 18),
                   ],
                 ),
               ],
             ),
-            // Secondary streaks (e.g. login / nutrition) as compact chips so
-            // they stay visible without the old horizontal scroll strip.
+            // Secondary streaks as compact hairline chips.
             if (others.isNotEmpty) ...[
               const SizedBox(height: 14),
               Wrap(
@@ -724,14 +712,14 @@ class _StreakHeroTile extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
-                        color: fg.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: fg.withValues(alpha: 0.08)),
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: AppColors.cardBorder),
                       ),
                       child: Text(
                         '🔥 ${s.count} · ${_humanize(s.type)}',
-                        style: TextStyle(
-                          color: fg.withValues(alpha: 0.7),
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
                           fontSize: 11.5,
                           fontWeight: FontWeight.w600,
                         ),
@@ -997,13 +985,9 @@ class _HeadlineTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.04);
-    final borderColor = highlight
-        ? accent.withValues(alpha: 0.55)
-        : fg.withValues(alpha: 0.08);
-
+    // Signature hairline tile. `highlight` (action-ready) earns the accent
+    // left edge; otherwise a flat warm hairline border. Framed glyph box,
+    // Barlow kicker, Anton headline.
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -1012,43 +996,40 @@ class _HeadlineTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: bg,
+          color: AppColors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: highlight ? 1.3 : 1),
+          border: highlight
+              ? Border.all(color: AppColors.cardBorder, width: 1)
+              : Border.all(color: AppColors.cardBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Surface 5.A.3 — neutral icon area, category-colored glyph.
-            // The previous accent-tinted background tile was visual noise;
-            // the colored glyph alone is enough signal.
-            SizedBox(
-              width: 22,
-              height: 22,
-              child: leadingEmoji != null
-                  ? Text(leadingEmoji!, style: const TextStyle(fontSize: 18))
-                  : Icon(leadingIcon,
-                      color: fg.withValues(alpha: 0.75), size: 20),
-            ),
+            // Framed hairline glyph box (emoji sits bare for trophy/rarity).
+            leadingEmoji != null
+                ? Text(leadingEmoji!, style: const TextStyle(fontSize: 20))
+                : Container(
+                    width: 28,
+                    height: 28,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.cardBorder),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(leadingIcon,
+                        color: AppColors.textSecondary, size: 16),
+                  ),
             const SizedBox(height: 10),
             Text(
-              title,
-              style: TextStyle(
-                color: fg.withValues(alpha: 0.55),
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 1.1,
-              ),
+              title.toUpperCase(),
+              style: ZType.lbl(10,
+                  color: AppColors.textMuted, letterSpacing: 1.5),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 5),
             Text(
               headline,
-              style: TextStyle(
-                color: fg,
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-              ),
+              style: ZType.disp(17, color: fg, letterSpacing: 0.2),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -1062,8 +1043,8 @@ class _HeadlineTile extends StatelessWidget {
             Flexible(
               child: Text(
                 sub,
-                style: TextStyle(
-                  color: fg.withValues(alpha: 0.55),
+                style: const TextStyle(
+                  color: AppColors.textMuted,
                   fontSize: 11,
                 ),
                 maxLines: 2,
@@ -1159,9 +1140,6 @@ class _CycleHubRow extends ConsumerWidget {
     if (!enabled) return const SizedBox.shrink();
 
     final prediction = ref.watch(cyclePredictionProvider).value;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    const accent = Color(0xFFE5567B); // cycle pink
 
     String sub = 'Phase, calendar & fertility insights';
     if (prediction != null && prediction.predictionsAvailable) {
@@ -1182,22 +1160,25 @@ class _CycleHubRow extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
-                : Colors.black.withValues(alpha: 0.03),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: accent.withValues(alpha: 0.22)),
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Row(
             children: [
+              // Framed hairline glyph — the heart keeps the cycle-pink tint
+              // as a single semantic accent (domain signal, like macro dots),
+              // but the surrounding chrome is matte hairline.
               Container(
-                padding: const EdgeInsets.all(9),
+                width: 30,
+                height: 30,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: AppColors.cardBorder),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(Icons.favorite_rounded,
-                    color: accent, size: 19),
+                    color: AppColors.pink, size: 16),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1206,26 +1187,23 @@ class _CycleHubRow extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      AppLocalizations.of(context).overviewCycle,
-                      style: TextStyle(
-                        color: fg,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                      ),
+                      AppLocalizations.of(context).overviewCycle.toUpperCase(),
+                      style: ZType.lbl(10,
+                          color: AppColors.textMuted, letterSpacing: 1.5),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 3),
                     Text(
                       sub,
-                      style: TextStyle(
-                        color: fg.withValues(alpha: 0.6),
-                        fontSize: 12,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12.5,
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: fg.withValues(alpha: 0.35)),
+              const Icon(Icons.chevron_right,
+                  color: AppColors.textMuted, size: 18),
             ],
           ),
         ),

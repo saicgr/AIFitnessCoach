@@ -14,25 +14,36 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Signature v2 stat cell: Anton numeral (color-tinted for min/avg/max),
+    // Barlow uppercase kicker beneath. Split value + unit so the unit reads as
+    // a small Barlow tail.
+    final parts = value.split(' ');
+    final numeral = parts.first;
+    final unit = parts.length > 1 ? parts.sublist(1).join(' ') : null;
     return Column(
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.textMuted
-                : AppColorsLight.textMuted,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(numeral, style: ZType.disp(22, color: color)),
+            if (unit != null) ...[
+              const SizedBox(width: 3),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  unit.toUpperCase(),
+                  style: ZType.lbl(9,
+                      color: color.withValues(alpha: 0.7), letterSpacing: 1),
+                ),
+              ),
+            ],
+          ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          label.toUpperCase(),
+          style: ZType.lbl(10, color: AppColors.textMuted, letterSpacing: 1.5),
         ),
       ],
     );

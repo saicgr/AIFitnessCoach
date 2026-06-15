@@ -122,12 +122,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border(
-          left: BorderSide(color: accentColor, width: 4),
-          top: BorderSide(color: accentColor.withValues(alpha: 0.2)),
-          right: BorderSide(color: accentColor.withValues(alpha: 0.2)),
-          bottom: BorderSide(color: accentColor.withValues(alpha: 0.2)),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: accentColor.withOpacity(0.15),
@@ -174,12 +169,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border(
-          left: BorderSide(color: accentColor, width: 4),
-          top: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-          right: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-          bottom: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: accentColor.withOpacity(0.15),
@@ -227,12 +217,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border(
-          left: BorderSide(color: accentColor, width: 4),
-          top: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
-          right: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
-          bottom: BorderSide(color: AppColors.textMuted.withValues(alpha: 0.2)),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: accentColor.withOpacity(0.15),
@@ -486,12 +471,7 @@ class _QuickStartCardState extends ConsumerState<QuickStartCard>
       decoration: BoxDecoration(
         color: elevatedColor,
         borderRadius: BorderRadius.circular(20),
-        border: Border(
-          left: BorderSide(color: accentColor, width: 4),
-          top: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
-          right: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
-          bottom: BorderSide(color: AppColors.purple.withValues(alpha: 0.3)),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: accentColor.withOpacity(0.15),

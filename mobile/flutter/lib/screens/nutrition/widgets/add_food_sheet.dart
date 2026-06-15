@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -89,7 +90,9 @@ class _AddFoodSheetBodyState extends State<_AddFoodSheetBody> {
   @override
   Widget build(BuildContext context) {
     final colors = ThemeColors.of(context);
-    const teal = Color(0xFF14B8A6);
+    // Signature: the ONE accent on this sheet (orange). Replaces the old
+    // hardcoded teal on the icon + action button.
+    final accent = colors.accent;
 
     // GlassSheet already handles the keyboard inset (AnimatedPadding) and the
     // drag handle — this body only needs its own content padding.
@@ -101,15 +104,11 @@ class _AddFoodSheetBodyState extends State<_AddFoodSheetBody> {
         children: [
           Row(
             children: [
-              Icon(widget.icon, color: teal, size: 22),
+              Icon(widget.icon, color: accent, size: 22),
               const SizedBox(width: 8),
               Text(
-                widget.title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
+                widget.title.toUpperCase(),
+                style: ZType.lbl(15, color: colors.textPrimary, letterSpacing: 1.2),
               ),
             ],
           ),
@@ -141,9 +140,12 @@ class _AddFoodSheetBodyState extends State<_AddFoodSheetBody> {
               const SizedBox(width: 8),
               FilledButton.icon(
                 onPressed: _submit,
-                icon: Icon(widget.actionIcon, size: 16),
-                label: Text(widget.actionLabel),
-                style: FilledButton.styleFrom(backgroundColor: teal),
+                icon: Icon(widget.actionIcon, size: 16, color: colors.accentContrast),
+                label: Text(
+                  widget.actionLabel,
+                  style: TextStyle(color: colors.accentContrast),
+                ),
+                style: FilledButton.styleFrom(backgroundColor: accent),
               ),
             ],
           ),

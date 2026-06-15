@@ -273,9 +273,12 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                     ),
                   ),
                   Expanded(
+                    // Coach is the product differentiator — the Signature spec
+                    // gives it the ✦ sparkle glyph (matches the masthead
+                    // ask-coach button), not a generic chat bubble.
                     child: _ExpandableNavItem(
-                      icon: Icons.chat_bubble_outline_rounded,
-                      selectedIcon: Icons.chat_bubble_rounded,
+                      icon: Icons.auto_awesome_outlined,
+                      selectedIcon: Icons.auto_awesome,
                       label: AppLocalizations.of(context).navCoach,
                       isSelected: selectedIndex == 2,
                       onTap: () => onItemTapped(2),
@@ -308,8 +311,10 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                       // collapse into this single tab's top-tabs. Research
                       // (Material 3) caps bottom nav at 5.
                       child: _ExpandableNavItem(
-                        icon: Icons.stars_outlined,
-                        selectedIcon: Icons.stars,
+                        // Signature spec: the "You" room uses a person glyph,
+                        // not a star.
+                        icon: Icons.person_outline,
+                        selectedIcon: Icons.person,
                         label: AppLocalizations.of(context).navYou,
                         isSelected: selectedIndex == 4,
                         onTap: () => onItemTapped(4),
@@ -395,8 +400,10 @@ class _ExpandableNavItem extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Barlow Condensed',
                 color: color,
-                fontSize: 10.5,
-                letterSpacing: 1.2,
+                fontSize: 10,
+                // Tighter tracking so "NUTRITION" / "WORKOUTS" fit one line
+                // without truncating to "NUTRITI…".
+                letterSpacing: 0.5,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                 height: 1.0,
               ),

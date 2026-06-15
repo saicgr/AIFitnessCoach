@@ -106,12 +106,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border(
-                      left: BorderSide(color: accentColor, width: 4),
-                      top: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
-                      right: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
-                      bottom: BorderSide(color: _getScoreColor(overallScore).withOpacity(0.3)),
-                    ),
+                    border: Border.all(color: AppColors.cardBorder, width: 1),
                   ),
                   child: Column(
                   children: [
@@ -230,12 +225,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border(
-              left: BorderSide(color: accentColor, width: 4),
-              top: BorderSide(color: accentColor.withOpacity(0.2)),
-              right: BorderSide(color: accentColor.withOpacity(0.2)),
-              bottom: BorderSide(color: accentColor.withOpacity(0.2)),
-            ),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
           ),
           child: Column(
             children: [

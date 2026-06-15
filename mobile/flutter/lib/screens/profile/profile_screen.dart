@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
@@ -231,14 +232,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         child: Row(
           children: [
+            // Framed hairline glyph (the spec's `.st-gl` 26-28px box) — muted
+            // icon, no per-row accent fill (drops the rainbow row tints).
             Container(
-              width: 32,
-              height: 32,
+              width: 30,
+              height: 30,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: row.iconColor.withValues(alpha: 0.15),
+                border: Border.all(color: AppColors.cardBorder),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(row.icon, color: row.iconColor, size: 18),
+              child: Icon(row.icon, color: textMuted, size: 16),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -593,17 +597,16 @@ class _PrimaryGoalPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final bg = isDark
-        ? accent.withValues(alpha: 0.16)
-        : accent.withValues(alpha: 0.10);
-    final border = accent.withValues(alpha: isDark ? 0.42 : 0.32);
-    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    final fg = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Signature hero grammar — matte hairline surface + ONE accent left edge
+    // (the single orange/accent spend on the Profile body), framed glyph,
+    // Barlow kicker. Replaces the accent-tinted fill pill.
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: bg,
-        border: Border.all(color: border, width: 1),
+        color: isDark ? AppColors.surface : AppColorsLight.surface,
+        border: Border.all(color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder, width: 1),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -613,10 +616,13 @@ class _PrimaryGoalPill extends StatelessWidget {
             height: 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: isDark ? 0.30 : 0.22),
-              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: isDark
+                      ? AppColors.cardBorder
+                      : AppColorsLight.cardBorder),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(Icons.flag_rounded, size: 18, color: accent),
+            child: Icon(Icons.flag_rounded, size: 17, color: accent),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -624,24 +630,19 @@ class _PrimaryGoalPill extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  // Lowercase eyebrow — distinguishes the pill role
-                  // ("Primary goal") from the value below ("Build Muscle").
                   'PRIMARY GOAL',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    letterSpacing: 0.8,
-                    fontWeight: FontWeight.w800,
-                    color: fg.withValues(alpha: 0.55),
-                  ),
+                  style: ZType.lbl(10,
+                      color: AppColors.textMuted, letterSpacing: 1.8),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   label,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.2,
                     color: fg,
                     height: 1.2,
                   ),

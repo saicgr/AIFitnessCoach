@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_constants.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -59,14 +61,15 @@ class _UserCardState extends ConsumerState<UserCard> {
     final authState = ref.watch(authStateProvider);
     final user = authState.user;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final muted = fg.withValues(alpha: 0.55);
-    final surface = fg.withValues(alpha: isDark ? 0.05 : 0.04);
-    final border = fg.withValues(alpha: 0.08);
+    final fg = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final userName =
         user?.displayName ?? user?.name ?? user?.username ?? 'You';
     final userEmail = user?.email ?? '';
     final photoUrl = user?.photoUrl;
+    // Signature monogram fallback — the spec's `.ny-av` rounded-square avatar
+    // carrying the first initial when there's no photo.
+    final initial =
+        userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'Y';
 
     return GestureDetector(
       onTap: () {
@@ -84,20 +87,30 @@ class _UserCardState extends ConsumerState<UserCard> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: border),
+          color: isDark ? AppColors.surface : AppColorsLight.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
         ),
         child: Column(
           children: [
             Row(
               children: [
+                // Rounded-square framed avatar (the `.ny-av` grammar), monogram
+                // fallback in Anton.
                 Container(
                   width: 52,
                   height: 52,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: fg.withValues(alpha: 0.08),
+                    color: isDark
+                        ? AppColors.elevated
+                        : AppColorsLight.elevated,
+                    borderRadius: BorderRadius.circular(13),
+                    border: Border.all(
+                        color: isDark
+                            ? AppColors.cardBorder
+                            : AppColorsLight.cardBorder),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: photoUrl != null && photoUrl.isNotEmpty
@@ -106,10 +119,10 @@ class _UserCardState extends ConsumerState<UserCard> {
                           width: 52,
                           height: 52,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              Icon(Icons.person, color: muted, size: 28),
+                          errorBuilder: (_, __, ___) => Text(initial,
+                              style: ZType.disp(22, color: fg)),
                         )
-                      : Icon(Icons.person, color: muted, size: 28),
+                      : Text(initial, style: ZType.disp(22, color: fg)),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -119,32 +132,35 @@ class _UserCardState extends ConsumerState<UserCard> {
                       Text(
                         userName,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 17,
                           fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
                           color: fg,
                         ),
                       ),
                       if (userEmail.isNotEmpty) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 3),
                         Text(
                           userEmail,
-                          style: TextStyle(fontSize: 13, color: muted),
+                          style: const TextStyle(
+                              fontSize: 12.5, color: AppColors.textMuted),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
                   ),
                 ),
-                Icon(Icons.edit_outlined, size: 16, color: muted),
+                const Icon(Icons.edit_outlined,
+                    size: 16, color: AppColors.textMuted),
               ],
             ),
             if (_bioLoaded && _bio != null && _bio!.isNotEmpty) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: Text(
                   _bio!,
-                  style: TextStyle(fontSize: 13, color: fg),
+                  style: TextStyle(fontSize: 13, height: 1.35, color: fg),
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                 ),

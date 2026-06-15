@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/providers/sleep_detail_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/api_client.dart';
@@ -51,9 +52,10 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.background : AppColorsLight.background;
+    final bg = isDark ? AppColors.pureBlack : AppColorsLight.background;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     final sync = ref.watch(healthSyncProvider);
     final historyAsync = ref.watch(sleepHistoryProvider);
@@ -61,33 +63,58 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
     final goalMinutes =
         goalsAsync.valueOrNull?.sleepDurationGoalMinutes ?? 480;
 
+    // "Last night · Jun 10–11" caption from the freshest tracked night.
+    final latestNight = historyAsync.valueOrNull?.latest;
+    final String? nightCaption = latestNight != null
+        ? 'Last night · '
+            '${DateFormat('MMM d').format(latestNight.date.subtract(const Duration(days: 1)))}'
+            '–${DateFormat('d').format(latestNight.date)}'
+        : null;
+
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
         child: Column(
           children: [
-            // ── Header
+            // ── Header: ← Health muted left, night caption faint right.
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 16, 4),
+              padding: const EdgeInsets.fromLTRB(12, 8, 16, 0),
               child: Row(
                 children: [
                   const GlassBackButton(),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context).sleepDetailSleep,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                    ),
+                    'Health',
+                    style: ZType.lbl(12, color: textMuted, letterSpacing: 1.2),
                   ),
                   const Spacer(),
+                  if (nightCaption != null)
+                    Text(
+                      nightCaption,
+                      style: ZType.lbl(
+                        11,
+                        color: textMuted.withValues(alpha: 0.7),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  const SizedBox(width: 8),
                   // Ask Coach — opens chat with this pillar prefilled.
                   AskCoachButton(
                     contextLabel: 'Sleep · last night',
                     statSnapshot: const {'pillar': 'sleep'},
                   ),
                 ],
+              ),
+            ),
+            // ── Anton masthead.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'SLEEP & RECOVERY',
+                  style: ZType.disp(28, color: textPrimary, letterSpacing: 0.5),
+                ),
               ),
             ),
             if (!sync.isConnected)
@@ -228,25 +255,40 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
         children: [
           _CardHeader(
             icon: Icons.bedtime_rounded,
-            color: AppColors.purple,
+            color: AppColors.macroProtein,
             title: DateFormat('EEEE, MMM d').format(night.date),
-            isDark: isDark,
-          ),
-          const SizedBox(height: 14),
-          // Duration headline vs goal.
-          _DurationHeadline(
-            asleepMinutes: total,
-            goalMinutes: goalMinutes,
             isDark: isDark,
           ),
           const SizedBox(height: 16),
           if (score != null) ...[
-            SleepScoreRing(score: score, isDark: isDark),
-            const SizedBox(height: 18),
+            // SLEEP SCORE — one deliberate violet arc beside the time-asleep
+            // numeral + the component scores.
+            SleepScoreRing(
+              score: score,
+              isDark: isDark,
+              asleepMinutes: total,
+            ),
+            const SizedBox(height: 8),
+            // Goal-line caption (under / over / on goal).
+            _DurationHeadline(
+              asleepMinutes: total,
+              goalMinutes: goalMinutes,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
+          ] else ...[
+            // No score (no asleep minutes) — duration headline carries it.
+            _DurationHeadline(
+              asleepMinutes: total,
+              goalMinutes: goalMinutes,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 16),
           ],
+          ZealovaRule(margin: const EdgeInsets.only(bottom: 16)),
           // Hypnogram (stage-proportion).
           SleepHypnogram(summary: main, isDark: isDark),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           // Efficiency + latency metric row.
           Row(
             children: [
@@ -306,16 +348,16 @@ class _Card extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(20),
+        color: surface,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: cardBorder, width: 1),
       ),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
       child: child,
     );
   }
@@ -335,29 +377,16 @@ class _CardHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     return Row(
       children: [
-        Container(
-          width: 36,
-          height: 36,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 18),
-        ),
-        const SizedBox(width: 10),
+        Icon(icon, color: color, size: 15),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
+            title.toUpperCase(),
+            style: ZType.lbl(12, color: textSecondary, letterSpacing: 1.6),
           ),
         ),
       ],
@@ -377,11 +406,7 @@ class _DurationHeadline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final h = asleepMinutes ~/ 60;
-    final m = asleepMinutes % 60;
     final goalH = goalMinutes ~/ 60;
     final goalM = goalMinutes % 60;
     final diff = asleepMinutes - goalMinutes;
@@ -394,45 +419,10 @@ class _DurationHeadline extends StatelessWidget {
     } else {
       goalLine = '${diff ~/ 60}h ${diff % 60}m over your ${goalH}h goal';
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '${h}h',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.w800,
-                color: textPrimary,
-                height: 1.0,
-                letterSpacing: -1.2,
-              ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '${m}m',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.w800,
-                color: textPrimary,
-                height: 1.0,
-                letterSpacing: -1.2,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          goalLine,
-          style: TextStyle(
-            fontSize: 12,
-            color: textMuted,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+    return Text(
+      goalLine.toUpperCase(),
+      style: ZType.lbl(11, color: textMuted, weight: FontWeight.w600,
+          letterSpacing: 0.8),
     );
   }
 }
@@ -456,60 +446,39 @@ class _MiniMetric extends StatelessWidget {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final tileBg = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.black.withValues(alpha: 0.03);
-    final tileBorder = isDark
-        ? Colors.white.withValues(alpha: 0.06)
-        : Colors.black.withValues(alpha: 0.05);
+    final cardBorder =
+        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        color: tileBg,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: tileBorder, width: 1),
+        border: Border.all(color: cardBorder, width: 1),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: color, size: 16),
+          Row(
+            children: [
+              Icon(icon, color: color, size: 13),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: ZType.lbl(9, color: textMuted, letterSpacing: 1.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: textPrimary,
-                    letterSpacing: -0.4,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textMuted,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: ZType.disp(22, color: textPrimary, height: 1.0),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -533,35 +502,30 @@ class _NapsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          naps.length == 1 ? AppLocalizations.of(context).sleepDetailNap : '${naps.length} naps',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: textMuted,
-          ),
+          (naps.length == 1
+                  ? AppLocalizations.of(context).sleepDetailNap
+                  : '${naps.length} naps')
+              .toUpperCase(),
+          style: ZType.lbl(10, color: textMuted, letterSpacing: 1.6),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         for (final nap in naps)
           Padding(
             padding: const EdgeInsets.only(bottom: 4),
             child: Row(
               children: [
-                Icon(Icons.wb_sunny_outlined,
-                    size: 14, color: AppColors.warning),
+                const Icon(Icons.wb_sunny_outlined,
+                    size: 14, color: Color(0xFFFFD54A)),
                 const SizedBox(width: 8),
                 Text(
                   _fmtDur(nap.totalMinutes),
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: textPrimary,
-                  ),
+                  style: ZType.data(13, color: textPrimary),
                 ),
                 const SizedBox(width: 8),
                 if (nap.bedTime != null && nap.wakeTime != null)
                   Text(
                     '${fmt.format(nap.bedTime!)} – ${fmt.format(nap.wakeTime!)}',
-                    style: TextStyle(fontSize: 12, color: textMuted),
+                    style: ZType.data(11, color: textMuted),
                   ),
               ],
             ),
@@ -668,13 +632,17 @@ class _DayBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final track = isDark
-        ? Colors.white.withValues(alpha: 0.05)
-        : Colors.black.withValues(alpha: 0.04);
+        ? AppColors.hairlineStrong
+        : Colors.black.withValues(alpha: 0.05);
     final frac = maxMinutes > 0 ? (minutes / maxMinutes).clamp(0.0, 1.0) : 0.0;
     final hitGoal = minutes >= goalMinutes;
+    // Goal-hit nights emphasized in violet; off-goal nights a muted translucent
+    // violet so the wins read at a glance.
     final barColor = minutes == 0
         ? track
-        : (hitGoal ? AppColors.success : AppColors.purple);
+        : (hitGoal
+            ? AppColors.macroProtein
+            : AppColors.macroProtein.withValues(alpha: 0.40));
     final hours = minutes > 0
         ? (minutes / 60).toStringAsFixed(1)
         : '';
@@ -686,13 +654,10 @@ class _DayBar extends StatelessWidget {
         children: [
           Text(
             hours,
-            style: TextStyle(
-              fontSize: 9,
-              fontWeight: FontWeight.w700,
-              color: textMuted,
-            ),
+            style: ZType.data(9,
+                color: hitGoal ? AppColors.macroProtein : textMuted),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Expanded(
             child: LayoutBuilder(
               builder: (context, c) {
@@ -703,7 +668,7 @@ class _DayBar extends StatelessWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: track,
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                     Container(
@@ -711,7 +676,7 @@ class _DayBar extends StatelessWidget {
                       height: c.maxHeight * frac,
                       decoration: BoxDecoration(
                         color: barColor,
-                        borderRadius: BorderRadius.circular(5),
+                        borderRadius: BorderRadius.circular(3),
                       ),
                     ),
                   ],
@@ -719,14 +684,10 @@ class _DayBar extends StatelessWidget {
               },
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 6),
           Text(
-            DateFormat('E').format(date)[0],
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: textMuted,
-            ),
+            DateFormat('E').format(date)[0].toUpperCase(),
+            style: ZType.lbl(10, color: textMuted, letterSpacing: 0.8),
           ),
         ],
       ),
@@ -809,6 +770,13 @@ class _DebtRegularityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    // Debt is shown as a red sliver against a 4h reference span.
+    final debtFrac = debt <= 0 ? 0.0 : (debt / 240).clamp(0.0, 1.0);
+    final regFrac =
+        regularity != null ? (regularity! / 100).clamp(0.0, 1.0) : 0.0;
     return _Card(
       isDark: isDark,
       child: Column(
@@ -816,38 +784,88 @@ class _DebtRegularityCard extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.balance_rounded,
-            color: AppColors.teal,
+            color: AppColors.macroCarbs,
             title: AppLocalizations.of(context).sleepDetailDebtRegularity,
             isDark: isDark,
           ),
+          const SizedBox(height: 16),
+          _HairlineStat(
+            label: AppLocalizations.of(context).sleepDetailSleepDebt14d,
+            value: debt <= 0 ? 'None' : '${debt ~/ 60}h ${debt % 60}m',
+            fraction: debtFrac,
+            fill: AppColors.error,
+            isDark: isDark,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+          ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _MiniMetric(
-                  label: AppLocalizations.of(context).sleepDetailSleepDebt14d,
-                  value: debt <= 0
-                      ? 'None'
-                      : '${debt ~/ 60}h ${debt % 60}m',
-                  icon: Icons.trending_down_rounded,
-                  color: debt > 120 ? AppColors.warning : AppColors.success,
-                  isDark: isDark,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _MiniMetric(
-                  label: AppLocalizations.of(context).sleepDetailRegularity,
-                  value: regularity != null ? '$regularity / 100' : '–',
-                  icon: Icons.event_repeat_rounded,
-                  color: AppColors.cyan,
-                  isDark: isDark,
-                ),
-              ),
-            ],
+          _HairlineStat(
+            label: AppLocalizations.of(context).sleepDetailRegularity,
+            value: regularity != null ? '$regularity' : '–',
+            fraction: regFrac,
+            fill: AppColors.macroCarbs,
+            isDark: isDark,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A Barlow label + Anton value + 1px hairline track with a coloured sliver.
+class _HairlineStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final double fraction;
+  final Color fill;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textMuted;
+  const _HairlineStat({
+    required this.label,
+    required this.value,
+    required this.fraction,
+    required this.fill,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final track = isDark
+        ? AppColors.hairlineStrong
+        : Colors.black.withValues(alpha: 0.06);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label.toUpperCase(),
+              style: ZType.lbl(10, color: textMuted, letterSpacing: 1.4),
+            ),
+            Text(
+              value,
+              style: ZType.disp(20, color: textPrimary, height: 1.0),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(2),
+          child: LinearProgressIndicator(
+            value: fraction,
+            minHeight: 3,
+            backgroundColor: track,
+            valueColor: AlwaysStoppedAnimation<Color>(fill),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1157,8 +1175,7 @@ class _GoalChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return GestureDetector(
       onTap: onTap,
@@ -1166,20 +1183,21 @@ class _GoalChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.success.withValues(alpha: 0.18)
+              ? AppColors.success.withValues(alpha: 0.12)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: selected ? AppColors.success : border,
-            width: selected ? 1.6 : 1,
+            width: 1,
           ),
         ),
         child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: selected ? AppColors.success : textPrimary,
+          label.toUpperCase(),
+          style: ZType.lbl(
+            12,
+            color: selected ? AppColors.success : textMuted,
+            weight: selected ? FontWeight.w700 : FontWeight.w600,
+            letterSpacing: 1.0,
           ),
         ),
       ),

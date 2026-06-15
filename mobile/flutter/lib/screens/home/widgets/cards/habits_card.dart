@@ -103,12 +103,7 @@ class HabitsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border(
-            left: BorderSide(color: AppColors.limeGreen, width: 4),
-            top: BorderSide(color: accentColor.withValues(alpha: 0.2)),
-            right: BorderSide(color: accentColor.withValues(alpha: 0.2)),
-            bottom: BorderSide(color: accentColor.withValues(alpha: 0.2)),
-          ),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.green.withOpacity(0.15),
@@ -190,12 +185,7 @@ class HabitsCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border(
-            left: BorderSide(color: AppColors.limeGreen, width: 4),
-            top: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-            right: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-            bottom: BorderSide(color: AppColors.error.withValues(alpha: 0.3)),
-          ),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.green.withOpacity(0.15),
@@ -268,12 +258,7 @@ class HabitsCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border(
-              left: BorderSide(color: AppColors.limeGreen, width: 4),
-              top: BorderSide(color: accentColor.withValues(alpha: 0.3)),
-              right: BorderSide(color: accentColor.withValues(alpha: 0.3)),
-              bottom: BorderSide(color: accentColor.withValues(alpha: 0.3)),
-            ),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
                 color: AppColors.green.withOpacity(0.15),
@@ -439,12 +424,7 @@ class HabitsCard extends ConsumerWidget {
           decoration: BoxDecoration(
             color: elevatedColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border(
-              left: BorderSide(color: AppColors.limeGreen, width: 4),
-              top: BorderSide(color: accentColor.withValues(alpha: 0.3)),
-              right: BorderSide(color: accentColor.withValues(alpha: 0.3)),
-              bottom: BorderSide(color: accentColor.withValues(alpha: 0.3)),
-            ),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
             boxShadow: [
               BoxShadow(
                 color: AppColors.green.withOpacity(0.15),

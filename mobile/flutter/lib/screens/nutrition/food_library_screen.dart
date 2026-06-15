@@ -745,19 +745,13 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
               duration: const Duration(milliseconds: 200),
               decoration: BoxDecoration(
                 color: elevated,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
+                // Flat hairline surface — accent only tints the border on focus
+                // (no glow halo), per the Signature search-bar contract.
                 border: Border.all(
                   color: _isSearchFocused ? accentColor : cardBorder,
-                  width: _isSearchFocused ? 2 : 1,
+                  width: _isSearchFocused ? 1.5 : 1,
                 ),
-                boxShadow: _isSearchFocused
-                    ? [
-                        BoxShadow(
-                          color: accentColor.withValues(alpha:0.2),
-                          blurRadius: 8,
-                        ),
-                      ]
-                    : null,
               ),
               child: Row(
                 children: [

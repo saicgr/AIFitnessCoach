@@ -198,6 +198,10 @@ class LoggedMealsSection extends StatelessWidget {
       'parse_nutrition_label' => 'Nutrition Label',
       'barcode' => 'Barcode',
       'restaurant' => 'Restaurant',
+      // Signature v2 — a menu-scan log carries an explicit "MENU SCAN" badge so
+      // its provenance reads at a glance across meals (▦ in the reference).
+      'menu' => 'Menu Scan',
+      'buffet' => 'Buffet Scan',
       _ => null,
     };
     if (label == null) return null;
@@ -207,6 +211,8 @@ class LoggedMealsSection extends StatelessWidget {
       'parse_nutrition_label' => Icons.receipt_long_rounded,
       'barcode' => Icons.qr_code_scanner_rounded,
       'restaurant' => Icons.storefront_outlined,
+      'menu' => Icons.menu_book_rounded,
+      'buffet' => Icons.local_dining_outlined,
       _ => Icons.info_outline,
     };
     final hairline = isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;

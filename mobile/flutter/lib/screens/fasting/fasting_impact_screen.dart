@@ -520,12 +520,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surface : AppColorsLight.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(color: correlationColor, width: 3),
-          top: BorderSide(color: cardBorder),
-          right: BorderSide(color: cardBorder),
-          bottom: BorderSide(color: cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Column(
         children: [
@@ -670,15 +665,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surface : AppColorsLight.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(color: color, width: 3),
-          top: BorderSide(
-              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-          right: BorderSide(
-              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-          bottom: BorderSide(
-              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -762,12 +749,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
       decoration: BoxDecoration(
         color: isDark ? AppColors.surface : AppColorsLight.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: const BorderSide(color: AppColors.warning, width: 3),
-          top: BorderSide(color: cardBorder),
-          right: BorderSide(color: cardBorder),
-          bottom: BorderSide(color: cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Row(
         children: [

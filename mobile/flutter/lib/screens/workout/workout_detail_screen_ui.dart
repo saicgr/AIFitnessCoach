@@ -55,12 +55,14 @@ extension _WorkoutDetailScreenStateUI on _WorkoutDetailScreenState {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  AppLocalizations.of(context).workoutDetailScreenLetSGo,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                    letterSpacing: 0.5,
+                  AppLocalizations.of(context)
+                      .workoutDetailScreenLetSGo
+                      .toUpperCase(),
+                  style: ZType.lbl(
+                    16,
                     color: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
+                    weight: FontWeight.w800,
+                    letterSpacing: 2.5,
                   ),
                 ),
               ],

@@ -256,28 +256,36 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           // ── Master enable toggle ──────────────────────────────────
-          ZealovaCard(
-            variant: ZealovaCardVariant.hero,
-            child: Column(
+          // Signature: a plain hairline toggle row + an auto-capture note —
+          // no boxed card (v2 `.st-row` + `.cm-note`).
+          ZealovaListRow(
+            icon: Icons.psychology_outlined,
+            label: 'Let Coach remember things about you',
+            showChevron: false,
+            hairline: false,
+            trailing: ZealovaToggle(
+              value: enabled,
+              onChanged: _setEnabled,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 2, right: 2, bottom: 2),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ZealovaListRow(
-                  icon: Icons.psychology_outlined,
-                  label: 'Let Coach remember things about you',
-                  showChevron: false,
-                  hairline: false,
-                  trailing: ZealovaToggle(
-                    value: enabled,
-                    onChanged: _setEnabled,
+                Icon(Icons.auto_awesome, size: 14, color: accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    enabled
+                        ? 'Coach notes the important stuff from your chats so '
+                            'its advice stays personal. Nothing is added by '
+                            'hand — correct or forget anything below.'
+                        : 'Memory is off. Coach will only use what you say in '
+                            'the current conversation.',
+                    style:
+                        TextStyle(color: textMuted, fontSize: 12, height: 1.4),
                   ),
-                ),
-                Text(
-                  enabled
-                      ? 'Coach notes the important stuff from your chats so its '
-                          'advice stays personal over time.'
-                      : 'Memory is off. Coach will only use what you say in the '
-                          'current conversation.',
-                  style: TextStyle(color: textMuted, fontSize: 12, height: 1.4),
                 ),
               ],
             ),
@@ -321,9 +329,14 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
             else
               ..._buildGroupedList(isDark, accent, textMuted, list),
 
-            const SizedBox(height: 28),
+            const SizedBox(height: 14),
 
             // ── Forget everything ───────────────────────────────────
+            // Hairline rule anchors the destructive footer (v2 `.rc-rule`).
+            if (!list.isEmpty) ...[
+              const ZealovaRule(),
+              const SizedBox(height: 12),
+            ],
             if (!list.isEmpty)
               Center(
                 child: TextButton.icon(
@@ -366,32 +379,31 @@ class _CoachMemoryScreenState extends ConsumerState<CoachMemoryScreen> {
     final widgets = <Widget>[];
     for (final key in orderedKeys) {
       widgets.add(ZealovaSectionKicker(key.toUpperCase(),
-          padding: const EdgeInsets.only(left: 4)));
-      widgets.add(const SizedBox(height: 8));
+          padding: const EdgeInsets.only(left: 2)));
+      widgets.add(const SizedBox(height: 2));
+      // Signature: memory tiles divided only by hairlines — no boxed card.
       widgets.add(
-        ZealovaCard(
-          child: Column(
-            children: [
-              for (var i = 0; i < groups[key]!.length; i++) ...[
-                if (i > 0) const ZealovaRule(),
-                _MemoryTile(
-                  memory: groups[key]![i],
-                  isDark: isDark,
-                  accent: accent,
-                  isEditing: _editingId == groups[key]![i].id,
-                  editController: _editController,
-                  onBeginEdit: () => _beginEdit(groups[key]![i]),
-                  onCancelEdit: _cancelEdit,
-                  onSaveEdit: () => _saveEdit(groups[key]![i]),
-                  onDelete: () => _delete(groups[key]![i]),
-                  onResolve: () => _resolve(groups[key]![i]),
-                ),
-              ],
+        Column(
+          children: [
+            for (var i = 0; i < groups[key]!.length; i++) ...[
+              if (i > 0) const ZealovaRule(),
+              _MemoryTile(
+                memory: groups[key]![i],
+                isDark: isDark,
+                accent: accent,
+                isEditing: _editingId == groups[key]![i].id,
+                editController: _editController,
+                onBeginEdit: () => _beginEdit(groups[key]![i]),
+                onCancelEdit: _cancelEdit,
+                onSaveEdit: () => _saveEdit(groups[key]![i]),
+                onDelete: () => _delete(groups[key]![i]),
+                onResolve: () => _resolve(groups[key]![i]),
+              ),
             ],
-          ),
+          ],
         ),
       );
-      widgets.add(const SizedBox(height: 20));
+      widgets.add(const SizedBox(height: 18));
     }
     return widgets;
   }

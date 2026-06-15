@@ -899,6 +899,30 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     return program.name;
   }
 
+  /// Build the masthead subtitle line — "Chest & Triceps · Push Pull Legs".
+  /// Joins the workout's primary muscle groups with the training program
+  /// name (when known). Returns null when neither is available so the
+  /// masthead collapses to just the name.
+  String? _workoutMastheadSubtitle(Workout workout) {
+    final parts = <String>[];
+    final muscles = workout.primaryMuscles
+        .where((m) => m.trim().isNotEmpty)
+        .map((m) => m.capitalize())
+        .take(2)
+        .toList();
+    if (muscles.isNotEmpty) {
+      parts.add(muscles.join(' & '));
+    }
+    final program = _trainingSplit != null
+        ? _getTrainingProgramName(_trainingSplit!)
+        : null;
+    if (program != null && program.trim().isNotEmpty) {
+      parts.add(program);
+    }
+    if (parts.isEmpty) return null;
+    return parts.join(' · ');
+  }
+
 
   // ─────────────────────────────────────────────────────────────────
   // SUPERSET HANDLERS

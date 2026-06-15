@@ -347,12 +347,7 @@ class WeightTrendCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
-          border: Border(
-            left: BorderSide(color: AppColors.orange, width: 4),
-            top: BorderSide(color: trendColor.withValues(alpha: 0.3)),
-            right: BorderSide(color: trendColor.withValues(alpha: 0.3)),
-            bottom: BorderSide(color: trendColor.withValues(alpha: 0.3)),
-          ),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.orange.withOpacity(0.15),
@@ -413,12 +408,7 @@ class WeightTrendCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: elevatedColor,
           borderRadius: BorderRadius.circular(12),
-          border: Border(
-            left: BorderSide(color: AppColors.orange, width: 4),
-            top: BorderSide(color: trendColor.withValues(alpha: 0.3)),
-            right: BorderSide(color: trendColor.withValues(alpha: 0.3)),
-            bottom: BorderSide(color: trendColor.withValues(alpha: 0.3)),
-          ),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.orange.withOpacity(0.15),

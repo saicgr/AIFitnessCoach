@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/providers/user_provider.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../core/providers/week_start_provider.dart';
@@ -17,6 +18,7 @@ import '../../../../data/providers/gym_profile_provider.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/home_sections_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../../data/providers/scores_provider.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
@@ -669,178 +671,123 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
         '${mins > 0 ? ' · ${mins}m' : ''}'
         '${exCount > 0 ? ' · $exCount exercises' : ''}';
 
+    // Signature v2 rh-card: a restrained dark surface2 card with a hairline
+    // top rule, an Anton masthead title, a Barlow subtitle, the scheduled
+    // date pill (orange when TODAY), a meta line, and a single orange
+    // "Start workout →" CTA. No photo background, no full-orange gradient.
+    final subtitle = _heroSubtitle(workout, type);
+    final isToday = widget.isToday;
     return GestureDetector(
       onTap: () {
-        // Card tap → workout detail screen, matching the Workouts-tab hero
-        // carousel (HeroWorkoutCard inCarousel=true). Starting the workout
-        // is the play-button's job below; the rest of the card opens detail.
         HapticService.medium();
         context.push('/workout/${workout.id}', extra: workout);
       },
-      // A5: the image-backed hero is the heaviest paint on Home (network
-      // image + gradient scrim). Isolating it in a RepaintBoundary stops a
-      // sibling tile's repaint (e.g. the per-second fasting tick) from
-      // forcing this expensive layer to re-rasterise.
       child: RepaintBoundary(
-        child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: SizedBox(
-          height: _kWorkoutHeroHeight,
-          child: Stack(
-            fit: StackFit.expand,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0F0F11), // --d-surface2
+            borderRadius: BorderRadius.circular(14),
+            border: const Border(
+              top: BorderSide(color: AppColors.hairlineStrong),
+            ),
+          ),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Background image (or accent gradient while loading / missing).
-              _buildBackground(c, accent),
-              // Accent-tinted gradient scrim — keeps the name legible over any
-              // image and gives the card its energy.
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomLeft,
-                    end: Alignment.topRight,
-                    colors: [
-                      accent.withValues(alpha: 0.92),
-                      accent.withValues(alpha: 0.42),
-                      Colors.black.withValues(alpha: 0.18),
-                    ],
-                    stops: const [0.0, 0.55, 1.0],
+              // Date pill, right-aligned (orange for TODAY, hairline otherwise).
+              Row(
+                children: [
+                  const Spacer(),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isToday ? c.accent : Colors.transparent,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: isToday ? c.accent : AppColors.cardBorder,
+                      ),
+                    ),
+                    child: Text(
+                      prefix,
+                      style: ZType.lbl(
+                        10,
+                        color: isToday ? c.accentContrast : c.textMuted,
+                        letterSpacing: 2,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-              // Foreground content.
-              Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.22),
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              LineIcon(
-                                  widget.completed ? 'check' : 'workout',
-                                  size: 12,
-                                  color: Colors.white),
-                              const SizedBox(width: 5),
-                              Text(
-                                prefix,
-                                style: const TextStyle(
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.6,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Spacer(),
-                        _OverImageMenuButton(workout: workout),
-                      ],
-                    ),
-                    const Spacer(),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                workout.name ?? 'Workout',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.12,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      blurRadius: 6,
-                                      color: Color(0x66000000),
-                                      offset: Offset(0, 1),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              _WorkoutHeroIntensityLine(meta: meta),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        // Play button — Material+InkWell, NOT a nested
-                        // GestureDetector. Two nested GestureDetectors
-                        // with onTap both register tap recognizers in
-                        // the gesture arena, and the inner-deepest-wins
-                        // rule is not actually guaranteed across Flutter
-                        // versions / hit-test paths — in practice taps
-                        // here were bleeding to the outer card handler
-                        // and opening the detail screen instead of
-                        // starting the workout. InkWell claims taps via
-                        // the Material gesture system, which reliably
-                        // beats a parent GestureDetector (same pattern
-                        // the Workouts-tab HeroWorkoutCard uses for its
-                        // START button via ElevatedButton.icon).
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.22),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            shape: const CircleBorder(),
-                            child: InkWell(
-                              customBorder: const CircleBorder(),
-                              onTap: () {
-                                HapticService.medium();
-                                if (widget.completed) {
-                                  context.push(
-                                      '/workout-summary/${workout.id}?tab=summary');
-                                } else {
-                                  context.push('/active-workout',
-                                      extra: workout);
-                                }
-                              },
-                              child: Center(
-                                child: LineIcon(
-                                    widget.completed ? 'check' : 'play',
-                                    color: accent,
-                                    size: 22),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              const SizedBox(height: 6),
+              Text(
+                (workout.name ?? 'Workout').toUpperCase(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: ZType.disp(30, color: c.textPrimary, letterSpacing: 0.5)
+                    .copyWith(height: 0.98),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Text(subtitle.toUpperCase(),
+                    style: ZType.lbl(12.5, color: c.textMuted, letterSpacing: 2),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+              ],
+              const SizedBox(height: 5),
+              Text(
+                meta,
+                style: TextStyle(
+                    fontSize: 11.5, color: c.textMuted.withValues(alpha: 0.7)),
+              ),
+              const SizedBox(height: 14),
+              // Single orange CTA — Start (today / available) — the one accent.
+              GestureDetector(
+                onTap: () {
+                  HapticService.medium();
+                  context.push('/active-workout', extra: workout);
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: c.accent,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    'START WORKOUT →',
+                    style: ZType.lbl(14,
+                        color: c.accentContrast,
+                        weight: FontWeight.w800,
+                        letterSpacing: 2.5),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-        ),
       ),
     );
+  }
+
+  /// Short Signature subtitle for the hero — the muscle focus when known,
+  /// else the workout type ("LEGS", "CHEST & TRICEPS", …).
+  String _heroSubtitle(Workout workout, String type) {
+    // Clean the muscle names: strip "(Latin name)" parentheticals, dedupe, keep
+    // at most two → "Chest & Triceps", never a raw multi-line anatomical dump.
+    final seen = <String>{};
+    final cleaned = <String>[];
+    for (final m in workout.primaryMuscles) {
+      final name = m.replaceAll(RegExp(r'\s*\([^)]*\)'), '').trim();
+      if (name.isEmpty) continue;
+      if (seen.add(name.toLowerCase())) cleaned.add(name);
+      if (cleaned.length >= 2) break;
+    }
+    if (cleaned.isNotEmpty) return cleaned.join(' & ');
+    return type;
   }
 
   /// The background layer: the exercise photo, a loading shimmer, or — when no
@@ -1380,6 +1327,236 @@ class _OverImageMenuButton extends ConsumerWidget {
 // conditionally render above the macros section, plus a post-workout refuel
 // highlight + a late-day "end at goal" chip.
 // ----------------------------------------------------------------------------
+/// Signature v2 compact FUEL strip — the one-line fuel summary that leads the
+/// nutrition slot on Home (replaces the full nutrition card above the fold).
+/// `Fuel  1,460 / 2,200 · 740 left` + semantic P/C/F dots + a floating 🥣.
+/// Reads the exact same providers as [HomeNutritionCard] (no new data path);
+/// tapping the whole strip opens the Nutrition tab.
+class HomeFuelStrip extends ConsumerWidget {
+  const HomeFuelStrip({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ref.colors(context);
+    final nutrition = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final summary = nutrition.summary;
+
+    // Cold load → slim one-line skeleton (never blank, never a fake target).
+    if (summary == null && nutrition.isLoading) {
+      return Padding(
+        padding: kHomeHPad,
+        child: _SkeletonBox(height: 44, radius: 10, c: c),
+      );
+    }
+    // Fetch failed with nothing cached → honest inline retry, no silent target.
+    if (summary == null && nutrition.error != null) {
+      return Padding(padding: kHomeHPad, child: _NutritionErrorCard(c: c));
+    }
+
+    final prefs = ref.watch(nutritionPreferencesProvider);
+    final calTarget = prefs.currentCalorieTarget;
+    final eatenCal = summary?.totalCalories ?? 0;
+    final eatenP = (summary?.totalProteinG ?? 0).round();
+    final eatenC = (summary?.totalCarbsG ?? 0).round();
+    final eatenF = (summary?.totalFatG ?? 0).round();
+    final calLeft = calTarget - eatenCal;
+    final over = calLeft < 0;
+    final nf = NumberFormat.decimalPattern();
+
+    return Padding(
+      padding: kHomeHPad,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticService.light();
+          context.go('/nutrition');
+        },
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text('FUEL',
+                          style: ZType.lbl(11, color: c.textMuted)),
+                      const SizedBox(width: 9),
+                      Text(nf.format(eatenCal),
+                          style: ZType.disp(26, color: c.textPrimary)
+                              .copyWith(height: 1.0)),
+                      const SizedBox(width: 7),
+                      Flexible(
+                        child: Text(
+                          over
+                              ? '/ ${nf.format(calTarget)} · ${nf.format(-calLeft)} over'
+                              : '/ ${nf.format(calTarget)} · ${nf.format(calLeft)} left',
+                          style: ZType.lbl(9.5,
+                              color: over ? c.warning : c.textMuted),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _FuelDot(color: AppColors.macroProtein, label: 'P $eatenP', c: c),
+                      const SizedBox(width: 14),
+                      _FuelDot(color: AppColors.macroCarbs, label: 'C $eatenC', c: c),
+                      const SizedBox(width: 14),
+                      _FuelDot(color: AppColors.macroFat, label: 'F $eatenF', c: c),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('🥣', style: TextStyle(fontSize: 32)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// One semantic macro dot + value for the FUEL strip (`● P 96`).
+class _FuelDot extends StatelessWidget {
+  final Color color;
+  final String label;
+  final ThemeColors c;
+  const _FuelDot({required this.color, required this.label, required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(label, style: ZType.lbl(10, color: c.textMuted, letterSpacing: 0.8)),
+      ],
+    );
+  }
+}
+
+/// Signature v2 below-fold STRENGTH breakdown — typographic, NO ring (the spec
+/// explicitly drops the activity ring here; steps/sleep live on the top strip).
+/// Big Anton overall score + a weekly delta, then hairline component bars for
+/// the top muscle groups, then a "Full breakdown ›" link. Self-hides with no
+/// data so an empty account doesn't show a bare "0".
+class HomeStrengthBreakdown extends ConsumerWidget {
+  const HomeStrengthBreakdown({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ref.colors(context);
+    final overall = ref.watch(overallStrengthScoreProvider);
+    final muscles = ref.watch(muscleScoresProvider);
+    if (overall <= 0 && muscles.isEmpty) return const SizedBox.shrink();
+
+    final entries = muscles.values.toList()
+      ..sort((a, b) => b.strengthScore.compareTo(a.strengthScore));
+    final top = entries.take(3).toList();
+    final weekChange =
+        entries.fold<int>(0, (s, e) => s + (e.scoreChange ?? 0));
+
+    return Padding(
+      padding: kHomeHPad,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('STRENGTH', style: ZType.lbl(11, color: c.textMuted)),
+          const SizedBox(height: 9),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text('$overall',
+                  style: ZType.disp(48, color: c.textPrimary)
+                      .copyWith(height: 0.9)),
+              const SizedBox(width: 11),
+              if (weekChange != 0)
+                Text(
+                  '${weekChange > 0 ? '+' : ''}$weekChange this week',
+                  style: ZType.lbl(11, color: c.accent, letterSpacing: 1),
+                ),
+            ],
+          ),
+          const SizedBox(height: 11),
+          ...top.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: _StrengthBar(
+                  label: m.muscleGroup,
+                  value: m.strengthScore,
+                  c: c,
+                ),
+              )),
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              context.push('/stats');
+            },
+            child: Text('Full breakdown ›',
+                style: ZType.lbl(10,
+                    color: c.textMuted.withValues(alpha: 0.7),
+                    letterSpacing: 0.8)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One hairline component bar for the strength breakdown (`label · bar · n`).
+class _StrengthBar extends StatelessWidget {
+  final String label;
+  final int value;
+  final ThemeColors c;
+  const _StrengthBar(
+      {required this.label, required this.value, required this.c});
+
+  @override
+  Widget build(BuildContext context) {
+    final frac = (value / 100).clamp(0.0, 1.0);
+    return Row(
+      children: [
+        SizedBox(
+          width: 54,
+          child: Text(label.toUpperCase(),
+              style: ZType.lbl(10.5, color: c.textSecondary, letterSpacing: 1),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+        ),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(1),
+            child: LinearProgressIndicator(
+              value: frac,
+              minHeight: 4,
+              backgroundColor: AppColors.hairlineStrong,
+              valueColor: AlwaysStoppedAnimation<Color>(c.textSecondary),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        SizedBox(
+          width: 26,
+          child: Text('$value',
+              textAlign: TextAlign.right,
+              style: ZType.data(12, color: c.textPrimary)),
+        ),
+      ],
+    );
+  }
+}
+
 class HomeNutritionCard extends ConsumerStatefulWidget {
   const HomeNutritionCard({super.key});
 

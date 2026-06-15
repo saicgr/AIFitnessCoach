@@ -13,6 +13,7 @@ import '../../core/theme/theme_colors.dart';
 import '../../widgets/design_system/zealova.dart';
 import '../../core/utils/exercise_name_format.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
+import '../../core/providers/user_provider.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/staples_provider.dart';
 import '../../core/providers/exercise_queue_provider.dart';
@@ -613,11 +614,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                   ? Padding(
                       padding: const EdgeInsets.only(left: 6),
                       child: Text(
-                        label,
-                        style: TextStyle(
+                        label.toUpperCase(),
+                        style: ZType.lbl(
+                          12,
                           color: accentColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.5,
                         ),
                       ),
                     )
@@ -668,9 +669,37 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
           );
         }
 
+        // Weight-over-time sparkline (Signature v2 Frame 4). Oldest→newest
+        // left to right; the latest point is the screen's single orange dot.
+        final useLbs = !ref.watch(useKgForWorkoutProvider);
+        final weightPoints = sessions.reversed
+            .where((s) => s.weightKg > 0)
+            .map((s) => useLbs ? s.weightKg * 2.20462 : s.weightKg)
+            .toList(growable: false);
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (weightPoints.length >= 2) ...[
+              Text(
+                'WEIGHT OVER TIME',
+                style: ZType.lbl(10,
+                    color: textMuted, letterSpacing: 2.0),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 72,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: _HistoryWeightSparkline(
+                    values: weightPoints,
+                    lineColor: textMuted,
+                    prColor: ThemeColors.of(context).accent,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             Text(
               '${sessions.length} SESSION${sessions.length == 1 ? '' : 'S'}',
               style: TextStyle(
@@ -993,4 +1022,85 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         ],
     );
   }
+}
+
+/// Signature v2 weight-over-time sparkline for the History tab. Draws a thin
+/// hairline path across the session weights (oldest→newest), marks the prior
+/// points as small muted dots, and renders the latest point as the screen's
+/// single orange (accent) focal dot. No axes/labels — a magazine spark, not a
+/// full chart (the Stats tab carries the full progression chart).
+class _HistoryWeightSparkline extends CustomPainter {
+  final List<double> values;
+  final Color lineColor;
+  final Color prColor;
+
+  const _HistoryWeightSparkline({
+    required this.values,
+    required this.lineColor,
+    required this.prColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+
+    const double padX = 6;
+    const double padY = 10;
+    final double w = size.width - padX * 2;
+    final double h = size.height - padY * 2;
+
+    double minV = values.reduce((a, b) => a < b ? a : b);
+    double maxV = values.reduce((a, b) => a > b ? a : b);
+    if (maxV - minV < 0.0001) {
+      // Flat history — center the line so it doesn't collapse.
+      minV -= 1;
+      maxV += 1;
+    }
+
+    Offset pointAt(int i) {
+      final double x = padX + (w * i / (values.length - 1));
+      final double t = (values[i] - minV) / (maxV - minV);
+      final double y = padY + h * (1 - t);
+      return Offset(x, y);
+    }
+
+    final path = Path();
+    for (var i = 0; i < values.length; i++) {
+      final p = pointAt(i);
+      if (i == 0) {
+        path.moveTo(p.dx, p.dy);
+      } else {
+        path.lineTo(p.dx, p.dy);
+      }
+    }
+
+    final linePaint = Paint()
+      ..color = lineColor.withValues(alpha: 0.7)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, linePaint);
+
+    // Prior points — small muted dots.
+    final dotPaint = Paint()..color = lineColor.withValues(alpha: 0.6);
+    for (var i = 0; i < values.length - 1; i++) {
+      canvas.drawCircle(pointAt(i), 2.2, dotPaint);
+    }
+
+    // Latest point — the single orange focal dot, with a soft halo.
+    final last = pointAt(values.length - 1);
+    canvas.drawCircle(
+      last,
+      6,
+      Paint()..color = prColor.withValues(alpha: 0.22),
+    );
+    canvas.drawCircle(last, 3.5, Paint()..color = prColor);
+  }
+
+  @override
+  bool shouldRepaint(_HistoryWeightSparkline oldDelegate) =>
+      oldDelegate.values != values ||
+      oldDelegate.lineColor != lineColor ||
+      oldDelegate.prColor != prColor;
 }

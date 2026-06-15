@@ -76,13 +76,19 @@ RestStreamBroadcaster startEasyRest({
   final broadcaster = RestStreamBroadcaster(seconds);
   timer.startRestTimer(seconds);
 
+  // Signature v2: rest is inline, not a full-screen takeover. The route uses a
+  // TRANSPARENT barrier so the set ledger / targets / next-set stay visible
+  // above the bottom-docked rest strip; the strip slides up from the bottom.
   Navigator.of(context).push(PageRouteBuilder(
     opaque: false,
-    barrierColor: Colors.black.withValues(alpha: 0.92),
+    barrierColor: Colors.transparent,
     transitionDuration: const Duration(milliseconds: 220),
     reverseTransitionDuration: const Duration(milliseconds: 180),
-    pageBuilder: (_, anim, __) => FadeTransition(
-      opacity: anim,
+    pageBuilder: (_, anim, __) => SlideTransition(
+      position: Tween<Offset>(
+        begin: const Offset(0, 1),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
       child: EasyRestOverlay(
         initialSeconds: seconds,
         remainingStream: broadcaster.stream,
@@ -93,6 +99,8 @@ RestStreamBroadcaster startEasyRest({
         nextTargetReps: target.targetReps,
         useKg: useKg,
         onSkip: timer.skipRest,
+        onAddTime: () => timer.adjustRestTime(15),
+        onSubtractTime: () => timer.adjustRestTime(-15),
         onDone: () {
           if (Navigator.of(context).canPop()) {
             Navigator.of(context).pop();

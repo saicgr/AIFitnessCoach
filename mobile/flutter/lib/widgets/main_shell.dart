@@ -518,6 +518,52 @@ class MainShell extends ConsumerWidget {
           // bottom-nav tab supersedes it — always reachable, never collapses
           // on scroll. Contextual chat deep links (coach hero card, active
           // workout, food tips) still push the /chat overlay unchanged.
+          // Signature "+" quick-log FAB — outlined rounded-rect that docks on
+          // Home / Workouts / You only (spec .rh-plus). Surface fill, hairline
+          // border, white glyph; opens the existing quick-log overlay.
+          if (isNavBarVisible &&
+              (selectedIndex == 0 || selectedIndex == 1 || selectedIndex == 4))
+            Positioned(
+              right: 24,
+              bottom: MediaQuery.of(context).padding.bottom +
+                  kMainNavBarHeight +
+                  kMainNavBottomGap +
+                  14,
+              child: GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  showQuickLogOverlay(context, ref);
+                },
+                child: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: isDark ? AppColors.surface : AppColorsLight.surface,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: isDark
+                          ? AppColors.cardBorder
+                          : AppColorsLight.cardBorder,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.add,
+                    size: 26,
+                    color: isDark
+                        ? AppColors.textPrimary
+                        : AppColorsLight.textPrimary,
+                  ),
+                ),
+              ),
+            ),
           // Nav bar at bottom — wrapped in Material so it participates in
           // Flutter's elevation/z-index system. This ensures OS-level
           // Tooltips (which use the root overlay) render UNDER the nav,

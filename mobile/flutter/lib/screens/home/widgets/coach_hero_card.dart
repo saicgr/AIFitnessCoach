@@ -83,18 +83,19 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             : () => _openChat(context, insightAsync.valueOrNull),
         onLongPress: isMinimized ? null : _onLongPressRegen,
         behavior: HitTestBehavior.opaque,
-        child: Container(
-          // Signature hero surface — matte fill + accent left edge (the focus
-          // card), replacing the accent gradient + uniform border.
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Stack(
+            children: [
+              Container(
+          // Signature hero surface — matte fill + a 3px accent left edge,
+          // painted as a clipped overlay (below) so we never combine a
+          // borderRadius with a NON-uniform border (Flutter crashes on that —
+          // this was the blank-Home fatal).
           decoration: BoxDecoration(
             color: c.surface,
             borderRadius: BorderRadius.circular(14),
-            border: BorderDirectional(
-              start: BorderSide(color: c.accent, width: 3),
-              top: BorderSide(color: c.cardBorder),
-              end: BorderSide(color: c.cardBorder),
-              bottom: BorderSide(color: c.cardBorder),
-            ),
+            border: Border.all(color: c.cardBorder),
           ),
           padding: EdgeInsetsDirectional.fromSTEB(16, 10, 10, isMinimized ? 12 : 14),
           // Render the previous insight in place during a SILENT refresh.
@@ -115,6 +116,15 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
               if (insightAsync.hasError) return _errorPlaceholder(c);
               return _skeleton(c, isMinimized: isMinimized);
             },
+          ),
+              ),
+              PositionedDirectional(
+                start: 0,
+                top: 0,
+                bottom: 0,
+                child: Container(width: 3, color: c.accent),
+              ),
+            ],
           ),
         ),
       ),

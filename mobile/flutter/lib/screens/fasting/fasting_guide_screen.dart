@@ -435,12 +435,7 @@ class _SafetyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border(
-          left: BorderSide(color: colors.warning, width: 3),
-          top: BorderSide(color: AppColors.cardBorder),
-          right: BorderSide(color: AppColors.cardBorder),
-          bottom: BorderSide(color: AppColors.cardBorder),
-        ),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

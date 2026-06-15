@@ -1358,12 +1358,10 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Color _glassBorder(BuildContext context, double alpha) =>
       _glassTint(context, alpha);
 
-  /// Theme-aware app accent orange — uses the darker [AppColorsLight.orange]
-  /// in light mode so badges/buttons stay legible on a white background.
-  Color _themeOrange(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark
-          ? AppColors.orange
-          : AppColorsLight.orange;
+  /// Signature accent (orange by default; gym-override aware). Resolves
+  /// through [ThemeColors.of] so badges/buttons follow the one app accent
+  /// rather than a hardcoded hex.
+  Color _themeOrange(BuildContext context) => ThemeColors.of(context).accent;
 
   // ───────────────────────── build ─────────────────────────
 

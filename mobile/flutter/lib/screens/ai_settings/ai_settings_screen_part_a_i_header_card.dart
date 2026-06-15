@@ -1,69 +1,34 @@
 part of 'ai_settings_screen.dart';
 
 
-/// AI Header Card
+/// AI Header Card — Signature v2 Anton masthead. The boxed cyan/purple
+/// gradient is replaced by a flat masthead: an Anton "AI SETTINGS" title with
+/// a Barlow descriptor kicker beneath, on the dark Signature surface.
 class _AIHeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.cyan.withOpacity(0.2),
-            AppColors.purple.withOpacity(0.2),
-          ],
-          begin: AlignmentDirectional.topStart,
-          end: AlignmentDirectional.bottomEnd,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)
+              .aiSettingsScreenAiCoachSettings
+              .toUpperCase(),
+          style: ZType.disp(34, color: tc.textPrimary),
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.cyan.withOpacity(0.3),
+        const SizedBox(height: 8),
+        Text(
+          AppLocalizations.of(context).aiSettingsScreenCustomizeHowYourAi,
+          style: ZType.lbl(
+            12,
+            weight: FontWeight.w600,
+            color: tc.textMuted,
+            letterSpacing: 1.4,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [AppColors.cyan, AppColors.purple],
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(Icons.smart_toy, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  AppLocalizations.of(context).aiSettingsScreenAiCoachSettings,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  AppLocalizations.of(context).aiSettingsScreenCustomizeHowYourAi,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }
@@ -160,23 +125,24 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final cardBorder = tc.cardBorder;
+    final accent = tc.accent;
 
     // Get current coach
     final coach = widget.ref.read(aiSettingsProvider.notifier).getCurrentCoach();
     final coachName = _displayName();
     final coachIcon = coach?.icon ?? Icons.smart_toy;
-    final coachColor = coach?.primaryColor ?? AppColors.cyan;
-    final coachAccentColor = coach?.accentColor ?? AppColors.purple;
+    // Persona glyph stays a NEUTRAL framed icon (not color-flooded) per the
+    // Signature spec — one accent per screen is reserved for selection state.
+    final coachColor = accent;
     final personalityBadge = coach?.personalityBadge ?? 'Default';
 
     return Container(
       decoration: BoxDecoration(
-        color: elevated,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
       ),
@@ -184,7 +150,8 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            // Coach avatar — tap navigates to full coach selection
+            // Coach avatar — tap navigates to full coach selection.
+            // Neutral framed glyph: hairline border, no gradient flood.
             GestureDetector(
               onTap: _editingName
                   ? null
@@ -192,15 +159,13 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
               child: Container(
                 width: 52,
                 height: 52,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [coachColor, coachAccentColor],
-                    begin: AlignmentDirectional.topStart,
-                    end: AlignmentDirectional.bottomEnd,
-                  ),
+                  color: tc.elevated,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: cardBorder),
                 ),
-                child: Icon(coachIcon, color: Colors.white, size: 26),
+                child: Icon(coachIcon, color: textPrimary, size: 26),
               ),
             ),
             const SizedBox(width: 14),
@@ -276,7 +241,7 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
                               coachName,
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w700,
                                 color: textPrimary,
                               ),
                               overflow: TextOverflow.ellipsis,
@@ -293,19 +258,22 @@ class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        // Neutral framed personality pill (hairline, no accent
+                        // flood — accent is reserved for selection state).
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: coachColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: cardBorder),
                           ),
                           child: Text(
-                            personalityBadge,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: coachColor,
+                            personalityBadge.toUpperCase(),
+                            style: ZType.lbl(
+                              9,
+                              weight: FontWeight.w600,
+                              color: textSecondary,
+                              letterSpacing: 1.2,
                             ),
                           ),
                         ),
@@ -381,55 +349,55 @@ class _PersonalitySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final cardBorder = tc.cardBorder;
+    final accent = tc.accent;
 
     final styles = [
-      ('motivational', 'Motivational', Icons.emoji_emotions),
-      ('professional', 'Professional', Icons.business),
-      ('friendly', 'Friendly', Icons.favorite),
-      ('tough-love', 'Tough Love', Icons.fitness_center),
-      ('drill-sergeant', 'Drill Sergeant', Icons.military_tech),
-      ('college-coach', 'College Coach', Icons.sports_football),
-      ('zen-master', 'Zen Master', Icons.spa),
-      ('hype-beast', 'Hype Beast', Icons.celebration),
-      ('scientist', 'Scientist', Icons.science),
-      ('comedian', 'Comedian', Icons.theater_comedy),
-      ('old-school', 'Old School', Icons.sports_gymnastics),
+      ('motivational', 'Motivational'),
+      ('professional', 'Professional'),
+      ('friendly', 'Friendly'),
+      ('tough-love', 'Tough Love'),
+      ('drill-sergeant', 'Drill Sergeant'),
+      ('college-coach', 'College Coach'),
+      ('zen-master', 'Zen Master'),
+      ('hype-beast', 'Hype Beast'),
+      ('scientist', 'Scientist'),
+      ('comedian', 'Comedian'),
+      ('old-school', 'Old School'),
     ];
 
     final tones = [
-      ('casual', 'Casual', Icons.chat_bubble_outline),
-      ('encouraging', 'Encouraging', Icons.thumb_up),
-      ('formal', 'Formal', Icons.school),
-      ('gen-z', 'Gen Z', Icons.trending_up),
-      ('sarcastic', 'Sarcastic', Icons.sentiment_satisfied_alt),
-      ('roast-mode', 'Roast Mode', Icons.local_fire_department),
-      ('pirate', 'Pirate', Icons.sailing),
-      ('british', 'British', Icons.local_cafe),
-      ('surfer', 'Surfer', Icons.surfing),
-      ('anime', 'Anime', Icons.auto_awesome),
+      ('casual', 'Casual'),
+      ('encouraging', 'Encouraging'),
+      ('formal', 'Formal'),
+      ('gen-z', 'Gen Z'),
+      ('sarcastic', 'Sarcastic'),
+      ('roast-mode', 'Roast Mode'),
+      ('pirate', 'Pirate'),
+      ('british', 'British'),
+      ('surfer', 'Surfer'),
+      ('anime', 'Anime'),
     ];
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Tiny uppercase sub-label
           Text(
-            AppLocalizations.of(context).customCoachFormCoachingStyle,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context)
+                .customCoachFormCoachingStyle
+                .toUpperCase(),
+            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.6),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -437,48 +405,25 @@ class _PersonalitySection extends StatelessWidget {
             runSpacing: 8,
             children: styles.map((style) {
               final isSelected = settings.coachingStyle == style.$1;
-              return GestureDetector(
-                onTap: () => ref.read(aiSettingsProvider.notifier).updateCoachingStyle(style.$1),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.cyan.withValues(alpha: 0.2) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? AppColors.cyan : cardBorder,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(style.$3, size: 16, color: isSelected ? AppColors.cyan : textSecondary),
-                      const SizedBox(width: 6),
-                      Text(
-                        style.$2,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected ? AppColors.cyan : textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              return ZealovaChip(
+                label: style.$2,
+                selected: isSelected,
+                onTap: () => ref
+                    .read(aiSettingsProvider.notifier)
+                    .updateCoachingStyle(style.$1),
               );
             }).toList(),
           ),
 
-          const SizedBox(height: 20),
-          Divider(color: cardBorder),
+          const SizedBox(height: 18),
+          ZealovaRule(margin: const EdgeInsets.symmetric(vertical: 2)),
           const SizedBox(height: 16),
 
           Text(
-            AppLocalizations.of(context).customCoachFormCommunicationTone,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context)
+                .customCoachFormCommunicationTone
+                .toUpperCase(),
+            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.6),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -486,69 +431,42 @@ class _PersonalitySection extends StatelessWidget {
             runSpacing: 8,
             children: tones.map((tone) {
               final isSelected = settings.communicationTone == tone.$1;
-              return GestureDetector(
-                onTap: () => ref.read(aiSettingsProvider.notifier).updateCommunicationTone(tone.$1),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.purple.withValues(alpha: 0.2) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? AppColors.purple : cardBorder,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(tone.$3, size: 16, color: isSelected ? AppColors.purple : textSecondary),
-                      const SizedBox(width: 6),
-                      Text(
-                        tone.$2,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected ? AppColors.purple : textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              return ZealovaChip(
+                label: tone.$2,
+                selected: isSelected,
+                onTap: () => ref
+                    .read(aiSettingsProvider.notifier)
+                    .updateCommunicationTone(tone.$1),
               );
             }).toList(),
           ),
 
-          const SizedBox(height: 20),
-          Divider(color: cardBorder),
+          const SizedBox(height: 18),
+          ZealovaRule(margin: const EdgeInsets.symmetric(vertical: 2)),
           const SizedBox(height: 16),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                AppLocalizations.of(context).customCoachFormEncouragementLevel,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
-                ),
+                AppLocalizations.of(context)
+                    .customCoachFormEncouragementLevel
+                    .toUpperCase(),
+                style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.6),
               ),
               Text(
                 '${(settings.encouragementLevel * 100).toInt()}%',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.cyan,
-                ),
+                style: ZType.data(14, color: accent),
               ),
             ],
           ),
           const SizedBox(height: 8),
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
-              activeTrackColor: AppColors.cyan,
+              activeTrackColor: accent,
               inactiveTrackColor: cardBorder,
-              thumbColor: AppColors.cyan,
-              overlayColor: AppColors.cyan.withOpacity(0.2),
+              thumbColor: accent,
+              overlayColor: accent.withValues(alpha: 0.2),
             ),
             child: Slider(
               value: settings.encouragementLevel,
@@ -578,11 +496,11 @@ class _ResponsePreferencesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final cardBorder = tc.cardBorder;
+    final accent = tc.accent;
 
     final lengths = [
       ('concise', 'Concise', 'Short, to-the-point'),
@@ -593,19 +511,18 @@ class _ResponsePreferencesSection extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).aiSettingsScreenResponseLength,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context)
+                .aiSettingsScreenResponseLength
+                .toUpperCase(),
+            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.6),
           ),
           const SizedBox(height: 12),
           Row(
@@ -616,12 +533,14 @@ class _ResponsePreferencesSection extends StatelessWidget {
                   onTap: () => ref.read(aiSettingsProvider.notifier).updateResponseLength(length.$1),
                   child: Container(
                     margin: EdgeInsetsDirectional.only(end: length.$1 != 'detailed' ? 8 : 0),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.orange.withOpacity(0.2) : Colors.transparent,
+                      color: isSelected
+                          ? accent.withValues(alpha: 0.14)
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected ? AppColors.orange : cardBorder,
+                        color: isSelected ? accent : cardBorder,
                       ),
                     ),
                     child: Column(
@@ -630,13 +549,14 @@ class _ResponsePreferencesSection extends StatelessWidget {
                           length.$2,
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                            color: isSelected ? AppColors.orange : textSecondary,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? accent : textSecondary,
                           ),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           length.$3,
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 10,
                             color: textSecondary,
@@ -651,7 +571,7 @@ class _ResponsePreferencesSection extends StatelessWidget {
           ),
 
           const SizedBox(height: 16),
-          Divider(color: cardBorder),
+          ZealovaRule(margin: const EdgeInsets.symmetric(vertical: 2)),
           const SizedBox(height: 8),
 
           _ToggleItem(
@@ -683,28 +603,27 @@ class _AgentsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textSecondary = tc.textSecondary;
+    final textMuted = tc.textMuted;
+    final cardBorder = tc.cardBorder;
+    final accent = tc.accent;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            AppLocalizations.of(context).aiSettingsScreenDefaultAgent,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context)
+                .aiSettingsScreenDefaultAgent
+                .toUpperCase(),
+            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.6),
           ),
           const SizedBox(height: 4),
           Text(
@@ -713,7 +632,7 @@ class _AgentsSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // Default agent selector
+          // Default agent selector — neutral framed chips, accent on selected.
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -725,23 +644,23 @@ class _AgentsSection extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isSelected ? config.primaryColor.withOpacity(0.2) : Colors.transparent,
+                    color: isSelected ? accent.withValues(alpha: 0.14) : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? config.primaryColor : cardBorder,
+                      color: isSelected ? accent : cardBorder,
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(config.icon, size: 16, color: isSelected ? config.primaryColor : textSecondary),
+                      Icon(config.icon, size: 16, color: isSelected ? accent : textSecondary),
                       const SizedBox(width: 6),
                       Text(
                         config.displayName,
                         style: TextStyle(
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                          color: isSelected ? config.primaryColor : textSecondary,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: isSelected ? accent : textSecondary,
                         ),
                       ),
                     ],
@@ -751,17 +670,15 @@ class _AgentsSection extends StatelessWidget {
             }).toList(),
           ),
 
-          const SizedBox(height: 20),
-          Divider(color: cardBorder),
+          const SizedBox(height: 18),
+          ZealovaRule(margin: const EdgeInsets.symmetric(vertical: 2)),
           const SizedBox(height: 16),
 
           Text(
-            AppLocalizations.of(context).aiSettingsScreenAvailableAgents,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: textPrimary,
-            ),
+            AppLocalizations.of(context)
+                .aiSettingsScreenAvailableAgents
+                .toUpperCase(),
+            style: ZType.lbl(10.5, color: textMuted, letterSpacing: 1.6),
           ),
           const SizedBox(height: 4),
           Text(
@@ -803,27 +720,31 @@ class _AgentToggleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
+    final cardBorder = tc.cardBorder;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: glassSurface,
+        color: tc.elevated,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         children: [
+          // Neutral framed agent glyph (no color flood).
           Container(
             width: 32,
             height: 32,
+            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: agent.primaryColor.withOpacity(0.2),
+              color: tc.surface,
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: cardBorder),
             ),
-            child: Icon(agent.icon, size: 18, color: agent.primaryColor),
+            child: Icon(agent.icon, size: 18, color: textPrimary),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -834,7 +755,7 @@ class _AgentToggleItem extends StatelessWidget {
                   agent.displayName,
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: textPrimary,
                   ),
                 ),
@@ -842,7 +763,7 @@ class _AgentToggleItem extends StatelessWidget {
                   AppLocalizations.of(context)!.aiSettingsScreenPartAIHeaderCardValue(agent.name),
                   style: TextStyle(
                     fontSize: 12,
-                    color: agent.primaryColor,
+                    color: textSecondary,
                   ),
                 ),
               ],
@@ -851,7 +772,7 @@ class _AgentToggleItem extends StatelessWidget {
           Switch(
             value: isEnabled,
             onChanged: (_) => onChanged(),
-            activeThumbColor: agent.primaryColor,
+            activeThumbColor: tc.accent,
           ),
         ],
       ),
@@ -869,14 +790,14 @@ class _FitnessCoachingSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Column(
         children: [
@@ -930,16 +851,15 @@ class _PrivacySection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef widgetRef) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final tc = ThemeColors.of(context);
+    final textSecondary = tc.textSecondary;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: elevated,
+        color: tc.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: tc.cardBorder),
       ),
       child: Column(
         children: [
@@ -957,7 +877,7 @@ class _PrivacySection extends ConsumerWidget {
             onChanged: () => ref.read(aiSettingsProvider.notifier).toggleUseRAG(),
           ),
           const SizedBox(height: 16),
-          Divider(color: cardBorder),
+          const ZealovaRule(margin: EdgeInsets.symmetric(vertical: 2)),
           const SizedBox(height: 12),
 
           // Clear history button
@@ -1040,9 +960,9 @@ class _ToggleItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textSecondary = tc.textSecondary;
 
     return Row(
       children: [
@@ -1054,7 +974,7 @@ class _ToggleItem extends StatelessWidget {
                 title,
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: textPrimary,
                 ),
               ),
@@ -1071,7 +991,7 @@ class _ToggleItem extends StatelessWidget {
         Switch(
           value: value,
           onChanged: (_) => onChanged(),
-          activeThumbColor: AppColors.cyan,
+          activeThumbColor: tc.accent,
         ),
       ],
     );

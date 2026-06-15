@@ -1320,7 +1320,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case HomeSection.workoutCard:
         return const HomeWorkoutCard();
       case HomeSection.nutritionCard:
-        return const HomeNutritionCard();
+        // Signature v2: Home leads with the compact one-line FUEL strip above
+        // the fold; the full nutrition card lives on the Nutrition tab.
+        return const HomeFuelStrip();
       case HomeSection.metricTrio:
         // Folded into the MetricSummaryDeck (Direction C). Kept in the enum so
         // a user's persisted ordering doesn't break; renders nothing now.
@@ -1336,9 +1338,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       case HomeSection.habits:
         return const HabitsSection();
       case HomeSection.todayScore:
-        // Direction C: the Today Score is now the head of the compact metric
-        // summary deck (segmented ring + live tiles + Log/Trends/Start).
-        return const MetricSummaryDeck();
+        // Signature v2: the below-fold leads with a typographic STRENGTH
+        // breakdown (Anton score + hairline PUSH/PULL/LEGS-style bars), NOT the
+        // old segmented activity ring deck — the spec drops the ring here.
+        return const HomeStrengthBreakdown();
       case HomeSection.cycle:
         // Self-hides unless menstrual tracking is enabled. Renders the merged
         // "Your Cycle" card (#12) — phase + day, next-period countdown, PMS-prep,

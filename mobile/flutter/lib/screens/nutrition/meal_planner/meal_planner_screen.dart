@@ -2,14 +2,14 @@
 /// AI coach review, and Apply-to-today.
 library;
 
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../widgets/design_system/zealova.dart';
 import '../../../data/models/coach_review.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/models/meal_plan.dart';
@@ -112,8 +112,8 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                 GlassBackButton(onTap: () => Navigator.of(context).pop()),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(AppLocalizations.of(context).recipesPlanDay,
-                    style: TextStyle(color: text, fontSize: 22, fontWeight: FontWeight.w800)),
+                  child: Text(AppLocalizations.of(context).recipesPlanDay.toUpperCase(),
+                    style: ZType.disp(26, color: text, letterSpacing: 0.5)),
                 ),
                 IconButton(
                   tooltip: AppLocalizations.of(context).mealPlannerSaveAsTemplate,
@@ -156,8 +156,12 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
           // overflow on small screens. ✅
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final coachBtn = OutlinedButton.icon(
-                onPressed: () {
+              // ✦ Coach review — ghost (secondary). Opens the glass score sheet.
+              final coachBtn = ZealovaButton(
+                label: AppLocalizations.of(context).recipeDetailCoachReview,
+                variant: ZealovaButtonVariant.ghost,
+                height: 48,
+                onTap: () {
                   showGlassSheet<void>(
                     context: context,
                     builder: (_) => GlassSheet(
@@ -168,16 +172,13 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                     ),
                   );
                 },
-                icon: const Icon(Icons.psychology_outlined, size: 18),
-                label: Text(
-                  AppLocalizations.of(context).recipeDetailCoachReview,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
               );
-              final groceryBtn = OutlinedButton.icon(
-                onPressed: () async {
+              // 🛒 Grocery — ghost (secondary). Builds the list.
+              final groceryBtn = ZealovaButton(
+                label: AppLocalizations.of(context).mealPlannerGrocery,
+                variant: ZealovaButtonVariant.ghost,
+                height: 48,
+                onTap: () async {
                   try {
                     final list = await ref.read(recipeRepositoryProvider).buildGroceryList(
                       widget.userId, GroceryListCreate(mealPlanId: _plan!.id),
@@ -190,16 +191,14 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
                   }
                 },
-                icon: const Icon(Icons.shopping_cart_outlined, size: 18),
-                label: Text(
-                  AppLocalizations.of(context).mealPlannerGrocery,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
               );
-              final applyBtn = ElevatedButton.icon(
-                onPressed: () async {
+              // ✓ Apply day — THE one reserved-accent CTA. Logs every slot.
+              final applyBtn = ZealovaButton(
+                label: AppLocalizations.of(context).setAdjustmentSheetApply,
+                variant: ZealovaButtonVariant.primary,
+                height: 48,
+                trailingIcon: Icons.check,
+                onTap: () async {
                   try {
                     final res = await ref.read(recipeRepositoryProvider).applyPlan(_plan!.id, _selectedDate);
                     if (mounted) {
@@ -212,14 +211,6 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
                   }
                 },
-                icon: const Icon(Icons.check, size: 18),
-                label: Text(
-                  AppLocalizations.of(context).setAdjustmentSheetApply,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                ),
-                style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
               );
 
               // Below ~420dp width, three buttons in a Row clip "Coach review"
@@ -285,28 +276,26 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
                 color: selected ? accent : surface,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                    color: selected ? accent : muted.withValues(alpha: 0.15)),
+                    color: selected ? accent : AppColors.cardBorder),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     isToday ? 'TODAY' : weekday[day.weekday],
-                    style: TextStyle(
-                      color: selected ? Colors.white : muted,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.4,
-                    ),
+                    style: ZType.lbl(9,
+                        color: selected
+                            ? ThemeColors.of(context).accentContrast
+                            : muted,
+                        letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '${day.day}',
-                    style: TextStyle(
-                      color: selected ? Colors.white : text,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
+                    style: ZType.disp(18,
+                        color: selected
+                            ? ThemeColors.of(context).accentContrast
+                            : text),
                   ),
                 ],
               ),
@@ -329,10 +318,10 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       children: [
-        // Macro projection at TOP — ring-based so the user sees nutrition
-        // progress toward their targets at a glance without scrolling.
+        // Macro projection at TOP — Signature hairline bars (no rings) so the
+        // user sees planned nutrition toward their targets at a glance.
         if (_sim != null) ...[
-          _MacroRingsHeader(sim: _sim!, isDark: widget.isDark, accent: accent),
+          _MacroProjection(sim: _sim!, isDark: widget.isDark),
           const SizedBox(height: 12),
         ],
         for (final m in MealSlot.values)
@@ -449,24 +438,28 @@ class _MealSlotCard extends StatelessWidget {
     };
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: surface, borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: muted.withValues(alpha: 0.15)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(children: [
-            Text('$emoji ${mealType.value.toUpperCase()}',
-                style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+            Text(emoji, style: const TextStyle(fontSize: 15)),
+            const SizedBox(width: 8),
+            Text(mealType.value.toUpperCase(),
+                style: ZType.lbl(12, color: text, letterSpacing: 1.6)),
             const Spacer(),
-            IconButton(icon: Icon(Icons.add_circle_outline, color: accent), onPressed: onAdd),
+            // "+" quick-add — white glyph on surface, never accent-filled.
+            ZealovaPlusButton(onTap: onAdd, size: 30),
           ]),
           if (items.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: Text(AppLocalizations.of(context).mealPlannerEmptyTapToAdd, style: TextStyle(color: muted, fontSize: 12)),
+              padding: const EdgeInsets.only(top: 10, left: 2),
+              child: Text(AppLocalizations.of(context).mealPlannerEmptyTapToAdd,
+                  style: ZType.lbl(11, color: muted, letterSpacing: 1.2)),
             )
           else
             ...items.map((i) {
@@ -474,43 +467,46 @@ class _MealSlotCard extends StatelessWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ListTile(
-                    dense: true, contentPadding: EdgeInsets.zero,
-                    leading: Icon(Icons.restaurant_menu, color: accent, size: 18),
-                    title: Text(i.recipeId != null ? AppLocalizations.of(context).mealPlannerRecipe : AppLocalizations.of(context).mealPlannerCustomItems,
-                        style: TextStyle(color: text)),
-                    subtitle: Text('×${i.servings.toStringAsFixed(1)} servings',
-                        style: TextStyle(color: muted, fontSize: 11)),
+                  const SizedBox(height: 4),
+                  ZealovaListRow(
+                    icon: Icons.restaurant_menu,
+                    label: i.recipeId != null
+                        ? AppLocalizations.of(context).mealPlannerRecipe
+                        : AppLocalizations.of(context).mealPlannerCustomItems,
+                    value: '×${i.servings.toStringAsFixed(1)}',
+                    showChevron: false,
+                    hairline: false,
                     trailing: IconButton(
                       icon: Icon(Icons.close, size: 16, color: muted),
                       onPressed: () => onRemove(i.id),
                     ),
                   ),
-                  // AI alternate for this exact slot — one tap to swap.
+                  // AI alternate for this exact slot — one tap to swap. Hairline
+                  // ghost affordance; accent stays reserved for Apply day.
                   if (swap != null)
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 6),
+                      padding: const EdgeInsets.only(left: 2, bottom: 6),
                       child: InkWell(
                         onTap: () => onSwap(i, swap),
                         borderRadius: BorderRadius.circular(10),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.10),
+                            color: AppColors.surface,
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: accent.withValues(alpha: 0.30)),
+                            border: Border.all(color: AppColors.cardBorder),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.autorenew, size: 14, color: accent),
+                              Icon(Icons.autorenew, size: 14, color: text),
                               const SizedBox(width: 6),
                               Flexible(
                                 child: Text(
                                   'Swap to ${swap.toLabel}',
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w700),
+                                  style: ZType.lbl(11, color: text, letterSpacing: 0.8),
                                 ),
                               ),
                             ],
@@ -527,17 +523,16 @@ class _MealSlotCard extends StatelessWidget {
   }
 }
 
-/// Top-of-screen ring-based macro projection.
+/// Top-of-screen macro projection — Signature hairline bars (no rings).
 ///
-/// Layout: a large calories ring on the left (showing kcal / target in the
-/// center) + three smaller macro ring tiles on the right (protein, carbs, fat).
-/// Replaces the linear-bar "Macro projection" section that used to sit at the
-/// bottom — moving it to the top so users see plan nutrition at a glance.
-class _MacroRingsHeader extends StatelessWidget {
+/// Layout: a big Anton "planned / target" kcal numeral over three hairline
+/// P/C/F bars with semantic macro colors, each showing planned/target grams.
+/// Replaces the ring-based header per the Signature spec ("no rings,
+/// hairline-led"). Reads the same simulate totals + target snapshot.
+class _MacroProjection extends StatelessWidget {
   final SimulateResponse sim;
   final bool isDark;
-  final Color accent;
-  const _MacroRingsHeader({required this.sim, required this.isDark, required this.accent});
+  const _MacroProjection({required this.sim, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
@@ -554,123 +549,69 @@ class _MacroRingsHeader extends StatelessWidget {
     final fat = sim.totals.fatG;
     final fatTarget = (sim.targetSnapshot['fat_g'] as num?)?.toDouble() ?? 0;
 
-    final trackColor = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.06);
+    String fmt(double v) => v
+        .toStringAsFixed(0)
+        .replaceAllMapped(
+            RegExp(r'(\d)(?=(\d{3})+$)'), (m) => '${m[1]},');
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withValues(alpha: 0.08),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          ZealovaSectionKicker(
+            AppLocalizations.of(context).mealPlannerMacroProjection,
+            fontSize: 11,
+          ),
+          const SizedBox(height: 10),
+          // Big planned/target calorie numeral — Anton.
           Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
             children: [
-              Icon(Icons.pie_chart_rounded, color: accent, size: 16),
-              const SizedBox(width: 6),
-              Text(
-                AppLocalizations.of(context).mealPlannerMacroProjection,
-                style: TextStyle(color: muted, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+              Text(fmt(cal), style: ZType.disp(34, color: text)),
+              const SizedBox(width: 4),
+              Text('/ ${fmt(calTarget)}',
+                  style: ZType.disp(18, color: muted)),
+              const SizedBox(width: 5),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 3),
+                child: Text('KCAL',
+                    style: ZType.lbl(10, color: muted, letterSpacing: 1.6)),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Large calories ring
-              SizedBox(
-                width: 112,
-                height: 112,
-                child: CustomPaint(
-                  painter: _SingleRingPainter(
-                    progress: calTarget > 0 ? (cal / calTarget).clamp(0.0, 1.5) : 0,
-                    color: accent,
-                    trackColor: trackColor,
-                    strokeWidth: 14,
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          cal.toStringAsFixed(0),
-                          style: TextStyle(
-                            color: text,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            height: 1.0,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '/ ${calTarget.toStringAsFixed(0)}',
-                          style: TextStyle(color: muted, fontSize: 11, height: 1.0),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'kcal',
-                          style: TextStyle(
-                            color: accent,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Macro mini-rings
-              Expanded(
-                child: Column(
-                  children: [
-                    _MacroMiniRing(
-                      label: AppLocalizations.of(context).weeklyCheckinSheetProtein,
-                      current: protein,
-                      target: proteinTarget,
-                      color: AppColors.macroProtein,
-                      trackColor: trackColor,
-                      text: text,
-                      muted: muted,
-                    ),
-                    const SizedBox(height: 10),
-                    _MacroMiniRing(
-                      label: AppLocalizations.of(context).weeklyCheckinSheetCarbs,
-                      current: carbs,
-                      target: carbsTarget,
-                      color: AppColors.macroCarbs,
-                      trackColor: trackColor,
-                      text: text,
-                      muted: muted,
-                    ),
-                    const SizedBox(height: 10),
-                    _MacroMiniRing(
-                      label: AppLocalizations.of(context).weeklyCheckinSheetFat,
-                      current: fat,
-                      target: fatTarget,
-                      color: AppColors.macroFat,
-                      trackColor: trackColor,
-                      text: text,
-                      muted: muted,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          _MacroBar(
+            keyLabel: 'P',
+            current: protein,
+            target: proteinTarget,
+            color: AppColors.macroProtein,
+            text: text,
+            muted: muted,
+          ),
+          const SizedBox(height: 9),
+          _MacroBar(
+            keyLabel: 'C',
+            current: carbs,
+            target: carbsTarget,
+            color: AppColors.macroCarbs,
+            text: text,
+            muted: muted,
+          ),
+          const SizedBox(height: 9),
+          _MacroBar(
+            keyLabel: 'F',
+            current: fat,
+            target: fatTarget,
+            color: AppColors.macroFat,
+            text: text,
+            muted: muted,
           ),
         ],
       ),
@@ -678,134 +619,57 @@ class _MacroRingsHeader extends StatelessWidget {
   }
 }
 
-class _MacroMiniRing extends StatelessWidget {
-  final String label;
+/// A single hairline macro projection bar — key letter, filled bar toward
+/// target (semantic color), and a mono planned/target readout.
+class _MacroBar extends StatelessWidget {
+  final String keyLabel;
   final double current;
   final double target;
   final Color color;
-  final Color trackColor;
   final Color text;
   final Color muted;
-  const _MacroMiniRing({
-    required this.label,
+  const _MacroBar({
+    required this.keyLabel,
     required this.current,
     required this.target,
     required this.color,
-    required this.trackColor,
     required this.text,
     required this.muted,
   });
 
   @override
   Widget build(BuildContext context) {
-    final pct = target > 0 ? (current / target).clamp(0.0, 1.5) : 0.0;
+    final pct = target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
     return Row(
       children: [
         SizedBox(
-          width: 36,
-          height: 36,
-          child: CustomPaint(
-            painter: _SingleRingPainter(
-              progress: pct.toDouble(),
-              color: color,
-              trackColor: trackColor,
-              strokeWidth: 5,
-            ),
-            child: Center(
-              child: Text(
-                '${(pct * 100).round()}%',
-                style: TextStyle(
-                  color: color,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                ),
+          width: 14,
+          child: Text(keyLabel,
+              style: ZType.lbl(12, color: color, letterSpacing: 0.5)),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              height: 6,
+              color: AppColors.hairlineStrong,
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: pct.toDouble(),
+                child: Container(color: color),
               ),
             ),
           ),
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  color: text,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${current.toStringAsFixed(0)} / ${target.toStringAsFixed(0)} g',
-                style: TextStyle(color: muted, fontSize: 11),
-              ),
-            ],
-          ),
+        Text(
+          '${current.toStringAsFixed(0)}/${target.toStringAsFixed(0)}',
+          style: ZType.data(11, color: muted),
         ),
       ],
     );
   }
-}
-
-/// Paints a single progress ring (track + arc from 12 o'clock).
-/// Used for the big calories ring + the 3 macro mini-rings.
-class _SingleRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final Color trackColor;
-  final double strokeWidth;
-  _SingleRingPainter({
-    required this.progress,
-    required this.color,
-    required this.trackColor,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = math.min(size.width, size.height) / 2 - strokeWidth / 2;
-    final rect = Rect.fromCircle(center: center, radius: radius);
-
-    final track = Paint()
-      ..color = trackColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    canvas.drawCircle(center, radius, track);
-
-    final effective = progress <= 0 ? 0.0 : progress;
-    final clamped = effective.clamp(0.0, 1.0);
-    final sweep = 2 * math.pi * clamped;
-
-    final arc = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-    if (clamped > 0) {
-      canvas.drawArc(rect, -math.pi / 2, sweep, false, arc);
-    }
-
-    // Overshoot (lighter color wrapping around) when over 100%.
-    if (progress > 1.0) {
-      final overshoot = (progress - 1.0).clamp(0.0, 0.5);
-      final overshootSweep = 2 * math.pi * overshoot;
-      final overshootPaint = Paint()
-        ..color = Color.lerp(color, Colors.white, 0.4)!
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round;
-      canvas.drawArc(rect, -math.pi / 2, overshootSweep, false, overshootPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_SingleRingPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
 }
 
 class _AddRecipeDialog extends ConsumerStatefulWidget {

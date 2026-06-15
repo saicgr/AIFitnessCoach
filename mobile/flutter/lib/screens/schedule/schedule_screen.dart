@@ -895,12 +895,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           decoration: BoxDecoration(
             color: colors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border(
-              left: BorderSide(color: colors.accent, width: 3),
-              top: BorderSide(color: AppColors.cardBorder),
-              right: BorderSide(color: AppColors.cardBorder),
-              bottom: BorderSide(color: AppColors.cardBorder),
-            ),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
           ),
           child: Material(
             color: Colors.transparent,

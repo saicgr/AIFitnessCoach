@@ -35,36 +35,43 @@ class ZealovaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
-    final Color bg;
-    Border? border;
-    switch (variant) {
-      case ZealovaCardVariant.flat:
-        bg = tc.surface;
-        border = null;
-        break;
-      case ZealovaCardVariant.outlined:
-        bg = tc.surface;
-        border = Border.all(color: AppColors.cardBorder, width: 1);
-        break;
-      case ZealovaCardVariant.hero:
-        bg = tc.surface;
-        border = Border(
-          left: BorderSide(color: tc.accent, width: 3),
-          top: BorderSide(color: AppColors.cardBorder),
-          right: BorderSide(color: AppColors.cardBorder),
-          bottom: BorderSide(color: AppColors.cardBorder),
-        );
-        break;
-    }
-    final card = Container(
+    final bool isHero = variant == ZealovaCardVariant.hero;
+
+    // IMPORTANT: never combine a borderRadius with a NON-uniform border —
+    // Flutter asserts/crashes ("A borderRadius can only be given on borders
+    // with uniform colors"). So all variants use a UNIFORM border, and the
+    // hero's accent left edge is painted as a clipped 3px overlay instead.
+    final Border? border = variant == ZealovaCardVariant.flat
+        ? null
+        : Border.all(color: AppColors.cardBorder, width: 1);
+
+    Widget card = Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: bg,
+        color: tc.surface,
         border: border,
         borderRadius: BorderRadius.circular(radius),
       ),
       child: child,
     );
+
+    if (isHero) {
+      card = ClipRRect(
+        borderRadius: BorderRadius.circular(radius),
+        child: Stack(
+          children: [
+            card,
+            PositionedDirectional(
+              start: 0,
+              top: 0,
+              bottom: 0,
+              child: Container(width: 3, color: tc.accent),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (onTap == null) return card;
     return Material(
       color: Colors.transparent,

@@ -1,10 +1,7 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/chrome_constants.dart';
 import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/models/workout.dart';
@@ -20,16 +17,12 @@ import '../../widgets/main_shell.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_swipe_navigation.dart';
-import '../home/widgets/cards/weekly_progress_card.dart';
-import 'widgets/workout_planner_section.dart';
+// WorkoutTuneMenu (calendar display options) still lives in the planner
+// section file and is hosted in the masthead action cluster.
+import 'widgets/workout_planner_section.dart' show WorkoutTuneMenu;
 import 'widgets/around_your_workout_section.dart';
 import 'widgets/workout_stats/workout_stats_section.dart';
-import 'widgets/exercise_preferences_card.dart';
-import 'widgets/workout_library_grid.dart';
-import 'widgets/workouts_floating_options_bar.dart';
-import 'widgets/upcoming_workouts_sheet.dart';
-import 'widgets/favorite_workouts_sheet.dart';
-import '../home/widgets/manage_gym_profiles_sheet.dart';
+import 'widgets/workouts_signature_body.dart';
 import '../home/widgets/week_calendar_strip.dart';
 import '../home/widgets/gym_profile_switcher.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -67,103 +60,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   // remaining items navigate / open sheets instead of scrolling.
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _planSectionKey = GlobalKey();
-  int _activeOption = 0;
 
-  // ---- Weekly-progress memoization ----------------------------------------
-  // The day/count computation in _buildContent walks the whole workouts list
-  // and was re-running on EVERY rebuild (scroll, accent change, sheet open).
-  // Cache the result keyed by a cheap signature of its inputs so it only
-  // recomputes when the underlying data — or the current calendar day —
-  // actually changes.
-  String? _weeklyProgressSignature;
-  _WeeklyProgress? _weeklyProgressCache;
-
-  /// Cheap content signature of the inputs to the weekly-progress calc. Built
-  /// from the screen-summary counts (when present) plus each workout's
-  /// scheduled date + completion flag, and the local calendar day (so the
-  /// week window rolls over correctly across midnight).
-  String _weeklyProgressKey(
-    List<Workout> workouts,
-    WorkoutScreenSummary? summary,
-  ) {
-    final today = DateTime.now();
-    final buf = StringBuffer()
-      ..write('${today.year}-${today.month}-${today.day}|')
-      ..write('${summary?.completedThisWeek}/${summary?.plannedThisWeek}|');
-    for (final w in workouts) {
-      buf.write('${w.scheduledDate}:${w.isCompleted};');
-    }
-    return buf.toString();
-  }
-
-  /// Compute (or return the memoized) weekly-progress figures.
-  _WeeklyProgress _computeWeeklyProgress(
-    List<Workout> workouts,
-    WorkoutScreenSummary? summary,
-  ) {
-    final signature = _weeklyProgressKey(workouts, summary);
-    final cached = _weeklyProgressCache;
-    if (cached != null && _weeklyProgressSignature == signature) {
-      return cached;
-    }
-
-    final now = DateTime.now();
-
-    // Completed / planned counts — prefer the lightweight screen summary.
-    final int completedThisWeek;
-    final int plannedThisWeek;
-    if (summary != null) {
-      completedThisWeek = summary.completedThisWeek;
-      plannedThisWeek = summary.plannedThisWeek;
-    } else {
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-      final endOfWeek = startOfWeek.add(const Duration(days: 7));
-      completedThisWeek = workouts.where((w) {
-        if (w.isCompleted != true) return false;
-        if (w.scheduledDate == null) return false;
-        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
-        if (scheduledDate == null) return false;
-        return scheduledDate.isAfter(startOfWeek) &&
-            scheduledDate.isBefore(endOfWeek);
-      }).length;
-      plannedThisWeek = workouts.where((w) {
-        if (w.scheduledDate == null) return false;
-        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
-        if (scheduledDate == null) return false;
-        return scheduledDate.isAfter(startOfWeek) &&
-            scheduledDate.isBefore(startOfWeek.add(const Duration(days: 7)));
-      }).length;
-    }
-
-    // Per-day indicators for the ring row. Day indices are 0=Mon … 6=Sun.
-    final startOfWeek = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: now.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    final completedDayIndices = <int>{};
-    final scheduledDayIndices = <int>{};
-    for (final w in workouts) {
-      if (w.scheduledDate == null) continue;
-      final scheduled = DateTime.tryParse(w.scheduledDate!);
-      if (scheduled == null) continue;
-      // Normalize to local calendar date so UTC-stored noon timestamps map
-      // to the right weekday in the user's zone.
-      final local = DateTime(scheduled.year, scheduled.month, scheduled.day);
-      if (local.isBefore(startOfWeek) || !local.isBefore(endOfWeek)) continue;
-      final dayIdx = local.weekday - 1;
-      scheduledDayIndices.add(dayIdx);
-      if (w.isCompleted == true) completedDayIndices.add(dayIdx);
-    }
-
-    final result = _WeeklyProgress(
-      completedThisWeek: completedThisWeek,
-      plannedThisWeek: plannedThisWeek,
-      completedDayIndices: completedDayIndices,
-      scheduledDayIndices: scheduledDayIndices,
-    );
-    _weeklyProgressSignature = signature;
-    _weeklyProgressCache = result;
-    return result;
-  }
+  // Weekly-progress memoization was removed in the Signature v2 body rebuild —
+  // the THIS WEEK strip now lives self-contained in `WorkoutsSignatureBody`,
+  // which reads `workoutsProvider` / the active gym profile directly.
 
   @override
   void dispose() {
@@ -171,39 +71,43 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     super.dispose();
   }
 
-  /// Dispatches the floating launcher bar action for [index].
-  ///
-  /// 0 Plan      → scroll back to the planner section.
-  /// 1 Gym       → open the manage-gym-profiles sheet.
-  /// 2 Library   → exercise library.
-  /// 3 Programs  → multi-week program library (B.3.1 — replaced History,
-  ///               which moved into the quick-actions row).
-  void _onOptionSelected(int index) {
-    switch (index) {
-      case 0:
-        setState(() => _activeOption = 0);
-        final ctx = _planSectionKey.currentContext;
-        if (ctx == null) return;
-        Scrollable.ensureVisible(
-          ctx,
-          duration: const Duration(milliseconds: 420),
-          curve: Curves.easeOutCubic,
-          alignment: 0.05,
-        );
-        break;
-      case 1:
-        showGlassSheet(
-          context: context,
-          builder: (_) => const ManageGymProfilesSheet(),
-        );
-        break;
-      case 2:
-        context.push('/library');
-        break;
-      case 3:
-        context.push('/workout/program-library');
-        break;
-    }
+  /// Hairline "+ BUILD A WORKOUT" affordance — the spec's "+" add/build
+  /// affordance. Routes to the custom workout builder (preserves the old
+  /// `/workout/build` route the floating bar's Builder + the CUSTOM chip used).
+  Widget _buildAddWorkoutAffordance(BuildContext context, Color accentColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.light();
+            context.push('/workout/build');
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.add, size: 18, color: accentColor),
+                const SizedBox(width: 8),
+                Text(
+                  AppLocalizations.of(context).workoutsCustom.toUpperCase(),
+                  style: ZType.lbl(12.5,
+                      color: ThemeColors.of(context).textPrimary,
+                      letterSpacing: 1.8),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -229,11 +133,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             CustomScrollView(
               controller: _scrollController,
               slivers: [
-                // Top padding for the floating header (title pill row).
-                // 56 = 40 pt pill + 8 pt top + 8 pt bottom from
-                // _buildFloatingHeader's container.
+                // Top padding for the floating masthead (eyebrow row + Anton
+                // title + gym pill). ~118 = 6 top + ~22 eyebrow + 4 + 30 Anton
+                // + 8 + ~33 gym pill + 10 bottom from _buildFloatingHeader.
                 SliverToBoxAdapter(
-                  child: SizedBox(height: MediaQuery.of(context).padding.top + 56),
+                  child: SizedBox(
+                      height: MediaQuery.of(context).padding.top + 118),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load
@@ -258,35 +163,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               accentColor,
             ),
 
-            // Floating options bar — docked above MainShell's bottom nav,
-            // mirroring the Nutrition / Discover / You tabs. Pills jump the
-            // scroll view to the matching section.
-            PositionedDirectional(start: 0,
-              end: 0,
-              bottom: MediaQuery.of(context).viewPadding.bottom +
-                  kMainNavClearance,
-              child: Center(
-                child: WorkoutsFloatingOptionsBar(
-                  accentColor: accentColor,
-                  activeIndex: _activeOption,
-                  onSelected: _onOptionSelected,
-                  items: [
-                    WorkoutsOptionItem(
-                        label: AppLocalizations.of(context).workoutsPlan, icon: Icons.calendar_today_rounded),
-                    WorkoutsOptionItem(
-                        label: AppLocalizations.of(context).workoutsGym, icon: Icons.storefront_outlined),
-                    WorkoutsOptionItem(
-                        label: AppLocalizations.of(context).workoutsLibrary,
-                        icon: Icons.menu_book_outlined),
-                    // B.3.1 — "Programs" replaces "History" here. History
-                    // moved into the quick-actions row; Programs opens the
-                    // multi-week program library beside the exercise Library.
-                    WorkoutsOptionItem(
-                        label: AppLocalizations.of(context).workoutsPrograms, icon: Icons.list_alt_rounded),
-                  ],
-                ),
-              ),
-            ),
+            // Floating options bar removed in the Signature v2 body rebuild —
+            // its Plan / Manage Gym / Library / Programs actions now live as
+            // inline LIBRARY/BUILDER/PROGRAMS links in the PROGRAM block and
+            // the gym switcher in the masthead. Routes preserved.
 
             // First-run spotlight tour. Anchors + copy live in
             // `widgets/tooltips/tours/workouts_tour.dart`.
@@ -297,7 +177,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     );
   }
 
-  /// Floating header with back button, title, and action icons
+  /// Signature masthead — flat (pureBlack) band, no gradient / no glass. An
+  /// Anton "WORKOUTS" title with the "Zealova" eyebrow + action cluster above
+  /// it, and the gym switcher restyled as a hairline pill below. Replaces the
+  /// old blurred gradient header + glassmorphic action circles.
   Widget _buildFloatingHeader(
     BuildContext context,
     bool isDark,
@@ -306,127 +189,108 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     Color accentColor,
   ) {
     final topPadding = MediaQuery.of(context).padding.top;
-    // Opaque-at-top, fade-to-transparent header band. Without a background the
-    // floating header was fully transparent, so scrolled content showed
-    // through the title (the "pasted-9" overlap glitch). We blur whatever
-    // scrolls underneath and lay a scaffold-colored gradient over it that is
-    // solid across the status bar + title row and fades out below, so the
-    // title always reads cleanly while the chrome still feels light.
+    // Flat scaffold-colored band that is solid across the status bar + title
+    // row and fades to transparent below, so content scrolling up meets the
+    // masthead without a seam — but no LinearGradient/blur glass.
     final scaffoldBg =
         isDark ? AppColors.background : AppColorsLight.background;
+    final tc = ThemeColors.of(context);
 
-    return PositionedDirectional(top: 0,
+    return PositionedDirectional(
+      top: 0,
       start: 0,
       end: 0,
-      // Isolating the header in its own painting layer pays the blur cost once
-      // per header change instead of once per scrolled pixel of content below.
       child: RepaintBoundary(
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-        padding: EdgeInsetsDirectional.only(top: topPadding + 8, start: 16, end: 16, bottom: 12),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              // Solid across the status bar + title row…
-              scaffoldBg,
-              scaffoldBg,
-              // …then a soft fade so content scrolling up meets the band
-              // without a hard seam.
-              scaffoldBg.withValues(alpha: 0.92),
-              scaffoldBg.withValues(alpha: 0.0),
+        child: Container(
+          padding: EdgeInsetsDirectional.only(
+              top: topPadding + 6, start: 20, end: 16, bottom: 10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                scaffoldBg,
+                scaffoldBg,
+                scaffoldBg.withValues(alpha: 0.0),
+              ],
+              stops: const [0.0, 0.72, 1.0],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Eyebrow row: "Zealova" wordmark on the left, hairline action
+              // pills on the right (replaces the glassmorphic circle cluster).
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      Branding.appName,
+                      style: ZType.lbl(11,
+                          color: tc.textMuted, letterSpacing: 1.5),
+                    ),
+                  ),
+                  _HairlineActionPill(
+                    icon: Icons.bar_chart_rounded,
+                    tint: accentColor,
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/stats');
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  _HairlineActionPill(
+                    icon: Icons.show_chart_rounded,
+                    tint: accentColor,
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/trends/custom');
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  // Calendar display options (week start / show synced). The
+                  // inner PopupMenuButton owns the tap, so no onTap here.
+                  _HairlineActionPill(
+                    child: WorkoutTuneMenu(tint: accentColor),
+                  ),
+                  const SizedBox(width: 8),
+                  _HairlineActionPill(
+                    icon: Icons.settings_outlined,
+                    tint: accentColor,
+                    onTap: () {
+                      HapticService.light();
+                      context.push('/settings/workout-settings');
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // Anton masthead — the room title.
+              Text(
+                AppLocalizations.of(context).navWorkouts.toUpperCase(),
+                style: ZType.disp(30, color: textPrimary),
+              ),
+              const SizedBox(height: 8),
+              // Gym profile switcher ("My Gym ▾"), restyled as a hairline pill.
+              // The shared GymProfileSwitcher stays fully functional — only its
+              // chrome is wrapped here.
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: Container(
+                  padding: const EdgeInsetsDirectional.only(
+                      start: 12, end: 10, top: 6, bottom: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface2,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: const GymProfileSwitcher(),
+                ),
+              ),
             ],
-            stops: const [0.0, 0.55, 0.8, 1.0],
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // The Gym profile switcher ("My Gym ▼") IS the header title now,
-                // replacing the static "Workouts" text. It anchors the screen to
-                // the active gym profile and stays a tap target for switching.
-                const Expanded(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: GymProfileSwitcher(),
-                  ),
-                ),
-                // Trailing action cluster: Stats, Custom Trends, then the
-                // settings gear at the far right. Each uses the same circular
-                // glass button styling.
-                _GlassmorphicButton(
-                  onTap: () {
-                    HapticService.light();
-                    context.push('/stats');
-                  },
-                  isDark: isDark,
-                  child: Icon(
-                    Icons.bar_chart_rounded,
-                    color: accentColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                _GlassmorphicButton(
-                  onTap: () {
-                    HapticService.light();
-                    context.push('/trends/custom');
-                  },
-                  isDark: isDark,
-                  child: Icon(
-                    Icons.show_chart_rounded,
-                    color: accentColor,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Calendar display options (week start / show synced). Moved up
-                // from a standalone full-width band below the header that ate a
-                // whole line; now a glass circle in the cluster, before the gear.
-                // _GlassmorphicButton with a null onTap lets the inner
-                // PopupMenuButton own the tap.
-                _GlassmorphicButton(
-                  isDark: isDark,
-                  child: WorkoutTuneMenu(tint: accentColor),
-                ),
-                const SizedBox(width: 8),
-                // Surface 2.1 — header consolidated to title + gear only.
-                // Import workouts moves into Workout Settings → Import row.
-                // Week-strip collapse toggle moves into Workout Settings
-                // as a "Compact week strip" toggle.
-                // TODO(surface-5-settings-owner): add these two rows in
-                // /settings/workout-settings once that screen's owner
-                // ships the redesign. Until then, both actions still exist
-                // via SettingsScreen overflow but are no longer in the
-                // top-bar.
-                _GlassmorphicButton(
-                  onTap: () {
-                    HapticService.light();
-                    context.push('/settings/workout-settings');
-                  },
-                  isDark: isDark,
-                  child: Icon(
-                    Icons.settings_outlined,
-                    color: accentColor,
-                    size: 22,
-                  ),
-                ),
-              ],
-            ),
-            // Tier toggle moved into Exercise Preferences → Workout Mode
-            // (1st option). Header stays focused on navigation only.
-          ],
-        ),
-            ), // Container
-          ), // BackdropFilter
-        ), // ClipRect
-      ), // RepaintBoundary
+      ),
     );
   }
 
@@ -439,79 +303,39 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     List<Workout> workouts,
     AsyncValue<WorkoutScreenSummary?> screenSummary,
   ) {
-    // Weekly progress — memoized so this whole-list walk only runs when the
-    // workouts data (or the calendar day) actually changes, not on every
-    // scroll / accent / sheet rebuild.
-    final weekly =
-        _computeWeeklyProgress(workouts, screenSummary.valueOrNull);
-    final completedThisWeek = weekly.completedThisWeek;
-    final plannedThisWeek = weekly.plannedThisWeek;
-    final completedDayIndices = weekly.completedDayIndices;
-    final scheduledDayIndices = weekly.scheduledDayIndices;
+    // The THIS WEEK strip + weekly figures now live self-contained inside
+    // `WorkoutsSignatureBody` (reads workoutsProvider / gym profile directly),
+    // so the old `_computeWeeklyProgress` walk that fed `WeeklyProgressCard`
+    // is no longer needed here.
 
     // Build the children list eagerly (cheap — these are widget *constructors*,
     // not built subtrees), then hand it to a lazy SliverChildBuilderDelegate so
     // the heavy below-fold widgets (WorkoutStatsSection et al.) only build as
     // they scroll into view, instead of all on the first frame.
+    //
+    // Signature v2 body — replaces the old photo planner card / gradient
+    // library grid / floating options bar with a single hairline-led scroll:
+    // TODAY block → THIS WEEK strip → PROGRAM links → EXERCISE PREFERENCES →
+    // HISTORY. The `_planSectionKey` (floating-bar "Plan" jump target — bar
+    // removed) and the `workoutsToday` tour anchor now wrap the TODAY block.
     final children = <Widget>[
-        // Date strip + workout carousel — sits directly under the header now
-        // that the calendar tune-menu moved up into the header cluster, so the
-        // gap that the old standalone full-width tune band created is gone.
         KeyedSubtree(
           key: _planSectionKey,
-          child: const WorkoutPlannerSection(),
+          child: KeyedSubtree(
+            key: TooltipAnchors.workoutsToday,
+            child: WorkoutsSignatureBody(
+              exercisePreferencesKey: _exercisePreferencesKey,
+            ),
+          ),
         ),
 
         // "Around your workout" — post-workout cards (Training effect, mood /
-        // journal prompts, Tomorrow tweak, …) moved here off Home (user
-        // feedback). Self-hides entirely until today's workout is completed, so
-        // it adds no header and no gap on non-workout days.
-        const SizedBox(height: 4),
+        // journal prompts, Tomorrow tweak, …). Self-hides entirely until
+        // today's workout is completed, so it adds nothing on non-workout days.
+        const SizedBox(height: 8),
         const AroundYourWorkoutSection(),
 
-        const SizedBox(height: 20),
-
-        // Quick Actions Row
-        KeyedSubtree(
-          key: _quickActionsKey,
-          child: _buildQuickActions(context, isDark, textSecondary, accentColor),
-        ),
-
-        const SizedBox(height: 20),
-
-        // Surface 2.4 — Workout library category grid (2×3). Sits
-        // between the quick-action chip row and the weekly progress card.
-        _buildSectionHeader('LIBRARY', textSecondary),
-        const SizedBox(height: 8),
-        const WorkoutLibraryGrid(),
-
-        const SizedBox(height: 16),
-
-        // Exercise Preferences (expandable)
-        KeyedSubtree(
-          key: _exercisePreferencesKey,
-          child: const ExercisePreferencesCard(),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Weekly Progress. Gym management + History now live in the
-        // floating launcher bar, so the in-body "Managed Gym" section and
-        // the duplicate History action button were removed for a cleaner
-        // single scroll.
-        _buildSectionHeader('THIS WEEK', textSecondary),
-        const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: WeeklyProgressCard(
-            completed: completedThisWeek,
-            total: plannedThisWeek > 0 ? plannedThisWeek : 5,
-            isDark: isDark,
-            completedDayIndices: completedDayIndices,
-            scheduledDayIndices: scheduledDayIndices,
-          ),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
         // Training stats — full analytics section (AI insight, scalar strip,
         // trend chart, muscle balance, fueling split, strength, timing,
@@ -523,136 +347,26 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         // visual system as the Profile tab.
         _buildSyncedWorkoutsSection(context, isDark, textSecondary),
 
-        // "Previous Sessions" was removed — it duplicated the floating
-        // bar's History launcher (full schedule/history screen). History
-        // is now the single entry point for past sessions.
+        // Quick-actions anchor preserved for the first-run tour — a hairline
+        // "+ BUILD A WORKOUT" affordance (replaces the old chip row + the
+        // floating bar's Builder entry).
+        KeyedSubtree(
+          key: _quickActionsKey,
+          child: _buildAddWorkoutAffordance(context, accentColor),
+        ),
+        const SizedBox(height: 20),
 
-        // JIT Generation: No "Generate More" button needed
-        // Workouts are automatically generated after each completion
-        // Show a subtle info message instead
+        // JIT Generation: workouts auto-generate after each completion.
         _buildJitInfoSection(isDark, textSecondary),
 
-        // Bottom padding — clears both MainShell's nav bar and the
-        // floating options bar docked above it.
-        const SizedBox(height: 168),
+        // Bottom padding — clears MainShell's bottom nav bar.
+        const SizedBox(height: 140),
     ];
 
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) => children[index],
         childCount: children.length,
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(
-    BuildContext context,
-    bool isDark,
-    Color textSecondary,
-    Color accentColor,
-  ) {
-    // Surface 2.3 — 4 chip-style buttons (24pt-ish height, icon + label,
-    // no card surround). Matches Google Health "Start a workout" pattern.
-    // Favorites uses the category-neutral textSecondary tint (Surface 2.8
-    // drops the hardcoded red heart).
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildQuickActionChip(
-              context,
-              icon: Icons.add_circle_outline,
-              label: AppLocalizations.of(context).workoutsCustom,
-              tint: textPrimary,
-              onTap: () {
-                HapticService.light();
-                context.push('/workout/build');
-              },
-            ),
-            const SizedBox(width: 8),
-            _buildQuickActionChip(
-              context,
-              icon: Icons.calendar_month_rounded,
-              label: AppLocalizations.of(context).workoutsUpcoming,
-              tint: textPrimary,
-              onTap: () {
-                HapticService.light();
-                showUpcomingWorkoutsSheet(context, ref);
-              },
-            ),
-            const SizedBox(width: 8),
-            _buildQuickActionChip(
-              context,
-              icon: Icons.favorite_border_rounded,
-              label: AppLocalizations.of(context).workoutsFavorites,
-              tint: textPrimary,
-              onTap: () {
-                HapticService.light();
-                showFavoriteWorkoutsSheet(context, ref);
-              },
-            ),
-            const SizedBox(width: 8),
-            _buildQuickActionChip(
-              context,
-              icon: Icons.history_rounded,
-              label: AppLocalizations.of(context).workoutHistory,
-              tint: textPrimary,
-              onTap: () {
-                HapticService.light();
-                context.push('/schedule');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionChip(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color tint,
-    required VoidCallback onTap,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            border: Border.all(color: border),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 16, color: tint),
-              const SizedBox(width: 6),
-              // Long localized labels (e.g. fi/de) must ellipsize instead of
-              // overflowing the pill.
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: tint,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -823,16 +537,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         return dateB.compareTo(dateA); // Most recent first
       });
 
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-
     if (completedWorkouts.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: elevatedColor,
-            borderRadius: BorderRadius.circular(16),
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.cardBorder, width: 1),
           ),
           child: Center(
             child: Column(
@@ -904,13 +617,14 @@ class _PreviousSessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final typeColor = AppColors.getWorkoutTypeColor(workout.type ?? 'strength');
+    final tc = ThemeColors.of(context);
+    final textPrimary = tc.textPrimary;
+    final textMuted = tc.textMuted;
+    final accent = tc.accent;
 
-    // Format the date
+    // Format the date for the hairline date pill.
     String dateText = '';
+    bool isToday = false;
     if (workout.scheduledDate != null) {
       final date = DateTime.tryParse(workout.scheduledDate!);
       if (date != null) {
@@ -921,6 +635,7 @@ class _PreviousSessionCard extends StatelessWidget {
 
         if (difference == 0) {
           dateText = 'Today';
+          isToday = true;
         } else if (difference == 1) {
           dateText = 'Yesterday';
         } else if (difference < 7) {
@@ -931,112 +646,89 @@ class _PreviousSessionCard extends StatelessWidget {
       }
     }
 
+    final typeLabel = (workout.type?.toUpperCase() ??
+        AppLocalizations.of(context).workoutsStrength);
+
+    // Signature rh-card row: surface2 fill, hairline border, Anton title,
+    // Barlow uppercase subtitle line, an orange date pill (accent only for
+    // TODAY), and a monospace duration readout.
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(15),
         decoration: BoxDecoration(
-          color: elevatedColor,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: textSecondary.withValues(alpha: 0.3),
-            width: 1,
-          ),
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Completed checkmark icon
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: textSecondary.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                Icons.check_circle,
-                color: textPrimary,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Workout details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    workout.name ?? AppLocalizations.of(context).navWorkout,
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
+                  // Date pill — accent for today, hairline otherwise.
+                  if (dateText.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isToday
+                            ? accent.withValues(alpha: 0.16)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: isToday ? accent : AppColors.cardBorder,
+                          width: 1,
+                        ),
+                      ),
+                      child: Text(
+                        dateText.toUpperCase(),
+                        style: ZType.lbl(9.5,
+                            color: isToday ? accent : textMuted,
+                            letterSpacing: 1.2),
+                      ),
                     ),
+                  if (dateText.isNotEmpty) const SizedBox(height: 8),
+                  // Anton title.
+                  Text(
+                    (workout.name ?? AppLocalizations.of(context).navWorkout)
+                        .toUpperCase(),
+                    style: ZType.disp(19, color: textPrimary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 5),
+                  // Barlow uppercase subtitle: type · QUICK · duration.
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: typeColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          workout.type?.toUpperCase() ?? AppLocalizations.of(context).workoutsStrength,
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w600,
-                            color: typeColor,
-                          ),
-                        ),
+                      Text(
+                        typeLabel,
+                        style: ZType.lbl(11,
+                            color: textMuted, letterSpacing: 1.5),
                       ),
-                      // Quick workout badge
                       if (_isQuickWorkout()) ...[
-                        const SizedBox(width: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            'QUICK',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
+                        Text('  ·  ',
+                            style: ZType.lbl(11, color: textMuted)),
+                        Text('QUICK',
+                            style: ZType.lbl(11,
+                                color: accent, letterSpacing: 1.5)),
                       ],
-                      const SizedBox(width: 8),
-                      Icon(Icons.timer_outlined, size: 12, color: textSecondary),
-                      const SizedBox(width: 2),
+                      Text('  ·  ',
+                          style: ZType.lbl(11, color: textMuted)),
                       Text(
                         workout.formattedDurationShort,
-                        style: TextStyle(fontSize: 12, color: textSecondary),
+                        style: ZType.data(11, color: textMuted),
                       ),
-                      if (dateText.isNotEmpty) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          dateText,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: textSecondary.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ],
               ),
             ),
-            // Arrow
-            Icon(Icons.chevron_right, color: textSecondary, size: 20),
+            const SizedBox(width: 10),
+            Icon(Icons.chevron_right, color: textMuted, size: 20),
           ],
         ),
       ),
@@ -1104,11 +796,10 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
         width: 180,
         height: height,
         decoration: BoxDecoration(
-          color: palette.bg(isDark),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: palette.fg.withValues(alpha: isDark ? 0.28 : 0.35),
-          ),
+          // Signature: surface2 fill + hairline border (was kind-tinted glass).
+          color: AppColors.surface2,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Stack(
           children: [
@@ -1120,7 +811,7 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
                   child: Icon(
                     kind.icon,
                     size: 96,
-                    color: palette.fg.withValues(alpha: 0.12),
+                    color: palette.fg.withValues(alpha: 0.10),
                   ),
                 ),
               ),
@@ -1140,21 +831,17 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
                         Flexible(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 3),
+                                horizontal: 7, vertical: 3),
                             decoration: BoxDecoration(
-                              color: palette.fg.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: AppColors.cardBorder),
                             ),
                             child: Text(
                               kindTag.toUpperCase(),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.6,
-                                color: palette.fg,
-                              ),
+                              style: ZType.lbl(9,
+                                  color: textMuted, letterSpacing: 1.0),
                             ),
                           ),
                         ),
@@ -1170,22 +857,18 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            primaryTitle,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: textPrimary,
-                              height: 1.15,
-                            ),
+                            primaryTitle.toUpperCase(),
+                            style: ZType.disp(15, color: textPrimary),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 3),
                           Text(
                             '$dateLabel${workout.durationMinutes != null ? ' · ${workout.durationMinutes} min' : ''}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(fontSize: 11, color: textMuted),
+                            style: ZType.lbl(10,
+                                color: textMuted, letterSpacing: 0.8),
                           ),
                           if (chips.isNotEmpty) ...[
                             const SizedBox(height: 6),
@@ -1204,13 +887,9 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    sourceApp,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: palette.fg
-                          .withValues(alpha: isDark ? 0.9 : 0.8),
-                    ),
+                    sourceApp.toUpperCase(),
+                    style: ZType.lbl(9.5,
+                        color: textMuted, letterSpacing: 1.0),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1320,39 +999,44 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
   }
 }
 
-/// Glassmorphic button with blur effect
-class _GlassmorphicButton extends StatelessWidget {
-  /// Null when the button is hosted inside a `PopupMenuButton`, which
-  /// supplies its own tap handling — the inner widget must let taps fall
-  /// through to the menu rather than swallowing them.
+/// Signature hairline action pill — a 40pt matte-hairline square for the
+/// masthead action cluster. Replaces the old `_GlassmorphicButton` (blurred
+/// glass). Pass [icon] + [tint] for the common case, or [child] to host a
+/// custom widget (e.g. the tune PopupMenuButton, which owns its own tap).
+class _HairlineActionPill extends StatelessWidget {
+  /// Null when the pill hosts a widget with its own tap handling (e.g. a
+  /// `PopupMenuButton`) — the inner widget must receive the taps.
   final VoidCallback? onTap;
-  final Widget child;
-  final bool isDark;
+  final IconData? icon;
+  final Color? tint;
+  final Widget? child;
 
   /// Fixed 40 pt square — every caller uses the same size.
   static const double size = 40;
 
-  const _GlassmorphicButton({
+  const _HairlineActionPill({
     this.onTap,
-    required this.child,
-    required this.isDark,
+    this.icon,
+    this.tint,
+    this.child,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Signature: matte hairline square (glass is reserved for sheets).
     final tc = ThemeColors.of(context);
+    final inner = child ??
+        Icon(icon, color: tint ?? tc.textPrimary, size: 21);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: tc.surface,
+          color: AppColors.surface2,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
-        child: Center(child: child),
+        child: Center(child: inner),
       ),
     );
   }
@@ -1382,17 +1066,15 @@ class _WorkoutsOverflowMenu extends ConsumerWidget {
       message: isCollapsed
           ? AppLocalizations.of(context).workoutsExpandWeekView
           : AppLocalizations.of(context).workoutsCollapseWeekView,
-      child: _GlassmorphicButton(
-        isDark: isDark,
+      child: _HairlineActionPill(
         onTap: () {
           HapticService.selection();
           ref.read(weekCalendarCollapsedProvider.notifier).toggle();
         },
-        child: Icon(
-          isCollapsed ? Icons.unfold_more_rounded : Icons.unfold_less_rounded,
-          color: accentColor,
-          size: 22,
-        ),
+        icon: isCollapsed
+            ? Icons.unfold_more_rounded
+            : Icons.unfold_less_rounded,
+        tint: accentColor,
       ),
     );
   }
@@ -1573,27 +1255,3 @@ class _ImportSourceTile extends StatelessWidget {
   }
 }
 
-/// Memoized result of the weekly-progress computation in
-/// `_WorkoutsScreenState._computeWeeklyProgress`. Holds the four figures the
-/// `WeeklyProgressCard` needs so the whole-list walk that produces them runs
-/// at most once per data/day change instead of once per rebuild.
-class _WeeklyProgress {
-  /// Workouts completed in the current Mon–Sun week.
-  final int completedThisWeek;
-
-  /// Workouts scheduled in the current Mon–Sun week.
-  final int plannedThisWeek;
-
-  /// Day indices (0=Mon … 6=Sun) with at least one completed workout.
-  final Set<int> completedDayIndices;
-
-  /// Day indices (0=Mon … 6=Sun) with at least one scheduled workout.
-  final Set<int> scheduledDayIndices;
-
-  const _WeeklyProgress({
-    required this.completedThisWeek,
-    required this.plannedThisWeek,
-    required this.completedDayIndices,
-    required this.scheduledDayIndices,
-  });
-}

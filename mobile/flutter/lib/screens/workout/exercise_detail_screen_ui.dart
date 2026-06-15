@@ -102,7 +102,9 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
 
     final red = isDark ? AppColors.error : AppColorsLight.error;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final orange = isDark ? AppColors.orange : AppColorsLight.orange;
+    // Signature v2 orange-once: the screen's single orange is the focal PR
+    // point on the History chart, so the "queued" state uses green instead.
+    final queuedColor = isDark ? AppColors.green : AppColorsLight.green;
 
     Widget actionButton({
       required IconData icon,
@@ -183,7 +185,7 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             activeIcon: Icons.queue,
             label: AppLocalizations.of(context).myExercisesQueue,
             active: isQueued,
-            activeColor: orange,
+            activeColor: queuedColor,
             onTap: () {
               HapticFeedback.lightImpact();
               ref.read(exerciseQueueProvider.notifier).toggleQueue(

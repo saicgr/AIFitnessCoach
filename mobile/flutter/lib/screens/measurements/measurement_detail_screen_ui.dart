@@ -370,7 +370,7 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
               previousValue != null ? currentValue - previousValue : null;
 
           return Padding(
-            padding: EdgeInsets.fromLTRB(16, index == 0 ? 0 : 4, 16, 4),
+            padding: EdgeInsets.fromLTRB(16, index == 0 ? 0 : 0, 16, 0),
             child: Dismissible(
               key: Key(entry.id),
               direction: DismissDirection.endToStart,
@@ -379,67 +379,64 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
                 padding: const EdgeInsetsDirectional.only(end: 20),
                 decoration: BoxDecoration(
                   color: AppColors.error,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               confirmDismiss: (direction) => _confirmDelete(entry),
+              // Hairline-led history row: cyan-tinted date stamp, Anton value,
+              // ↓/↑ delta. A bottom hairline separates rows (no boxed card).
               child: Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: elevated,
-                  borderRadius: BorderRadius.circular(12),
+                  border: Border(
+                    bottom: BorderSide(color: AppColors.hairline),
+                  ),
                 ),
                 child: Row(
                   children: [
-                    Container(
+                    SizedBox(
                       width: 52,
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      decoration: BoxDecoration(
-                        color: cyan.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            DateFormat('d').format(entry.recordedAt),
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: cyan,
-                            ),
+                            DateFormat('MMM d').format(entry.recordedAt),
+                            style: ZType.lbl(11,
+                                color: cyan, letterSpacing: 1),
                           ),
-                          Text(
-                            DateFormat('MMM yy').format(entry.recordedAt),
-                            style: TextStyle(
-                              fontSize: 9,
-                              color: cyan,
-                            ),
-                          ),
-                          const SizedBox(height: 1),
+                          const SizedBox(height: 2),
                           Text(
                             DateFormat('h:mm a').format(entry.recordedAt),
-                            style: TextStyle(
-                              fontSize: 8,
-                              color: cyan.withOpacity(0.7),
-                            ),
+                            style: ZType.lbl(9,
+                                color: textMuted, letterSpacing: 0.5),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '${_formatValue(currentValue)} $unit',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                _formatValue(currentValue),
+                                style: ZType.disp(18, color: textPrimary),
+                              ),
+                              const SizedBox(width: 3),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 1),
+                                child: Text(
+                                  unit.toUpperCase(),
+                                  style: ZType.lbl(9,
+                                      color: textMuted, letterSpacing: 1),
+                                ),
+                              ),
+                            ],
                           ),
                           if (entry.notes?.isNotEmpty ?? false)
                             Text(
@@ -455,33 +452,24 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
                       ),
                     ),
                     if (change != null && change.abs() >= 0.01)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _getChangeColor(change).withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              change > 0
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward,
-                              size: 12,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            change > 0 ? '↑' : '↓',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
                               color: _getChangeColor(change),
                             ),
-                            Text(
-                              _formatValue(change.abs()),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: _getChangeColor(change),
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            _formatValue(change.abs()),
+                            style: ZType.data(12,
+                                color: _getChangeColor(change)),
+                          ),
+                        ],
                       ),
                   ],
                 ),

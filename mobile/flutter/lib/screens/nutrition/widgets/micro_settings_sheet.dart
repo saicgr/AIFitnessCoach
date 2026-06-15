@@ -8,6 +8,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/micronutrient_catalog.dart';
 import '../../../data/providers/micronutrient_visibility_provider.dart';
@@ -45,12 +46,8 @@ class _MicroSettingsContent extends ConsumerWidget {
           Row(
             children: [
               Text(
-                'Customize nutrients',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: c.textPrimary,
-                ),
+                'CUSTOMIZE NUTRIENTS',
+                style: ZType.lbl(15, color: c.textPrimary, letterSpacing: 1.2),
               ),
               const Spacer(),
               GestureDetector(
@@ -59,12 +56,8 @@ class _MicroSettingsContent extends ConsumerWidget {
                   notifier.resetToDefault();
                 },
                 child: Text(
-                  'Reset',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: c.accent,
-                  ),
+                  'RESET',
+                  style: ZType.lbl(12, color: c.accent, letterSpacing: 1.4),
                 ),
               ),
             ],
@@ -80,12 +73,7 @@ class _MicroSettingsContent extends ConsumerWidget {
           // ── Visible (reorderable) ──────────────────────────────────────
           Text(
             'SHOWN',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.6,
-              color: c.textMuted,
-            ),
+            style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.8),
           ),
           const SizedBox(height: 8),
           if (visible.isEmpty)
@@ -129,12 +117,7 @@ class _MicroSettingsContent extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               'HIDDEN',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.6,
-                color: c.textMuted,
-              ),
+              style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.8),
             ),
             const SizedBox(height: 8),
             Wrap(

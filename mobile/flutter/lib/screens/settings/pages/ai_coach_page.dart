@@ -123,6 +123,9 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
   /// Essentials: nudge intensity + the two notification toggles users care
   /// about most (AI-personalized + missed workout). Other toggles move
   /// behind Advanced.
+  ///
+  /// Signature hairline composition — Barlow kicker, the intensity segmented
+  /// control on a hairline, then hairline-divided toggle rows. No boxed card.
   Widget _buildEssentialNudgeSection({
     required WidgetRef ref,
     required Color textPrimary,
@@ -135,70 +138,63 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
       children: [
         ZealovaSectionKicker(
           AppLocalizations.of(context).aiCoachCoachNotifications,
-          padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
+          padding: const EdgeInsetsDirectional.only(start: 2, bottom: 8),
         ),
-        ZealovaCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 13),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 14, bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context).aiCoachNudgeIntensity,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      AppLocalizations.of(context).aiCoachHowMuchYourAi,
-                      style: TextStyle(fontSize: 12, color: textMuted),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<String>(
-                        showSelectedIcon: false,
-                        segments: [
-                          ButtonSegment(value: 'gentle', label: Text(AppLocalizations.of(context).aiCoachGentle, style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'balanced', label: Text(AppLocalizations.of(context).quizProgressionConstraintsBalanced, style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'tough_love', label: Text(AppLocalizations.of(context).aiCoachTough, style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'off', label: Text(AppLocalizations.of(context).programBuilderPartOff, style: TextStyle(fontSize: 11))),
-                        ],
-                        selected: {prefs.accountabilityIntensity},
-                        onSelectionChanged: (values) {
-                          HapticFeedback.selectionClick();
-                          ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
-                        },
-                        style: ButtonStyle(visualDensity: VisualDensity.compact),
-                      ),
-                    ),
-                  ],
+              Text(
+                AppLocalizations.of(context).aiCoachNudgeIntensity,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
                 ),
               ),
-              ZealovaRule(),
-              _coachToggle(
-                icon: Icons.auto_awesome,
-                title: AppLocalizations.of(context).aiCoachAiPersonalizedMessages,
-                subtitle: AppLocalizations.of(context).aiCoachMatchYourCoachS,
-                value: prefs.aiPersonalizedNudges,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v),
+              const SizedBox(height: 4),
+              Text(
+                AppLocalizations.of(context).aiCoachHowMuchYourAi,
+                style: TextStyle(fontSize: 12, color: textMuted),
               ),
-              _coachToggle(
-                icon: Icons.alarm,
-                title: AppLocalizations.of(context).aiCoachMissedWorkoutNudge,
-                subtitle: AppLocalizations.of(context).aiCoachRemindByEveningIf,
-                value: prefs.missedWorkoutNudge,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v),
-                isLast: true,
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<String>(
+                  showSelectedIcon: false,
+                  segments: [
+                    ButtonSegment(value: 'gentle', label: Text(AppLocalizations.of(context).aiCoachGentle, style: TextStyle(fontSize: 11))),
+                    ButtonSegment(value: 'balanced', label: Text(AppLocalizations.of(context).quizProgressionConstraintsBalanced, style: TextStyle(fontSize: 11))),
+                    ButtonSegment(value: 'tough_love', label: Text(AppLocalizations.of(context).aiCoachTough, style: TextStyle(fontSize: 11))),
+                    ButtonSegment(value: 'off', label: Text(AppLocalizations.of(context).programBuilderPartOff, style: TextStyle(fontSize: 11))),
+                  ],
+                  selected: {prefs.accountabilityIntensity},
+                  onSelectionChanged: (values) {
+                    HapticFeedback.selectionClick();
+                    ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
+                  },
+                  style: ButtonStyle(visualDensity: VisualDensity.compact),
+                ),
               ),
             ],
           ),
+        ),
+        const ZealovaRule(),
+        _coachToggle(
+          icon: Icons.auto_awesome,
+          title: AppLocalizations.of(context).aiCoachAiPersonalizedMessages,
+          subtitle: AppLocalizations.of(context).aiCoachMatchYourCoachS,
+          value: prefs.aiPersonalizedNudges,
+          onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v),
+        ),
+        _coachToggle(
+          icon: Icons.alarm,
+          title: AppLocalizations.of(context).aiCoachMissedWorkoutNudge,
+          subtitle: AppLocalizations.of(context).aiCoachRemindByEveningIf,
+          value: prefs.missedWorkoutNudge,
+          onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v),
+          isLast: true,
         ),
       ],
     );
@@ -218,49 +214,42 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
       children: [
         ZealovaSectionKicker(
           AppLocalizations.of(context).aiCoachOtherNotifications,
-          padding: const EdgeInsetsDirectional.only(start: 4, bottom: 8),
+          padding: const EdgeInsetsDirectional.only(start: 2, bottom: 8),
         ),
-        ZealovaCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              _coachToggle(
-                icon: Icons.lunch_dining,
-                title: AppLocalizations.of(context).aiCoachPostWorkoutMeal,
-                subtitle: AppLocalizations.of(context).aiCoachRefuelReminderAfterTraining,
-                value: prefs.postWorkoutMealReminder,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v),
-              ),
-              _coachToggle(
-                icon: Icons.checklist,
-                title: AppLocalizations.of(context).aiCoachHabitReminders,
-                subtitle: AppLocalizations.of(context).aiCoachEveningCheckInFor,
-                value: prefs.habitReminders,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v),
-              ),
-              _coachToggle(
-                icon: Icons.celebration,
-                title: AppLocalizations.of(context).aiCoachStreakCelebrations,
-                subtitle: AppLocalizations.of(context).aiCoachCelebrateStreakMilestones,
-                value: prefs.streakCelebration,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
-              ),
-              _coachToggle(
-                icon: Icons.card_giftcard,
-                title: 'Daily Crate Reminders',
-                subtitle: AppLocalizations.of(context).aiCoachGetNotifiedWhenYour,
-                value: prefs.dailyCrateReminders,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
-              ),
-              ZealovaListRow(
-                icon: Icons.beach_access_rounded,
-                label: 'Vacation Mode',
-                value: 'Pause all non-critical notifications',
-                hairline: false,
-                onTap: () => context.push('/settings/vacation-mode'),
-              ),
-            ],
-          ),
+        _coachToggle(
+          icon: Icons.lunch_dining,
+          title: AppLocalizations.of(context).aiCoachPostWorkoutMeal,
+          subtitle: AppLocalizations.of(context).aiCoachRefuelReminderAfterTraining,
+          value: prefs.postWorkoutMealReminder,
+          onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v),
+        ),
+        _coachToggle(
+          icon: Icons.checklist,
+          title: AppLocalizations.of(context).aiCoachHabitReminders,
+          subtitle: AppLocalizations.of(context).aiCoachEveningCheckInFor,
+          value: prefs.habitReminders,
+          onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v),
+        ),
+        _coachToggle(
+          icon: Icons.celebration,
+          title: AppLocalizations.of(context).aiCoachStreakCelebrations,
+          subtitle: AppLocalizations.of(context).aiCoachCelebrateStreakMilestones,
+          value: prefs.streakCelebration,
+          onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
+        ),
+        _coachToggle(
+          icon: Icons.card_giftcard,
+          title: 'Daily Crate Reminders',
+          subtitle: AppLocalizations.of(context).aiCoachGetNotifiedWhenYour,
+          value: prefs.dailyCrateReminders,
+          onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
+        ),
+        ZealovaListRow(
+          icon: Icons.beach_access_rounded,
+          label: 'Vacation Mode',
+          value: 'Pause all non-critical notifications',
+          hairline: false,
+          onTap: () => context.push('/settings/vacation-mode'),
         ),
       ],
     );
@@ -389,6 +378,7 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     );
   }
 
+  /// Floating chat-bubble toggle — Signature hairline toggle row (v2 `.st-row`).
   Widget _buildEdgeHandleToggle({
     required WidgetRef ref,
     required Color textPrimary,
@@ -396,59 +386,16 @@ class _AiCoachPageState extends ConsumerState<AiCoachPage> {
     required Color cardBorder,
   }) {
     final isEnabled = ref.watch(edgeHandleEnabledProvider);
-    final tc = ThemeColors.of(context);
-
-    return ZealovaCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.cardBorder),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(Icons.chat_bubble_outline, size: 15,
-                color: isEnabled ? tc.accent : tc.textMuted),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).aiCoachFloatingAiChatBubble,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                  ),
-                  Text(
-                    AppLocalizations.of(context).aiCoachShowFloatingBubbleFor,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ZealovaToggle(
-            value: isEnabled,
-            onChanged: (value) {
-              HapticFeedback.lightImpact();
-              ref.read(edgeHandleEnabledProvider.notifier).setEnabled(value);
-            },
-          ),
-        ],
-      ),
+    return _coachToggle(
+      icon: Icons.chat_bubble_outline,
+      title: AppLocalizations.of(context).aiCoachFloatingAiChatBubble,
+      subtitle: AppLocalizations.of(context).aiCoachShowFloatingBubbleFor,
+      value: isEnabled,
+      onChanged: (value) {
+        HapticFeedback.lightImpact();
+        ref.read(edgeHandleEnabledProvider.notifier).setEnabled(value);
+      },
+      isLast: true,
     );
   }
 }
@@ -470,33 +417,46 @@ class _AdvancedToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ZealovaCard(
-      variant: ZealovaCardVariant.flat,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+    final tc = ThemeColors.of(context);
+    // Signature hairline toggle row — framed glyph + label/value + toggle,
+    // sitting on a hairline (no boxed card). Reuses the .st-row archetype.
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 13),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.hairline)),
+      ),
       child: Row(
         children: [
-          Icon(Icons.tune, size: 18, color: textSecondary),
+          Container(
+            width: 30,
+            height: 30,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.cardBorder),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(Icons.tune, size: 15,
+                color: value ? tc.accent : tc.textMuted),
+          ),
           const SizedBox(width: 12),
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).aiSettingsAdvancedSettings,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppLocalizations.of(context).aiSettingsAdvancedSettings,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: textPrimary,
                   ),
-                  Text(
-                    AppLocalizations.of(context).aiCoachShowFloatingChatBubble,
-                    style: TextStyle(fontSize: 12, color: textSecondary),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  AppLocalizations.of(context).aiCoachShowFloatingChatBubble,
+                  style: TextStyle(fontSize: 11, color: textSecondary),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 12),

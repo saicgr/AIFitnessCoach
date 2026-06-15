@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +15,7 @@ import '../../workout/widgets/hydration_dialog.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../fasting/widgets/fasting_stage_model.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../data/providers/meal_logged_ghost_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/design_system/zealova.dart';
@@ -24,7 +27,6 @@ import 'optional_trackers_strip.dart';
 import 'coach_recommends_card.dart';
 import 'micros_entry_card.dart';
 import 'logged_meals_section.dart';
-import '../../home/widgets/hero_nutrition_card.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
 import 'goal_row.dart';
@@ -69,9 +71,9 @@ class DailyTab extends ConsumerStatefulWidget {
   /// is nonsensical.
   final bool isViewingToday;
 
-  /// The date the tab is currently showing. Forwarded to [HeroNutritionCard]
-  /// so the swipeable carousel reads/writes the date-scoped nutrition family
-  /// on past dates too (Bug 1 — carousel on every date, not today-only).
+  /// The date the tab is currently showing. Drives the date-scoped nutrition
+  /// family reads (headline + meal sections) and the Log Meal target date so
+  /// logging on a past day files onto that day, not "now".
   final DateTime selectedDate;
 
   /// Forwarded to [FastingSavedRow] so its cards carry the `nutrition_v1`
@@ -249,6 +251,9 @@ class _DailyTabState extends ConsumerState<DailyTab>
       );
 
       if (mounted) {
+        // Signature v2 — flash the "✓ Added to <Meal>" ghost on the slot the
+        // saved food filed into (computed above by time of day).
+        ref.read(mealLoggedGhostProvider.notifier).show(mealType);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Logged ${food.name}'),
@@ -513,31 +518,30 @@ class _DailyTabState extends ConsumerState<DailyTab>
                       widget.calmMode ? null : () => _showEditTargetsSheet(context),
                 ),
 
-                // 2b. FUEL DETAIL — the swipeable Google-Fit-style nutrition
-                //    card (living mascot + micronutrient pages + the Log Meal
-                //    button that carries the first-run tour anchor). Demoted
-                //    BELOW the headline now that the headline owns the hero
-                //    numeral; kept mounted so its mascot/micros wiring and the
-                //    `nutritionLogMeal` tour anchor are preserved 1:1. Renders
-                //    on EVERY date (reads the date-scoped family via
-                //    `selectedDate`). Embedded mode self-sizes + drops its own
-                //    horizontal padding so it aligns with the meal cards below.
-                const SizedBox(height: 14),
-                ZealovaSectionKicker(
-                  'Fuel',
-                  padding: const EdgeInsets.only(left: 2, bottom: 6),
-                ),
-                HeroNutritionCard(
-                  embedded: true,
-                  isToday: widget.isViewingToday,
-                  selectedDate: widget.selectedDate,
-                  // First-run tour: spotlight the card's "Log Meal" button.
-                  // Key only attaches while the tour is pending so two card
-                  // instances never both hold the same GlobalKey.
-                  logMealAnchorKey: widget.tourActive
+                // 2b. PRIMARY LOG MEAL CTA — signature-v2 is MEAL-led: the
+                //    headline owns the hero numeral + macro dots, and the
+                //    record IS the meal sections below. The old swipeable
+                //    Google-Fit "fuel detail" card (living mascot + ring +
+                //    P/C/F gradient pills) was OFF-SPEC and is removed. Its
+                //    only load-bearing affordance was the primary "Log Meal"
+                //    button (the per-meal "+" rows in LoggedMealsSection are
+                //    secondary), so we re-add the single Signature primary CTA
+                //    here — wired to the SAME `onLogMeal` callback (null slot =
+                //    let the log file into the slot picked downstream) — and
+                //    keep the first-run `nutritionLogMeal` tour anchor on it so
+                //    the coach-mark still has its target.
+                const SizedBox(height: 16),
+                KeyedSubtree(
+                  key: widget.tourActive
                       ? TooltipAnchors.nutritionLogMeal
                       : null,
+                  child: ZealovaButton(
+                    label: 'Log Meal',
+                    trailingIcon: Icons.add_rounded,
+                    onTap: () => widget.onLogMeal(null),
+                  ),
                 ),
+                const SizedBox(height: 4),
                 // F3 — "Coach recommends" card backed by /quick-suggestion.
                 // Self-hides until a suggestion is available (no empty shell).
                 // Today-only: recommending meals for a past day is nonsensical.
@@ -549,12 +553,13 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   ),
                 ],
 
-                // 3. MEAL SECTIONS with (date-scoped) hero-row summary at top.
-                //    Daily Goals card removed — the 4 macro rings + goal-config strip
+                // 3. MEAL SECTIONS — the durable record (BREAKFAST / LUNCH /
+                //    DINNER / SNACKS as collapsible hairline sections). Daily
+                //    Goals card removed — the 4 macro rings + goal-config strip
                 //    now live on the Profile screen (Nutrition & Fasting card).
-                //    The HeroNutritionCard carousel above now replaces the old
-                //    in-section calorie-ring hero on EVERY date, so the section
-                //    renders only the meal list (no embedded hero).
+                //    The signature-v2 headline above owns the calorie numeral +
+                //    macro dots, so this section renders only the meal list (no
+                //    embedded ring hero).
                 // Magazine catalog — a grid of the day's food photos (the
                 // user's uploaded images; no AI generation). Opens on tap.
                 if ((widget.summary?.meals ?? const []).isNotEmpty)
@@ -704,7 +709,130 @@ class _DailyTabState extends ConsumerState<DailyTab>
               ],
             ),
           ),
+          // Signature v2 — the transient "✓ Added to <Meal>" ghost. Auto-
+          // dismisses; presentation-only. Sits above the meal sections (the
+          // durable record) but below the nav, parked near the composer line.
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 96,
+            child: IgnorePointer(child: _MealLoggedGhostOverlay()),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// The auto-dismissing "✓ Added to [meal]" ghost (Signature v2 · Nutrition).
+///
+/// Listens to [mealLoggedGhostProvider]; when a new event arrives it fades +
+/// rises in, holds briefly, then fades out and clears the provider. Pure
+/// presentation — it carries no logging side effect. Filing into the correct
+/// meal is decided upstream (by the entry's timestamp / picked slot); this
+/// overlay only NAMES the meal the log landed in.
+class _MealLoggedGhostOverlay extends ConsumerStatefulWidget {
+  const _MealLoggedGhostOverlay();
+
+  @override
+  ConsumerState<_MealLoggedGhostOverlay> createState() =>
+      _MealLoggedGhostOverlayState();
+}
+
+class _MealLoggedGhostOverlayState
+    extends ConsumerState<_MealLoggedGhostOverlay>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  int _lastSeq = 0;
+  String _mealLabel = '';
+  Timer? _holdTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 260),
+    );
+  }
+
+  @override
+  void dispose() {
+    _holdTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _titleCase(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  void _trigger(MealLoggedGhost ghost) {
+    _lastSeq = ghost.seq;
+    // 'snack' → "Snacks" to match the Snacks meal-section label.
+    final label =
+        ghost.mealType == 'snack' ? 'Snacks' : _titleCase(ghost.mealType);
+    setState(() => _mealLabel = label);
+    _holdTimer?.cancel();
+    _controller.forward(from: 0);
+    // Hold ~1.5s after the entrance, then fade out and clear.
+    _holdTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (!mounted) return;
+      _controller.reverse().then((_) {
+        if (mounted) ref.read(mealLoggedGhostProvider.notifier).clear();
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Fire whenever a new ghost event lands (dedupe by monotonic seq).
+    ref.listen<MealLoggedGhost?>(mealLoggedGhostProvider, (prev, next) {
+      if (next != null && next.seq != _lastSeq) _trigger(next);
+    });
+
+    if (_mealLabel.isEmpty) return const SizedBox.shrink();
+
+    final tc = ThemeColors.of(context);
+    return Center(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final t = Curves.easeOutCubic.transform(_controller.value);
+          return Opacity(
+            opacity: t,
+            child: Transform.translate(
+              offset: Offset(0, (1 - t) * 10),
+              child: child,
+            ),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+          decoration: BoxDecoration(
+            color: tc.surface,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: tc.cardBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: tc.isDark ? 0.4 : 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_rounded, size: 15, color: tc.textPrimary),
+              const SizedBox(width: 8),
+              Text(
+                'Added to $_mealLabel'.toUpperCase(),
+                style: ZType.lbl(11.5,
+                    color: tc.textPrimary, letterSpacing: 1.4),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -760,13 +888,16 @@ class _LeftoversCarousel extends ConsumerWidget {
                     return InkWell(
                       borderRadius: BorderRadius.circular(14),
                       onTap: ev.isExpired ? null : () async {
+                        final mealSlot = _currentMealSlot();
                         try {
                           await ref.read(nutritionRepositoryProvider).logRecipe(
                                 userId: userId,
                                 recipeId: ev.recipeId ?? '',
-                                mealType: _currentMealSlot(),
+                                mealType: mealSlot,
                                 servings: 1.0,
                               );
+                          // Signature v2 — ghost confirms the leftover's meal slot.
+                          ref.read(mealLoggedGhostProvider.notifier).show(mealSlot);
                           // Invalidate so the carousel updates portions_remaining
                           ref.invalidate(activeCookEventsProvider(userId));
                           // Reflect the logged leftover on the Daily summary

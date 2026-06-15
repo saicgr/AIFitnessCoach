@@ -10,6 +10,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/theme/theme_colors.dart';
+import '../../widgets/design_system/zealova.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
@@ -970,8 +972,7 @@ class _CollapsibleSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final tc = ThemeColors.of(context);
     return Theme(
       // ExpansionTile draws default dividers via the outer ListTileTheme;
       // strip them so adjacent sections stack cleanly.
@@ -980,16 +981,14 @@ class _CollapsibleSection extends StatelessWidget {
         key: PageStorageKey<String>('ai_section_$title'),
         initiallyExpanded: expanded,
         onExpansionChanged: onChanged,
+        iconColor: tc.textMuted,
+        collapsedIconColor: tc.textMuted,
         tilePadding: const EdgeInsets.symmetric(horizontal: 4),
         childrenPadding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
+        // Barlow uppercase kicker as the section title.
         title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 1.2,
-            color: textMuted,
-          ),
+          title.toUpperCase(),
+          style: ZType.lbl(11.5, color: tc.textMuted, letterSpacing: 2.0),
         ),
         children: [child],
       ),
@@ -1016,13 +1015,14 @@ class _AdvancedToggleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final cardBg = isDark ? AppColors.surface : AppColorsLight.surface;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+        border: Border.all(color: cardBorder),
       ),
       child: Row(
         children: [
@@ -1143,11 +1143,14 @@ class _FocusAreasSectionState extends State<_FocusAreasSection> {
     final available =
         _suggestions.where((s) => !_draft.any((d) => d.area == s)).toList();
 
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1493,11 +1496,9 @@ class _TrainingSplitSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final accent = AccentColorScope.of(context).getColor(isDark);
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final current = settings.trainingSplit ?? TrainingSplit.auto;
 
     return Container(
@@ -1505,6 +1506,7 @@ class _TrainingSplitSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1519,12 +1521,9 @@ class _TrainingSplitSection extends StatelessWidget {
             runSpacing: 8,
             children: [
               for (final s in TrainingSplit.all)
-                _SplitChip(
+                ZealovaChip(
                   label: TrainingSplit.displayName(s),
-                  isSelected: s == current,
-                  accent: accent,
-                  textPrimary: textPrimary,
-                  isDark: isDark,
+                  selected: s == current,
                   onTap: () => ref
                       .read(aiSettingsProvider.notifier)
                       .setTrainingSplit(s == current && s != TrainingSplit.auto
@@ -1539,54 +1538,3 @@ class _TrainingSplitSection extends StatelessWidget {
   }
 }
 
-class _SplitChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color accent;
-  final Color textPrimary;
-  final bool isDark;
-  final VoidCallback onTap;
-
-  const _SplitChip({
-    required this.label,
-    required this.isSelected,
-    required this.accent,
-    required this.textPrimary,
-    required this.isDark,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? accent.withValues(alpha: 0.18)
-              : (isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.black.withValues(alpha: 0.05)),
-          border: Border.all(
-            color: isSelected
-                ? accent.withValues(alpha: 0.7)
-                : Colors.transparent,
-            width: 1.2,
-          ),
-          borderRadius: BorderRadius.circular(18),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? accent : textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}

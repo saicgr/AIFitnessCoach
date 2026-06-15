@@ -333,7 +333,6 @@ class _TrainingFocusCard extends ConsumerWidget {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final accent = ref.colors(context).accent;
 
     return GestureDetector(
       onTap: () {
@@ -351,16 +350,17 @@ class _TrainingFocusCard extends ConsumerWidget {
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: cardBorder),
+                  borderRadius: BorderRadius.circular(9),
                 ),
                 child: Icon(
                   Icons.fitness_center,
-                  color: accent,
-                  size: 20,
+                  color: textMuted,
+                  size: 18,
                 ),
               ),
               const SizedBox(width: 12),

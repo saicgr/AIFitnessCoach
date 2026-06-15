@@ -26,6 +26,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/last_used_service.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../data/providers/meal_logged_ghost_provider.dart';
 import '../../widgets/common/last_used_badge.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/guest_upgrade_sheet.dart';

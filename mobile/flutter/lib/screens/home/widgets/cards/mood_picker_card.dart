@@ -107,12 +107,7 @@ class _MoodPickerCardState extends ConsumerState<MoodPickerCard>
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(20),
-              border: Border(
-                left: BorderSide(color: AppColors.purple, width: 4),
-                top: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
-                right: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
-                bottom: BorderSide(color: AppColors.cyan.withOpacity(0.2)),
-              ),
+              border: Border.all(color: AppColors.cardBorder, width: 1),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

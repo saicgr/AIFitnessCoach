@@ -260,7 +260,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               borderRadius: BorderRadius.circular(8),
             ),
             focusedBorder: OutlineInputBorder(
-              borderSide: const BorderSide(color: Color(0xFFFFD700)),
+              borderSide: const BorderSide(color: AppColors.gamGold),
               borderRadius: BorderRadius.circular(8),
             ),
           ),
@@ -281,7 +281,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFFD700),
+              backgroundColor: AppColors.gamGold,
               foregroundColor: Colors.black,
             ),
             child: Text(AppLocalizations.of(context).workoutUiBuildersConfirm),
@@ -478,7 +478,7 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
     return RefreshIndicator(
       onRefresh: _loadRewards,
-      color: const Color(0xFFFFD700),
+      color: AppColors.gamGold,
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: rewards.length,
@@ -554,7 +554,7 @@ class _RewardCard extends StatelessWidget {
         break;
       case 'premium':
         icon = Icons.workspace_premium;
-        iconColor = const Color(0xFFFFD700);
+        iconColor = AppColors.gamGold;
         title = 'Premium Subscription';
         subtitle = _getTriggerDescription(triggerType);
         break;

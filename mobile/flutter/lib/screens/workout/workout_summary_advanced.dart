@@ -1623,6 +1623,25 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
       color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
     );
 
+    // Signature v2: flag the PR set (highest estimated 1RM in this exercise)
+    // so its weight reads green — mirrors the spec's green-flagged PR row.
+    // Deterministic Epley estimate; no flag when there isn't a clear top set.
+    int? prSetIndex;
+    double bestOneRm = 0;
+    for (var i = 0; i < widget.sets.length; i++) {
+      final s = widget.sets[i];
+      final w = (s['weight_kg'] as num?)?.toDouble() ??
+          (s['weight'] as num?)?.toDouble();
+      final r = (s['reps'] as num?)?.toInt();
+      if (w == null || w <= 0 || r == null || r <= 0) continue;
+      final oneRm = w * (1 + r / 30.0);
+      if (oneRm > bestOneRm) {
+        bestOneRm = oneRm;
+        prSetIndex = i;
+      }
+    }
+    final prGreen = isDark ? AppColors.green : AppColorsLight.green;
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: DataTable(
@@ -1640,7 +1659,9 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
           DataColumn(label: Text(l.summaryColRir, style: headerStyle)),
           DataColumn(label: Text(l.summaryColRpe, style: headerStyle)),
         ],
-        rows: widget.sets.map((s) {
+        rows: widget.sets.asMap().entries.map((entry) {
+          final s = entry.value;
+          final isPrSet = entry.key == prSetIndex;
           final setNum = s['set_number'] as int? ?? 0;
           final prevW = (s['previous_weight_kg'] as num?)?.toDouble();
           final prevR = (s['previous_reps'] as num?)?.toInt();
@@ -1673,7 +1694,22 @@ class _ExerciseDeepDiveCardState extends State<_ExerciseDeepDiveCard> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(weightStr, style: cellStyle),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      weightStr,
+                      style: isPrSet
+                          ? cellStyle.copyWith(
+                              color: prGreen, fontWeight: FontWeight.w700)
+                          : cellStyle,
+                    ),
+                    if (isPrSet) ...[
+                      const SizedBox(width: 3),
+                      Icon(Icons.star_rounded, size: 12, color: prGreen),
+                    ],
+                  ],
+                ),
                 if (aiSource != null)
                   Text('AI: $aiSource', style: subtleStyle),
               ],
