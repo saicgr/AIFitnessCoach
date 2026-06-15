@@ -37,7 +37,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from google.genai import types
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, AliasChoices, ConfigDict
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
@@ -285,8 +285,13 @@ def _sanitize_chips(raw: Any) -> Optional[List[Dict[str, Any]]]:
 # Response model
 # ---------------------------------------------------------------------------
 class CtaModel(BaseModel):
-    label: str
-    route: str
+    # The LLM (and some legacy cached rows) occasionally emit {"text": ...}
+    # instead of {"label": ...}; accept either so the endpoint never 500s on a
+    # well-formed-but-mislabelled CTA. `route` defaults to the coach so a
+    # missing route degrades to "open chat" rather than a validation error.
+    model_config = ConfigDict(populate_by_name=True)
+    label: str = Field(validation_alias=AliasChoices("label", "text"))
+    route: str = "/chat"
 
 
 class ChipModel(BaseModel):
