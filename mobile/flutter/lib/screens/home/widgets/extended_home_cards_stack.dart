@@ -139,12 +139,9 @@ class ExtendedHomeCardsStack extends ConsumerWidget {
         // header only paints when the tile itself renders (the tile self-hides
         // when there's no referral offer), so a hidden tile leaves no orphan
         // header.
-        SelfHidingCardSection(
-          title: 'Refer & earn',
-          children: const [
-            ReferralGiftTile(),
-          ],
-        ),
+        // Refer & earn RELOCATED off Home (→ You / Settings) per the Signature
+        // v2 lean-home decision — it's promotional, not glanceable home content.
+        // The ReferralGiftTile widget stays in place for its new home.
         // #14 — the standalone "Connect Health Connect / Apple Health" preflight
         // (MissingDataChip) was removed from home; the user prefers reaching
         // these via the timeline + workout card. The MissingDataChip widget

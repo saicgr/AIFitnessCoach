@@ -1207,13 +1207,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // carousel → fuel → (below the fold) the metric deck, habits, reports.
     // The emoji quick-actions grid and the week strip are dropped from Home —
     // quick-actions live behind the "+" / quick-log sheet in v2.
+    // Signature v2 below-the-fold = Strength → Habits → Readiness → Cycle →
+    // Timeline (timeline appended separately). The weekly Report + "Your Week"
+    // recap were RELOCATED off Home (Reports → Progress, Recap → You/Wrapped)
+    // to keep Home lean per the spec.
     final visible = <HomeSection>[
       HomeSection.coachHero,
       HomeSection.workoutCard,
       HomeSection.nutritionCard,
       HomeSection.todayScore,
       HomeSection.habits,
-      HomeSection.weeklyReport,
+      HomeSection.readiness,
       if (menstrualEnabled) HomeSection.cycle,
     ];
 
