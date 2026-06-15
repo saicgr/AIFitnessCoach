@@ -389,19 +389,28 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
           const SizedBox(height: 10),
           _BlocksCarousel(blocks: insight.blocks.take(3).toList()),
         ],
-        if (insight.ctaPrimary != null || insight.ctaSecondary != null) ...[
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (insight.ctaPrimary != null)
-                _primaryCta(c, insight.ctaPrimary!),
-              if (insight.ctaSecondary != null)
-                _secondaryCta(c, insight.ctaSecondary!),
-            ],
-          ),
-        ],
+        // Spec footer: a hairline rule, then "Adjust today" (muted) · "Ask
+        // coach ›" (accent) — replaces the Log/View CTA buttons.
+        const SizedBox(height: 13),
+        Container(height: 1, color: c.cardBorder),
+        const SizedBox(height: 11),
+        Row(
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _openChat(context, insight),
+              child: Text('ADJUST TODAY',
+                  style: ZType.lbl(11, color: c.textMuted, letterSpacing: 1.5)),
+            ),
+            const Spacer(),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _openChat(context, insight),
+              child: Text('ASK COACH ›',
+                  style: ZType.lbl(11, color: c.accent, letterSpacing: 1.5)),
+            ),
+          ],
+        ),
         // Tier 2 — stacked contextual nudges. Hidden in minimized mode
         // (the entire `_content` early-returns above when minimized).
         const _CoachNudgeStack(),
