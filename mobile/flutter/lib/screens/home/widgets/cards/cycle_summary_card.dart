@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/hormonal_health.dart';
 import '../../../../data/providers/hormonal_health_provider.dart';
@@ -205,33 +206,64 @@ class _PhaseHeader extends StatelessWidget {
     final c = ThemeColors.of(context);
     return Row(
       children: [
-        Text(_phaseEmoji(phase), style: const TextStyle(fontSize: 22)),
-        const SizedBox(width: 10),
+        // The one accent: a semantic phase dot (phase-tinted), replacing the
+        // old emoji-as-leading. Flat fill, hairline ring — no glow.
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: _phaseColor(phase, c),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: _phaseColor(phase, c).withValues(alpha: 0.35),
+              width: 3,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Barlow kicker — the Signature section eyebrow.
               Text(
-                _phaseLabel(phase),
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: c.textPrimary,
-                ),
+                'YOUR CYCLE',
+                style: ZType.lbl(10, color: c.textSecondary),
+              ),
+              const SizedBox(height: 3),
+              // Anton display label for the phase — the masthead line.
+              Text(
+                _phaseLabel(phase).toUpperCase(),
+                style: ZType.disp(16, color: c.textPrimary, letterSpacing: 0.3),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 1),
+              const SizedBox(height: 3),
               Text(
                 'Day $day of cycle',
-                style: TextStyle(fontSize: 12, color: c.textSecondary),
+                style: ZType.lbl(11, color: c.textMuted, letterSpacing: 1.2),
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  /// Phase → a quiet semantic tint for the accent dot. Kept muted so the dot
+  /// reads as a status marker, not a loud badge.
+  Color _phaseColor(CyclePhase p, ThemeColors c) {
+    switch (p) {
+      case CyclePhase.menstrual:
+        return const Color(0xFFEF4444); // red — period
+      case CyclePhase.follicular:
+        return const Color(0xFF22C55E); // green — building
+      case CyclePhase.ovulation:
+        return c.accent; // accent — peak window
+      case CyclePhase.luteal:
+        return const Color(0xFFF59E0B); // amber — pre-period
+    }
   }
 
   String _phaseLabel(CyclePhase p) {
@@ -247,18 +279,6 @@ class _PhaseHeader extends StatelessWidget {
     }
   }
 
-  String _phaseEmoji(CyclePhase p) {
-    switch (p) {
-      case CyclePhase.menstrual:
-        return '🩸';
-      case CyclePhase.follicular:
-        return '🌱';
-      case CyclePhase.ovulation:
-        return '🌸';
-      case CyclePhase.luteal:
-        return '🌙';
-    }
-  }
 }
 
 /// Next-period countdown / late-by line + confidence pill — from
@@ -299,14 +319,22 @@ class _PredictionRow extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text('🩸', style: TextStyle(fontSize: 15)),
-            const SizedBox(width: 6),
+            // A quiet semantic dot in place of the emoji — flat, no glow.
+            Container(
+              width: 7,
+              height: 7,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEF4444),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 headline,
                 style: TextStyle(
                   fontSize: 13,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: c.textPrimary,
                 ),
                 maxLines: 1,
@@ -342,19 +370,14 @@ class _ConfidencePill extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: c.cardBorder.withValues(alpha: 0.5),
+        border: Border.all(color: c.cardBorder),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        confidence,
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: c.textMuted,
-          letterSpacing: 0.3,
-        ),
+        confidence.toUpperCase(),
+        style: ZType.lbl(9, color: c.textMuted, letterSpacing: 0.8),
       ),
     );
   }

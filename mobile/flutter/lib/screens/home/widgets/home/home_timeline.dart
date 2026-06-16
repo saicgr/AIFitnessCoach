@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/models/timeline_entry.dart';
@@ -199,18 +200,12 @@ class HomeTimeline extends ConsumerWidget {
                 const SizedBox(width: 7),
                 Expanded(
                   child: Text(
-                    // Reads as a section header consistent with the in-card
-                    // day headers ("Today"/"Yesterday") — primary text, 13px,
-                    // tight tracking — rather than a tiny muted eyebrow.
-                    'Timeline',
+                    // Signature kicker — Barlow Condensed uppercase eyebrow,
+                    // consistent with the other v2 home masthead headers.
+                    'TIMELINE',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.2,
-                      color: c.textPrimary,
-                    ),
+                    style: ZType.lbl(12, color: c.textPrimary),
                   ),
                 ),
                 // Silent-refresh indicator: feed reloading but stale data shown.

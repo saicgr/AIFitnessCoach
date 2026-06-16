@@ -115,53 +115,61 @@ class _PlanAdjustmentsCardState extends ConsumerState<PlanAdjustmentsCard> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      // Signature v2: a slim flat surface with a single hairline border. One
-      // accent element only — a short accent rule + leading tick — instead of
-      // the old accent-tinted box outline / glow. The collapsed default reads
-      // as a slim accent-edged row.
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: c.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: c.cardBorder),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header — tap anywhere toggles expand/collapse. The chevron
-            // signals the card is collapsible; collapsed is the default.
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => setState(() => _expanded = !_expanded),
+      // Signature v2: NOT a boxed glow card. A slim hairline-led row (à la
+      // ZealovaListRow) — a framed tune glyph + "Plan adjustments" label + the
+      // count + a chevron. The one accent is the count pill. Tapping the row
+      // toggles the expand/collapse of the gated adjustment rows below, which
+      // keep their own CTAs / routes verbatim.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header row — slim, hairline underline when expanded so the revealed
+          // body reads as hanging off the row rather than floating.
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 13),
+              decoration: _expanded
+                  ? BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: c.cardBorder),
+                      ),
+                    )
+                  : null,
               child: Row(
                 children: [
-                  // The one accent: a short vertical rule marking the row.
+                  // Framed leading glyph — the hairline-square treatment shared
+                  // with ZealovaListRow.
                   Container(
-                    width: 3,
-                    height: 22,
+                    width: 30,
+                    height: 30,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: c.accent,
-                      borderRadius: BorderRadius.circular(2),
+                      border: Border.all(color: c.cardBorder),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: Icon(Icons.tune_rounded,
+                        size: 15, color: c.textSecondary),
                   ),
-                  const SizedBox(width: 11),
-                  Icon(Icons.tune_rounded, size: 17, color: c.accent),
-                  const SizedBox(width: 9),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      (rows.length == 1
-                              ? 'Plan adjustment'
-                              : '${rows.length} plan adjustments')
-                          .toUpperCase(),
-                      style: ZType.lbl(
-                        12,
+                      'Plan & adjustments',
+                      style: TextStyle(
+                        fontSize: 15,
                         color: c.textPrimary,
-                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
+                  // The one accent: the adjustment count.
+                  Text(
+                    rows.length.toString(),
+                    style: ZType.lbl(13, color: c.accent, letterSpacing: 1),
+                  ),
+                  const SizedBox(width: 8),
                   AnimatedRotation(
                     duration: const Duration(milliseconds: 200),
                     turns: _expanded ? 0.5 : 0,
@@ -175,24 +183,24 @@ class _PlanAdjustmentsCardState extends ConsumerState<PlanAdjustmentsCard> {
                 ],
               ),
             ),
-            // Body — revealed only when expanded.
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 200),
-              crossFadeState: _expanded
-                  ? CrossFadeState.showSecond
-                  : CrossFadeState.showFirst,
-              firstChild: const SizedBox(width: double.infinity, height: 0),
-              secondChild: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  ...children,
-                ],
-              ),
+          ),
+          // Body — revealed only when expanded.
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 200),
+            crossFadeState: _expanded
+                ? CrossFadeState.showSecond
+                : CrossFadeState.showFirst,
+            firstChild: const SizedBox(width: double.infinity, height: 0),
+            secondChild: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 14),
+                ...children,
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
