@@ -33,6 +33,7 @@ from core.supabase_client import get_supabase
 from services.gemini_service import GeminiService
 from services.food_database_lookup_service import get_food_db_lookup_service
 from services.food_analysis.cache_service_helpers_part2 import FoodAnalysisCacheServicePart2
+from services.food_analysis.constants import detect_restaurant
 from services.food_analysis.modifiers_helpers import _build_default_modifiers
 
 logger = logging.getLogger(__name__)
@@ -954,8 +955,13 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             if not parsed:
                 return None
 
-            # Fuzzy match on the parsed food name (safe — single food, not full description)
-            override = await lookup_service._check_override_fuzzy_db(parsed.food_name)
+            # Fuzzy match on the parsed food name (safe — single food, not full
+            # description), biased toward the chain's menu when one is named so a
+            # brand item resolves to the chain's row, not a generic.
+            restaurant = detect_restaurant(description)
+            override = await lookup_service._check_override_fuzzy_db(
+                parsed.food_name, restaurant=restaurant
+            )
             food_key = parsed.food_name
             if not override:
                 return None

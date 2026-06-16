@@ -11,7 +11,7 @@ from core.supabase_client import get_supabase
 from services.food_analysis.parser import ParsedFoodItem
 from services.food_analysis.constants import (
     _WEIGHT_REGEX, _WEIGHT_AFTER_REGEX, _VOLUME_REGEX, _VOLUME_AFTER_REGEX,
-    _FILLER_REGEX, _WORD_NUMBERS, strip_restaurant_qualifier,
+    _FILLER_REGEX, _WORD_NUMBERS, strip_restaurant_qualifier, detect_restaurant,
 )
 from services.food_analysis.parser import _weight_unit_to_grams, _volume_unit_to_ml
 from services.food_database_lookup_service import get_food_db_lookup_service
@@ -437,6 +437,11 @@ class FoodAnalysisCacheServicePart2:
             Combined analysis dict if at least one item resolved, None otherwise
         """
         try:
+            # Detect the chain BEFORE stripping it, so the brand survives as a
+            # lookup bias (the stripped item alone, e.g. "honey walnut shrimp",
+            # would otherwise match a generic/other-chain row). Applied to every
+            # item parsed from this description.
+            restaurant = detect_restaurant(description)
             # Strip trailing restaurant names before parsing
             description = strip_restaurant_qualifier(description)
 
@@ -474,7 +479,9 @@ class FoodAnalysisCacheServicePart2:
             local_results: List[Optional[Dict[str, Any]]] = []
             for item in items:
                 local_results.append(
-                    await self._resolve_single_parsed_item(item, lookup_service)
+                    await self._resolve_single_parsed_item(
+                        item, lookup_service, restaurant=restaurant
+                    )
                 )
 
             # Phase B: per-item Gemini fallback for local misses, but ONLY when at
@@ -884,7 +891,7 @@ class FoodAnalysisCacheServicePart2:
             return None
 
     async def _resolve_single_parsed_item(
-        self, item: ParsedFoodItem, lookup_service
+        self, item: ParsedFoodItem, lookup_service, restaurant: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Resolve a single ParsedFoodItem to a nutrition analysis using overrides + common foods.
@@ -901,8 +908,10 @@ class FoodAnalysisCacheServicePart2:
             Analysis dict or None if not found
         """
         food_name = item.food_name
-        # Fuzzy DB lookup: exact → variant array → stemmed/reordered → trigram
-        override = await lookup_service._check_override_fuzzy_db(food_name)
+        # Fuzzy DB lookup: exact → (brand-aware) → variant array → stemmed → trigram
+        override = await lookup_service._check_override_fuzzy_db(
+            food_name, restaurant=restaurant
+        )
 
         if override:
             # Weight-based scaling

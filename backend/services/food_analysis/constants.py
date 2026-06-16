@@ -5,6 +5,7 @@ Contains regex patterns, word number mappings, unit sets, and
 filler phrase patterns used to clean natural-language food descriptions.
 """
 import re
+from typing import Optional
 
 
 # ── Parsing constants ─────────────────────────────────────────────
@@ -251,3 +252,35 @@ def strip_restaurant_qualifier(query: str) -> str:
                 return candidate
 
     return q
+
+
+def detect_restaurant(query: str) -> Optional[str]:
+    """Return the chain name referenced in a query, else None.
+
+    Detects a known chain appearing as a leading token ("panda express orange
+    chicken"), a trailing token ("orange chicken panda express"), or a
+    "from/at <chain>" suffix ("orange chicken from panda express"). Unlike
+    `strip_restaurant_qualifier` this does NOT modify the query — it only
+    surfaces the brand so override lookups can be biased toward that chain's
+    menu (a soft, additive preference; callers fail open when no branded row
+    matches).
+
+    Returns the matched lowercase RESTAURANT_NAMES token (an ILIKE-friendly
+    substring of the DB's `restaurant_name`, e.g. 'panda express'), or None.
+    Whole-query-is-a-chain ("panda express") returns None — that's a menu
+    browse with no specific item to bias.
+    """
+    if not query:
+        return None
+    q_lower = query.strip().lower()
+    if not q_lower or q_lower in RESTAURANT_NAMES:
+        return None
+    # Longest-first so "panda express" wins over a hypothetical "panda".
+    for r in _RESTAURANT_NAMES_SORTED:
+        if (
+            q_lower.startswith(r + ' ')
+            or q_lower.endswith(' ' + r)
+            or (' ' + r + ' ') in q_lower
+        ):
+            return r
+    return None

@@ -876,22 +876,93 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
             self._ai_validation_cache[cache_key] = False
             return False
 
-    async def _check_override_fuzzy_db(self, food_name: str) -> Optional[Dict]:
+    async def _restaurant_variant_match(
+        self, normalized: str, restaurant: str
+    ) -> Optional[Dict]:
+        """Match `normalized` against variant_names, filtered to a chain's menu.
+
+        Tries an exact variant containment first, then stemmed/reordered
+        candidates — both scoped by `restaurant_name ILIKE %restaurant%` (the
+        `idx_food_overrides_restaurant` index). Returns the best branded row or
+        None. Never raises (fail-open): any error falls through to the generic
+        lookup in the caller.
+        """
+        try:
+            sb = get_supabase()
+            base = (
+                sb.client.table("food_nutrition_overrides")
+                .select("*")
+                .eq("is_active", True)
+                .ilike("restaurant_name", f"%{restaurant}%")
+            )
+            # Match the bare item OR the brand-qualified composite ("panda express
+            # teriyaki chicken"). The composite catches dishes whose bare name is
+            # ambiguous across chains (so it was intentionally NOT seeded as a bare
+            # variant) but which carry a brand-qualified variant on the chain row.
+            resp = base.overlaps(
+                "variant_names", [normalized, f"{restaurant} {normalized}"]
+            ).limit(3).execute()
+            rows = resp.data or []
+            if not rows:
+                candidates = self._generate_fuzzy_candidates(normalized)
+                if candidates:
+                    resp = (
+                        sb.client.table("food_nutrition_overrides")
+                        .select("*")
+                        .eq("is_active", True)
+                        .ilike("restaurant_name", f"%{restaurant}%")
+                        .overlaps("variant_names", candidates)
+                        .limit(3)
+                        .execute()
+                    )
+                    rows = resp.data or []
+            if not rows:
+                return None
+            best = self._pick_best_fuzzy_match(rows, normalized) if len(rows) > 1 else rows[0]
+            override_data = self._row_to_override_dict(best)
+            logger.info(
+                f"[FoodDB] OVERRIDE HIT (branded:{restaurant}): '{normalized}' → "
+                f"{override_data['display_name']} ({override_data['calories_per_100g']} cal/100g)"
+            )
+            return override_data
+        except Exception as e:
+            logger.warning(
+                f"[FoodDB] branded match errored for '{normalized}'@{restaurant}: {e}"
+            )
+            return None
+
+    async def _check_override_fuzzy_db(
+        self, food_name: str, restaurant: Optional[str] = None
+    ) -> Optional[Dict]:
         """
         Extended override lookup with DB-backed fuzzy matching.
 
         Tries progressively fuzzier steps:
         1. Exact match on food_name_normalized (existing _check_override)
+        1b. Brand-aware: when the query names a chain (`restaurant`), prefer that
+            chain's menu — variant/fuzzy match filtered to `restaurant_name`. This
+            disambiguates shared dish names ("orange chicken" → the named chain's
+            row). Purely additive: if no branded row matches, falls through to the
+            generic steps below unchanged (fail-open).
         2. Exact match in variant_names array (DB query, GIN index)
         3. Stemmed + reordered candidates vs variant_names (DB overlaps)
         4. Trigram similarity on food_name_normalized (threshold 0.4, 4+ chars)
         """
+        normalized = food_name.lower().strip()
+
+        # Step 0 (brand-first): when a chain is named, prefer its menu BEFORE the
+        # generic exact match — otherwise a generic row sharing the same bare name
+        # (e.g. a generic "teriyaki chicken") would shadow the chain's item.
+        if restaurant and normalized:
+            branded = await self._restaurant_variant_match(normalized, restaurant)
+            if branded:
+                return branded
+
         # Step 1: Exact match (existing, fast)
         result = self._check_override(food_name)
         if result:
             return result
 
-        normalized = food_name.lower().strip()
         if not normalized:
             return None
 
