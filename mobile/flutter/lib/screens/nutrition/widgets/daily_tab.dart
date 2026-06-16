@@ -1353,12 +1353,12 @@ class _NutritionHeadline extends ConsumerWidget {
                   _formatThousands(eatenCal),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: ZType.disp(54, color: tc.textPrimary, height: 0.95),
+                  style: ZType.disp(44, color: tc.textPrimary, height: 0.95),
                 ),
               ),
               const SizedBox(width: 12),
               Padding(
-                padding: const EdgeInsets.only(bottom: 9),
+                padding: const EdgeInsets.only(bottom: 6),
                 child: _TargetsChip(
                   label: configured
                       ? 'Targets · ${_formatThousands(calTarget)} kcal'
@@ -1368,7 +1368,7 @@ class _NutritionHeadline extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 7),
           // Hairline consumed/target track.
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
@@ -1379,7 +1379,7 @@ class _NutritionHeadline extends ConsumerWidget {
               valueColor: AlwaysStoppedAnimation<Color>(tc.textSecondary),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           // Semantic macro rows — protein violet / carbs cyan / fat orange.
           Row(
             children: [
@@ -1390,7 +1390,7 @@ class _NutritionHeadline extends ConsumerWidget {
                 mark: 'P',
                 showTarget: configured,
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 14),
               _MacroStat(
                 color: AppColors.macroCarbs,
                 eaten: eatenC,
@@ -1398,7 +1398,7 @@ class _NutritionHeadline extends ConsumerWidget {
                 mark: 'C',
                 showTarget: configured,
               ),
-              const SizedBox(width: 18),
+              const SizedBox(width: 14),
               _MacroStat(
                 color: AppColors.macroFat,
                 eaten: eatenF,
@@ -1412,14 +1412,14 @@ class _NutritionHeadline extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               leftLine,
-              style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 0.8),
+              style: ZType.lbl(10, color: tc.textMuted, letterSpacing: 0.8),
             ),
           ],
           if (coachLine != null) ...[
             const SizedBox(height: 8),
             Text(
               coachLine,
-              style: ZType.ser(14.5, color: tc.textSecondary),
+              style: ZType.ser(12.5, color: tc.textSecondary),
             ),
           ],
         ],

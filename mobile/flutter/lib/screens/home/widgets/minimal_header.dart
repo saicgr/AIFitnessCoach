@@ -61,17 +61,11 @@ class MinimalHeader extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Wordmark removed (the user sees "Zealova" on every screen) — the
+          // action cluster sits right-aligned on its own row.
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              Text(
-                'ZEALOVA',
-                style: ZType.lbl(
-                  11,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                  letterSpacing: 2.4,
-                ),
-              ),
-              const Spacer(),
               const _StreakChip(),
               const SizedBox(width: 2),
               NotificationBellButton(isDark: isDark),
@@ -223,7 +217,7 @@ class _Greeting extends ConsumerWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: ZType.ser(
-        15,
+        12.5,
         color: isDark
             ? Colors.white.withValues(alpha: 0.82)
             : const Color(0xFF2A2A2A),

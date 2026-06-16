@@ -219,17 +219,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Eyebrow row: "Zealova" wordmark on the left, hairline action
-              // pills on the right (replaces the glassmorphic circle cluster).
+              // Eyebrow row: action pills right-aligned (the "Zealova" wordmark
+              // was removed — it's redundant on every screen).
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      Branding.appName,
-                      style: ZType.lbl(11,
-                          color: tc.textMuted, letterSpacing: 1.5),
-                    ),
-                  ),
+                  const Spacer(),
                   _HairlineActionPill(
                     icon: Icons.bar_chart_rounded,
                     tint: accentColor,

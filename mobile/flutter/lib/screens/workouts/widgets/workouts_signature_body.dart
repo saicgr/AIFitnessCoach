@@ -119,7 +119,7 @@ class _TodayBlock extends ConsumerWidget {
             today?.restDayMessage?.trim().isNotEmpty == true
                 ? today!.restDayMessage!.trim()
                 : 'Recovery is part of the program. Let the work land.',
-            style: ZType.ser(15, color: tc.textSecondary),
+            style: ZType.ser(12.5, color: tc.textSecondary),
           ),
         ] else ...[
           Text(
@@ -685,7 +685,7 @@ class _HistoryBlock extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 16),
             child: Text(
               'No completed sessions yet. Finish today\'s workout to start your log.',
-              style: ZType.ser(14, color: tc.textSecondary),
+              style: ZType.ser(12.5, color: tc.textSecondary),
             ),
           )
         else
