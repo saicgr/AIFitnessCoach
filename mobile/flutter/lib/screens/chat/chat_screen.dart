@@ -51,7 +51,6 @@ import 'widgets/chat_quick_pills.dart';
 import 'widgets/chat_features_info_sheet.dart';
 import 'widgets/enhanced_empty_state.dart';
 import 'widgets/coach_briefing_card.dart';
-import 'widgets/coach_greeting_view.dart';
 import 'widgets/voice_message_widget.dart';
 import 'widgets/chat_message_bubble.dart';
 import 'widgets/chat_media_widgets.dart';
@@ -426,13 +425,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         _openStateInsight = insight;
         _seededOpenInsightId = insight.insightId ?? 'open_brief';
       });
-    } else {
-      // Light greeting (or briefing unavailable) — render the living empty
-      // state. Only honour an ACTUAL greeting payload; a 'home' fallback
-      // insight falls through to EnhancedEmptyState (no fabricated greeting).
-      if (insight.isGreeting) {
-        setState(() => _openStateInsight = insight);
+    } else if (insight.isGreeting) {
+      // Signature-v2 chat-first: a light greeting is ALSO seeded as a coach
+      // chat bubble (no avatar/chart landing) so the tab always reads as a
+      // conversation — bubbles + chips + composer — never the card landing.
+      final id = insight.insightId;
+      final marker = id != null ? 'insight:$id' : 'insight:open_greeting';
+      final alreadySeeded = existingNow.any((m) =>
+          (id != null && m.insightId == id) || m.intent == marker);
+      if (!alreadySeeded) {
+        final headline = insight.headline.trim();
+        final body = insight.body.trim();
+        final content = [headline, body].where((s) => s.isNotEmpty).join('\n\n');
+        if (content.isNotEmpty) {
+          ref.read(chatMessagesProvider.notifier).appendSeededCoachTurn(
+                content: content,
+                intent: marker,
+                sourceSurface: 'chat_open',
+                insightId: id,
+              );
+        }
       }
+      setState(() {
+        _openStateInsight = insight;
+        _seededOpenInsightId = insight.insightId ?? 'open_greeting';
+      });
     }
   }
 
@@ -471,6 +488,71 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     );
   }
 
+  /// Signature-v2 chat-first: render the light greeting's quick-reply chips
+  /// (e.g. "Adjust today" / "Why this plan?") directly below the seeded
+  /// greeting coach bubble. Dispatch mirrors the briefing card's contract —
+  /// route chips deep-link, action chips fire a workout-card action, label
+  /// chips send a user turn. No avatar/chart landing is involved.
+  Widget _buildOpenGreetingChips(DailyCoachInsight insight) {
+    final accent = ThemeColors.of(context).accent;
+    void dispatch(InsightChip chip) {
+      HapticService.selection();
+      if (chip.route != null && chip.route!.isNotEmpty) {
+        try {
+          context.push(chip.route!);
+        } catch (_) {}
+        return;
+      }
+      if (chip.action != null && chip.action!.isNotEmpty) {
+        unawaited(
+          ref.read(chatMessagesProvider.notifier).dispatchWorkoutCardAction(
+            chip.action!,
+            {
+              if (insight.insightId != null) 'insight_id': insight.insightId,
+              'source_surface': insight.source,
+              ...chip.actionContext,
+            },
+          ),
+        );
+        return;
+      }
+      _textController.text = chip.label;
+      _sendMessage();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 8, right: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final chip in insight.chips)
+            InkWell(
+              borderRadius: BorderRadius.circular(999),
+              onTap: () => dispatch(chip),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: accent.withValues(alpha: 0.32)),
+                ),
+                child: Text(
+                  chip.label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: accent,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   CoachPersona _resolvedCoachForChips() {
     final aiSettings = ref.read(aiSettingsProvider);
     return CoachPersona.findById(aiSettings.coachPersonaId) ??
@@ -486,41 +568,22 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       (widget.insightId == null || widget.insightId!.isEmpty) &&
       (widget.initialMessage == null || widget.initialMessage!.isEmpty);
 
-  /// The empty/greeting state shown before any message exists. Renders the
-  /// time-aware living greeting when the open-state ladder resolved one,
-  /// otherwise the default EnhancedEmptyState. Extracted so the SAME surface
-  /// can paint immediately during the transient loadHistory loading flash
-  /// (#20) AND in the resolved `data([])` branch — the daily briefing is
-  /// fetched async by _runOpenStateLadder and swapped in when it resolves,
-  /// never blocking first paint.
+  /// The empty state shown before any message exists. Signature-v2 is
+  /// chat-first: the light greeting is NO LONGER an avatar+chart landing
+  /// (CoachGreetingView) — it's seeded as a coach chat bubble by
+  /// _runOpenStateLadder. So this surface only ever paints the minimal
+  /// EnhancedEmptyState, shown during the transient loadHistory flash (#20)
+  /// and in the resolved `data([])` branch until the seeded greeting (or a
+  /// rich briefing) bubble swaps in. Never blocks first paint.
   Widget _buildEmptyOrGreeting(CoachPersona coach) {
-    final Widget base;
-    final greeting = _openStateInsight;
-    if (greeting != null && greeting.isGreeting) {
-      base = CoachGreetingView(
-        key: const ValueKey('greeting'),
-        greeting: greeting,
-        coach: coach,
-        onSuggestionTap: (suggestion) {
-          _textController.text = suggestion;
-          _sendMessage();
-        },
-        onRouteTap: (route) {
-          try {
-            context.push(route);
-          } catch (_) {}
-        },
-      );
-    } else {
-      base = EnhancedEmptyState(
-        key: const ValueKey('empty'),
-        coach: coach,
-        onSuggestionTap: (suggestion) {
-          _textController.text = suggestion;
-          _sendMessage();
-        },
-      );
-    }
+    final Widget base = EnhancedEmptyState(
+      key: const ValueKey('empty'),
+      coach: coach,
+      onSuggestionTap: (suggestion) {
+        _textController.text = suggestion;
+        _sendMessage();
+      },
+    );
 
     // #19 — when chat was opened FROM a measurement / metric screen
     // (cardMode 'metric_weight' or generic 'metric:<name>'), surface
@@ -903,22 +966,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Eyebrow — brand on the left, the program day-count on the right.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                Branding.appName,
+          // Eyebrow — wordmark retired (signature-v2); keep only the
+          // right-aligned program day-count.
+          if (dayCount > 0)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                l10n.chatScreenMastheadDay(dayCount),
                 style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
               ),
-              if (dayCount > 0)
-                Text(
-                  l10n.chatScreenMastheadDay(dayCount),
-                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
-                ),
-            ],
-          ),
-          const SizedBox(height: 4),
+            ),
+          if (dayCount > 0) const SizedBox(height: 4),
           // Anton display masthead + the History / New chip pair.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -985,7 +1043,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 Flexible(
                   child: Text(
                     l10n.chatScreenMastheadSubtitle,
-                    style: ZType.ser(14.5, color: tc.textSecondary),
+                    style: ZType.ser(12.5, color: tc.textSecondary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1451,6 +1509,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                           return Column(children: [dateSeparator, card]);
                         }
                         return card;
+                      }
+
+                      // Signature-v2 chat-first — when this turn is the light
+                      // greeting we seeded on organic open, keep the plain
+                      // coach bubble and render the greeting's quick-reply
+                      // chips ("Adjust today" / "Why this plan?") below it,
+                      // so the tab reads as a conversation, never a landing.
+                      final isSeededOpenGreetingTurn = openInsight != null &&
+                          openInsight.isGreeting &&
+                          openInsight.chips.isNotEmpty &&
+                          (message.source == 'seeded_chat_open') &&
+                          (message.intent ==
+                                  'insight:${openInsight.insightId}' ||
+                              message.intent == 'insight:open_greeting');
+                      if (isSeededOpenGreetingTurn) {
+                        final greetingTurn = Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            wrappedBubble,
+                            _buildOpenGreetingChips(openInsight),
+                          ],
+                        );
+                        if (dateSeparator != null) {
+                          return Column(
+                              children: [dateSeparator, greetingTurn]);
+                        }
+                        return greetingTurn;
                       }
 
                       // Plan §1c.5 — render the suggested-reply chip
