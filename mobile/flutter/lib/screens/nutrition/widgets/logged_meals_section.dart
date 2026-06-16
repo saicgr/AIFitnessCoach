@@ -248,6 +248,9 @@ class LoggedMealsSection extends StatelessWidget {
     required int calories,
     String? amount,
     double? proteinG,
+    double? carbsG,
+    double? fatG,
+    int? inflammationScore,
     required DateTime time,
     required Color textPrimary,
     required Color textMuted,
@@ -371,14 +374,8 @@ class LoggedMealsSection extends StatelessWidget {
                     // Null for image-with-thumbnail (already visible) and
                     // plain text entries (default).
                     _buildSourceBadge(meal, textMuted) ?? const SizedBox.shrink(),
-                    // Per-food inflammation chip — color-graded, tap opens the
-                    // shared explain sheet. Only when the log carries a score
-                    // (null = enrichment pending, never shown as 0).
-                    if (meal.inflammationScore != null)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: InflammationChip(score: meal.inflammationScore!),
-                      ),
+                    // (Inflammation chip moved to the right column beside the
+                    // macros so the score reads next to the nutrition numbers.)
                   ],
                 ),
               ),
@@ -390,13 +387,25 @@ class LoggedMealsSection extends StatelessWidget {
                     '$calories cal',
                     style: ZType.data(12, color: textPrimary),
                   ),
-                  if (proteinG != null && proteinG > 0)
+                  // All three macros (P/C/F) in their semantic colors, replacing
+                  // the protein-only line. Renders whenever any macro is present.
+                  if ((proteinG ?? 0) > 0 || (carbsG ?? 0) > 0 || (fatG ?? 0) > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '${proteinG.round()}g protein',
-                        style: TextStyle(fontSize: 10.5, color: textMuted),
+                      child: _macroTriplet(
+                        proteinG: proteinG,
+                        carbsG: carbsG,
+                        fatG: fatG,
+                        fontSize: 10.5,
                       ),
+                    ),
+                  // Health/inflammation score chip — surfaced inline so the
+                  // food's quality reads on the row, not only in the details
+                  // sheet. Null = enrichment pending (never shown as 0).
+                  if (inflammationScore != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: InflammationChip(score: inflammationScore),
                     ),
                   if (showTime)
                     Padding(
@@ -414,6 +423,46 @@ class LoggedMealsSection extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  /// Compact "36P · 14C · 13F" macro line with each macro in its semantic
+  /// color (protein violet · carbs cyan · fat orange — AppColors.macro*).
+  /// Used on per-food rows so all three macros read at a glance, replacing
+  /// the old protein-only subtitle. A macro that is null/0 is omitted.
+  Widget _macroTriplet({
+    required double? proteinG,
+    required double? carbsG,
+    required double? fatG,
+    double fontSize = 10.5,
+  }) {
+    final spans = <TextSpan>[];
+    void add(double? v, String suffix, Color color) {
+      if (v == null || v <= 0) return;
+      if (spans.isNotEmpty) {
+        spans.add(const TextSpan(text: ' · '));
+      }
+      spans.add(TextSpan(
+        text: '${v.round()}$suffix',
+        style: TextStyle(color: color),
+      ));
+    }
+
+    add(proteinG, 'P', AppColors.macroProtein);
+    add(carbsG, 'C', AppColors.macroCarbs);
+    add(fatG, 'F', AppColors.macroFat);
+    if (spans.isEmpty) return const SizedBox.shrink();
+
+    return RichText(
+      text: TextSpan(
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.w600,
+          // Default color (used by the " · " separators) is muted.
+          color: (isDark ? AppColors.textMuted : AppColorsLight.textMuted),
+        ),
+        children: spans,
       ),
     );
   }
@@ -3922,7 +3971,6 @@ class _MealSectionState extends State<_MealSection> {
     final owner = widget.owner;
     final isDark = owner.isDark;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accent = AccentColorScope.of(context).getColor(isDark);
@@ -3972,6 +4020,39 @@ class _MealSectionState extends State<_MealSection> {
                             '$totalCal',
                             style: ZType.data(11.5, color: textPrimary),
                           ),
+                          // Macros BESIDE the calories, each in its semantic
+                          // macro color (protein violet · carbs cyan · fat
+                          // orange). Only when there are macros to show.
+                          if ((totalProtein + totalCarbs + totalFat) > 0) ...[
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: RichText(
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                text: TextSpan(
+                                  style: ZType.data(11.5),
+                                  children: [
+                                    TextSpan(
+                                      text: '·  ',
+                                      style: TextStyle(color: textMuted),
+                                    ),
+                                    TextSpan(
+                                      text: '${totalProtein.round()}P',
+                                      style: TextStyle(color: AppColors.macroProtein),
+                                    ),
+                                    TextSpan(
+                                      text: '  ${totalCarbs.round()}C',
+                                      style: TextStyle(color: AppColors.macroCarbs),
+                                    ),
+                                    TextSpan(
+                                      text: '  ${totalFat.round()}F',
+                                      style: TextStyle(color: AppColors.macroFat),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
                         const Spacer(),
                         if (countLabel != null)
@@ -4009,21 +4090,9 @@ class _MealSectionState extends State<_MealSection> {
             ],
           ),
         ),
-        // Compact MUTED per-meal P/C/F line — not colored, not emphatic
-        // (Signature `.rm-macro`). Only when there are macros to show.
-        if (_isExpanded && (totalProtein + totalCarbs + totalFat) > 0)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(33, 0, 6, 8),
-            child: Text(
-              [
-                '${totalProtein.round()}P',
-                '${totalCarbs.round()}C',
-                '${totalFat.round()}F',
-              ].join('   '),
-              style: ZType.lbl(11, color: textSecondary, letterSpacing: 0.8)
-                  .copyWith(color: textMuted),
-            ),
-          ),
+        // Per-meal P/C/F now lives BESIDE the calorie total in the header row
+        // above (semantic macro colors), so the separate muted line was
+        // removed — the macros read at a glance on one line.
         // Items or empty state
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 180),
@@ -4058,6 +4127,10 @@ class _MealSectionState extends State<_MealSection> {
                           calories: food?.calories ?? meal.totalCalories,
                           amount: food?.amount,
                           proteinG: food?.proteinG ?? meal.proteinG,
+                          carbsG: food?.carbsG ?? meal.carbsG,
+                          fatG: food?.fatG ?? meal.fatG,
+                          inflammationScore:
+                              food?.inflammationScore ?? meal.inflammationScore,
                           time: meal.loggedAt,
                           textPrimary: textPrimary,
                           textMuted: textMuted,
@@ -4386,13 +4459,26 @@ class _FoodGroup extends StatelessWidget {
                     '${food.calories ?? 0} cal',
                     style: ZType.data(11, color: textPrimary),
                   ),
-                  if (food.proteinG != null && food.proteinG! > 0)
+                  // All three macros (P/C/F) in semantic colors — replaces the
+                  // protein-only line so each child food shows full macros.
+                  if ((food.proteinG ?? 0) > 0 ||
+                      (food.carbsG ?? 0) > 0 ||
+                      (food.fatG ?? 0) > 0)
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '${food.proteinG!.round()}g protein',
-                        style: TextStyle(fontSize: 10, color: textMuted),
+                      child: owner._macroTriplet(
+                        proteinG: food.proteinG,
+                        carbsG: food.carbsG,
+                        fatG: food.fatG,
+                        fontSize: 10,
                       ),
+                    ),
+                  // Per-item health/inflammation score, when the item carries
+                  // one (null = pending, never shown as 0).
+                  if (food.inflammationScore != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: InflammationChip(score: food.inflammationScore!),
                     ),
                 ],
               ),

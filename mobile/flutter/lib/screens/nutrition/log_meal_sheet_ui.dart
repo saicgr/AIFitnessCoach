@@ -1512,6 +1512,14 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     // C10 — every item shaky → one re-photo prompt, not a confirm storm.
     final allLow = lowIdx.length == items.length && items.length > 1;
 
+    // C — collapsed-by-default slim header (only for the per-item confirm
+    // path). The all-low re-photo branch is a single CTA, so it always shows.
+    final collapsible = !allLow;
+    final expanded = !collapsible || _lowConfidenceExpanded;
+    final headerText = allLow
+        ? AppLocalizations.of(context).logMealSheetThisPhotoWasHard
+        : '${lowIdx.length == 1 ? 'one item is' : '${lowIdx.length} items are'} a rough estimate';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
@@ -1525,23 +1533,49 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const Icon(Icons.help_outline_rounded, size: 16, color: amber),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    allLow
-                        ? AppLocalizations.of(context).logMealSheetThisPhotoWasHard
-                        : 'Quick check — ${lowIdx.length == 1 ? 'one item is' : '${lowIdx.length} items are'} a rough estimate',
-                    style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: textPrimary),
+            // Slim header — tappable to expand/collapse when collapsible.
+            // Reads "⚠ N items are a rough estimate · review ›" collapsed.
+            InkWell(
+              onTap: collapsible
+                  ? () => setState(
+                      () => _lowConfidenceExpanded = !_lowConfidenceExpanded)
+                  : null,
+              borderRadius: BorderRadius.circular(6),
+              child: Row(
+                children: [
+                  const Icon(Icons.help_outline_rounded, size: 16, color: amber),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      headerText,
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary),
+                    ),
                   ),
-                ),
-              ],
+                  if (collapsible) ...[
+                    const SizedBox(width: 6),
+                    if (!expanded)
+                      Text(
+                        'review',
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: amber),
+                      ),
+                    AnimatedRotation(
+                      duration: const Duration(milliseconds: 180),
+                      turns: expanded ? 0.25 : 0,
+                      child: Icon(Icons.chevron_right_rounded,
+                          size: 18, color: amber),
+                    ),
+                  ],
+                ],
+              ),
             ),
+            // Body — only when expanded (or for the always-on re-photo case).
+            if (expanded) ...[
             const SizedBox(height: 6),
             if (allLow) ...[
               Text(
@@ -1608,6 +1642,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   child: _lowConfidenceRow(isDark, idx, items[idx], amber),
                 ),
             ],
+            ], // end if (expanded)
           ],
         ),
       ),
@@ -1638,7 +1673,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: textPrimary),
-                  maxLines: 1,
+                  // C — names must be fully readable when expanded; allow 2
+                  // lines instead of hard-truncating the tail.
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
                 // L4 — grounded reasoning ("~220g; plate reads ~10in"),

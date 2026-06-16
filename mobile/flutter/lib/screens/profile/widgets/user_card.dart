@@ -21,7 +21,12 @@ import 'edit_personal_info_sheet.dart';
 /// tint, no "Profile" label since the user already knows whose profile
 /// they're looking at.
 class UserCard extends ConsumerStatefulWidget {
-  const UserCard({super.key});
+  /// Whether this card carries the edit affordance (pencil + tap-to-edit).
+  /// The Profile sub-tab is the canonical place to edit identity, so the
+  /// Overview tab mounts the card with [editable] = false to avoid a second,
+  /// redundant "edit profile" entry point on the same hub.
+  final bool editable;
+  const UserCard({super.key, this.editable = true});
 
   @override
   ConsumerState<UserCard> createState() => _UserCardState();
@@ -72,18 +77,20 @@ class _UserCardState extends ConsumerState<UserCard> {
         userName.trim().isNotEmpty ? userName.trim()[0].toUpperCase() : 'Y';
 
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        showGlassSheet(
-          context: context,
-          builder: (_) => const EditPersonalInfoSheet(),
-        ).then((result) {
-          if (result == true) {
-            ref.read(authStateProvider.notifier).refreshUser();
-            _loadBio();
-          }
-        });
-      },
+      onTap: widget.editable
+          ? () {
+              HapticFeedback.lightImpact();
+              showGlassSheet(
+                context: context,
+                builder: (_) => const EditPersonalInfoSheet(),
+              ).then((result) {
+                if (result == true) {
+                  ref.read(authStateProvider.notifier).refreshUser();
+                  _loadBio();
+                }
+              });
+            }
+          : null,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -150,8 +157,9 @@ class _UserCardState extends ConsumerState<UserCard> {
                     ],
                   ),
                 ),
-                const Icon(Icons.edit_outlined,
-                    size: 16, color: AppColors.textMuted),
+                if (widget.editable)
+                  const Icon(Icons.edit_outlined,
+                      size: 16, color: AppColors.textMuted),
               ],
             ),
             if (_bioLoaded && _bio != null && _bio!.isNotEmpty) ...[

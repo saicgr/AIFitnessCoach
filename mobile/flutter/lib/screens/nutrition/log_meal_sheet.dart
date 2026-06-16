@@ -216,6 +216,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   final _descriptionController = TextEditingController();
   bool _hasScanned = false;
 
+  /// C — the "Quick check — N items are a rough estimate" review card is
+  /// collapsed by default (slim header only). Tap expands to the per-item
+  /// "Looks right" confirmation rows. Kept in state so it survives rebuilds
+  /// while the user reviews other parts of the result.
+  bool _lowConfidenceExpanded = false;
+
   // ─── A1 Snap / Describe mode state ─────────────────────────────
   /// Active AI-logging mode. Defaults to Search (the typed food-search /
   /// browser path); Snap is the one-tap instant-camera path.

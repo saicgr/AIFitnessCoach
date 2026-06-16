@@ -261,20 +261,10 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'ZEALOVA',
-                            style: ZType.lbl(10,
-                                color: AppColors.textMuted, letterSpacing: 2),
-                          ),
-                          Text(
-                            AppLocalizations.of(context).navYou.toUpperCase(),
-                            style: ZType.disp(28, color: fg),
-                          ),
-                        ],
+                      // Wordmark removed (redundant on every screen).
+                      Text(
+                        AppLocalizations.of(context).navYou.toUpperCase(),
+                        style: ZType.disp(28, color: fg),
                       ),
                       const Spacer(),
                       // Permanent mini-games entry point — hidden until the
@@ -319,8 +309,12 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
                           label: AppLocalizations.of(context).navProfile,
                           icon: Icons.person_outline,
                         ),
+                        // Renamed "Stats" → "Rewards": this tab is gamification
+                        // (trophies/XP/rewards), distinct from the /stats fitness
+                        // hub (reached via the chart icon above). De-confuses the
+                        // two "stats" the user flagged.
                         TopSegmentItem(
-                          label: AppLocalizations.of(context).youHubStats,
+                          label: 'Rewards',
                           icon: Icons.emoji_events_outlined,
                         ),
                       ],

@@ -189,25 +189,41 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     // translucent + blurred so the scrolling content shows softly through it
     // (no hard opaque bar, only a whisper-thin top edge). Home-indicator inset
     // padded inside so the glass runs to the very bottom.
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
-          decoration: BoxDecoration(
-            color: backgroundColor.withValues(alpha: isDark ? 0.55 : 0.62),
-            border: Border(
-              top: BorderSide(
-                color: (isDark ? Colors.white : Colors.black)
-                    .withValues(alpha: 0.06),
-                width: 0.5,
+    return SizedBox(
+      height: navBarHeight + bottomPadding + fadeHeight,
+      child: Stack(
+        children: [
+          // NO blur (a BackdropFilter draws a hard-edged box). Just a soft fade —
+          // transparent at the top → solid bg by the time it reaches the icons —
+          // so the content scrolls and dissolves behind the nav with no edge/line.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      backgroundColor.withValues(alpha: 0.0),
+                      backgroundColor.withValues(alpha: 0.85),
+                      backgroundColor,
+                      backgroundColor,
+                    ],
+                    stops: const [0.0, 0.4, 0.65, 1.0],
+                  ),
+                ),
               ),
             ),
           ),
-          padding: EdgeInsets.only(bottom: bottomPadding),
-          child: SizedBox(
-            height: navBarHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+          // Docked icon row at the bottom.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: bottomPadding,
+            child: SizedBox(
+              height: navBarHeight,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
               // Tab order (2026-06 redesign, Change 1): Home · Workout ·
               // Coach (center — the product's differentiator) · Nutrition ·
               // You. The leaderboard moved to You › Stats & Rewards; selected
@@ -304,8 +320,9 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
             ),
           ),
             ),
-          ),
-        );
+          ],
+        ),
+      );
   }
 }
 

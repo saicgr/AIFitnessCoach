@@ -46,10 +46,12 @@ class ZType {
       );
 
   /// Fraunces — the human/emotional line (greetings, coach whispers, exhales).
+  /// Upright by default (NOT italic) — the user dislikes the cursive look; pass
+  /// `style: FontStyle.italic` explicitly where italics are still wanted.
   static TextStyle ser(
     double size, {
     Color? color,
-    FontStyle style = FontStyle.italic,
+    FontStyle style = FontStyle.normal,
     FontWeight weight = FontWeight.w400,
     double height = 1.3,
   }) =>
@@ -83,7 +85,7 @@ extension ZTypeContext on BuildContext {
   TextStyle zLbl(double size,
           {Color? color, FontWeight weight = FontWeight.w700, double letterSpacing = 1.8}) =>
       ZType.lbl(size, color: color, weight: weight, letterSpacing: letterSpacing);
-  TextStyle zSer(double size, {Color? color, FontStyle style = FontStyle.italic}) =>
+  TextStyle zSer(double size, {Color? color, FontStyle style = FontStyle.normal}) =>
       ZType.ser(size, color: color, style: style);
   TextStyle zData(double size, {Color? color, FontWeight weight = FontWeight.w700}) =>
       ZType.data(size, color: color, weight: weight);

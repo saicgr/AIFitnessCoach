@@ -479,7 +479,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _LogWaterButton(onTap: _scrollToHydration)),
+                        Expanded(child: _LogWaterButton(onTap: _logWaterFromCard)),
                         const SizedBox(width: 10),
                         const Expanded(child: _FastingActiveBar()),
                       ],

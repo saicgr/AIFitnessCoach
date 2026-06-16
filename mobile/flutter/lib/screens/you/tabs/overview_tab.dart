@@ -346,9 +346,11 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
           // Training section.
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
-            // Shared widget — same UserCard now also renders at the top of
-            // the Profile sub-tab. See lib/screens/profile/widgets/user_card.dart.
-            child: UserCard(),
+            // Shared widget — same UserCard also renders at the top of the
+            // Profile sub-tab, which owns the edit affordance. Here it's a
+            // read-only glance (editable: false) so the hub doesn't show two
+            // redundant "edit profile" entry points.
+            child: UserCard(editable: false),
           ),
           const SizedBox(height: 16),
 

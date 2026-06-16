@@ -203,7 +203,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       child: RepaintBoundary(
         child: Container(
           padding: EdgeInsetsDirectional.only(
-              top: topPadding + 6, start: 20, end: 16, bottom: 10),
+              top: topPadding + 2, start: 20, end: 16, bottom: 10),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -219,10 +219,22 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Eyebrow row: action pills right-aligned (the "Zealova" wordmark
-              // was removed — it's redundant on every screen).
+              // Eyebrow row: the "My Gym" switcher fills the LEFT (so the top
+              // isn't empty after the wordmark removal), action pills on the right.
               Row(
                 children: [
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsetsDirectional.only(
+                          start: 12, end: 10, top: 6, bottom: 6),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface2,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: AppColors.cardBorder),
+                      ),
+                      child: const GymProfileSwitcher(),
+                    ),
+                  ),
                   const Spacer(),
                   _HairlineActionPill(
                     icon: Icons.bar_chart_rounded,
@@ -263,23 +275,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               Text(
                 AppLocalizations.of(context).navWorkouts.toUpperCase(),
                 style: ZType.disp(30, color: textPrimary),
-              ),
-              const SizedBox(height: 8),
-              // Gym profile switcher ("My Gym ▾"), restyled as a hairline pill.
-              // The shared GymProfileSwitcher stays fully functional — only its
-              // chrome is wrapped here.
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Container(
-                  padding: const EdgeInsetsDirectional.only(
-                      start: 12, end: 10, top: 6, bottom: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface2,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppColors.cardBorder),
-                  ),
-                  child: const GymProfileSwitcher(),
-                ),
               ),
             ],
           ),

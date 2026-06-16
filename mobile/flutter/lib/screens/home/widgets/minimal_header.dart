@@ -56,24 +56,23 @@ class MinimalHeader extends ConsumerWidget {
     // settings gear stays in the cluster so it's still one tap from Home.
     return Padding(
       key: AppTourKeys.topBarKey,
-      padding: const EdgeInsets.fromLTRB(20, 8, 8, 0),
+      padding: const EdgeInsets.fromLTRB(20, 4, 8, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Wordmark removed (the user sees "Zealova" on every screen) — the
-          // action cluster sits right-aligned on its own row.
+          // Eyebrow: the greeting fills the LEFT so the top isn't empty (and no
+          // stray "streak 4" number — the streak moved off the masthead into
+          // coach / You). Bell / coach / settings cluster on the right.
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              const _StreakChip(),
-              const SizedBox(width: 2),
+              const Expanded(child: _Greeting()),
               NotificationBellButton(isDark: isDark),
               _CoachGlyphButton(isDark: isDark),
               _SettingsButton(isDark: isDark),
             ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           // Big editorial date — Anton display, gym-aware accent on the month.
           RichText(
             text: TextSpan(
@@ -87,9 +86,7 @@ class MinimalHeader extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 4),
-          const _Greeting(),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
         ],
       ),
     );
