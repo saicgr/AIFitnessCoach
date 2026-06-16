@@ -27,7 +27,6 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/design_system/section_header.dart';
 import '../you_hub_screen.dart' show kYouHubBodyBottomInset;
-import '../../../widgets/xp_hero_tile.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 class YouStatsRewardsTab extends ConsumerStatefulWidget {
@@ -151,12 +150,10 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
       child: ListView(
         padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset),
         children: [
-          // PROGRESS — the "where am I on the journey" group
+          // PROGRESS — the "where am I on the journey" group.
+          // The XP hero lives ONLY on the You › Overview tab now (de-duped);
+          // this tab leads straight into the Skills + Achievements row.
           _SectionLabel(label: AppLocalizations.of(context).statsRewardsProgress, fg: fg),
-          const SizedBox(height: 10),
-          // Hero XP tile takes over the primary-tile slot. Skills +
-          // Achievements continue to render below as secondary metrics.
-          const XpHeroTile(),
           const SizedBox(height: 10),
           _ProgressSecondaryRow(
             skills: _skillsSummary,
@@ -167,8 +164,23 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           ),
           const SizedBox(height: 20),
 
-          // INSIGHTS — interactive trends + correlations
+          // INSIGHTS — interactive trends + correlations.
+          // The deep stats numbers (scores, measurements, nutrition, mood,
+          // photos) live in ONE canonical place — `/stats` — so this tab
+          // links OUT to it rather than duplicating the surface.
           _SectionLabel(label: AppLocalizations.of(context).statsRewardsInsights, fg: fg),
+          const SizedBox(height: 10),
+          _MetricTile(
+            icon: Icons.insights_rounded,
+            title: AppLocalizations.of(context).youHubStatsScores,
+            headline: 'View all',
+            sub: 'Scores, measurements, nutrition & mood',
+            fg: fg,
+            accent: accent,
+            isDark: isDark,
+            route: '/stats',
+            wide: true,
+          ),
           const SizedBox(height: 10),
           _MetricTile(
             icon: Icons.auto_graph_rounded,

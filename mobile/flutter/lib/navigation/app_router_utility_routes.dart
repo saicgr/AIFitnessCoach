@@ -226,12 +226,6 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const WorkoutGalleryScreen(),
       ),
 
-      // Scoring Screen (Fitness score breakdown)
-      GoRoute(
-        path: '/scores',
-        builder: (context, state) => const ScoringScreen(),
-      ),
-
       // Custom Exercises (My Exercises - user created)
       GoRoute(
         path: '/custom-exercises',

@@ -112,7 +112,7 @@ class _BodyMetricsSectionState extends ConsumerState<BodyMetricsSection> {
                     textSecondary: textSecondary,
                     onTap: () {
                       HapticService.light();
-                      context.push('/scores');
+                      context.push('/stats');
                     },
                   ),
                 ),

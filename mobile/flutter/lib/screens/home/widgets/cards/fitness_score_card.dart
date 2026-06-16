@@ -96,7 +96,7 @@ class _FitnessScoreCardState extends ConsumerState<FitnessScoreCard> {
               ref.read(contextLoggingServiceProvider).logScoreView(
                 screen: 'home_card',
               );
-              context.push('/scores');
+              context.push('/stats');
             },
             borderRadius: BorderRadius.circular(16),
             child: Builder(

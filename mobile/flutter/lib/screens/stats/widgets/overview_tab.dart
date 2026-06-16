@@ -35,6 +35,7 @@ import 'overview/strength_score_card.dart';
 import 'overview/weekly_score_card.dart';
 import 'overview/activity_streak_card.dart';
 import 'overview/month_highlight_card.dart';
+import 'overview/fitness_score_breakdown_section.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Disk-cached snapshots for the Overview tab.
@@ -285,6 +286,15 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
                 ],
               ),
             ),
+
+            const SizedBox(height: AppSpacing.lg),
+
+            // ── 1b. FITNESS SCORE BREAKDOWN ──────────────────────────────
+            // The consolidated home of the former standalone `/scores` screen:
+            // overall fitness-score hero + the four weighted component scores
+            // (Strength / Consistency / Nutrition / Readiness). Self-fetching;
+            // renders a layout-matched skeleton until scores load.
+            const FitnessScoreBreakdownSection(),
 
             const SizedBox(height: AppSpacing.lg),
 

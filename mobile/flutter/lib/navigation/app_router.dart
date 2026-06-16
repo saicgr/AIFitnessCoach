@@ -148,7 +148,6 @@ import '../screens/nutrition/menu_analysis_history_screen.dart';
 import '../screens/nutrition/saved_hub_screen.dart';
 import '../data/services/api_client.dart';
 import '../screens/mood/mood_history_screen.dart';
-import '../screens/scores/scoring_screen.dart';
 import '../screens/custom_exercises/custom_exercises_screen.dart';
 // Avoided screens now accessed via unified MyExercisesScreen
 // import '../screens/settings/exercise_preferences/avoided_exercises_screen.dart';
