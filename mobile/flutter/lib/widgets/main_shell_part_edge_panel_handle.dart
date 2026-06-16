@@ -185,25 +185,29 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
         ? Colors.grey.shade500
         : Colors.grey.shade400;
 
-    // Signature v2 nav (.rc-nav2): a DOCKED full-width opaque bar with a
-    // hairline TOP border — flush to the bottom edge, not a floating pill.
-    // The home-indicator inset is padded INSIDE the bar so the bar background
-    // runs to the very bottom.
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        border: Border(
-          top: BorderSide(
-            color: isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder,
-            width: 1,
+    // Signature nav: a seamless FROSTED-GLASS bar — docked full-width but
+    // translucent + blurred so the scrolling content shows softly through it
+    // (no hard opaque bar, only a whisper-thin top edge). Home-indicator inset
+    // padded inside so the glass runs to the very bottom.
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Container(
+          decoration: BoxDecoration(
+            color: backgroundColor.withValues(alpha: isDark ? 0.55 : 0.62),
+            border: Border(
+              top: BorderSide(
+                color: (isDark ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.06),
+                width: 0.5,
+              ),
+            ),
           ),
-        ),
-      ),
-      padding: EdgeInsets.only(bottom: bottomPadding),
-      child: SizedBox(
-        height: navBarHeight,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
+          padding: EdgeInsets.only(bottom: bottomPadding),
+          child: SizedBox(
+            height: navBarHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               // Tab order (2026-06 redesign, Change 1): Home · Workout ·
               // Coach (center — the product's differentiator) · Nutrition ·
               // You. The leaderboard moved to You › Stats & Rewards; selected
@@ -297,6 +301,8 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                   ),
                 ],
               ),
+            ),
+          ),
             ),
           ),
         );

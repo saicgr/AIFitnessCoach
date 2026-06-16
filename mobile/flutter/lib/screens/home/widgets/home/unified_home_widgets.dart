@@ -690,6 +690,18 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
             border: const Border(
               top: BorderSide(color: AppColors.hairlineStrong),
             ),
+            // Subtle, heavily-darkened exercise illustration behind the text so
+            // the Anton title / CTA stay legible (flat surface fallback below).
+            image: _imageUrl != null
+                ? DecorationImage(
+                    image: CachedNetworkImageProvider(_imageUrl!,
+                        maxWidth: 600, maxHeight: 360),
+                    fit: BoxFit.cover,
+                    alignment: const Alignment(0.0, -0.25),
+                    colorFilter: ColorFilter.mode(
+                        Colors.black.withValues(alpha: 0.66), BlendMode.darken),
+                  )
+                : null,
           ),
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 15),
           child: Column(
@@ -1488,16 +1500,27 @@ class HomeStrengthBreakdown extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 11),
-          ...top.map((m) => Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: _StrengthBar(
-                  label: m.muscleGroup,
-                  value: m.strengthScore,
-                  c: c,
-                ),
-              )),
-          const SizedBox(height: 4),
+          // Component bars only when there's per-muscle data; otherwise a
+          // one-line hint instead of an empty void (the user saw blank space).
+          if (top.isNotEmpty) ...[
+            const SizedBox(height: 11),
+            ...top.map((m) => Padding(
+                  padding: const EdgeInsets.only(bottom: 7),
+                  child: _StrengthBar(
+                    label: m.muscleGroup,
+                    value: m.strengthScore,
+                    c: c,
+                  ),
+                )),
+            const SizedBox(height: 4),
+          ] else ...[
+            const SizedBox(height: 7),
+            Text('Log a few workouts to build your muscle breakdown.',
+                style: TextStyle(
+                    fontSize: 11.5,
+                    color: c.textMuted.withValues(alpha: 0.65))),
+            const SizedBox(height: 7),
+          ],
           GestureDetector(
             onTap: () {
               HapticService.light();

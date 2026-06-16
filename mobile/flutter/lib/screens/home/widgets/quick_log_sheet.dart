@@ -100,27 +100,23 @@ class _QuickLogContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 4, 18, 24),
+      padding: const EdgeInsets.fromLTRB(18, 4, 18, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Log',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: c.textPrimary,
-            ),
+            'LOG',
+            style: ZType.lbl(13, color: c.textMuted, letterSpacing: 2),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           GridView.count(
             crossAxisCount: 3,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 12,
-            childAspectRatio: 0.92,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.12,
             children: [
               for (final a in _actions)
                 _QuickTile(action: a, colors: c, parentRef: parentRef),

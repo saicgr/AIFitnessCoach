@@ -543,10 +543,10 @@ class MainShell extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: isDark ? AppColors.surface : AppColorsLight.surface,
                     borderRadius: BorderRadius.circular(6),
+                    // Accent (orange) border so the quick-actions "+" stands out.
                     border: Border.all(
-                      color: isDark
-                          ? AppColors.cardBorder
-                          : AppColorsLight.cardBorder,
+                      color: ThemeColors.of(context).accent,
+                      width: 1.5,
                     ),
                     boxShadow: [
                       BoxShadow(
