@@ -970,6 +970,7 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
 
     # Lazy imports — only needed when we actually have an opted-in cohort.
     from services import cardio_digest_service as cardio_svc
+    from services.weekly_progress_service import compute_weekly_progress
     try:
         import resend as _resend  # noqa: WPS433
     except ImportError:
@@ -1060,41 +1061,26 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
             if stats.time_band != TimeBand.MORNING:
                 continue
 
-            # W5: compute percentile via migration 1939 RPC. Falls back to
-            # None on any error so the email still sends without social proof.
-            percentile_val: Optional[float] = None
-            percentile_tier: Optional[str] = None
+            # Roll up the Google-Health-style weekly report (wearable + app-native,
+            # week-over-week deltas). Best-effort — on any failure we still send a
+            # minimal coach check-in rather than skip the user.
             try:
-                # Week-start Monday (today's user-local Monday is today since we
-                # only send Monday mornings per line 701).
-                week_start_str = user_today.isoformat()
-                rpc = supabase.client.rpc(
-                    "compute_user_percentile",
-                    {
-                        "p_user_id": uid,
-                        "p_week_start": week_start_str,
-                        "p_board_type": "xp",
-                    },
-                ).execute()
-                pdata = rpc.data[0] if isinstance(rpc.data, list) and rpc.data else (rpc.data or {})
-                if pdata:
-                    percentile_val = float(pdata.get("percentile") or 0)
-                    percentile_tier = pdata.get("tier")
+                progress = compute_weekly_progress(supabase, uid, user_tz, stats)
             except Exception as e:
-                logger.warning(f"[W5] compute_user_percentile failed for {uid}: {e}")
+                logger.warning(f"[weekly_summary] progress compute failed for {uid}: {e}")
+                progress = None
 
             result = await email_svc.send_weekly_summary(
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
-                percentile=percentile_val,
-                percentile_tier=percentile_tier,
+                progress=progress,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type, {
                     "workouts_this_week": stats.workouts_this_week,
                     "meals_this_week": stats.nutrition_days_logged_this_week,
-                    "percentile": percentile_val,
+                    "total_steps": getattr(progress, "total_steps", None),
                 })
                 sent += 1
 

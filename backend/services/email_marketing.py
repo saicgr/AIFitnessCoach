@@ -154,108 +154,54 @@ class EmailMarketingMixin:
 
     async def send_weekly_summary(
         self, to_email: str, first_name_value: str, stats: UserStats,
+        progress: Optional[Any] = None,        # WeeklyProgress (the report data)
         total_duration_minutes: int = 0, top_exercise: str = "",
         top_exercise_volume_lbs: float = 0,
-        percentile: Optional[float] = None,   # W5: 0-100 among active users
-        percentile_tier: Optional[str] = None,  # 'legendary' | 'top' | 'elite' | 'rising' | 'active'
+        percentile: Optional[float] = None,   # retained for signature compat (unused)
+        percentile_tier: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Weekly summary — the nutrition showcase email.
+        """Weekly progress report — the Google-Health-style numbers email.
 
-        Renders two stat grids: the workouts/streak/volume grid, AND the
-        dedicated nutrition grid showing days logged, avg calories, avg protein,
-        and whether they logged today. When user has never touched nutrition,
-        the nutrition block shows a gentle "start logging" nudge instead of
-        an empty grid.
+        Renders the signature template (`email_signature_template`): orange rail,
+        avatar greeting, hero card (steps, or workouts when no wearable), per-day
+        step rings, rounded metric-card grids (wearable + app-native, auto-hiding
+        empty tiles), an awards band when milestones fired, coach card, pill CTA.
 
-        Persona signature + mood emoji adapt: impressed when active, concerned
-        when sparse. The subject uses specific numbers ("3 workouts, 2,341 lbs")
-        so the user reads the value before even opening.
+        `progress` is a `WeeklyProgress` from `weekly_progress_service`. When it's
+        absent (defensive — the cron always supplies it) we still send a minimal
+        coach check-in rather than crash.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
         from core.config import get_settings
+        from services import email_signature_template as sig
+
         backend_url = get_settings().backend_base_url
-        logo_url = get_settings().email_logo_url
         open_url = lifecycle_open_url(backend_url, "weekly_summary")
-
         name = first_name_value or "there"
-        coach = stats.coach_name
+        coach = stats.coach_name or "Your coach"
 
-        hours = total_duration_minutes // 60
-        mins = total_duration_minutes % 60
-        duration_str = f"{hours}h {mins}m" if hours > 0 else f"{mins}m" if mins else ""
-
-        # Dynamic subject — the numbers go first, the name second.
-        # W5: prefer percentile when the user is in the top 30% and has logged
-        # workouts this week. This is Duolingo-style social-proof copy — research
-        # shows this is one of the strongest drivers of app consistency.
-        top_percent_text = None
-        if percentile is not None and percentile > 0 and stats.workouts_this_week >= 1:
-            top_pct = max(1, int(round(100 - percentile)))  # invert: percentile 95 → top 5%
-            if top_pct <= 30:
-                top_percent_text = f"top {top_pct}%"
-
-        if stats.workouts_this_week >= 1:
-            summary_bits = [f"{stats.workouts_this_week} workouts"]
-            if stats.nutrition_days_logged_this_week:
-                summary_bits.append(f"{stats.nutrition_days_logged_this_week}/7 meal days")
-            if stats.nutrition_avg_protein_g_week:
-                summary_bits.append(f"{stats.nutrition_avg_protein_g_week}g protein avg")
-
-            if top_percent_text is not None:
-                subject = f"🏆 {name}, you're in the {top_percent_text} this week"
-                title = f"You're in the {top_percent_text}, {name}"
-            else:
-                subject = f"{name}, your week: " + " · ".join(summary_bits)
-                title = f"Your week, {name}"
-
-            if stats.workouts_this_week >= 3:
-                mood_line = f"{coach} is impressed."
-            else:
-                mood_line = f"{coach} noticed."
-            subtitle = f"Here's what you pulled off" + (f" · {duration_str} of training." if duration_str else ".")
-        else:
-            subject = f"{name}, empty week — {coach} is here when you're ready"
-            title = f"A quiet week, {name}"
-            subtitle = (
-                f"You didn't log a workout this week. "
-                f"{coach} isn't mad — just checking in. Ready to restart?"
+        if progress is None:
+            html_content = sig.signature_email(
+                header_tag="Weekly", greeting=f"Hi, {name}.",
+                greeting_sub="Your weekly check-in", avatar=name[:1],
+                body_html=sig.coach_card(coach, f"Checking in, {name} — open the app to see your week.")
+                + sig.pill_cta("View in app →", open_url),
+                category_label="weekly reports",
             )
-            mood_line = ""
-
-        # Feature blocks — workouts, nutrition, next steps.
-        features = [
-            ("&#127947;", f"{stats.workouts_this_week} workouts done",
-             f"Lifetime total: {stats.workouts_total}." + (f" Current streak: {stats.current_streak_days} 🔥" if stats.current_streak_days else "")),
-            ("&#128202;", "Nutrition this week",
-             _nutrition_summary_line(stats)),
-        ]
-        # W5: add percentile block prominently when we have it
-        if top_percent_text is not None:
-            features.append((
-                "&#127942;",
-                f"You're in the {top_percent_text} of active users",
-                "That's real consistency. Keep showing up — most people don't.",
-            ))
-        features.append((
-            "&#128293;", "Coming up",
-            f"Up next: {stats.next_workout_name or 'your next session'}." + (" " + mood_line if mood_line else "")
-        ))
-
-        # The core content: workouts grid + nutrition grid, stacked.
-        stats_row = build_stats_grid_html(stats) + build_nutrition_grid_html(stats)
-
-        html_content = self._build_standard_email(
-            logo_url=logo_url, open_url=open_url,
-            title=title, subtitle=subtitle,
-            cta_text="See full stats",
-            features=features,
-            footer_text="You received this because you have weekly summaries enabled.",
-            persona_signature_html=build_persona_signature_html(stats),
-            stats_row_html=stats_row,
-            category_name="weekly summary",
-        )
+            subject = f"{name}, your weekly check-in"
+        else:
+            subject = _weekly_subject(progress, name)
+            html_content = sig.signature_email(
+                header_tag=f"Weekly · {progress.week_label}",
+                greeting=_weekly_greeting(progress, name, stats),
+                greeting_sub=f"Your stats for {progress.week_label}",
+                avatar=name[:1],
+                body_html=_compose_weekly_body(progress, coach, open_url),
+                category_label="weekly reports",
+                preheader=_weekly_preheader(progress, name),
+            )
 
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
@@ -281,3 +227,131 @@ def _nutrition_summary_line(stats: UserStats) -> str:
     if stats.nutrition_avg_protein_g_week:
         parts.append(f"~{stats.nutrition_avg_protein_g_week}g protein/day")
     return ". ".join(parts) + "."
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Weekly progress report — subject / greeting / body composition.
+# Consumes a `WeeklyProgress` from services.weekly_progress_service.
+# ─────────────────────────────────────────────────────────────────────
+
+_TOD_WORD = {
+    "morning": "Morning", "midday": "Afternoon", "afternoon": "Afternoon",
+    "evening": "Evening", "late": "Evening", "quiet": "Hi",
+}
+
+
+def _weekly_greeting(progress: Any, name: str, stats: UserStats) -> str:
+    if progress.is_first_week:
+        return f"Welcome, {name}."
+    if progress.empty_week:
+        return f"A quiet week, {name}."
+    if progress.awards:
+        return f"Big week, {name}."
+    band = getattr(getattr(stats, "time_band", None), "value", "morning")
+    return f"{_TOD_WORD.get(band, 'Hi')}, {name}."
+
+
+def _weekly_subject(progress: Any, name: str) -> str:
+    """Numbers-first subject, variant pool ≥4 (feedback_dynamic_copy_not_robotic)."""
+    if progress.empty_week:
+        pool = [
+            f"{name}, a quiet week — we're here when you're ready",
+            f"{name}, this week was light — let's reset",
+            f"No pressure, {name} — your week in 30 seconds",
+            f"{name}, picking back up starts with one session",
+        ]
+    elif progress.awards:
+        n = len(progress.awards)
+        pool = [
+            f"Big week, {name} — {n} milestone{'s' if n != 1 else ''} unlocked",
+            f"{name}, you set {n} milestone{'s' if n != 1 else ''} this week",
+            f"{name}, your week was a statement",
+            f"{name}, the numbers are in — and they're good",
+        ]
+    elif progress.has_wearable and progress.total_steps > 0:
+        s = f"{progress.total_steps:,}"
+        pool = [
+            f"{name}, your week: {s} steps",
+            f"{s} steps this week, {name}",
+            f"Your weekly stats, {name} — {s} steps",
+            f"{name}, here's your week in numbers",
+        ]
+    else:
+        w = progress.workouts_this_week
+        pool = [
+            f"{name}, your training week: {w} workout{'s' if w != 1 else ''}",
+            f"{w} workout{'s' if w != 1 else ''} this week, {name}",
+            f"Your weekly stats, {name}",
+            f"{name}, here's your week in numbers",
+        ]
+    idx = (progress.total_steps + progress.workouts_this_week + len(name)) % len(pool)
+    return pool[idx]
+
+
+def _weekly_preheader(progress: Any, name: str) -> str:
+    if progress.has_wearable and progress.total_steps > 0:
+        return f"{progress.total_steps:,} steps and {progress.workouts_this_week} workouts — your week."
+    return f"{progress.workouts_this_week} workouts this week — your Zealova report."
+
+
+def _weekly_coach_msg(progress: Any) -> str:
+    if progress.empty_week:
+        return "I'm not going anywhere. When you're ready, we pick up right where we left off."
+    if progress.is_first_week:
+        return "This is your baseline. Next week we measure everything against it."
+    if progress.awards:
+        return "Milestones stacked up this week. That's the consistency that compounds."
+    if progress.best_label:
+        return f"Best step day was {progress.best_label} — let's keep your daily average climbing."
+    return "Solid week. Consistency is the whole game — keep showing up."
+
+
+def _compose_weekly_body(progress: Any, coach: str, cta_url: str) -> str:
+    from services import email_signature_template as sig
+
+    parts: list = []
+    if progress.awards:
+        parts.append(sig.awards_block(progress.awards))
+
+    if progress.empty_week:
+        if progress.quiet_line:
+            parts.append(sig.callout(progress.quiet_line))
+    elif progress.has_wearable and progress.total_steps > 0:
+        pills = [(f"Avg {progress.avg_steps:,} / day", "flat")]
+        if progress.steps_delta:
+            txt = progress.steps_delta + (" vs last week" if progress.steps_dir == "up" else "")
+            pills.append((txt, progress.steps_dir))
+        parts.append(sig.hero_card(icon="foot", big=f"{progress.total_steps:,}",
+                                   caption="Total steps this week", pills=pills))
+        if any(s is not None for _, s in progress.day_steps):
+            best = (f"Best {progress.best_label} {progress.best_steps:,}"
+                    if progress.best_label and progress.best_steps else "")
+            sub = f"Avg {progress.avg_steps:,} / day" + (f" · {best}" if best else "")
+            parts.append(sig.day_rings_row(progress.day_steps, progress.step_goal,
+                                           progress.best_label, sub))
+    else:
+        pills = []
+        if progress.workouts_subline:
+            pills.append((progress.workouts_subline, "flat"))
+        if progress.workouts_delta:
+            pills.append((progress.workouts_delta, progress.workouts_dir))
+        parts.append(sig.hero_card(icon="dumbbell", big=str(progress.workouts_this_week),
+                                   caption="Workouts this week", pills=pills))
+
+    if progress.activity_tiles:
+        parts.append(sig.section_label("Activity"))
+        parts.append(sig.metric_grid(progress.activity_tiles))
+    if progress.zealova_tiles:
+        parts.append(sig.section_label("Your Zealova week"))
+        parts.append(sig.metric_grid(progress.zealova_tiles))
+
+    if not progress.has_wearable and not progress.empty_week:
+        parts.append(sig.callout(
+            "<b>Connect a watch or phone steps</b> to unlock steps, sleep &amp; "
+            "heart rate in next week's report.",
+            "Connect a wearable →", cta_url))
+
+    parts.append(sig.coach_card(coach, _weekly_coach_msg(progress)))
+    cta_text = "Start a 15-minute session →" if progress.empty_week else "View in app →"
+    parts.append(sig.pill_cta(cta_text, cta_url))
+    return "".join(parts)
