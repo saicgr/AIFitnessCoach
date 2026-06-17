@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — Weekly Progress Email · v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0c; --ink:#f3f3f4; --grey:#8a8a90; --faint:#5b5b62; --line:#222227;
+    --accent:#F0531E;            /* single orange accent */
+    --chipgrey:#7e7e86;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:#060607;color:var(--ink);
+    font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;padding:0 0 120px}
+  .disp{font-family:'Anton',Impact,sans-serif;font-weight:400;letter-spacing:.3px;line-height:1}
+  .serif{font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:400}
+  .lbl{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:600}
+
+  /* preview chrome */
+  .pagehead{position:sticky;top:0;z-index:20;background:rgba(6,6,7,.93);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:13px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .pagehead h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.4px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+  .pagehead .sub{color:var(--faint);font-size:12px;letter-spacing:1px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
+  .nav{display:flex;gap:7px;flex-wrap:wrap;margin-left:auto}
+  .nav a{font-size:12px;color:var(--grey);text-decoration:none;border:1px solid var(--line);
+    padding:5px 10px;border-radius:4px;text-transform:uppercase;letter-spacing:1px;font-family:'Barlow Condensed',sans-serif}
+  .nav a:hover{color:var(--ink);border-color:var(--accent)}
+
+  .scene{max-width:760px;margin:44px auto 0;padding:0 20px}
+  .kicker{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;
+    font-size:12px;font-weight:700;color:var(--accent);margin:0 0 6px}
+  .kdesc{font-size:14px;color:var(--grey);margin:0 0 16px;line-height:1.5;max-width:600px}
+
+  /* email frame */
+  .mail{max-width:600px;margin:0 auto;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+  .rail{height:3px;background:var(--accent)}     /* the ONE top rail */
+  .pad{padding:26px 26px}
+  .hr{height:1px;background:var(--line);border:0;margin:0}
+
+  .head{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px}
+  .head .brand{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-weight:700;font-size:16px}
+  .head .when{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:12px;color:var(--faint)}
+
+  .greet{font-size:26px;margin:20px 0 22px;color:var(--ink)}
+
+  .sectlbl{font-size:12px;color:var(--grey);margin:24px 0 12px}
+  .sectlbl.first{margin-top:8px}
+
+  /* hero */
+  .hero .big{font-size:62px;color:var(--ink)}
+  .hero .delta{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:18px;color:var(--accent);letter-spacing:.5px;margin-left:10px;vertical-align:8px}
+  .hero .vs{font-size:12px;color:var(--faint);margin:6px 0 0}
+  .hero .meta{font-size:12.5px;color:var(--grey);margin:14px 0 0;letter-spacing:1.5px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
+
+  /* google-health style day circles */
+  .circles{display:flex;justify-content:space-between;gap:4px;margin:20px 0 6px}
+  .cday{flex:1;text-align:center}
+  .cday svg{display:block;margin:0 auto 7px}
+  .cday .dd{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1px;font-size:11px;color:var(--faint);font-weight:600}
+  .cday.best .dd{color:var(--accent)}
+  .bestnote{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-size:11px;color:var(--grey);text-align:center;margin:2px 0 4px}
+  .bestnote b{color:var(--accent)}
+
+  /* hairline tile grid */
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .tile{padding:16px 14px;border-left:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .tiles .tile:nth-child(3n+1){border-left:0}
+  .tiles .tile:nth-last-child(-n+0){border-bottom:0}
+  .tile .ic{height:20px;margin-bottom:8px;opacity:.85}
+  .tile .tv{font-size:26px;color:var(--ink)}
+  .tile .tv.sm{font-size:21px}
+  .tile .tl{font-size:11px;color:var(--grey);margin-top:5px}
+  .tile .dl{margin-top:9px;font-size:12px;font-weight:700;font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px}
+  .dl.up{color:var(--accent)}
+  .dl.nu{color:var(--chipgrey)}     /* neutral / no change / over target / baseline */
+
+  /* coach card */
+  .coach{display:flex;gap:14px;border-left:2px solid var(--accent);background:#101012;padding:15px 16px;margin:22px 0 6px}
+  .coach .av{width:34px;height:34px;border-radius:50%;flex:none;background:var(--accent);color:#0b0b0c;
+    display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:16px}
+  .coach .cl{font-size:11px;color:var(--grey);margin:0 0 4px}
+  .coach .cm{font-size:15px;color:var(--ink);line-height:1.45;font-family:'Fraunces',Georgia,serif;font-style:italic}
+
+  /* callout (wearable nudge) */
+  .callout{border-left:2px solid var(--accent);padding:14px 16px;margin:20px 0 2px}
+  .callout .ct{font-size:15px;color:var(--ink);line-height:1.45}
+  .callout .ct b{color:var(--ink)}
+  .callout a{display:inline-block;margin-top:8px;color:var(--accent);text-decoration:none;
+    font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;font-size:12px}
+
+  /* quiet-week message block */
+  .msgblock{border:1px solid var(--line);padding:18px;margin:6px 0 2px;font-size:15px;line-height:1.55;color:var(--grey)}
+  .msgblock b{color:var(--ink)}
+  .msgblock .pause{color:var(--accent)}
+
+  /* awards / trophies list */
+  .awlbl{font-size:12px;color:var(--grey);margin:8px 0 10px}
+  .award{display:flex;align-items:center;gap:13px;border:1px solid var(--line);border-left:2px solid var(--accent);
+    padding:13px 15px;margin-bottom:8px}
+  .award .ai{flex:none}
+  .award .at{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;font-size:14px;color:var(--ink)}
+  .award .ad{font-size:13px;color:var(--grey);margin-top:2px}
+
+  /* CTA */
+  .cta{display:block;text-align:center;background:var(--accent);color:#0b0b0c;text-decoration:none;
+    font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2.5px;font-weight:700;
+    font-size:15px;padding:16px;margin:24px 0 4px}
+
+  /* footer */
+  .foot{padding:20px 26px 24px;text-align:center}
+  .social{display:flex;gap:18px;justify-content:center;margin-bottom:12px}
+  .social a{color:var(--grey)}
+  .social a:hover{color:var(--ink)}
+  .fine{font-size:11px;color:var(--faint);line-height:1.7;font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;text-transform:uppercase}
+  .fine a{color:var(--faint);text-decoration:underline}
+
+  .note{max-width:600px;margin:12px auto 0;font-size:12.5px;color:var(--faint);border-left:2px solid var(--line);padding:4px 0 4px 12px;line-height:1.5}
+  @media(max-width:520px){.tiles{grid-template-columns:repeat(2,1fr)}.tiles .tile:nth-child(3n+1){border-left:1px solid var(--line)}.tiles .tile:nth-child(2n+1){border-left:0}}
+</style>
+</head>
+<body>
+
+<div class="pagehead">
+  <h1>Zealova · Weekly Progress · v2</h1>
+  <span class="sub">redesigned to app system</span>
+  <nav class="nav">
+    <a href="#s1">1 · Full</a><a href="#s2">2 · No wearable</a><a href="#s3">3 · First week</a>
+    <a href="#s4">4 · Quiet</a><a href="#s5">5 · Awards</a>
+  </nav>
+</div>
+
+<!-- ============================================================= -->
+<!-- SVG icon defs (monoline, single stroke, one grey) — reused    -->
+<!-- ============================================================= -->
+<!-- Icon paths from Lucide (lucide.dev, ISC license), 24x24 stroke -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="i-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></g>
+  <g id="i-activity"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></g>
+  <g id="i-timer"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></g>
+  <g id="i-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></g>
+  <g id="i-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></g>
+  <g id="i-scale"><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></g>
+  <g id="i-dumbbell"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></g>
+  <g id="i-bars"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></g>
+  <g id="i-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></g>
+  <g id="i-leaf"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></g>
+  <g id="i-salad"><path d="M7 21h10"/><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1"/><path d="m13 12 4-4"/><path d="M10.9 7.25A3.99 3.99 0 0 0 4 10c0 .73.2 1.41.54 2"/></g>
+  <g id="i-flame"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></g>
+  <g id="i-foot"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></g>
+  <g id="i-trophy"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></g>
+  <g id="i-medal"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><path d="M8 7h8"/><circle cx="12" cy="17" r="5"/><path d="M12 18v-2h-.5"/></g>
+</defs></svg>
+
+<!-- ===================== SCENARIO 1 ===================== -->
+<section class="scene" id="s1">
+  <p class="kicker">Scenario 1 — Full data</p>
+  <p class="kdesc">Connected wearable + active app use. Hero steps, Google-Health day circles (best day in orange, hollow no-data), hairline tiles, neutral/positive deltas, coach card.</p>
+  <div class="mail">
+    <div class="rail"></div>
+    <div class="pad">
+      <div class="head"><div class="brand">Zealova</div><div class="when">Weekly · Jun 6–12</div></div>
+      <hr class="hr">
+      <div class="greet serif">Evening, Chetan.</div>
+
+      <div class="sectlbl lbl first">Total steps this week</div>
+      <div class="hero">
+        <span class="disp big">15,968</span><span class="delta">↑ 3,888</span>
+        <div class="vs lbl">Vs last week</div>
+      </div>
+
+      <div class="circles">
+        <!-- ring fill = day steps / 6,000-step daily goal ; r=15 → C≈94.25 ; offset = C*(1-min(1,frac)) -->
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="66" transform="rotate(-90 20 20)"/></svg><div class="dd">S</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="61" transform="rotate(-90 20 20)"/></svg><div class="dd">M</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="57" transform="rotate(-90 20 20)"/></svg><div class="dd">T</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="71" transform="rotate(-90 20 20)"/></svg><div class="dd">W</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="80" transform="rotate(-90 20 20)"/></svg><div class="dd">T</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="70" transform="rotate(-90 20 20)"/></svg><div class="dd">F</div></div>
+        <div class="cday best"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#3a1f12" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="4" transform="rotate(-90 20 20)"/></svg><div class="dd">S</div></div>
+      </div>
+      <div class="bestnote">Avg 2,281 / day · Best <b>Sat 5,734</b></div>
+
+      <div class="sectlbl lbl">Activity</div>
+      <div class="tiles">
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg><div class="disp tv sm">7.30</div><div class="tl lbl">Total miles</div><div class="dl up">↑ 1.78</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-activity"/></svg><div class="disp tv sm">2,729</div><div class="tl lbl">Cal burned</div><div class="dl up">↑ 202</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-timer"/></svg><div class="disp tv sm">370</div><div class="tl lbl">Zone min</div><div class="dl up">↑ 146</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg><div class="disp tv sm">6h 41m</div><div class="tl lbl">Restful sleep</div><div class="dl up">↑ 11m</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg><div class="disp tv sm">69</div><div class="tl lbl">Resting bpm</div><div class="dl up">↓ 4</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-scale"/></svg><div class="disp tv sm">98.3</div><div class="tl lbl">Weight (kg)</div><div class="dl nu">No change</div></div>
+      </div>
+
+      <div class="sectlbl lbl">Your Zealova week</div>
+      <div class="tiles">
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg><div class="disp tv">3</div><div class="tl lbl">Workouts</div><div class="dl up">↑ 1</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bars"/></svg><div class="disp tv">24,310</div><div class="tl lbl">Lbs lifted</div><div class="dl up">↑ 3,120</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-utensils"/></svg><div class="disp tv">5 / 7</div><div class="tl lbl">Days logged</div><div class="dl up">↑ 2</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg><div class="disp tv">42m</div><div class="tl lbl">Mindfulness</div><div class="dl up">↑ 18m</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-salad"/></svg><div class="disp tv">1,940</div><div class="tl lbl">Cal eaten</div><div class="dl nu">On target</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg><div class="disp tv">12</div><div class="tl lbl">Day streak</div><div class="dl up">↑ 7</div></div>
+      </div>
+
+      <div class="coach">
+        <div class="av">M</div>
+        <div><div class="cl lbl">Coach Mara</div><div class="cm">Best step week yet — Saturday carried it. Let's keep your daily average above 2k.</div></div>
+      </div>
+
+      <a href="#" class="cta">Open Zealova →</a>
+    </div>
+    <hr class="hr">
+    <div class="foot">
+      <div class="social">
+        <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="#" aria-label="Reddit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>
+      </div>
+      <div class="fine">You're getting this because weekly reports are on.<br><a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Floors tile auto-hidden (was 0). “Cal eaten” = neutral grey “On target”, never red. Resting BPM ↓ is orange (down is good). One comparison reference — “Vs last week” — stated once under the hero; tiles show only ↑/↓.</div>
+</section>
+
+<!-- ===================== SCENARIO 2 ===================== -->
+<section class="scene" id="s2">
+  <p class="kicker">Scenario 2 — No wearable connected</p>
+  <p class="kdesc">No steps/sleep/HR. Step hero hidden; leads with app-native strength/habit data in the hairline style. Connect-nudge is a single orange-rail callout, not a card.</p>
+  <div class="mail">
+    <div class="rail"></div>
+    <div class="pad">
+      <div class="head"><div class="brand">Zealova</div><div class="when">Weekly · Jun 6–12</div></div>
+      <hr class="hr">
+      <div class="greet serif">Evening, Chetan.</div>
+
+      <div class="sectlbl lbl first">Your training week</div>
+      <div class="hero">
+        <span class="disp big">4</span><span class="delta">↑ 2</span>
+        <div class="vs lbl">Workouts vs last week</div>
+        <div class="meta">3h 52m training · 31,050 lbs moved</div>
+      </div>
+
+      <div class="sectlbl lbl">Your Zealova week</div>
+      <div class="tiles">
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bars"/></svg><div class="disp tv">31,050</div><div class="tl lbl">Lbs lifted</div><div class="dl up">↑ 8,400</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-timer"/></svg><div class="disp tv sm">3h 52m</div><div class="tl lbl">Time training</div><div class="dl up">↑ 1h 10m</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-utensils"/></svg><div class="disp tv">6 / 7</div><div class="tl lbl">Days logged</div><div class="dl up">↑ 1</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-salad"/></svg><div class="disp tv">2,010</div><div class="tl lbl">Cal eaten</div><div class="dl nu">240 over target</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg><div class="disp tv">9</div><div class="tl lbl">Day streak</div><div class="dl up">↑ 7</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg><div class="disp tv">4</div><div class="tl lbl">Workouts</div><div class="dl up">↑ 2</div></div>
+      </div>
+
+      <div class="callout">
+        <div class="ct"><b>Connect a watch or phone steps</b> to unlock steps, sleep & heart rate in next week's report.</div>
+        <a href="#">Connect a wearable →</a>
+      </div>
+
+      <div class="coach">
+        <div class="av">M</div>
+        <div><div class="cl lbl">Coach Mara</div><div class="cm">Four sessions and a 6/7 logging week — that's the consistency that moves the needle.</div></div>
+      </div>
+
+      <a href="#" class="cta">Open Zealova →</a>
+    </div>
+    <hr class="hr">
+    <div class="foot">
+      <div class="social">
+        <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="#" aria-label="Reddit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>
+      </div>
+      <div class="fine">You're getting this because weekly reports are on.<br><a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Mindfulness tile self-hidden (0 sessions). “240 over target” is a neutral grey chip, not a red regression. Hero pivots to Workouts since steps are unavailable.</div>
+</section>
+
+<!-- ===================== SCENARIO 3 ===================== -->
+<section class="scene" id="s3">
+  <p class="kicker">Scenario 3 — First full week</p>
+  <p class="kdesc">No prior week to compare. “Baseline” chips become small uppercase grey labels; “Your starting point” loses the pin. No-data days render as dashed hollow circles so the week shape stays readable.</p>
+  <div class="mail">
+    <div class="rail"></div>
+    <div class="pad">
+      <div class="head"><div class="brand">Zealova</div><div class="when">Weekly · Jun 6–12</div></div>
+      <hr class="hr">
+      <div class="greet serif">Welcome, Chetan.</div>
+
+      <div class="sectlbl lbl first">Your first full week</div>
+      <div class="hero">
+        <span class="disp big">21,400</span><span class="delta">Baseline</span>
+        <div class="vs lbl">Your starting point</div>
+      </div>
+
+      <div class="circles">
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4" stroke-dasharray="2 5"/></svg><div class="dd">S</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="28" transform="rotate(-90 20 20)"/></svg><div class="dd">M</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="33" transform="rotate(-90 20 20)"/></svg><div class="dd">T</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="44" transform="rotate(-90 20 20)"/></svg><div class="dd">W</div></div>
+        <div class="cday best"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#3a1f12" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="2" transform="rotate(-90 20 20)"/></svg><div class="dd">T</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#6a6a72" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="31" transform="rotate(-90 20 20)"/></svg><div class="dd">F</div></div>
+        <div class="cday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4" stroke-dasharray="2 5"/></svg><div class="dd">S</div></div>
+      </div>
+      <div class="bestnote">Avg 3,057 / day · Best <b>Thu 6,120</b></div>
+
+      <div class="sectlbl lbl">This week's baseline</div>
+      <div class="tiles">
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg><div class="disp tv sm">9.8</div><div class="tl lbl">Total miles</div><div class="dl nu">Baseline</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-activity"/></svg><div class="disp tv sm">2,540</div><div class="tl lbl">Cal burned</div><div class="dl nu">Baseline</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg><div class="disp tv sm">7h 02m</div><div class="tl lbl">Restful sleep</div><div class="dl nu">Baseline</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg><div class="disp tv sm">64</div><div class="tl lbl">Resting bpm</div><div class="dl nu">Baseline</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg><div class="disp tv">2</div><div class="tl lbl">Workouts</div><div class="dl nu">Baseline</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg><div class="disp tv">4</div><div class="tl lbl">Day streak</div><div class="dl nu">Baseline</div></div>
+      </div>
+
+      <div class="coach">
+        <div class="av">M</div>
+        <div><div class="cl lbl">Coach Mara</div><div class="cm">This is your line in the sand. Next Monday, we measure everything against it.</div></div>
+      </div>
+
+      <a href="#" class="cta">Open Zealova →</a>
+    </div>
+    <hr class="hr">
+    <div class="foot">
+      <div class="social">
+        <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="#" aria-label="Reddit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>
+      </div>
+      <div class="fine">You're getting this because weekly reports are on.<br><a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Sun & Sat have no step data → dashed hollow circles (not removed). Every chip reads “Baseline” — no invented deltas the first week.</div>
+</section>
+
+<!-- ===================== SCENARIO 4 ===================== -->
+<section class="scene" id="s4">
+  <p class="kicker">Scenario 4 — Quiet week</p>
+  <p class="kdesc">User went dark. No wall of zeros — softens to a check-in led by the serif coach voice, the little data that exists, and one orange CTA. This scenario fits the app voice best already.</p>
+  <div class="mail">
+    <div class="rail"></div>
+    <div class="pad">
+      <div class="head"><div class="brand">Zealova</div><div class="when">Weekly · Jun 6–12</div></div>
+      <hr class="hr">
+      <div class="greet serif">A quiet week, Chetan.</div>
+
+      <div class="msgblock">
+        You logged <b>652 steps</b> and <b>0 workouts</b> this week. No guilt — weeks like this happen.<br><br>
+        Your 12-day streak is <span class="pause">paused, not gone.</span> One short session brings it back.
+      </div>
+
+      <div class="sectlbl lbl">Still on the board</div>
+      <div class="tiles">
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-foot"/></svg><div class="disp tv">652</div><div class="tl lbl">Total steps</div><div class="dl nu">↓ 15,300</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-utensils"/></svg><div class="disp tv">1 / 7</div><div class="tl lbl">Days logged</div><div class="dl nu">↓ 4</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg><div class="disp tv sm">Paused</div><div class="tl lbl">Streak</div><div class="dl nu">Restart anytime</div></div>
+      </div>
+
+      <div class="coach">
+        <div class="av">M</div>
+        <div><div class="cl lbl">Coach Mara</div><div class="cm">I'm not going anywhere. When you're ready, we pick up right where we left off.</div></div>
+      </div>
+
+      <a href="#" class="cta">Start a 15-minute session →</a>
+    </div>
+    <hr class="hr">
+    <div class="foot">
+      <div class="social">
+        <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="#" aria-label="Reddit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>
+      </div>
+      <div class="fine">You're getting this because weekly reports are on.<br><a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Down-deltas stay neutral grey (not red) so a bad week never reads as failure. Suppression (vacation / comeback mode) still applies upstream — genuinely paused users never get this.</div>
+</section>
+
+<!-- ===================== SCENARIO 5 ===================== -->
+<section class="scene" id="s5">
+  <p class="kicker">Scenario 5 — Award / milestone unlocked</p>
+  <p class="kdesc">Milestones crossed this week render as the app's compact “trophies earned” rows — uppercase, orange-accented, hairline — not three glossy cards. Up to 3, ranked by significance.</p>
+  <div class="mail">
+    <div class="rail"></div>
+    <div class="pad">
+      <div class="head"><div class="brand">Zealova</div><div class="when">Weekly · Jun 6–12</div></div>
+      <hr class="hr">
+      <div class="greet serif">Big week, Chetan.</div>
+
+      <div class="awlbl lbl">3 milestones this week</div>
+      <div class="award"><svg class="ai" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-medal"/></svg><div><div class="at">Level 8 reached</div><div class="ad">+540 XP this week · top 12% of active members</div></div></div>
+      <div class="award"><svg class="ai" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg><div><div class="at">14-day streak record</div><div class="ad">Longest yet — beat your old best of 11</div></div></div>
+      <div class="award"><svg class="ai" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg><div><div class="at">New PR · Barbell Bench</div><div class="ad">185 lb × 5 — up from 175 lb</div></div></div>
+
+      <div class="sectlbl lbl">Your week</div>
+      <div class="tiles">
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-foot"/></svg><div class="disp tv">18,420</div><div class="tl lbl">Total steps</div><div class="dl up">↑ 2,450</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg><div class="disp tv">5</div><div class="tl lbl">Workouts</div><div class="dl up">↑ 2</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bars"/></svg><div class="disp tv">38,900</div><div class="tl lbl">Lbs lifted</div><div class="dl up">↑ 6,100</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trophy"/></svg><div class="disp tv">3</div><div class="tl lbl">PRs set</div><div class="dl up">↑ 3</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg><div class="disp tv">14</div><div class="tl lbl">Day streak</div><div class="dl up">↑ 7</div></div>
+        <div class="tile"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-utensils"/></svg><div class="disp tv">6 / 7</div><div class="tl lbl">Days logged</div><div class="dl up">↑ 1</div></div>
+      </div>
+
+      <div class="coach">
+        <div class="av">M</div>
+        <div><div class="cl lbl">Coach Mara</div><div class="cm">Level 8, a streak record, and a bench PR in one week. That's a statement.</div></div>
+      </div>
+
+      <a href="#" class="cta">View your awards →</a>
+    </div>
+    <hr class="hr">
+    <div class="foot">
+      <div class="social">
+        <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="#" aria-label="Reddit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>
+      </div>
+      <div class="fine">You're getting this because weekly reports are on.<br><a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Award rows only render when ≥1 milestone fired (level-up, streak record, new PR, metric personal-best). Sources exist: <code>user_achievements</code>, <code>user_streaks</code>, <code>all_time_prs</code>.</div>
+</section>
+
+</body>
+</html>

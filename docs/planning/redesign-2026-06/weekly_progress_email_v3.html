@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — Weekly Stats · v3 (Google-Health layout, our design language)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=Fraunces:ital,opsz,wght@1,9..144,400;1,9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0c; --card:#141417; --chip:#1c1c22; --line:#1f1f25;
+    --ink:#f3f3f4; --grey:#8a8a90; --faint:#5b5b62;
+    --accent:#F0531E; --accentbg:rgba(240,83,30,.13);
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{margin:0;background:#060607;color:var(--ink);
+    font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;padding:0 0 110px}
+  .disp{font-family:'Anton',Impact,sans-serif;font-weight:400;line-height:1}
+  .serif{font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:400}
+  .lbl{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:600}
+
+  .pagehead{position:sticky;top:0;z-index:9;background:rgba(6,6,7,.93);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:13px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .pagehead h1{font-size:14px;margin:0;font-weight:700;letter-spacing:.5px;font-family:'Barlow Condensed',sans-serif;text-transform:uppercase}
+  .pagehead .sub{color:var(--faint);font-size:11px;letter-spacing:1px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
+
+  .wrap{max-width:600px;margin:34px auto 0;padding:0 16px}
+  .mail{background:var(--bg);border:1px solid var(--line);border-radius:20px;overflow:hidden}
+  .rail{height:3px;background:var(--accent)}
+  .pad{padding:24px 22px}
+
+  .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+  .top .brand{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:3px;font-weight:700;font-size:15px}
+  .top .tag{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-size:11px;color:var(--faint)}
+
+  .greetrow{display:flex;align-items:center;gap:13px;margin-bottom:6px}
+  .avatar{width:42px;height:42px;border-radius:50%;flex:none;background:var(--accent);color:#0b0b0c;
+    display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:19px}
+  .greet{font-size:23px}
+  .greetsub{font-size:12px;color:var(--faint);letter-spacing:1.5px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;margin-top:2px}
+
+  /* day rings */
+  .rings{display:flex;justify-content:space-between;gap:3px;margin:22px 2px 6px}
+  .rday{flex:1;text-align:center}
+  .rday svg{display:block;margin:0 auto 7px}
+  .rday .d{font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:.5px;font-size:11px;color:var(--faint);font-weight:600}
+  .rday.best .d{color:var(--accent)}
+  .rday .bs{display:block;font-family:'Barlow Condensed',sans-serif;font-size:10px;color:var(--accent);font-weight:700;margin-top:1px}
+
+  /* hero card */
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 22px;text-align:center;margin-top:14px}
+  .hero .chip{width:48px;height:48px;border-radius:14px;background:var(--accentbg);display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+  .hero .num{font-size:54px;color:var(--ink)}
+  .hero .cap{font-size:13px;color:var(--grey);letter-spacing:2.5px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif;margin-top:4px}
+  .pills{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+  .pill{display:inline-block;padding:6px 11px;border-radius:999px;font-family:'Barlow Condensed',sans-serif;
+    text-transform:uppercase;letter-spacing:1px;font-size:10.5px;font-weight:700}
+  .pill.up{color:var(--accent);background:var(--accentbg)}
+  .pill.flat{color:var(--grey);background:var(--chip)}
+
+  .sect{font-size:12px;color:var(--grey);margin:24px 4px 12px}
+
+  /* metric cards */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px 10px;text-align:center}
+  .card .chip{width:40px;height:40px;border-radius:11px;background:var(--chip);display:flex;align-items:center;justify-content:center;margin:0 auto 11px}
+  .card .v{font-size:24px;color:var(--ink)}
+  .card .v.sm{font-size:19px}
+  .card .l{font-size:11px;color:var(--grey);margin-top:5px;letter-spacing:1px;text-transform:uppercase;font-family:'Barlow Condensed',sans-serif}
+  .card .p{display:inline-block;margin-top:11px;padding:5px 9px;border-radius:999px;font-family:'Barlow Condensed',sans-serif;
+    text-transform:uppercase;letter-spacing:.6px;font-size:10px;font-weight:700}
+  .p.up{color:var(--accent);background:var(--accentbg)}
+  .p.flat{color:var(--faint);background:var(--chip)}
+
+  .cta{display:block;text-align:center;background:var(--accent);color:#0b0b0c;text-decoration:none;
+    font-family:'Barlow Condensed',sans-serif;text-transform:uppercase;letter-spacing:2px;font-weight:700;
+    font-size:15px;padding:16px;border-radius:999px;margin:26px 0 6px}
+
+  .coach{display:flex;gap:13px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);
+    border-radius:14px;padding:15px 16px;margin-top:14px}
+  .coach .av{width:34px;height:34px;border-radius:50%;flex:none;background:var(--accent);color:#0b0b0c;
+    display:flex;align-items:center;justify-content:center;font-family:'Anton',sans-serif;font-size:15px}
+  .coach .cl{font-size:11px;color:var(--grey);margin-bottom:4px}
+  .coach .cm{font-size:15px;color:var(--ink);line-height:1.45;font-family:'Fraunces',Georgia,serif;font-style:italic}
+
+  .foot{padding:20px 22px 24px;text-align:center;border-top:1px solid var(--line);margin-top:8px}
+  .social{display:flex;gap:18px;justify-content:center;margin-bottom:12px}
+  .social a{color:var(--grey)}
+  .fine{font-size:11px;color:var(--faint);line-height:1.7;font-family:'Barlow Condensed',sans-serif;letter-spacing:.6px;text-transform:uppercase}
+  .fine a{color:var(--faint);text-decoration:underline}
+
+  .note{max-width:600px;margin:12px auto 0;font-size:12.5px;color:var(--faint);border-left:2px solid var(--line);padding:4px 0 4px 12px;line-height:1.5}
+  @media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="pagehead">
+  <h1>Zealova · Weekly Stats · v3</h1>
+  <span class="sub">Google-Health layout · our design language · canonical email template</span>
+</div>
+
+<!-- Lucide icon defs -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="i-foot"><path d="M4 16v-2.38C4 11.5 2.97 10.5 3 8c.03-2.72 1.49-6 4.5-6C9.37 2 10 3.8 10 5.5c0 3.11-2 5.66-2 8.68V16a2 2 0 1 1-4 0Z"/><path d="M20 20v-2.38c0-2.12 1.03-3.12 1-5.62-.03-2.72-1.49-6-4.5-6C14.63 6 14 7.8 14 9.5c0 3.11 2 5.66 2 8.68V20a2 2 0 1 0 4 0Z"/><path d="M16 17h4"/><path d="M4 13h4"/></g>
+  <g id="i-pin"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></g>
+  <g id="i-activity"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></g>
+  <g id="i-timer"><line x1="10" y1="2" x2="14" y2="2"/><line x1="12" y1="14" x2="15" y2="11"/><circle cx="12" cy="14" r="8"/></g>
+  <g id="i-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></g>
+  <g id="i-heart"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></g>
+  <g id="i-scale"><circle cx="12" cy="5" r="3"/><path d="M6.5 8a2 2 0 0 0-1.905 1.46L2.1 18.5A2 2 0 0 0 4 21h16a2 2 0 0 0 1.925-2.54L19.4 9.5A2 2 0 0 0 17.48 8Z"/></g>
+  <g id="i-dumbbell"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></g>
+  <g id="i-bars"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></g>
+  <g id="i-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></g>
+  <g id="i-leaf"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></g>
+  <g id="i-salad"><path d="M7 21h10"/><path d="M12 21a9 9 0 0 0 9-9H3a9 9 0 0 0 9 9Z"/><path d="M11.38 12a2.4 2.4 0 0 1-.4-4.77 2.4 2.4 0 0 1 3.2-2.77 2.4 2.4 0 0 1 3.47-.63 2.4 2.4 0 0 1 3.37 3.37 2.4 2.4 0 0 1-1.1 3.7 2.51 2.51 0 0 1 .03 1.1"/><path d="m13 12 4-4"/></g>
+  <g id="i-flame"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></g>
+  <g id="i-star"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></g>
+</defs></svg>
+
+<div class="wrap">
+  <div class="mail">
+    <div class="rail"></div>
+    <div class="pad">
+
+      <div class="top"><div class="brand">Zealova</div><div class="tag">Weekly Stats</div></div>
+
+      <div class="greetrow">
+        <div class="avatar">C</div>
+        <div>
+          <div class="greet serif">Evening, Chetan.</div>
+          <div class="greetsub">Your stats for Jun 6 – 12</div>
+        </div>
+      </div>
+
+      <!-- day rings (fill = day steps / 6,000 goal) -->
+      <div class="rings">
+        <div class="rday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="66" transform="rotate(-90 20 20)"/></svg><div class="d">Sun</div></div>
+        <div class="rday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="61" transform="rotate(-90 20 20)"/></svg><div class="d">Mon</div></div>
+        <div class="rday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="57" transform="rotate(-90 20 20)"/></svg><div class="d">Tue</div></div>
+        <div class="rday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="71" transform="rotate(-90 20 20)"/></svg><div class="d">Wed</div></div>
+        <div class="rday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="80" transform="rotate(-90 20 20)"/></svg><div class="d">Thu</div></div>
+        <div class="rday"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#232328" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="70" transform="rotate(-90 20 20)"/></svg><div class="d">Fri</div></div>
+        <div class="rday best"><svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#3a1f12" stroke-width="4"/><circle cx="20" cy="20" r="15" fill="none" stroke="#F0531E" stroke-width="4" stroke-linecap="round" stroke-dasharray="94.25" stroke-dashoffset="4" transform="rotate(-90 20 20)"/><svg x="11" y="11" width="18" height="18" viewBox="0 0 24 24" fill="#F0531E" stroke="none"><use href="#i-star"/></svg></svg><div class="d">Sat</div><span class="bs">Best · 5,734</span></div>
+      </div>
+
+      <!-- hero card -->
+      <div class="hero">
+        <div class="chip"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#F0531E" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-foot"/></svg></div>
+        <div class="disp num">15,968</div>
+        <div class="cap">Total steps this week</div>
+        <div class="pills">
+          <span class="pill flat">Avg 2,281 / day</span>
+          <span class="pill up">&uarr; 3,888 vs last week</span>
+        </div>
+      </div>
+
+      <!-- activity cards -->
+      <div class="sect lbl">Activity</div>
+      <div class="grid">
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg></div><div class="disp v sm">7.30</div><div class="l">Total miles</div><div class="p up">&uarr; 1.78</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-activity"/></svg></div><div class="disp v sm">2,729</div><div class="l">Cal burned</div><div class="p up">&uarr; 202</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-timer"/></svg></div><div class="disp v sm">370</div><div class="l">Zone min</div><div class="p up">&uarr; 146</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-moon"/></svg></div><div class="disp v sm">6h 41m</div><div class="l">Restful sleep</div><div class="p up">&uarr; 11m</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-heart"/></svg></div><div class="disp v sm">69</div><div class="l">Resting bpm</div><div class="p up">&darr; 4</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-scale"/></svg></div><div class="disp v sm">98.3</div><div class="l">Weight (kg)</div><div class="p flat">No change</div></div>
+      </div>
+
+      <!-- zealova week cards -->
+      <div class="sect lbl">Your Zealova week</div>
+      <div class="grid">
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg></div><div class="disp v">3</div><div class="l">Workouts</div><div class="p up">&uarr; 1</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bars"/></svg></div><div class="disp v">24,310</div><div class="l">Lbs lifted</div><div class="p up">&uarr; 3,120</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-utensils"/></svg></div><div class="disp v">5 / 7</div><div class="l">Days logged</div><div class="p up">&uarr; 2</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leaf"/></svg></div><div class="disp v">42m</div><div class="l">Mindfulness</div><div class="p up">&uarr; 18m</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-salad"/></svg></div><div class="disp v">1,940</div><div class="l">Cal eaten</div><div class="p flat">On target</div></div>
+        <div class="card"><div class="chip"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8a8a90" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><use href="#i-flame"/></svg></div><div class="disp v">12</div><div class="l">Day streak</div><div class="p up">&uarr; 7</div></div>
+      </div>
+
+      <div class="coach">
+        <div class="av">M</div>
+        <div><div class="cl lbl">Coach Mara</div><div class="cm">Best step week yet — Saturday carried it. Let's keep your daily average above 2k.</div></div>
+      </div>
+
+      <a href="#" class="cta">View in app &rarr;</a>
+    </div>
+
+    <div class="foot">
+      <div class="social">
+        <a href="#" aria-label="Discord"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg></a>
+        <a href="#" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.015 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+        <a href="#" aria-label="Reddit"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg></a>
+      </div>
+      <div class="fine">You're getting this because weekly reports are on.<br><a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+
+  <div class="note">Google-Health layout (rounded hero + day rings + 3-up metric cards + pill chips + pill CTA) reskinned in our system: Anton numerals, Barlow uppercase labels, Fraunces greeting/coach, single orange accent, Lucide monoline icons in soft chips — no emoji. Floors auto-hidden (0). Down-good (resting BPM) is orange; neutral is muted grey, never red. This is the proposed canonical template for every Zealova email; the 4 other scenarios (no-wearable, first-week, quiet, awards) reuse it.</div>
+</div>
+
+</body>
+</html>
