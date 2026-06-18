@@ -227,12 +227,20 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            activeProfile.name,
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: textColor,
+          // Flexible + ellipsis so a long gym name (or a narrow header pill)
+          // shrinks instead of overflowing the Row (fixes the 18px right
+          // overflow in the Workouts masthead's gym switcher).
+          Flexible(
+            child: Text(
+              activeProfile.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: textColor,
+              ),
             ),
           ),
           // Show time slot indicator if set

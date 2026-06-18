@@ -26,6 +26,7 @@ import '../shared/set_rail.dart';
 import '../shared/set_rail_overflow_sheet.dart';
 import 'pre_set_coaching_banner.dart';
 import 'set_row_visuals.dart';
+import 'voice_set_logging.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'set_tracking_table_part_set_number_badge.dart';
@@ -173,6 +174,13 @@ class SetTrackingTable extends StatefulWidget {
   /// Callback when a set is deleted via swipe
   final void Function(int setIndex)? onSetDeleted;
 
+  /// "Same as last time" — fill EVERY set from its previous-session values in
+  /// one tap (bulk chip in the header). When null, the table falls back to its
+  /// built-in behavior: write the active set's previous into the live
+  /// weight/reps controllers, and push completed/other sets through
+  /// [onSetUpdated]. Provide this to centralize the apply in the parent.
+  final VoidCallback? onApplyPreviousAll;
+
   /// Callback when unit toggle is tapped (kg/lbs)
   final VoidCallback? onToggleUnit;
 
@@ -252,6 +260,7 @@ class SetTrackingTable extends StatefulWidget {
     this.allSetsCompleted = false,
     this.onSelectAllTapped,
     this.onSetDeleted,
+    this.onApplyPreviousAll,
     this.onToggleUnit,
     this.onRirTapped,
     this.onRpeLogged,
@@ -371,6 +380,132 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       _editWeightController = null;
       _editRepsController = null;
     });
+  }
+
+  /// Convert a stored (kg) weight into the display unit the live controllers
+  /// expect (lb unless the user is in kg mode). Mirrors the inverse of
+  /// `_saveEditing`'s kg conversion so values round-trip cleanly.
+  double _toDisplayWeight(double kg) {
+    if (widget.useKg) return kg;
+    return kgToDisplayLbs(kg, widget.exercise.equipment,
+        exerciseName: widget.exercise.name);
+  }
+
+  /// "Same as last time" for ONE set: copy its previous-session weight/reps
+  /// into the live input. For the active set this writes the shared
+  /// weight/reps controllers (the parent's listeners pick it up); for any
+  /// other set with previous data it routes through [onSetUpdated] so the
+  /// logged value persists.
+  void _copyPreviousForSet(int index) {
+    if (index < 0 || index >= widget.sets.length) return;
+    final set = widget.sets[index];
+    final prevKg = set.previousWeight;
+    final prevReps = set.previousReps;
+    if (prevKg == null && prevReps == null) return;
+
+    HapticFeedback.selectionClick();
+
+    final isActive = index == widget.activeSetIndex && !set.isCompleted;
+    if (isActive) {
+      if (prevKg != null) {
+        widget.weightController.text = _toDisplayWeight(prevKg).toStringAsFixed(0);
+      }
+      if (prevReps != null) {
+        widget.repsController.text = prevReps.toString();
+        widget.repsRightController?.text = prevReps.toString();
+      }
+    } else if (widget.onSetUpdated != null) {
+      // Persist for completed / non-active sets via the update callback.
+      final weightKg = prevKg ?? set.actualWeight ?? 0;
+      final reps = prevReps ?? set.actualReps ?? 0;
+      if (reps > 0 && (weightKg > 0 || set.isBodyweight)) {
+        widget.onSetUpdated!(index, weightKg, reps);
+      }
+    }
+  }
+
+  /// Bulk "↻ Same as last time": fill every set from its previous values.
+  /// Prefers the parent-supplied [onApplyPreviousAll] (lets the screen own the
+  /// optimistic apply + persistence); otherwise applies per-set locally.
+  void _applyPreviousAll() {
+    HapticFeedback.mediumImpact();
+    if (widget.onApplyPreviousAll != null) {
+      widget.onApplyPreviousAll!();
+      return;
+    }
+    for (int i = 0; i < widget.sets.length; i++) {
+      _copyPreviousForSet(i);
+    }
+  }
+
+  /// Whether ANY set has previous-session data to copy from — gates the bulk
+  /// chip so it never shows for a brand-new exercise.
+  bool get _hasAnyPrevious => widget.sets.any(
+      (s) => s.previousWeight != null || s.previousReps != null);
+
+  /// Apply a voice-parsed set ("225 for 8") into the ACTIVE set's live inputs.
+  /// The parsed weight is in display units (lb unless kg mode) — same space as
+  /// the controllers — so it writes through directly. Reps fill both L/R fields
+  /// in L/R mode.
+  void _applyVoiceToActive(ParsedVoiceSet parsed) {
+    if (parsed.isEmpty) return;
+    if (parsed.weight != null) {
+      widget.weightController.text = parsed.weight!.toStringAsFixed(0);
+    }
+    if (parsed.reps != null) {
+      widget.repsController.text = parsed.reps.toString();
+      widget.repsRightController?.text = parsed.reps.toString();
+    }
+    HapticFeedback.mediumImpact();
+  }
+
+  /// The fast-logging action row beneath the table header: a bulk
+  /// "↻ Same as last time" chip (fills every set from history) and a voice
+  /// mic ("225 for 8"). Hidden in showcase mode and when there's no history to
+  /// copy (the mic still shows since it's independent of history).
+  Widget _buildFastLogRow(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 8, 2),
+      child: Row(
+        children: [
+          if (_hasAnyPrevious)
+            GestureDetector(
+              onTap: _applyPreviousAll,
+              behavior: HitTestBehavior.opaque,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: accent.withValues(alpha: 0.35)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.replay_rounded, size: 13, color: accent),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Same as last time',
+                      style: ZType.lbl(10.5,
+                          color: accent, letterSpacing: 0.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          const Spacer(),
+          // Voice "225 for 8" — fills the active set hands-free.
+          VoiceSetMicButton(
+            onParsed: _applyVoiceToActive,
+            useKg: widget.useKg,
+            size: 20,
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -544,6 +679,10 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
           // Table header
           _buildTableHeader(context, theme),
+
+          // Fast-logging actions: bulk "same as last time" + voice mic. Hidden
+          // in display-only showcase mode.
+          if (!widget.showcase) _buildFastLogRow(context),
 
           // Windowed set rows (header + inline rest + RIR bar + banner interleaved)
           ...setRows,
@@ -976,6 +1115,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 isWarmup: set.isWarmup,
                 isDark: isDark,
                 onRirTapped: null,
+                // Tap-to-copy "same as last time" — enabled for any set that
+                // has history and isn't in display-only showcase mode. Active
+                // set fills the live controllers; others persist via update.
+                onCopyPrevious: (!widget.showcase &&
+                        (set.previousWeight != null || set.previousReps != null))
+                    ? () => _copyPreviousForSet(index)
+                    : null,
               ),
             ),
 

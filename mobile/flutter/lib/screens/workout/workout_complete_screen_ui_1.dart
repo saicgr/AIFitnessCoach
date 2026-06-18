@@ -1219,8 +1219,51 @@ class _ExpandableExerciseRow extends StatefulWidget {
 
 class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
   bool _expanded = false;
+  // Independent of the per-set expansion: the Gravl-parity records table
+  // (Projected 1RM / Max weight / Max reps / Max volume) for this exercise.
+  bool _showRecords = false;
 
   bool get _expandable => widget.perSets.isNotEmpty;
+
+  /// Compute this exercise's session records from the logged sets. Returns
+  /// null when there's nothing to compute (no sets with reps) so the toggle is
+  /// omitted entirely — never a row of zeros. Warm-up sets are excluded.
+  ///   • Projected 1RM — Epley: best of weight × (1 + reps/30)
+  ///   • Max weight    — heaviest set
+  ///   • Max reps      — highest rep count
+  ///   • Max volume    — best of weight × reps
+  ({double? oneRmKg, double? maxWeightKg, int? maxReps, double? maxVolumeKg})?
+      _records() {
+    if (widget.perSets.isEmpty) return null;
+    double? best1rm;
+    double? maxWeight;
+    int? maxReps;
+    double? maxVolume;
+    var any = false;
+    for (final s in widget.perSets) {
+      final type = ((s['set_type'] as String?) ?? 'working').toLowerCase();
+      if (type == 'warmup' || type == 'warm_up') continue;
+      final w = (s['weight_kg'] as num?)?.toDouble() ?? 0;
+      final r = (s['reps'] as num?)?.toInt() ?? 0;
+      if (r <= 0) continue;
+      any = true;
+      if (w > 0) {
+        final epley = w * (1 + r / 30.0);
+        if (best1rm == null || epley > best1rm) best1rm = epley;
+        if (maxWeight == null || w > maxWeight) maxWeight = w;
+        final vol = w * r;
+        if (maxVolume == null || vol > maxVolume) maxVolume = vol;
+      }
+      if (maxReps == null || r > maxReps) maxReps = r;
+    }
+    if (!any) return null;
+    return (
+      oneRmKg: best1rm,
+      maxWeightKg: maxWeight,
+      maxReps: maxReps,
+      maxVolumeKg: maxVolume,
+    );
+  }
 
   /// Index of the set that best matches the PR (weight≈ + reps), else the
   /// heaviest set; -1 when this exercise didn't set a PR. Best-effort — per-set
@@ -1355,8 +1398,106 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
                 ],
               ),
             ),
+          // Gravl-parity records: a "Show records ▾" toggle expanding to the
+          // four session records for this exercise (only when computable).
+          if (_records() != null) ...[
+            _buildRecordsToggle(),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _showRecords
+                  ? _buildRecordsTable(_records()!)
+                  : const SizedBox.shrink(),
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _buildRecordsToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => setState(() => _showRecords = !_showRecords),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 6, left: 2),
+        child: Row(
+          children: [
+            Text(
+              _showRecords ? 'Hide records' : 'Show records',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: accent,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _showRecords ? Icons.expand_less : Icons.expand_more,
+              size: 18,
+              color: accent,
+            ),
+            const Spacer(),
+            Icon(Icons.emoji_events_outlined, size: 14, color: widget.textMuted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordsTable(
+      ({double? oneRmKg, double? maxWeightKg, int? maxReps, double? maxVolumeKg})
+          r) {
+    final rows = <Widget>[];
+    void addRow(String label, String value) {
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 5),
+          child: Row(
+            children: [
+              const Text('🏆', style: TextStyle(fontSize: 13)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(label,
+                    style: TextStyle(fontSize: 12, color: widget.textMuted)),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: widget.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (r.oneRmKg != null) {
+      addRow('Projected 1 rep max',
+          WeightUtils.formatWorkoutWeight(r.oneRmKg!, useKg: widget.useKg));
+    }
+    if (r.maxWeightKg != null) {
+      addRow('Max weight',
+          WeightUtils.formatWorkoutWeight(r.maxWeightKg!, useKg: widget.useKg));
+    }
+    if (r.maxReps != null) {
+      addRow('Max repetitions', '${r.maxReps}');
+    }
+    if (r.maxVolumeKg != null) {
+      addRow('Max volume',
+          WeightUtils.formatWorkoutWeight(r.maxVolumeKg!, useKg: widget.useKg));
+    }
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 2, left: 2, bottom: 4),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows),
     );
   }
 

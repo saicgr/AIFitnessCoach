@@ -721,6 +721,12 @@ class _PreviousCellWithRir extends StatelessWidget {
   /// Callback when RIR badge text is tapped (for editing)
   final VoidCallback? onRirTapped;
 
+  /// "Same as last time" — tapping the previous weight×reps copies it into the
+  /// active set. Null disables the affordance (e.g. completed rows, or rows
+  /// with no history). When non-null AND there's previous data, a small replay
+  /// glyph is shown to signal tap-to-copy.
+  final VoidCallback? onCopyPrevious;
+
   const _PreviousCellWithRir({
     this.previousWeight,
     this.previousReps,
@@ -730,6 +736,7 @@ class _PreviousCellWithRir extends StatelessWidget {
     this.isWarmup = false,
     this.isDark = true,
     this.onRirTapped,
+    this.onCopyPrevious,
   });
 
   void _showRirExplanation(BuildContext context) {
@@ -896,6 +903,9 @@ class _PreviousCellWithRir extends StatelessWidget {
     // Determine which RIR to show (target takes priority for current set guidance)
     final displayRir = targetRir ?? previousRir;
 
+    final bool hasPrevious = previousWeight != null || previousReps != null;
+    final bool copyable = onCopyPrevious != null && hasPrevious;
+
     return ClipRect(
       child: Padding(
         padding: const EdgeInsets.only(right: 4),
@@ -903,16 +913,43 @@ class _PreviousCellWithRir extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Previous weight x reps — monospaced telemetry, muted.
-            Text(
-              previousString,
-              style: ZType.data(
-                11.5,
-                color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
-                weight: FontWeight.w400,
+            // Previous weight x reps — monospaced telemetry, muted. When the
+            // active set can adopt it ("same as last time"), the whole cell is
+            // tap-to-copy with a small replay glyph hint.
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: copyable
+                  ? () {
+                      HapticFeedback.selectionClick();
+                      onCopyPrevious!();
+                    }
+                  : null,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      previousString,
+                      style: ZType.data(
+                        11.5,
+                        color:
+                            isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                        weight: FontWeight.w400,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (copyable) ...[
+                    const SizedBox(width: 3),
+                    Icon(
+                      Icons.replay_rounded,
+                      size: 11,
+                      color: ThemeColors.of(context).accent.withOpacity(0.85),
+                    ),
+                  ],
+                ],
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
 
             // RIR pill with ? icon (if available and not warmup)

@@ -446,6 +446,147 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
   // Calendar Heatmap (hairline-led)
   // ============================================
 
+  /// Consecutive-week streak (Gravl-style "X week streak"): walk back from the
+  /// current Monday-anchored week, counting weeks that contain ≥1 completed
+  /// workout, stopping at the first gap. The CURRENT week never breaks the
+  /// streak if it's empty (the week isn't over yet) — we only start counting
+  /// from the most recent week that has a completion. Derived purely from the
+  /// calendar data already loaded into [state]; no extra fetch.
+  ({int weeks, int restDays}) _weekStreakAndRest(ConsistencyState state) {
+    final data = state.calendarData?.data;
+    if (data == null || data.isEmpty) return (weeks: 0, restDays: 0);
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final thisMonday = today.subtract(Duration(days: today.weekday - 1));
+
+    // Bucket completed-workout days by their week's Monday.
+    final completedWeeks = <DateTime>{};
+    var restDays = 0;
+    for (final day in data) {
+      final d = day.dateTime;
+      final dd = DateTime(d.year, d.month, d.day);
+      if (dd.isAfter(today)) continue; // ignore future cells
+      switch (day.statusEnum) {
+        case CalendarStatus.completed:
+          final monday = dd.subtract(Duration(days: dd.weekday - 1));
+          completedWeeks.add(DateTime(monday.year, monday.month, monday.day));
+          break;
+        case CalendarStatus.rest:
+          restDays++;
+          break;
+        case CalendarStatus.missed:
+        case CalendarStatus.future:
+          break;
+      }
+    }
+    if (completedWeeks.isEmpty) return (weeks: 0, restDays: restDays);
+
+    // Start from the current week if it has a completion, otherwise from the
+    // most recent prior week with one (so an in-progress empty week doesn't
+    // zero out a real streak).
+    var cursor = thisMonday;
+    if (!completedWeeks.contains(cursor)) {
+      cursor = cursor.subtract(const Duration(days: 7));
+    }
+    var weeks = 0;
+    while (completedWeeks.contains(cursor)) {
+      weeks++;
+      cursor = cursor.subtract(const Duration(days: 7));
+    }
+    return (weeks: weeks, restDays: restDays);
+  }
+
+  /// Gravl-parity streak banner shown above the heatmap: a "🔥 X week streak"
+  /// pill plus a "🌙 N rest days" pill. Both are derived from the loaded
+  /// calendar data. The banner hides entirely when there's no streak AND no
+  /// rest day to report (nothing to celebrate yet — no placeholder zeros).
+  Widget _buildStreakBanner(ConsistencyState state) {
+    final tc = ThemeColors.of(context);
+    final stats = _weekStreakAndRest(state);
+    final weeks = stats.weeks;
+    final restDays = stats.restDays;
+    if (weeks <= 0 && restDays <= 0) return const SizedBox.shrink();
+
+    Widget pill({
+      required String emoji,
+      required String value,
+      required String label,
+      required bool accent,
+    }) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: tc.surface,
+            border: Border.all(
+              color: accent
+                  ? tc.accent.withValues(alpha: 0.45)
+                  : AppColors.hairlineStrong,
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.disp(
+                        20,
+                        color: accent ? tc.accent : tc.textPrimary,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.lbl(9,
+                          color: tc.textMuted, letterSpacing: 1.2),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final children = <Widget>[];
+    if (weeks > 0) {
+      children.add(pill(
+        emoji: '🔥',
+        value: '$weeks',
+        label: weeks == 1 ? 'week streak' : 'week streak',
+        accent: true,
+      ));
+    }
+    if (restDays > 0) {
+      if (children.isNotEmpty) children.add(const SizedBox(width: 10));
+      children.add(pill(
+        emoji: '🌙',
+        value: '$restDays',
+        label: restDays == 1 ? 'rest day' : 'rest days',
+        accent: false,
+      ));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Row(children: children),
+    ).animate().fadeIn(delay: 220.ms, duration: 400.ms).slideY(begin: 0.1, end: 0);
+  }
+
   Widget _buildCalendarHeatmap(
       ConsistencyState state, ColorScheme colorScheme) {
     final calendarData = state.calendarData;
@@ -457,6 +598,8 @@ class _ConsistencyScreenState extends ConsumerState<ConsistencyScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Gravl-parity streak + rest-day banner, derived from loaded data.
+        _buildStreakBanner(state),
         ZealovaSectionKicker(
           AppLocalizations.of(context).consistencyLast4Weeks,
         ),

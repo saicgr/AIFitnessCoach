@@ -18,7 +18,7 @@ import '../../../widgets/coach_avatar.dart';
 import 'food_analysis_inline_card.dart';
 import 'generic_blocks_renderer.dart';
 import 'food_analysis_result_card.dart';
-import 'form_check_result_card.dart';
+import '../../workout/widgets/form_analysis_gauge_card.dart';
 import 'form_comparison_result_card.dart';
 import 'fullscreen_image_viewer.dart';
 import 'proposed_change_card.dart';
@@ -349,7 +349,7 @@ class ChatMessageBubble extends ConsumerWidget {
           if (!isUser && message.actionData?['action'] == 'show_options')
             _buildShowOptions(context, message.actionData!),
           if (!isUser && message.hasFormCheckResult)
-            FormCheckResultCard(result: message.formCheckResult!),
+            FormAnalysisGaugeCard(result: message.formCheckResult!),
           if (!isUser && message.hasFoodAnalysis &&
               (message.actionData!['food_items'] as List).length <= 5)
             FoodAnalysisInlineCard(
@@ -423,11 +423,13 @@ class ChatMessageBubble extends ConsumerWidget {
                 'create_superset',
                 'break_superset',
                 'reorder_exercises',
+                'add_set',
               }.contains(message.actionData!['action'] as String?) &&
               (message.actionData!['requires_confirmation'] == true ||
                   message.actionData!['action'] == 'swap_exercise' ||
                   message.actionData!['action'] == 'reorder_exercises' ||
-                  message.actionData!['action'] == 'log_set'))
+                  message.actionData!['action'] == 'log_set' ||
+                  message.actionData!['action'] == 'add_set'))
             ChatActionConfirmCard(
               actionData: Map<String, dynamic>.from(message.actionData!),
               summaryText: ChatActionSummaryBuilder.build(context, message.actionData) ??

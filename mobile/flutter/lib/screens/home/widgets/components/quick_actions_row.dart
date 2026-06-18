@@ -18,6 +18,8 @@ import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
 import '../../../stats/widgets/photos_tab.dart';
+import '../../../custom_exercises/widgets/create_exercise_sheet.dart';
+import '../../../workout/widgets/form_analysis_sheet.dart';
 import 'quick_action_launcher.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
@@ -124,6 +126,36 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         label: scanMenu?.label ?? AppLocalizations.of(context).quickActionsRowMenu,
         iconColor: scanMenu?.color ?? AppColors.accent,
         onTap: () => launchQuickAction(context, ref, 'scan_menu'),
+        isDark: isDark,
+      );
+    case 'form_check':
+      // Gravl-parity: opens the AI Form Analysis sheet with NO exercise name
+      // (the analyzer auto-detects the movement). Record/upload any clip.
+      final formCheck = quickActionRegistry['form_check'];
+      return _GridActionItem(
+        icon: formCheck?.icon ?? Icons.sports_gymnastics_outlined,
+        label: formCheck?.label ?? 'Form Check',
+        iconColor: formCheck?.color ?? AppColors.accent,
+        onTap: () {
+          HapticService.light();
+          showFormAnalysisSheet(context);
+        },
+        isDark: isDark,
+      );
+    case 'add_exercise':
+      // Opens the Fill-with-AI create-exercise sheet directly.
+      final addEx = quickActionRegistry['add_exercise'];
+      return _GridActionItem(
+        icon: addEx?.icon ?? Icons.add_circle_outline,
+        label: addEx?.label ?? 'Add Exercise',
+        iconColor: addEx?.color ?? AppColors.accent,
+        onTap: () {
+          HapticService.light();
+          showGlassSheet(
+            context: context,
+            builder: (_) => const CreateExerciseSheet(),
+          );
+        },
         isDark: isDark,
       );
     case 'workout':

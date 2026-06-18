@@ -69,13 +69,21 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
       // logger over that window in a single round trip.
       final logs = await repo.getFoodLogs(widget.userId, limit: 200);
       final frequent = _deriveFrequentMeals(logs);
+      // WS6 — reuse the same recent-logs payload to capture YESTERDAY's logs
+      // (device-local) for the "Same [slot] as yesterday" smart pill. No extra
+      // round trip: the 200-row window comfortably reaches back one day.
+      final yesterday = _yesterdayLogsFrom(logs);
       if (!mounted) return;
       setState(() {
         _frequentMeals = frequent;
+        _yesterdayLogs = yesterday;
         _frequentMealsLoading = false;
         _frequentMealsLoaded = true;
       });
-      debugPrint('🍽️ [L2] Frequent meals loaded | count=${frequent.length}');
+      debugPrint('🍽️ [L2] Frequent meals loaded | count=${frequent.length} | yesterday=${yesterday.length}');
+      // WS6 — kick the leftover (cook-events) fetch for the smart-pill row.
+      // Runs after frequent meals so the row paints its other sources first.
+      unawaited(_loadSmartPillSources());
     } catch (e) {
       debugPrint('🍽️ [L2] Frequent meals load failed: $e');
       if (!mounted) return;
@@ -87,6 +95,9 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
         _frequentMealsLoading = false;
         _frequentMealsLoaded = true;
       });
+      // WS6 — still try leftovers even if the recent-logs fetch failed; the
+      // sources are independent. If this also fails the row hides itself.
+      unawaited(_loadSmartPillSources());
     }
   }
 
@@ -549,7 +560,8 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // L2 meal-slot prediction hint + frequent-meals strip.
+          // WS6 smart quick-log pills + L2 meal-slot prediction hint + strip.
+          _buildQuickLogPills(isDark),
           _buildMealSlotPredictionHint(isDark),
           _buildFrequentMealsStrip(isDark),
           const SizedBox(height: 4),

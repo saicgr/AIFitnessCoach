@@ -139,6 +139,14 @@ class ChatActionConfirmCardState
             exerciseIds: ids,
           );
           break;
+        case 'add_set':
+          result = await repo.addSet(
+            workoutId: _workoutId,
+            exerciseName: widget.actionData['exercise_name'] as String,
+            exerciseId: widget.actionData['exercise_id'] as String?,
+            isDropSet: widget.actionData['is_drop_set'] == true,
+          );
+          break;
         default:
           result = (false, 'Unknown action: $_action');
       }
@@ -275,6 +283,8 @@ class ChatActionConfirmCardState
         return Icons.link_off;
       case 'reorder_exercises':
         return Icons.reorder;
+      case 'add_set':
+        return Icons.playlist_add;
       default:
         return Icons.info_outline;
     }

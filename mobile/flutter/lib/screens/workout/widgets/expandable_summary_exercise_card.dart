@@ -43,6 +43,11 @@ class _ExpandableSummaryExerciseCardState
   late AnimationController _chevronController;
   late Animation<double> _chevronRotation;
 
+  /// Independent of the per-set table expansion ([widget.isExpanded]): toggles
+  /// the Gravl-parity "records" table (Projected 1RM / Max weight / Max reps /
+  /// Max volume) for this exercise. Collapsed by default.
+  bool _showRecords = false;
+
   @override
   void initState() {
     super.initState();
@@ -267,6 +272,22 @@ class _ExpandableSummaryExerciseCardState
           if (widget.setLogs.isNotEmpty) ...[
             _buildSetTable(),
             const SizedBox(height: 12),
+          ],
+
+          // Gravl-parity per-exercise records: a "Show records ▾" toggle that
+          // expands a small table of Projected 1RM / Max weight / Max reps /
+          // Max volume, computed from this session's logged sets.
+          if (_recordsFromSets() != null) ...[
+            _buildRecordsToggle(),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _showRecords
+                  ? _buildRecordsTable(_recordsFromSets()!)
+                  : const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 4),
           ],
 
           // Time spent row
@@ -531,6 +552,157 @@ class _ExpandableSummaryExerciseCardState
           fontWeight: FontWeight.w700,
           color: color,
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RECORDS TABLE (Gravl-parity)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Compute this exercise's session records from the logged working sets.
+  /// Returns null when there's nothing to compute (no sets with a positive
+  /// rep count) so the toggle is omitted entirely — never a row of zeros.
+  ///   • Projected 1RM — Epley: best over sets of weight × (1 + reps/30)
+  ///   • Max weight    — heaviest set
+  ///   • Max reps      — highest rep count
+  ///   • Max volume    — best over sets of weight × reps
+  _ExerciseRecords? _recordsFromSets() {
+    // Warm-up sets don't count toward records.
+    final sets = widget.setLogs
+        .where((s) => s.repsCompleted > 0 && _isWorkingSet(s.setType))
+        .toList();
+    if (sets.isEmpty) return null;
+
+    double? best1rmKg;
+    double? maxWeightKg;
+    int? maxReps;
+    double? maxVolumeKg;
+
+    for (final s in sets) {
+      final w = s.weightKg;
+      final r = s.repsCompleted;
+      // Epley projected 1RM (only meaningful with a load).
+      if (w > 0) {
+        final epley = w * (1 + r / 30.0);
+        if (best1rmKg == null || epley > best1rmKg) best1rmKg = epley;
+        if (maxWeightKg == null || w > maxWeightKg) maxWeightKg = w;
+        final vol = w * r;
+        if (maxVolumeKg == null || vol > maxVolumeKg) maxVolumeKg = vol;
+      }
+      if (maxReps == null || r > maxReps) maxReps = r;
+    }
+
+    return _ExerciseRecords(
+      projected1rmKg: best1rmKg,
+      maxWeightKg: maxWeightKg,
+      maxReps: maxReps,
+      maxVolumeKg: maxVolumeKg,
+    );
+  }
+
+  bool _isWorkingSet(String setType) {
+    final t = setType.toLowerCase();
+    return t != 'warmup' && t != 'warm_up';
+  }
+
+  Widget _buildRecordsToggle() {
+    final muted =
+        widget.isDark ? AppColors.textMuted : Colors.grey.shade500;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => setState(() => _showRecords = !_showRecords),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Text(
+              _showRecords ? 'Hide records' : 'Show records',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: widget.accentColor,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              _showRecords ? Icons.expand_less : Icons.expand_more,
+              size: 18,
+              color: widget.accentColor,
+            ),
+            const Spacer(),
+            Icon(Icons.emoji_events_outlined, size: 14, color: muted),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecordsTable(_ExerciseRecords r) {
+    final rows = <Widget>[];
+
+    void addRow(String label, String value) {
+      rows.add(_buildRecordRow(label, value));
+    }
+
+    if (r.projected1rmKg != null) {
+      addRow(
+        'Projected 1 rep max',
+        WeightUtils.formatWorkoutWeight(r.projected1rmKg!, useKg: widget.useKg),
+      );
+    }
+    if (r.maxWeightKg != null) {
+      addRow(
+        'Max weight',
+        WeightUtils.formatWorkoutWeight(r.maxWeightKg!, useKg: widget.useKg),
+      );
+    }
+    if (r.maxReps != null) {
+      addRow(
+        'Max repetitions',
+        '${r.maxReps}',
+      );
+    }
+    if (r.maxVolumeKg != null) {
+      addRow(
+        'Max volume',
+        WeightUtils.formatWorkoutWeight(r.maxVolumeKg!, useKg: widget.useKg),
+      );
+    }
+    if (rows.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 6),
+      child: Column(children: rows),
+    );
+  }
+
+  Widget _buildRecordRow(String label, String value) {
+    final textPrimary =
+        widget.isDark ? AppColors.textPrimary : Colors.black87;
+    final muted =
+        widget.isDark ? AppColors.textSecondary : Colors.grey.shade600;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 5),
+      child: Row(
+        children: [
+          const Text('🏆', style: TextStyle(fontSize: 13)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 12, color: muted),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -863,4 +1035,21 @@ class _ExpandableSummaryExerciseCardState
     ];
     return '${months[date.month - 1]} ${date.day}';
   }
+}
+
+/// Per-exercise session records (Gravl-parity). Any field may be null when it
+/// can't be computed from the logged sets (e.g. bodyweight-only exercise has
+/// no max weight / 1RM / volume); the table omits null rows entirely.
+class _ExerciseRecords {
+  final double? projected1rmKg;
+  final double? maxWeightKg;
+  final int? maxReps;
+  final double? maxVolumeKg;
+
+  const _ExerciseRecords({
+    required this.projected1rmKg,
+    required this.maxWeightKg,
+    required this.maxReps,
+    required this.maxVolumeKg,
+  });
 }

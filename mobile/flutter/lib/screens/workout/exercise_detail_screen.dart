@@ -21,8 +21,12 @@ import '../../core/providers/avoided_provider.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/exercise_stats_widgets.dart';
 import '../../data/models/exercise.dart';
+import '../../data/models/exercise_history.dart';
 import '../../data/providers/exercise_history_provider.dart';
+import '../../data/repositories/form_analysis_repository.dart';
 import '../../data/services/api_client.dart';
+import 'widgets/form_analysis_gauge_card.dart';
+import 'widgets/form_analysis_sheet.dart';
 
 
 import '../../l10n/generated/app_localizations.dart';
@@ -36,7 +40,7 @@ part 'exercise_detail_screen_ui.dart';
 class ExerciseDetailScreen extends ConsumerStatefulWidget {
   final WorkoutExercise exercise;
 
-  /// Initial tab index: 0=Info, 1=Stats, 2=History.
+  /// Initial tab index: 0=Info, 1=Stats, 2=History, 3=Form.
   /// Used when the caller wants to deep-link into a specific tab
   /// (e.g. "View History" from the 3-dot exercise-options sheet).
   final int initialTab;
@@ -93,8 +97,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   @override
   void initState() {
     super.initState();
-    final startTab = widget.initialTab.clamp(0, 2);
-    _tabController = TabController(length: 3, vsync: this, initialIndex: startTab);
+    final startTab = widget.initialTab.clamp(0, 3);
+    _tabController = TabController(length: 4, vsync: this, initialIndex: startTab);
     _selectedTab = startTab;
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) return;
@@ -508,9 +512,12 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
                   ] else if (_selectedTab == 1) ...[
                     // STATS TAB
                     _buildStatsTabContent(textMuted),
-                  ] else ...[
+                  ] else if (_selectedTab == 2) ...[
                     // HISTORY TAB
                     _buildHistoryTabContent(textMuted),
+                  ] else ...[
+                    // FORM TAB
+                    _buildFormTabContent(textMuted),
                   ],
 
                   // Bottom padding for floating pill bar
@@ -572,6 +579,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
             _buildPillItem(Icons.bar_chart_outlined, Icons.bar_chart_rounded, 'Stats', 1, accentColor, iconMuted, isDark),
             const SizedBox(width: 4),
             _buildPillItem(Icons.history_outlined, Icons.history_rounded, 'History', 2, accentColor, iconMuted, isDark),
+            const SizedBox(width: 4),
+            _buildPillItem(Icons.sports_gymnastics_outlined, Icons.sports_gymnastics_rounded, 'Form', 3, accentColor, iconMuted, isDark),
           ],
         ),
       ),

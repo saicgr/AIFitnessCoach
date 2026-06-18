@@ -54,6 +54,11 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
             ),
             const SizedBox(height: 16),
 
+            // Prominent headline stats (Gravl-parity): Projected 1RM, Max
+            // weight, Max volume, Max reps — computed from logged sessions.
+            _buildPrStatPills(history),
+            const SizedBox(height: 16),
+
             if (history.summary != null)
               ExerciseSummaryCard(summary: history.summary!),
             const SizedBox(height: 16),
@@ -83,6 +88,224 @@ extension _ExerciseDetailScreenStateUI on _ExerciseDetailScreenState {
           ],
         );
       },
+    );
+  }
+
+
+  /// Four headline stat pills (Projected 1RM / Max weight / Max volume / Max
+  /// reps) shown prominently atop the Stats tab — the per-exercise analytics
+  /// the competitor surfaces. Values come straight from logged sessions and
+  /// reuse the session model's unit-aware formatters; a stat with no data
+  /// shows "—" rather than a fabricated zero.
+  Widget _buildPrStatPills(ExerciseHistoryData history) {
+    final colors = ThemeColors.of(context);
+    final accent = colors.accent;
+    final useLbs = !ref.watch(useKgForWorkoutProvider);
+    final sessions = history.sessions;
+
+    ExerciseWorkoutSession? byMax(double Function(ExerciseWorkoutSession) f) {
+      ExerciseWorkoutSession? best;
+      double bestVal = -1;
+      for (final s in sessions) {
+        final v = f(s);
+        if (v > bestVal) {
+          bestVal = v;
+          best = s;
+        }
+      }
+      return best;
+    }
+
+    final wSes = byMax((s) => s.weightKg);
+    final vSes = byMax((s) => s.totalVolumeKg);
+    final rmSes = byMax((s) => s.estimated1rmKg ?? 0);
+    final maxReps = sessions.fold<int>(0, (m, s) => s.reps > m ? s.reps : m);
+
+    final pills = <List<String>>[
+      [
+        'Proj. 1RM',
+        (rmSes != null && (rmSes.estimated1rmKg ?? 0) > 0)
+            ? rmSes.formatted1rmFor(useLbs: useLbs)
+            : '—',
+      ],
+      ['Max weight', wSes != null ? wSes.formattedWeightFor(useLbs: useLbs) : '—'],
+      ['Max volume', vSes != null ? vSes.formattedVolumeFor(useLbs: useLbs) : '—'],
+      ['Max reps', maxReps > 0 ? '$maxReps' : '—'],
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Row(
+        children: [
+          for (final p in pills)
+            Container(
+              width: 104,
+              margin: const EdgeInsetsDirectional.only(end: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: colors.elevated,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: colors.cardBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.emoji_events_outlined, size: 13, color: accent),
+                      const SizedBox(width: 5),
+                      Expanded(
+                        child: Text(
+                          p[0],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textMuted,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    p[1],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+
+  /// FORM TAB — the per-exercise counterpart to chat form analysis. Shows a
+  /// prominent "Analyze my form" CTA that opens the Form Analysis sheet for
+  /// THIS exercise, plus every past analysis for it (newest first), each
+  /// rendered with the shared [FormAnalysisGaugeCard].
+  Widget _buildFormTabContent(Color textMuted) {
+    final exerciseName = widget.exercise.name;
+    final accent = ref.colors(context).accent;
+    final analysesAsync =
+        ref.watch(exerciseFormAnalysesProvider(exerciseName));
+
+    Future<void> openSheet() async {
+      HapticFeedback.lightImpact();
+      await showFormAnalysisSheet(context, exerciseName: exerciseName);
+      // Refresh history when the sheet closes — a new analysis may have landed.
+      if (mounted) ref.invalidate(exerciseFormAnalysesProvider(exerciseName));
+    }
+
+    final analyzeButton = Material(
+      color: accent,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: openSheet,
+        borderRadius: BorderRadius.circular(14),
+        child: const SizedBox(
+          height: 52,
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.sports_gymnastics_rounded,
+                    color: Colors.white, size: 20),
+                SizedBox(width: 10),
+                Text(
+                  'Analyze my form',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        analyzeButton,
+        const SizedBox(height: 20),
+        analysesAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, _) => Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            child: Center(
+              child: Text(
+                'Could not load your form history.',
+                style: TextStyle(color: textMuted, fontSize: 13),
+              ),
+            ),
+          ),
+          data: (items) {
+            if (items.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.video_camera_back_outlined,
+                          size: 48, color: textMuted),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No form check yet',
+                        style: TextStyle(color: textMuted, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Record a set above and track your form over time.',
+                        style: TextStyle(
+                          color: textMuted.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${items.length} FORM CHECK${items.length == 1 ? '' : 'S'}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                for (final item in items)
+                  FormAnalysisGaugeCard(
+                    result: item.result,
+                    analyzedAt: item.analyzedAt,
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 

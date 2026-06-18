@@ -7,6 +7,7 @@ import '../../../widgets/glass_card.dart';
 import '../../../widgets/glow_button.dart';
 import '../../../widgets/number_stepper.dart';
 import 'set_row_visuals.dart';
+import 'voice_set_logging.dart';
 
 
 part 'set_row_part_weight_increments.dart';
@@ -121,6 +122,43 @@ class _SetRowState extends State<SetRow> {
     final nextType = types[(currentIndex + 1) % types.length];
     widget.onDataChanged(widget.setData.copyWith(setType: nextType));
     HapticFeedback.lightImpact();
+  }
+
+  /// "Same as last time" — copy the previous session's weight/reps into this
+  /// set's ACTUAL fields in one tap (Hevy/Strong-style). No-op on completed
+  /// sets or when there's no history. Copies whichever values exist.
+  void _copyPrevious() {
+    final prevW = widget.setData.previousWeight;
+    final prevR = widget.setData.previousReps;
+    if (prevW == null && prevR == null) return;
+
+    var next = widget.setData;
+    if (prevW != null) {
+      _weightController.text = prevW.toStringAsFixed(1);
+      next = next.copyWith(actualWeight: prevW);
+    }
+    if (prevR != null) {
+      _repsController.text = prevR.toString();
+      next = next.copyWith(actualReps: prevR);
+    }
+    widget.onDataChanged(next);
+    HapticFeedback.selectionClick();
+  }
+
+  /// Apply a voice-parsed set ("225 for 8") into this set's actual fields.
+  /// Weight arrives in the same display unit the row already uses (lb).
+  void _applyVoice(ParsedVoiceSet parsed) {
+    if (parsed.isEmpty) return;
+    var next = widget.setData;
+    if (parsed.weight != null) {
+      _weightController.text = parsed.weight!.toStringAsFixed(1);
+      next = next.copyWith(actualWeight: parsed.weight);
+    }
+    if (parsed.reps != null) {
+      _repsController.text = parsed.reps.toString();
+      next = next.copyWith(actualReps: parsed.reps);
+    }
+    widget.onDataChanged(next);
   }
 
   Color get _setTypeColor {
@@ -326,11 +364,28 @@ class _SetRowState extends State<SetRow> {
                     widget.setData.intensityPercent != null)
                   _buildOneRMTargetLabel()
                 else if (widget.showPrevious && widget.setData.previousWeight != null)
-                  Text(
-                    'Prev: ${widget.setData.previousWeight?.toStringAsFixed(1)} kg',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textMuted,
+                  // Tap-to-copy "same as last time" reference (Hevy/Strong
+                  // style). Greyed last-session weight; tap fills this set's
+                  // actual weight + reps. Disabled once the set is completed.
+                  GestureDetector(
+                    onTap: isCompleted ? null : _copyPrevious,
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Prev: ${widget.setData.previousWeight?.toStringAsFixed(1)} kg',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                        if (!isCompleted) ...[
+                          const SizedBox(width: 3),
+                          Icon(Icons.replay_rounded,
+                              size: 10, color: AppColors.cyan.withOpacity(0.8)),
+                        ],
+                      ],
                     ),
                   ),
                 // Fix #5 — trend pill (↑/↓ vs prior set's target) and Edited
@@ -420,11 +475,15 @@ class _SetRowState extends State<SetRow> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.showPrevious && widget.setData.previousReps != null)
-                  Text(
-                    'Prev: ${widget.setData.previousReps} reps',
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textMuted,
+                  GestureDetector(
+                    onTap: isCompleted ? null : _copyPrevious,
+                    behavior: HitTestBehavior.opaque,
+                    child: Text(
+                      'Prev: ${widget.setData.previousReps} reps',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ),
                 Row(
@@ -495,6 +554,15 @@ class _SetRowState extends State<SetRow> {
               child: pills,
             );
           }),
+
+          // Voice "225 for 8" mic — hands-free set entry. Hidden once the set
+          // is completed (nothing left to fill).
+          if (!isCompleted)
+            VoiceSetMicButton(
+              onParsed: _applyVoice,
+              useKg: false,
+              size: 20,
+            ),
 
           // Complete button
           if (!isCompleted)

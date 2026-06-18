@@ -143,6 +143,18 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Gravl-parity hero badge carousel — every earned item
+                      // (PR, cardio PR, achievement) as a horizontally-
+                      // scrolling medallion. Renders only when something was
+                      // earned this session.
+                      _buildBadgeCarousel(
+                        context,
+                        newPRs: newPRs,
+                        cardioPrs: cardioPrs,
+                        newAchievements: newAchievements,
+                        useKg: useKg,
+                      ),
+
                       // Personal Records Section
                       if (newPRs.isNotEmpty) ...[
                         _buildSectionHeader(
@@ -264,6 +276,83 @@ class _TrophiesEarnedSheet extends ConsumerWidget {
                 ),
               ),
             ],
+    );
+  }
+
+  /// Gravl-parity hero carousel: collapses every earned item this session into
+  /// a single horizontally-scrolling row of badge medallions (gold trophy for
+  /// strength PRs, sport-colored chip for cardio PRs, tier-gradient for
+  /// achievements), each with a name + short description below. Renders nothing
+  /// when nothing was earned. Works for 1–N items.
+  Widget _buildBadgeCarousel(
+    BuildContext context, {
+    required List<Map<String, dynamic>> newPRs,
+    required List<CardioPersonalRecord>? cardioPrs,
+    required List<Map<String, dynamic>> newAchievements,
+    required bool useKg,
+  }) {
+    final badges = <_BadgeData>[];
+
+    // Strength PRs — gold trophy medallion.
+    for (final pr in newPRs) {
+      final name = (pr['exercise_name'] ?? pr['exercise'] ?? 'PR').toString();
+      final weightKg = pr['weight_kg'] as num?;
+      final reps = pr['reps'] as int?;
+      final desc = weightKg != null
+          ? '${WeightUtils.formatWorkoutWeight(weightKg.toDouble(), useKg: useKg)}'
+              '${reps != null ? ' × $reps' : ''}'
+          : 'New personal record';
+      badges.add(_BadgeData(
+        emoji: '🏆',
+        gradient: const [Color(0xFFFFD700), Color(0xFFB8860B)],
+        title: name,
+        subtitle: desc,
+      ));
+    }
+
+    // Cardio PRs — sport-colored medallion.
+    for (final pr in (cardioPrs ?? const <CardioPersonalRecord>[])) {
+      final color = _cardioSportColor(pr.sport);
+      badges.add(_BadgeData(
+        emoji: pr.isFirstTimeActivity ? '✨' : '🥇',
+        gradient: [color, color.withOpacity(0.6)],
+        title: '${_cardioSportLabel(pr.sport)} · ${pr.kindLabel}',
+        subtitle: pr.formatValue(),
+      ));
+    }
+
+    // Achievements — tier-gradient medallion with its own emoji.
+    for (final a in newAchievements) {
+      final tier = (a['tier'] as String? ?? 'bronze');
+      final tierColor = _getTierColor(tier);
+      badges.add(_BadgeData(
+        emoji: _getIconEmoji(a['icon'] as String? ?? 'medal'),
+        gradient: [tierColor, tierColor.withOpacity(0.6)],
+        title: (a['name'] ?? a['title'] ?? 'Badge').toString(),
+        subtitle: (a['description'] ?? '').toString(),
+      ));
+    }
+
+    if (badges.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 20),
+      child: SizedBox(
+        height: 150,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: EdgeInsets.zero,
+          physics: const BouncingScrollPhysics(),
+          itemCount: badges.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            return _BadgeMedallion(badge: badges[index])
+                .animate(delay: Duration(milliseconds: 120 + (index * 60)))
+                .fadeIn(duration: 350.ms)
+                .scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack);
+          },
+        ),
+      ),
     );
   }
 
@@ -1116,6 +1205,93 @@ class _MilestoneProgressRow extends StatelessWidget {
           style: TextStyle(fontSize: 11, color: textSecondary),
         ),
       ],
+    );
+  }
+}
+
+/// Immutable description of one badge in the post-workout hero carousel.
+class _BadgeData {
+  final String emoji;
+  final List<Color> gradient;
+  final String title;
+  final String subtitle;
+
+  const _BadgeData({
+    required this.emoji,
+    required this.gradient,
+    required this.title,
+    required this.subtitle,
+  });
+}
+
+/// A single badge medallion: a glossy gradient disc with the badge emoji, a
+/// title, and a one-line description. Fixed width so the carousel scrolls
+/// horizontally with consistent card sizing regardless of count.
+class _BadgeMedallion extends StatelessWidget {
+  final _BadgeData badge;
+
+  const _BadgeMedallion({required this.badge});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    return SizedBox(
+      width: 116,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Medallion disc.
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: badge.gradient,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: badge.gradient.first.withOpacity(0.35),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(badge.emoji, style: const TextStyle(fontSize: 32)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            badge.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: textPrimary,
+            ),
+          ),
+          if (badge.subtitle.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              badge.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 11, color: textSecondary),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

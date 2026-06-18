@@ -43,6 +43,8 @@ import 'widgets/workout_ai_recap_card.dart'; // B8 — merged post-workout Coach
 import 'widgets/share_templates/_share_common.dart';
 import '../../shareables/adapters/workout_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
+// ShareableTemplate.prs — land the instant PR share directly on the PRs card.
+import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
@@ -675,6 +677,23 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Instant PR shareable: when this session set a PR, offer a
+              // one-tap "Share PR" that opens the share sheet pre-loaded on the
+              // medal-ranked PRs card. Only shown when PRs exist.
+              if (_newPRs.isNotEmpty) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ZealovaButton(
+                    label: _newPRs.length == 1
+                        ? 'Share your PR'
+                        : 'Share your PRs',
+                    onTap: _showPRShareSheet,
+                    variant: ZealovaButtonVariant.ghost,
+                    trailingIcon: Icons.emoji_events_rounded,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
               Row(
                 children: [
                   // Secondary action — ghost (hairline outline), keeps the

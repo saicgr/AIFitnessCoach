@@ -648,7 +648,10 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
                   ),
           ),
         ),
-        if (_selectedImage != null) ...[
+        // The AI button always shows — it fills from the typed name (text path)
+        // OR a selected photo, whichever is present. Name-fill is the
+        // competitor-parity "guess the rest from the name" flow.
+        ...[
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -742,7 +745,17 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   Future<void> _analyzeWithAI() async {
-    if (_selectedImage == null) return;
+    final typedName = _nameController.text.trim();
+    // Need either a photo or a typed name to fill from.
+    if (_selectedImage == null && typedName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Type an exercise name or add a photo first'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isAnalyzing = true);
 
@@ -753,13 +766,22 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
         throw Exception('User not authenticated');
       }
 
-      final bytes = await _selectedImage!.readAsBytes();
-      final base64Image = base64Encode(bytes);
-
-      final response = await apiClient.post(
-        '/custom-exercises/$userId/analyze-photo',
-        data: {'image_base64': base64Image},
-      );
+      // Photo path takes precedence; otherwise fill from the typed name (fast
+      // synchronous text extraction, ~1-2s).
+      final dynamic response;
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        response = await apiClient.post(
+          '/custom-exercises/$userId/analyze-photo',
+          data: {'image_base64': base64Image},
+        );
+      } else {
+        response = await apiClient.post(
+          '/custom-exercises/$userId/analyze-text',
+          data: {'raw_text': typedName},
+        );
+      }
 
       final data = response.data as Map<String, dynamic>;
 

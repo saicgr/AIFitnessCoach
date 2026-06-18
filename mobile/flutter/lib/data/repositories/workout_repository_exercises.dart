@@ -830,4 +830,39 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       return (false, 'Failed to reorder exercises.');
     }
   }
+
+  /// Add one more planned set (or a drop set) to an exercise mid-workout via
+  /// POST /api/v1/workouts/{id}/add-set. Backed by the AI coach's ``add_set``
+  /// mutation tool. ``isDropSet`` marks the new slot as a back-off (lighter, no
+  /// rest) without changing how sets are logged.
+  Future<(bool, String?)> addSet({
+    required String workoutId,
+    required String exerciseName,
+    String? exerciseId,
+    bool isDropSet = false,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/add-set',
+        data: {
+          if (exerciseId != null && exerciseId.isNotEmpty)
+            'exercise_id': exerciseId,
+          'exercise_name': exerciseName,
+          'is_drop_set': isDropSet,
+        },
+      );
+      if (response.statusCode == 200) {
+        return (true, null);
+      }
+      return (false, 'Server error (${response.statusCode}).');
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      final detail = (body is Map) ? body['detail']?.toString() : null;
+      debugPrint('❌ [Workout] addSet failed: ${e.message}');
+      return (false, detail ?? 'Failed to add set. Please try again.');
+    } catch (e) {
+      debugPrint('❌ [Workout] addSet unexpected: $e');
+      return (false, 'Failed to add set.');
+    }
+  }
 }

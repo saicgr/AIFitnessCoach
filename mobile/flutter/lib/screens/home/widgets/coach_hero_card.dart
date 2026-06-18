@@ -59,7 +59,6 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
 
   // Which to-do row is expanded (tap a task to reveal its detail + action,
   // the way the previous coach tasks opened up). null = all collapsed.
-  int? _expandedTodo;
 
   // Trend graphs are collapsed by default (the user found the always-on chart
   // made the card too tall) — tap the "TRENDS" header to reveal the carousel.
@@ -241,126 +240,14 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
         const SizedBox(height: 13),
         Text('TO DO TODAY',
             style: ZType.lbl(10.5, color: c.textMuted, letterSpacing: 2)),
-        const SizedBox(height: 6),
-        // A tappable list — tapping a row EXPANDS it to reveal the detail +
-        // its action button (the way the previous coach tasks opened up).
-        for (int i = 0; i < tasks.length; i++)
-          _todoTaskRow(c, tasks[i], index: i, showDivider: i > 0),
+        const SizedBox(height: 8),
+        // Same swipeable, adaptive-height carousel as the coach action cards
+        // above (2 cards per page, page dots, height fits the active page).
+        _TodoCarousel(tasks: tasks),
       ],
     );
   }
 
-  /// One tappable to-do row that EXPANDS on tap to reveal a detail line + an
-  /// action button. The chevron rotates to point down when open.
-  Widget _todoTaskRow(ThemeColors c, _TodoTask t,
-      {required int index, required bool showDivider}) {
-    final expanded = _expandedTodo == index;
-    return Container(
-      decoration: showDivider
-          ? BoxDecoration(border: Border(top: BorderSide(color: c.cardBorder)))
-          : null,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: () =>
-                setState(() => _expandedTodo = expanded ? null : index),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: t.done ? AppColors.green : Colors.transparent,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                          color: t.done ? AppColors.green : c.cardBorder,
-                          width: 1.5),
-                    ),
-                    child: t.done
-                        ? const Icon(Icons.check, size: 13, color: Colors.white)
-                        : Icon(t.icon, size: 12, color: c.accent),
-                  ),
-                  const SizedBox(width: 11),
-                  Expanded(
-                    child: Text(
-                      t.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: t.done ? c.textMuted : c.textPrimary,
-                        decoration:
-                            t.done ? TextDecoration.lineThrough : null,
-                        decorationColor: c.textMuted,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(t.trailing, style: ZType.data(11, color: c.textMuted)),
-                  const SizedBox(width: 6),
-                  AnimatedRotation(
-                    turns: expanded ? 0.25 : 0.0,
-                    duration: const Duration(milliseconds: 180),
-                    child: Icon(Icons.chevron_right, size: 16, color: c.textMuted),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Expanded detail panel — the "open the task to reveal more" behavior.
-          AnimatedCrossFade(
-            firstChild: const SizedBox(width: double.infinity),
-            secondChild: Padding(
-              padding: const EdgeInsetsDirectional.only(
-                  start: 33, bottom: 12, end: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t.detail,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.35,
-                      color: c.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: t.onTap,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: c.accent.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                            color: c.accent.withValues(alpha: 0.34)),
-                      ),
-                      child: Text(
-                        '${t.actionLabel} ›',
-                        style: ZType.lbl(11, color: c.accent, letterSpacing: 1),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            crossFadeState: expanded
-                ? CrossFadeState.showSecond
-                : CrossFadeState.showFirst,
-            duration: const Duration(milliseconds: 180),
-          ),
-        ],
-      ),
-    );
-  }
 
   /// Collapsible "TRENDS" section wrapping the grounded-graph carousel.
   /// Collapsed by default; the header toggles the reveal.
@@ -752,22 +639,18 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   }
 
   Widget _skeleton(ThemeColors c, {bool isMinimized = false}) {
-    Widget bar(double w, double h) => Container(
-          width: w,
-          height: h,
-          decoration: BoxDecoration(
-            color: c.textMuted.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        );
+    // No placeholder skeleton bars while the daily insight loads — a flashing
+    // grey block reads as "broken" (the briefing resolves in ~1-3s anyway).
+    // We paint just the real header, and — when expanded — the nudge stack,
+    // which reads nutrition/hydration/workout providers directly and so is
+    // ready on the first frame. The briefing text simply appears (fades in via
+    // `_content`) once it resolves, rather than morphing out of grey bars.
     if (isMinimized) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           _eyebrow(c, false, isMinimized: true),
-          const SizedBox(height: 6),
-          bar(220, 14),
         ],
       );
     }
@@ -776,17 +659,6 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
       children: [
         _eyebrow(c, false),
         const SizedBox(height: 8),
-        bar(220, 16),
-        const SizedBox(height: 6),
-        bar(double.infinity, 12),
-        const SizedBox(height: 4),
-        bar(180, 12),
-        // Contextual nudges (morning hydration / breakfast / etc.) do NOT
-        // depend on the daily coach insight — they read nutrition +
-        // hydration + workout providers directly. Mounting the stack inside
-        // the skeleton means sub-cards paint on the first frame after cold
-        // start instead of waiting 1–3 s for the Gemini insight call.
-        // Foreground-cycle workaround for the same bug is no longer needed.
         const _CoachNudgeStack(),
       ],
     );
@@ -1148,6 +1020,203 @@ class _PageDots extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// "TO DO TODAY" carousel — same swipeable, adaptive-height format as the
+/// coach action cards above: up to 2 task cards per page, page dots, and a
+/// height that fits the active page's card count (no dead space on a short
+/// last page). Mirrors [_CoachNudgeStack].
+class _TodoCarousel extends StatefulWidget {
+  final List<_TodoTask> tasks;
+  const _TodoCarousel({required this.tasks});
+
+  static const int _kCardsPerPage = 2;
+  static const double _kRowHeight = 80;
+
+  @override
+  State<_TodoCarousel> createState() => _TodoCarouselState();
+}
+
+class _TodoCarouselState extends State<_TodoCarousel> {
+  late final PageController _controller;
+  int _activePage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController()..addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_controller.hasClients || _controller.page == null) return;
+    final p = _controller.page!.round();
+    if (p != _activePage) setState(() => _activePage = p);
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onScroll);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    final tasks = widget.tasks;
+    if (tasks.isEmpty) return const SizedBox.shrink();
+
+    final pageCount = (tasks.length / _TodoCarousel._kCardsPerPage).ceil();
+    final activeIndex = _activePage.clamp(0, pageCount - 1);
+
+    final cardsOnActivePage =
+        (tasks.length - activeIndex * _TodoCarousel._kCardsPerPage)
+            .clamp(1, _TodoCarousel._kCardsPerPage);
+    final textScale =
+        MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.6);
+    final pageHeight =
+        _TodoCarousel._kRowHeight * textScale * cardsOnActivePage +
+            (cardsOnActivePage - 1) * 8;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AnimatedSize(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          child: SizedBox(
+            height: pageHeight,
+            child: PageView.builder(
+              controller: _controller,
+              itemCount: pageCount,
+              physics: const PageScrollPhysics(),
+              itemBuilder: (ctx, page) {
+                final start = page * _TodoCarousel._kCardsPerPage;
+                final end = (start + _TodoCarousel._kCardsPerPage)
+                    .clamp(0, tasks.length);
+                final slice = tasks.sublist(start, end);
+                return Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < slice.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      _TodoCard(task: slice[i]),
+                    ],
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
+        if (pageCount > 1) ...[
+          const SizedBox(height: 8),
+          Semantics(
+            label: 'Page ${activeIndex + 1} of $pageCount',
+            child: _PageDots(
+              pageCount: pageCount,
+              activeIndex: activeIndex,
+              color: c.textMuted,
+              activeColor: c.accent,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// A single TO-DO card matching the coach action-card look: an icon tile, the
+/// task label + detail line, and a CTA pill (or the progress value once done).
+/// Tapping anywhere fires the task's action.
+class _TodoCard extends StatelessWidget {
+  final _TodoTask task;
+  const _TodoCard({required this.task});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    final done = task.done;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: task.onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: c.glassSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: done
+                    ? AppColors.green.withValues(alpha: 0.16)
+                    : c.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: done
+                  ? const Icon(Icons.check_rounded,
+                      size: 18, color: AppColors.green)
+                  : Icon(task.icon, size: 17, color: c.accent),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    task.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: done ? c.textMuted : c.textPrimary,
+                      decoration: done ? TextDecoration.lineThrough : null,
+                      decorationColor: c.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    task.detail,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      height: 1.2,
+                      color: c.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            if (!done)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: c.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: c.accent.withValues(alpha: 0.34)),
+                ),
+                child: Text(
+                  task.actionLabel,
+                  style: ZType.lbl(11, color: c.accent, letterSpacing: 0.5),
+                ),
+              )
+            else
+              Text(task.trailing, style: ZType.data(11, color: c.textMuted)),
+          ],
+        ),
+      ),
     );
   }
 }

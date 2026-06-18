@@ -8,6 +8,7 @@ import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
 import '../../core/constants/synced_workout_kinds.dart';
 import '../../data/providers/synced_workouts_provider.dart';
+import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
@@ -196,6 +197,27 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         isDark ? AppColors.background : AppColorsLight.background;
     final tc = ThemeColors.of(context);
 
+    // Contextual masthead (replaces the redundant static "WORKOUTS" wordmark —
+    // the nav tab already names this room). Mirrors Home's editorial date
+    // masthead: today's split name big, with the date below; on a rest/no-plan
+    // day it falls back to the date itself so the masthead is never empty.
+    const _mhWeekdays = [
+      'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY',
+    ];
+    const _mhMonths = [
+      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+      'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER',
+    ];
+    final mhNow = DateTime.now();
+    final mhWeekday = _mhWeekdays[mhNow.weekday - 1];
+    final mhMonthDay = '${_mhMonths[mhNow.month - 1]} ${mhNow.day}';
+    final mhTodayName =
+        ref.watch(todayWorkoutProvider).valueOrNull?.todayWorkout?.name;
+    final mhHasSplit = mhTodayName != null &&
+        mhTodayName.trim().isNotEmpty &&
+        mhTodayName != 'Generating...' &&
+        mhTodayName != 'Workout';
+
     return PositionedDirectional(
       top: 0,
       start: 0,
@@ -271,11 +293,33 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 ],
               ),
               const SizedBox(height: 4),
-              // Anton masthead — the room title.
-              Text(
-                AppLocalizations.of(context).navWorkouts.toUpperCase(),
-                style: ZType.disp(30, color: textPrimary),
-              ),
+              // Contextual Anton masthead: today's split (or the date on a
+              // rest/no-plan day), with a muted date line beneath the split.
+              if (mhHasSplit) ...[
+                Text(
+                  mhTodayName!.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: ZType.disp(30, color: textPrimary),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '$mhWeekday  ·  $mhMonthDay',
+                  style: ZType.lbl(12.5, color: tc.textMuted, letterSpacing: 1.5),
+                ),
+              ] else
+                RichText(
+                  text: TextSpan(
+                    text: mhWeekday,
+                    style: ZType.disp(30, color: textPrimary),
+                    children: [
+                      TextSpan(
+                        text: '  ·  $mhMonthDay',
+                        style: ZType.disp(30, color: tc.textMuted),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

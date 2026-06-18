@@ -64,6 +64,7 @@ import 'widgets/exercise_options_sheet.dart' show RepProgressionType;
 import 'widgets/exercise_swap_sheet.dart';
 import 'widgets/fatigue_alert_modal.dart';
 import 'widgets/set_tracking_table.dart';
+import 'widgets/rest_duration_policy.dart';
 import 'widgets/stretch_phase_screen.dart';
 import 'widgets/warmup_phase_screen.dart';
 // Prime sheet kept for re-enable when BLE / voice pre-prompt is needed.
@@ -602,6 +603,39 @@ class _ActiveWorkoutScreenState
   set exerciseSwapsRequested(int value) => _exerciseSwapsRequested = value;
   @override int get videoViews => _videoViews;
   set videoViews(int value) => _videoViews = value;
+
+  /// Smart rest-timer adaptation.
+  ///
+  /// Overrides [TimerRestMixin.startRest] so the auto-started countdown ADAPTS
+  /// to how hard the just-finished set was. When the caller already supplied an
+  /// explicit [overrideDuration] (e.g. drop-set micro-rest patterns) or the
+  /// exercise has a plan-authored rest, we defer to the existing behavior. Only
+  /// the "no prescribed rest, between-sets" case gets effort scaling:
+  ///   RIR 0 → 180s · RIR 1–2 → 120s · RIR 3+ → 90s  (RPE used if no RIR).
+  /// The base mixin's [super.startRest] still handles AI suggestions, messages,
+  /// inline-rest UI and interval tracking — this only seeds the duration.
+  @override
+  void startRest(bool betweenExercises, {Duration? overrideDuration}) {
+    if (overrideDuration != null || betweenExercises) {
+      super.startRest(betweenExercises, overrideDuration: overrideDuration);
+      return;
+    }
+
+    final exercise = _exercises[_currentExerciseIndex];
+    // Plan-authored rest wins — let the base mixin read exercise.restSeconds.
+    if (exercise.restSeconds != null && exercise.restSeconds! > 0) {
+      super.startRest(betweenExercises);
+      return;
+    }
+
+    final adapted = RestDurationPolicy.resolveSeconds(
+      prescribedRestSeconds: null,
+      rir: _lastSetRir,
+      rpe: _lastSetRpe,
+      betweenExercises: false,
+    );
+    super.startRest(false, overrideDuration: Duration(seconds: adapted));
+  }
 
   @override
   void initState() {

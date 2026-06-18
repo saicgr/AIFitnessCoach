@@ -215,6 +215,19 @@ class EasyActiveWorkoutView extends StatelessWidget {
             reps: lastSet?.reps,
             unit: useKg ? 'kg' : 'lb',
             when: lastSet?.when,
+            // "Same as last time": one tap copies last session's first-set
+            // weight × reps into the current set. Weight is pushed in the
+            // user's display unit — the same value the chip shows and the
+            // stepper edits.
+            onCopy: lastSet == null
+                ? null
+                : () {
+                    final w = useKg
+                        ? lastSet!.weightKg
+                        : lastSet!.weightKg * 2.20462;
+                    onWeightChanged(w);
+                    onRepsChanged(lastSet!.reps.toDouble());
+                  },
           ),
           // B6 — Strength-Score target pill: "Hit 80 lb × 8 to level up Chest".
           // Hides (zero height) when there's no target for this muscle.

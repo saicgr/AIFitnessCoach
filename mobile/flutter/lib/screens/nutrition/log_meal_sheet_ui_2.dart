@@ -620,9 +620,11 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
 
     return Column(
       children: [
-        // L2 — meal-slot prediction hint + one-tap re-log strip sit at
-        // the top of Search so a repeat meal is a single tap away.
+        // WS6 — ranked smart quick-log pills (leftovers / yesterday / usual /
+        // frequent) sit at the very top so a repeat meal is a single tap away.
+        // L2 — meal-slot prediction hint + one-tap re-log strip below it.
         if (!_isListening) ...[
+          _buildQuickLogPills(isDark),
           _buildMealSlotPredictionHint(isDark),
           _buildFrequentMealsStrip(isDark),
         ],

@@ -272,13 +272,16 @@ class HomeWorkoutCard extends ConsumerWidget {
     final state = ref.watch(todayWorkoutProvider);
     final resp = state.valueOrNull;
 
-    // Loading / generating states — both render the hero-shaped skeleton so
-    // the swap to the real hero is a pure cross-fade with no resize.
+    // Loading / generating states — render NOTHING (collapse) rather than a
+    // hero-shaped grey skeleton box. On cold start the cache resolves in
+    // ~1-3s, and a large empty placeholder reads as "broken"; the user would
+    // rather the hero simply appear (cross-faded by the AnimatedSwitcher
+    // below) once there's real content than stare at a blank box first.
     if (state.isLoading && !state.hasValue) {
-      content = _heroSkeleton(c, key: const ValueKey('today-loading'));
+      content = const SizedBox.shrink(key: ValueKey('today-loading'));
     } else if (resp?.isGenerating == true &&
         resp?.hasDisplayableContent != true) {
-      content = _heroSkeleton(c, key: const ValueKey('today-generating'));
+      content = const SizedBox.shrink(key: ValueKey('today-generating'));
     } else {
       // Resolve today's workout. /workouts/today is authoritative when it
       // returns one, but it resolves "today" off the gym-profile schedule —

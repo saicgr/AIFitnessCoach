@@ -166,6 +166,23 @@ final healthImportProvider =
   );
 });
 
+/// Read-only accessor for the list of external workouts discovered in Health
+/// Connect / Apple Health that the user hasn't imported yet. Drives the
+/// "N external workouts to import" entry point (workouts screen) and the
+/// manual review/import sheet. Empty when nothing is pending — callers render
+/// nothing (no fabricated data).
+///
+/// NOTE: this only reflects what the notifier has already discovered; it does
+/// NOT trigger a Health Connect scan. Call
+/// `ref.read(healthImportProvider.notifier).checkForUnimportedWorkouts()` on a
+/// surface that wants fresh data (the workouts screen does this on resume).
+final pendingExternalWorkoutsProvider =
+    Provider<List<PendingWorkoutImport>>((ref) {
+  return ref.watch(
+    healthImportProvider.select((s) => s.pendingImports),
+  );
+});
+
 // ---------------------------------------------------------------------------
 // HealthImportNotifier
 // ---------------------------------------------------------------------------

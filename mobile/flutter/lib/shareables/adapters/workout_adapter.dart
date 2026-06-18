@@ -190,6 +190,83 @@ class WorkoutAdapter {
     );
   }
 
+  /// Build a PR-focused `Shareable` for the "Share PR" one-tap action on the
+  /// workout-complete / trophy screen. Unlike `fromCompletion` (which makes a
+  /// whole-session card with PRs as one highlight), this produces a
+  /// `personalRecords`-kind card so the share sheet lands on the medal-ranked
+  /// **PRs template** — the instant, viral "I just hit a PR" card.
+  ///
+  /// `newPRs` entries use the workout-complete shape:
+  ///   { exercise_name, weight_kg, reps?, estimated_1rm_kg?, improvement_kg?,
+  ///     is_all_time_pr? }
+  ///
+  /// Returns `null` when there are no PRs (a legitimate "nothing to share"
+  /// state — the caller surfaces a snackbar).
+  static Shareable? prFromCompletion({
+    required WidgetRef ref,
+    required List<Map<String, dynamic>> newPRs,
+    String? userDisplayName,
+    String? userAvatarUrl,
+  }) {
+    if (newPRs.isEmpty) return null;
+
+    final accent = ref.read(accentColorProvider).getColor(true);
+    final useKg = ref.read(useKgForWorkoutProvider);
+    final unit = useKg ? 'kg' : 'lbs';
+
+    num toDisplay(num kg) => useKg ? kg : kg * 2.20462;
+
+    // Rank PRs by 1RM (best lift first) so the medal order is meaningful.
+    final ranked = List<Map<String, dynamic>>.from(newPRs);
+    double rmOf(Map<String, dynamic> pr) =>
+        (pr['estimated_1rm_kg'] as num?)?.toDouble() ??
+        (pr['weight_kg'] as num?)?.toDouble() ??
+        0;
+    ranked.sort((a, b) => rmOf(b).compareTo(rmOf(a)));
+
+    final highlights = <ShareableMetric>[];
+    for (final pr in ranked.take(5)) {
+      final name = (pr['exercise_name'] as String?)?.trim();
+      if (name == null || name.isEmpty) continue;
+      final weightKg = (pr['weight_kg'] as num?)?.toDouble();
+      final reps = (pr['reps'] as num?)?.toInt();
+      final rm = (pr['estimated_1rm_kg'] as num?)?.toDouble();
+
+      String value;
+      if (weightKg != null && weightKg > 0) {
+        final w = toDisplay(weightKg).round();
+        value = reps != null && reps > 0 ? '$w $unit × $reps' : '$w $unit';
+      } else if (rm != null && rm > 0) {
+        value = '${toDisplay(rm).round()} $unit';
+      } else {
+        value = 'New PR';
+      }
+
+      highlights.add(ShareableMetric(
+        label: name,
+        value: value,
+        icon: Icons.emoji_events_rounded,
+      ));
+    }
+
+    if (highlights.isEmpty) return null;
+
+    // Hero = number of PRs hit this session (the PRs template renders this big).
+    return Shareable(
+      kind: ShareableKind.personalRecords,
+      title: highlights.length == 1 ? 'New PR' : 'New PRs',
+      periodLabel: _fmtDateShort(DateTime.now()),
+      heroValue: highlights.length,
+      heroUnitSingular: 'PR',
+      highlights: highlights,
+      subMetrics: const [],
+      prCount: highlights.length,
+      userDisplayName: userDisplayName,
+      userAvatarUrl: userAvatarUrl,
+      accentColor: accent,
+    );
+  }
+
   /// Per-muscle working-set count derived from each exercise's primary
   /// muscle tag. Index-parallel: `built[i]` is the ShareableExercise built
   /// from `planned[i]`, so the actual logged set count is used when

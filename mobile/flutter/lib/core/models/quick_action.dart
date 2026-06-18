@@ -24,6 +24,12 @@ enum QuickActionBehavior {
   // ingredients). Surfaced because the builder previously had no entry point
   // outside the Food Library.
   recipeBuilder,
+  // Opens the Form Analysis sheet with NO exercise name — the AI auto-detects
+  // the movement from the clip. Record/upload a set from anywhere.
+  formCheck,
+  // Opens the create-custom-exercise sheet (Fill-with-AI). Surfaced so a user
+  // can add a movement from Quick Actions, not just deep in the Library.
+  addExercise,
 }
 
 class QuickAction {
@@ -328,6 +334,24 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/trends/custom',
   ),
+  // Form Check — record/upload any clip, exercise name optional (AI
+  // auto-detects). More-only by default, pinnable; never displaces the
+  // protected primary slots (slot 9 = scan_menu, slot 10 = More).
+  'form_check': QuickAction(
+    id: 'form_check',
+    label: 'Form Check',
+    icon: Icons.sports_gymnastics_outlined,
+    color: Color(0xFF06B6D4),
+    behavior: QuickActionBehavior.formCheck,
+  ),
+  // Add Exercise — open the AI create-exercise sheet (Fill-with-AI) directly.
+  'add_exercise': QuickAction(
+    id: 'add_exercise',
+    label: 'Add Exercise',
+    icon: Icons.add_circle_outline,
+    color: Color(0xFFEF4444),
+    behavior: QuickActionBehavior.addExercise,
+  ),
 };
 
 // Home shortcut bar layout (home-v27 redesign — `CompactQuickActionsRow`):
@@ -367,6 +391,10 @@ const defaultQuickActionOrder = [
   'travel_mode',
   // Calorii-audit surfacing tiles — More-only by default, pinnable.
   'meal_planner', 'recipe_creator', 'from_fridge', 'custom_trends',
+  // Gravl-parity additions — More-only by default, pinnable. Form Check rides
+  // the AI form-analysis flow (no exercise name → AI auto-detects); Add
+  // Exercise opens the Fill-with-AI create-exercise sheet.
+  'form_check', 'add_exercise',
   // 'chat' kept in the catalog for users who want to re-pin it.
   'chat',
 ];

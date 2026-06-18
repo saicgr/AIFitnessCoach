@@ -26,6 +26,7 @@ import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/hormonal_health.dart';
 import '../../../../data/providers/hormonal_health_provider.dart';
 import '../../../../data/services/haptic_service.dart';
+import '../../../cycle/widgets/cycle_phase_ring.dart';
 
 class CycleSummaryCard extends ConsumerStatefulWidget {
   const CycleSummaryCard({super.key});
@@ -121,6 +122,13 @@ class _CycleSummaryCardState extends ConsumerState<CycleSummaryCard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // ── Cycle phase graph — the at-a-glance phase ring,
+                      // revealed when the card is expanded. Same signature
+                      // visual used on the full /cycle screen. ──
+                      const SizedBox(height: 14),
+                      Center(
+                        child: CyclePhaseRing(prediction: pred, accent: c.accent),
+                      ),
                       // ── PMS-prep guidance — only in the 1-5 day luteal window ──
                       ..._buildPmsPrep(context, pred),
                       // ── In-period symptom-log affordance ──

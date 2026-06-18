@@ -76,6 +76,21 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   int _currentPage = 0;
   static const int _totalPages = 3;
 
+  // Skip ("Maybe later") visibility — platform-aware.
+  //
+  // Google Play REQUIRES a clearly-visible dismiss at any price (its
+  // "Paywall Restriction" policy deactivates apps that hide it), so on
+  // Android the skip is visible from the first frame.
+  //
+  // iOS polices *deceptive* dismissal (hidden/trapping X), but tolerates a
+  // short delay before a then-clearly-visible skip. We hide it for a few
+  // seconds so the user reads all three intro beats first, then fade it in.
+  // (The iOS hard-gate — `_experiments.hardGate` scoped to iOS — removes it
+  // entirely; the $1 / trial entry is what keeps that palatable.)
+  bool _skipVisible = !Platform.isIOS;
+  Timer? _skipRevealTimer;
+  static const Duration _kSkipRevealDelay = Duration(seconds: 4);
+
   // v7 first-run redesign: page 0 leads with founder-note proof instead of
   // the phone-mock hero. Kill switch `onboarding_v7_paywall_founder_page`
   // (default ON, fail-open) restores the hero without a redeploy.
@@ -131,8 +146,19 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   @override
   void dispose() {
+    _skipRevealTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// On iOS, reveal the de-emphasized "Maybe later" skip a few seconds after
+  /// the user lands on the last intro page — so they read the offer first.
+  /// No-op on Android (skip is already visible) and once already revealed.
+  void _scheduleSkipReveal() {
+    if (_skipVisible || _skipRevealTimer != null) return;
+    _skipRevealTimer = Timer(_kSkipRevealDelay, () {
+      if (mounted) setState(() => _skipVisible = true);
+    });
   }
 
   void _goToNextPage() {
@@ -789,6 +815,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   physics: const ClampingScrollPhysics(),
                   onPageChanged: (i) {
                     setState(() => _currentPage = i);
+                    // iOS: once the user reaches the last (offer) page, start
+                    // the timer that fades the "Maybe later" skip in.
+                    if (i == _totalPages - 1) _scheduleSkipReveal();
                     // v7: per-page funnel visibility (which beat loses
                     // people: proof → reminder → offer).
                     ref.read(posthogServiceProvider).capture(
@@ -976,21 +1005,34 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               );
             }),
           ),
-          // Quiet exit on the last page only — once user has seen all 3
-          // beats, give them a way out without a buried "Maybe later" on
-          // the first hopeful page.
-          if (isLast) ...[
+          // Quiet exit on the last page only — once the user has seen all 3
+          // beats. Platform-aware:
+          //  • iOS hard-gate (paywall_hard_gate) removes it entirely — the
+          //    $1 / trial entry keeps that palatable, and Apple permits hard
+          //    paywalls for no-free-tier apps. Scoped to iOS only.
+          //  • Otherwise it's shown, but on iOS it fades in a few seconds
+          //    after this page appears (`_scheduleSkipReveal`); Android shows
+          //    it immediately — Google Play requires a clearly-visible
+          //    dismiss at any price ("Paywall Restriction" enforcement).
+          if (isLast && !(_experiments.hardGate && Platform.isIOS)) ...[
             const SizedBox(height: 6),
-            GestureDetector(
-              onTap: () => _handleMaybeLater(context, ref),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Text(
-                  AppLocalizations.of(context).notifsLaterButton,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textMuted.withValues(alpha: 0.7),
+            AnimatedOpacity(
+              opacity: _skipVisible ? 1 : 0,
+              duration: const Duration(milliseconds: 280),
+              child: IgnorePointer(
+                ignoring: !_skipVisible,
+                child: GestureDetector(
+                  onTap: () => _handleMaybeLater(context, ref),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Text(
+                      AppLocalizations.of(context).notifsLaterButton,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: colors.textMuted.withValues(alpha: 0.7),
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -1428,69 +1470,28 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           const SizedBox(height: 18),
 
-          // v7: Cal AI's signature trial TOGGLE, with compliant copy —
-          // auto-renewal + the REAL billed price stated right in the row.
-          // ON = yearly + 7-day trial (default); OFF = monthly, no trial.
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-            decoration: BoxDecoration(
-              color: colors.surface,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                  color: colors.textMuted.withValues(alpha: 0.15)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context).paywallTrialToggleTitle,
-                        style: TextStyle(
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        _selectedBillingCycle == 'yearly'
-                            ? AppLocalizations.of(context)
-                                .paywallTrialToggleOn(yearlyTotal)
-                            : AppLocalizations.of(context)
-                                .paywallTrialToggleOff,
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          color: colors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch.adaptive(
-                  value: _selectedBillingCycle == 'yearly',
-                  activeThumbColor: Colors.white,
-                  activeTrackColor: _paywallAccent,
-                  onChanged: (on) => _selectBillingCycle(
-                      on ? 'yearly' : 'monthly'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
+          // Plan selection is driven entirely by the two cards below — no
+          // trial TOGGLE. Apple's Jan 2026 Guideline 3.1.2c enforcement
+          // rejects a switch that enables/disables a free trial (this is
+          // what Cal AI was pulled for in Apr 2026), independent of the copy
+          // around it. The yearly card carries the trial terms compliantly.
           Row(
             children: [
               Expanded(
                 child: _PlanTile(
                   title: AppLocalizations.of(context).xpGoalsMonthly,
+                  // COMPLIANCE: the headline stays the REAL renewal price
+                  // ($7.99/mo); the "$1 first month" intro is the small
+                  // ribbon, never the other way around (Cal AI was pulled for
+                  // the inverse). Ribbon only when the $1-intro A/B is on AND
+                  // the store offering exists (flag `paywall_monthly_intro`,
+                  // default OFF — dormant until then).
                   price: monthlyPrice,
                   unit: '/mo',
                   isSelected: _selectedBillingCycle == 'monthly',
                   onTap: () => _selectBillingCycle('monthly'),
                   colors: colors,
-                  ribbon: null,
+                  ribbon: _experiments.monthlyIntro ? 'FIRST MONTH \$1' : null,
                   anchorPrice: null,
                 ),
               ),
@@ -1518,13 +1519,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           const InlineReferralExpander(),
           const SizedBox(height: 8),
           // App Store Guideline 3.1.2 + Google Play subscription policy:
-          // auto-renewal terms must be disclosed adjacent to the purchase CTA.
+          // auto-renewal AND cancellation terms must be disclosed adjacent to
+          // the purchase CTA. Google Play rejects/deactivates paywalls that
+          // omit how-to-cancel + the trial→paid conversion terms, so on the
+          // trial path we state explicitly that cancelling before the trial
+          // ends means no charge.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Subscription auto-renews at the price above unless cancelled at '
-              'least 24 hours before the end of the current period. Manage or '
-              'cancel anytime in your device account settings.',
+              _selectedBillingCycle == 'yearly'
+                  ? 'Your 7-day free trial is free — cancel before it ends and '
+                    'you won’t be charged. After the trial, the subscription '
+                    'auto-renews at the price above unless cancelled at least '
+                    '24 hours before the period ends. Cancel anytime in your '
+                    'device account settings.'
+                  : 'Subscription auto-renews at the price above unless '
+                    'cancelled at least 24 hours before the end of the current '
+                    'period. Cancel anytime in your device account settings.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 11,

@@ -841,6 +841,38 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
     );
   }
 
+  /// Instant PR shareable: opens the unified `ShareableSheet` pre-loaded on
+  /// the medal-ranked **PRs template** with this session's personal records.
+  /// One tap from the PR celebration → a viral "I just hit a PR" card, reusing
+  /// the existing shareables infra (no new share pipeline). Only shown when
+  /// PRs exist; surfaces a snackbar if the adapter can't build a card.
+  Future<void> _showPRShareSheet() async {
+    HapticFeedback.mediumImpact();
+
+    final shareable = WorkoutAdapter.prFromCompletion(
+      ref: ref,
+      newPRs: _newPRs,
+      userDisplayName: ref.read(authStateProvider).user?.displayName,
+    );
+
+    if (!mounted) return;
+    if (shareable == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context)!.completeNoShareData),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      // Land directly on the PRs card so the share is truly one-tap.
+      initialTemplate: ShareableTemplate.prs,
+    );
+  }
+
   /// Calls the backend `POST /workouts/{id}/share-link` endpoint and
   /// returns the public URL so the share sheet can show it in the
   /// `ShareLinkPill`. Returns null on any failure — the pill will reflect

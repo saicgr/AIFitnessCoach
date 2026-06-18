@@ -69,6 +69,22 @@ class PaywallExperiments {
   /// reversible). The free trial is what keeps a hard gate palatable.
   final bool hardGate;
 
+  /// $1 first-month introductory offer on the MONTHLY plan (A/B vs the
+  /// 7-day free trial). When TRUE, the monthly plan tile advertises "FIRST
+  /// MONTH $1" and the purchase should route to the $1-intro offering.
+  ///
+  /// Data: low paid intros lift conversion ~38% and self-select intent; a
+  /// $1→$7.99/mo step is gentle (vs the $1→$59.99/yr cliff), with a day-30
+  /// annual upsell migrating keepers into annual's ~3× LTV.
+  ///
+  /// Defaults to FALSE: the intro offering (`onboarding_intro_monthly`) does
+  /// NOT yet exist in App Store Connect / Play Console / RevenueCat, and on
+  /// iOS a product can carry only ONE intro at a time — so the $1 intro
+  /// REPLACES the monthly 7-day trial for this arm. Flip the PostHog flag
+  /// [flagMonthlyIntro] on ONLY after that offering is live; the UI copy is
+  /// otherwise dormant and the purchase keeps using the standard package.
+  final bool monthlyIntro;
+
   const PaywallExperiments({
     required this.noPaymentMicrocopy,
     required this.secureCheckoutBadge,
@@ -77,6 +93,7 @@ class PaywallExperiments {
     required this.hardPaywallDiscount,
     required this.softPaywallExitOffer,
     required this.hardGate,
+    required this.monthlyIntro,
   });
 
   /// Shipped defaults: the honest, no-discount conversion levers ON; both
@@ -91,6 +108,7 @@ class PaywallExperiments {
     hardPaywallDiscount: false,
     softPaywallExitOffer: false,
     hardGate: false,
+    monthlyIntro: false,
   );
 
   /// PostHog flag keys, one per lever. Create these in PostHog to A/B test;
@@ -102,6 +120,7 @@ class PaywallExperiments {
   static const String flagHardPaywallDiscount = 'paywall_hard_paywall_discount';
   static const String flagSoftPaywallExitOffer = 'paywall_soft_exit_offer';
   static const String flagHardGate = 'paywall_hard_gate';
+  static const String flagMonthlyIntro = 'paywall_monthly_intro';
 }
 
 /// Maps a raw PostHog flag value to an enabled/disabled bool.
@@ -166,6 +185,8 @@ Future<PaywallExperiments> loadPaywallExperiments(
         defaults.softPaywallExitOffer),
     resolve(PaywallExperiments.flagHardGate,
         defaults.hardGate),
+    resolve(PaywallExperiments.flagMonthlyIntro,
+        defaults.monthlyIntro),
   ]);
 
   if (kDebugMode) {
@@ -176,7 +197,8 @@ Future<PaywallExperiments> loadPaywallExperiments(
         'pricingPsychology=${results[3]}, '
         'hardPaywallDiscount=${results[4]}, '
         'softPaywallExitOffer=${results[5]}, '
-        'hardGate=${results[6]}');
+        'hardGate=${results[6]}, '
+        'monthlyIntro=${results[7]}');
   }
 
   return PaywallExperiments(
@@ -187,5 +209,6 @@ Future<PaywallExperiments> loadPaywallExperiments(
     hardPaywallDiscount: results[4],
     softPaywallExitOffer: results[5],
     hardGate: results[6],
+    monthlyIntro: results[7],
   );
 }

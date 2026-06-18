@@ -14,6 +14,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../widgets/design_system/zealova.dart';
 import '../../data/models/nutrition.dart';
+import '../../data/models/cook_event.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
@@ -32,6 +33,8 @@ import '../../widgets/glass_sheet.dart';
 import '../../widgets/guest_upgrade_sheet.dart';
 import '../../widgets/main_shell.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
+import '../../data/providers/recipe_providers.dart' show activeCookEventsProvider;
+import '../../data/providers/usual_meal_provider.dart';
 import '../../data/services/food_search_service.dart' as search;
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../data/models/coach_persona.dart';
@@ -69,6 +72,7 @@ part 'log_meal_sheet_ui.dart';
 part 'log_meal_sheet_ui_1.dart';
 part 'log_meal_sheet_ui_2.dart';
 part 'log_meal_sheet_l2.dart';
+part 'widgets/quick_log_pills.dart';
 
 const String _kMealTypeLastUsedKey = 'meal_type';
 const String _kFoodBrowserLastUsedKey = 'food_browser_filter';
@@ -313,6 +317,23 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   /// (L2). Null when the slot came from an explicit deep link or the
   /// user's last-used choice — used only to show the "predicted" hint.
   MealType? _predictedMealSlot;
+
+  // ─── WS6 smart quick-log pills state ──────────────────────────
+  /// Yesterday's logs (device-local "yesterday"), captured from the same
+  /// recent-logs fetch that builds [_frequentMeals]. Used by the "Same
+  /// [slot] as yesterday" pill — its macros are exact, so its pill is a
+  /// one-tap optimistic log. Empty when the user logged nothing yesterday.
+  List<FoodLog> _yesterdayLogs = const [];
+  /// The active cook-events (leftovers) for the smart-pill row. Fetched in
+  /// the background alongside [_frequentMeals] so the leftover pill is ready
+  /// without blocking sheet open. Empty when there are no leftovers.
+  List<ActiveCookEvent> _leftoverEvents = const [];
+  /// True once the smart-pill sources (leftovers + yesterday) have resolved
+  /// at least once — drives the pill-row skeleton vs. content/empty.
+  bool _smartPillsLoaded = false;
+  /// Guards the one-tap optimistic-log path so a rapid double-tap of the
+  /// same exact-macro pill can't fire two logs before the row rebuilds.
+  bool _smartPillLogging = false;
 
   // Mood tracking state
   FoodMood? _moodBefore;
