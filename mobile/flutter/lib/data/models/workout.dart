@@ -518,6 +518,12 @@ class Workout extends Equatable {
       knownExerciseCount: knownExerciseCount ?? this.knownExerciseCount,
     );
   }
+
+  /// A copy of this workout reset for a fresh "redo" run: the same plan
+  /// (exercises / targets / metadata) with its completion state cleared so the
+  /// active-workout player treats it as a new, untracked session instead of an
+  /// already-finished one. Used by the Summary header "Redo" action.
+  Workout cloneForRedo() => copyWith(isCompleted: false);
 }
 
 /// Personal Record info returned from workout completion API

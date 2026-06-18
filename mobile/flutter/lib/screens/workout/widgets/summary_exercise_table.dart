@@ -240,6 +240,61 @@ class SummaryExerciseTable extends StatelessWidget {
   }
 }
 
+/// Just the set grid (column header + set rows + timing rows) for ONE
+/// exercise, WITHOUT the exercise-name header. Used by the collapsible
+/// [SummaryExerciseCard] which renders its own richer header (AI button,
+/// detail chevron, collapsed summary), so the table body must not repeat the
+/// name. Adaptive columns match [SummaryExerciseTable] exactly.
+class SummaryExerciseSetsTable extends StatelessWidget {
+  final SummaryExerciseData exercise;
+  final bool useKg;
+
+  const SummaryExerciseSetsTable({
+    super.key,
+    required this.exercise,
+    required this.useKg,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final sets = exercise.sets;
+    if (exercise.isSkipped || sets.isEmpty) return const SizedBox.shrink();
+
+    final showPrevious = sets.any((s) =>
+        (s.previousWeightKg ?? s.previousWeightLbs) != null ||
+        s.previousReps != null);
+    final showTarget = sets.any((s) =>
+        (s.targetWeightKg ?? s.targetWeightLbs) != null || s.targetReps != null);
+    final showRir = sets.any((s) => s.rir != null);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SummaryTableHeader(
+          useKg: useKg,
+          isDark: isDark,
+          showPrevious: showPrevious,
+          showTarget: showTarget,
+          showRir: showRir,
+        ),
+        for (final set in sets) ...[
+          _SummarySetRow(
+            set: set,
+            useKg: useKg,
+            isDark: isDark,
+            showPrevious: showPrevious,
+            showTarget: showTarget,
+            showRir: showRir,
+          ),
+          if (_SummaryTimingRow.hasMeaningfulTiming(set))
+            _SummaryTimingRow(set: set, isDark: isDark),
+        ],
+      ],
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // EXERCISE SECTION (header + table)
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -559,7 +614,6 @@ void _showSetNotesSheet({
   List<String> photoUrls = const [],
   String? completedAt,
 }) {
-  final bg = isDark ? const Color(0xFF111111) : Colors.white;
   final fg = isDark ? Colors.white : Colors.black87;
   final muted = isDark ? Colors.white60 : Colors.black54;
 

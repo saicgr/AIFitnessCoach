@@ -19,11 +19,11 @@ import '../../data/models/workout.dart';
 import '../../widgets/heart_rate_chart.dart';
 import '../library/providers/muscle_group_images_provider.dart';
 import 'widgets/hr_connect_chip.dart';
+import 'widgets/summary_exercise_card.dart';
 import 'widgets/summary_exercise_table.dart';
 import 'widgets/summary_floating_pill.dart';
 import 'widgets/summary_hero_stats.dart';
 import 'widgets/workout_ai_recap_card.dart';
-import '../../widgets/glass_sheet.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -55,6 +55,12 @@ class WorkoutSummaryGeneral extends StatelessWidget {
     final workoutName = summary.workout['name'] as String? ?? 'Workout';
     final scheduledDate = summary.workout['scheduled_date'] as String?;
     final exercisesJson = summary.workout['exercises_json'];
+
+    // Ids the per-exercise AI + detail nav need.
+    final workoutId = summary.workout['id'] as String? ?? '';
+    final workoutLogId = metadata?['id'] as String?;
+    final gymProfileId = (metadata?['gym_profile_id'] ??
+        summary.workout['gym_profile_id']) as String?;
 
     // Parse exercises for muscles worked
     final exercises = _parseExercises(exercisesJson);
@@ -137,6 +143,35 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
           const SizedBox(height: 16),
 
+          // 4b. Achievements — promoted so PRs/accomplishments are front-and-
+          // centre right under the headline numbers (not buried at the bottom).
+          if (personalRecords.isNotEmpty) ...[
+            _PersonalRecordsSection(
+              records: personalRecords,
+              isDark: isDark,
+            )
+                .animate()
+                .fadeIn(
+                  duration: 400.ms,
+                  delay: Duration(milliseconds: 100 * sectionIndex++),
+                )
+                .slideY(begin: 0.05, end: 0),
+            const SizedBox(height: 16),
+          ],
+
+          // 4c. Hydration — water/drink intake logged during the session,
+          // promoted out of the old buried "more details" disclosure.
+          if (_HydrationStrip.totalMlOf(metadata) > 0) ...[
+            _HydrationStrip(metadata: metadata, isDark: isDark)
+                .animate()
+                .fadeIn(
+                  duration: 400.ms,
+                  delay: Duration(milliseconds: 100 * sectionIndex++),
+                )
+                .slideY(begin: 0.05, end: 0),
+            const SizedBox(height: 16),
+          ],
+
           // 4. Heart Rate chart — only when the session has readings. The
           // no-monitor case is a slim hint chip near the bottom (section 8)
           // instead of a full-height empty card up here.
@@ -167,10 +202,15 @@ class WorkoutSummaryGeneral extends StatelessWidget {
 
           if (exercises.isNotEmpty) const SizedBox(height: 16),
 
-          // 5. Exercise Table
+          // 5. Exercises — collapsible per-exercise cards (tap to expand the
+          // full set grid; "✨ AI" for a per-exercise breakdown; "›" opens the
+          // exercise detail incl. its Form-video tab).
           if (exerciseTableData.isNotEmpty)
-            _ExerciseTableSection(
+            _ExerciseCardsSection(
               exercises: exerciseTableData,
+              workoutId: workoutId,
+              workoutLogId: workoutLogId,
+              gymProfileId: gymProfileId,
               isDark: isDark,
             )
                 .animate()
@@ -181,21 +221,6 @@ class WorkoutSummaryGeneral extends StatelessWidget {
                 .slideY(begin: 0.05, end: 0),
 
           if (exerciseTableData.isNotEmpty) const SizedBox(height: 16),
-
-          // 5.5. Personal Records
-          if (personalRecords.isNotEmpty)
-            _PersonalRecordsSection(
-              records: personalRecords,
-              isDark: isDark,
-            )
-                .animate()
-                .fadeIn(
-                  duration: 400.ms,
-                  delay: Duration(milliseconds: 100 * sectionIndex++),
-                )
-                .slideY(begin: 0.05, end: 0),
-
-          if (personalRecords.isNotEmpty) const SizedBox(height: 16),
 
           // 7. Post-Workout Feedback
           if (feedback != null) ...[
@@ -1128,90 +1153,104 @@ class _MuscleAvatar extends StatelessWidget {
 // SECTION 5: EXERCISE TABLE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-class _ExerciseTableSection extends StatelessWidget {
+/// The per-exercise list: a collapse/expand-all header + one
+/// [SummaryExerciseCard] per exercise. Stateful only to own the broadcast
+/// [ValueNotifier] that drives expand-all / collapse-all.
+class _ExerciseCardsSection extends StatefulWidget {
   final List<SummaryExerciseData> exercises;
+  final String workoutId;
+  final String? workoutLogId;
+  final String? gymProfileId;
   final bool isDark;
 
-  const _ExerciseTableSection({
+  const _ExerciseCardsSection({
     required this.exercises,
+    required this.workoutId,
+    required this.workoutLogId,
+    required this.gymProfileId,
     required this.isDark,
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Text(
-              AppLocalizations.of(context).workoutSummaryGeneralExercises,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ),
-          const SizedBox(height: 4),
-          SummaryExerciseTable(
-            exercises: exercises,
-            useKg: false,
-            onExerciseTap: (name, libraryId) {
-              // Return a callback that shows exercise info in a bottom sheet
-              return () => _showExerciseSheet(context, name, libraryId);
-            },
-          ),
-        ],
-      ),
-    );
+  State<_ExerciseCardsSection> createState() => _ExerciseCardsSectionState();
+}
+
+class _ExerciseCardsSectionState extends State<_ExerciseCardsSection> {
+  final ValueNotifier<bool?> _expandAll = ValueNotifier<bool?>(null);
+  bool _allExpanded = false;
+
+  @override
+  void dispose() {
+    _expandAll.dispose();
+    super.dispose();
   }
 
-  void _showExerciseSheet(
-      BuildContext context, String name, String? libraryId) {
-    final isDarkSheet = Theme.of(context).brightness == Brightness.dark;
-    showGlassSheet<void>(
-      context: context,
-      builder: (_) => GlassSheet(
-        maxHeightFraction: 0.4,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              name,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: isDarkSheet ? AppColors.textPrimary : Colors.black87,
-              ),
-            ),
-            if (libraryId != null) ...[
-              const SizedBox(height: 8),
+  void _toggleAll() {
+    setState(() => _allExpanded = !_allExpanded);
+    _expandAll.value = _allExpanded;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 2, right: 2, bottom: 8),
+          child: Row(
+            children: [
               Text(
-                AppLocalizations.of(context)!.workoutSummaryGeneralLibraryId(libraryId),
+                AppLocalizations.of(context).workoutSummaryGeneralExercises,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: isDarkSheet
-                      ? AppColors.textMuted
-                      : Colors.grey.shade500,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? AppColors.textMuted : Colors.grey.shade500,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _toggleAll,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _allExpanded ? 'Collapse all' : 'Expand all',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textSecondary
+                            : Colors.grey.shade700,
+                      ),
+                    ),
+                    Icon(
+                      _allExpanded
+                          ? Icons.unfold_less_rounded
+                          : Icons.unfold_more_rounded,
+                      size: 16,
+                      color:
+                          isDark ? AppColors.textSecondary : Colors.grey.shade700,
+                    ),
+                  ],
                 ),
               ),
             ],
-          ],
+          ),
         ),
-      ),
+        for (final ex in widget.exercises)
+          SummaryExerciseCard(
+            key: ValueKey('ex_${ex.exerciseIndex}_${ex.name}'),
+            exercise: ex,
+            workoutId: widget.workoutId,
+            workoutLogId: widget.workoutLogId,
+            gymProfileId: widget.gymProfileId,
+            useKg: false,
+            expandSignal: _expandAll,
+          ),
+      ],
     );
   }
 }
@@ -1530,6 +1569,85 @@ class _PostWorkoutFeedbackSection extends StatelessWidget {
           return w[0].toUpperCase() + w.substring(1).toLowerCase();
         })
         .join(' ');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HYDRATION STRIP
+// ═══════════════════════════════════════════════════════════════════════════════
+
+class _HydrationStrip extends StatelessWidget {
+  final Map<String, dynamic>? metadata;
+  final bool isDark;
+
+  const _HydrationStrip({required this.metadata, required this.isDark});
+
+  /// Total drink intake (ml) for this session: prefers the rolled-up
+  /// `drink_intake_ml`, else sums per-event amounts. 0 → strip is hidden.
+  static int totalMlOf(Map<String, dynamic>? metadata) {
+    if (metadata == null) return 0;
+    final rolled = (metadata['drink_intake_ml'] as num?)?.toInt();
+    if (rolled != null && rolled > 0) return rolled;
+    final raw = metadata['drink_events'];
+    if (raw is List) {
+      var sum = 0;
+      for (final e in raw) {
+        if (e is Map) {
+          final ml = (e['amount_ml'] ?? e['amountMl']) as num?;
+          if (ml != null) sum += ml.toInt();
+        }
+      }
+      return sum;
+    }
+    return 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final totalMl = totalMlOf(metadata);
+    final oz = (totalMl / 29.5735).round();
+    const water = Color(0xFF38BDF8);
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: water.withValues(alpha: isDark ? 0.10 : 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: water.withValues(alpha: 0.28)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.water_drop_rounded, size: 20, color: water),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'HYDRATION',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                    color: isDark ? AppColors.textMuted : Colors.grey.shade500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'You drank $totalMl ml ($oz oz) during this session',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

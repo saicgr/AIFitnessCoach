@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
 /// A glassmorphic floating pill toggle for switching between
-/// workout summary views (Detail / General / Advanced).
+/// workout summary views (Plan / Summary).
 class SummaryFloatingPill extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onChanged;
@@ -15,7 +15,7 @@ class SummaryFloatingPill extends StatelessWidget {
     super.key,
     required this.selectedIndex,
     required this.onChanged,
-    this.labels = const ['Detail', 'Summary', 'Advanced'],
+    this.labels = const ['Plan', 'Summary'],
   });
 
   static const double _pillHeight = 48;

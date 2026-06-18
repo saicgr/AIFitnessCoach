@@ -2,20 +2,23 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
-import '../../core/theme/app_typography.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../data/services/haptic_service.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../shareables/adapters/workout_adapter.dart';
+import '../../shareables/shareable_sheet.dart';
 import '../../widgets/design_system/zealova.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/lottie_animations.dart';
 import 'workout_detail_screen.dart';
 import 'workout_summary_general.dart';
-import 'workout_summary_advanced.dart';
+import 'widgets/save_to_library_sheet.dart';
 import 'widgets/summary_floating_pill.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -23,24 +26,29 @@ import '../../l10n/generated/app_localizations.dart';
 /// than a raw int) so callers — including the `?tab=` query param on
 /// `/workout-summary/:id` — can deep-link to a specific pane without knowing
 /// the pill's underlying index. Declaration order matches the pill layout
-/// (Detail, Summary, Advanced) so the built-in `Enum.index` IS the pill index.
+/// (Plan, Summary) so the built-in `Enum.index` IS the pill index.
+///
+/// The legacy 3-pane layout (Detail/Summary/Advanced) was merged into 2 panes
+/// — "Plan" (the former Detail) and one rich "Summary" scroll that folds in the
+/// worthwhile Advanced analytics. `fromQuery` keeps the old `?tab=` deep links
+/// working: `detail`→plan, and `summary`/`general`/`advanced`→summary.
 enum WorkoutSummaryTab {
-  detail,
-  summary,
-  advanced;
+  plan,
+  summary;
 
   /// Parse the `?tab=` query param. Unknown / missing values resolve to
-  /// [detail] so the existing "open the workout detail" entry points keep
+  /// [plan] so the existing "open the workout detail" entry points keep
   /// their behaviour.
   static WorkoutSummaryTab fromQuery(String? raw) {
     switch ((raw ?? '').toLowerCase()) {
       case 'summary':
       case 'general':
+      case 'advanced': // merged into Summary — keep old deep links alive
         return WorkoutSummaryTab.summary;
-      case 'advanced':
-        return WorkoutSummaryTab.advanced;
+      case 'plan':
+      case 'detail':
       default:
-        return WorkoutSummaryTab.detail;
+        return WorkoutSummaryTab.plan;
     }
   }
 }
@@ -52,7 +60,7 @@ class WorkoutSummaryScreenV2 extends ConsumerStatefulWidget {
   const WorkoutSummaryScreenV2({
     super.key,
     required this.workoutId,
-    this.initialTab = WorkoutSummaryTab.detail,
+    this.initialTab = WorkoutSummaryTab.plan,
   });
 
   @override
@@ -62,7 +70,7 @@ class WorkoutSummaryScreenV2 extends ConsumerStatefulWidget {
 
 class _WorkoutSummaryScreenV2State
     extends ConsumerState<WorkoutSummaryScreenV2> {
-  late int _selectedView = widget.initialTab.index; // 0 = Detail, 1 = General, 2 = Advanced
+  late int _selectedView = widget.initialTab.index; // 0 = Plan, 1 = Summary
   WorkoutSummaryResponse? _summaryData;
   Map<String, dynamic>? _metadata;
   Workout? _parsedWorkout;
@@ -153,8 +161,9 @@ class _WorkoutSummaryScreenV2State
 
     final topPadding = MediaQuery.of(context).padding.top;
 
-    // Detail tab renders the full WorkoutDetailScreen (which has its own Scaffold + back button)
-    // General/Advanced tabs render inside this screen's Scaffold
+    // Plan tab renders the full WorkoutDetailScreen (its own Scaffold + back
+    // button + favorite/save/overflow actions). Summary tab renders inside
+    // this screen's Scaffold with its own header action cluster.
     if (_selectedView == 0) {
       return Stack(
         children: [
@@ -179,32 +188,34 @@ class _WorkoutSummaryScreenV2State
         // Force Stack to fill the screen so the pill anchors to the real bottom
         const SizedBox.expand(),
 
-        // General or Advanced view — Positioned.fill so the AnimatedSwitcher's
-        // child (a SingleChildScrollView in Advanced) gets the full Stack
-        // width instead of collapsing to wrap-content.
+        // The single rich Summary scroll. Positioned.fill so its
+        // SingleChildScrollView gets the full Stack width.
         Positioned.fill(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: _selectedView == 1
-                ? WorkoutSummaryGeneral(
-                    key: const ValueKey('general'),
-                    data: _summaryData,
-                    metadata: _metadata,
-                    topPadding: topPadding,
-                  )
-                : WorkoutSummaryAdvanced(
-                    key: const ValueKey('advanced'),
-                    data: _summaryData,
-                    metadata: _metadata,
-                    topPadding: topPadding,
-                  ),
+          child: WorkoutSummaryGeneral(
+            key: const ValueKey('summary'),
+            data: _summaryData,
+            metadata: _metadata,
+            topPadding: topPadding,
           ),
         ),
 
-        // Floating back button (only for General/Advanced — Detail has its own)
-        PositionedDirectional(top: topPadding + 8,
+        // Floating back button (Plan tab has its own).
+        PositionedDirectional(
+          top: topPadding + 8,
           start: 16,
           child: const GlassBackButton(),
+        ),
+
+        // Header action cluster — Share / Favorite / Save / Redo.
+        PositionedDirectional(
+          top: topPadding + 8,
+          end: 12,
+          child: _SummaryHeaderActions(
+            workoutId: widget.workoutId,
+            workout: _parsedWorkout,
+            summary: _summaryData,
+            metadata: _metadata,
+          ),
         ),
 
         // Floating pill at bottom
@@ -280,6 +291,197 @@ class _WorkoutSummaryScreenV2State
               expand: false,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HEADER ACTIONS — Share / Favorite / Save / Redo
+//
+// The completed-workout Summary header previously had only a back button, so
+// the user "could not share / favorite / save / redo after finishing". This
+// cluster wires the actions that already exist elsewhere (Share from the legacy
+// summary screen, Favorite + Save from the workout detail screen) plus a new
+// Redo that re-runs the same plan.
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _SummaryHeaderActions extends ConsumerStatefulWidget {
+  final String workoutId;
+  final Workout? workout;
+  final WorkoutSummaryResponse? summary;
+  final Map<String, dynamic>? metadata;
+
+  const _SummaryHeaderActions({
+    required this.workoutId,
+    required this.workout,
+    required this.summary,
+    required this.metadata,
+  });
+
+  @override
+  ConsumerState<_SummaryHeaderActions> createState() =>
+      _SummaryHeaderActionsState();
+}
+
+class _SummaryHeaderActionsState extends ConsumerState<_SummaryHeaderActions> {
+  late bool _isFavorite = widget.workout?.isFavorite ?? false;
+
+  Future<void> _share() async {
+    final workout = widget.workout;
+    final summary = widget.summary;
+    if (workout == null || summary == null) {
+      _toast(AppLocalizations.of(context).workoutSummaryNoWorkoutDataTo);
+      return;
+    }
+    HapticService.selection();
+    final shareable = WorkoutAdapter.fromCompletion(
+      ref: ref,
+      workoutName: workout.name ?? 'Workout',
+      durationSeconds: (workout.durationMinutes ?? 0) * 60,
+      plannedExercises: workout.exercises,
+      loggedSets: summary.setLogs,
+      setsJsonRaw: widget.metadata?['sets_json'],
+      calories: workout.estimatedCalories,
+    );
+    if (!mounted) return;
+    if (shareable == null) {
+      _toast(AppLocalizations.of(context).workoutSummaryNoWorkoutDataTo);
+      return;
+    }
+    await ShareableSheet.show(context, data: shareable);
+  }
+
+  Future<void> _toggleFavorite() async {
+    HapticService.selection();
+    final next = !_isFavorite;
+    setState(() => _isFavorite = next); // optimistic
+    try {
+      await ref
+          .read(workoutRepositoryProvider)
+          .toggleWorkoutFavorite(widget.workoutId);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isFavorite = !next); // rollback
+      _toast('Could not update favorite');
+    }
+  }
+
+  Future<void> _save() async {
+    final name = widget.workout?.name ?? 'Workout';
+    HapticService.selection();
+    try {
+      final saved = await showSaveToLibrarySheet(
+        context,
+        workoutId: widget.workoutId,
+        defaultName: 'Copy of $name',
+      );
+      if (!mounted) return;
+      if (saved) _toast('Saved to your library');
+    } catch (e) {
+      if (mounted) _toast('Could not save: $e');
+    }
+  }
+
+  void _redo() {
+    final workout = widget.workout;
+    if (workout == null) return;
+    HapticService.medium();
+    context.push('/active-workout', extra: workout.cloneForRedo());
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider).getColor(isDark);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _GlassActionButton(
+          icon: Icons.ios_share_rounded,
+          tooltip: 'Share',
+          isDark: isDark,
+          onTap: _share,
+        ),
+        const SizedBox(width: 8),
+        _GlassActionButton(
+          icon: _isFavorite
+              ? Icons.favorite_rounded
+              : Icons.favorite_border_rounded,
+          tooltip: 'Favorite',
+          isDark: isDark,
+          color: _isFavorite ? const Color(0xFFFF4D6D) : null,
+          onTap: _toggleFavorite,
+        ),
+        const SizedBox(width: 8),
+        _GlassActionButton(
+          icon: Icons.bookmark_add_outlined,
+          tooltip: 'Save to library',
+          isDark: isDark,
+          onTap: _save,
+        ),
+        const SizedBox(width: 8),
+        _GlassActionButton(
+          icon: Icons.replay_rounded,
+          tooltip: 'Redo workout',
+          isDark: isDark,
+          color: accent,
+          onTap: _redo,
+        ),
+      ],
+    );
+  }
+}
+
+class _GlassActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool isDark;
+  final Color? color;
+  final VoidCallback onTap;
+
+  const _GlassActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.isDark,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark
+        ? AppColors.elevated.withValues(alpha: 0.8)
+        : Colors.white.withValues(alpha: 0.85);
+    final border = isDark
+        ? AppColors.cardBorder.withValues(alpha: 0.6)
+        : Colors.black.withValues(alpha: 0.08);
+    final fg = color ?? (isDark ? AppColors.textPrimary : Colors.black87);
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: bg,
+              shape: BoxShape.circle,
+              border: Border.all(color: border),
+            ),
+            child: Icon(icon, size: 19, color: fg),
+          ),
         ),
       ),
     );
