@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -17,6 +19,7 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../food_history_screen.dart';
+import '../log_meal_sheet.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Defensive access to the new FoodLog signal columns (FE-E adds typed fields)
@@ -140,6 +143,10 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
   bool _loadingLogs = true;
   bool _logsError = false;
   String? _scrollToDateKey; // set when a calendar day is tapped → Feed scroll
+
+  // Log IDs whose photo upload is in flight — drives the per-card loading state
+  // on the "Add a photo" affordance so the user gets instant feedback.
+  final Set<String> _attachingLogIds = <String>{};
 
   // My Foods grid.
   List<SavedFood> _savedFoods = const [];
@@ -306,6 +313,113 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
     });
   }
 
+  /// CAMERA-FIRST — open the full log flow straight on the camera. After the
+  /// sheet closes we refresh logs so a freshly snapped meal lands in the
+  /// Calendar + Feed without a manual pull.
+  Future<void> _snapMeal() async {
+    HapticService.medium();
+    await showLogMealSheet(context, ref, autoOpenCamera: true);
+    if (!mounted) return;
+    await _loadLogs();
+  }
+
+  /// Attach a photo to an EXISTING photo-less log. Defaults to the CAMERA but
+  /// offers a gallery option via a tiny chooser. Optimistically flips the
+  /// card into a loading state, uploads via the repo, then stamps the returned
+  /// imageUrl onto the in-memory log so the photo appears INSTANTLY in both the
+  /// Feed card and the Calendar day cell (both read the same `_logs`).
+  Future<void> _attachPhotoToLog(FoodLog log) async {
+    if (log.id.isEmpty) return;
+    if (_attachingLogIds.contains(log.id)) return; // already uploading
+
+    final source = await _pickPhotoSource();
+    if (source == null || !mounted) return;
+
+    HapticService.medium();
+    XFile? shot;
+    try {
+      shot = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 1600,
+        imageQuality: 85,
+      );
+    } catch (e) {
+      debugPrint('❌ [Journal] image pick failed: $e');
+      if (!mounted) return;
+      _showSnack('Could not access the camera or photos. Enable permission and try again.');
+      return;
+    }
+    if (shot == null || !mounted) return; // user cancelled
+
+    final logId = log.id;
+    setState(() => _attachingLogIds.add(logId));
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      final newUrl = await repo.attachPhotoToFoodLog(
+        logId: logId,
+        userId: widget.userId,
+        image: File(shot.path),
+      );
+      if (!mounted) return;
+      // Optimistic in-place update — replace the log entry with a copy carrying
+      // the new imageUrl so Calendar + Feed repaint with the photo immediately.
+      setState(() {
+        _logs = [
+          for (final l in _logs)
+            (l.id == logId) ? l.copyWith(imageUrl: newUrl) : l,
+        ];
+        _attachingLogIds.remove(logId);
+      });
+      await _writeCache();
+      HapticService.success();
+    } catch (e) {
+      debugPrint('❌ [Journal] attach photo failed: $e');
+      if (!mounted) return;
+      setState(() => _attachingLogIds.remove(logId));
+      _showSnack('Could not attach the photo. Please try again.');
+    }
+  }
+
+  /// Tiny source chooser — camera first, gallery second. Returns null on cancel.
+  Future<ImageSource?> _pickPhotoSource() {
+    final tc = ThemeColors.of(context);
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: tc.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(Icons.photo_camera_outlined, color: tc.accent),
+              title: Text('Take a photo',
+                  style: ZType.ser(15, color: tc.textPrimary)),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library_outlined, color: tc.accent),
+              title: Text('Choose from library',
+                  style: ZType.ser(15, color: tc.textPrimary)),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   // ── Build ────────────────────────────────────────────────────────────────
 
   @override
@@ -331,6 +445,10 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
             onViewChanged: _setView,
             onAskCoach: _openCoach,
           ),
+          // CAMERA-FIRST — prominent "Snap a meal" CTA. The Journal renders
+          // only REAL photos, so making capture obvious is how the calendar
+          // fills with imagery over time.
+          _SnapMealCta(onTap: _snapMeal),
           Expanded(
             child: IndexedStack(
               index: _view,
@@ -481,6 +599,8 @@ class _NutritionJournalTabState extends ConsumerState<NutritionJournalTab>
                             tags: log.journalTags,
                             symptoms: log.journalSymptoms,
                             highlight: highlight,
+                            attaching: _attachingLogIds.contains(log.id),
+                            onAddPhoto: () => _attachPhotoToLog(log),
                           ),
                       ],
                     );
@@ -591,6 +711,47 @@ class _JournalHeaderBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Camera-first CTA — prominent "Snap a meal" bar under the header
+// ═════════════════════════════════════════════════════════════════════════════
+
+class _SnapMealCta extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SnapMealCta({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Container(
+      color: tc.background,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: Material(
+        color: tc.accent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.photo_camera_rounded,
+                    size: 18, color: tc.accentContrast),
+                const SizedBox(width: 10),
+                Text(
+                  'SNAP A MEAL',
+                  style: ZType.lbl(12, color: tc.accentContrast, letterSpacing: 1.8),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -868,6 +1029,8 @@ class _FeedCard extends StatelessWidget {
   final List<String> tags;
   final List<String> symptoms;
   final bool highlight;
+  final bool attaching;
+  final VoidCallback onAddPhoto;
   const _FeedCard({
     required this.log,
     required this.title,
@@ -875,6 +1038,8 @@ class _FeedCard extends StatelessWidget {
     required this.tags,
     required this.symptoms,
     required this.highlight,
+    required this.attaching,
+    required this.onAddPhoto,
   });
 
   @override
@@ -907,13 +1072,22 @@ class _FeedCard extends StatelessWidget {
                 child: Image.network(
                   heroImage!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      _AddPhotoBanner(tc: tc, compact: false),
+                  errorBuilder: (_, __, ___) => _AddPhotoBanner(
+                    tc: tc,
+                    compact: false,
+                    loading: attaching,
+                    onTap: onAddPhoto,
+                  ),
                 ),
               ),
             )
           else
-            _AddPhotoBanner(tc: tc, compact: false),
+            _AddPhotoBanner(
+              tc: tc,
+              compact: false,
+              loading: attaching,
+              onTap: onAddPhoto,
+            ),
 
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
@@ -1019,29 +1193,51 @@ class _FeedCard extends StatelessWidget {
 class _AddPhotoBanner extends StatelessWidget {
   final ThemeColors tc;
   final bool compact;
-  const _AddPhotoBanner({required this.tc, required this.compact});
+  final bool loading;
+  final VoidCallback? onTap;
+  const _AddPhotoBanner({
+    required this.tc,
+    required this.compact,
+    this.loading = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-      child: Container(
-        height: compact ? 64 : 120,
-        width: double.infinity,
+      child: Material(
         color: tc.elevated,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_a_photo_outlined,
-                size: compact ? 22 : 28, color: tc.textMuted),
-            if (!compact) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Add a photo',
-                style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.5),
-              ),
-            ],
-          ],
+        child: InkWell(
+          onTap: loading ? null : onTap,
+          child: SizedBox(
+            height: compact ? 64 : 120,
+            width: double.infinity,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (loading)
+                  SizedBox(
+                    width: compact ? 20 : 24,
+                    height: compact ? 20 : 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(tc.accent),
+                    ),
+                  )
+                else
+                  Icon(Icons.add_a_photo_outlined,
+                      size: compact ? 22 : 28, color: tc.accent),
+                if (!compact) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    loading ? 'Adding photo…' : 'Add a photo',
+                    style: ZType.lbl(11, color: tc.accent, letterSpacing: 1.5),
+                  ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );

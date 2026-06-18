@@ -7,18 +7,18 @@ import json
 import time
 import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, Header, HTTPException, Query, Request, UploadFile
 from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso, to_utc_iso
-from core.auth import get_current_user, verify_resource_ownership
+from core.auth import get_current_user, verify_resource_ownership, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from core.activity_logger import log_user_activity
 from core.supabase_client import get_supabase
 from core.nutrition_bias import apply_calorie_bias, get_user_calorie_bias
 from core.locale import parse_accept_language, overlay_food_i18n
-from api.v1.nutrition.helpers import resign_food_image_url
+from api.v1.nutrition.helpers import resign_food_image_url, upload_food_image_to_s3
 
 from api.v1.nutrition.models import (
     FoodLogResponse,
@@ -395,6 +395,95 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
         raise
     except Exception as e:
         logger.error(f"Failed to update food log: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.post("/food-logs/{log_id}/image")
+async def attach_food_log_image(
+    log_id: str,
+    user_id: str = Form(...),
+    image: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Attach a photo to an EXISTING food log.
+
+    Most food logs are text-entered and carry no image, so the Journal calendar
+    shows only fork icons. This endpoint lets a user snap/attach a photo to any
+    photo-less log so real photos accumulate (the calendar day cell already
+    renders food_logs.image_url as its background when set).
+
+    Flow:
+    1. Verify the log belongs to the authenticated user (ownership check).
+    2. Upload the image bytes to S3 via upload_food_image_to_s3 (source="camera").
+    3. UPDATE that food_logs row's image_url + image_storage_key.
+    4. Return the freshly re-signed image_url so the client renders it instantly.
+    """
+    # IDOR guard — the posted user_id must match the authenticated user.
+    verify_user_ownership(current_user, user_id)
+    logger.info(f"Attaching image to food log {log_id} for user {user_id}")
+
+    # Validate file type and size before processing (mirror /log-image).
+    ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
+    MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+
+    if image.content_type and image.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}",
+        )
+
+    try:
+        db = get_supabase_db()
+
+        # Ownership check — fetch the log and confirm it belongs to this user.
+        log = db.get_food_log(log_id)
+        if not log or str(log.get("user_id")) != str(user_id):
+            raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        # Read + size-validate the bytes.
+        image_bytes = await image.read()
+        if len(image_bytes) > MAX_IMAGE_SIZE:
+            raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
+        content_type = image.content_type or 'image/jpeg'
+
+        # Upload to S3 (camera source). Returns (presigned_url, storage_key).
+        meal_type = log.get("meal_type") or "meal"
+        image_url, storage_key = await upload_food_image_to_s3(
+            file_bytes=image_bytes,
+            user_id=user_id,
+            content_type=content_type,
+            source="camera",
+            meal_type=meal_type,
+        )
+
+        # Persist the image onto the existing log row.
+        result = get_supabase().client.table("food_logs").update({
+            "image_url": image_url,
+            "image_storage_key": storage_key,
+        }).eq("id", log_id).eq("user_id", user_id).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        # Invalidate the daily-summary + bootstrap caches so the next fetch (and
+        # the Journal calendar that reads image_url) reflects the new photo.
+        try:
+            from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+            await invalidate_daily_summary_cache(user_id)
+            await invalidate_bootstrap_cache(user_id)
+        except Exception as inv_err:
+            logger.debug(f"cache bust skipped (attach image): {inv_err}")
+
+        # Re-sign so the client receives a guaranteed-working short-lived URL.
+        fresh_url = resign_food_image_url(image_url)
+        logger.info(f"✅ Attached image to food log {log_id}: {storage_key}")
+        return {"status": "updated", "id": log_id, "image_url": fresh_url}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to attach image to food log {log_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

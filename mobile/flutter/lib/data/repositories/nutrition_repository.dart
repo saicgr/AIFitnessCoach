@@ -993,6 +993,50 @@ class NutritionRepository {
     }
   }
 
+  /// Attach a photo to an EXISTING food log (camera-first Journal feature).
+  ///
+  /// Most logs are text-entered and carry no image, so the Journal calendar
+  /// shows only fork icons. This uploads the picked/snapped image to
+  /// `POST /nutrition/food-logs/{log_id}/image`, which persists it onto the
+  /// food_logs row and returns a freshly re-signed `image_url`. The caller
+  /// stamps that URL onto the in-memory log so the photo appears instantly in
+  /// BOTH the Feed and the Calendar (they read the same `imageUrl`).
+  ///
+  /// Throws on failure — NO silent fallback (per CLAUDE.md).
+  Future<String> attachPhotoToFoodLog({
+    required String logId,
+    required String userId,
+    required File image,
+  }) async {
+    debugPrint('📸 [Nutrition] Attaching photo to food log $logId for $userId');
+    final formData = FormData.fromMap({
+      'user_id': userId,
+      'image': await MultipartFile.fromFile(
+        image.path,
+        filename: 'food_attach.jpg',
+      ),
+    });
+    try {
+      final response = await _client.post(
+        '/nutrition/food-logs/$logId/image',
+        data: formData,
+        options: Options(receiveTimeout: const Duration(seconds: 75)),
+      );
+      final data = Map<String, dynamic>.from(response.data as Map);
+      final imageUrl = data['image_url'] as String?;
+      if (imageUrl == null || imageUrl.isEmpty) {
+        throw Exception('Server did not return an image URL');
+      }
+      debugPrint('✅ [Nutrition] Photo attached to log $logId');
+      return imageUrl;
+    } on DioException catch (e) {
+      debugPrint('❌ [Nutrition] Failed to attach photo to log $logId: $e');
+      throw Exception(
+        'Failed to attach photo. Please try again. (${e.response?.statusCode ?? 'network'})',
+      );
+    }
+  }
+
   /// Convert a Dio error from a scan endpoint into a [ScanImportException].
   /// A 422 whose `detail` carries a `reason` (recipe / not_nutrition) becomes
   /// a routable exception; everything else becomes a plain user-facing message.
