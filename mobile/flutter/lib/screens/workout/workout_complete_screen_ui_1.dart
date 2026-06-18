@@ -2,7 +2,6 @@ part of 'workout_complete_screen.dart';
 
 /// UI builder methods extracted from _WorkoutCompleteScreenState
 extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
-
   /// Per-exercise breakdown (2D) — each exercise is a compact tap-to-expand
   /// row: collapsed shows "N×reps · avg weight" + a PR badge; expanded reveals
   /// every set's weight × reps with the PR set starred. Collapsed by default so
@@ -14,15 +13,15 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     if (perf == null || perf.isEmpty) return null;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final useKg = ref.watch(useKgForWorkoutProvider);
 
     // PR lookup by exercise name — drives the badge AND the per-set star.
     final prByName = <String, PersonalRecordInfo>{
-      for (final pr
-          in (widget.personalRecords ?? const <PersonalRecordInfo>[]))
+      for (final pr in (widget.personalRecords ?? const <PersonalRecordInfo>[]))
         pr.exerciseName.toLowerCase().trim(): pr,
     };
     // Per-set rows by exercise name (passed through from the finalizer).
@@ -30,10 +29,26 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       for (final ex in (widget.exerciseSets ?? const <Map<String, dynamic>>[]))
         ((ex['name'] as String?) ?? '').toLowerCase().trim():
             ((ex['sets'] as List?)
-                    ?.whereType<Map>()
-                    .map((m) => Map<String, dynamic>.from(m))
-                    .toList() ??
-                const <Map<String, dynamic>>[]),
+                ?.whereType<Map>()
+                .map((m) => Map<String, dynamic>.from(m))
+                .toList() ??
+            const <Map<String, dynamic>>[]),
+    };
+
+    // Exercise id + equipment hint by name, sourced from the planned workout
+    // models so the thumbnail resolves the exact library row (not a fuzzy
+    // name match) and falls back to an equipment-matched icon. Name-only still
+    // works when an exercise isn't in this map.
+    final metaByName = <String, ({String? id, String? equipment})>{
+      for (final ex in widget.workout.exercises)
+        ex.name.toLowerCase().trim(): (
+          id: (ex.exerciseId?.isNotEmpty == true)
+              ? ex.exerciseId
+              : (ex.libraryId?.isNotEmpty == true ? ex.libraryId : null),
+          equipment: (ex.equipment?.trim().isNotEmpty == true)
+              ? ex.equipment!.split(',').first.trim()
+              : null,
+        ),
     };
 
     return ZealovaCard(
@@ -43,8 +58,11 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
         children: [
           Row(
             children: [
-              Icon(Icons.format_list_bulleted_rounded,
-                  size: 16, color: textMuted),
+              Icon(
+                Icons.format_list_bulleted_rounded,
+                size: 16,
+                color: textMuted,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Exercises'.toUpperCase(),
@@ -59,6 +77,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
             () {
               final name = (e['name'] as String?) ?? 'Exercise';
               final key = name.toLowerCase().trim();
+              final meta = metaByName[key];
               return _ExpandableExerciseRow(
                 name: name,
                 sets: (e['sets'] as num?)?.toInt() ?? 0,
@@ -69,6 +88,8 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 useKg: useKg,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
+                exerciseId: meta?.id,
+                equipmentHint: meta?.equipment,
               );
             }(),
         ],
@@ -111,14 +132,11 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           unit: unit,
         ),
         _LedgerRow(
-          label: '${l.workoutSummaryGeneralSets} · ${l.workoutSummaryGeneralReps}',
+          label:
+              '${l.workoutSummaryGeneralSets} · ${l.workoutSummaryGeneralReps}',
           value: '${widget.totalSets ?? 0} · ${widget.totalReps ?? 0}',
         ),
-        _LedgerRow(
-          label: 'Energy',
-          value: '${widget.calories}',
-          unit: 'kcal',
-        ),
+        _LedgerRow(label: 'Energy', value: '${widget.calories}', unit: 'kcal'),
         _LedgerRow(
           label: 'Median rest',
           value: medianRest != null ? _formatMmSs(medianRest) : '--',
@@ -133,7 +151,6 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       ],
     );
   }
-
 
   /// XP + streak two-cell row (Signature v2 Frame 2). Left cell: XP earned
   /// this session (from the last XP-earned event). Right cell: the current
@@ -151,19 +168,19 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     }
 
     Widget cell(String label, Widget value) => Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label.toUpperCase(),
-                style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.8),
-              ),
-              const SizedBox(height: 5),
-              value,
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: ZType.lbl(10, color: c.textMuted, letterSpacing: 1.8),
           ),
-        );
+          const SizedBox(height: 5),
+          value,
+        ],
+      ),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(top: 14),
@@ -176,14 +193,21 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('+$earnedXp',
-                      style: ZType.disp(24, color: c.textPrimary)),
+                  Text(
+                    '+$earnedXp',
+                    style: ZType.disp(24, color: c.textPrimary),
+                  ),
                   const SizedBox(width: 4),
                   Padding(
                     padding: const EdgeInsets.only(bottom: 2),
-                    child: Text('XP',
-                        style: ZType.lbl(11,
-                            color: c.textMuted, letterSpacing: 1.2)),
+                    child: Text(
+                      'XP',
+                      style: ZType.lbl(
+                        11,
+                        color: c.textMuted,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -195,8 +219,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text('$streak',
-                      style: ZType.disp(24, color: c.textPrimary)),
+                  Text('$streak', style: ZType.disp(24, color: c.textPrimary)),
                   const SizedBox(width: 5),
                   const Text('🔥', style: TextStyle(fontSize: 18)),
                 ],
@@ -234,9 +257,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -251,15 +272,13 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.favorite,
-                  size: 18,
-                  color: accentColor,
-                ),
+                child: Icon(Icons.favorite, size: 18, color: accentColor),
               ),
               const SizedBox(width: 10),
               Text(
-                AppLocalizations.of(context).workoutCompleteScreenHeartRateAnalysis,
+                AppLocalizations.of(
+                  context,
+                ).workoutCompleteScreenHeartRateAnalysis,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -297,16 +316,20 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 restingHR: restingHR,
                 durationMinutes: durationMinutes,
               ),
-              icon: Icon(Icons.analytics_outlined, size: 18, color: accentColor),
+              icon: Icon(
+                Icons.analytics_outlined,
+                size: 18,
+                color: accentColor,
+              ),
               label: Text(
-                AppLocalizations.of(context).workoutCompleteScreenViewAllMetrics,
+                AppLocalizations.of(
+                  context,
+                ).workoutCompleteScreenViewAllMetrics,
                 style: TextStyle(color: accentColor),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: accentColor,
-                side: BorderSide(
-                  color: accentColor.withValues(alpha: 0.4),
-                ),
+                side: BorderSide(color: accentColor.withValues(alpha: 0.4)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -318,7 +341,6 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       ),
     );
   }
-
 
   /// Surface 6c — Heart-rate section rendered from the Apple Health /
   /// Health Connect BACKFILL (when no live BLE/Watch HR was captured during
@@ -352,9 +374,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       decoration: BoxDecoration(
         color: elevated,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -369,17 +389,14 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   color: accentColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.favorite,
-                  size: 18,
-                  color: accentColor,
-                ),
+                child: Icon(Icons.favorite, size: 18, color: accentColor),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  AppLocalizations.of(context)
-                      .workoutCompleteScreenHeartRateAnalysis,
+                  AppLocalizations.of(
+                    context,
+                  ).workoutCompleteScreenHeartRateAnalysis,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -389,8 +406,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               ),
               // Source provenance chip.
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
@@ -433,16 +449,20 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 restingHR: restingHR,
                 durationMinutes: durationMinutes,
               ),
-              icon: Icon(Icons.analytics_outlined, size: 18, color: accentColor),
+              icon: Icon(
+                Icons.analytics_outlined,
+                size: 18,
+                color: accentColor,
+              ),
               label: Text(
-                AppLocalizations.of(context).workoutCompleteScreenViewAllMetrics,
+                AppLocalizations.of(
+                  context,
+                ).workoutCompleteScreenViewAllMetrics,
                 style: TextStyle(color: accentColor),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: accentColor,
-                side: BorderSide(
-                  color: accentColor.withValues(alpha: 0.4),
-                ),
+                side: BorderSide(color: accentColor.withValues(alpha: 0.4)),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -455,19 +475,26 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     );
   }
 
-
   /// Build the trophies section showing PRs and achievements earned
   Widget _buildTrophiesSection(Color elevated) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
     // Calculate trophy count
-    final newAchievements = (_achievements?['new_achievements'] as List<dynamic>?)?.length ?? 0;
+    final newAchievements =
+        (_achievements?['new_achievements'] as List<dynamic>?)?.length ?? 0;
     final totalTrophies = _newPRs.length + newAchievements;
     final streak = _achievements?['streak_days'] as int? ?? 0;
     // Ensure at least 1 since the user just completed a workout
-    final totalWorkouts = (_achievements?['total_workouts'] as int? ?? 0).clamp(1, 999999);
+    final totalWorkouts = (_achievements?['total_workouts'] as int? ?? 0).clamp(
+      1,
+      999999,
+    );
     final hasAchievements = totalTrophies > 0;
 
     Widget trophiesCard = GestureDetector(
@@ -498,31 +525,37 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: hasAchievements
-                        ? AppColors.gamGold.withOpacity(0.15)
-                        : ThemeColors.of(context).elevated,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: hasAchievements
-                          ? AppColors.gamGold.withOpacity(0.5)
-                          : AppColors.cardBorder,
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.emoji_events_rounded,
-                    color: hasAchievements
-                        ? AppColors.gamGold
-                        : textSecondary,
-                    size: 24,
-                  ),
-                )
-                    .animate(onPlay: (controller) => hasAchievements ? controller.repeat(reverse: true) : null)
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: hasAchievements
+                            ? AppColors.gamGold.withOpacity(0.15)
+                            : ThemeColors.of(context).elevated,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: hasAchievements
+                              ? AppColors.gamGold.withOpacity(0.5)
+                              : AppColors.cardBorder,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.emoji_events_rounded,
+                        color: hasAchievements
+                            ? AppColors.gamGold
+                            : textSecondary,
+                        size: 24,
+                      ),
+                    )
+                    .animate(
+                      onPlay: (controller) => hasAchievements
+                          ? controller.repeat(reverse: true)
+                          : null,
+                    )
                     .scale(
                       begin: const Offset(1.0, 1.0),
-                      end: hasAchievements ? const Offset(1.08, 1.08) : const Offset(1.0, 1.0),
+                      end: hasAchievements
+                          ? const Offset(1.08, 1.08)
+                          : const Offset(1.0, 1.0),
                       duration: 800.ms,
                       curve: Curves.easeInOut,
                     ),
@@ -530,40 +563,49 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   Positioned(
                     right: -4,
                     top: -4,
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: elevated, width: 2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFFFFD700).withOpacity(0.5),
-                            blurRadius: 8,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      child: Text(
-                        '$totalTrophies',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    )
-                        .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                        .scale(
-                          begin: const Offset(1.0, 1.0),
-                          end: const Offset(1.15, 1.15),
-                          duration: 600.ms,
-                          curve: Curves.easeInOut,
-                        ),
+                    child:
+                        Container(
+                              padding: const EdgeInsets.all(5),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFFFFD700),
+                                    Color(0xFFFFA500),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: elevated, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(
+                                      0xFFFFD700,
+                                    ).withOpacity(0.5),
+                                    blurRadius: 8,
+                                    spreadRadius: 1,
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                '$totalTrophies',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                            .animate(
+                              onPlay: (controller) =>
+                                  controller.repeat(reverse: true),
+                            )
+                            .scale(
+                              begin: const Offset(1.0, 1.0),
+                              end: const Offset(1.15, 1.15),
+                              duration: 600.ms,
+                              curve: Curves.easeInOut,
+                            ),
                   ),
               ],
             ),
@@ -577,21 +619,28 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                     children: [
                       if (hasAchievements)
                         Text(
-                          AppLocalizations.of(context).workoutCompleteScreenTrophiesEarned.toUpperCase(),
-                          style: ZType.lbl(
-                            13,
-                            color: AppColors.gamGold,
-                            letterSpacing: 1.5,
-                          ),
-                        )
-                            .animate(onPlay: (controller) => controller.repeat(reverse: true))
+                              AppLocalizations.of(context)
+                                  .workoutCompleteScreenTrophiesEarned
+                                  .toUpperCase(),
+                              style: ZType.lbl(
+                                13,
+                                color: AppColors.gamGold,
+                                letterSpacing: 1.5,
+                              ),
+                            )
+                            .animate(
+                              onPlay: (controller) =>
+                                  controller.repeat(reverse: true),
+                            )
                             .shimmer(
                               duration: 1500.ms,
                               color: Colors.white.withOpacity(0.3),
                             )
                       else
                         Text(
-                          AppLocalizations.of(context).workoutCompleteScreenTrophiesMilestones.toUpperCase(),
+                          AppLocalizations.of(context)
+                              .workoutCompleteScreenTrophiesMilestones
+                              .toUpperCase(),
                           style: ZType.lbl(
                             13,
                             color: textPrimary,
@@ -601,7 +650,9 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                       const Spacer(),
                       Icon(
                         Icons.chevron_right_rounded,
-                        color: hasAchievements ? AppColors.gamGold : textSecondary,
+                        color: hasAchievements
+                            ? AppColors.gamGold
+                            : textSecondary,
                         size: 20,
                       ),
                     ],
@@ -611,11 +662,13 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                     hasAchievements
                         ? '${_newPRs.length} PRs${newAchievements > 0 ? ', $newAchievements badges' : ''} - Tap to view'
                         : streak > 0
-                            ? '$streak day streak, $totalWorkouts total workouts'
-                            : 'Track your progress',
+                        ? '$streak day streak, $totalWorkouts total workouts'
+                        : 'Track your progress',
                     style: TextStyle(
                       fontSize: 12,
-                      color: hasAchievements ? AppColors.gamGold.withOpacity(0.85) : textSecondary,
+                      color: hasAchievements
+                          ? AppColors.gamGold.withOpacity(0.85)
+                          : textSecondary,
                     ),
                   ),
                 ],
@@ -643,15 +696,18 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     return trophiesCard;
   }
 
-
   /// Build the exercise progression suggestions section
   /// Shows when user has exercises ready to progress to harder variants
   Widget _buildProgressionSuggestionsSection() {
     return Builder(
       builder: (context) {
         final isDarkProg = Theme.of(context).brightness == Brightness.dark;
-        final elevatedProg = isDarkProg ? AppColors.elevated : AppColorsLight.elevated;
-        final textSecondaryProg = isDarkProg ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final elevatedProg = isDarkProg
+            ? AppColors.elevated
+            : AppColorsLight.elevated;
+        final textSecondaryProg = isDarkProg
+            ? AppColors.textSecondary
+            : AppColorsLight.textSecondary;
 
         return Container(
           width: double.infinity,
@@ -688,7 +744,9 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context).workoutCompleteScreenReadyToLevelUp,
+                      AppLocalizations.of(
+                        context,
+                      ).workoutCompleteScreenReadyToLevelUp,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -701,14 +759,15 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
               ),
               const SizedBox(height: 8),
               Text(
-                AppLocalizations.of(context).workoutCompleteScreenYouVeMasteredThese,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textSecondaryProg,
-                ),
+                AppLocalizations.of(
+                  context,
+                ).workoutCompleteScreenYouVeMasteredThese,
+                style: TextStyle(fontSize: 13, color: textSecondaryProg),
               ),
               const SizedBox(height: 16),
-              ..._progressionSuggestions.map((suggestion) => _buildProgressionCard(suggestion)),
+              ..._progressionSuggestions.map(
+                (suggestion) => _buildProgressionCard(suggestion),
+              ),
             ],
           ),
         );
@@ -716,15 +775,20 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     ).animate().fadeIn(delay: 525.ms).slideY(begin: 0.1);
   }
 
-
   /// Build individual progression suggestion card
   Widget _buildProgressionCard(ProgressionSuggestion suggestion) {
     return Builder(
       builder: (context) {
         final isDarkCard = Theme.of(context).brightness == Brightness.dark;
-        final elevatedCard = isDarkCard ? AppColors.elevated : AppColorsLight.elevated;
-        final textPrimaryCard = isDarkCard ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        final textSecondaryCard = isDarkCard ? AppColors.textSecondary : AppColorsLight.textSecondary;
+        final elevatedCard = isDarkCard
+            ? AppColors.elevated
+            : AppColorsLight.elevated;
+        final textPrimaryCard = isDarkCard
+            ? AppColors.textPrimary
+            : AppColorsLight.textPrimary;
+        final textSecondaryCard = isDarkCard
+            ? AppColors.textSecondary
+            : AppColorsLight.textSecondary;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -732,9 +796,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
           decoration: BoxDecoration(
             color: elevatedCard,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.purple.withOpacity(0.2),
-            ),
+            border: Border.all(color: AppColors.purple.withOpacity(0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,7 +843,10 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   // Difficulty badge
                   if (suggestion.difficultyIncrease != null)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.cyan.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(6),
@@ -809,10 +874,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                   const SizedBox(width: 4),
                   Text(
                     'Marked as "too easy" ${suggestion.consecutiveEasySessions}x in a row',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textSecondaryCard,
-                    ),
+                    style: TextStyle(fontSize: 12, color: textSecondaryCard),
                   ),
                 ],
               ),
@@ -822,16 +884,23 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => _declineProgression(suggestion, 'not_ready'),
+                      onPressed: () =>
+                          _declineProgression(suggestion, 'not_ready'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: textSecondaryCard,
-                        side: BorderSide(color: textSecondaryCard.withOpacity(0.3)),
+                        side: BorderSide(
+                          color: textSecondaryCard.withOpacity(0.3),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: Text(AppLocalizations.of(context).workoutCompleteScreenNotYet),
+                      child: Text(
+                        AppLocalizations.of(
+                          context,
+                        ).workoutCompleteScreenNotYet,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -839,7 +908,11 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                     child: ElevatedButton.icon(
                       onPressed: () => _acceptProgression(suggestion),
                       icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                      label: Text(AppLocalizations.of(context).workoutCompleteScreenLevelUp),
+                      label: Text(
+                        AppLocalizations.of(
+                          context,
+                        ).workoutCompleteScreenLevelUp,
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.purple,
                         foregroundColor: Colors.white,
@@ -859,163 +932,178 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
     );
   }
 
-
   Widget _buildNewPRsSection() {
     final useKg = ref.watch(useKgForWorkoutProvider);
     return Builder(
-      builder: (context) {
-        final isDarkPR = Theme.of(context).brightness == Brightness.dark;
-        final textPrimaryPR = isDarkPR ? AppColors.textPrimary : AppColorsLight.textPrimary;
+          builder: (context) {
+            final isDarkPR = Theme.of(context).brightness == Brightness.dark;
+            final textPrimaryPR = isDarkPR
+                ? AppColors.textPrimary
+                : AppColorsLight.textPrimary;
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                AppColors.success.withOpacity(0.2),
-                AppColors.orange.withOpacity(0.1),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.success.withOpacity(0.5)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.emoji_events,
-                      size: 20,
-                      color: AppColors.success,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      AppLocalizations.of(context).workoutCompleteScreenNewPersonalRecords,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.success,
-                        letterSpacing: 1.0,
-                      ),
-                    ),
-                  ),
-                ],
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.success.withOpacity(0.2),
+                    AppColors.orange.withOpacity(0.1),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.success.withOpacity(0.5)),
               ),
-              const SizedBox(height: 16),
-              ..._newPRs.map((pr) {
-                final celebrationMessage = pr['celebration_message'] as String?;
-                final improvementKg = pr['improvement_kg'] as num?;
-                final improvementPercent = pr['improvement_percent'] as num?;
-                final estimated1rm = pr['estimated_1rm_kg'] as num?;
-                final reps = pr['reps'] as int?;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.star, color: AppColors.orange, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              '${pr['exercise_name']}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: textPrimaryPR,
-                              ),
-                            ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.emoji_events,
+                          size: 20,
+                          color: AppColors.success,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          AppLocalizations.of(
+                            context,
+                          ).workoutCompleteScreenNewPersonalRecords,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.success,
+                            letterSpacing: 1.0,
                           ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ..._newPRs.map((pr) {
+                    final celebrationMessage =
+                        pr['celebration_message'] as String?;
+                    final improvementKg = pr['improvement_kg'] as num?;
+                    final improvementPercent =
+                        pr['improvement_percent'] as num?;
+                    final estimated1rm = pr['estimated_1rm_kg'] as num?;
+                    final reps = pr['reps'] as int?;
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Text(
-                                '${WeightUtils.formatWorkoutWeight((pr['weight_kg'] as num).toDouble(), useKg: useKg)}${reps != null ? ' x $reps' : ''}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.success,
-                                  fontSize: 16,
-                                ),
+                              const Icon(
+                                Icons.star,
+                                color: AppColors.orange,
+                                size: 18,
                               ),
-                              if (estimated1rm != null)
-                                Text(
-                                  '1RM: ${WeightUtils.formatWorkoutWeight(estimated1rm.toDouble(), useKg: useKg)}',
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  '${pr['exercise_name']}',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: textPrimaryPR.withOpacity(0.7),
+                                    fontWeight: FontWeight.w600,
+                                    color: textPrimaryPR,
                                   ),
                                 ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '${WeightUtils.formatWorkoutWeight((pr['weight_kg'] as num).toDouble(), useKg: useKg)}${reps != null ? ' x $reps' : ''}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.success,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  if (estimated1rm != null)
+                                    Text(
+                                      '1RM: ${WeightUtils.formatWorkoutWeight(estimated1rm.toDouble(), useKg: useKg)}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: textPrimaryPR.withOpacity(0.7),
+                                      ),
+                                    ),
+                                ],
+                              ),
                             ],
                           ),
-                        ],
-                      ),
-                      // Show improvement if available
-                      if (improvementKg != null && improvementKg > 0) ...[
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const SizedBox(width: 26),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppColors.success.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
+                          // Show improvement if available
+                          if (improvementKg != null && improvementKg > 0) ...[
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const SizedBox(width: 26),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.success.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    '+${WeightUtils.formatWorkoutWeight(improvementKg.toDouble(), useKg: useKg)}${improvementPercent != null ? ' (+${improvementPercent.toStringAsFixed(1)}%)' : ''}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.success,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          // Show AI celebration message if available
+                          if (celebrationMessage != null &&
+                              celebrationMessage.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Padding(
+                              padding: const EdgeInsets.only(left: 26),
                               child: Text(
-                                '+${WeightUtils.formatWorkoutWeight(improvementKg.toDouble(), useKg: useKg)}${improvementPercent != null ? ' (+${improvementPercent.toStringAsFixed(1)}%)' : ''}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.success,
+                                celebrationMessage,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: textPrimaryPR.withOpacity(0.8),
                                 ),
                               ),
                             ),
                           ],
-                        ),
-                      ],
-                      // Show AI celebration message if available
-                      if (celebrationMessage != null && celebrationMessage.isNotEmpty) ...[
-                        const SizedBox(height: 6),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 26),
-                          child: Text(
-                            celebrationMessage,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontStyle: FontStyle.italic,
-                              color: textPrimaryPR.withOpacity(0.8),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
+        )
+        .animate()
+        .fadeIn(delay: 550.ms)
+        .scale(
+          begin: const Offset(0.9, 0.9),
+          duration: 400.ms,
+          curve: Curves.elasticOut,
         );
-      },
-    ).animate().fadeIn(delay: 550.ms).scale(
-      begin: const Offset(0.9, 0.9),
-      duration: 400.ms,
-      curve: Curves.elasticOut,
-    );
   }
-
 
   /// Build the performance comparison section showing improvements/setbacks
   Widget _buildPerformanceComparisonSection() {
@@ -1026,9 +1114,15 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-        final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-        final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+        final textPrimary = isDark
+            ? AppColors.textPrimary
+            : AppColorsLight.textPrimary;
+        final textSecondary = isDark
+            ? AppColors.textSecondary
+            : AppColorsLight.textSecondary;
+        final cardBorder = isDark
+            ? AppColors.cardBorder
+            : AppColorsLight.cardBorder;
 
         final hasImprovements = comparison.improvedCount > 0;
         final hasDeclines = comparison.declinedCount > 0;
@@ -1077,11 +1171,7 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
                         color: accentColor.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(
-                        headerIcon,
-                        size: 20,
-                        color: accentColor,
-                      ),
+                      child: Icon(headerIcon, size: 20, color: accentColor),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -1135,7 +1225,11 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
 
               // Exercise comparisons
               ...comparison.exerciseComparisons.map((exComp) {
-                return _buildExerciseComparisonRow(exComp, textPrimary, textSecondary);
+                return _buildExerciseComparisonRow(
+                  exComp,
+                  textPrimary,
+                  textSecondary,
+                );
               }),
 
               // Overall workout comparison (if has previous)
@@ -1153,7 +1247,6 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       },
     );
   }
-
 
   Widget _buildCountBadge({
     required int count,
@@ -1183,7 +1276,6 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
       ),
     );
   }
-
 }
 
 /// One tap-to-expand exercise row on the completion screen (2D). Collapsed:
@@ -1201,6 +1293,12 @@ class _ExpandableExerciseRow extends StatefulWidget {
   final Color textPrimary;
   final Color textMuted;
 
+  /// Library row id (exercise_id ?? library_id) for exact thumbnail resolution.
+  final String? exerciseId;
+
+  /// First equipment item — picks a matching fallback icon when no image.
+  final String? equipmentHint;
+
   const _ExpandableExerciseRow({
     required this.name,
     required this.sets,
@@ -1211,6 +1309,8 @@ class _ExpandableExerciseRow extends StatefulWidget {
     required this.useKg,
     required this.textPrimary,
     required this.textMuted,
+    this.exerciseId,
+    this.equipmentHint,
   });
 
   @override
@@ -1233,7 +1333,7 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
   ///   • Max reps      — highest rep count
   ///   • Max volume    — best of weight × reps
   ({double? oneRmKg, double? maxWeightKg, int? maxReps, double? maxVolumeKg})?
-      _records() {
+  _records() {
     if (widget.perSets.isEmpty) return null;
     double? best1rm;
     double? maxWeight;
@@ -1300,8 +1400,19 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
     final prIdx = _prSetIndex;
 
     final header = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        // Exercise illustration thumbnail (E) — resolves by id when available,
+        // falls back to an equipment-matched icon, never a broken-image glyph.
+        ExerciseImage(
+          exerciseName: widget.name,
+          exerciseId: widget.exerciseId,
+          equipmentHint: widget.equipmentHint,
+          width: 44,
+          height: 44,
+          borderRadius: 8,
+        ),
+        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1325,7 +1436,9 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFCD34D),
                         borderRadius: BorderRadius.circular(6),
@@ -1333,8 +1446,11 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.emoji_events_rounded,
-                              size: 11, color: Color(0xFF7A5C00)),
+                          Icon(
+                            Icons.emoji_events_rounded,
+                            size: 11,
+                            color: Color(0xFF7A5C00),
+                          ),
                           SizedBox(width: 3),
                           Text(
                             'PR',
@@ -1351,8 +1467,10 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
                 ],
               ),
               const SizedBox(height: 2),
-              Text(summary,
-                  style: TextStyle(fontSize: 12, color: widget.textMuted)),
+              Text(
+                summary,
+                style: TextStyle(fontSize: 12, color: widget.textMuted),
+              ),
             ],
           ),
         ),
@@ -1441,7 +1559,11 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
               color: accent,
             ),
             const Spacer(),
-            Icon(Icons.emoji_events_outlined, size: 14, color: widget.textMuted),
+            Icon(
+              Icons.emoji_events_outlined,
+              size: 14,
+              color: widget.textMuted,
+            ),
           ],
         ),
       ),
@@ -1449,8 +1571,9 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
   }
 
   Widget _buildRecordsTable(
-      ({double? oneRmKg, double? maxWeightKg, int? maxReps, double? maxVolumeKg})
-          r) {
+    ({double? oneRmKg, double? maxWeightKg, int? maxReps, double? maxVolumeKg})
+    r,
+  ) {
     final rows = <Widget>[];
     void addRow(String label, String value) {
       rows.add(
@@ -1461,8 +1584,10 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
               const Text('🏆', style: TextStyle(fontSize: 13)),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(label,
-                    style: TextStyle(fontSize: 12, color: widget.textMuted)),
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 12, color: widget.textMuted),
+                ),
               ),
               Text(
                 value,
@@ -1479,25 +1604,34 @@ class _ExpandableExerciseRowState extends State<_ExpandableExerciseRow> {
     }
 
     if (r.oneRmKg != null) {
-      addRow('Projected 1 rep max',
-          WeightUtils.formatWorkoutWeight(r.oneRmKg!, useKg: widget.useKg));
+      addRow(
+        'Projected 1 rep max',
+        WeightUtils.formatWorkoutWeight(r.oneRmKg!, useKg: widget.useKg),
+      );
     }
     if (r.maxWeightKg != null) {
-      addRow('Max weight',
-          WeightUtils.formatWorkoutWeight(r.maxWeightKg!, useKg: widget.useKg));
+      addRow(
+        'Max weight',
+        WeightUtils.formatWorkoutWeight(r.maxWeightKg!, useKg: widget.useKg),
+      );
     }
     if (r.maxReps != null) {
       addRow('Max repetitions', '${r.maxReps}');
     }
     if (r.maxVolumeKg != null) {
-      addRow('Max volume',
-          WeightUtils.formatWorkoutWeight(r.maxVolumeKg!, useKg: widget.useKg));
+      addRow(
+        'Max volume',
+        WeightUtils.formatWorkoutWeight(r.maxVolumeKg!, useKg: widget.useKg),
+      );
     }
     if (rows.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.only(top: 2, left: 2, bottom: 4),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: rows),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: rows,
+      ),
     );
   }
 

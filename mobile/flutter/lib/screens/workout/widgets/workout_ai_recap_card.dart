@@ -6,11 +6,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/api_client.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
+import 'ai_summary_sheet.dart';
 import 'score_level_up_celebration.dart';
 
 /// Persisted post-workout AI recap card (Task B8 — deeper than Gravl's summary).
@@ -234,10 +236,12 @@ class _WorkoutAiRecapCardState extends ConsumerState<WorkoutAiRecapCard> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final muscles = _extractMuscles(widget.workoutExercises);
     final recap = _recap ?? const <String, dynamic>{};
     final headline = (recap['headline'] as String?)?.trim() ?? '';
@@ -273,7 +277,9 @@ class _WorkoutAiRecapCardState extends ConsumerState<WorkoutAiRecapCard> {
             Text(
               headline,
               maxLines: _expanded ? null : 2,
-              overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+              overflow: _expanded
+                  ? TextOverflow.visible
+                  : TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
@@ -316,10 +322,41 @@ class _WorkoutAiRecapCardState extends ConsumerState<WorkoutAiRecapCard> {
                 : const SizedBox(width: double.infinity),
           ),
 
+          // "AI Summary" — opens a longer, strict, honest breakdown (Strengths /
+          // Weaknesses / What to improve / What to do next) in a sheet. ADDITIVE:
+          // the short recap above stays exactly as-is.
+          const SizedBox(height: 14),
+          _AiSummaryButton(onTap: _openAiSummary),
+
           // Strength level-up celebration, merged in (2.3). Self-hides to
           // zero height when no tier was crossed, so normally invisible.
+          const SizedBox(height: 4),
           ScoreLevelUpCelebration(trainedMuscles: widget.trainedMuscles),
         ],
+      ),
+    );
+  }
+
+  void _openAiSummary() {
+    showAiSummarySheet(
+      context,
+      request: AiSummaryRequest(
+        workoutId: widget.workoutId,
+        workoutLogId: widget.workoutLogId,
+        workoutName: widget.workoutName,
+        workoutType: widget.workoutType,
+        exercises: widget.exercises,
+        plannedExercises: widget.plannedExercises,
+        totalTimeSeconds: widget.totalTimeSeconds,
+        totalRestSeconds: widget.totalRestSeconds,
+        avgRestSeconds: widget.avgRestSeconds,
+        caloriesBurned: widget.caloriesBurned,
+        totalSets: widget.totalSets,
+        totalReps: widget.totalReps,
+        totalVolumeKg: widget.totalVolumeKg,
+        earnedPRs: widget.earnedPRs,
+        loggedNotes: widget.loggedNotes,
+        totalWorkoutsCompleted: widget.totalWorkoutsCompleted,
       ),
     );
   }
@@ -402,7 +439,9 @@ class _RecapHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     return Row(
       children: [
         Container(
@@ -416,7 +455,11 @@ class _RecapHeader extends StatelessWidget {
             ),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.insights_rounded, size: 15, color: Colors.white),
+          child: const Icon(
+            Icons.insights_rounded,
+            size: 15,
+            color: Colors.white,
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -436,6 +479,69 @@ class _RecapHeader extends StatelessWidget {
   }
 }
 
+// ─── "AI Summary" button (opens the detailed breakdown sheet) ───
+
+class _AiSummaryButton extends ConsumerWidget {
+  final VoidCallback onTap;
+  const _AiSummaryButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = ref.watch(accentColorProvider).getColor(isDark);
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: accent.withValues(alpha: 0.30)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.auto_awesome_rounded, size: 18, color: accent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'AI Summary',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Strengths, weaknesses, and what to do next',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: textPrimary.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 20, color: accent),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ─── Loading / generating skeleton (never a blank spinner) ──────
 
 class _RecapSkeleton extends StatelessWidget {
@@ -446,46 +552,50 @@ class _RecapSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06);
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
     Widget bar(double widthFactor, double height) => FractionallySizedBox(
-          alignment: Alignment.centerLeft,
-          widthFactor: widthFactor,
-          child: Container(
-            height: height,
-            decoration: BoxDecoration(
-              color: base,
-              borderRadius: BorderRadius.circular(6),
-            ),
-          ),
-        );
+      alignment: Alignment.centerLeft,
+      widthFactor: widthFactor,
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: base,
+          borderRadius: BorderRadius.circular(6),
+        ),
+      ),
+    );
 
-    final shimmer = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      // MUST be min: this card lives inside the completion screen's vertical
-      // SingleChildScrollView (unbounded height). A default mainAxisSize.max
-      // Column forces infinite height there ("BoxConstraints forces an infinite
-      // height"), which fails layout for the WHOLE screen → blank screen on
-      // workout finish. The outer skeleton Column is min; this inner one was not.
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        bar(0.85, 16),
-        const SizedBox(height: 12),
-        bar(1.0, 11),
-        const SizedBox(height: 7),
-        bar(0.92, 11),
-        const SizedBox(height: 7),
-        bar(0.7, 11),
-        const SizedBox(height: 16),
-        bar(0.5, 38),
-      ],
-    )
-        .animate(onPlay: (c) => c.repeat())
-        .shimmer(
-          duration: 1100.ms,
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-        );
+    final shimmer =
+        Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              // MUST be min: this card lives inside the completion screen's vertical
+              // SingleChildScrollView (unbounded height). A default mainAxisSize.max
+              // Column forces infinite height there ("BoxConstraints forces an infinite
+              // height"), which fails layout for the WHOLE screen → blank screen on
+              // workout finish. The outer skeleton Column is min; this inner one was not.
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                bar(0.85, 16),
+                const SizedBox(height: 12),
+                bar(1.0, 11),
+                const SizedBox(height: 7),
+                bar(0.92, 11),
+                const SizedBox(height: 7),
+                bar(0.7, 11),
+                const SizedBox(height: 16),
+                bar(0.5, 38),
+              ],
+            )
+            .animate(onPlay: (c) => c.repeat())
+            .shimmer(
+              duration: 1100.ms,
+              color: (isDark ? Colors.white : Colors.black).withValues(
+                alpha: 0.08,
+              ),
+            );
 
     // Header lives in the always-visible area now — this only fills the
     // expanded region with shimmer lines.
@@ -524,8 +634,9 @@ class _RecapError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -571,12 +682,14 @@ class _RecapDetail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final stoodOut = (recap['what_stood_out'] as List?)
+    final stoodOut =
+        (recap['what_stood_out'] as List?)
             ?.map((e) => e.toString())
             .where((s) => s.trim().isNotEmpty)
             .toList() ??
         const <String>[];
-    final prs = (recap['prs'] as List?)
+    final prs =
+        (recap['prs'] as List?)
             ?.whereType<Map>()
             .map((m) => Map<String, dynamic>.from(m))
             .toList() ??
@@ -593,11 +706,15 @@ class _RecapDetail extends StatelessWidget {
     }
     if (prs.isNotEmpty) {
       if (children.isNotEmpty) children.add(const SizedBox(height: 14));
-      children.addAll(prs.map((pr) => _PrRow(
+      children.addAll(
+        prs.map(
+          (pr) => _PrRow(
             exercise: (pr['exercise_name'] as String?) ?? 'Exercise',
             detail: (pr['detail'] as String?) ?? '',
             isDark: isDark,
-          )));
+          ),
+        ),
+      );
     }
     if (stoodOut.isNotEmpty) {
       if (children.isNotEmpty) children.add(const SizedBox(height: 14));
@@ -702,10 +819,13 @@ String _normalizeMuscle(String name) {
 
 String _titleCase(String s) {
   if (s.isEmpty) return s;
-  return s.split(' ').map((w) {
-    if (w.isEmpty) return w;
-    return w[0].toUpperCase() + w.substring(1).toLowerCase();
-  }).join(' ');
+  return s
+      .split(' ')
+      .map((w) {
+        if (w.isEmpty) return w;
+        return w[0].toUpperCase() + w.substring(1).toLowerCase();
+      })
+      .join(' ');
 }
 
 String? _findMuscleImage(String normalized) {
@@ -804,8 +924,11 @@ class _MuscleChip extends StatelessWidget {
                   ? Image.asset(
                       muscle.imagePath!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Icon(Icons.fitness_center, size: 18, color: textMuted),
+                      errorBuilder: (_, __, ___) => Icon(
+                        Icons.fitness_center,
+                        size: 18,
+                        color: textMuted,
+                      ),
                     )
                   : Icon(Icons.fitness_center, size: 18, color: textMuted),
             ),
@@ -857,10 +980,12 @@ class _MergedQuickPills extends StatelessWidget {
     final minutes = durationSeconds > 0 ? durationSeconds / 60.0 : 1.0;
     final workRateKg = totalVolumeKg / minutes;
     // Volume + work-rate are aggregates → linear conversion (not gym-snapped).
-    final displayVolume =
-        useKg ? totalVolumeKg : WeightUtils.kgToLbs(totalVolumeKg);
-    final displayWorkRate =
-        useKg ? workRateKg : WeightUtils.kgToLbs(workRateKg);
+    final displayVolume = useKg
+        ? totalVolumeKg
+        : WeightUtils.kgToLbs(totalVolumeKg);
+    final displayWorkRate = useKg
+        ? workRateKg
+        : WeightUtils.kgToLbs(workRateKg);
     final unit = WeightUtils.workoutUnitLabel(useKg);
 
     return Row(
@@ -968,14 +1093,19 @@ class _VolumeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final delta = (volume['delta_pct'] as num?)?.toDouble();
     final summary = (volume['summary'] as String?)?.trim() ?? '';
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
 
     final bool up = (delta ?? 0) >= 1;
     final bool down = (delta ?? 0) <= -1;
     final Color accent = up
         ? AppColors.green
-        : (down ? AppColors.orange : (isDark ? AppColors.textSecondary : AppColorsLight.textSecondary));
+        : (down
+              ? AppColors.orange
+              : (isDark
+                    ? AppColors.textSecondary
+                    : AppColorsLight.textSecondary));
     final IconData icon = up
         ? Icons.trending_up_rounded
         : (down ? Icons.trending_down_rounded : Icons.trending_flat_rounded);
@@ -1035,10 +1165,12 @@ class _PrRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -1085,8 +1217,9 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     return Text(
       text.toUpperCase(),
       style: TextStyle(
@@ -1108,8 +1241,9 @@ class _BulletRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -1146,8 +1280,9 @@ class _NoteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1178,8 +1313,9 @@ class _CoachingCue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

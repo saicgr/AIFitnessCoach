@@ -33,7 +33,8 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../ai_settings/ai_settings_screen.dart';
-import '../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
+import '../settings/sections/social_privacy_section.dart'
+    show publicShareLinksProvider;
 import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';
@@ -48,7 +49,6 @@ import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
 import 'widgets/trophies_earned_sheet.dart';
 import 'widgets/trophy_celebration_overlay.dart';
 import '../../widgets/heart_rate_chart.dart';
-import '../../core/constants/stat_typography.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../widgets/design_system/zealova.dart';
@@ -61,6 +61,7 @@ import '../../data/services/health_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/complete_screen_helper_widgets.dart';
+import '../../widgets/exercise_image.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 import '../../l10n/generated/app_localizations.dart';
 export 'widgets/complete_screen_helper_widgets.dart' show HeartRateReadingData;
@@ -71,7 +72,6 @@ part 'workout_complete_screen_ui_2.dart';
 part 'workout_complete_screen_ext_1.dart';
 part 'workout_complete_screen_ext_2.dart';
 
-
 class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   final Workout workout;
   final int duration;
@@ -79,6 +79,7 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   // Additional workout performance data for AI Coach feedback
   final String? workoutLogId;
   final List<Map<String, dynamic>>? exercisesPerformance;
+
   /// Per-set breakdown for tap-to-expand exercise rows:
   /// [{name, sets: [{set_number, reps, weight_kg, set_type}]}]. Optional —
   /// rows fall back to the aggregate summary when absent.
@@ -153,16 +154,14 @@ class WorkoutCompleteScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<WorkoutCompleteScreen> createState() => _WorkoutCompleteScreenState();
+  ConsumerState<WorkoutCompleteScreen> createState() =>
+      _WorkoutCompleteScreenState();
 }
 
 class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   int _rating = 0;
   String _difficulty = 'just_right';
   bool _isSubmitting = false;
-  String? _aiSummary;
-  bool _isLoadingSummary = true;
-  bool _isAiReviewExpanded = false;
 
   // Per-exercise ratings (exercise index -> rating 1-5)
   final Map<int, int> _exerciseRatings = {};
@@ -219,7 +218,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   bool _hrBackfillAttempted = false;
 
   // Milestone thresholds
-  static const List<int> _milestoneThresholds = [5, 10, 25, 50, 100, 150, 200, 250, 500, 1000];
+  static const List<int> _milestoneThresholds = [
+    5,
+    10,
+    25,
+    50,
+    100,
+    150,
+    200,
+    250,
+    500,
+    1000,
+  ];
 
   @override
   void initState() {
@@ -271,14 +281,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
             final resp = await apiClient.get('/users/$userId');
             final data = resp.data as Map<String, dynamic>?;
             final prefs = data?['preferences'] as Map<String, dynamic>?;
-            final perWeek = prefs?['workouts_per_week'] ??
+            final perWeek =
+                prefs?['workouts_per_week'] ??
                 prefs?['days_per_week'] ??
                 data?['workouts_per_week'];
             if (perWeek is int && perWeek > 0 && perWeek <= 7) {
               sessionsPerWeek = perWeek;
             }
           }
-        } catch (_) {/* non-critical */}
+        } catch (_) {
+          /* non-critical */
+        }
 
         // Pick highest PR improvement percent, if any
         int firstPrImprovementPct = 0;
@@ -332,8 +345,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       if (result.hasData) {
         setState(() => _hrBackfill = result);
         if (kDebugMode) {
-          debugPrint('❤️ [Complete] HR backfilled from health store: '
-              '${result.series.length} samples (${result.sourceLabel})');
+          debugPrint(
+            '❤️ [Complete] HR backfilled from health store: '
+            '${result.series.length} samples (${result.sourceLabel})',
+          );
         }
       }
     } catch (e) {
@@ -367,8 +382,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     final intervals = widget.restIntervals;
     if (intervals != null && intervals.isNotEmpty) {
       final secs = <int>[
-        for (final i in intervals)
-          ((i['rest_seconds'] as num?)?.toInt() ?? 0),
+        for (final i in intervals) ((i['rest_seconds'] as num?)?.toInt() ?? 0),
       ];
       final m = medianOfRestSeconds(secs);
       if (m != null) return m;
@@ -398,13 +412,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       final endTime = DateTime.now();
       final startTime = endTime.subtract(Duration(seconds: widget.duration));
 
-      await ref.read(healthSyncProvider.notifier).writeWorkoutToHealth(
-        workoutType: widget.workout.type ?? 'strength',
-        startTime: startTime,
-        endTime: endTime,
-        totalCaloriesBurned: widget.calories,
-        title: widget.workout.name ?? '${Branding.appName} Workout',
-      );
+      await ref
+          .read(healthSyncProvider.notifier)
+          .writeWorkoutToHealth(
+            workoutType: widget.workout.type ?? 'strength',
+            startTime: startTime,
+            endTime: endTime,
+            totalCaloriesBurned: widget.calories,
+            title: widget.workout.name ?? '${Branding.appName} Workout',
+          );
     } catch (e) {
       debugPrint('⚠️ [Health] Non-critical: workout health sync failed: $e');
     }
@@ -469,13 +485,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
       totalIntakeMl: totalIntake,
     );
     if (result != null && mounted) {
-      ref.read(hydrationProvider.notifier).logHydration(
-        userId: userId,
-        drinkType: result.drinkType.value,
-        amountMl: result.amountMl,
-        workoutId: widget.workout.id,
-        source: HydrationSource.workout,
-      );
+      ref
+          .read(hydrationProvider.notifier)
+          .logHydration(
+            userId: userId,
+            drinkType: result.drinkType.value,
+            amountMl: result.amountMl,
+            workoutId: widget.workout.id,
+            source: HydrationSource.workout,
+          );
     }
   }
 
@@ -504,23 +522,47 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     final coachEmoji = coach?.emoji ?? '💪';
 
     // Determine workout quality based on actual metrics
-    final bool wasMinimalEffort = totalSets == 0 || totalReps == 0 || minutes < 5;
+    final bool wasMinimalEffort =
+        totalSets == 0 || totalReps == 0 || minutes < 5;
     final bool wasShortWorkout = minutes >= 5 && minutes < 15 && totalSets < 6;
 
     // Generate honest feedback based on actual performance
     if (wasMinimalEffort) {
       // Honest feedback for minimal effort - vary by coach personality
-      return _getMinimalEffortFeedback(coachName, coachEmoji, minutes, totalSets);
+      return _getMinimalEffortFeedback(
+        coachName,
+        coachEmoji,
+        minutes,
+        totalSets,
+      );
     } else if (wasShortWorkout) {
       // Acknowledge effort but encourage more
-      return _getShortWorkoutFeedback(coachName, coachEmoji, minutes, totalSets, totalReps);
+      return _getShortWorkoutFeedback(
+        coachName,
+        coachEmoji,
+        minutes,
+        totalSets,
+        totalReps,
+      );
     } else {
       // Good workout - give appropriate recognition
-      return _getGoodWorkoutFeedback(coachName, coachEmoji, minutes, totalSets, totalReps, totalVolume);
+      return _getGoodWorkoutFeedback(
+        coachName,
+        coachEmoji,
+        minutes,
+        totalSets,
+        totalReps,
+        totalVolume,
+      );
     }
   }
 
-  String _getMinimalEffortFeedback(String coachName, String emoji, int minutes, int totalSets) {
+  String _getMinimalEffortFeedback(
+    String coachName,
+    String emoji,
+    int minutes,
+    int totalSets,
+  ) {
     final aiSettings = ref.read(aiSettingsProvider);
     final tone = aiSettings.communicationTone;
     final coachId = aiSettings.coachPersonaId;
@@ -544,7 +586,13 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
-  String _getShortWorkoutFeedback(String coachName, String emoji, int minutes, int totalSets, int totalReps) {
+  String _getShortWorkoutFeedback(
+    String coachName,
+    String emoji,
+    int minutes,
+    int totalSets,
+    int totalReps,
+  ) {
     final aiSettings = ref.read(aiSettingsProvider);
     final coachId = aiSettings.coachPersonaId;
 
@@ -564,10 +612,19 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
     }
   }
 
-  String _getGoodWorkoutFeedback(String coachName, String emoji, int minutes, int totalSets, int totalReps, double totalVolume) {
+  String _getGoodWorkoutFeedback(
+    String coachName,
+    String emoji,
+    int minutes,
+    int totalSets,
+    int totalReps,
+    double totalVolume,
+  ) {
     final aiSettings = ref.read(aiSettingsProvider);
     final coachId = aiSettings.coachPersonaId;
-    final volumeStr = totalVolume > 0 ? ' ${totalVolume.toStringAsFixed(0)}kg total volume!' : '';
+    final volumeStr = totalVolume > 0
+        ? ' ${totalVolume.toStringAsFixed(0)}kg total volume!'
+        : '';
 
     switch (coachId) {
       case 'coach_mike':
@@ -597,7 +654,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
       // Find matching PR
       final matchingPR = prs.firstWhere(
-        (pr) => (pr['exercise_name'] ?? '').toString().toLowerCase() == exName.toString().toLowerCase(),
+        (pr) =>
+            (pr['exercise_name'] ?? '').toString().toLowerCase() ==
+            exName.toString().toLowerCase(),
         orElse: () => null,
       );
 
@@ -660,8 +719,12 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack
+        : AppColorsLight.pureWhite;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     debugPrint('🏁 [Complete] Building workout complete screen');
@@ -738,13 +801,22 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
               TextButton(
                 onPressed: _handleSkipRating,
                 style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 4,
+                    horizontal: 12,
+                  ),
                   minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  AppLocalizations.of(context).workoutCompleteSkipRating.toUpperCase(),
-                  style: ZType.lbl(11, color: textSecondary, letterSpacing: 1.5),
+                  AppLocalizations.of(
+                    context,
+                  ).workoutCompleteSkipRating.toUpperCase(),
+                  style: ZType.lbl(
+                    11,
+                    color: textSecondary,
+                    letterSpacing: 1.5,
+                  ),
                 ),
               ),
             ],
@@ -767,7 +839,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ZealovaSectionKicker(
-                        AppLocalizations.of(context).workoutCompleteWorkoutComplete,
+                        AppLocalizations.of(
+                          context,
+                        ).workoutCompleteWorkoutComplete,
                       ),
                       const SizedBox(height: 4),
                       // Typographic finish — orange is reserved for the DONE
@@ -782,11 +856,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        widget.workout.name ?? AppLocalizations.of(context).navWorkout,
-                        style: ZType.ser(
-                          16,
-                          color: textSecondary,
-                        ),
+                        widget.workout.name ??
+                            AppLocalizations.of(context).navWorkout,
+                        style: ZType.ser(16, color: textSecondary),
                       ),
                     ],
                   ).animate().fadeIn(delay: 100.ms),
@@ -803,14 +875,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
 
                   // Heart Rate Section — live watch/BLE capture takes priority;
                   // otherwise the Apple Health / Health Connect backfill (6c).
-                  if (widget.heartRateReadings != null && widget.heartRateReadings!.isNotEmpty) ...[
+                  if (widget.heartRateReadings != null &&
+                      widget.heartRateReadings!.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    _buildHeartRateSection(elevated).animate().fadeIn(delay: 250.ms),
+                    _buildHeartRateSection(
+                      elevated,
+                    ).animate().fadeIn(delay: 250.ms),
                   ] else if (_hrBackfill != null && _hrBackfill!.hasData) ...[
                     const SizedBox(height: 16),
-                    _buildBackfilledHeartRateSection(elevated, _hrBackfill!)
-                        .animate()
-                        .fadeIn(delay: 250.ms),
+                    _buildBackfilledHeartRateSection(
+                      elevated,
+                      _hrBackfill!,
+                    ).animate().fadeIn(delay: 250.ms),
                   ],
 
                   // ONE merged Coach card (2C): AI recap + muscles-worked strip
@@ -824,13 +900,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     workoutName: widget.workout.name ?? 'Workout',
                     workoutType: widget.workout.type ?? 'strength',
                     exercises: widget.workout.exercises
-                        .map((e) => <String, dynamic>{
-                              'name': e.name,
-                              'sets': e.sets ?? 0,
-                              'reps': e.reps ?? 0,
-                              'weight_kg': e.weight ?? 0,
-                              'time_seconds': e.durationSeconds ?? 0,
-                            })
+                        .map(
+                          (e) => <String, dynamic>{
+                            'name': e.name,
+                            'sets': e.sets ?? 0,
+                            'reps': e.reps ?? 0,
+                            'weight_kg': e.weight ?? 0,
+                            'time_seconds': e.durationSeconds ?? 0,
+                          },
+                        )
                         .toList(),
                     workoutExercises: widget.workout.exercises,
                     totalSets: widget.totalSets ?? 0,
@@ -862,7 +940,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: ZealovaSectionKicker(
-                      AppLocalizations.of(context).workoutCompleteHowWasYourWorkout,
+                      AppLocalizations.of(
+                        context,
+                      ).workoutCompleteHowWasYourWorkout,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -875,7 +955,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: Icon(
-                            starIndex <= _rating ? Icons.star : Icons.star_border,
+                            starIndex <= _rating
+                                ? Icons.star
+                                : Icons.star_border,
                             size: 36,
                             // Neutral filled stars keep the single orange budget
                             // on the DONE CTA (Signature v2 orange-once rule).
@@ -898,7 +980,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     ),
                   const SizedBox(height: 6),
                   Text(
-                    AppLocalizations.of(context).workoutCompleteYourRatingsHelpUs,
+                    AppLocalizations.of(
+                      context,
+                    ).workoutCompleteYourRatingsHelpUs,
                     style: ZType.ser(13, color: textSecondary),
                   ),
 
@@ -928,7 +1012,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                               )
                             : const Icon(Icons.add, size: 16),
                         label: Text(
-                          _isExtendingWorkout ? AppLocalizations.of(context).workoutReviewAdding : AppLocalizations.of(context).workoutCompleteDoMore,
+                          _isExtendingWorkout
+                              ? AppLocalizations.of(context).workoutReviewAdding
+                              : AppLocalizations.of(
+                                  context,
+                                ).workoutCompleteDoMore,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
@@ -936,14 +1024,22 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed: _saunaMinutes != null ? null : _showSaunaDialog,
+                        onPressed: _saunaMinutes != null
+                            ? null
+                            : _showSaunaDialog,
                         icon: Icon(
                           Icons.hot_tub_rounded,
                           size: 16,
-                          color: _saunaMinutes != null ? AppColors.textMuted : textSecondary,
+                          color: _saunaMinutes != null
+                              ? AppColors.textMuted
+                              : textSecondary,
                         ),
                         label: Text(
-                          _saunaMinutes != null ? '${_saunaMinutes}min' : AppLocalizations.of(context).workoutCompleteSauna,
+                          _saunaMinutes != null
+                              ? '${_saunaMinutes}min'
+                              : AppLocalizations.of(
+                                  context,
+                                ).workoutCompleteSauna,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
@@ -968,13 +1064,21 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                           ),
                         ),
                       TextButton.icon(
-                        onPressed: () => setState(() => _showDetailedFeedback = !_showDetailedFeedback),
+                        onPressed: () => setState(
+                          () => _showDetailedFeedback = !_showDetailedFeedback,
+                        ),
                         icon: Icon(
-                          _showDetailedFeedback ? Icons.expand_less : Icons.rate_review_outlined,
+                          _showDetailedFeedback
+                              ? Icons.expand_less
+                              : Icons.rate_review_outlined,
                           size: 16,
                         ),
                         label: Text(
-                          _showDetailedFeedback ? AppLocalizations.of(context).workoutCompleteLess : AppLocalizations.of(context).workoutCompleteGiveDetailedFeedback,
+                          _showDetailedFeedback
+                              ? AppLocalizations.of(context).workoutCompleteLess
+                              : AppLocalizations.of(
+                                  context,
+                                ).workoutCompleteGiveDetailedFeedback,
                           style: const TextStyle(fontSize: 13),
                         ),
                         style: TextButton.styleFrom(
@@ -984,7 +1088,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                       // Overflow menu — holds the less-frequently-used
                       // actions so they don't consume a full row each.
                       PopupMenuButton<String>(
-                        tooltip: AppLocalizations.of(context).workoutCompleteMoreActions,
+                        tooltip: AppLocalizations.of(
+                          context,
+                        ).workoutCompleteMoreActions,
                         position: PopupMenuPosition.under,
                         onSelected: (value) {
                           switch (value) {
@@ -1001,10 +1107,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             value: 'water',
                             child: Row(
                               children: [
-                                Icon(Icons.water_drop_rounded,
-                                    size: 18, color: AppColors.waterBlue),
+                                Icon(
+                                  Icons.water_drop_rounded,
+                                  size: 18,
+                                  color: AppColors.waterBlue,
+                                ),
                                 const SizedBox(width: 10),
-                                Text(AppLocalizations.of(context).workoutCompleteLogWater),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).workoutCompleteLogWater,
+                                ),
                               ],
                             ),
                           ),
@@ -1012,22 +1125,34 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                             value: 'this_week',
                             child: Row(
                               children: [
-                                Icon(Icons.insights_outlined,
-                                    size: 18, color: AppColors.cyan),
+                                Icon(
+                                  Icons.insights_outlined,
+                                  size: 18,
+                                  color: AppColors.cyan,
+                                ),
                                 const SizedBox(width: 10),
-                                Text(AppLocalizations.of(context).workoutCompleteThisWeek),
+                                Text(
+                                  AppLocalizations.of(
+                                    context,
+                                  ).workoutCompleteThisWeek,
+                                ),
                               ],
                             ),
                           ),
                         ],
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 8),
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.more_horiz,
-                                  size: 16, color: AppColors.textMuted),
+                              Icon(
+                                Icons.more_horiz,
+                                size: 16,
+                                color: AppColors.textMuted,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 AppLocalizations.of(context).homeMore,
@@ -1048,7 +1173,10 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: ThemeColors.of(context).surface,
                           borderRadius: BorderRadius.circular(999),
@@ -1057,8 +1185,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.hot_tub_rounded,
-                                size: 16, color: ThemeColors.of(context).textSecondary),
+                            Icon(
+                              Icons.hot_tub_rounded,
+                              size: 16,
+                              color: ThemeColors.of(context).textSecondary,
+                            ),
                             const SizedBox(width: 8),
                             Text(
                               '$_saunaMinutes min sauna · ~$_saunaCalories cal',
@@ -1081,14 +1212,18 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ZealovaSectionKicker(
-                        AppLocalizations.of(context).workoutCompleteHowWasTheDifficulty,
+                        AppLocalizations.of(
+                          context,
+                        ).workoutCompleteHowWasTheDifficulty,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         DifficultyOption(
-                          label: AppLocalizations.of(context).workoutCompleteTooEasy,
+                          label: AppLocalizations.of(
+                            context,
+                          ).workoutCompleteTooEasy,
                           icon: Icons.sentiment_very_satisfied,
                           isSelected: _difficulty == 'too_easy',
                           onTap: () => setState(() => _difficulty = 'too_easy'),
@@ -1096,15 +1231,20 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                         ),
                         const SizedBox(width: 8),
                         DifficultyOption(
-                          label: AppLocalizations.of(context).workoutCompleteJustRight,
+                          label: AppLocalizations.of(
+                            context,
+                          ).workoutCompleteJustRight,
                           icon: Icons.sentiment_satisfied,
                           isSelected: _difficulty == 'just_right',
-                          onTap: () => setState(() => _difficulty = 'just_right'),
+                          onTap: () =>
+                              setState(() => _difficulty = 'just_right'),
                           color: AppColors.cyan,
                         ),
                         const SizedBox(width: 8),
                         DifficultyOption(
-                          label: AppLocalizations.of(context).workoutCompleteTooHard,
+                          label: AppLocalizations.of(
+                            context,
+                          ).workoutCompleteTooHard,
                           icon: Icons.sentiment_dissatisfied,
                           isSelected: _difficulty == 'too_hard',
                           onTap: () => setState(() => _difficulty = 'too_hard'),
@@ -1119,7 +1259,9 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: ZealovaSectionKicker(
-                        AppLocalizations.of(context).workoutCompleteRateExercises,
+                        AppLocalizations.of(
+                          context,
+                        ).workoutCompleteRateExercises,
                       ),
                     ),
                     const SizedBox(height: 8),

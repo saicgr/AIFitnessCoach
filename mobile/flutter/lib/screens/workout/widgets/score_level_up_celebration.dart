@@ -15,6 +15,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -27,10 +28,7 @@ class ScoreLevelUpCelebration extends ConsumerStatefulWidget {
   /// muscle the user actually trained when several crossed at once.
   final Set<String> trainedMuscles;
 
-  const ScoreLevelUpCelebration({
-    super.key,
-    this.trainedMuscles = const {},
-  });
+  const ScoreLevelUpCelebration({super.key, this.trainedMuscles = const {}});
 
   @override
   ConsumerState<ScoreLevelUpCelebration> createState() =>
@@ -47,7 +45,9 @@ class _ScoreLevelUpCelebrationState
   @override
   void initState() {
     super.initState();
-    _confetti = ConfettiController(duration: const Duration(milliseconds: 1400));
+    _confetti = ConfettiController(
+      duration: const Duration(milliseconds: 1400),
+    );
     _fetch();
   }
 
@@ -64,7 +64,8 @@ class _ScoreLevelUpCelebrationState
       if (!mounted) return;
       if (resp.statusCode == 200 && resp.data is Map) {
         final map = Map<String, dynamic>.from(resp.data as Map);
-        final muscles = (map['muscle_level_ups'] as List?)
+        final muscles =
+            (map['muscle_level_ups'] as List?)
                 ?.whereType<Map>()
                 .map((m) => Map<String, dynamic>.from(m))
                 .toList() ??
@@ -72,10 +73,12 @@ class _ScoreLevelUpCelebrationState
         // Prioritize a muscle trained in THIS workout for the headline.
         if (widget.trainedMuscles.isNotEmpty && muscles.length > 1) {
           muscles.sort((a, b) {
-            final aTrained = widget.trainedMuscles
-                .contains((a['muscle_group'] as String?)?.toLowerCase());
-            final bTrained = widget.trainedMuscles
-                .contains((b['muscle_group'] as String?)?.toLowerCase());
+            final aTrained = widget.trainedMuscles.contains(
+              (a['muscle_group'] as String?)?.toLowerCase(),
+            );
+            final bTrained = widget.trainedMuscles.contains(
+              (b['muscle_group'] as String?)?.toLowerCase(),
+            );
             if (aTrained == bTrained) return 0;
             return aTrained ? -1 : 1;
           });
@@ -83,8 +86,9 @@ class _ScoreLevelUpCelebrationState
         final overall = map['overall_level_up'];
         setState(() {
           _muscleLevelUps = muscles;
-          _overallLevelUp =
-              overall is Map ? Map<String, dynamic>.from(overall) : null;
+          _overallLevelUp = overall is Map
+              ? Map<String, dynamic>.from(overall)
+              : null;
           _loaded = true;
         });
         if (_muscleLevelUps.isNotEmpty || _overallLevelUp != null) {
@@ -102,6 +106,17 @@ class _ScoreLevelUpCelebrationState
   String _titleCase(String s) =>
       s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
 
+  /// Deterministic index into a variant pool from a string key — stable across
+  /// rebuilds (NO Random), so the same level-up always reads the same copy.
+  int _stableIndex(String key, int modulo) {
+    if (modulo <= 0) return 0;
+    var hash = 0;
+    for (final unit in key.codeUnits) {
+      hash = (hash * 31 + unit) & 0x7fffffff;
+    }
+    return hash % modulo;
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_loaded) return const SizedBox.shrink();
@@ -111,28 +126,56 @@ class _ScoreLevelUpCelebrationState
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary =
-        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
+    final textSecondary = isDark
+        ? AppColors.textSecondary
+        : AppColorsLight.textSecondary;
 
-    // Headline: overall level-up wins, else the strongest muscle crossing.
+    // Headline + subline: self-explanatory copy that names the tier, says it's
+    // per-muscle, and that it's computed from best lifts. Variant pool (≥4)
+    // picked by a STABLE index (muscle/level name hash, not Random) so the
+    // same crossing always reads the same way (feedback_dynamic_copy_not_robotic).
+    //
+    // `targetMuscle` (when set) is the muscle the card deep-links into.
     final String headline;
     final String subline;
+    final String? targetMuscle;
     if (_overallLevelUp != null) {
       final lvl = _titleCase(_overallLevelUp!['new_level'] as String? ?? '');
-      headline = 'Level Up! You\'re now $lvl';
-      subline = _muscleLevelUps.isNotEmpty
-          ? '${_muscleLevelUps.length} muscle${_muscleLevelUps.length == 1 ? '' : 's'} also leveled up'
-          : 'Your overall fitness score crossed a new tier';
+      final also = _muscleLevelUps.isNotEmpty
+          ? ' — ${_muscleLevelUps.length} muscle${_muscleLevelUps.length == 1 ? '' : 's'} leveled up too'
+          : '';
+      const overallHeadlines = [
+        'Your overall strength score reached **{lvl}**',
+        'You just crossed into **{lvl}** overall',
+        'Overall strength: **{lvl}** unlocked',
+        'New tier — your overall score is now **{lvl}**',
+      ];
+      final hIdx = _stableIndex(lvl, overallHeadlines.length);
+      headline = overallHeadlines[hIdx].replaceAll('{lvl}', lvl);
+      subline =
+          'It blends your best lifts across every muscle into one score.$also';
+      targetMuscle = null;
     } else {
       final top = _muscleLevelUps.first;
       final muscle = _titleCase(top['muscle_group'] as String? ?? 'Muscle');
       final lvl = _titleCase(top['new_level'] as String? ?? '');
-      headline = '$muscle Level Up — $lvl!';
+      const muscleHeadlines = [
+        'Your {muscle} strength score crossed into **{lvl}**',
+        '{muscle} just leveled up to **{lvl}**',
+        'New {muscle} tier — you\'re now **{lvl}**',
+        '{muscle} strength reached **{lvl}**',
+      ];
+      final hIdx = _stableIndex('$muscle$lvl', muscleHeadlines.length);
+      headline = muscleHeadlines[hIdx]
+          .replaceAll('{muscle}', muscle)
+          .replaceAll('{lvl}', lvl);
       subline = _muscleLevelUps.length > 1
-          ? '${_muscleLevelUps.length} muscles crossed a new strength tier'
-          : 'Your $muscle strength score crossed a new tier';
+          ? 'Calculated from your best lifts on $muscle exercises — and ${_muscleLevelUps.length - 1} other muscle${_muscleLevelUps.length - 1 == 1 ? '' : 's'} crossed a tier too. Tap to see the breakdown.'
+          : 'Calculated from your best lifts on $muscle exercises. Tap to see what counts toward it.';
+      targetMuscle = top['muscle_group'] as String?;
     }
 
     final card = Container(
@@ -160,19 +203,22 @@ class _ScoreLevelUpCelebrationState
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [accent, AppColors.purple],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(13),
-            ),
-            child: const Icon(Icons.trending_up_rounded,
-                color: Colors.white, size: 26),
-          )
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [accent, AppColors.purple],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(
+                  Icons.trending_up_rounded,
+                  color: Colors.white,
+                  size: 26,
+                ),
+              )
               .animate(onPlay: (c) => c.repeat(reverse: true))
               .scale(
                 begin: const Offset(1, 1),
@@ -190,7 +236,9 @@ class _ScoreLevelUpCelebrationState
                     colors: [accent, AppColors.purple],
                   ).createShader(b),
                   child: Text(
-                    headline,
+                    // The gradient already supplies emphasis; strip the
+                    // **bold** markers used by the copy pool for plain render.
+                    headline.replaceAll('**', ''),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w900,
@@ -212,9 +260,11 @@ class _ScoreLevelUpCelebrationState
                       for (final lu in _muscleLevelUps.take(5))
                         _MuscleLevelChip(
                           muscle: _titleCase(
-                              lu['muscle_group'] as String? ?? ''),
-                          newLevel:
-                              _titleCase(lu['new_level'] as String? ?? ''),
+                            lu['muscle_group'] as String? ?? '',
+                          ),
+                          newLevel: _titleCase(
+                            lu['new_level'] as String? ?? '',
+                          ),
                           accent: accent,
                           textPrimary: textPrimary,
                         ),
@@ -224,8 +274,38 @@ class _ScoreLevelUpCelebrationState
               ],
             ),
           ),
+          // Affordance that the card is tappable into the strength breakdown.
+          const SizedBox(width: 6),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 22,
+            color: accent.withValues(alpha: 0.9),
+          ),
         ],
       ),
+    );
+
+    // Deep-link target: the per-muscle strength breakdown. For an overall-only
+    // crossing (no specific muscle) fall back to the top crossed muscle, else
+    // the muscle-analytics hub.
+    final navMuscle =
+        targetMuscle ??
+        (_muscleLevelUps.isNotEmpty
+            ? _muscleLevelUps.first['muscle_group'] as String?
+            : null);
+    final tappableCard = GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        HapticService.instance.tap();
+        if (navMuscle != null && navMuscle.trim().isNotEmpty) {
+          context.push(
+            '/stats/muscle-analytics/${Uri.encodeComponent(navMuscle.trim())}',
+          );
+        } else {
+          context.push('/stats/muscle-analytics');
+        }
+      },
+      child: card,
     );
 
     return Padding(
@@ -236,7 +316,7 @@ class _ScoreLevelUpCelebrationState
         clipBehavior: Clip.none,
         alignment: Alignment.topCenter,
         children: [
-          card
+          tappableCard
               .animate()
               .fadeIn(duration: 350.ms)
               .scale(
@@ -259,7 +339,7 @@ class _ScoreLevelUpCelebrationState
                 accent,
                 AppColors.purple,
                 AppColors.orange,
-                Colors.white
+                Colors.white,
               ],
             ),
           ),
