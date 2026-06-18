@@ -1014,6 +1014,284 @@ class WorkoutAiRecapPayload(BaseModel):
     )
 
 
+# =============================================================================
+# Enrichment block builders (B / A2 / A3)
+#
+# These distill the rich DB context (ExerciseContext, injuries, rest, effort,
+# active-workout signals) into compact prompt lines. Every block is OMITTED when
+# empty so the token budget only pays for signal that exists. None of these make
+# DB calls — they consume what the endpoint already assembled.
+# =============================================================================
+
+
+def _fmt_kg(value: Optional[float], use_kg: bool) -> str:
+    """Compact kg/lb formatting for prompt lines (storage is kg)."""
+    if value is None:
+        return "bodyweight"
+    if value <= 0:
+        return "bodyweight"
+    if use_kg:
+        return f"{value:.0f}kg" if value >= 10 else f"{value:.1f}kg"
+    lb = value * _LB_PER_KG
+    return f"{lb:.0f}lb" if lb >= 10 else f"{lb:.1f}lb"
+
+
+def build_history_pr_block(
+    exercise_contexts: Optional[Dict[str, Any]],
+    use_kg: bool,
+    max_exercises: int = 5,
+) -> str:
+    """PRIOR HISTORY & PRS block: per exercise, last 3 top sets + PR/1RM + flags.
+
+    `exercise_contexts` is {name -> ExerciseContext}. Returns '' when there's no
+    history for any exercise (block omitted).
+    """
+    if not exercise_contexts:
+        return ""
+    lines: List[str] = []
+    for name, ctx in list(exercise_contexts.items())[:max_exercises]:
+        if not getattr(ctx, "has_history", False) and not getattr(ctx, "current_pr", None):
+            continue
+        # Last up-to-3 sessions, top set each.
+        sess_bits: List[str] = []
+        for sess in (getattr(ctx, "recent_sessions", []) or [])[:3]:
+            sets = sess.get("sets") or []
+            if not sets:
+                continue
+            top = max(sets, key=lambda s: (s.get("weight_kg") or 0, s.get("reps") or 0))
+            w = _fmt_kg(top.get("weight_kg"), use_kg)
+            sess_bits.append(f"{sess.get('date','?')}: {int(top.get('reps') or 0)}x{w}")
+        parts = []
+        if sess_bits:
+            parts.append("recent top sets " + "; ".join(sess_bits))
+        atb = getattr(ctx, "all_time_best_1rm_kg", None)
+        eff = getattr(ctx, "effective_1rm_kg", None)
+        if atb:
+            parts.append(f"all-time best 1RM ~{_fmt_kg(atb, use_kg)}")
+        if eff and (not atb or abs(eff - atb) > 0.5):
+            parts.append(f"effective 1RM ~{_fmt_kg(eff, use_kg)}")
+        flag = ""
+        if getattr(ctx, "is_pr", False):
+            flag = " — TODAY IS A PR"
+        elif getattr(ctx, "is_near_pr", False):
+            flag = " — NEAR PR (within ~2.5% of best)"
+        if parts or flag:
+            lines.append(f"- {name}: {'; '.join(parts) if parts else 'first logged session'}{flag}")
+    if not lines:
+        return ""
+    return "PRIOR HISTORY & PRS (use only these numbers):\n" + "\n".join(lines)
+
+
+def build_effort_block(exercise_contexts: Optional[Dict[str, Any]], max_exercises: int = 5) -> str:
+    """EFFORT block: per-exercise average RIR/RPE logged THIS session."""
+    if not exercise_contexts:
+        return ""
+    lines: List[str] = []
+    for name, ctx in list(exercise_contexts.items())[:max_exercises]:
+        rir = getattr(ctx, "avg_rir", None)
+        rpe = getattr(ctx, "avg_rpe", None)
+        bits = []
+        if rir is not None:
+            bits.append(f"avg RIR {rir:g}")
+        if rpe is not None:
+            bits.append(f"avg RPE {rpe:g}")
+        if bits:
+            lines.append(f"- {name}: {', '.join(bits)}")
+    if not lines:
+        return ""
+    return "EFFORT (reps in reserve / perceived exertion this session):\n" + "\n".join(lines)
+
+
+def build_rest_block(rest_analysis: Optional[Dict[str, Any]]) -> str:
+    """REST block: prescribed vs actual rest per exercise.
+
+    `rest_analysis` is {exercise_name -> {avg_actual_s, avg_prescribed_s}}.
+    """
+    if not rest_analysis:
+        return ""
+    lines: List[str] = []
+    for name, r in list(rest_analysis.items())[:5]:
+        actual = r.get("avg_actual_s")
+        presc = r.get("avg_prescribed_s")
+        if actual is None:
+            continue
+        if presc:
+            lines.append(
+                f"- {name}: rested ~{int(actual)}s vs prescribed ~{int(presc)}s"
+            )
+        else:
+            lines.append(f"- {name}: rested ~{int(actual)}s")
+    if not lines:
+        return ""
+    return "REST (actual vs prescribed):\n" + "\n".join(lines)
+
+
+def build_injury_block(injury_context: Optional[Any]) -> str:
+    """INJURY/PAIN block. Omitted entirely when there's nothing active."""
+    if injury_context is None:
+        return ""
+    injuries = getattr(injury_context, "injuries", None) or []
+    pain_flagged = getattr(injury_context, "pain_flagged_exercises", None) or []
+    if not injuries and not pain_flagged:
+        return ""
+    lines: List[str] = []
+    for inj in injuries[:4]:
+        bits = [inj.get("body_part") or "an area"]
+        if inj.get("injury_type"):
+            bits.append(str(inj.get("injury_type")))
+        if inj.get("severity"):
+            bits.append(f"{inj.get('severity')} severity")
+        if inj.get("pain_level") is not None:
+            bits.append(f"pain {inj.get('pain_level')}/10")
+        if inj.get("recovery_phase"):
+            bits.append(f"{inj.get('recovery_phase')} phase")
+        affects = inj.get("affects_exercises") or []
+        if affects:
+            bits.append("affects: " + ", ".join(str(a) for a in affects[:4]))
+        lines.append("- " + " — ".join(b for b in bits if b))
+    if pain_flagged:
+        lines.append("- Pain-flagged movements: " + ", ".join(pain_flagged[:6]))
+    return (
+        "INJURY / PAIN (RESPECT THIS — do not push load on affected movements; "
+        "favor pain-free range and recovery):\n" + "\n".join(lines)
+    )
+
+
+def build_form_block(exercise_contexts: Optional[Dict[str, Any]]) -> str:
+    """FORM block: cite the SINGLE lowest-scoring exercise's form note, if any."""
+    if not exercise_contexts:
+        return ""
+    scored = []
+    for name, ctx in exercise_contexts.items():
+        form = getattr(ctx, "form", None)
+        if form and form.get("form_score") is not None:
+            scored.append((name, form))
+    if not scored:
+        return ""
+    name, form = min(scored, key=lambda x: x[1].get("form_score") or 99)
+    issues = form.get("top_issues") or []
+    issue_txt = ""
+    if issues:
+        i0 = issues[0]
+        issue_txt = f" Top issue: {i0.get('description')}"
+        if i0.get("correction"):
+            issue_txt += f" (fix: {i0.get('correction')})"
+    return f"FORM CHECK ({name}): form_score {form.get('form_score')}/10.{issue_txt}"
+
+
+def summarize_session_signals(
+    metadata: Optional[Dict[str, Any]],
+    sets_json: Optional[List[Dict[str, Any]]],
+) -> List[str]:
+    """Distill high-value active-workout signals into compact prompt lines (A2).
+
+    NO DB cost — everything here is already in the completion payload the client
+    sent. Only NON-DEFAULT / notable signals are emitted (so a normal session adds
+    a handful of lines, not 95). Covers: progression-vs-last (per-set
+    previous_weight_kg/previous_reps), target-vs-actual, set types
+    (failure/amrap/dropset), exit reason, warmup/stretch status, ai_interactions.*,
+    heart_rate, drink behavior, rest behavior, and per-set notes.
+    """
+    metadata = metadata or {}
+    sets_json = sets_json or []
+    lines: List[str] = []
+
+    # --- Exit reason (sets TONE) ---
+    exit_reason = (metadata.get("exitReason") or metadata.get("exit_reason") or "").lower()
+    if exit_reason and exit_reason not in ("completed", "complete", "finished", ""):
+        lines.append(f"Session ended early — reason: {exit_reason} (adjust tone; do not over-cheerlead).")
+
+    # --- Warmup / stretch adherence ---
+    warmup = metadata.get("warmup") or {}
+    if isinstance(warmup, dict) and (warmup.get("status") == "skipped" or warmup.get("skipped")):
+        lines.append("Warmup was skipped.")
+    stretch = metadata.get("stretch") or metadata.get("cooldown") or {}
+    if isinstance(stretch, dict) and (stretch.get("status") == "skipped" or stretch.get("skipped")):
+        lines.append("Cooldown/stretch was skipped.")
+
+    # --- AI interaction counters ---
+    ai = metadata.get("ai_interactions") or metadata.get("aiInteractions") or {}
+    if isinstance(ai, dict):
+        if ai.get("fatigue_alerts_triggered"):
+            lines.append(f"Pushed through {ai.get('fatigue_alerts_triggered')} fatigue alert(s).")
+        accepted = ai.get("weight_suggestions_accepted")
+        if accepted:
+            lines.append(f"Accepted {accepted} coach weight suggestion(s).")
+        if ai.get("exercise_swaps_requested"):
+            lines.append(f"Requested {ai.get('exercise_swaps_requested')} exercise swap(s).")
+
+    # --- Heart rate (intensity proxy) ---
+    hr = metadata.get("heart_rate") or metadata.get("heartRate") or {}
+    if isinstance(hr, dict) and hr.get("avg_bpm"):
+        hr_bits = f"avg {int(hr['avg_bpm'])} bpm"
+        if hr.get("max_bpm"):
+            hr_bits += f", peak {int(hr['max_bpm'])} bpm"
+        lines.append(f"Heart rate this session: {hr_bits}.")
+
+    # --- Hydration behavior ---
+    drink_events = metadata.get("drink_events") or metadata.get("drinkEvents") or []
+    drink_ml = metadata.get("drink_intake_ml") or metadata.get("drinkIntakeMl")
+    if drink_events:
+        lines.append(f"Logged {len(drink_events)} hydration break(s) mid-session.")
+    elif drink_ml:
+        lines.append(f"Drank ~{int(drink_ml)}ml during the session.")
+
+    # --- Set-level signals from sets_json: progression vs last, targets, set types ---
+    set_type_flags: Dict[str, int] = {}
+    progressed = 0
+    regressed = 0
+    missed_target = 0
+    for s in sets_json:
+        stype = (s.get("set_type") or s.get("setType") or "").lower()
+        if stype in ("failure", "amrap", "dropset", "drop_set", "drop-set"):
+            set_type_flags[stype] = set_type_flags.get(stype, 0) + 1
+
+        # Progression vs last time (per-set previous_*).
+        prev_w = s.get("previous_weight_kg")
+        if prev_w is None:
+            prev_w = s.get("previousWeightKg")
+        cur_w = s.get("weight_kg")
+        if cur_w is None:
+            cur_w = s.get("weightKg")
+        if prev_w is not None and cur_w is not None:
+            try:
+                if float(cur_w) > float(prev_w) + 0.1:
+                    progressed += 1
+                elif float(cur_w) < float(prev_w) - 0.1:
+                    regressed += 1
+            except (TypeError, ValueError):
+                pass
+
+        # Target adherence.
+        tgt_w = s.get("target_weight_kg")
+        if tgt_w is None:
+            tgt_w = s.get("targetWeightKg")
+        if tgt_w is not None and cur_w is not None:
+            try:
+                if float(cur_w) < float(tgt_w) - 0.1:
+                    missed_target += 1
+            except (TypeError, ValueError):
+                pass
+
+    if progressed and progressed >= regressed:
+        lines.append(f"Added load on {progressed} set(s) vs last time.")
+    elif regressed > progressed and regressed:
+        lines.append(f"Backed off load on {regressed} set(s) vs last time.")
+    for stype, count in set_type_flags.items():
+        label = stype.replace("_", " ")
+        lines.append(f"Logged {count} {label} set(s) — notable effort.")
+    if missed_target:
+        lines.append(f"Came in under the prescribed load on {missed_target} set(s).")
+
+    return lines
+
+
+def _signals_prompt_block(signals: Optional[List[str]]) -> str:
+    if not signals:
+        return ""
+    return "SESSION SIGNALS:\n" + "\n".join(f"- {s}" for s in signals[:10])
+
+
 def _find_last_comparable_session(
     current_session: Dict[str, Any],
     past_sessions: List[Dict[str, Any]],
@@ -1066,6 +1344,11 @@ async def generate_workout_recap(
     earned_prs: Optional[List[Dict[str, Any]]] = None,
     logged_notes: Optional[List[str]] = None,
     total_workouts_completed: Optional[int] = None,
+    exercise_contexts: Optional[Dict[str, Any]] = None,
+    injury_context: Optional[Any] = None,
+    rest_analysis: Optional[Dict[str, Any]] = None,
+    session_signals: Optional[List[str]] = None,
+    use_kg: bool = False,
 ) -> Dict[str, Any]:
     """Generate a STRUCTURED post-workout recap (B8).
 
@@ -1079,6 +1362,14 @@ async def generate_workout_recap(
         logged_notes: Free-text set/workout notes the user logged this session
             (multi-modal-ready signal). Empty/None => recap won't reference notes.
         total_workouts_completed: Lifetime workout count, for consistency framing.
+        exercise_contexts: {name -> ExerciseContext} from exercise_context_service.
+            When supplied, replaces the thin ChromaDB weight-history loop and feeds
+            the richer PRIOR HISTORY & PRS / EFFORT / FORM blocks. Optional.
+        injury_context: InjuryContext (active injuries + pain-flagged moves). When
+            non-empty, adds the INJURY/PAIN block. Optional.
+        rest_analysis: {name -> {avg_actual_s, avg_prescribed_s}} for the REST block.
+        session_signals: distilled active-workout signals (see summarize_session_signals).
+        use_kg: when False, weights in prompt blocks are phrased in lb.
 
     Returns:
         Dict matching WorkoutAiRecapPayload, PLUS denormalized derived fields the
@@ -1098,24 +1389,36 @@ async def generate_workout_recap(
         for ex in (current_session.get("exercises", []) or [])[:5]
         if ex.get("name")
     ]
-    gathered = await asyncio.gather(
-        rag_service.get_user_workout_history(user_id, n_results=10),
-        *[
-            rag_service.get_exercise_weight_history(user_id, n, n_results=5)
-            for n in ex_names
-        ],
-        return_exceptions=True,
-    )
-    history_result = gathered[0]
-    past_sessions = history_result if not isinstance(history_result, Exception) else []
-    if isinstance(history_result, Exception):
-        logger.warning(f"[recap] workout history fetch failed: {history_result}")
+    # When the endpoint already assembled rich per-exercise context (the B path),
+    # we ONLY need the session-level workout history for the volume comparison —
+    # the thin ChromaDB per-exercise weight loop is superseded by exercise_contexts.
+    if exercise_contexts:
+        history_result = await rag_service.get_user_workout_history(user_id, n_results=10)
+        weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
+        if isinstance(history_result, Exception):
+            logger.warning(f"[recap] workout history fetch failed: {history_result}")
+            past_sessions = []
+        else:
+            past_sessions = history_result
+    else:
+        gathered = await asyncio.gather(
+            rag_service.get_user_workout_history(user_id, n_results=10),
+            *[
+                rag_service.get_exercise_weight_history(user_id, n, n_results=5)
+                for n in ex_names
+            ],
+            return_exceptions=True,
+        )
+        history_result = gathered[0]
+        past_sessions = history_result if not isinstance(history_result, Exception) else []
+        if isinstance(history_result, Exception):
+            logger.warning(f"[recap] workout history fetch failed: {history_result}")
 
-    # Per-exercise weight progression (reuse existing RAG helper).
-    weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
-    for ex_name, history in zip(ex_names, gathered[1:]):
-        if history and not isinstance(history, Exception):
-            weight_progressions[ex_name] = history
+        # Per-exercise weight progression (reuse existing RAG helper).
+        weight_progressions = {}
+        for ex_name, history in zip(ex_names, gathered[1:]):
+            if history and not isinstance(history, Exception):
+                weight_progressions[ex_name] = history
 
     comparable = _find_last_comparable_session(current_session, past_sessions)
 
@@ -1137,8 +1440,20 @@ async def generate_workout_recap(
         current_session, past_sessions, weight_progressions
     )
 
-    # Deterministic comparison line handed to the model so it never invents numbers.
-    if previous_volume and delta_pct is not None:
+    # --- 0kg GUARDRAIL ---------------------------------------------------------
+    # A marked-done / no-load session has zero logged volume. NEVER say "0kg",
+    # "baseline of 0", or emit a volume delta — that's the AI-slop the redesign
+    # exists to kill. Force a completion-framed comparison and guard delta math.
+    marked_done_no_load = current_volume <= 0
+    if marked_done_no_load:
+        previous_volume = None
+        delta_pct = None
+        vol_line = (
+            "This session was marked complete with no logged load (no per-set "
+            "weights recorded). Do NOT mention volume, kilograms, '0kg', or any "
+            "baseline number — speak only to completion and consistency."
+        )
+    elif previous_volume and delta_pct is not None:
         direction = "up" if delta_pct >= 0 else "down"
         vol_line = (
             f"Total volume this session: {current_volume:.0f}kg. "
@@ -1150,6 +1465,14 @@ async def generate_workout_recap(
             f"Total volume this session: {current_volume:.0f}kg. "
             f"No comparable prior session to compare against (first of its kind)."
         )
+
+    # --- Enrichment blocks (B / A2 / A3) — omitted when empty ------------------
+    history_block = build_history_pr_block(exercise_contexts, use_kg)
+    effort_block = build_effort_block(exercise_contexts)
+    rest_block = build_rest_block(rest_analysis)
+    injury_block = build_injury_block(injury_context)
+    form_block = build_form_block(exercise_contexts)
+    signals_block = _signals_prompt_block(session_signals)
 
     pr_lines = ""
     if earned_prs:
@@ -1169,12 +1492,23 @@ async def generate_workout_recap(
     if total_workouts_completed:
         consistency_line = f"Lifetime workouts completed: {total_workouts_completed}."
 
+    zero_load_rule = (
+        " This session has NO logged load — NEVER write '0kg', 'baseline', or a "
+        "volume number; frame it purely as a completed session and what to do next."
+        if marked_done_no_load else ""
+    )
     system_prompt = (
         "You are an elite strength coach writing a SHORT, data-grounded recap of a "
         "client's just-finished workout. Be specific and honest; never generic. "
-        "Use ONLY the numbers provided — do not invent volume, weights, or PRs. "
+        "Use ONLY the numbers provided — do not invent volume, weights, PRs, RIR, "
+        "or rest figures. When an INJURY/PAIN block is present, respect it: never "
+        "tell the client to push load on an affected movement. "
         "No emojis. No markdown. The coaching cue must be ONE concrete, actionable "
-        "instruction for the next session, tied to the actual data."
+        "instruction for the next session, tied to the actual data." + zero_load_rule
+    )
+
+    extra_blocks = "\n\n".join(
+        b for b in (history_block, effort_block, rest_block, injury_block, form_block, signals_block) if b
     )
 
     user_prompt = f"""Write a structured recap of this workout.
@@ -1184,6 +1518,8 @@ async def generate_workout_recap(
 VOLUME COMPARISON (use these exact numbers):
 {vol_line}
 
+{extra_blocks}
+
 {pr_lines}
 
 {notes_block}
@@ -1192,10 +1528,10 @@ VOLUME COMPARISON (use these exact numbers):
 
 Requirements:
 - headline: punchy one-liner about THIS session.
-- what_stood_out: 1-3 specific highlights (weak point progressed, consistency streak, strongest lift, completion). Each one short sentence.
+- what_stood_out: 1-3 specific highlights (a PR / near-PR, weak point progressed, consistency streak, strongest lift, completion). Each one short sentence.
 - volume_comparison: fill from the VOLUME COMPARISON numbers above (do not change them).
 - prs: only the PRs listed above (empty if none).
-- coaching_cue: EXACTLY ONE concrete cue for next time, grounded in the data.
+- coaching_cue: EXACTLY ONE concrete cue for next time, grounded in the data{' (respect any injury/pain noted above)' if injury_block else ''}.
 - notes_reference: {"one sentence acknowledging/acting on the user's notes above" if has_notes else "null (no notes were logged)"}.
 """
 
@@ -1228,16 +1564,24 @@ Requirements:
 
     # Force the volume_comparison numbers to the deterministic truth (the model
     # is told to use them, but we never trust it to echo numbers correctly).
+    if marked_done_no_load:
+        # 0kg guardrail: no volume numbers, no delta, completion-framed summary.
+        forced_summary = (
+            "Marked complete — log your sets next time to unlock volume and "
+            "progress insights."
+        )
+    else:
+        forced_summary = (
+            payload_dict.get("volume_comparison", {}).get("summary")
+            if isinstance(payload_dict.get("volume_comparison"), dict)
+            else None
+        ) or _volume_summary(delta_pct, comparable_name)
     payload_dict["volume_comparison"] = {
         "current_volume_kg": current_volume,
         "previous_volume_kg": previous_volume,
         "delta_pct": delta_pct,
         "comparable_workout_name": comparable_name,
-        "summary": (
-            payload_dict.get("volume_comparison", {}).get("summary")
-            if isinstance(payload_dict.get("volume_comparison"), dict)
-            else None
-        ) or _volume_summary(delta_pct, comparable_name),
+        "summary": forced_summary,
     }
 
     # If the user logged no notes, never fabricate a notes reference.
@@ -1507,6 +1851,11 @@ async def generate_exercise_critique(
     target: Optional[Dict[str, Any]] = None,
     use_kg: bool = False,
     exercise_id: Optional[str] = None,
+    context: Optional[Any] = None,
+    injury: Optional[Any] = None,
+    rest: Optional[Dict[str, Any]] = None,
+    form: Optional[Dict[str, Any]] = None,
+    session_signals: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """Short, strict, honest AI critique of the sets just logged for ONE exercise.
 
@@ -1522,6 +1871,13 @@ async def generate_exercise_critique(
         target: Optional {weight_kg, reps, rir} prescription to compare against.
         use_kg: When False, weights are phrased in lb (this user trains in lb).
         exercise_id: Optional exercise UUID (passed through, not required).
+        context: Optional ExerciseContext (prior sessions, PR status, 1RM) to add
+            PRIOR SESSIONS / PR STATUS blocks. Optional.
+        injury: Optional InjuryContext — when this exercise is pain-flagged or an
+            active injury affects it, adds a PAIN block (don't push load).
+        rest: Optional {avg_actual_s, avg_prescribed_s} for this exercise.
+        form: Optional {form_score, top_issues} most-recent form analysis.
+        session_signals: Optional distilled signals scoped to this exercise.
 
     Returns:
         {"critique_markdown": str, "is_fallback": bool}. Never raises.
@@ -1530,6 +1886,9 @@ async def generate_exercise_critique(
     from services.gemini.constants import gemini_generate_with_retry
 
     stats = _summarize_exercise_sets(sets or [], use_kg)
+
+    # 0-load guardrail: if no set carries weight, talk reps/RIR, never "0kg"/"0lb".
+    no_load = (stats.get("top_weight_kg") or 0) <= 0 and stats.get("set_count", 0) > 0
 
     # Build the deterministic, numbers-only context the model must ground on.
     set_block = "\n".join(stats["set_lines"]) if stats["set_lines"] else "No sets logged."
@@ -1544,6 +1903,58 @@ async def generate_exercise_critique(
 
     unit = "kilograms" if use_kg else "pounds"
 
+    # --- Enrichment blocks for ONE exercise (omitted when empty) ---
+    enrich_lines: List[str] = []
+    if context is not None:
+        hb = build_history_pr_block({exercise_name: context}, use_kg)
+        if hb:
+            enrich_lines.append(hb)
+        if getattr(context, "is_pr", False):
+            enrich_lines.append("PR STATUS: today's top set is a NEW PR for this exercise.")
+        elif getattr(context, "is_near_pr", False):
+            enrich_lines.append("PR STATUS: today's top set is within ~2.5% of the all-time best (near PR).")
+    if rest:
+        rb = build_rest_block({exercise_name: rest})
+        if rb:
+            enrich_lines.append(rb)
+    if form:
+        # Reuse the form block builder via a one-item context.
+        class _FormHolder:
+            pass
+        holder = _FormHolder()
+        holder.form = form
+        fb = build_form_block({exercise_name: holder})
+        if fb:
+            enrich_lines.append(fb)
+    # Pain: only inject when THIS exercise is affected.
+    if injury is not None:
+        pain_names = [n.lower() for n in (getattr(injury, "pain_flagged_exercises", None) or [])]
+        affected = exercise_name.lower() in pain_names
+        if not affected:
+            for inj in (getattr(injury, "injuries", None) or []):
+                aff = [str(a).lower() for a in (inj.get("affects_exercises") or [])]
+                if exercise_name.lower() in aff:
+                    affected = True
+                    break
+        if affected:
+            enrich_lines.append(
+                "PAIN: this movement is flagged for pain/injury — do NOT cue adding "
+                "load; favor pain-free range and recovery."
+            )
+    if session_signals:
+        sb = _signals_prompt_block(session_signals)
+        if sb:
+            enrich_lines.append(sb)
+    enrich_block = ("\n\n" + "\n\n".join(enrich_lines)) if enrich_lines else ""
+
+    zero_load_rule = (
+        " The sets carry NO external load (bodyweight or unweighted) — speak to "
+        "reps and reps-in-reserve, NEVER mention weight, '0kg', or '0lb'."
+        if no_load else ""
+    )
+    pain_rule = (
+        " A PAIN block may be present — if so, never cue adding load on this movement."
+    )
     system_prompt = (
         "You are an elite strength coach giving a SHORT, honest, data-grounded "
         "critique of the sets a client just logged for ONE exercise. Be specific; "
@@ -1552,8 +1963,13 @@ async def generate_exercise_critique(
         "Output MARKDOWN: a single bold lead sentence, then AT MOST 3 bullet "
         "points. Exactly ONE bullet is a concrete, actionable cue for next time, "
         "tied to the actual numbers. No emojis. No headers. Keep it tight."
+        + zero_load_rule + pain_rule
     )
 
+    top_set_str = (
+        f"{stats['top_reps']} reps at {_fmt_weight(stats['top_weight_kg'], use_kg)}"
+        if stats['top_weight_kg'] else f"{stats['top_reps']} reps (bodyweight)"
+    )
     user_prompt = f"""Critique this exercise based ONLY on the data below.
 
 Exercise: {exercise_name}
@@ -1565,9 +1981,10 @@ Sets logged:
 Summary (use these, do not change them):
 - Working sets: {stats['set_count']}
 - Total reps: {stats['total_reps']}
-- Top set: {stats['top_reps']} reps at {_fmt_weight(stats['top_weight_kg'], use_kg) if stats['top_weight_kg'] else 'bodyweight'}
+- Top set: {top_set_str}
 - Reps in reserve logged: {'yes, avg ' + format(stats['avg_rir'], '.1f') if stats['has_rir'] else 'no'}
 - Load dropped across sets: {'yes' if stats['load_dropped'] else 'no'}
+{enrich_block}
 
 Write a bold one-sentence lead, then up to 3 bullets, one of which is a single concrete cue for next time."""
 
@@ -1681,6 +2098,11 @@ async def generate_detailed_workout_summary(
     earned_prs: Optional[List[Dict[str, Any]]] = None,
     logged_notes: Optional[List[str]] = None,
     total_workouts_completed: Optional[int] = None,
+    exercise_contexts: Optional[Dict[str, Any]] = None,
+    injury_context: Optional[Any] = None,
+    rest_analysis: Optional[Dict[str, Any]] = None,
+    session_signals: Optional[List[str]] = None,
+    use_kg: bool = False,
 ) -> Dict[str, Any]:
     """Longer, strict, honest post-workout breakdown as sectioned MARKDOWN.
 
@@ -1703,23 +2125,34 @@ async def generate_detailed_workout_summary(
         for ex in (current_session.get("exercises", []) or [])[:5]
         if ex.get("name")
     ]
-    gathered = await asyncio.gather(
-        rag_service.get_user_workout_history(user_id, n_results=10),
-        *[
-            rag_service.get_exercise_weight_history(user_id, n, n_results=5)
-            for n in ex_names
-        ],
-        return_exceptions=True,
-    )
-    history_result = gathered[0]
-    past_sessions = history_result if not isinstance(history_result, Exception) else []
-    if isinstance(history_result, Exception):
-        logger.warning(f"[detailed] workout history fetch failed: {history_result}")
+    # See generate_workout_recap: when exercise_contexts are supplied we only need
+    # the session-level history (the per-exercise ChromaDB loop is superseded).
+    if exercise_contexts:
+        history_result = await rag_service.get_user_workout_history(user_id, n_results=10)
+        weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
+        if isinstance(history_result, Exception):
+            logger.warning(f"[detailed] workout history fetch failed: {history_result}")
+            past_sessions = []
+        else:
+            past_sessions = history_result
+    else:
+        gathered = await asyncio.gather(
+            rag_service.get_user_workout_history(user_id, n_results=10),
+            *[
+                rag_service.get_exercise_weight_history(user_id, n, n_results=5)
+                for n in ex_names
+            ],
+            return_exceptions=True,
+        )
+        history_result = gathered[0]
+        past_sessions = history_result if not isinstance(history_result, Exception) else []
+        if isinstance(history_result, Exception):
+            logger.warning(f"[detailed] workout history fetch failed: {history_result}")
 
-    weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
-    for ex_name, history in zip(ex_names, gathered[1:]):
-        if history and not isinstance(history, Exception):
-            weight_progressions[ex_name] = history
+        weight_progressions = {}
+        for ex_name, history in zip(ex_names, gathered[1:]):
+            if history and not isinstance(history, Exception):
+                weight_progressions[ex_name] = history
 
     comparable = _find_last_comparable_session(current_session, past_sessions)
 
@@ -1754,7 +2187,17 @@ async def generate_detailed_workout_summary(
         current_session, past_sessions, weight_progressions
     )
 
-    if previous_volume and delta_pct is not None:
+    # --- 0kg GUARDRAIL (same as the recap) ---
+    marked_done_no_load = current_volume <= 0
+    if marked_done_no_load:
+        previous_volume = None
+        delta_pct = None
+        vol_line = (
+            "This session was marked complete with no logged load (no per-set "
+            "weights). Do NOT mention volume, kilograms, '0kg', or any baseline "
+            "number — speak only to completion, adherence, and what to log next time."
+        )
+    elif previous_volume and delta_pct is not None:
         direction = "up" if delta_pct >= 0 else "down"
         vol_line = (
             f"Total volume this session: {current_volume:.0f}kg. "
@@ -1766,6 +2209,17 @@ async def generate_detailed_workout_summary(
             f"Total volume this session: {current_volume:.0f}kg. "
             f"No comparable prior session (first of its kind)."
         )
+
+    # Enrichment blocks (B / A2 / A3) — omitted when empty.
+    history_block = build_history_pr_block(exercise_contexts, use_kg)
+    effort_block = build_effort_block(exercise_contexts)
+    rest_block = build_rest_block(rest_analysis)
+    injury_block = build_injury_block(injury_context)
+    form_block = build_form_block(exercise_contexts)
+    signals_block = _signals_prompt_block(session_signals)
+    extra_blocks = "\n\n".join(
+        b for b in (history_block, effort_block, rest_block, injury_block, form_block, signals_block) if b
+    )
 
     pr_lines = ""
     if earned_prs:
@@ -1784,21 +2238,31 @@ async def generate_detailed_workout_summary(
     if total_workouts_completed:
         consistency_line = f"Lifetime workouts completed: {total_workouts_completed}."
 
+    zero_load_rule = (
+        " This session has NO logged load — NEVER write '0kg', 'baseline', or a "
+        "volume figure anywhere; frame strengths/weaknesses around completion, "
+        "adherence, and logging discipline."
+        if marked_done_no_load else ""
+    )
     system_prompt = (
         "You are an elite strength coach writing a HONEST, data-grounded breakdown "
         "of a client's just-finished workout. Be specific; never generic. Use ONLY "
-        "the numbers provided — NEVER invent volume, weights, PRs, or completion "
-        "figures. Output MARKDOWN with EXACTLY these four bold section headers, in "
-        "this order, each followed by 1-4 bullet points:\n"
+        "the numbers provided — NEVER invent volume, weights, PRs, RIR, rest, or "
+        "completion figures. When an INJURY/PAIN block is present, respect it — "
+        "never advise pushing load on an affected movement. Output MARKDOWN with "
+        "EXACTLY these four bold section headers, in this order, each followed by "
+        "1-4 bullet points:\n"
         "**Strengths**\n**Weaknesses**\n**What to improve**\n**What to do next**\n"
         "Do not add other sections or headers. No emojis. Keep each bullet to one "
         "sentence. 'What to do next' must contain concrete, actionable steps tied "
-        "to the data."
+        "to the data." + zero_load_rule
     )
 
     user_prompt = f"""Write the four-section breakdown of this workout, grounded only in the data below.
 
 {context}
+
+{extra_blocks}
 
 VOLUME COMPARISON (use these exact numbers):
 {vol_line}

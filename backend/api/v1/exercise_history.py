@@ -960,85 +960,40 @@ async def get_batch_exercise_history(
 
     db = get_supabase_db()
 
-    # Normalize names once for case-insensitive matching.
-    normalized = [n.lower() for n in request.exercise_names]
-    since = (datetime.utcnow().date() - timedelta(days=request.days_back)).isoformat()
-
     try:
-        # One query to grab all candidate rows for every exercise at once.
-        # performance_logs is the source of truth for per-set data.
-        pl_query = (
-            db.client.from_("performance_logs")
-            .select(
-                "exercise_name, set_number, reps_completed, weight_kg, rpe, rir, "
-                "set_type, recorded_at, workout_log_id"
-            )
-            .eq("user_id", request.user_id)
-            .in_("exercise_name", normalized)
-            .gte("recorded_at", since)
+        # Shared per-set assembler (one query, warmups filtered, newest-first).
+        # Lives in exercise_context_service so the post-workout AI surfaces reuse
+        # the exact same grouping (DRY — see services/exercise_context_service.py).
+        from services.exercise_context_service import fetch_batch_perset_history
+
+        raw = fetch_batch_perset_history(
+            db,
+            request.user_id,
+            request.exercise_names,
+            gym_profile_id=request.gym_profile_id,
+            days_back=request.days_back,
+            limit_per_exercise=request.limit_per_exercise,
         )
-        if request.gym_profile_id:
-            pl_query = pl_query.eq("gym_profile_id", request.gym_profile_id)
-        result = (
-            pl_query
-            .order("recorded_at", desc=True)
-            .limit(request.limit_per_exercise * len(normalized) * 10)
-            .execute()
-        )
-        rows = result.data or []
 
-        # Group rows by (exercise_name_lower, workout_log_id) — a workout_log_id
-        # approximates "one session" for this exercise. Fall back to date if
-        # the id is missing for any row.
-        grouped: Dict[str, Dict[str, Dict[str, Any]]] = {n: {} for n in normalized}
-
-        for row in rows:
-            ex_name = (row.get("exercise_name") or "").lower()
-            if ex_name not in grouped:
-                continue
-            # Skip warmups
-            set_type = (row.get("set_type") or "working").lower()
-            if set_type == "warmup":
-                continue
-            reps = row.get("reps_completed")
-            if reps is None or int(reps) <= 0:
-                continue
-
-            session_key = row.get("workout_log_id") or (row.get("recorded_at") or "")[:10]
-            if not session_key:
-                continue
-
-            bucket = grouped[ex_name].setdefault(
-                session_key,
-                {"date": (row.get("recorded_at") or "")[:10], "sets": []},
-            )
-            # Keep the earliest recorded_at as the session date (sets inside
-            # a session can span seconds — any set's date is fine for our day-
-            # level gap logic).
-            bucket["sets"].append(
-                BatchSessionSet(
-                    weight_kg=float(row.get("weight_kg") or 0.0),
-                    reps=int(reps),
-                    rpe=int(row["rpe"]) if row.get("rpe") is not None else None,
-                    rir=int(row["rir"]) if row.get("rir") is not None else None,
-                )
-            )
-
-        # Build the response — keep the N most recent sessions per exercise,
-        # newest first. Order sets within a session by set_number when known
-        # (performance_logs may already be chronological, but we don't rely on that).
+        # Adapt the shared shape ({date, sets:[{weight_kg, reps, rir, rpe, ...}]})
+        # into this endpoint's typed response model.
         histories: Dict[str, List[BatchSessionSummary]] = {}
-        for original_name, normalized_name in zip(
-            request.exercise_names, normalized, strict=True
-        ):
-            bucket = grouped.get(normalized_name, {})
-            # Sort sessions by date desc
-            sorted_sessions = sorted(
-                bucket.values(), key=lambda x: x["date"], reverse=True
-            )[: request.limit_per_exercise]
+        for original_name in request.exercise_names:
+            sessions = raw.get(original_name, []) or []
             histories[original_name] = [
-                BatchSessionSummary(date=s["date"], working_sets=s["sets"])
-                for s in sorted_sessions
+                BatchSessionSummary(
+                    date=s["date"],
+                    working_sets=[
+                        BatchSessionSet(
+                            weight_kg=float(st.get("weight_kg") or 0.0),
+                            reps=int(st.get("reps") or 0),
+                            rpe=int(st["rpe"]) if st.get("rpe") is not None else None,
+                            rir=int(st["rir"]) if st.get("rir") is not None else None,
+                        )
+                        for st in s["sets"]
+                    ],
+                )
+                for s in sessions
                 if s["sets"]
             ]
 

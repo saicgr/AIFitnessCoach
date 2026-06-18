@@ -925,6 +925,15 @@ class GenerateRecapRequest(BaseModel):
     # Multi-modal-ready: free-text set/workout notes the user logged this session.
     logged_notes: Optional[List[str]] = None
     total_workouts_completed: Optional[int] = None
+    # Per-gym scope for history/PR/1RM context assembly. Optional — server can
+    # also read the active gym from the workout log when omitted.
+    gym_profile_id: Optional[str] = None
+    # Display unit for the prompt's weight phrasing (this user trains in lb).
+    use_kg: bool = False
+    # Active-workout signals the client already collected (A2). Optional — the
+    # server falls back to reading them from the workout_logs row by id.
+    metadata: Optional[dict] = None
+    sets_json: Optional[List[dict]] = None
     # When true, regenerate even if a recap already exists (re-bills Gemini).
     force: bool = False
 
@@ -945,6 +954,142 @@ def _serialize_recap_row(row: dict) -> dict:
         "model_version": row.get("model_version"),
         "recap": payload,
     }
+
+
+async def _assemble_recap_enrichment(
+    db,
+    user_id: str,
+    body: "GenerateRecapRequest",
+    exercises_data: List[dict],
+):
+    """Assemble the enrichment context for the recap / detailed summary (B/A2/A3).
+
+    Runs the batch ExerciseContext assembler, the injury context, a rest_intervals
+    query keyed on workout_log_id, and the session-signal distiller — all in a
+    small, fixed number of queries. Every piece fails open to empty so an old
+    client (or a missing log row) still gets a working recap.
+
+    Returns (exercise_contexts, injury_context, rest_analysis, session_signals).
+    """
+    from services.exercise_context_service import (
+        assemble_exercise_contexts,
+        fetch_active_injury_context,
+        fetch_recent_form_analysis,
+    )
+    from services.workout_feedback_rag_service import summarize_session_signals
+
+    ex_names = [e.get("name") for e in exercises_data if e.get("name")][:8]
+    gym_id = body.gym_profile_id
+
+    # --- sets_json / metadata: from the request, else read the log row once. ---
+    sets_json = body.sets_json
+    metadata = body.metadata
+    if (sets_json is None or metadata is None) and body.workout_log_id:
+        try:
+            log_res = (
+                db.client.from_("workout_logs")
+                .select("sets_json, metadata, gym_profile_id")
+                .eq("id", body.workout_log_id)
+                .limit(1)
+                .execute()
+            )
+            if log_res.data:
+                row = log_res.data[0]
+                if sets_json is None:
+                    sets_json = row.get("sets_json")
+                if metadata is None:
+                    metadata = row.get("metadata")
+                if not gym_id:
+                    gym_id = row.get("gym_profile_id")
+        except Exception as e:
+            logger.warning(f"[recap] workout_logs read failed: {e}")
+
+    # --- current session per-exercise working sets (from sets_json) ------------
+    current_by_name: dict = {}
+    for s in (sets_json or []):
+        name = s.get("exercise_name") or s.get("exerciseName") or s.get("name")
+        if not name:
+            continue
+        stype = (s.get("set_type") or s.get("setType") or "working").lower()
+        if stype in ("warmup", "warm_up", "warm-up"):
+            continue
+        w = s.get("weight_kg")
+        if w is None:
+            w = s.get("weightKg")
+        reps = s.get("reps") if s.get("reps") is not None else s.get("reps_completed")
+        current_by_name.setdefault(name, []).append(
+            {
+                "weight_kg": float(w) if w is not None else 0.0,
+                "reps": int(reps) if reps is not None else 0,
+                "rir": s.get("rir"),
+                "rpe": s.get("rpe"),
+                "set_type": stype,
+            }
+        )
+
+    # --- exercise contexts (Q1-Q3) -------------------------------------------
+    exercise_contexts = {}
+    try:
+        exercise_contexts = assemble_exercise_contexts(
+            db, user_id, ex_names, gym_id, current_by_name
+        )
+        # A3 v1: attach the most recent form analysis per exercise (one query each,
+        # only for the top exercises — bounded, no N+1 explosion).
+        for name, ctx in list(exercise_contexts.items())[:5]:
+            form = fetch_recent_form_analysis(db, user_id, name, None, gym_id)
+            if form:
+                ctx.form = form
+    except Exception as e:
+        logger.warning(f"[recap] exercise context assembly failed: {e}")
+
+    # --- injury context (2 queries) ------------------------------------------
+    injury_context = None
+    try:
+        ic = fetch_active_injury_context(db, user_id)
+        injury_context = None if ic.is_empty else ic
+    except Exception as e:
+        logger.warning(f"[recap] injury context failed: {e}")
+
+    # --- rest analysis (1 query, grouped by exercise) ------------------------
+    rest_analysis = {}
+    if body.workout_log_id:
+        try:
+            rest_res = (
+                db.client.from_("rest_intervals")
+                .select("exercise_name, rest_duration_seconds, prescribed_rest_seconds")
+                .eq("user_id", user_id)
+                .eq("workout_log_id", body.workout_log_id)
+                .execute()
+            )
+            agg: dict = {}
+            for r in (rest_res.data or []):
+                nm = r.get("exercise_name")
+                if not nm:
+                    continue
+                b = agg.setdefault(nm, {"actual": [], "presc": []})
+                if r.get("rest_duration_seconds") is not None:
+                    b["actual"].append(float(r["rest_duration_seconds"]))
+                if r.get("prescribed_rest_seconds") is not None:
+                    b["presc"].append(float(r["prescribed_rest_seconds"]))
+            for nm, b in agg.items():
+                if b["actual"]:
+                    rest_analysis[nm] = {
+                        "avg_actual_s": round(sum(b["actual"]) / len(b["actual"])),
+                        "avg_prescribed_s": (
+                            round(sum(b["presc"]) / len(b["presc"])) if b["presc"] else None
+                        ),
+                    }
+        except Exception as e:
+            logger.warning(f"[recap] rest_intervals query failed: {e}")
+
+    # --- session signals (NO DB — distilled from metadata + sets_json) -------
+    session_signals = []
+    try:
+        session_signals = summarize_session_signals(metadata, sets_json)
+    except Exception as e:
+        logger.warning(f"[recap] session signal distill failed: {e}")
+
+    return exercise_contexts, injury_context, rest_analysis, session_signals
 
 
 @router.get("/recap/{workout_id}")
@@ -1054,6 +1199,14 @@ async def generate_recap_endpoint(
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }
 
+        # Assemble the rich grounding context (B/A2/A3) before generating.
+        (
+            exercise_contexts,
+            injury_context,
+            rest_analysis,
+            session_signals,
+        ) = await _assemble_recap_enrichment(db, user_id, body, exercises_data)
+
         recap = await generate_workout_recap(
             gemini_service=gemini_service,
             rag_service=rag_service,
@@ -1062,6 +1215,11 @@ async def generate_recap_endpoint(
             earned_prs=body.earned_prs,
             logged_notes=body.logged_notes,
             total_workouts_completed=body.total_workouts_completed,
+            exercise_contexts=exercise_contexts,
+            injury_context=injury_context,
+            rest_analysis=rest_analysis,
+            session_signals=session_signals,
+            use_kg=body.use_kg,
         )
 
         # Split derived denormalized fields (prefixed with _) from the stored payload.
@@ -1187,6 +1345,363 @@ async def exercise_critique_endpoint(
             ),
             is_fallback=True,
         )
+
+
+# ============================================
+# Per-exercise AI summary — PERSISTED + cached (C)
+# Distinct from the ephemeral /exercise-critique: this is keyed on
+# (user, workout_log_id, exercise_name) so re-opening the card is instant.
+# ============================================
+
+class ExerciseSummarySet(BaseModel):
+    """One logged set for the per-exercise summary."""
+    set_number: int = 0
+    weight_kg: float = 0.0
+    reps: int = 0
+    rir: Optional[int] = None
+    rpe: Optional[float] = None
+    set_type: Optional[str] = "working"
+
+
+class ExerciseSummaryTarget(BaseModel):
+    weight_kg: float = 0.0
+    reps: int = 0
+    rir: Optional[int] = None
+
+
+class ExerciseSummaryRequest(BaseModel):
+    """POST /feedback/exercise-summary request (frontend contract — exact shape)."""
+    user_id: str
+    workout_id: str
+    workout_log_id: str
+    exercise_name: str
+    exercise_id: Optional[str] = None
+    gym_profile_id: Optional[str] = None
+    sets: List[ExerciseSummarySet] = []
+    target: Optional[ExerciseSummaryTarget] = None
+    use_kg: bool = False
+    force: bool = False
+
+
+class ExerciseSummaryContext(BaseModel):
+    """Structured context surfaced alongside the markdown (frontend contract)."""
+    is_pr: bool = False
+    is_near_pr: bool = False
+    has_history: bool = False
+    form_score: Optional[float] = None
+    today_top_1rm_kg: Optional[float] = None
+
+
+class ExerciseSummaryResponse(BaseModel):
+    """POST/GET /feedback/exercise-summary response (frontend contract)."""
+    critique_markdown: str
+    is_fallback: bool = False
+    cached: bool = False
+    generated_at: str
+    context: ExerciseSummaryContext
+
+
+def _exercise_summary_context_from_ctx(ctx, form: Optional[dict]) -> ExerciseSummaryContext:
+    """Build the response `context` block from an ExerciseContext + form analysis."""
+    form_score = None
+    if form and form.get("form_score") is not None:
+        try:
+            form_score = float(form["form_score"])
+        except (TypeError, ValueError):
+            form_score = None
+    return ExerciseSummaryContext(
+        is_pr=bool(getattr(ctx, "is_pr", False)),
+        is_near_pr=bool(getattr(ctx, "is_near_pr", False)),
+        has_history=bool(getattr(ctx, "has_history", False)),
+        form_score=form_score,
+        today_top_1rm_kg=getattr(ctx, "today_top_1rm", None),
+    )
+
+
+@router.get("/exercise-summary/{workout_log_id}/{exercise_name}")
+async def get_exercise_summary(
+    workout_log_id: str,
+    exercise_name: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Fetch a cached per-exercise AI summary (instant re-open, no LLM).
+
+    Returns {"found": false} when none has been generated yet so the client can
+    show its skeleton then POST to generate.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        res = (
+            db.client.from_("workout_exercise_ai_summaries")
+            .select("*")
+            .eq("user_id", user_id)
+            .eq("workout_log_id", workout_log_id)
+            .ilike("exercise_name", exercise_name)
+            .limit(1)
+            .execute()
+        )
+        rows = res.data or []
+        if not rows:
+            return {"found": False}
+        row = rows[0]
+        payload = row.get("payload") or {}
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except (json.JSONDecodeError, TypeError):
+                payload = {}
+        return {
+            "critique_markdown": row.get("critique_markdown") or "",
+            "is_fallback": bool(payload.get("is_fallback", False)),
+            "cached": True,
+            "generated_at": row.get("generated_at"),
+            "context": payload.get("context") or {
+                "is_pr": False, "is_near_pr": False, "has_history": False,
+                "form_score": None, "today_top_1rm_kg": None,
+            },
+        }
+    except Exception as e:
+        logger.error(f"[ex-summary] fetch failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "exercise_summary")
+
+
+@router.post("/exercise-summary", response_model=ExerciseSummaryResponse)
+@limiter.limit("20/minute")
+async def generate_exercise_summary_endpoint(
+    request: Request,
+    body: ExerciseSummaryRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate + PERSIST a per-exercise AI summary (cached per workout_log_id).
+
+    Enriched with prior sessions / PR status / effort / rest / pain / form, then
+    upserted (migration 2271). Idempotent unless `force` is set. Fails open to a
+    deterministic critique so the card is never blank.
+    """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        db = get_supabase_db()
+        supabase = db.client
+        user_id = current_user["id"]
+
+        # Idempotency: return the cached summary unless forced.
+        if not body.force:
+            existing = (
+                supabase.table("workout_exercise_ai_summaries")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("workout_log_id", body.workout_log_id)
+                .ilike("exercise_name", body.exercise_name)
+                .limit(1)
+                .execute()
+            )
+            if existing.data:
+                row = existing.data[0]
+                payload = row.get("payload") or {}
+                if isinstance(payload, str):
+                    try:
+                        payload = json.loads(payload)
+                    except (json.JSONDecodeError, TypeError):
+                        payload = {}
+                logger.info(f"[ex-summary] cached for {body.exercise_name}")
+                return ExerciseSummaryResponse(
+                    critique_markdown=row.get("critique_markdown") or "",
+                    is_fallback=bool(payload.get("is_fallback", False)),
+                    cached=True,
+                    generated_at=row.get("generated_at") or datetime.now(timezone.utc).isoformat(),
+                    context=ExerciseSummaryContext(**(payload.get("context") or {})),
+                )
+
+        from services.exercise_context_service import (
+            assemble_single_exercise_context,
+            fetch_active_injury_context,
+            fetch_recent_form_analysis,
+        )
+
+        sets_data = [s.model_dump() for s in body.sets]
+        # ExerciseContext expects {weight_kg, reps, rir, rpe, set_type}.
+        ctx_sets = [
+            {
+                "weight_kg": s.get("weight_kg") or 0.0,
+                "reps": s.get("reps") or 0,
+                "rir": s.get("rir"),
+                "rpe": s.get("rpe"),
+                "set_type": s.get("set_type") or "working",
+            }
+            for s in sets_data
+        ]
+
+        ctx = assemble_single_exercise_context(
+            db, user_id, body.exercise_name, body.gym_profile_id, ctx_sets
+        )
+        injury_ctx = None
+        try:
+            ic = fetch_active_injury_context(db, user_id)
+            injury_ctx = None if ic.is_empty else ic
+        except Exception as e:
+            logger.warning(f"[ex-summary] injury ctx failed: {e}")
+        form = None
+        try:
+            form = fetch_recent_form_analysis(
+                db, user_id, body.exercise_name, body.exercise_id, body.gym_profile_id
+            )
+            if form:
+                ctx.form = form
+        except Exception as e:
+            logger.warning(f"[ex-summary] form fetch failed: {e}")
+
+        # Rest for this exercise (one scoped query).
+        rest = None
+        try:
+            rest_res = (
+                supabase.from_("rest_intervals")
+                .select("rest_duration_seconds, prescribed_rest_seconds")
+                .eq("user_id", user_id)
+                .eq("workout_log_id", body.workout_log_id)
+                .ilike("exercise_name", body.exercise_name)
+                .execute()
+            )
+            actuals = [float(r["rest_duration_seconds"]) for r in (rest_res.data or []) if r.get("rest_duration_seconds") is not None]
+            prescs = [float(r["prescribed_rest_seconds"]) for r in (rest_res.data or []) if r.get("prescribed_rest_seconds") is not None]
+            if actuals:
+                rest = {
+                    "avg_actual_s": round(sum(actuals) / len(actuals)),
+                    "avg_prescribed_s": round(sum(prescs) / len(prescs)) if prescs else None,
+                }
+        except Exception as e:
+            logger.warning(f"[ex-summary] rest query failed: {e}")
+
+        gemini_service = get_gemini_service()
+        result = await generate_exercise_critique(
+            gemini_service=gemini_service,
+            exercise_name=body.exercise_name,
+            sets=sets_data,
+            target=body.target.model_dump() if body.target else None,
+            use_kg=body.use_kg,
+            exercise_id=body.exercise_id,
+            context=ctx,
+            injury=injury_ctx,
+            rest=rest,
+            form=form,
+        )
+
+        context_block = _exercise_summary_context_from_ctx(ctx, form)
+        now = datetime.now(timezone.utc).isoformat()
+        payload = {
+            "is_fallback": result.get("is_fallback", False),
+            "context": context_block.model_dump(),
+        }
+        model_version = getattr(gemini_service, "model", None)
+
+        try:
+            supabase.table("workout_exercise_ai_summaries").upsert(
+                {
+                    "user_id": user_id,
+                    "workout_log_id": body.workout_log_id,
+                    "exercise_name": body.exercise_name,
+                    "payload": payload,
+                    "critique_markdown": result["critique_markdown"],
+                    "model_version": model_version,
+                    "generated_at": now,
+                    "updated_at": now,
+                },
+                on_conflict="user_id,workout_log_id,exercise_name",
+            ).execute()
+        except Exception as persist_err:
+            logger.warning(f"[ex-summary] persist failed (returning anyway): {persist_err}")
+
+        return ExerciseSummaryResponse(
+            critique_markdown=result["critique_markdown"],
+            is_fallback=result.get("is_fallback", False),
+            cached=False,
+            generated_at=now,
+            context=context_block,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[ex-summary] generation failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "exercise_summary")
+
+
+# ============================================
+# Progress Pros & Cons — cross-session AI analysis (H), cached in-process
+# ============================================
+
+class ProgressAnalysisRequest(BaseModel):
+    """POST /feedback/progress-analysis request (frontend contract)."""
+    user_id: str
+    exercise_name: Optional[str] = None  # null => whole-body / overall report
+    gym_profile_id: Optional[str] = None
+    window: str = "8w"  # '8w' | '6m' | '1y' | 'all'
+    force: bool = False
+
+
+class ProgressAnalysisResponse(BaseModel):
+    """POST /feedback/progress-analysis response (frontend contract)."""
+    pros: List[str] = []
+    cons: List[str] = []
+    plateaus: List[str] = []
+    next_focus: List[str] = []
+    summary_markdown: str = ""
+    has_history: bool = False
+    is_fallback: bool = False
+    cached: bool = False
+    generated_at: str
+
+
+@router.post("/progress-analysis", response_model=ProgressAnalysisResponse)
+@limiter.limit("20/minute")
+async def progress_analysis_endpoint(
+    request: Request,
+    body: ProgressAnalysisRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Cross-session AI progress analysis (pros/cons/plateaus/next focus).
+
+    Per-exercise when `exercise_name` is set, else whole-body. Grounded ONLY in
+    existing data (exercise history, PR statistics, per-muscle strength scores);
+    never invents numbers. Cached in-process (short TTL) keyed by
+    (user, exercise|'all', window). `force` bypasses the cache. Fails open to a
+    deterministic minimal report so the card is never blank.
+    """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        from services.progress_analysis_service import generate_progress_analysis
+
+        db = get_supabase_db()
+        gemini_service = get_gemini_service()
+        result = await generate_progress_analysis(
+            gemini_service=gemini_service,
+            db=db,
+            user_id=body.user_id,
+            exercise_name=body.exercise_name,
+            gym_profile_id=body.gym_profile_id,
+            window=body.window,
+            force=body.force,
+        )
+        return ProgressAnalysisResponse(
+            pros=result.get("pros", []),
+            cons=result.get("cons", []),
+            plateaus=result.get("plateaus", []),
+            next_focus=result.get("next_focus", []),
+            summary_markdown=result.get("summary_markdown", ""),
+            has_history=result.get("has_history", False),
+            is_fallback=result.get("is_fallback", False),
+            cached=result.get("cached", False),
+            generated_at=datetime.now(timezone.utc).isoformat(),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[progress] endpoint failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "progress_analysis")
 
 
 # ============================================
@@ -1317,6 +1832,14 @@ async def generate_detailed_summary_endpoint(
             "completed_at": datetime.now(timezone.utc).isoformat(),
         }
 
+        # Assemble the rich grounding context (B/A2/A3) before generating.
+        (
+            exercise_contexts,
+            injury_context,
+            rest_analysis,
+            session_signals,
+        ) = await _assemble_recap_enrichment(db, user_id, body, exercises_data)
+
         result = await generate_detailed_workout_summary(
             gemini_service=gemini_service,
             rag_service=rag_service,
@@ -1325,6 +1848,11 @@ async def generate_detailed_summary_endpoint(
             earned_prs=body.earned_prs,
             logged_notes=body.logged_notes,
             total_workouts_completed=body.total_workouts_completed,
+            exercise_contexts=exercise_contexts,
+            injury_context=injury_context,
+            rest_analysis=rest_analysis,
+            session_signals=session_signals,
+            use_kg=body.use_kg,
         )
         summary_md = result["summary_markdown"]
 
