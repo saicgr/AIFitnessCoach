@@ -181,6 +181,16 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   String? _seededOpenInsightId;
   // Guard so the open-ladder runs at most once per screen mount.
   bool _openLadderAttempted = false;
+  // True once the open-ladder has finished deciding (greeting/briefing seeded,
+  // OR nothing to seed because the fetch failed / returned empty / a real
+  // conversation already existed). While this is false on an ORGANIC open we
+  // paint a chat-first "coach is composing" placeholder (typing dots) instead
+  // of the avatar landing — so the empty chat resolves smoothly INTO the
+  // seeded greeting bubble (signature-v2 is chat-first) rather than flashing a
+  // full "Coach Mike / Your Motivational Powerhouse" landing that then gets
+  // wholesale-replaced by the conversation. The landing only shows as the
+  // genuine fallback once we know there's no greeting to seed.
+  bool _openLadderResolved = false;
 
   // C4 — mirrors whether the notifier currently has a streaming bubble
   // (live OR dropped). Only flips on null↔non-null transitions, so the
@@ -370,7 +380,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   Future<void> _runOpenStateLadder() async {
     if (_openLadderAttempted || !mounted) return;
     _openLadderAttempted = true;
+    try {
+      await _runOpenStateLadderBody();
+    } finally {
+      // Whatever the outcome (seeded a turn, bailed on a guard, or the fetch
+      // threw) the ladder is done — let the chat-first "composing" placeholder
+      // yield to the resolved state (seeded greeting bubble, or the empty
+      // landing fallback) instead of spinning forever.
+      if (mounted && !_openLadderResolved) {
+        setState(() => _openLadderResolved = true);
+      }
+    }
+  }
 
+  Future<void> _runOpenStateLadderBody() async {
     // Only the empty open state gets decorated. A real session OR any existing
     // message means this is a continuing conversation — never inject there.
     final activeSession = ref.read(currentChatSessionProvider);
@@ -575,6 +598,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// EnhancedEmptyState, shown during the transient loadHistory flash (#20)
   /// and in the resolved `data([])` branch until the seeded greeting (or a
   /// rich briefing) bubble swaps in. Never blocks first paint.
+  /// Chat-first "coach is composing" placeholder shown on an ORGANIC open
+  /// while the open-state ladder is still resolving the greeting/briefing.
+  /// It's the same left-aligned typing bubble a real incoming coach message
+  /// animates out of, so when the seeded greeting bubble swaps in (200ms
+  /// AnimatedSwitcher) the surface reads as one continuous conversation —
+  /// never the avatar landing → chat jump the user reported. The masthead is
+  /// already painted above this, so the tab is recognizable from frame one.
+  Widget _buildOpenComposingPlaceholder() {
+    return ListView(
+      key: const ValueKey('open_composing'),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+      children: const [
+        _TypingIndicator(),
+      ],
+    );
+  }
+
   Widget _buildEmptyOrGreeting(CoachPersona coach) {
     final Widget base = EnhancedEmptyState(
       key: const ValueKey('empty'),
@@ -966,17 +1006,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Eyebrow — wordmark retired (signature-v2); keep only the
-          // right-aligned program day-count.
-          if (dayCount > 0)
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                l10n.chatScreenMastheadDay(dayCount),
+          // Eyebrow (signature-v2): wordmark on the LEFT, program day-count on
+          // the RIGHT — both on ONE line. The row is ALWAYS rendered so the
+          // masthead never reflows when `xpCurrentStreakProvider` resolves
+          // async: previously the lone right-aligned "Day N" was the only
+          // eyebrow child, so before the streak loaded it was absent (no line),
+          // then popped onto its own line once it arrived — the jarring shift
+          // the user saw between the first paint and the loaded state.
+          Row(
+            children: [
+              Text(
+                'Zealova',
                 style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
               ),
-            ),
-          if (dayCount > 0) const SizedBox(height: 4),
+              const Spacer(),
+              if (dayCount > 0)
+                Text(
+                  l10n.chatScreenMastheadDay(dayCount),
+                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 1.6),
+                ),
+            ],
+          ),
+          const SizedBox(height: 4),
           // Anton display masthead + the History / New chip pair.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -1210,13 +1261,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 // initialMessage) the chat is a fresh/empty conversation: the
                 // brief AsyncValue.loading() flash while loadHistory resolves
                 // an empty new chat must NOT show a bare spinner. Paint the
-                // living empty/greeting state IMMEDIATELY; the daily briefing
-                // is fetched async by _runOpenStateLadder and swapped in when
-                // it resolves. Non-organic opens (deep-link turn / pending
-                // initialMessage) still show the spinner while the targeted
-                // history loads.
+                // chat-first "composing" placeholder IMMEDIATELY; the daily
+                // briefing is fetched async by _runOpenStateLadder and swapped
+                // in when it resolves (signature-v2 chat-first — never the
+                // avatar landing, which then jumps to the conversation).
+                // Non-organic opens (deep-link turn / pending initialMessage)
+                // still show the spinner while the targeted history loads.
                 loading: () => _isOrganicOpen
-                    ? _buildEmptyOrGreeting(coach)
+                    ? _buildOpenComposingPlaceholder()
                     : const Center(
                         key: ValueKey('loading'),
                         child: CircularProgressIndicator(color: AppColors.cyan),
@@ -1295,11 +1347,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                 },
                 data: (messages) {
                   if (messages.isEmpty) {
-                    // Living open state — when the open-ladder resolved a
-                    // light greeting payload, render the time-aware greeting
-                    // view. Otherwise fall back to the organic empty state.
-                    // (Shared with the organic-open loading branch above so
-                    // the surface never flickers between spinner and empty.)
+                    // Living open state. On an organic open, while the ladder
+                    // is still resolving its greeting/briefing, keep the
+                    // chat-first "composing" placeholder up so the empty chat
+                    // flows straight INTO the seeded greeting bubble (the
+                    // landing never flashes). Once the ladder has resolved with
+                    // nothing to seed (fetch failed / empty / a deliberately
+                    // started "+ New" chat), fall back to the avatar landing
+                    // empty state with its "Try asking…" suggestions.
+                    if (_isOrganicOpen && !_openLadderResolved) {
+                      return _buildOpenComposingPlaceholder();
+                    }
                     return _buildEmptyOrGreeting(coach);
                   }
 
