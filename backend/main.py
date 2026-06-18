@@ -19,7 +19,8 @@ from starlette.middleware.gzip import GZipMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
 from slowapi.errors import RateLimitExceeded
 from core.rate_limiter import structured_rate_limit_handler
-from slowapi.middleware import SlowAPIMiddleware
+from slowapi.middleware import SlowAPIMiddleware  # noqa: F401  (kept for type/back-compat)
+from core.rate_limiter import SafeSlowAPIMiddleware
 import asyncio
 import logging
 import re
@@ -1023,8 +1024,11 @@ app.add_middleware(LoggingMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Add SlowAPI middleware for rate limiting
-# This MUST be added for rate limiting to work properly
-app.add_middleware(SlowAPIMiddleware)
+# This MUST be added for rate limiting to work properly.
+# SafeSlowAPIMiddleware guards against the slowapi 0.1.9 crash where a swallowed
+# storage error leaves request.state.view_rate_limit unset → 500 (see
+# core/rate_limiter.py for the full writeup).
+app.add_middleware(SafeSlowAPIMiddleware)
 
 # Add per-route metrics middleware (Phase D4 observability).
 # Added LAST => it is the OUTERMOST layer, so the latency it records is the
@@ -1081,8 +1085,14 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")
+@limiter.exempt
 async def root():
-    """Root endpoint - basic info."""
+    """Root endpoint - basic info.
+
+    Exempt from rate limiting: Render health checks ping this constantly, and
+    it carries no abuse risk. Exemption also short-circuits the middleware
+    before any header injection, keeping this hot path off the limiter entirely.
+    """
     result = {
         "service": f"{branding.APP_NAME} Backend",
         "version": "1.0.0",

@@ -140,6 +140,61 @@ limiter = Limiter(
 )
 
 
+# ---------------------------------------------------------------------------
+# Crash-proof rate-limit middleware
+# ---------------------------------------------------------------------------
+# slowapi 0.1.9's SlowAPIMiddleware.dispatch ends with:
+#     if should_inject_headers:
+#         response = limiter._inject_headers(response, request.state.view_rate_limit)
+# `should_inject_headers` is True whenever the limit check ran without raising,
+# but `request.state.view_rate_limit` is set ONLY on the success path inside
+# Limiter.__evaluate_limits. With `swallow_errors=True` and no in-memory
+# fallback, a transient storage error (e.g. a Redis blip) is swallowed and the
+# function returns *before* setting the attribute — yet `should_inject_headers`
+# is still True. The middleware then reads a missing attribute and raises
+# `AttributeError: 'State' object has no attribute 'view_rate_limit'`, which
+# escapes as an HTTP 500 (seen most on `GET /`, hammered by Render health pings).
+#
+# This subclass reuses slowapi's own helpers but injects headers only when the
+# attribute is actually present. `_inject_headers(resp, None)` is itself a no-op,
+# so the guard degrades gracefully — the request succeeds without X-RateLimit-*
+# headers instead of 500ing. Version-faithful with the vendored 0.1.9 dispatch.
+from slowapi.middleware import (  # noqa: E402
+    SlowAPIMiddleware,
+    _find_route_handler,
+    _should_exempt,
+    sync_check_limits,
+)
+from starlette.responses import Response  # noqa: E402
+
+
+class SafeSlowAPIMiddleware(SlowAPIMiddleware):
+    async def dispatch(self, request: Request, call_next) -> Response:
+        app = request.app
+        limiter_ = app.state.limiter
+
+        if not limiter_.enabled:
+            return await call_next(request)
+
+        handler = _find_route_handler(app.routes, request.scope)
+        if _should_exempt(limiter_, handler):
+            return await call_next(request)
+
+        error_response, should_inject_headers = sync_check_limits(
+            limiter_, request, handler, app
+        )
+        if error_response is not None:
+            return error_response
+
+        response = await call_next(request)
+        # GUARD: only inject when the success path actually recorded the limit.
+        if should_inject_headers and hasattr(request.state, "view_rate_limit"):
+            response = limiter_._inject_headers(
+                response, request.state.view_rate_limit
+            )
+        return response
+
+
 def get_user_id_from_request(request: Request) -> str:
     """
     Extract user_id from request for user-based rate limiting.

@@ -15,6 +15,11 @@ from typing import List, Optional, Dict, Any
 
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
+# map_recovery_to_tier is called below (recovery-adaptation path). It was used
+# without being imported → NameError that 500'd get_today_workout for any user
+# on the recovery path (Sentry PYTHON-FASTAPI-50 / -4Z). No circular import:
+# readiness_service does not import this module.
+from services.readiness_service import map_recovery_to_tier
 
 logger = get_logger(__name__)
 
