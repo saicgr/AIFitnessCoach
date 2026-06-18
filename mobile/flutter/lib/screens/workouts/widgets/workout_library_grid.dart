@@ -1,26 +1,41 @@
-/// Workout library grid — Surface 2.4 of the minimalist redesign.
+/// Workout library grid — Signature v2.
 ///
 /// 3×2 grid of category tiles (Strength / Cardio / Mobility / HIIT / Yoga
 /// / Saved). Each tile routes to `LibraryScreen` (`/library`) with a
-/// pre-applied category filter. Per-category illustrations live under
-/// `assets/images/workout_types/` and are rendered with `Image.asset` —
-/// when an asset is missing, the fail-soft `errorBuilder` falls through
-/// to a category-tinted gradient so the tile is never blank.
+/// pre-applied category filter.
+///
+/// Restyled from the old photo/gradient art tiles to the Signature hairline
+/// system that the rest of the Workouts tab uses: `surface2` fill, 1px
+/// `cardBorder`, an accent-tinted category glyph, and a Barlow uppercase
+/// label with a short accent underline. No bundled PNGs / gradients, so the
+/// grid reads as part of the same monochrome-plus-one-accent surface as the
+/// TODAY / THIS WEEK / PROGRAM blocks above it.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_typography.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 
 class WorkoutLibraryGrid extends StatelessWidget {
-  const WorkoutLibraryGrid({super.key});
+  /// Outer gutter around the grid. Defaults to the legacy 16px; callers that
+  /// already sit inside a padded column (e.g. the Signature body's 20px
+  /// gutter) pass `EdgeInsets.zero` so the tiles align with their siblings.
+  final EdgeInsetsGeometry padding;
+
+  const WorkoutLibraryGrid({
+    super.key,
+    this.padding = const EdgeInsets.symmetric(horizontal: 16),
+  });
 
   @override
   Widget build(BuildContext context) {
-    final categories = _buildCategories(context);
+    const categories = _categories;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: padding,
       child: GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -33,9 +48,9 @@ class WorkoutLibraryGrid extends StatelessWidget {
           crossAxisCount: 3,
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          // Matches the source tile art aspect (~385x470) so the illustration
-          // and its baked-in label fill the tile with no cropping.
-          childAspectRatio: 0.82,
+          // Slightly wider than tall — a compact glyph + label tile (the old
+          // 0.82 portrait ratio was sized for the full-bleed art).
+          childAspectRatio: 0.92,
         ),
         itemCount: categories.length,
         itemBuilder: (context, i) => _CategoryTile(category: categories[i]),
@@ -43,58 +58,30 @@ class WorkoutLibraryGrid extends StatelessWidget {
     );
   }
 
-  List<_LibraryCategory> _buildCategories(BuildContext context) {
-    return const [
-      _LibraryCategory(
-        key: 'strength',
-        label: 'Strength',
-        gradient: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-        assetPath: 'assets/images/workout_types/strength.png',
-      ),
-      _LibraryCategory(
-        key: 'cardio',
-        label: 'Cardio',
-        gradient: [Color(0xFFEF4444), Color(0xFFF97316)],
-        assetPath: 'assets/images/workout_types/cardio.png',
-      ),
-      _LibraryCategory(
-        key: 'mobility',
-        label: 'Mobility',
-        gradient: [Color(0xFF14B8A6), Color(0xFF06B6D4)],
-        assetPath: 'assets/images/workout_types/mobility.png',
-      ),
-      _LibraryCategory(
-        key: 'hiit',
-        label: 'HIIT',
-        gradient: [Color(0xFFF59E0B), Color(0xFFEF4444)],
-        assetPath: 'assets/images/workout_types/hiit.png',
-      ),
-      _LibraryCategory(
-        key: 'yoga',
-        label: 'Yoga',
-        gradient: [Color(0xFFA855F7), Color(0xFFEC4899)],
-        assetPath: 'assets/images/workout_types/yoga.png',
-      ),
-      _LibraryCategory(
-        key: 'saved',
-        label: 'Saved',
-        gradient: [Color(0xFF22C55E), Color(0xFF10B981)],
-        assetPath: 'assets/images/workout_types/saved.png',
-      ),
-    ];
-  }
+  static const List<_LibraryCategory> _categories = [
+    _LibraryCategory(
+        key: 'strength', label: 'Strength', icon: Icons.fitness_center_rounded),
+    _LibraryCategory(
+        key: 'cardio', label: 'Cardio', icon: Icons.directions_run_rounded),
+    _LibraryCategory(
+        key: 'mobility', label: 'Mobility', icon: Icons.self_improvement_rounded),
+    _LibraryCategory(
+        key: 'hiit', label: 'HIIT', icon: Icons.bolt_rounded),
+    _LibraryCategory(
+        key: 'yoga', label: 'Yoga', icon: Icons.spa_rounded),
+    _LibraryCategory(
+        key: 'saved', label: 'Saved', icon: Icons.bookmark_outline_rounded),
+  ];
 }
 
 class _LibraryCategory {
   final String key;
   final String label;
-  final List<Color> gradient;
-  final String assetPath;
+  final IconData icon;
   const _LibraryCategory({
     required this.key,
     required this.label,
-    required this.gradient,
-    required this.assetPath,
+    required this.icon,
   });
 }
 
@@ -104,101 +91,67 @@ class _CategoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The bundled tile art is self-contained — its rounded corners are baked
-    // into the PNG with the area outside the card masked transparent, and it
-    // carries its own bottom scrim + category label. So we render it directly
-    // (no surrounding clip/border/gradient that would show square edges behind
-    // the rounded art). Its ~385x470 aspect matches the tile's childAspectRatio
-    // so cover shows the whole illustration uncropped. Screen readers get the
-    // label via Semantics since it lives in the bitmap.
+    final tc = ThemeColors.of(context);
     return Semantics(
       label: category.label,
       button: true,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           onTap: () {
             HapticService.selection();
             context.push('/library?category=${category.key}');
           },
-          child: Image.asset(
-            category.assetPath,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
-            errorBuilder: (_, __, ___) => _FallbackTile(category: category),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.surface2,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.cardBorder, width: 1),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: tc.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(category.icon, size: 20, color: tc.accent),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      category.label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.lbl(11.5,
+                          color: tc.textPrimary, letterSpacing: 0.8),
+                    ),
+                    const SizedBox(height: 6),
+                    // Short accent underline — the one bit of color, echoing
+                    // the program progress rule.
+                    Container(
+                      width: 18,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: tc.accent,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-/// Shown only when the bundled tile PNG is missing — a category-tinted rounded
-/// card with a bottom scrim and the label, so the tile still reads cleanly.
-class _FallbackTile extends StatelessWidget {
-  final _LibraryCategory category;
-  const _FallbackTile({required this.category});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: category.gradient,
-              ),
-            ),
-          ),
-          IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.45),
-                  ],
-                  stops: const [0.55, 1.0],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Align(
-              alignment: Alignment.bottomLeft,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.bottomLeft,
-                child: Text(
-                  category.label,
-                  maxLines: 1,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                    letterSpacing: -0.2,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 6,
-                        color: Color(0x66000000),
-                        offset: Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

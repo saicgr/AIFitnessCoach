@@ -14,7 +14,9 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
+import '../../workout/widgets/quick_workout_sheet.dart';
 import 'exercise_preferences_card.dart';
+import 'workout_library_grid.dart';
 
 /// Signature v2 body for the Workouts tab.
 ///
@@ -57,10 +59,20 @@ class WorkoutsSignatureBody extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _TodayBlock(),
+          const SizedBox(height: 22),
+          // QUICK GENERATE — one-tap AI workout for "I just want to train
+          // now" days. Launches the existing quick-workout sheet (5–30 min,
+          // built around equipment + recovery) and jumps to the result.
+          const _QuickGenerateBlock(),
           const SizedBox(height: 26),
           const _ThisWeekStrip(),
           const SizedBox(height: 26),
           const _ProgramBlock(),
+          const SizedBox(height: 24),
+          // BROWSE BY TYPE — the 3×2 category grid (Strength / Cardio /
+          // Mobility / HIIT / Yoga / Saved), each tile deep-links into the
+          // library pre-filtered to that category.
+          const _BrowseByTypeBlock(),
           const SizedBox(height: 22),
           // EXERCISE PREFERENCES — the real expandable card (its header is a
           // label + chevron row). Kept inline so every preference sub-route
@@ -288,6 +300,121 @@ class _GhostLinkButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 1b. QUICK GENERATE block
+// ─────────────────────────────────────────────────────────────────────────
+
+/// One-tap "make me a workout right now" affordance. Opens the existing
+/// quick-workout sheet (`showQuickWorkoutSheet`) — 5–30 min, built around the
+/// user's equipment + muscle recovery — then routes straight to the generated
+/// workout's preview so they can start it. A leading accent-tinted bolt makes
+/// it read as the fast lane next to the program-driven TODAY block above.
+class _QuickGenerateBlock extends ConsumerWidget {
+  const _QuickGenerateBlock();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () async {
+          HapticService.medium();
+          final workout = await showQuickWorkoutSheet(context, ref);
+          if (workout != null && context.mounted) {
+            context.push('/workout/${workout.id}', extra: workout);
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+          decoration: BoxDecoration(
+            color: AppColors.surface2,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: tc.accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.bolt_rounded, size: 22, color: tc.accent),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'QUICK GENERATE',
+                      style: ZType.lbl(13, color: tc.textPrimary,
+                          letterSpacing: 1.8),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'A 5–30 min workout, built around your day',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.lbl(11, color: tc.textMuted,
+                          letterSpacing: 0.3),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.chevron_right_rounded, color: tc.textMuted, size: 22),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 1c. BROWSE BY TYPE block (3×2 category grid)
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Section wrapper for the restored 3×2 `WorkoutLibraryGrid`. Renders a
+/// hairline "BROWSE BY TYPE" label + an "ALL ›" link into the full library,
+/// then the six category tiles (zero outer gutter — the body already supplies
+/// the 20px horizontal padding).
+class _BrowseByTypeBlock extends StatelessWidget {
+  const _BrowseByTypeBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text('BROWSE BY TYPE',
+                  style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 2.4)),
+            ),
+            _ProgramLink(
+              label: 'ALL',
+              onTap: () {
+                HapticService.light();
+                context.push('/library');
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        const WorkoutLibraryGrid(padding: EdgeInsets.zero),
+      ],
     );
   }
 }
