@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — Weekly Progress Email Mockups</title>
+<style>
+  :root{
+    --bg:#0a0a0b; --card:#141417; --card2:#1b1b20; --tile:#17171c;
+    --line:#26262d; --txt:#f4f4f6; --mut:#8c8c98; --mut2:#6a6a76;
+    --cyan:#06b6d4; --orange:#F97316; --green:#34d399; --red:#f87171;
+    --violet:#a78bfa; --gold:#fbbf24;
+  }
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
+  body{
+    margin:0;background:#050506;color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:0 0 120px;
+  }
+  /* preview chrome */
+  .pagehead{position:sticky;top:0;z-index:20;background:rgba(5,5,6,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);padding:14px 20px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .pagehead h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.2px}
+  .pagehead .sub{color:var(--mut);font-size:12px}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .nav a{font-size:12px;color:var(--mut);text-decoration:none;border:1px solid var(--line);
+    padding:5px 10px;border-radius:999px}
+  .nav a:hover{color:var(--txt);border-color:var(--cyan)}
+
+  .scene{max-width:980px;margin:46px auto 0;padding:0 20px}
+  .scene-label{display:flex;align-items:baseline;gap:12px;margin:0 0 14px;flex-wrap:wrap}
+  .scene-label .tag{font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;
+    color:#050506;background:linear-gradient(135deg,var(--cyan),var(--orange));padding:4px 10px;border-radius:6px}
+  .scene-label h2{font-size:18px;margin:0;font-weight:700}
+  .scene-label p{font-size:13px;color:var(--mut);margin:0;flex:1 1 100%}
+
+  /* email frame */
+  .mail{max-width:600px;margin:0 auto;background:var(--bg);border:1px solid var(--line);
+    border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)}
+  .topbar{height:4px;background:linear-gradient(135deg,var(--cyan) 0%,var(--orange) 100%)}
+  .pad{padding:26px 24px}
+  .brandrow{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .brandrow .logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--orange));
+    display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#050506}
+  .brandrow .name{font-weight:700;font-size:15px;letter-spacing:.3px}
+  .brandrow .stamp{margin-left:auto;font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--mut2);text-transform:uppercase}
+  .hi{font-size:22px;font-weight:800;margin:18px 0 4px}
+  .range{font-size:13px;color:var(--mut);margin:0 0 20px}
+
+  /* day circles */
+  .circles{display:flex;justify-content:space-between;gap:6px;margin:8px 0 22px}
+  .day{flex:1;text-align:center}
+  .ring{width:46px;height:46px;margin:0 auto 7px;border-radius:50%;position:relative;
+    background:
+      radial-gradient(closest-side,var(--bg) 70%,transparent 71% 100%),
+      conic-gradient(var(--cyan) var(--pct,40%),#23232b 0);}
+  .ring.lo{background:radial-gradient(closest-side,var(--bg) 70%,transparent 71% 100%),conic-gradient(var(--orange) var(--pct,40%),#23232b 0)}
+  .ring.best{background:radial-gradient(closest-side,var(--bg) 72%,transparent 73% 100%),conic-gradient(var(--gold) var(--pct,100%),#23232b 0);
+    box-shadow:0 0 0 2px rgba(251,191,36,.35),0 0 18px rgba(251,191,36,.25)}
+  .ring.empty{background:radial-gradient(closest-side,var(--bg) 70%,transparent 71% 100%),conic-gradient(#23232b 0%,#23232b 100%)}
+  .ring .star{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .day .dl{font-size:11px;color:var(--mut);font-weight:600}
+  .day .dl.is-best{color:var(--gold)}
+  .bestcap{text-align:center;font-size:11px;color:var(--gold);margin:-12px 0 22px;font-weight:600}
+
+  /* hero */
+  .hero{background:linear-gradient(180deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:16px;padding:24px;text-align:center;margin-bottom:14px}
+  .hero .ic{font-size:26px}
+  .hero .big{font-size:46px;font-weight:800;letter-spacing:-1px;line-height:1.05;margin:6px 0 2px}
+  .hero .lbl{font-size:14px;color:var(--mut);margin-bottom:14px}
+  .chips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+  .chip{font-size:11px;padding:5px 9px;border-radius:999px;background:#212128;color:var(--mut);font-weight:600;display:inline-flex;gap:5px;align-items:center}
+  .chip.up{color:var(--green);background:rgba(52,211,153,.12)}
+  .chip.down{color:var(--green);background:rgba(52,211,153,.12)} /* down can be good (HR) */
+  .chip.bad{color:var(--red);background:rgba(248,113,113,.12)}
+  .chip.flat{color:var(--mut)}
+
+  /* tiles */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+  .tile{background:var(--tile);border:1px solid var(--line);border-radius:14px;padding:15px 13px}
+  .tile .ti{font-size:18px}
+  .tile .tv{font-size:22px;font-weight:800;margin:7px 0 0;letter-spacing:-.3px}
+  .tile .tl{font-size:11px;color:var(--mut);margin-top:2px;line-height:1.3}
+  .tile .td{margin-top:9px;font-size:10.5px;font-weight:600;display:inline-flex;gap:4px;align-items:center;padding:3px 7px;border-radius:6px}
+  .tile .td.up{color:var(--green);background:rgba(52,211,153,.1)}
+  .tile .td.bad{color:var(--red);background:rgba(248,113,113,.1)}
+  .tile .td.flat{color:var(--mut2);background:#1f1f25}
+  .tile.native{border-color:rgba(6,182,212,.28)}
+  .tile.native .ti{filter:saturate(1.2)}
+
+  .secttl{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--mut2);
+    font-weight:700;margin:24px 2px 2px}
+
+  /* awards */
+  .award{display:flex;gap:13px;align-items:center;border-radius:14px;padding:14px 15px;margin-top:10px;
+    background:linear-gradient(135deg,rgba(167,139,250,.14),rgba(251,191,36,.1));border:1px solid rgba(167,139,250,.3)}
+  .award .medal{width:42px;height:42px;border-radius:12px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:22px;background:rgba(0,0,0,.3)}
+  .award .at{font-size:14px;font-weight:700}
+  .award .ad{font-size:12px;color:var(--mut);margin-top:2px}
+
+  /* empty / nudge */
+  .nudge{border:1px dashed var(--line);border-radius:14px;padding:20px;text-align:center;color:var(--mut);font-size:13px;margin:8px 0 16px}
+  .nudge .ne{font-size:24px;display:block;margin-bottom:8px}
+  .nudge b{color:var(--txt)}
+
+  .cta{display:block;text-align:center;background:linear-gradient(135deg,var(--cyan),var(--orange));
+    color:#050506;font-weight:800;font-size:14px;text-decoration:none;padding:14px;border-radius:12px;margin:22px 0 6px}
+  .coachline{font-size:13px;color:var(--mut);text-align:center;font-style:italic;margin:14px 0 2px}
+
+  .foot{border-top:1px solid var(--line);margin-top:6px;padding:18px 24px;text-align:center}
+  .foot .links{display:flex;gap:14px;justify-content:center;margin-bottom:10px}
+  .foot .links a{color:var(--mut);font-size:12px;text-decoration:none}
+  .foot .fine{font-size:10.5px;color:var(--mut2);line-height:1.6}
+  .foot .fine a{color:var(--mut2);text-decoration:underline}
+
+  .note{max-width:600px;margin:12px auto 0;font-size:12px;color:var(--mut2);border-left:2px solid var(--line);padding:4px 0 4px 12px}
+  @media(max-width:520px){.grid{grid-template-columns:repeat(2,1fr)}.ring{width:38px;height:38px}}
+</style>
+</head>
+<body>
+
+<div class="pagehead">
+  <h1>Zealova · Weekly Progress Email</h1>
+  <span class="sub">mockup — 5 scenarios · not yet wired</span>
+  <nav class="nav">
+    <a href="#s1">1 · Full data</a>
+    <a href="#s2">2 · No wearable</a>
+    <a href="#s3">3 · First week</a>
+    <a href="#s4">4 · Empty week</a>
+    <a href="#s5">5 · Award unlocked</a>
+  </nav>
+</div>
+
+<!-- ============ SCENARIO 1 : FULL DATA ============ -->
+<section class="scene" id="s1">
+  <div class="scene-label">
+    <span class="tag">Scenario 1</span><h2>Full data — wearable + app-native</h2>
+    <p>Connected wearable + active app use. Hero steps, per-day circles with a best-day, every tile populated, week-over-week deltas (up / down / same), a coach sign-off.</p>
+  </div>
+  <div class="mail">
+    <div class="topbar"></div>
+    <div class="pad">
+      <div class="brandrow"><div class="logo">Z</div><div class="name">Zealova</div><div class="stamp">Weekly Stats</div></div>
+      <div class="hi">Hi, Chetan 👋</div>
+      <p class="range">Here are your stats for Jun 6 – Jun 12</p>
+
+      <div class="circles">
+        <div class="day"><div class="ring lo" style="--pct:48%"></div><div class="dl">Sun</div></div>
+        <div class="day"><div class="ring" style="--pct:55%"></div><div class="dl">Mon</div></div>
+        <div class="day"><div class="ring" style="--pct:62%"></div><div class="dl">Tue</div></div>
+        <div class="day"><div class="ring" style="--pct:58%"></div><div class="dl">Wed</div></div>
+        <div class="day"><div class="ring" style="--pct:50%"></div><div class="dl">Thu</div></div>
+        <div class="day"><div class="ring" style="--pct:66%"></div><div class="dl">Fri</div></div>
+        <div class="day"><div class="ring best" style="--pct:100%"><span class="star">🌟</span></div><div class="dl is-best">Sat</div></div>
+      </div>
+      <div class="bestcap">Best day · Saturday · 5,734 steps</div>
+
+      <div class="hero">
+        <div class="ic">👟</div>
+        <div class="big">15,968</div>
+        <div class="lbl">total steps</div>
+        <div class="chips">
+          <span class="chip">Avg 2,281 / day</span>
+          <span class="chip up">▲ 3,888 vs last week</span>
+        </div>
+      </div>
+
+      <div class="secttl">Activity</div>
+      <div class="grid">
+        <div class="tile"><div class="ti">🪜</div><div class="tv">0</div><div class="tl">total floors</div><div class="td flat">same as last week</div></div>
+        <div class="tile"><div class="ti">📍</div><div class="tv">7.30</div><div class="tl">total miles</div><div class="td up">▲ 1.78 mi</div></div>
+        <div class="tile"><div class="ti">🔥</div><div class="tv">2,729</div><div class="tl">avg calories burned</div><div class="td up">▲ 202</div></div>
+        <div class="tile"><div class="ti">⚡</div><div class="tv">370</div><div class="tl">active zone minutes</div><div class="td up">▲ 146</div></div>
+        <div class="tile"><div class="ti">🌙</div><div class="tv">6h 41m</div><div class="tl">avg restful sleep</div><div class="td up">▲ 11m</div></div>
+        <div class="tile"><div class="ti">🚶</div><div class="tv">2 of 9h</div><div class="tl">avg hrs w/ 250+ steps</div><div class="td flat">same as last week</div></div>
+        <div class="tile"><div class="ti">❤️</div><div class="tv">69 bpm</div><div class="tl">avg resting heart rate</div><div class="td up">▼ 4 bpm</div></div>
+        <div class="tile"><div class="ti">⚖️</div><div class="tv">98.3 kg</div><div class="tl">avg weight</div><div class="td flat">same as last week</div></div>
+      </div>
+
+      <div class="secttl">Your Zealova week</div>
+      <div class="grid">
+        <div class="tile native"><div class="ti">🏋️</div><div class="tv">3</div><div class="tl">workouts done</div><div class="td up">▲ 1</div></div>
+        <div class="tile native"><div class="ti">📊</div><div class="tv">24,310</div><div class="tl">lbs lifted</div><div class="td up">▲ 3,120</div></div>
+        <div class="tile native"><div class="ti">🍽️</div><div class="tv">5 / 7</div><div class="tl">days logged</div><div class="td up">▲ 2</div></div>
+        <div class="tile native"><div class="ti">⚡</div><div class="tv">1,940</div><div class="tl">avg calories eaten</div><div class="td flat">same</div></div>
+        <div class="tile native"><div class="ti">🧘</div><div class="tv">42 min</div><div class="tl">mindfulness</div><div class="td up">▲ 18m</div></div>
+        <div class="tile native"><div class="ti">🔥</div><div class="tv">12 days</div><div class="tl">current streak</div><div class="td up">▲ 7</div></div>
+      </div>
+
+      <a href="#" class="cta">View in app</a>
+      <div class="coachline">"Best step week yet — Saturday carried it. Let's keep the floor above 2k. — Coach Mara"</div>
+    </div>
+    <div class="foot">
+      <div class="links"><a href="#">Discord</a><a href="#">Instagram</a></div>
+      <div class="fine">You're getting this because weekly progress reports are on.<br>
+        <a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Each delta chip is green when the change is good (steps up, resting HR <em>down</em>), red when it regresses, muted grey for “same as last week.” Floors here shows 0 with a flat chip — a real candidate for auto-hide (toggle in scenario notes).</div>
+</section>
+
+<!-- ============ SCENARIO 2 : NO WEARABLE ============ -->
+<section class="scene" id="s2">
+  <div class="scene-label">
+    <span class="tag">Scenario 2</span><h2>No wearable connected — app-native only</h2>
+    <p>No steps/sleep/HR data. The step circles collapse into a single connect-a-wearable nudge, the steps hero is hidden, and the email leads with Zealova-native tiles so it’s still worth opening.</p>
+  </div>
+  <div class="mail">
+    <div class="topbar"></div>
+    <div class="pad">
+      <div class="brandrow"><div class="logo">Z</div><div class="name">Zealova</div><div class="stamp">Weekly Stats</div></div>
+      <div class="hi">Hi, Chetan 👋</div>
+      <p class="range">Your Zealova week · Jun 6 – Jun 12</p>
+
+      <div class="nudge">
+        <span class="ne">⌚</span>
+        Connect a watch or phone steps to unlock <b>steps, sleep & heart rate</b> in next week’s report.
+        <br><a href="#" style="color:var(--cyan);text-decoration:none;font-weight:600">Connect a wearable →</a>
+      </div>
+
+      <div class="secttl">Your Zealova week</div>
+      <div class="grid">
+        <div class="tile native"><div class="ti">🏋️</div><div class="tv">4</div><div class="tl">workouts done</div><div class="td up">▲ 2</div></div>
+        <div class="tile native"><div class="ti">📊</div><div class="tv">31,050</div><div class="tl">lbs lifted</div><div class="td up">▲ 8,400</div></div>
+        <div class="tile native"><div class="ti">⏱️</div><div class="tv">3h 52m</div><div class="tl">time training</div><div class="td up">▲ 1h 10m</div></div>
+        <div class="tile native"><div class="ti">🍽️</div><div class="tv">6 / 7</div><div class="tl">days logged</div><div class="td up">▲ 1</div></div>
+        <div class="tile native"><div class="ti">⚡</div><div class="tv">2,010</div><div class="tl">avg calories eaten</div><div class="td bad">▲ 240 over target</div></div>
+        <div class="tile native"><div class="ti">🔥</div><div class="tv">9 days</div><div class="tl">current streak</div><div class="td up">▲ 7</div></div>
+      </div>
+
+      <a href="#" class="cta">View in app</a>
+      <div class="coachline">"Four sessions and a 6/7 logging week — that’s the consistency that moves the needle. — Coach Mara"</div>
+    </div>
+    <div class="foot">
+      <div class="links"><a href="#">Discord</a><a href="#">Instagram</a></div>
+      <div class="fine">You're getting this because weekly progress reports are on.<br>
+        <a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Mindfulness tile is absent here (zero sessions this week → auto-hidden). Every tile self-hides when its metric has no data, so the grid never shows empty cells.</div>
+</section>
+
+<!-- ============ SCENARIO 3 : FIRST WEEK ============ -->
+<section class="scene" id="s3">
+  <div class="scene-label">
+    <span class="tag">Scenario 3</span><h2>First full week — no prior data for deltas</h2>
+    <p>New user / first complete week. There’s nothing to compare against, so delta chips switch to baseline framing (“your starting point”) instead of fake percentages.</p>
+  </div>
+  <div class="mail">
+    <div class="topbar"></div>
+    <div class="pad">
+      <div class="brandrow"><div class="logo">Z</div><div class="name">Zealova</div><div class="stamp">Weekly Stats</div></div>
+      <div class="hi">Hi, Chetan 👋</div>
+      <p class="range">Your first full week · Jun 6 – Jun 12</p>
+
+      <div class="circles">
+        <div class="day"><div class="ring empty"></div><div class="dl">Sun</div></div>
+        <div class="day"><div class="ring lo" style="--pct:40%"></div><div class="dl">Mon</div></div>
+        <div class="day"><div class="ring" style="--pct:60%"></div><div class="dl">Tue</div></div>
+        <div class="day"><div class="ring" style="--pct:52%"></div><div class="dl">Wed</div></div>
+        <div class="day"><div class="ring best" style="--pct:100%"><span class="star">🌟</span></div><div class="dl is-best">Thu</div></div>
+        <div class="day"><div class="ring" style="--pct:46%"></div><div class="dl">Fri</div></div>
+        <div class="day"><div class="ring empty"></div><div class="dl">Sat</div></div>
+      </div>
+      <div class="bestcap">Best day · Thursday · 6,120 steps</div>
+
+      <div class="hero">
+        <div class="ic">👟</div>
+        <div class="big">21,400</div>
+        <div class="lbl">total steps</div>
+        <div class="chips">
+          <span class="chip">Avg 3,057 / day</span>
+          <span class="chip flat">📌 Your starting point</span>
+        </div>
+      </div>
+
+      <div class="secttl">This week’s baseline</div>
+      <div class="grid">
+        <div class="tile"><div class="ti">📍</div><div class="tv">9.8</div><div class="tl">total miles</div><div class="td flat">baseline</div></div>
+        <div class="tile"><div class="ti">🔥</div><div class="tv">2,540</div><div class="tl">avg calories burned</div><div class="td flat">baseline</div></div>
+        <div class="tile"><div class="ti">🌙</div><div class="tv">7h 02m</div><div class="tl">avg restful sleep</div><div class="td flat">baseline</div></div>
+        <div class="tile"><div class="ti">❤️</div><div class="tv">64 bpm</div><div class="tl">avg resting heart rate</div><div class="td flat">baseline</div></div>
+        <div class="tile native"><div class="ti">🏋️</div><div class="tv">2</div><div class="tl">workouts done</div><div class="td flat">baseline</div></div>
+        <div class="tile native"><div class="ti">🔥</div><div class="tv">4 days</div><div class="tl">current streak</div><div class="td flat">baseline</div></div>
+      </div>
+
+      <a href="#" class="cta">View in app</a>
+      <div class="coachline">"This is your line in the sand. Next Monday we measure everything against it. — Coach Mara"</div>
+    </div>
+    <div class="foot">
+      <div class="links"><a href="#">Discord</a><a href="#">Instagram</a></div>
+      <div class="fine">You're getting this because weekly progress reports are on.<br>
+        <a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Days with no step data render as hollow grey rings (Sun & Sat) rather than disappearing, so the week shape stays readable.</div>
+</section>
+
+<!-- ============ SCENARIO 4 : EMPTY WEEK ============ -->
+<section class="scene" id="s4">
+  <div class="scene-label">
+    <span class="tag">Scenario 4</span><h2>Quiet week — almost no activity</h2>
+    <p>User went dark this week. Instead of a wall of zeros, the email softens to a check-in with whatever little data exists, and the coach voice leads.</p>
+  </div>
+  <div class="mail">
+    <div class="topbar"></div>
+    <div class="pad">
+      <div class="brandrow"><div class="logo">Z</div><div class="name">Zealova</div><div class="stamp">Weekly Stats</div></div>
+      <div class="hi">A quiet week, Chetan</div>
+      <p class="range">Jun 6 – Jun 12</p>
+
+      <div class="nudge">
+        <span class="ne">🌱</span>
+        You logged <b>652 steps</b> and <b>0 workouts</b> this week. No guilt — weeks like this happen.
+        <br>Your 12-day streak is paused, not gone. One short session brings it back.
+      </div>
+
+      <div class="secttl">Still on the board</div>
+      <div class="grid">
+        <div class="tile"><div class="ti">👟</div><div class="tv">652</div><div class="tl">total steps</div><div class="td bad">▼ 15,300</div></div>
+        <div class="tile native"><div class="ti">🍽️</div><div class="tv">1 / 7</div><div class="tl">days logged</div><div class="td bad">▼ 4</div></div>
+        <div class="tile native"><div class="ti">🔥</div><div class="tv">Paused</div><div class="tl">streak</div><div class="td flat">restart anytime</div></div>
+      </div>
+
+      <a href="#" class="cta">Start a 15-min session</a>
+      <div class="coachline">"I’m not going anywhere. When you’re ready, we pick up right where we left off. — Coach Mara"</div>
+    </div>
+    <div class="foot">
+      <div class="links"><a href="#">Discord</a><a href="#">Instagram</a></div>
+      <div class="fine">You're getting this because weekly progress reports are on.<br>
+        <a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Empty-week copy + a single soft CTA. Suppression (vacation / comeback mode) still applies upstream, so genuinely-paused users never get this.</div>
+</section>
+
+<!-- ============ SCENARIO 5 : AWARD UNLOCKED ============ -->
+<section class="scene" id="s5">
+  <div class="scene-label">
+    <span class="tag">Scenario 5</span><h2>Award / milestone unlocked this week</h2>
+    <p>When the week crosses an achievement — a level-up, a streak milestone, a new PR, or a personal-best metric — an “Awards this week” band appears above the grid. This is what the “what awards are shown” question looks like.</p>
+  </div>
+  <div class="mail">
+    <div class="topbar"></div>
+    <div class="pad">
+      <div class="brandrow"><div class="logo">Z</div><div class="name">Zealova</div><div class="stamp">Weekly Stats</div></div>
+      <div class="hi">Big week, Chetan 🏆</div>
+      <p class="range">Here are your stats for Jun 6 – Jun 12</p>
+
+      <div class="secttl">Awards this week</div>
+      <div class="award">
+        <div class="medal">🥇</div>
+        <div><div class="at">Level 8 reached</div><div class="ad">+540 XP this week · you’re in the top 12% of active members</div></div>
+      </div>
+      <div class="award" style="background:linear-gradient(135deg,rgba(6,182,212,.14),rgba(52,211,153,.1));border-color:rgba(6,182,212,.3)">
+        <div class="medal">🔥</div>
+        <div><div class="at">14-day streak milestone</div><div class="ad">Longest streak yet — beat your old best of 11</div></div>
+      </div>
+      <div class="award" style="background:linear-gradient(135deg,rgba(251,191,36,.14),rgba(249,115,22,.1));border-color:rgba(251,191,36,.3)">
+        <div class="medal">💪</div>
+        <div><div class="at">New PR · Barbell Bench Press</div><div class="ad">185 lbs × 5 — up from 175 lbs</div></div>
+      </div>
+
+      <div class="hero" style="margin-top:18px">
+        <div class="ic">👟</div>
+        <div class="big">18,420</div>
+        <div class="lbl">total steps</div>
+        <div class="chips">
+          <span class="chip">Best day · 4,980</span>
+          <span class="chip up">▲ 2,450 vs last week</span>
+        </div>
+      </div>
+
+      <div class="secttl">Your Zealova week</div>
+      <div class="grid">
+        <div class="tile native"><div class="ti">🏋️</div><div class="tv">5</div><div class="tl">workouts done</div><div class="td up">▲ 2</div></div>
+        <div class="tile native"><div class="ti">📊</div><div class="tv">38,900</div><div class="tl">lbs lifted</div><div class="td up">▲ 6,100</div></div>
+        <div class="tile native"><div class="ti">🏅</div><div class="tv">3</div><div class="tl">PRs set</div><div class="td up">▲ 3</div></div>
+        <div class="tile native"><div class="ti">🔥</div><div class="tv">14 days</div><div class="tl">current streak</div><div class="td up">▲ 7</div></div>
+      </div>
+
+      <a href="#" class="cta">View your awards</a>
+      <div class="coachline">"Level 8, a streak record, and a bench PR in one week. That’s a statement. — Coach Mara"</div>
+    </div>
+    <div class="foot">
+      <div class="links"><a href="#">Discord</a><a href="#">Instagram</a></div>
+      <div class="fine">You're getting this because weekly progress reports are on.<br>
+        <a href="#">Turn off weekly reports</a> · <a href="#">Unsubscribe</a> · Zealova</div>
+    </div>
+  </div>
+  <div class="note">Award band only renders when ≥1 milestone fired this week (level-up, streak record, new PR, or a metric personal-best). Sources already exist: <code>user_achievements</code>, <code>user_streaks</code>, <code>all_time_prs</code>. Up to 3 shown, ranked by significance.</div>
+</section>
+
+</body>
+</html>
