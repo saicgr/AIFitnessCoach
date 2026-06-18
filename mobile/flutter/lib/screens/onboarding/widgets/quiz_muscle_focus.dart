@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_hint_banner.dart';
 import 'onboarding_theme.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -14,6 +15,11 @@ class QuizMuscleFocus extends StatelessWidget {
   final ValueChanged<Map<String, int>> onPointsChanged;
   final bool showHeader;
 
+  /// `onboarding_smart_defaults` (default ON): when true and the user hasn't
+  /// allocated any points yet, show a "Recommended: leave it balanced" hint so
+  /// skipping reads as a sound default, not an empty screen (Gravl pattern).
+  final bool smartDefaults;
+
   const QuizMuscleFocus({
     super.key,
     required this.question,
@@ -21,6 +27,7 @@ class QuizMuscleFocus extends StatelessWidget {
     required this.focusPoints,
     required this.onPointsChanged,
     this.showHeader = true,
+    this.smartDefaults = true,
   });
 
   static const int maxTotalPoints = 5;
@@ -61,6 +68,13 @@ class QuizMuscleFocus extends StatelessWidget {
           _FocusPointsIndicator(
             usedPoints: totalPointsUsed,
           ).animate().fadeIn(delay: 300.ms),
+          if (smartDefaults && totalPointsUsed == 0) ...[
+            const SizedBox(height: 12),
+            const OnboardingHintBanner(
+              text: 'Recommended: leave it balanced and let your AI coach '
+                  'distribute volume evenly. Add points only to prioritize.',
+            ).animate().fadeIn(delay: 360.ms),
+          ],
           const SizedBox(height: 16),
           Expanded(
             child: ListView(

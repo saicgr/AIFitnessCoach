@@ -44870,6 +44870,14 @@ class AppLocalizationsHa extends AppLocalizations {
   }
 
   @override
+  String quizStepOfTotal(int current, int total) {
+    return 'STEP $current OF $total';
+  }
+
+  @override
+  String get quizAlmostDone => 'ALMOST DONE';
+
+  @override
   String get introV7HeadlineLine1 => 'KOCINKA';
 
   @override

@@ -10,6 +10,11 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/posthog_service.dart';
+import 'onboarding_experiments.dart';
+import 'value_beats/fully_guided_beat.dart';
+import 'value_beats/nutrition_decoded_beat.dart';
+import 'value_beats/progress_vs_others_beat.dart';
+import 'value_beats/social_proof_beat.dart';
 import '../../data/services/template_workout_generator.dart';
 import 'widgets/quiz_progress_bar.dart';
 import 'widgets/quiz_header.dart';
@@ -66,6 +71,46 @@ class PreAuthQuizScreen extends ConsumerStatefulWidget {
 class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     with TickerProviderStateMixin {
   int _currentQuestion = 0;
+
+  /// `onboarding_step_counter` A/B treatment (default OFF). When true the quiz
+  /// header shows a Gravl-style "STEP n OF m" counter instead of the default
+  /// "~2 min left" estimate. Resolved once in [initState]; never force-on.
+  bool _showStepCount = false;
+
+  /// `onboarding_smart_defaults` kill-switch (default ON). Shows "Recommended"
+  /// hints on optional steps (muscle focus, limitations). Resolved in
+  /// [initState]; only an explicit-off flag hides them.
+  bool _showSmartDefaults = true;
+
+  /// `onboarding_equipment_visual` kill-switch (default ON): visual+searchable
+  /// equipment grid vs the legacy chip UI.
+  bool _showEquipmentVisual = true;
+
+  /// `onboarding_split_rationale` kill-switch (default ON): "Why we picked
+  /// this" rationale + muscle chips on the selected split.
+  bool _showSplitRationale = true;
+
+  /// `onboarding_dial_inputs` kill-switch (default ON): tactile ruler/dial
+  /// body-stats inputs (in the personalization gate) vs the legacy TextFields.
+  bool _showDialInputs = true;
+
+  /// `onboarding_value_cadence` multivariate arm: 'control' (today's flow —
+  /// value screens bunched after the quiz), 'interleaved' (reward beats woven
+  /// between question clusters), or 'more' (interleaved + extra beats).
+  /// Resolved locally in [initState]; absent/unknown stays 'control' so the
+  /// live funnel is byte-identical until the flag is explicitly set.
+  String _valueCadence = 'control';
+  bool get _interleaved =>
+      _valueCadence == 'interleaved' || _valueCadence == 'more';
+  bool get _moreCadence => _valueCadence == 'more';
+
+  /// A value beat currently overlaid between two quiz questions (interleaved
+  /// arm only). Null = no beat showing.
+  Widget? _activeBeat;
+
+  /// Question indices whose post-answer beat has already been shown, so a beat
+  /// fires at most once even if the user navigates back and forward.
+  final Set<int> _shownBeats = {};
 
   // Feature flag for conditional workout days screen
   static const bool _featureFlagWorkoutDays = false;
@@ -171,6 +216,53 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     );
     _questionController.forward();
 
+    // Resolve the (default-OFF) step-counter A/B treatment once. Fail-open to
+    // the existing "~2 min left" estimate if PostHog is unreachable.
+    OnboardingExperiments.isEnabledDefaultOff(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagStepCounter,
+    ).then((on) {
+      if (mounted && on) setState(() => _showStepCount = true);
+    });
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagSmartDefaults,
+    ).then((on) {
+      if (mounted && !on) setState(() => _showSmartDefaults = false);
+    });
+    // Default-ON kill-switches for the Tranche-2 sub-widget upgrades. Each
+    // only hides on an explicit-off flag; fail-open keeps the new UI.
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagEquipmentVisual,
+    ).then((on) {
+      if (mounted && !on) setState(() => _showEquipmentVisual = false);
+    });
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagSplitRationale,
+    ).then((on) {
+      if (mounted && !on) setState(() => _showSplitRationale = false);
+    });
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagDialInputs,
+    ).then((on) {
+      if (mounted && !on) setState(() => _showDialInputs = false);
+    });
+    // Multivariate value-cadence arm. Pre-auth (before primeFlowFlags runs),
+    // so resolve it directly here; only the three known arms are honoured.
+    ref
+        .read(posthogServiceProvider)
+        .getFeatureFlag(OnboardingExperiments.flagValueCadence)
+        .then((raw) {
+      if (!mounted || raw is! String) return;
+      final v = raw.toLowerCase();
+      if (v == 'interleaved' || v == 'more' || v == 'control') {
+        setState(() => _valueCadence = v);
+      }
+    });
+
     // Do NOT auto-reset the user's onboarding on every quiz visit.
     //
     // History: this callback used to POST /reset-onboarding unconditionally
@@ -260,13 +352,63 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     return 1.0;  // User-selected: Fill to 100% for optional phases
   }
 
+  /// Shows a value beat overlaid on the quiz when the interleaved/more cadence
+  /// arm defines one for leaving [q] (once only). Returns true if a beat was
+  /// shown — the caller should bail; the beat's Continue re-enters
+  /// [_nextQuestion] to proceed normally.
+  bool _maybeShowBeatFor(int q) {
+    if (!_interleaved || _shownBeats.contains(q)) return false;
+    final beat = _beatForQuestion(q);
+    if (beat == null) return false;
+    _shownBeats.add(q);
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_value_beat_shown',
+      properties: {'after_step': q, 'cadence': _valueCadence},
+    );
+    setState(() => _activeBeat = beat);
+    return true;
+  }
+
+  /// The reward beat shown after answering question [q], or null. Beats woven
+  /// between question clusters keep momentum (Gravl drops one every ~2-3 Qs).
+  Widget? _beatForQuestion(int q) {
+    void proceed() {
+      setState(() => _activeBeat = null);
+      _nextQuestion();
+    }
+
+    switch (q) {
+      case 1: // after fitness level + experience → "you vs others" progress
+        return ProgressVsOthersBeat(
+          onContinue: proceed,
+          experienceLabel: _selectedLevel,
+        );
+      case 4: // after equipment → "your workouts, fully guided"
+        return FullyGuidedBeat(onContinue: proceed);
+      case 0: // after goals → social proof (more arm only)
+        return _moreCadence ? SocialProofBeat(onContinue: proceed) : null;
+      case 5: // after limitations → nutrition teaser (more arm only)
+        return _moreCadence ? NutritionDecodedBeat(onContinue: proceed) : null;
+    }
+    return null;
+  }
+
   void _nextQuestion() async {
     HapticFeedback.mediumImpact();
+
+    // Interleaved value-cadence (A/B): surface a reward beat once when leaving
+    // this step, then re-enter to proceed. Control arm is a no-op, so the live
+    // funnel is unchanged unless onboarding_value_cadence is set.
+    if (_maybeShowBeatFor(_currentQuestion)) return;
 
     await _saveCurrentQuestionData();
 
     // Log analytics for current screen
     AnalyticsService.logScreenView('onboarding_screen_$_currentQuestion');
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'onboarding_quiz_step_complete',
+      properties: {'step': _currentQuestion, 'cadence': _valueCadence},
+    );
 
     // Special handling for Screen 2 -> Skip Screen 3 if feature flag disabled
     if (_currentQuestion == 2 && !_featureFlagWorkoutDays) {
@@ -644,7 +786,9 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       child: Scaffold(
       backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
-      body: OnboardingBackground(
+      body: Stack(
+        children: [
+          OnboardingBackground(
         child: SafeArea(
           child: FoldableQuizScaffold(
             headerTitle: _getStepTitle(_currentQuestion),
@@ -659,6 +803,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
             headerOverlay: QuizHeader(
               currentQuestion: _currentQuestion,
               totalQuestions: _totalQuestions,
+              showStepCount: _showStepCount,
               canGoBack: _currentQuestion > 0,
               onBack: _previousQuestion,
               onBackToWelcome: () async {
@@ -735,6 +880,15 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           ),
         ),
       ),
+          // Interleaved-cadence value beat overlaid between questions.
+          if (_activeBeat != null)
+            Positioned.fill(
+              child: OnboardingBackground(
+                child: SafeArea(child: _activeBeat!),
+              ),
+            ),
+        ],
+      ),
     ),
     );
   }
@@ -795,6 +949,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       selectedEnvironment: _selectedEnvironment,
       onEnvironmentChanged: _handleEnvironmentChange,
       showHeader: showHeader,
+      visualMode: _showEquipmentVisual,
       // Quick-preset taps replace the entire selection in one shot.
       // Mirrors `_handleEquipmentToggle('full_gym')`'s "clear and add"
       // pattern but for arbitrary preset combos like Bodyweight + Bands.
@@ -817,6 +972,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   Widget _buildTrainingPreferences() {
     return QuizTrainingPreferences(
       key: const ValueKey('training_preferences'),
+      showRationale: _showSplitRationale,
       selectedSplit: _selectedTrainingSplit,
       selectedWorkoutType: _selectedWorkoutType,
       selectedProgressionPace: _selectedProgressionPace,
@@ -927,6 +1083,7 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
       question: 'Would you like to give extra focus to any muscles?',
       subtitle: 'Allocate up to 5 focus points to prioritize specific muscle groups in your workouts',
       showHeader: showHeader,
+      smartDefaults: _showSmartDefaults,
       focusPoints: _muscleFocusPoints,
       onPointsChanged: (points) {
         setState(() => _muscleFocusPoints = points);

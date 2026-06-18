@@ -29,6 +29,15 @@ class QuizPersonalizationGate extends StatefulWidget {
   final double? initialGoalWeightKg;
   final bool initialUseMetric;
 
+  /// Kill-switch `onboarding_dial_inputs` (default ON). When true, Height /
+  /// Current weight / Goal weight render a tactile horizontal ruler picker
+  /// beneath the big-number readout (the readout stays editable as the
+  /// tap-to-type fallback). When false, only the original TextField inputs are
+  /// shown. The parent resolves the flag and passes it in; defaults to true so
+  /// this widget works before parent wiring. Logged values are identical in
+  /// both modes — the ruler and the TextField write the SAME controllers.
+  final bool dialInputs;
+
   // Persistence callback — invoked when user proceeds with valid metrics.
   // Name is captured post-sign-in on /personal-info per the canonical
   // ONBOARDING_FLOW.md ordering. The pre-auth quiz body-metrics gate
@@ -54,6 +63,7 @@ class QuizPersonalizationGate extends StatefulWidget {
     this.initialWeightKg,
     this.initialGoalWeightKg,
     this.initialUseMetric = false,
+    this.dialInputs = true,
   });
 
   @override
@@ -139,6 +149,78 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
     final inches = double.tryParse(_heightInchesCtrl.text) ?? 0;
     final totalInches = ft * 12 + inches;
     return totalInches > 0 ? totalInches * 2.54 : null;
+  }
+
+  // ── Dial / ruler pickers (kill-switch `onboarding_dial_inputs` ON) ─────────
+  // Each ruler reads the live controller value, snaps to an integer tick, and
+  // writes the snapped value straight back into the SAME controller the
+  // TextField uses — so `_isValid`, `_resolveHeightCm`, and `_proceed` are
+  // untouched and logged values are byte-identical across input modes.
+
+  /// Height ruler. Metric → cm ticks. Imperial → total-inch ticks, written back
+  /// as feet (`_heightCtrl`) + leftover inches (`_heightInchesCtrl`).
+  Widget _buildHeightRuler(OnboardingTheme t) {
+    final double current = _heightInCm
+        ? (double.tryParse(_heightCtrl.text) ?? 170)
+        : (() {
+            final ft = double.tryParse(_heightCtrl.text) ?? 5;
+            final inches = double.tryParse(_heightInchesCtrl.text) ?? 7;
+            return ft * 12 + inches;
+          }());
+    final double min = _heightInCm ? 120 : 47; // 120 cm / 3'11"
+    final double max = _heightInCm ? 220 : 86; // 220 cm / 7'2"
+    return _RulerStrip(
+      t: t,
+      min: min,
+      max: max,
+      value: current.clamp(min, max),
+      onChanged: (v) {
+        if (_heightInCm) {
+          _heightCtrl.text = v.round().toString();
+        } else {
+          final total = v.round();
+          _heightCtrl.text = (total ~/ 12).toString();
+          _heightInchesCtrl.text = (total % 12).toString();
+        }
+        setState(() {});
+      },
+    );
+  }
+
+  /// Weight ruler (current weight). 1 kg / 1 lb per tick.
+  Widget _buildWeightRuler(OnboardingTheme t) {
+    final double current =
+        double.tryParse(_weightCtrl.text) ?? (_weightInKg ? 70 : 154);
+    final double min = _weightInKg ? 30 : 66;
+    final double max = _weightInKg ? 200 : 440;
+    return _RulerStrip(
+      t: t,
+      min: min,
+      max: max,
+      value: current.clamp(min, max),
+      onChanged: (v) {
+        _weightCtrl.text = v.round().toString();
+        setState(() {});
+      },
+    );
+  }
+
+  /// Goal-weight ruler. Shares the body-weight unit toggle (`_weightInKg`).
+  Widget _buildGoalWeightRuler(OnboardingTheme t) {
+    final double current =
+        double.tryParse(_goalWeightCtrl.text) ?? (_weightInKg ? 70 : 154);
+    final double min = _weightInKg ? 30 : 66;
+    final double max = _weightInKg ? 200 : 440;
+    return _RulerStrip(
+      t: t,
+      min: min,
+      max: max,
+      value: current.clamp(min, max),
+      onChanged: (v) {
+        _goalWeightCtrl.text = v.round().toString();
+        setState(() {});
+      },
+    );
   }
 
   bool get _isValid {
@@ -330,6 +412,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                               ),
                             ],
                           ),
+                    rulerChild: widget.dialInputs ? _buildHeightRuler(t) : null,
                     t: t,
                   ).animate().fadeIn(delay: 400.ms),
 
@@ -364,6 +447,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                       suffix: _weightInKg ? 'kg' : 'lb',
                       t: t,
                     ),
+                    rulerChild: widget.dialInputs ? _buildWeightRuler(t) : null,
                     t: t,
                   ).animate().fadeIn(delay: 450.ms),
 
@@ -398,6 +482,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                       suffix: _weightInKg ? 'kg' : 'lb',
                       t: t,
                     ),
+                    rulerChild: widget.dialInputs ? _buildGoalWeightRuler(t) : null,
                     t: t,
                   ).animate().fadeIn(delay: 500.ms),
                 ],
@@ -630,6 +715,9 @@ class _MetricCard extends StatelessWidget {
   final ValueChanged<String> onUnitChanged;
   final Widget valueChild;
   final OnboardingTheme t;
+  /// Optional tactile ruler rendered beneath the number row. Null when the
+  /// dial-inputs kill-switch is off (TextField-only fallback).
+  final Widget? rulerChild;
 
   const _MetricCard({
     required this.label,
@@ -638,6 +726,7 @@ class _MetricCard extends StatelessWidget {
     required this.onUnitChanged,
     required this.valueChild,
     required this.t,
+    this.rulerChild,
   });
 
   @override
@@ -677,6 +766,10 @@ class _MetricCard extends StatelessWidget {
               ),
             ],
           ),
+          if (rulerChild != null) ...[
+            const SizedBox(height: 8),
+            rulerChild!,
+          ],
         ],
       ),
     );
@@ -747,6 +840,215 @@ class _BigNumberInput extends StatelessWidget {
             ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Tactile horizontal ruler. A draggable tick-strip with a fixed center
+// indicator; each integer unit is one tick. Self-contained — owns its own
+// ScrollController and maps scroll offset → snapped value. Rendered beneath
+// the big-number readout inside `_MetricCard`; the readout TextField stays
+// the tap-to-type fallback, and both write the same controller. iPhone-SE
+// safe: the strip is horizontally scrollable, padded by half the viewport so
+// the first/last tick can reach the center.
+// ─────────────────────────────────────────────────────────────────────
+class _RulerStrip extends StatefulWidget {
+  final OnboardingTheme t;
+  final double min;
+  final double max;
+  final double value;
+  final ValueChanged<double> onChanged;
+
+  const _RulerStrip({
+    required this.t,
+    required this.min,
+    required this.max,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  State<_RulerStrip> createState() => _RulerStripState();
+}
+
+class _RulerStripState extends State<_RulerStrip> {
+  // Pixel width of one tick slot.
+  static const double _tickSpacing = 14.0;
+  static const double _height = 52.0;
+
+  late ScrollController _controller;
+  double _viewportHalf = 0;
+  bool _suppress = false;
+
+  int get _tickCount => (widget.max - widget.min).round() + 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = ScrollController();
+  }
+
+  @override
+  void didUpdateWidget(_RulerStrip old) {
+    super.didUpdateWidget(old);
+    // On a unit toggle the bounds change — re-seat on the new value without
+    // echoing onChanged back to the parent.
+    if (old.min != widget.min || old.max != widget.max) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _jumpToValue(widget.value));
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _offsetForValue(double value) =>
+      (value - widget.min) * _tickSpacing;
+
+  double _valueForOffset(double offset) =>
+      (widget.min + offset / _tickSpacing).clamp(widget.min, widget.max);
+
+  void _jumpToValue(double value) {
+    if (!_controller.hasClients) return;
+    _suppress = true;
+    _controller.jumpTo(_offsetForValue(value).clamp(
+      _controller.position.minScrollExtent,
+      _controller.position.maxScrollExtent,
+    ));
+    _suppress = false;
+  }
+
+  void _onScroll() {
+    if (_suppress) return;
+    final snapped =
+        _valueForOffset(_controller.offset).roundToDouble().clamp(widget.min, widget.max);
+    if (snapped != widget.value) {
+      HapticFeedback.selectionClick();
+      widget.onChanged(snapped);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = widget.t;
+    final tickColor = t.isDark
+        ? Colors.white.withValues(alpha: 0.26)
+        : Colors.black.withValues(alpha: 0.20);
+    final majorTickColor = t.isDark
+        ? Colors.white.withValues(alpha: 0.48)
+        : Colors.black.withValues(alpha: 0.38);
+
+    return SizedBox(
+      height: _height,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          _viewportHalf = constraints.maxWidth / 2;
+          // Seat the strip on the current value each layout (no-op once aligned).
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted || !_controller.hasClients) return;
+            final target = _offsetForValue(widget.value).clamp(
+              _controller.position.minScrollExtent,
+              _controller.position.maxScrollExtent,
+            );
+            if ((_controller.offset - target).abs() > 0.5) {
+              _jumpToValue(widget.value);
+            }
+          });
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              NotificationListener<ScrollNotification>(
+                onNotification: (n) {
+                  if (n is ScrollUpdateNotification ||
+                      n is ScrollEndNotification) {
+                    _onScroll();
+                  }
+                  return false;
+                },
+                child: ListView.builder(
+                  controller: _controller,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.symmetric(horizontal: _viewportHalf),
+                  itemExtent: _tickSpacing,
+                  itemCount: _tickCount,
+                  itemBuilder: (context, i) {
+                    final value = widget.min + i;
+                    final isMajor = value % 5 == 0;
+                    final isLabeled = value % 10 == 0;
+                    return _RulerTick(
+                      isMajor: isMajor,
+                      label: isLabeled ? value.round().toString() : null,
+                      tickColor: tickColor,
+                      majorTickColor: majorTickColor,
+                      labelColor: t.textMuted,
+                    );
+                  },
+                ),
+              ),
+              // Center indicator.
+              IgnorePointer(
+                child: Container(
+                  width: 3,
+                  height: _height * 0.5,
+                  decoration: BoxDecoration(
+                    color: t.accent,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RulerTick extends StatelessWidget {
+  final bool isMajor;
+  final String? label;
+  final Color tickColor;
+  final Color majorTickColor;
+  final Color labelColor;
+
+  const _RulerTick({
+    required this.isMajor,
+    required this.label,
+    required this.tickColor,
+    required this.majorTickColor,
+    required this.labelColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: isMajor ? 2 : 1,
+          height: isMajor ? 20 : 12,
+          decoration: BoxDecoration(
+            color: isMajor ? majorTickColor : tickColor,
+            borderRadius: BorderRadius.circular(1),
+          ),
+        ),
+        if (label != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            label!,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: labelColor,
+            ),
+          ),
+        ],
       ],
     );
   }

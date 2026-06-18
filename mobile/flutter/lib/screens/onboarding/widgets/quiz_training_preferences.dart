@@ -24,6 +24,13 @@ class QuizTrainingPreferences extends StatefulWidget {
   final ValueChanged<String>? onObstacleToggle;
   final bool showHeader;
 
+  /// Gravl-gap kill-switch `onboarding_split_rationale` (default ON). When
+  /// false, the "Why we picked this" rationale card + per-session muscle-group
+  /// chips under the selected split are hidden and the quiz renders unchanged.
+  /// The parent (pre_auth_quiz_screen) wires the resolved flag in later; until
+  /// then it defaults true so the upgrade is visible.
+  final bool showRationale;
+
   const QuizTrainingPreferences({
     super.key,
     required this.selectedSplit,
@@ -37,6 +44,7 @@ class QuizTrainingPreferences extends StatefulWidget {
     this.onSleepQualityChanged,
     this.onObstacleToggle,
     this.showHeader = true,
+    this.showRationale = true,
   });
 
   @override
@@ -61,6 +69,61 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
     {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on, 'color': AppColors.pink, 'desc': '4 days \u2022 Power + Hypertrophy'},
     {'id': 'body_part', 'label': 'Body Part Split', 'icon': Icons.view_week, 'color': AppColors.teal, 'desc': '5-6 days \u2022 Advanced'},
   ];
+
+  // \u2500\u2500 Split rationale + muscle map (Gravl-gap, `onboarding_split_rationale`) \u2500\u2500
+  //
+  // When a split is selected we surface (a) a short human "Why we picked this
+  // for you" line and (b) the per-session muscle groups that split trains, so
+  // the choice reads as a recommendation rather than a bare radio button. No
+  // backend / new data source \u2014 derived locally from the split id.
+
+  // One rationale per split. Distinct, human voice (\u22654 unique sentences) so the
+  // card never reads templated. "Nothing structured" speaks to AI auto-pick.
+  static const Map<String, String> _splitRationale = {
+    'nothing_structured':
+        "No need to commit \u2014 we'll read your goals, experience and schedule, then pick the split that fits and adjust it as you progress.",
+    'push_pull_legs':
+        'Grouping by movement pattern lets each muscle recover for days while you keep training \u2014 the reliable workhorse for steady muscle gain.',
+    'full_body':
+        'Hitting everything each session means even three days a week moves the needle \u2014 the most forgiving way to build a consistent habit.',
+    'upper_lower':
+        'Splitting upper from lower days doubles how often each muscle gets trained without the fatigue of a six-day grind \u2014 a balanced middle ground.',
+    'phul':
+        'Two heavy power days build raw strength, two lighter hypertrophy days add size \u2014 you get both without choosing one over the other.',
+    'body_part':
+        'Dedicating a whole day to one muscle group lets you pile on volume and chase detail \u2014 built for lifters who already have a base.',
+  };
+
+  // Per-session muscle groups for each split. Order = the session order shown.
+  // Each entry: a session label + its primary muscle groups. Kept compact so
+  // the chips wrap cleanly on an iPhone SE.
+  static const Map<String, List<Map<String, Object>>> _splitMuscleMap = {
+    'push_pull_legs': [
+      {'session': 'Push', 'muscles': ['Chest', 'Shoulders', 'Triceps']},
+      {'session': 'Pull', 'muscles': ['Back', 'Biceps', 'Rear Delts']},
+      {'session': 'Legs', 'muscles': ['Quads', 'Hamstrings', 'Glutes', 'Calves']},
+    ],
+    'full_body': [
+      {'session': 'Full Body', 'muscles': ['Chest', 'Back', 'Legs', 'Shoulders', 'Arms', 'Core']},
+    ],
+    'upper_lower': [
+      {'session': 'Upper', 'muscles': ['Chest', 'Back', 'Shoulders', 'Arms']},
+      {'session': 'Lower', 'muscles': ['Quads', 'Hamstrings', 'Glutes', 'Calves']},
+    ],
+    'phul': [
+      {'session': 'Power Upper', 'muscles': ['Chest', 'Back', 'Shoulders']},
+      {'session': 'Power Lower', 'muscles': ['Quads', 'Hamstrings', 'Glutes']},
+      {'session': 'Hypertrophy Upper', 'muscles': ['Chest', 'Back', 'Arms']},
+      {'session': 'Hypertrophy Lower', 'muscles': ['Quads', 'Hamstrings', 'Calves']},
+    ],
+    'body_part': [
+      {'session': 'Chest', 'muscles': ['Chest']},
+      {'session': 'Back', 'muscles': ['Back', 'Lats']},
+      {'session': 'Shoulders', 'muscles': ['Delts', 'Traps']},
+      {'session': 'Arms', 'muscles': ['Biceps', 'Triceps']},
+      {'session': 'Legs', 'muscles': ['Quads', 'Hamstrings', 'Calves']},
+    ],
+  };
 
   // Workout types with colors
   static final _workoutTypes = [
@@ -336,6 +399,10 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
                       const SizedBox(height: 6),
                       _buildSplitCards(t),
 
+                      // "Why we picked this for you" rationale + per-session
+                      // muscle chips for the currently-selected split.
+                      if (widget.showRationale) _buildSplitRationale(t),
+
                       const SizedBox(height: 12),
 
                       // Section 2: Workout Type
@@ -496,6 +563,124 @@ class _QuizTrainingPreferencesState extends State<QuizTrainingPreferences> {
           ).animate(delay: (200 + index * 40).ms).fadeIn().slideX(begin: 0.03),
         );
       }).toList(),
+    );
+  }
+
+  /// "Why we picked this for you" card for the selected split: a one-line
+  /// human rationale plus, for the structured splits, the per-session
+  /// muscle-group chips. Renders nothing until a split is chosen. Keyed on the
+  /// split id so it cross-fades when the user changes their pick.
+  Widget _buildSplitRationale(OnboardingTheme t) {
+    final selectedId = widget.selectedSplit;
+    if (selectedId == null) return const SizedBox.shrink();
+
+    final rationale = _splitRationale[selectedId];
+    if (rationale == null) return const SizedBox.shrink();
+
+    final sessions = _splitMuscleMap[selectedId] ?? const [];
+    final accent = t.selectionAccent;
+
+    return Padding(
+      key: ValueKey('split_rationale_$selectedId'),
+      padding: const EdgeInsets.only(top: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: t.cardFill,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.35),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Heading row
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome, size: 14, color: accent),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Why we picked this for you',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: accent,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  rationale,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: t.textPrimary,
+                  ),
+                ),
+                // Per-session muscle chips (structured splits only).
+                if (sessions.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  ...sessions.map((session) => _buildSessionMuscleRow(t, session)),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate(key: ValueKey('split_rationale_anim_$selectedId')).fadeIn(duration: 220.ms).slideY(begin: 0.04);
+  }
+
+  /// One session's label + its muscle-group chips, wrapping on narrow screens.
+  Widget _buildSessionMuscleRow(OnboardingTheme t, Map<String, Object> session) {
+    final label = session['session'] as String;
+    final muscles = (session['muscles'] as List).cast<String>();
+    final accent = t.selectionAccent;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: t.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: muscles
+                .map((m) => Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: accent.withValues(alpha: 0.25)),
+                      ),
+                      child: Text(
+                        m,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: t.textPrimary,
+                        ),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      ),
     );
   }
 

@@ -50,6 +50,35 @@ class _WorkoutEnvironmentOption {
   });
 }
 
+/// A titled section in the visual equipment picker (e.g. "Free weights",
+/// "Bands & accessories"). Groups related [items] under one band.
+class _EquipmentCategory {
+  final String title;
+  final IconData icon;
+  final List<_VisualItem> items;
+
+  const _EquipmentCategory({
+    required this.title,
+    required this.icon,
+    required this.items,
+  });
+}
+
+/// A single tappable equipment tile in the visual picker. [id] is the
+/// canonical equipment id shared with the chip mode, so selection state is
+/// identical regardless of which mode rendered the tile.
+class _VisualItem {
+  final String id;
+  final String label;
+  final IconData icon;
+
+  const _VisualItem({
+    required this.id,
+    required this.label,
+    required this.icon,
+  });
+}
+
 /// Follow-up suggestion shown after selecting certain equipment
 class _FollowUp {
   final String suggest;
@@ -83,6 +112,16 @@ class QuizEquipment extends StatefulWidget {
   /// callers that haven't opted in yet (e.g. legacy edit screens).
   final ValueChanged<List<String>>? onPresetSelected;
 
+  /// Kill-switch for the visual, categorized, searchable picker
+  /// (`onboarding_equipment_visual`, default ON). When true (default) the
+  /// step renders an always-visible search field plus a categorized grid
+  /// of equipment tiles with icon thumbnails. When false, it renders the
+  /// EXISTING two-column chip grid unchanged — the safe fallback. The
+  /// parent resolves the flag and passes it in; both modes share the same
+  /// [selectedEquipment] set, callbacks and custom-equipment flow, so the
+  /// resulting selection is identical regardless of mode.
+  final bool visualMode;
+
   const QuizEquipment({
     super.key,
     required this.selectedEquipment,
@@ -98,6 +137,7 @@ class QuizEquipment extends StatefulWidget {
     this.onEnvironmentChanged,
     this.showHeader = true,
     this.onPresetSelected,
+    this.visualMode = true,
   });
 
   static List<_WorkoutEnvironmentOption> _buildEnvironments(AppLocalizations l10n) => [
@@ -224,6 +264,58 @@ class QuizEquipment extends StatefulWidget {
     {'id': 'trx', 'label': l10n.quizEquipmentTrxSuspension, 'icon': Icons.swap_vert},
   ];
 
+  /// Visual-mode category grouping. Each section is a titled band of
+  /// equipment tiles (icon thumbnail + label). The IDs reference the same
+  /// canonical equipment set used everywhere else (`_buildEquipment`), so
+  /// tapping a tile toggles the identical `selectedEquipment` entry the
+  /// chip mode would. `full_gym` is intentionally surfaced as its own
+  /// "Quick access" entry — selecting it collapses to a full-gym setup via
+  /// the existing `_hasFullGym` logic.
+  static List<_EquipmentCategory> _buildVisualCategories(AppLocalizations l10n) => [
+    _EquipmentCategory(
+      title: 'Essentials',
+      icon: Icons.star_outline,
+      items: [
+        _VisualItem(id: 'full_gym', label: l10n.quizEquipmentFullGymAccess, icon: Icons.store),
+        _VisualItem(id: 'bodyweight', label: l10n.quizEquipmentBodyweightOnly2, icon: Icons.accessibility_new),
+      ],
+    ),
+    _EquipmentCategory(
+      title: 'Free weights',
+      icon: Icons.fitness_center,
+      items: [
+        _VisualItem(id: 'dumbbells', label: l10n.quizEquipmentDumbbells, icon: Icons.fitness_center),
+        _VisualItem(id: 'barbell', label: l10n.quizEquipmentBarbell, icon: Icons.line_weight),
+        _VisualItem(id: 'kettlebell', label: l10n.quizEquipmentKettlebell, icon: Icons.sports_handball),
+        _VisualItem(id: 'medicine_ball', label: l10n.quizEquipmentMedicineBall, icon: Icons.circle),
+      ],
+    ),
+    _EquipmentCategory(
+      title: 'Benches & racks',
+      icon: Icons.weekend,
+      items: [
+        _VisualItem(id: 'bench', label: l10n.quizEquipmentFlatBench, icon: Icons.weekend),
+        _VisualItem(id: 'squat_rack', label: l10n.quizEquipmentSquatRack, icon: Icons.grid_on),
+      ],
+    ),
+    _EquipmentCategory(
+      title: 'Machines & cables',
+      icon: Icons.settings_ethernet,
+      items: [
+        _VisualItem(id: 'cable_machine', label: l10n.quizEquipmentCableMachine, icon: Icons.settings_ethernet),
+      ],
+    ),
+    _EquipmentCategory(
+      title: 'Bands & accessories',
+      icon: Icons.cable,
+      items: [
+        _VisualItem(id: 'resistance_bands', label: l10n.quizEquipmentResistanceBands, icon: Icons.cable),
+        _VisualItem(id: 'pull_up_bar', label: l10n.quizEquipmentPullUpBar, icon: Icons.sports_gymnastics),
+        _VisualItem(id: 'trx', label: l10n.quizEquipmentTrxSuspension, icon: Icons.swap_vert),
+      ],
+    ),
+  ];
+
   /// Follow-up suggestions: selecting a primary equipment suggests a secondary
   static Map<String, _FollowUp> _buildEquipmentFollowUps(AppLocalizations l10n) => {
     'dumbbells': _FollowUp(
@@ -249,6 +341,17 @@ class QuizEquipment extends StatefulWidget {
 
 class _QuizEquipmentState extends State<QuizEquipment> {
   final _shownFollowUps = <String>{};
+
+  // Always-visible search field (visual mode only). Filters the categorized
+  // grid by label/id; an empty query shows every category.
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   // Maps equipment ID → suggested follow-up equipment ID (for logic only, no i18n needed).
   static const _followUpSuggest = {
@@ -415,9 +518,16 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             const SizedBox(height: 12),
           ],
           // Quick-preset chips: one tap to pick a common combo. Hidden
-          // when the parent didn't opt in via [onPresetSelected].
+          // when the parent didn't opt in via [onPresetSelected]. Kept on
+          // TOP in BOTH modes — the fast path always wins.
           if (widget.onPresetSelected != null) ...[
             _buildPresetSection(context, t),
+            const SizedBox(height: 12),
+          ],
+          // Always-visible search (visual mode only). Promotes the
+          // formerly sheet-only search to the surface, Gravl-style.
+          if (widget.visualMode) ...[
+            _buildSearchField(context, t),
             const SizedBox(height: 12),
           ],
           Expanded(
@@ -426,7 +536,12 @@ class _QuizEquipmentState extends State<QuizEquipment> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTwoColumnGrid(context, t),
+                  // Visual categorized grid vs. legacy two-column chips.
+                  // Both bind to the SAME selection set + callbacks.
+                  if (widget.visualMode)
+                    _buildVisualGrid(context, t)
+                  else
+                    _buildTwoColumnGrid(context, t),
                   // Quantity selectors shown below the grid when applicable
                   if (widget.selectedEquipment.contains('dumbbells') && !_hasFullGym) ...[
                     const SizedBox(height: 12),
@@ -453,6 +568,387 @@ class _QuizEquipmentState extends State<QuizEquipment> {
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Visual mode: search + categorized tile grid ────────────────────
+
+  /// Always-visible search field that filters the categorized grid.
+  Widget _buildSearchField(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: t.cardFill,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: t.borderDefault),
+          ),
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) => setState(() => _searchQuery = value),
+            style: TextStyle(color: t.textPrimary, fontSize: 14),
+            decoration: InputDecoration(
+              isDense: true,
+              hintText: l10n.settingsCardPartSearchEquipment,
+              hintStyle: TextStyle(color: t.textSecondary, fontSize: 14),
+              prefixIcon: Icon(Icons.search, color: t.textSecondary, size: 20),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, color: t.textSecondary, size: 18),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            ),
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 150.ms);
+  }
+
+  /// Categorized grid of equipment tiles. Each section title bands a small
+  /// group of icon tiles. A trailing "Other equipment" section preserves
+  /// the existing custom-equipment search sheet (`onOtherTap`). When the
+  /// search query matches nothing in the canonical set, we surface a
+  /// "See all equipment" affordance into that same custom flow so the user
+  /// can still find the long-tail (sandbags, machines, traditional kit).
+  Widget _buildVisualGrid(BuildContext context, OnboardingTheme t) {
+    final l10n = AppLocalizations.of(context);
+    final query = _searchQuery.trim().toLowerCase();
+    final categories = QuizEquipment._buildVisualCategories(l10n);
+
+    final sections = <Widget>[];
+    var visibleItemCount = 0;
+    for (final category in categories) {
+      final items = query.isEmpty
+          ? category.items
+          : category.items
+              .where((it) =>
+                  it.label.toLowerCase().contains(query) ||
+                  it.id.toLowerCase().contains(query))
+              .toList();
+      if (items.isEmpty) continue;
+      visibleItemCount += items.length;
+      if (sections.isNotEmpty) sections.add(const SizedBox(height: 16));
+      sections.add(_buildCategorySection(context, t, category, items));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ...sections,
+        // "Other equipment" affordance: always present (opens the existing
+        // searchable custom sheet). When a search returns no canonical
+        // matches, this becomes the primary call-to-action so nothing is
+        // a dead end.
+        if (widget.onOtherTap != null) ...[
+          if (sections.isNotEmpty) const SizedBox(height: 16),
+          _buildOtherSection(context, t, noCanonicalMatch: visibleItemCount == 0),
+        ] else if (visibleItemCount == 0) ...[
+          const SizedBox(height: 24),
+          _buildNoResults(context, t),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildCategorySection(
+    BuildContext context,
+    OnboardingTheme t,
+    _EquipmentCategory category,
+    List<_VisualItem> items,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 10, left: 2),
+          child: Row(
+            children: [
+              Icon(category.icon, size: 15, color: t.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                category.title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                  color: t.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Wrap (not a fixed Row) so tiles reflow on an iPhone SE without
+        // overflowing. Each tile is a fixed-aspect icon thumbnail + label.
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: items
+              .map((item) => _buildVisualTile(context, t, item))
+              .toList(),
+        ),
+      ],
+    ).animate().fadeIn(delay: 200.ms);
+  }
+
+  Widget _buildVisualTile(
+    BuildContext context,
+    OnboardingTheme t,
+    _VisualItem item,
+  ) {
+    final isFullGymOption = item.id == 'full_gym';
+    final isSelected =
+        isFullGymOption ? _hasFullGym : widget.selectedEquipment.contains(item.id);
+    final recommended = _isRecommended(item.id);
+
+    // 3-up on the narrowest phone: (screen - 40 padding - 2*10 spacing) / 3.
+    final tileWidth = (MediaQuery.of(context).size.width - 40 - 20) / 3;
+
+    return GestureDetector(
+      onTap: () => _handleChipTap(item.id),
+      child: SizedBox(
+        width: tileWidth,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: isSelected
+                        ? LinearGradient(
+                            colors: t.cardSelectedGradient,
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: isSelected ? null : t.cardFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isSelected
+                          ? t.borderSelected
+                          : recommended
+                              ? t.checkBorderUnselected
+                              : t.borderDefault,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon thumbnail puck.
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? t.selectionAccent.withValues(alpha: 0.18)
+                              : t.textSecondary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          item.icon,
+                          size: 22,
+                          color: isSelected
+                              ? t.selectionAccent
+                              : t.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        item.label,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          height: 1.15,
+                          fontWeight:
+                              isSelected ? FontWeight.w700 : FontWeight.w500,
+                          color: t.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Selected check badge, top-right.
+            if (isSelected)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: t.checkBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check, color: t.checkIcon, size: 13),
+                ),
+              ),
+            // "Recommended" badge for follow-up suggestions.
+            if (recommended && !isSelected)
+              Positioned(
+                top: -6,
+                right: 4,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: t.badgeBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: t.selectionAccent.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    AppLocalizations.of(context).quizEquipmentRecommended,
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: t.badgeText,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// "Other equipment" section reusing the existing custom-equipment flow
+  /// (`onOtherTap` → searchable sheet). Doubles as the search empty-state
+  /// when no canonical tile matched the query.
+  Widget _buildOtherSection(
+    BuildContext context,
+    OnboardingTheme t, {
+    required bool noCanonicalMatch,
+  }) {
+    final l10n = AppLocalizations.of(context);
+    final hasOtherSelected = widget.otherSelectedEquipment.isNotEmpty;
+    final title = noCanonicalMatch
+        ? l10n.quizEquipmentNoEquipmentIdentifiedPick
+        : (hasOtherSelected
+            ? l10n.quizEquipmentOtherCount(widget.otherSelectedEquipment.length)
+            : l10n.quizEquipmentOtherEquipment);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        widget.onOtherTap?.call();
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: hasOtherSelected
+                  ? LinearGradient(
+                      colors: t.cardSelectedGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: hasOtherSelected ? null : t.cardFill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: hasOtherSelected
+                    ? t.borderSelected
+                    : (noCanonicalMatch
+                        ? t.selectionAccent.withValues(alpha: 0.4)
+                        : t.borderDefault),
+                width: hasOtherSelected ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: t.textSecondary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    noCanonicalMatch ? Icons.search : Icons.more_horiz,
+                    color: hasOtherSelected ? t.textPrimary : t.textSecondary,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: hasOtherSelected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: t.textPrimary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.equipmentSearchSearchFrom100Equipment,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: t.textSecondary,
+                          height: 1.2,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(Icons.chevron_right, color: t.textSecondary, size: 20),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate().fadeIn(delay: 240.ms);
+  }
+
+  /// Empty-state shown only when the custom flow is unavailable (legacy
+  /// callers without `onOtherTap`) and a search returns no canonical match.
+  Widget _buildNoResults(BuildContext context, OnboardingTheme t) {
+    return Center(
+      child: Column(
+        children: [
+          Icon(Icons.search_off, size: 40, color: t.textSecondary),
+          const SizedBox(height: 10),
+          Text(
+            AppLocalizations.of(context).equipmentSearchNoEquipmentFound,
+            style: TextStyle(fontSize: 14, color: t.textSecondary),
           ),
         ],
       ),

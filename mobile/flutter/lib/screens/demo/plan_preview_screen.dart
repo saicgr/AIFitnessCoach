@@ -37,6 +37,12 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
   bool _isLoading = true;
   late AnimationController _pulseController;
 
+  /// Gravl-gap kill-switch `onboarding_split_rationale` (default ON). When on,
+  /// each session card in the preview surfaces its primary muscle-group chips.
+  /// Resolved async in [initState]; defaults true so the chips show unless the
+  /// flag is explicitly disabled.
+  bool _showSplitRationale = true;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +50,14 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
+
+    // Resolve the split-rationale kill-switch (fail-open: stays on if absent).
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagSplitRationale,
+    ).then((enabled) {
+      if (mounted) setState(() => _showSplitRationale = enabled);
+    });
 
     // Onboarding conversion v6: inside the funnel, honor the remote
     // kill-switch and log the view.
@@ -350,11 +364,78 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
             ),
           ),
           child: isWorkoutDay
-              ? _buildWorkoutDayCard(dayNames[dayIndex], workout, textPrimary, textSecondary)
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildWorkoutDayCard(dayNames[dayIndex], workout, textPrimary, textSecondary),
+                    // Gravl-gap: primary muscle groups this session trains,
+                    // derived from its exercises (kill-switch gated).
+                    if (_showSplitRationale)
+                      _buildSessionMuscleChips(workout, textSecondary),
+                  ],
+                )
               : _buildRestDayCard(dayNames[dayIndex], textPrimary, textSecondary),
         ).animate(delay: Duration(milliseconds: 250 + dayIndex * 50)).fadeIn().slideX(begin: 0.02),
       );
     });
+  }
+
+  /// Per-session muscle-group chips for a preview workout day. Derives a
+  /// deduped, order-preserving set from the session's exercise `muscle` tags
+  /// (e.g. Push → Chest, Shoulders, Triceps). Splits compound tags like
+  /// "Chest/Triceps" so each group reads as its own chip, and caps at 6 to keep
+  /// the collapsed card tidy on small screens.
+  Widget _buildSessionMuscleChips(Map<String, dynamic> workout, Color textSecondary) {
+    final color = workout['color'] as Color;
+    final exercises = (workout['exercises'] as List).cast<Map<String, dynamic>>();
+
+    final muscles = <String>[];
+    for (final ex in exercises) {
+      final raw = ex['muscle'] as String? ?? '';
+      for (final part in raw.split('/')) {
+        final m = part.trim();
+        if (m.isEmpty) continue;
+        if (!muscles.contains(m)) muscles.add(m);
+      }
+    }
+    if (muscles.isEmpty) return const SizedBox.shrink();
+
+    final shown = muscles.take(6).toList();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.fitness_center, size: 13, color: textSecondary),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: shown
+                  .map((m) => Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: color.withValues(alpha: 0.25)),
+                        ),
+                        child: Text(
+                          m,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: color,
+                          ),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildRestDayCard(String dayName, Color textPrimary, Color textSecondary) {

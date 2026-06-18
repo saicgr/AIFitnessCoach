@@ -34,6 +34,20 @@ class IntroScreen extends ConsumerStatefulWidget {
   ConsumerState<IntroScreen> createState() => _IntroScreenState();
 }
 
+/// The base four demo scenes, always present, in loop order. Indexes here are
+/// the scene's stable identity (used by [_IntroScreenState._buildScene] /
+/// [_IntroScreenState._wordForKind]); the WINDOW a scene occupies is its
+/// position in the resolved [_IntroScreenState._scenes] list, which the two
+/// optional scenes append to when their flags are on.
+enum _DemoScene {
+  programBuilder,
+  liveLogging,
+  foodScan,
+  menuAnalysis,
+  integrations,
+  shareables,
+}
+
 class _IntroScreenState extends ConsumerState<IntroScreen>
     with TickerProviderStateMixin {
   late final AnimationController _clock;
@@ -41,18 +55,32 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
   bool _demoEnabled = true;
   String _appVersion = '';
 
+  /// The resolved, ordered scene list this session plays. Starts with the
+  /// four base scenes (correct before flags resolve / in legacy fallback);
+  /// the two Gravl-gap scenes are appended once their flags resolve ON.
+  List<_DemoScene> _scenes = const [
+    _DemoScene.programBuilder,
+    _DemoScene.liveLogging,
+    _DemoScene.foodScan,
+    _DemoScene.menuAnalysis,
+  ];
+
   @override
   void initState() {
     super.initState();
+    // Configure the clock for the base count BEFORE creating the controller
+    // so its duration matches the loop length; flags may extend it below.
+    DemoClock.configure(_scenes.length);
     _clock = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: DemoClock.loopMs),
+      duration: const Duration(milliseconds: DemoClock.sceneMs * 4),
     )..repeat();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     );
     _maybeFallBack();
+    _resolveOptionalScenes();
     ref.read(posthogServiceProvider).capture(
       eventName: 'onboarding_intro_viewed',
       properties: {'variant': 'v7_demo'},
@@ -60,6 +88,41 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     PackageInfo.fromPlatform().then((info) {
       if (mounted) setState(() => _appVersion = info.version);
     });
+  }
+
+  /// Resolve the two flag-gated Gravl-gap scenes (both default-ON kill
+  /// switches). When a flag is ON its scene is appended to the loop; the
+  /// clock + controller duration are re-derived so every scene keeps its full
+  /// [DemoClock.sceneMs] window. Fail-open: an unreadable flag keeps the
+  /// scene IN (matches the default-ON contract).
+  Future<void> _resolveOptionalScenes() async {
+    final posthog = ref.read(posthogServiceProvider);
+    final showIntegrations = await OnboardingExperiments.isEnabled(
+      posthog,
+      OnboardingExperiments.flagIntroIntegrations,
+    );
+    final showShareables = await OnboardingExperiments.isEnabled(
+      posthog,
+      OnboardingExperiments.flagIntroShareables,
+    );
+    if (!mounted) return;
+    final next = <_DemoScene>[
+      _DemoScene.programBuilder,
+      _DemoScene.liveLogging,
+      _DemoScene.foodScan,
+      _DemoScene.menuAnalysis,
+      if (showIntegrations) _DemoScene.integrations,
+      if (showShareables) _DemoScene.shareables,
+    ];
+    if (next.length == _scenes.length) return; // nothing changed
+    setState(() => _scenes = next);
+    DemoClock.configure(next.length);
+    // Re-stretch the loop to the new scene count and restart from the top so
+    // the dot countdown / fades stay aligned with the longer window.
+    _clock.duration = Duration(milliseconds: DemoClock.loopMs);
+    _clock
+      ..reset()
+      ..repeat();
   }
 
   /// Remote kill switch: explicit off → legacy v5 hero layout.
@@ -106,8 +169,11 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
       builder: (context, _) {
         final tMs = DemoClock.timeMs(_clock.value);
         final scene = DemoClock.sceneOf(tMs);
-        // Scenes 0 & 2 have light backgrounds at the top of the screen.
-        final lightScene = scene == 0 || scene == 2;
+        final activeKind = _scenes[scene.clamp(0, _scenes.length - 1)];
+        // Program-builder & food-scan have light backgrounds at the top of
+        // the screen; every other scene (incl. the two new ones) is dark.
+        final lightScene = activeKind == _DemoScene.programBuilder ||
+            activeKind == _DemoScene.foodScan;
 
         return AnnotatedRegion<SystemUiOverlayStyle>(
           value: lightScene
@@ -293,22 +359,36 @@ class _IntroScreenState extends ConsumerState<IntroScreen>
     );
   }
 
-  String _wordFor(int scene, AppLocalizations l10n) => switch (scene) {
-        0 => l10n.introV7WordTyping,
-        1 => l10n.introV7WordSpotting,
-        2 => l10n.introV7WordCounting,
-        _ => l10n.introV7WordChoosing,
-      };
+  /// Headline accent word for the scene occupying window [window]. The base
+  /// four keep their localized words; the two new scenes use inline English
+  /// copy (no new l10n keys per the redesign contract).
+  String _wordFor(int window, AppLocalizations l10n) {
+    final kind = _scenes[window.clamp(0, _scenes.length - 1)];
+    return switch (kind) {
+      _DemoScene.programBuilder => l10n.introV7WordTyping,
+      _DemoScene.liveLogging => l10n.introV7WordSpotting,
+      _DemoScene.foodScan => l10n.introV7WordCounting,
+      _DemoScene.menuAnalysis => l10n.introV7WordChoosing,
+      _DemoScene.integrations => 'ADAPTING',
+      _DemoScene.shareables => 'FLEXING',
+    };
+  }
 
-  Widget _scene(int i, int tMs) {
-    final opacity = DemoClock.opacityFor(i, tMs);
+  /// Render the scene occupying window [window] at global time [tMs]. The
+  /// window index drives the fade/opacity math; the [_DemoScene] at that slot
+  /// drives WHICH scene widget renders.
+  Widget _scene(int window, int tMs) {
+    final opacity = DemoClock.opacityFor(window, tMs);
     if (opacity <= 0) return const SizedBox.shrink();
     final local = DemoClock.localMs(tMs);
-    final child = switch (i) {
-      0 => ProgramBuilderScene(localMs: local),
-      1 => LiveLoggingScene(localMs: local),
-      2 => FoodScanScene(localMs: local),
-      _ => MenuAnalysisScene(localMs: local),
+    final kind = _scenes[window.clamp(0, _scenes.length - 1)];
+    final child = switch (kind) {
+      _DemoScene.programBuilder => ProgramBuilderScene(localMs: local),
+      _DemoScene.liveLogging => LiveLoggingScene(localMs: local),
+      _DemoScene.foodScan => FoodScanScene(localMs: local),
+      _DemoScene.menuAnalysis => MenuAnalysisScene(localMs: local),
+      _DemoScene.integrations => IntegrationsGridScene(localMs: local),
+      _DemoScene.shareables => ShareablesScene(localMs: local),
     };
     return Opacity(opacity: opacity, child: child);
   }

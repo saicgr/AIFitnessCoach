@@ -553,6 +553,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           onCustomLimitationChanged: (customText) => setState(() {
             _customLimitation = customText;
           }),
+          smartDefaults: _showSmartDefaults,
           showHeader: showHeader,
         );
 
@@ -567,6 +568,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         final quiz = ref.read(preAuthQuizProvider);
         return QuizPersonalizationGate(
           key: const ValueKey('personalization_gate'),
+          dialInputs: _showDialInputs,
           initialGender: quiz.gender,
           initialHeightCm: quiz.heightCm,
           initialWeightKg: quiz.weightKg,

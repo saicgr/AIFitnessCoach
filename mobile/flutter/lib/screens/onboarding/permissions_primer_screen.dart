@@ -10,7 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../data/models/coach_persona.dart';
 import '../../data/services/notification_service.dart';
+import '../ai_settings/ai_settings_screen.dart';
+import 'onboarding_experiments.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Unified pre-permission rationale screen for the four most-used
@@ -41,6 +44,22 @@ class PermissionsPrimerScreen extends ConsumerStatefulWidget {
 class _PermissionsPrimerScreenState
     extends ConsumerState<PermissionsPrimerScreen> {
   bool _isRequesting = false;
+
+  /// `onboarding_notif_previews` kill-switch (default ON, fail-open). Shows a
+  /// small stack of sample notifications above the grant CTA so users see the
+  /// value before the OS prompt — Gravl-style. Flip the flag off to hide.
+  bool _showNotifPreviews = true;
+
+  @override
+  void initState() {
+    super.initState();
+    OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagNotifPreviews,
+    ).then((on) {
+      if (mounted && !on) setState(() => _showNotifPreviews = false);
+    });
+  }
 
   Future<void> _markShown() async {
     final prefs = await SharedPreferences.getInstance();
@@ -133,6 +152,12 @@ class _PermissionsPrimerScreenState
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
+
+    // Resolve the user's selected coach persona for the sample coach
+    // notification — never hardcode "Coach" (feedback_coach_voice_naming).
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ??
+        CoachPersona.defaultCoach;
 
     return Scaffold(
       backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
@@ -241,6 +266,13 @@ class _PermissionsPrimerScreenState
                               end: 0,
                               duration: 300.ms,
                             ),
+                        if (_showNotifPreviews) ...[
+                          const SizedBox(height: 20),
+                          _NotificationPreviewStack(
+                            coachName: coach.name,
+                            isDark: isDark,
+                          ).animate().fadeIn(delay: 800.ms, duration: 400.ms),
+                        ],
                       ],
                     ),
                   ),
@@ -295,7 +327,7 @@ class _PermissionsPrimerScreenState
                       : 'You can change these anytime in Settings.',
                   style: TextStyle(
                     fontSize: 12,
-                    color: textSecondary.withOpacity(0.7),
+                    color: textSecondary.withValues(alpha: 0.7),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -323,7 +355,7 @@ class _Illustration extends StatelessWidget {
         gradient: LinearGradient(
           begin: AlignmentDirectional.topStart,
           end: AlignmentDirectional.bottomEnd,
-          colors: [accent.withOpacity(0.18), accent.withOpacity(0.04)],
+          colors: [accent.withValues(alpha: 0.18), accent.withValues(alpha: 0.04)],
         ),
       ),
       alignment: Alignment.center,
@@ -331,6 +363,161 @@ class _Illustration extends StatelessWidget {
         Icons.shield_moon_rounded,
         color: accent,
         size: 56,
+      ),
+    );
+  }
+}
+
+/// Sample notification stack shown above the grant CTA — lets users see the
+/// kind of nudges they'll get (rest timer, a coach check-in, a weekly recap)
+/// BEFORE the OS permission prompt. Mirrors Gravl's notification preview.
+class _NotificationPreviewStack extends StatelessWidget {
+  const _NotificationPreviewStack({
+    required this.coachName,
+    required this.isDark,
+  });
+
+  final String coachName;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 10),
+          child: Text(
+            'A taste of what lands on your lock screen',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: textSecondary.withValues(alpha: 0.8),
+              letterSpacing: 0.2,
+            ),
+          ),
+        ),
+        _NotifPreviewCard(
+          icon: Icons.timer_outlined,
+          title: "Rest's up — next set",
+          body: 'Bench Press · Set 3 of 4 · 8 reps · 75 kg',
+          time: 'now',
+          isDark: isDark,
+        ),
+        const SizedBox(height: 10),
+        _NotifPreviewCard(
+          icon: Icons.fitness_center_rounded,
+          title: coachName,
+          body: 'Saw you crushed legs yesterday — how are the quads '
+              'feeling today?',
+          time: '2m',
+          isDark: isDark,
+        ),
+        const SizedBox(height: 10),
+        _NotifPreviewCard(
+          icon: Icons.trending_up_rounded,
+          title: 'Weekly check-in',
+          body: "You're one workout from beating last week's volume.",
+          time: '1h',
+          isDark: isDark,
+        ),
+      ],
+    );
+  }
+}
+
+class _NotifPreviewCard extends StatelessWidget {
+  const _NotifPreviewCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.time,
+    required this.isDark,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final String time;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final surface = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.black.withValues(alpha: 0.035);
+    final iconBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.06);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(9),
+            ),
+            alignment: Alignment.center,
+            child: Icon(icon, size: 19, color: textPrimary),
+          ),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      time,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: textSecondary.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    color: textSecondary,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -358,8 +545,8 @@ class _BenefitRow extends StatelessWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final surface = isDark
-        ? Colors.white.withOpacity(0.04)
-        : Colors.black.withOpacity(0.03);
+        ? Colors.white.withValues(alpha: 0.04)
+        : Colors.black.withValues(alpha: 0.03);
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -374,7 +561,7 @@ class _BenefitRow extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.15),
+              color: accent.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,

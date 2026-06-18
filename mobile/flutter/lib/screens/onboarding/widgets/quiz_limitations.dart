@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'onboarding_hint_banner.dart';
 import 'onboarding_theme.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -19,6 +20,10 @@ class QuizLimitations extends StatefulWidget {
   final ValueChanged<String?>? onCustomLimitationChanged;
   final bool showHeader;
 
+  /// `onboarding_smart_defaults` (default ON): show a reassurance hint while
+  /// "None" is the only selection, so the safe default reads as intentional.
+  final bool smartDefaults;
+
   const QuizLimitations({
     super.key,
     required this.selectedLimitations,
@@ -26,6 +31,7 @@ class QuizLimitations extends StatefulWidget {
     required this.onLimitationsChanged,
     this.onCustomLimitationChanged,
     this.showHeader = true,
+    this.smartDefaults = true,
   });
 
   @override
@@ -102,6 +108,17 @@ class _QuizLimitationsState extends State<QuizLimitations> {
                   ],
                 ),
                 const SizedBox(height: 16),
+
+                if (widget.smartDefaults &&
+                    widget.selectedLimitations.length == 1 &&
+                    widget.selectedLimitations.first == 'none') ...[
+                  const OnboardingHintBanner(
+                    text: "Most people start here. Tap any area you want us "
+                        "to train around — we'll swap risky exercises out.",
+                    icon: Icons.health_and_safety_outlined,
+                  ).animate().fadeIn(delay: 560.ms),
+                  const SizedBox(height: 16),
+                ],
 
                 // Custom limitation input field (shown when "Other" is selected)
                 if (widget.selectedLimitations.contains('other')) ...[

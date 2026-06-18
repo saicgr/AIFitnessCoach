@@ -28338,6 +28338,18 @@
       }
     }
   },
+  "quizStepOfTotal": "STEP {current} OF {total}",
+  "@quizStepOfTotal": {
+    "description": "Bounded step counter shown in the quiz header (A/B treatment vs the time-remaining estimate)",
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "quizAlmostDone": "ALMOST DONE",
+  "@quizAlmostDone": {
+    "description": "Quiz header label for the optional (post-required) personalization steps"
+  },
   "introV7HeadlineLine1": "YOUR COACH IS",
   "@introV7HeadlineLine1": {
     "description": "v7 intro demo / first screen"

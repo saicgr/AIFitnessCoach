@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/generated/app_localizations.dart';
+import '../../../shareables/shareable_data.dart';
+import '../../../shareables/templates/achievement_hero_template.dart';
 import 'demo_clock.dart';
 
-/// The four auto-playing scenes of the intro demo — faithful, lightweight
+/// The auto-playing scenes of the intro demo — faithful, lightweight
 /// recreations of real app surfaces (ported from the zealova.com hero):
-///   1. ProgramBuilderScene — coach chat assembling a program
-///   2. LiveLoggingScene    — active-workout set logging + PR
-///   3. FoodScanScene       — photo logging with macro extraction
-///   4. MenuAnalysisScene   — DARK menu-analysis sheet with live re-sort
+///   1. ProgramBuilderScene    — coach chat assembling a program
+///   2. LiveLoggingScene       — active-workout set logging + PR
+///   3. FoodScanScene          — photo logging with macro extraction
+///   4. MenuAnalysisScene      — DARK menu-analysis sheet with live re-sort
+///   5. IntegrationsGridScene  — wearable/health data tiles lighting up
+///   6. ShareablesScene        — a real share card rendered in-frame
 ///
-/// Each scene receives its LOCAL time in ms (0..2500) and renders pure
-/// widgets from it — no per-scene controllers, the master clock drives all.
+/// Scenes 5 + 6 are flag-gated (default ON) — see [IntroScreen]'s effective
+/// scene list. Each scene receives its LOCAL time in ms (0..2500) and renders
+/// pure widgets from it — no per-scene controllers, the master clock drives all.
 
 // ── shared bits ─────────────────────────────────────────────────────────
 
@@ -811,6 +816,263 @@ class MenuAnalysisScene extends StatelessWidget {
       child: Text(label,
           style: TextStyle(
               fontSize: 9.5, fontWeight: FontWeight.w700, color: color)),
+    );
+  }
+}
+
+// ── Scene 5: integrations grid (dark) ──────────────────────────────────
+//
+// "Adapts to your data." A grid of the data sources we ACTUALLY read —
+// Health Connect, Apple Health, and the wearable signals they carry
+// (steps, heart rate, sleep, calories, workouts). Tiles light up one by
+// one, then a footer line lands selling the payoff: every workout evolves
+// with your effort, recovery & progress. No copyrighted logos — Material
+// icons + simple branded tiles only, no fabricated integrations.
+
+class _IntegrationTile {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _IntegrationTile(this.icon, this.label, this.color);
+}
+
+const List<_IntegrationTile> _integrationTiles = [
+  _IntegrationTile(
+      Icons.health_and_safety_rounded, 'Health Connect', Color(0xFF34A853)),
+  _IntegrationTile(Icons.favorite_rounded, 'Apple Health', Color(0xFFFF375F)),
+  _IntegrationTile(
+      Icons.directions_walk_rounded, 'Steps', Color(0xFF06B6D4)),
+  _IntegrationTile(
+      Icons.monitor_heart_rounded, 'Heart rate', Color(0xFFEF4444)),
+  _IntegrationTile(Icons.bedtime_rounded, 'Sleep', Color(0xFF8B5CF6)),
+  _IntegrationTile(
+      Icons.local_fire_department_rounded, 'Calories', AppColors.orange),
+];
+
+class IntegrationsGridScene extends StatelessWidget {
+  final int localMs;
+  const IntegrationsGridScene({super.key, required this.localMs});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _demoDarkBg,
+      padding: EdgeInsetsDirectional.only(
+        top: MediaQuery.of(context).padding.top + 14,
+        start: 22,
+        end: 22,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('CONNECTED DATA',
+              style: TextStyle(
+                  fontFamily: 'Barlow Condensed',
+                  fontSize: 12,
+                  letterSpacing: 2.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.orange)),
+          const SizedBox(height: 8),
+          const Text('Adapts to your data.',
+              style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFFAFAFA))),
+          const SizedBox(height: 16),
+          // 2-column tile grid; each tile pops in on its own beat.
+          for (var row = 0; row < _integrationTiles.length; row += 2)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _tile(_integrationTiles[row], 250 + row * 130),
+                  ),
+                  const SizedBox(width: 10),
+                  if (row + 1 < _integrationTiles.length)
+                    Expanded(
+                      child:
+                          _tile(_integrationTiles[row + 1], 320 + row * 130),
+                    )
+                  else
+                    const Expanded(child: SizedBox()),
+                ],
+              ),
+            ),
+          const SizedBox(height: 6),
+          BeatIn(
+            localMs: localMs,
+            at: 1700,
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded,
+                    size: 15, color: AppColors.orange.withValues(alpha: 0.9)),
+                const SizedBox(width: 7),
+                const Expanded(
+                  child: Text(
+                    'Every workout evolves with your effort, recovery & progress.',
+                    style:
+                        TextStyle(fontSize: 12.5, color: Color(0xFF9A9AA2)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tile(_IntegrationTile t, int at) {
+    // A subtle "live" pulse on the connected dot once the tile is in.
+    final inT = beatT(localMs, at, at + 300);
+    final pulsePhase = (localMs % 1500) / 1500;
+    final dotAlpha = 0.5 + 0.5 * (0.5 - (pulsePhase - 0.5).abs()) * 2;
+    return BeatIn(
+      localMs: localMs,
+      at: at,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        decoration: BoxDecoration(
+          color: _demoDarkCard,
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(
+            color: Color.lerp(_demoDarkBorder, t.color, 0.35 * inT) ??
+                _demoDarkBorder,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: t.color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(9),
+              ),
+              alignment: Alignment.center,
+              child: Icon(t.icon, size: 18, color: t.color),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Text(t.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFFAFAFA))),
+            ),
+            Container(
+              width: 7,
+              height: 7,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF2ECC71)
+                    .withValues(alpha: dotAlpha * inT),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Scene 6: shareables showcase (dark) ────────────────────────────────
+//
+// "Flex your progress." Renders a REAL share card via the production
+// shareables renderer ([AchievementHeroTemplate]) fed static sample data,
+// scaled to fit the demo frame. The template lays out in its native
+// 1080×1920 (story) design space, so we wrap it in a SizedBox at that size
+// and FittedBox it down — exactly what the share preview pane does.
+
+class ShareablesScene extends StatelessWidget {
+  final int localMs;
+  const ShareablesScene({super.key, required this.localMs});
+
+  /// Static sample payload — no providers, no network. Built once.
+  static final Shareable _sample = Shareable(
+    kind: ShareableKind.achievements,
+    title: 'Six Week Streak',
+    periodLabel: 'This Season',
+    heroValue: 12,
+    accentColor: AppColors.orange,
+    userDisplayName: 'Alex',
+    highlights: const [
+      ShareableMetric(label: 'LATEST', value: '225 lb Bench'),
+      ShareableMetric(label: 'WORKOUTS', value: '38'),
+      ShareableMetric(label: 'PR DAYS', value: '9'),
+    ],
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final size = ShareableAspect.story.size;
+    // Card rises + settles as the scene opens (mockup `vl-pop-in` at scale).
+    final riseT = beatT(localMs, 0, 520, Curves.easeOutCubic);
+    final scale = 0.94 + 0.06 * riseT;
+
+    return Container(
+      color: _demoDarkBg,
+      padding: EdgeInsetsDirectional.only(
+        top: MediaQuery.of(context).padding.top + 14,
+        start: 22,
+        end: 22,
+        bottom: 12,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('SHARE YOUR WINS',
+              style: TextStyle(
+                  fontFamily: 'Barlow Condensed',
+                  fontSize: 12,
+                  letterSpacing: 2.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.orange)),
+          const SizedBox(height: 8),
+          const Text('Flex your progress.',
+              style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFFFAFAFA))),
+          const SizedBox(height: 14),
+          Expanded(
+            child: Center(
+              child: Opacity(
+                opacity: riseT.clamp(0.0, 1.0),
+                child: Transform.translate(
+                  offset: Offset(0, 18 * (1 - riseT)),
+                  child: Transform.scale(
+                    scale: scale,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: SizedBox(
+                        // Native export size; FittedBox scales it to the
+                        // available height while preserving the 9:16 ratio.
+                        height: double.infinity,
+                        child: FittedBox(
+                          fit: BoxFit.contain,
+                          alignment: Alignment.center,
+                          child: SizedBox(
+                            width: size.width,
+                            height: size.height,
+                            child: AchievementHeroTemplate(
+                              data: _sample,
+                              showWatermark: true,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

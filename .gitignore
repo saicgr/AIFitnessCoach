@@ -18,6 +18,11 @@ data_keys.gz
 *.pdf
 *.p8 
 
+# images
+*.png
+*.jpg
+*.jpeg
+
 # Chroma vector store data
 backend/data/chroma/
 

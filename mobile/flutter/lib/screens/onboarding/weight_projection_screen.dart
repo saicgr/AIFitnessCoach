@@ -13,6 +13,7 @@ import 'pre_auth_quiz_screen.dart';
 import 'widgets/calorie_macro_estimator.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/quiz_weight_rate.dart';
+import 'value_beats/plan_ready_beat.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 part 'weight_projection_screen_part_weight_data_point.dart';
@@ -326,6 +327,20 @@ class _WeightProjectionScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Plan-ready celebration (Gravl-gap): seal + "N days/week = M
+                // planned workouts/month" stat. Upgrades the plain "plan is
+                // ready" line that already lives in this reveal — NOT a new
+                // screen (a duplicate preview step was deliberately removed).
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 18),
+                    child: PlanReadyFlair(
+                      daysPerWeek: workoutDays,
+                      compact: true,
+                      showHeadline: false,
+                    ),
+                  ),
+                ),
                 // Show title inline only on phone
                 Consumer(builder: (context, ref, _) {
                   final windowState = ref.watch(windowModeProvider);

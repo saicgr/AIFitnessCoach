@@ -1,20 +1,41 @@
 import 'package:flutter/material.dart';
 
-/// Timing math for the intro screen's auto-playing 4-scene demo.
+/// Timing math for the intro screen's auto-playing demo.
 ///
-/// One 10s master loop, four 2.5s scene windows:
+/// Each scene gets a fixed [sceneMs] window; the master loop is exactly
+/// `sceneCount × sceneMs` long, so the loop length scales with however many
+/// scenes are active (the two Gravl-gap scenes — integrations + shareables —
+/// are flag-gated and may be dropped, shrinking the loop to keep timing
+/// correct). The base four:
 ///   0 program builder · 1 live logging · 2 food scan · 3 menu analysis
+/// then optionally · 4 integrations · 5 shareables.
 /// All scene widgets receive a LOCAL time (ms inside their own window) so
 /// their internal beats are window-relative.
+///
+/// [configure] is called once in [IntroScreen.initState] with the resolved
+/// active-scene count; it is a no-op to call it repeatedly with the same
+/// value. Defaults to the four base scenes so any read before configuration
+/// (or in the legacy fallback) is still correct.
 class DemoClock {
   DemoClock._();
 
-  static const int loopMs = 10000;
   static const int sceneMs = 2500;
-  static const int sceneCount = 4;
+
+  /// Number of active scenes (4..6). Set by [configure] from the resolved
+  /// feature flags; the loop and scene-fade math read it live.
+  static int sceneCount = 4;
+
+  /// Total master-loop length — derived so each scene keeps its full
+  /// [sceneMs] window regardless of how many are active.
+  static int get loopMs => sceneCount * sceneMs;
 
   /// Crossfade duration at scene boundaries.
   static const int fadeMs = 240;
+
+  /// Set the active-scene count (clamped to the 4 base + up to 2 optional).
+  static void configure(int activeScenes) {
+    sceneCount = activeScenes.clamp(4, 6);
+  }
 
   /// Global loop time in ms from the master controller's 0..1 value.
   static int timeMs(double controllerValue) =>

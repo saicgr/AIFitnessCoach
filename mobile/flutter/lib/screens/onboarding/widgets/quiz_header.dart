@@ -12,12 +12,22 @@ import 'onboarding_theme.dart';
 /// time-remaining estimate ("~2 min left") — completion anxiety research
 /// favors time over step counts, and the segmented progress bar below
 /// already communicates position.
+///
+/// [showStepCount] is the `onboarding_step_counter` A/B treatment (default
+/// OFF): when true the header renders a Gravl-style "STEP n OF m" bounded
+/// counter instead of the time estimate. Control keeps the time estimate.
 class QuizHeader extends StatelessWidget {
   final int currentQuestion;
   final int totalQuestions;
   final bool canGoBack;
   final VoidCallback onBack;
   final VoidCallback? onBackToWelcome;
+  final bool showStepCount;
+
+  /// Number of REQUIRED (Phase-1) questions. Once [currentQuestion] passes
+  /// this, the remaining steps are optional personalization, so the bounded
+  /// counter switches to "ALMOST DONE" rather than promising a hard count.
+  final int requiredQuestions;
 
   const QuizHeader({
     super.key,
@@ -26,6 +36,8 @@ class QuizHeader extends StatelessWidget {
     required this.canGoBack,
     required this.onBack,
     this.onBackToWelcome,
+    this.showStepCount = false,
+    this.requiredQuestions = 7,
   });
 
   /// Rough per-question pace (~15s) → whole minutes, floored at 1 so the
@@ -33,6 +45,14 @@ class QuizHeader extends StatelessWidget {
   int get _minutesLeft {
     final remaining = math.max(1, totalQuestions - currentQuestion);
     return math.max(1, (remaining * 15 / 60).ceil());
+  }
+
+  /// Bounded "STEP n OF m" label for the required phase; "ALMOST DONE" for the
+  /// optional personalization steps that follow (no hard count past required).
+  String _stepLabel(AppLocalizations l10n) {
+    if (currentQuestion >= requiredQuestions) return l10n.quizAlmostDone;
+    final current = math.min(currentQuestion + 1, requiredQuestions);
+    return l10n.quizStepOfTotal(current, requiredQuestions);
   }
 
   @override
@@ -58,7 +78,7 @@ class QuizHeader extends StatelessWidget {
           Padding(
             padding: const EdgeInsetsDirectional.only(end: 4),
             child: Text(
-              l10n.quizMinutesLeft(_minutesLeft),
+              showStepCount ? _stepLabel(l10n) : l10n.quizMinutesLeft(_minutesLeft),
               style: TextStyle(
                 color: t.accent,
                 fontFamily: 'Barlow Condensed',

@@ -32,6 +32,59 @@ class OnboardingExperiments {
   static const String flagPaywallFounderPageV7 =
       'onboarding_v7_paywall_founder_page';
 
+  /// Gravl-gap UX upgrades (2026-06). All default-ON kill-switches resolved
+  /// via [isEnabled] at screen build, EXCEPT:
+  ///  - [flagStepCounter] — default OFF (`isEnabledDefaultOff`). The quiz
+  ///    header DELIBERATELY shows "~2 min left" instead of a "Step X of N"
+  ///    pill (see quiz_header.dart — completion-anxiety research). This flag
+  ///    is the A/B treatment to revert to a Gravl-style "Step N of M" count;
+  ///    control keeps today's time estimate. Never force-on.
+  ///  - [flagGymFinder] — default OFF, gated on a configured Maps key.
+  ///  - [flagValueCadence] — multivariate, primed into [valueCadence].
+  /// See plan `1-gravl-tutorial-2-squishy-lamport.md`.
+  static const String flagStepCounter = 'onboarding_step_counter'; // default OFF
+  static const String flagNotifPreviews = 'onboarding_notif_previews';
+  static const String flagHcWalkthrough = 'onboarding_hc_walkthrough';
+  static const String flagSmartDefaults = 'onboarding_smart_defaults';
+  static const String flagEquipmentVisual = 'onboarding_equipment_visual';
+  static const String flagDialInputs = 'onboarding_dial_inputs';
+  static const String flagGymFinder = 'onboarding_gym_finder'; // default OFF
+  static const String flagSplitRationale = 'onboarding_split_rationale';
+  static const String flagIntroIntegrations =
+      'onboarding_intro_integrations';
+  static const String flagIntroShareables = 'onboarding_intro_shareables';
+
+  /// Multivariate cadence experiment: `control` (value beats bunched after the
+  /// quiz, today's order) | `interleaved` (beats woven between question
+  /// clusters) | `more` (interleaved + all added beats incl. nutrition).
+  /// Absent / unreadable → `control` (today's exact flow), so the reorder is
+  /// dead code until the flag is set — zero prod risk.
+  static const String flagValueCadence = 'onboarding_value_cadence';
+
+  /// Sync-readable cache of [flagValueCadence] (router + quiz read it
+  /// synchronously). Primed once per session by [primeFlowFlags].
+  static String valueCadence = 'control';
+  static bool get isInterleaved =>
+      valueCadence == 'interleaved' || valueCadence == 'more';
+  static bool get isMoreCadence => valueCadence == 'more';
+
+  /// Default-OFF kill-switch resolver: an *absent* flag stays OFF (only an
+  /// explicit truthy value enables). Mirrors [primeFlowFlags] semantics, for
+  /// flags like [flagGymFinder] that must stay dark until deliberately turned
+  /// on.
+  static Future<bool> isEnabledDefaultOff(
+    PosthogService posthog,
+    String flagKey,
+  ) async {
+    final raw = await posthog.getFeatureFlag(flagKey);
+    if (raw is bool) return raw;
+    if (raw is String) {
+      final v = raw.toLowerCase();
+      return v == 'on' || v == 'true' || v == 'treatment' || v == 'enabled';
+    }
+    return false; // absent / unreadable → stay OFF
+  }
+
   /// Experiment: move name + DOB collection (`/personal-info`) to AFTER the
   /// paywall instead of before coach-selection. Removes the one piece of pure
   /// data-collection friction sitting between the pre-auth value peak (demo
@@ -67,6 +120,16 @@ class OnboardingExperiments {
           v == 'on' || v == 'true' || v == 'treatment' || v == 'enabled';
     }
     // absent / unreadable → keep default false (today's order)
+
+    // Multivariate cadence: only the three known arms are honoured; anything
+    // else (incl. absent) stays on `control` = today's exact flow.
+    final cadenceRaw = await posthog.getFeatureFlag(flagValueCadence);
+    if (cadenceRaw is String) {
+      final v = cadenceRaw.toLowerCase();
+      if (v == 'interleaved' || v == 'more' || v == 'control') {
+        valueCadence = v;
+      }
+    }
   }
 
   /// True unless [flagKey] is explicitly configured to a disabling value.

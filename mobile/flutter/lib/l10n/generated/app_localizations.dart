@@ -75319,6 +75319,18 @@ abstract class AppLocalizations {
   /// **'~{minutes} min left'**
   String quizMinutesLeft(int minutes);
 
+  /// Bounded step counter shown in the quiz header (A/B treatment vs the time-remaining estimate)
+  ///
+  /// In en, this message translates to:
+  /// **'STEP {current} OF {total}'**
+  String quizStepOfTotal(int current, int total);
+
+  /// Quiz header label for the optional (post-required) personalization steps
+  ///
+  /// In en, this message translates to:
+  /// **'ALMOST DONE'**
+  String get quizAlmostDone;
+
   /// v7 intro demo / first screen
   ///
   /// In en, this message translates to:
