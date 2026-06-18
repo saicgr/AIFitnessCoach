@@ -117,15 +117,9 @@ final List<_QuickAction> _actions = [
     label: 'Search food',
     onTap: (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
   ),
-  // "Quick add" = drop in calories/macros without searching a food (the
-  // MyFitnessPal-style manual entry). Keeps its +1 glyph, inherits the
-  // registry green so it reads as a food action.
-  _QuickAction(
-    registryId: 'food',
-    iconOverride: Icons.exposure_plus_1_rounded,
-    label: 'Quick add',
-    onTap: (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
-  ),
+  // ("Quick add" tile removed — Snap meal / Scan menu / Search food plus the
+  // food log's own manual-entry already cover dropping in calories, so a 4th
+  // food tile read as redundant.)
   // Row 2 — body + activity
   _QuickAction(
     registryId: 'water',
