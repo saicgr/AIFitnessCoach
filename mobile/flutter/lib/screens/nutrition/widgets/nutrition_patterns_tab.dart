@@ -16,6 +16,8 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 import 'package:go_router/go_router.dart';
+import '../log_meal_sheet.dart';
+import 'gut_health_card.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 // ─────────────────────────────────────────────────────────────────────────────
@@ -183,29 +185,23 @@ class _NutritionPatternsTabState extends ConsumerState<NutritionPatternsTab>
               isDark: widget.isDark,
             ),
           ),
-          SliverToBoxAdapter(
-            child: _TopFoodsSection(
-              userId: userId,
-              range: _range,
-              date: _anchorDateStr,
-              isDark: widget.isDark,
-            ),
-          ),
-          // "Ask about your food" — natural-language entry into the nutrition
-          // coach (Phase 2E wires the patterns engine into the coach prompt).
-          SliverToBoxAdapter(
-            child: _AskAboutFoodCard(isDark: widget.isDark),
-          ),
-          SliverToBoxAdapter(
-            child: _MoodSection(
-              userId: userId,
-              isDark: widget.isDark,
-            ),
-          ),
-          // Per-symptom + per-tag correlation buckets (image-first). Extends
-          // "Your Body's Responses" with structured how-you-felt signal.
+          // ── Differentiated insight first ──────────────────────────────────
+          // The correlation / gut / gentle-change sections are what makes this
+          // tab more than a calorie donut, so they sit directly under the
+          // overview — not buried below Top Foods where users never scroll.
+          //
+          // Per-symptom + per-tag correlation buckets (image-first). "How foods
+          // sat with you" — structured how-you-felt signal.
           SliverToBoxAdapter(
             child: _SymptomTagSection(
+              userId: userId,
+              isDark: widget.isDark,
+            ),
+          ),
+          // Gut-health insights — regularity chart + natural-rhythm stats +
+          // food/tag → gut correlations. Cozy, non-clinical.
+          SliverToBoxAdapter(
+            child: _GutHealthSection(
               userId: userId,
               isDark: widget.isDark,
             ),
@@ -218,10 +214,21 @@ class _NutritionPatternsTabState extends ConsumerState<NutritionPatternsTab>
               isDark: widget.isDark,
             ),
           ),
-          // Gut-health insights — regularity chart + natural-rhythm stats +
-          // food/tag → gut correlations. Cozy, non-clinical.
+          // "Ask about your food" — natural-language entry into the nutrition
+          // coach (Phase 2E wires the patterns engine into the coach prompt).
           SliverToBoxAdapter(
-            child: _GutHealthSection(
+            child: _AskAboutFoodCard(isDark: widget.isDark),
+          ),
+          SliverToBoxAdapter(
+            child: _TopFoodsSection(
+              userId: userId,
+              range: _range,
+              date: _anchorDateStr,
+              isDark: widget.isDark,
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: _MoodSection(
               userId: userId,
               isDark: widget.isDark,
             ),
@@ -1104,7 +1111,6 @@ class _MoodSectionState extends ConsumerState<_MoodSection> {
   /// query is always a fixed 90-day window so a single per-user slot suffices.
   FoodPatternsMoodResponse? _cached;
   bool _cacheChecked = false;
-
   @override
   void initState() {
     super.initState();
@@ -1619,6 +1625,113 @@ class _EmptyStub extends StatelessWidget {
   }
 }
 
+/// Rich, ALWAYS-VISIBLE teaser shown inside a deepened-Patterns section when the
+/// user hasn't captured the signal it needs yet. We deliberately never silently
+/// hide these sections (the old behaviour) — that made the whole "deeper
+/// patterns" capability invisible to anyone who hadn't already been tagging
+/// meals. Instead we teach what the section will reveal and give a one-tap CTA
+/// straight into the capture flow.
+class _PatternsTeaser extends StatelessWidget {
+  final IconData icon;
+  final String headline;
+  final List<String> bullets;
+  final String ctaLabel;
+  final IconData ctaIcon;
+  final VoidCallback onCta;
+  final bool isDark;
+  const _PatternsTeaser({
+    required this.icon,
+    required this.headline,
+    required this.bullets,
+    required this.ctaLabel,
+    required this.ctaIcon,
+    required this.onCta,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: tc.accent.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: tc.accent),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                headline,
+                style: TextStyle(
+                    fontSize: 13, height: 1.4, color: textPrimary),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        for (final b in bullets)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.check_circle_outline,
+                    size: 14, color: tc.accent.withValues(alpha: 0.8)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(b,
+                      style: TextStyle(
+                          fontSize: 11.5, height: 1.35, color: textMuted)),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: Material(
+            color: tc.accent,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                HapticService.light();
+                onCta();
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(ctaIcon, size: 16, color: Colors.black),
+                    const SizedBox(width: 8),
+                    Text(ctaLabel,
+                        style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // Deepened Patterns (Phase 4B/4C — FE-D)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1758,8 +1871,6 @@ class _SymptomTagSection extends ConsumerStatefulWidget {
 
 class _SymptomTagSectionState extends ConsumerState<_SymptomTagSection> {
   SymptomTagCorrelations? _cached;
-  bool _cacheChecked = false;
-
   @override
   void initState() {
     super.initState();
@@ -1770,10 +1881,7 @@ class _SymptomTagSectionState extends ConsumerState<_SymptomTagSection> {
     final v = await _readPatternsCache(
         _kSymptomTagCacheKey, widget.userId, SymptomTagCorrelations.fromJson);
     if (!mounted) return;
-    setState(() {
-      _cached = v;
-      _cacheChecked = true;
-    });
+    setState(() => _cached = v);
   }
 
   @override
@@ -1790,14 +1898,8 @@ class _SymptomTagSectionState extends ConsumerState<_SymptomTagSection> {
     final data = fresh ?? _cached;
     final isDark = widget.isDark;
 
-    // Hide the whole section when there's genuinely nothing to show yet — the
-    // legacy _MoodSection above already covers the "no patterns yet" empty
-    // state, so a second empty card would be noise.
-    if (data != null && data.isEmpty) {
-      if (async.isLoading) return const SizedBox.shrink();
-      return const SizedBox.shrink();
-    }
-
+    // Always render the section so the capability is discoverable — when
+    // there's no signal yet we teach + drive capture instead of vanishing.
     return _SectionContainer(
       title: 'How foods sat with you',
       subtitle: 'Grouped by how you felt and what you tagged',
@@ -1822,11 +1924,25 @@ class _SymptomTagSectionState extends ConsumerState<_SymptomTagSection> {
             ],
           );
         }
-        if (_cacheChecked && async.hasError) {
-          // Fail open — never blank the tab; just hide this analytical extra.
-          return const SizedBox.shrink();
+        // First load with no cached payload → skeleton.
+        if (data == null && async.isLoading) {
+          return const _CorrelationSkeleton();
         }
-        return const _CorrelationSkeleton();
+        // Empty signal (or an unmigrated/failed fetch) → teach + capture CTA.
+        return _PatternsTeaser(
+          icon: Icons.insights_outlined,
+          headline:
+              'See which foods your body keeps reacting to — bloating, energy, focus and more.',
+          bullets: const [
+            'Tag a meal and note how it felt afterwards',
+            'We surface the foods linked to each feeling',
+            'Patterns sharpen after a handful of tagged meals',
+          ],
+          ctaLabel: 'Log a meal',
+          ctaIcon: Icons.restaurant_outlined,
+          onCta: () => showLogMealSheet(context, ref, autoOpenCamera: true),
+          isDark: isDark,
+        );
       }),
     );
   }
@@ -2048,8 +2164,6 @@ class _GentleChangesSection extends ConsumerStatefulWidget {
 class _GentleChangesSectionState
     extends ConsumerState<_GentleChangesSection> {
   MacrosBaseline? _cached;
-  bool _cacheChecked = false;
-
   @override
   void initState() {
     super.initState();
@@ -2060,10 +2174,7 @@ class _GentleChangesSectionState
     final v = await _readPatternsCache(
         _kGentleCacheKey, widget.userId, MacrosBaseline.fromJson);
     if (!mounted) return;
-    setState(() {
-      _cached = v;
-      _cacheChecked = true;
-    });
+    setState(() => _cached = v);
   }
 
   @override
@@ -2075,11 +2186,6 @@ class _GentleChangesSectionState
     }
     final data = fresh ?? _cached;
     final isDark = widget.isDark;
-
-    if (data != null && data.goals.isEmpty && data.nutrientTracks.isEmpty) {
-      // Nothing to encourage yet — hide rather than show an empty card.
-      return const SizedBox.shrink();
-    }
 
     return _SectionContainer(
       title: 'Gentle changes',
@@ -2113,10 +2219,23 @@ class _GentleChangesSectionState
             isDark: isDark,
           );
         }
-        if (_cacheChecked && async.hasError) {
-          return const SizedBox.shrink();
+        if (data == null && async.isLoading) {
+          return const _GentleSkeleton();
         }
-        return const _GentleSkeleton();
+        return _PatternsTeaser(
+          icon: Icons.eco_outlined,
+          headline:
+              'Gentle nudges toward how you want to eat — built from your own trends.',
+          bullets: const [
+            'Track fiber, protein, veggies and consistency',
+            'Compare this period against your recent baseline',
+            'Fills in as you log a few more days',
+          ],
+          ctaLabel: 'Log a meal',
+          ctaIcon: Icons.restaurant_outlined,
+          onCta: () => showLogMealSheet(context, ref, autoOpenCamera: true),
+          isDark: isDark,
+        );
       }),
     );
   }
@@ -2473,8 +2592,6 @@ class _GutHealthSection extends ConsumerStatefulWidget {
 
 class _GutHealthSectionState extends ConsumerState<_GutHealthSection> {
   DigestionPatterns? _cached;
-  bool _cacheChecked = false;
-
   @override
   void initState() {
     super.initState();
@@ -2485,10 +2602,7 @@ class _GutHealthSectionState extends ConsumerState<_GutHealthSection> {
     final v = await _readPatternsCache(
         _kGutCacheKey, widget.userId, DigestionPatterns.fromJson);
     if (!mounted) return;
-    setState(() {
-      _cached = v;
-      _cacheChecked = true;
-    });
+    setState(() => _cached = v);
   }
 
   @override
@@ -2501,26 +2615,12 @@ class _GutHealthSectionState extends ConsumerState<_GutHealthSection> {
     final data = fresh ?? _cached;
     final isDark = widget.isDark;
 
-    // Backend not live yet / no data at all → hide entirely (gut tracking is
-    // opt-in; surfacing an empty clinical card to non-trackers is noise).
-    if (data != null && data.isEmpty && !async.isLoading) {
-      return const SizedBox.shrink();
-    }
-
     return _SectionContainer(
       title: 'Your natural rhythm',
       subtitle: 'How your gut has been, in your own words',
       isDark: isDark,
       child: Builder(builder: (context) {
-        if (data != null && !data.isEmpty) {
-          if (data.hasNoData) {
-            return _EmptyStub(
-              icon: Icons.spa_outlined,
-              title: 'Nothing logged yet',
-              subtitle:
-                  'Tap the gut-health tile on Daily to start — a few taps is all it takes.',
-            );
-          }
+        if (data != null && !data.isEmpty && !data.hasNoData) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -2535,10 +2635,26 @@ class _GutHealthSectionState extends ConsumerState<_GutHealthSection> {
             ],
           );
         }
-        if (_cacheChecked && async.hasError) {
-          return const SizedBox.shrink();
+        // First load with no cached payload → skeleton.
+        if (data == null && async.isLoading) {
+          return const _GutSkeleton();
         }
-        return const _GutSkeleton();
+        // Nothing logged yet → teach + one-tap into the gut-log sheet.
+        return _PatternsTeaser(
+          icon: Icons.spa_outlined,
+          headline:
+              'Track how your gut has been — in your own words, no clinical detail.',
+          bullets: const [
+            'A few taps logs each day',
+            'See your regularity rhythm over time',
+            'Spot foods and tags that seem connected',
+          ],
+          ctaLabel: 'Log gut health',
+          ctaIcon: Icons.add_rounded,
+          onCta: () =>
+              showGutHealthSheet(context: context, userId: widget.userId),
+          isDark: isDark,
+        );
       }),
     );
   }
