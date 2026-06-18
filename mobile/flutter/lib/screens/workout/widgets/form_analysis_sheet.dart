@@ -23,6 +23,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/form_analysis_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -33,12 +34,16 @@ import 'form_analysis_gauge_card.dart';
 Future<void> showFormAnalysisSheet(
   BuildContext context, {
   String? exerciseName,
+  String? exerciseId,
 }) {
   return showGlassSheet(
     context: context,
     builder: (_) => GlassSheet(
       showHandle: true,
-      child: FormAnalysisSheet(exerciseName: exerciseName),
+      child: FormAnalysisSheet(
+        exerciseName: exerciseName,
+        exerciseId: exerciseId,
+      ),
     ),
   );
 }
@@ -48,7 +53,12 @@ enum _FormFlowStage { entry, uploading, analyzing, result, error }
 class FormAnalysisSheet extends ConsumerStatefulWidget {
   final String? exerciseName;
 
-  const FormAnalysisSheet({super.key, this.exerciseName});
+  /// Canonical exercise id when launched from a specific exercise (active
+  /// workout / library). Persisted with the analysis so history binds to the
+  /// exact exercise (not a fuzzy name match) — see C3 persistence.
+  final String? exerciseId;
+
+  const FormAnalysisSheet({super.key, this.exerciseName, this.exerciseId});
 
   @override
   ConsumerState<FormAnalysisSheet> createState() => _FormAnalysisSheetState();
@@ -56,6 +66,12 @@ class FormAnalysisSheet extends ConsumerStatefulWidget {
 
 class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
   final _picker = ImagePicker();
+
+  // Editable, optional exercise name — pre-filled from the launching context.
+  // Clearing it lets the AI auto-detect the movement.
+  late final TextEditingController _exerciseController = TextEditingController(
+    text: widget.exerciseName ?? '',
+  );
 
   _FormFlowStage _stage = _FormFlowStage.entry;
   double _uploadProgress = 0; // 0..1 during the S3 PUT
@@ -78,6 +94,7 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
     _disposed = true;
     _pollTimer?.cancel();
     _videoController?.dispose();
+    _exerciseController.dispose();
     super.dispose();
   }
 
@@ -133,9 +150,15 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
         },
       );
 
+      // Edited (optional) name; clearing it → null → AI auto-detects.
+      final typedName = _exerciseController.text.trim();
       final jobId = await repo.submitFormAnalysis(
         s3Key: s3Key,
-        exerciseName: widget.exerciseName,
+        exerciseName: typedName.isEmpty ? null : typedName,
+        exerciseId: widget.exerciseId,
+        // Bind the analysis to the gym that was active when it was recorded so
+        // history is scoped per user / per gym / per exercise (C3).
+        gymProfileId: ref.read(activeGymProfileIdProvider),
       );
 
       if (_disposed) return;
@@ -173,7 +196,9 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
           timer.cancel();
           final result = status.resultJson;
           if (result == null || result.isEmpty) {
-            _fail("Analysis finished but returned no result. Please try again.");
+            _fail(
+              "Analysis finished but returned no result. Please try again.",
+            );
             return;
           }
           HapticService.success();
@@ -184,9 +209,11 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
           });
         } else if (status.status == 'failed' || status.status == 'cancelled') {
           timer.cancel();
-          _fail(status.errorMessage?.trim().isNotEmpty == true
-              ? status.errorMessage!
-              : "We couldn't analyze that clip. Try a clear side-on video of one set.");
+          _fail(
+            status.errorMessage?.trim().isNotEmpty == true
+                ? status.errorMessage!
+                : "We couldn't analyze that clip. Try a clear side-on video of one set.",
+          );
         }
         // pending / in_progress → keep polling
       } catch (e) {
@@ -294,7 +321,52 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
             color: colors.textSecondary,
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 16),
+        // Editable, optional exercise name — pre-filled from context (e.g.
+        // "Push-ups"). Correct it, or clear it to let the AI auto-detect.
+        TextField(
+          controller: _exerciseController,
+          textCapitalization: TextCapitalization.words,
+          style: TextStyle(fontSize: 14, color: colors.textPrimary),
+          decoration: InputDecoration(
+            isDense: true,
+            labelText: 'Exercise (optional)',
+            hintText: 'AI auto-detects if left blank',
+            labelStyle: TextStyle(fontSize: 12.5, color: colors.textMuted),
+            hintStyle: TextStyle(fontSize: 12.5, color: colors.textMuted),
+            prefixIcon: Icon(
+              Icons.fitness_center_rounded,
+              size: 18,
+              color: colors.textMuted,
+            ),
+            suffixIcon: ValueListenableBuilder<TextEditingValue>(
+              valueListenable: _exerciseController,
+              builder: (_, value, __) => value.text.isEmpty
+                  ? const SizedBox.shrink()
+                  : IconButton(
+                      icon: Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: colors.textMuted,
+                      ),
+                      onPressed: () => _exerciseController.clear(),
+                    ),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colors.cardBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: colors.cardBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: accent),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
         _entryButton(
           colors,
           accent,
@@ -345,9 +417,11 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 20,
-                  color: filled ? Colors.white : colors.textPrimary),
+              Icon(
+                icon,
+                size: 20,
+                color: filled ? Colors.white : colors.textPrimary,
+              ),
               const SizedBox(width: 10),
               Text(
                 label,
@@ -479,10 +553,7 @@ class _FormAnalysisSheetState extends ConsumerState<FormAnalysisSheet> {
           analyzedAt: _analyzedAt,
         ),
         const SizedBox(height: 12),
-        TextButton(
-          onPressed: _reset,
-          child: const Text('Analyze another'),
-        ),
+        TextButton(onPressed: _reset, child: const Text('Analyze another')),
       ],
     );
   }

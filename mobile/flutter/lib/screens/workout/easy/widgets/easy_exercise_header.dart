@@ -14,11 +14,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/exercise.dart';
 import '../../../../core/services/haptic_service.dart';
+import '../../../../core/theme/accent_color_provider.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../widgets/exercise_image.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+
 class EasyExerciseHeader extends ConsumerWidget {
   final WorkoutExercise exercise;
   final int currentSet; // 1-indexed
@@ -26,6 +28,10 @@ class EasyExerciseHeader extends ConsumerWidget {
   final VoidCallback onShowVideo;
   final VoidCallback onOpenPlan;
   final VoidCallback onShowInfo;
+
+  /// Opens the AI Form-Check sheet for this exercise (pre-filled, editable).
+  /// Rendered as the accent-tinted hero chip in the media row. Null hides it.
+  final VoidCallback? onFormCheck;
 
   /// Tap + on the "Set N of M" row. Null disables (e.g. at the upper cap).
   final VoidCallback? onAddSet;
@@ -56,6 +62,7 @@ class EasyExerciseHeader extends ConsumerWidget {
     required this.onShowVideo,
     required this.onOpenPlan,
     required this.onShowInfo,
+    this.onFormCheck,
     this.onAddSet,
     this.onRemoveSet,
     this.onEditNote,
@@ -69,6 +76,7 @@ class EasyExerciseHeader extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? Colors.white : Colors.black;
     final muted = textColor.withValues(alpha: 0.58);
+    final accent = AccentColorScope.of(context).getColor(isDark);
     // Max thumbnail size the layout targets. Actual render size shrinks when
     // the title wraps to a second line or when the parent column is short.
     final thumbnailMax = compact ? 140.0 : 180.0;
@@ -115,7 +123,9 @@ class EasyExerciseHeader extends ConsumerWidget {
                   icon: Icons.remove_rounded,
                   onTap: onRemoveSet,
                   color: muted,
-                  tooltip: AppLocalizations.of(context).easyExerciseHeaderRemoveSet,
+                  tooltip: AppLocalizations.of(
+                    context,
+                  ).easyExerciseHeaderRemoveSet,
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -135,7 +145,9 @@ class EasyExerciseHeader extends ConsumerWidget {
                   icon: Icons.add_rounded,
                   onTap: onAddSet,
                   color: muted,
-                  tooltip: AppLocalizations.of(context).easyExerciseHeaderAddSet,
+                  tooltip: AppLocalizations.of(
+                    context,
+                  ).easyExerciseHeaderAddSet,
                 ),
               ],
             ),
@@ -166,58 +178,76 @@ class EasyExerciseHeader extends ConsumerWidget {
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _LinkChip(
-                  icon: Icons.play_circle_outline,
-                  label: AppLocalizations.of(context).workoutShowcaseVideo,
-                  color: textColor,
-                  onTap: () async {
-                    await HapticService.instance.tap();
-                    onShowVideo();
-                  },
-                ),
-                const SizedBox(width: 10),
-                _LinkChip(
-                  icon: Icons.menu_book_outlined,
-                  label: AppLocalizations.of(context).workoutShowcaseInstructions,
-                  color: textColor,
-                  onTap: () async {
-                    await HapticService.instance.tap();
-                    onShowInfo();
-                  },
-                ),
-                const SizedBox(width: 10),
-                _LinkChip(
-                  icon: Icons.list_alt_rounded,
-                  label: AppLocalizations.of(context).workoutsPlan,
-                  color: textColor,
-                  onTap: () async {
-                    await HapticService.instance.tap();
-                    onOpenPlan();
-                  },
-                ),
-                if (onEditNote != null) ...[
-                  const SizedBox(width: 10),
-                  _NoteHeaderChip(
-                    onTap: onEditNote!,
-                    hasNote: hasNote,
-                    color: textColor,
-                  ),
-                ],
-                if (onShowMore != null) ...[
-                  const SizedBox(width: 10),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
                   _LinkChip(
-                    icon: Icons.more_horiz_rounded,
-                    label: AppLocalizations.of(context).homeMore,
+                    icon: Icons.play_circle_outline,
+                    label: AppLocalizations.of(context).workoutShowcaseVideo,
                     color: textColor,
                     onTap: () async {
                       await HapticService.instance.tap();
-                      onShowMore!();
+                      onShowVideo();
                     },
                   ),
+                  const SizedBox(width: 10),
+                  // Form Check — the hero media action, accent-tinted so it
+                  // stands out from the muted Video/Instructions/Plan chips.
+                  // Opens the AI form-analysis sheet pre-filled with this
+                  // exercise (editable). The differentiator surfaced in-workout.
+                  if (onFormCheck != null) ...[
+                    _LinkChip(
+                      icon: Icons.sports_gymnastics_outlined,
+                      label: 'Form',
+                      color: accent,
+                      onTap: () async {
+                        await HapticService.instance.tap();
+                        onFormCheck!();
+                      },
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  _LinkChip(
+                    icon: Icons.menu_book_outlined,
+                    label: AppLocalizations.of(
+                      context,
+                    ).workoutShowcaseInstructions,
+                    color: textColor,
+                    onTap: () async {
+                      await HapticService.instance.tap();
+                      onShowInfo();
+                    },
+                  ),
+                  const SizedBox(width: 10),
+                  _LinkChip(
+                    icon: Icons.list_alt_rounded,
+                    label: AppLocalizations.of(context).workoutsPlan,
+                    color: textColor,
+                    onTap: () async {
+                      await HapticService.instance.tap();
+                      onOpenPlan();
+                    },
+                  ),
+                  if (onEditNote != null) ...[
+                    const SizedBox(width: 10),
+                    _NoteHeaderChip(
+                      onTap: onEditNote!,
+                      hasNote: hasNote,
+                      color: textColor,
+                    ),
+                  ],
+                  if (onShowMore != null) ...[
+                    const SizedBox(width: 10),
+                    _LinkChip(
+                      icon: Icons.more_horiz_rounded,
+                      label: AppLocalizations.of(context).homeMore,
+                      color: textColor,
+                      onTap: () async {
+                        await HapticService.instance.tap();
+                        onShowMore!();
+                      },
+                    ),
+                  ],
                 ],
-              ],
               ),
             ),
           ],
@@ -238,7 +268,9 @@ class _Thumbnail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04);
-    final border = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.10);
+    final border = (isDark ? Colors.white : Colors.black).withValues(
+      alpha: 0.10,
+    );
     // Use the shared ExerciseImage widget so imageS3Path keys without a full
     // URL, or expired presigned URLs, round-trip through the
     // `/exercise-images/{name}` endpoint instead of silently failing in
@@ -260,8 +292,9 @@ class _Thumbnail extends StatelessWidget {
         height: double.infinity,
         borderRadius: 0,
         backgroundColor: Colors.transparent,
-        iconColor:
-            (isDark ? Colors.white : Colors.black).withValues(alpha: 0.22),
+        iconColor: (isDark ? Colors.white : Colors.black).withValues(
+          alpha: 0.22,
+        ),
       ),
     );
   }

@@ -47,6 +47,8 @@ import '../models/workout_state.dart';
 import '../widgets/change_equipment_helper.dart';
 import '../widgets/enhanced_notes_sheet.dart';
 import '../widgets/exercise_swap_sheet.dart';
+import '../widgets/form_analysis_sheet.dart';
+import '../widgets/how_did_i_do_pill.dart';
 import '../widgets/report_pain_sheet.dart';
 import 'easy_active_workout_screen.dart';
 import '../providers/active_workout_session_provider.dart';
@@ -62,6 +64,7 @@ import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_help_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+
 class EasyActiveWorkoutScreenState
     extends ConsumerState<EasyActiveWorkoutScreen> {
   late List<WorkoutExercise> _exercises;
@@ -94,6 +97,7 @@ class EasyActiveWorkoutScreenState
   String _pendingNoteText = '';
   String? _pendingNoteAudioPath;
   List<String> _pendingNotePhotoPaths = const [];
+
   /// Preserves the user's values when they enter edit mode so we can
   /// restore them when they "return to current set" without losing
   /// the in-progress weight/rep picks.
@@ -161,8 +165,10 @@ class EasyActiveWorkoutScreenState
             // Only fill empty buckets so a tier-swap restore isn't doubled.
             if (s != null && s.completed.isEmpty) s.completed.addAll(logs);
           });
-          _currentIndex =
-              stored.currentExerciseIndex.clamp(0, _exercises.length - 1);
+          _currentIndex = stored.currentExerciseIndex.clamp(
+            0,
+            _exercises.length - 1,
+          );
         });
       }
       // Restore the workout clock if the checkpoint had one.
@@ -191,7 +197,8 @@ class EasyActiveWorkoutScreenState
 
     _prService = ref.read(prDetectionServiceProvider)..startNewWorkout();
     unawaited(
-        _prService.preloadExerciseHistory(ref: ref, exercises: _exercises));
+      _prService.preloadExerciseHistory(ref: ref, exercises: _exercises),
+    );
     unawaited(_preloadLastSetPerExercise());
     unawaited(_preloadSmartWeightPerExercise());
     unawaited(_preloadScoreTargetsPerExercise());
@@ -203,8 +210,7 @@ class EasyActiveWorkoutScreenState
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(activeWorkoutWarmupDoneProvider.notifier).state = true;
-      EasyHelpSheet.showIfNeverSeen(context,
-          onSkipToNext: _skipToNextExercise);
+      EasyHelpSheet.showIfNeverSeen(context, onSkipToNext: _skipToNextExercise);
     });
   }
 
@@ -291,14 +297,16 @@ class EasyActiveWorkoutScreenState
     final useKg = ref.read(useKgForWorkoutProvider);
     setState(() {
       while (state.completed.length < targetIndex) {
-        state.completed.add(SetLog(
-          reps: 0,
-          weight: 0,
-          targetReps: state.targetReps,
-          startedAt: null,
-          durationSeconds: 0,
-          loggingMode: 'easy',
-        ));
+        state.completed.add(
+          SetLog(
+            reps: 0,
+            weight: 0,
+            targetReps: state.targetReps,
+            startedAt: null,
+            durationSeconds: 0,
+            loggingMode: 'easy',
+          ),
+        );
       }
       // Load target values into the focal stepper for the new current set.
       final targetWeightKg = state.targetWeightKg;
@@ -342,28 +350,34 @@ class EasyActiveWorkoutScreenState
       if (userId == null || _exercises.isEmpty) return;
       final repo = ref.read(workoutRepositoryProvider);
 
-      await Future.wait(List.generate(_exercises.length, (i) async {
-        final ex = _exercises[i];
-        try {
-          final data = await repo.getExerciseLastPerformance(
-              userId: userId, exerciseName: ex.name);
-          if (data == null) return;
-          final sets = data['sets'];
-          if (sets is! List || sets.isEmpty) return;
-          final first = sets.first;
-          if (first is! Map) return;
-          final wKg = (first['weight'] as num?)?.toDouble();
-          final reps = (first['reps'] as num?)?.toInt();
-          final completedAtRaw = data['completed_at'] ?? first['completed_at'];
-          DateTime? when;
-          if (completedAtRaw is String) {
-            when = DateTime.tryParse(completedAtRaw)?.toLocal();
+      await Future.wait(
+        List.generate(_exercises.length, (i) async {
+          final ex = _exercises[i];
+          try {
+            final data = await repo.getExerciseLastPerformance(
+              userId: userId,
+              exerciseName: ex.name,
+            );
+            if (data == null) return;
+            final sets = data['sets'];
+            if (sets is! List || sets.isEmpty) return;
+            final first = sets.first;
+            if (first is! Map) return;
+            final wKg = (first['weight'] as num?)?.toDouble();
+            final reps = (first['reps'] as num?)?.toInt();
+            final completedAtRaw =
+                data['completed_at'] ?? first['completed_at'];
+            DateTime? when;
+            if (completedAtRaw is String) {
+              when = DateTime.tryParse(completedAtRaw)?.toLocal();
+            }
+            if (wKg == null || reps == null || wKg <= 0 || when == null) return;
+            _lastSetByEx[i] = (weightKg: wKg, reps: reps, when: when);
+          } catch (_) {
+            /* swallow per-exercise failure */
           }
-          if (wKg == null || reps == null || wKg <= 0 || when == null) return;
-          _lastSetByEx[i] =
-              (weightKg: wKg, reps: reps, when: when);
-        } catch (_) {/* swallow per-exercise failure */}
-      }));
+        }),
+      );
 
       if (mounted) setState(() {});
     } catch (e) {
@@ -385,39 +399,44 @@ class EasyActiveWorkoutScreenState
       if (userId == null || _exercises.isEmpty) return;
       final useKg = ref.read(useKgForWorkoutProvider);
 
-      await Future.wait(List.generate(_exercises.length, (i) async {
-        final ex = _exercises[i];
-        final state = _perExercise[i];
-        if (state == null) return;
-        // Skip bodyweight exercises — they have no external weight.
-        final equipment = (ex.equipment ?? 'dumbbell').toLowerCase();
-        if (equipment.contains('bodyweight') || equipment == 'none') return;
-        final firstTarget = ex.getTargetForSet(1);
-        final targetReps = firstTarget?.targetReps ?? ex.reps ?? 10;
-        try {
-          final suggestion = await WeightSuggestionService.getSmartWeight(
-            dio: apiClient.dio,
-            userId: userId,
-            exerciseId: ex.exerciseId ?? ex.libraryId ?? '',
-            exerciseName: ex.name,
-            targetReps: targetReps,
-            equipment: equipment,
-          );
-          if (suggestion == null || suggestion.suggestedWeight <= 0) return;
-          if (!mounted) return;
-          // Don't clobber a value the user has already logged OR manually
-          // edited (the edit can land before the first set is logged, so the
-          // logged-set guard alone isn't enough — also check userEditedWeight).
-          if (state.completed.isNotEmpty || state.userEditedWeight) return;
-          final kg = suggestion.suggestedWeight;
-          setState(() {
-            state.targetWeightKg = kg;
-            // Equipment-aware snap (same pipeline as Advanced), not raw ×2.20462.
-            state.displayWeight =
-                useKg ? kg : kgToDisplayLbs(kg, ex.equipment, exerciseName: ex.name);
-          });
-        } catch (_) {/* swallow per-exercise failure */}
-      }));
+      await Future.wait(
+        List.generate(_exercises.length, (i) async {
+          final ex = _exercises[i];
+          final state = _perExercise[i];
+          if (state == null) return;
+          // Skip bodyweight exercises — they have no external weight.
+          final equipment = (ex.equipment ?? 'dumbbell').toLowerCase();
+          if (equipment.contains('bodyweight') || equipment == 'none') return;
+          final firstTarget = ex.getTargetForSet(1);
+          final targetReps = firstTarget?.targetReps ?? ex.reps ?? 10;
+          try {
+            final suggestion = await WeightSuggestionService.getSmartWeight(
+              dio: apiClient.dio,
+              userId: userId,
+              exerciseId: ex.exerciseId ?? ex.libraryId ?? '',
+              exerciseName: ex.name,
+              targetReps: targetReps,
+              equipment: equipment,
+            );
+            if (suggestion == null || suggestion.suggestedWeight <= 0) return;
+            if (!mounted) return;
+            // Don't clobber a value the user has already logged OR manually
+            // edited (the edit can land before the first set is logged, so the
+            // logged-set guard alone isn't enough — also check userEditedWeight).
+            if (state.completed.isNotEmpty || state.userEditedWeight) return;
+            final kg = suggestion.suggestedWeight;
+            setState(() {
+              state.targetWeightKg = kg;
+              // Equipment-aware snap (same pipeline as Advanced), not raw ×2.20462.
+              state.displayWeight = useKg
+                  ? kg
+                  : kgToDisplayLbs(kg, ex.equipment, exerciseName: ex.name);
+            });
+          } catch (_) {
+            /* swallow per-exercise failure */
+          }
+        }),
+      );
     } catch (e) {
       debugPrint('⚠️ [EasyWorkout] smart-weight preload failed: $e');
     }
@@ -432,38 +451,43 @@ class EasyActiveWorkoutScreenState
   Future<void> _preloadScoreTargetsPerExercise() async {
     try {
       if (_exercises.isEmpty) return;
-      await Future.wait(List.generate(_exercises.length, (i) async {
-        final ex = _exercises[i];
-        final muscle = (ex.primaryMuscle ?? ex.muscleGroup ?? ex.bodyPart ?? '')
-            .trim()
-            .toLowerCase();
-        if (muscle.isEmpty) return;
-        final targetReps = ex.getTargetForSet(1)?.targetReps ?? ex.reps ?? 8;
-        final exName = (ex.name).trim();
-        final equip = (ex.equipment ?? '').trim();
-        try {
-          // Cache by (muscle, reps, exercise, equipment): the target is now
-          // exercise-aware (different exercises on the same muscle can differ,
-          // and bodyweight moves return a rep goal), so the key must include
-          // exercise identity — keying by muscle alone made every exercise on
-          // a muscle show the identical (often nonsensical) target.
-          final cacheKey = '$muscle|$targetReps|$exName|$equip';
-          ScoreTarget? target;
-          if (_scoreTargetByMuscle.containsKey(cacheKey)) {
-            target = _scoreTargetByMuscle[cacheKey];
-          } else {
-            target = await ScoreTargetService.fetch(
-              ref: ref,
-              muscleGroup: muscle,
-              targetReps: targetReps,
-              exerciseName: exName,
-              equipment: equip,
-            );
-            _scoreTargetByMuscle[cacheKey] = target;
+      await Future.wait(
+        List.generate(_exercises.length, (i) async {
+          final ex = _exercises[i];
+          final muscle =
+              (ex.primaryMuscle ?? ex.muscleGroup ?? ex.bodyPart ?? '')
+                  .trim()
+                  .toLowerCase();
+          if (muscle.isEmpty) return;
+          final targetReps = ex.getTargetForSet(1)?.targetReps ?? ex.reps ?? 8;
+          final exName = (ex.name).trim();
+          final equip = (ex.equipment ?? '').trim();
+          try {
+            // Cache by (muscle, reps, exercise, equipment): the target is now
+            // exercise-aware (different exercises on the same muscle can differ,
+            // and bodyweight moves return a rep goal), so the key must include
+            // exercise identity — keying by muscle alone made every exercise on
+            // a muscle show the identical (often nonsensical) target.
+            final cacheKey = '$muscle|$targetReps|$exName|$equip';
+            ScoreTarget? target;
+            if (_scoreTargetByMuscle.containsKey(cacheKey)) {
+              target = _scoreTargetByMuscle[cacheKey];
+            } else {
+              target = await ScoreTargetService.fetch(
+                ref: ref,
+                muscleGroup: muscle,
+                targetReps: targetReps,
+                exerciseName: exName,
+                equipment: equip,
+              );
+              _scoreTargetByMuscle[cacheKey] = target;
+            }
+            _scoreTargetByEx[i] = target;
+          } catch (_) {
+            /* swallow per-exercise failure */
           }
-          _scoreTargetByEx[i] = target;
-        } catch (_) {/* swallow per-exercise failure */}
-      }));
+        }),
+      );
       if (mounted) setState(() {});
     } catch (e) {
       debugPrint('⚠️ [EasyWorkout] score-target preload failed: $e');
@@ -494,9 +518,7 @@ class EasyActiveWorkoutScreenState
   void _openNoteSheet() {
     final state = _perExercise[_currentIndex]!;
     final idx = _editingSetIndex;
-    final editing = idx != null &&
-        idx >= 0 &&
-        idx < state.completed.length;
+    final editing = idx != null && idx >= 0 && idx < state.completed.length;
 
     // The EnhancedNotesSheet edits a single text blob; flatten the per-set
     // notes list with newlines so existing notes are presented as one block,
@@ -564,8 +586,9 @@ class EasyActiveWorkoutScreenState
     final exercise = _exercises[_currentIndex];
     final useKg = ref.read(useKgForWorkoutProvider);
 
-    final weightKg =
-        useKg ? state.displayWeight : state.displayWeight * 0.453592;
+    final weightKg = useKg
+        ? state.displayWeight
+        : state.displayWeight * 0.453592;
 
     // Edit mode: overwrite the past log in-place and return to live set.
     if (_editingSetIndex != null) {
@@ -631,20 +654,26 @@ class EasyActiveWorkoutScreenState
     await HapticService.instance.success();
 
     detectEasyPRs(
-        service: _prService, log: setLog, exercise: exercise, state: state);
+      service: _prService,
+      log: setLog,
+      exercise: exercise,
+      state: state,
+    );
 
     if (widget.workout.id != null) {
-      unawaited(persistEasySet(
-        ref: ref,
-        exercise: exercise,
-        log: setLog,
-        state: state,
-        workoutId: widget.workout.id!,
-        totalTimeSeconds: _timer.workoutSeconds,
-        cachedWorkoutLogId: _workoutLogId,
-      ).then((id) {
-        if (id != null) _workoutLogId = id;
-      }));
+      unawaited(
+        persistEasySet(
+          ref: ref,
+          exercise: exercise,
+          log: setLog,
+          state: state,
+          workoutId: widget.workout.id!,
+          totalTimeSeconds: _timer.workoutSeconds,
+          cachedWorkoutLogId: _workoutLogId,
+        ).then((id) {
+          if (id != null) _workoutLogId = id;
+        }),
+      );
     }
 
     final finished = state.completed.length >= state.totalSets;
@@ -696,7 +725,7 @@ class EasyActiveWorkoutScreenState
         return;
       }
       setState(() => _currentIndex = next);
-    ref.read(activeWorkoutSessionProvider.notifier).setCurrentIndex(next);
+      ref.read(activeWorkoutSessionProvider.notifier).setCurrentIndex(next);
       return;
     }
     // Re-seed working values for the NEXT set from target table / last log.
@@ -706,8 +735,7 @@ class EasyActiveWorkoutScreenState
     if (target != null) {
       final useKg = ref.read(useKgForWorkoutProvider);
       final ex = _exercises[_currentIndex];
-      final targetKg =
-          (target.targetWeightKg ?? st.targetWeightKg).toDouble();
+      final targetKg = (target.targetWeightKg ?? st.targetWeightKg).toDouble();
       setState(() {
         st.targetReps = target.targetReps;
         st.targetWeightKg = targetKg;
@@ -793,7 +821,9 @@ class EasyActiveWorkoutScreenState
         ref.read(activeWorkoutLiveProvider.notifier).state = updated;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).easyActiveWorkoutExerciseSwapped),
+            content: Text(
+              AppLocalizations.of(context).easyActiveWorkoutExerciseSwapped,
+            ),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -859,13 +889,15 @@ class EasyActiveWorkoutScreenState
 
     // WF8/WF9 — backend save off the navigation path. Failures (offline /
     // 5xx) are enqueued + replayed on reconnect inside runEasyBackgroundSave.
-    unawaited(runEasyBackgroundSave(
-      ref: ref,
-      workout: widget.workout,
-      aggregates: aggregates,
-      totalTimeSeconds: _timer.workoutSeconds,
-      workoutLogId: _workoutLogId,
-    ));
+    unawaited(
+      runEasyBackgroundSave(
+        ref: ref,
+        workout: widget.workout,
+        aggregates: aggregates,
+        totalTimeSeconds: _timer.workoutSeconds,
+        workoutLogId: _workoutLogId,
+      ),
+    );
 
     // Tell any background "mini player" the workout is over and clear
     // the active-workout phase flag so re-entry restarts cleanly.
@@ -876,23 +908,26 @@ class EasyActiveWorkoutScreenState
     ref.read(activeWorkoutSessionProvider.notifier).clear();
 
     if (!mounted) return;
-    context.go('/workout-complete', extra: <String, dynamic>{
-      'workout': widget.workout,
-      'duration': _timer.workoutSeconds,
-      'calories': aggregates.calories,
-      'workoutLogId': _workoutLogId,
-      'exercisesPerformance': aggregates.exercisesPerformance,
-      'exerciseSets': aggregates.exerciseSets,
-      'totalSets': aggregates.totalSets,
-      'totalReps': aggregates.totalReps,
-      'totalVolumeKg': aggregates.totalVolumeKg,
-      // PRs / performance comparison resolve in the background save; the
-      // completion screen renders its calm "Saved" state and upgrades
-      // silently when they arrive. Null here is expected, not an error.
-      'personalRecords': null,
-      'performanceComparison': null,
-      'isFirstWorkout': false,
-    });
+    context.go(
+      '/workout-complete',
+      extra: <String, dynamic>{
+        'workout': widget.workout,
+        'duration': _timer.workoutSeconds,
+        'calories': aggregates.calories,
+        'workoutLogId': _workoutLogId,
+        'exercisesPerformance': aggregates.exercisesPerformance,
+        'exerciseSets': aggregates.exerciseSets,
+        'totalSets': aggregates.totalSets,
+        'totalReps': aggregates.totalReps,
+        'totalVolumeKg': aggregates.totalVolumeKg,
+        // PRs / performance comparison resolve in the background save; the
+        // completion screen renders its calm "Saved" state and upgrades
+        // silently when they arrive. Null here is expected, not an error.
+        'personalRecords': null,
+        'performanceComparison': null,
+        'isFirstWorkout': false,
+      },
+    );
   }
 
   /// User-initiated "Complete workout" overflow action. Confirms, then
@@ -911,7 +946,9 @@ class EasyActiveWorkoutScreenState
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(context).workoutFlowMixinCompleteWorkoutNow),
+        title: Text(
+          AppLocalizations.of(context).workoutFlowMixinCompleteWorkoutNow,
+        ),
         content: const Text(
           'Any sets you haven’t logged will be saved as zero (0 weight, '
           '0 reps). You’ll go straight to the workout summary.',
@@ -951,26 +988,28 @@ class EasyActiveWorkoutScreenState
           // Fire-and-forget persist; we don't block the UI on each. The
           // finalize step below awaits the workout-log PATCH which is
           // the load-bearing call for summary aggregation.
-          unawaited(persistEasySet(
-            ref: ref,
-            exercise: _exercises[i],
-            log: placeholder.copyWith(),
-            // Spoof a state so persistEasySet uses the right set_number
-            // (it reads `state.completed.length` for setNumber).
-            state: EasyExerciseState(
-              displayWeight: 0,
-              reps: 0,
-              targetReps: st.targetReps,
-              targetWeightKg: st.targetWeightKg,
-              totalSets: st.totalSets,
-              completed: List<SetLog>.from(st.completed),
-            ),
-            workoutId: widget.workout.id!,
-            totalTimeSeconds: _timer.workoutSeconds,
-            cachedWorkoutLogId: _workoutLogId,
-          ).then((id) {
-            if (id != null) _workoutLogId = id;
-          }));
+          unawaited(
+            persistEasySet(
+              ref: ref,
+              exercise: _exercises[i],
+              log: placeholder.copyWith(),
+              // Spoof a state so persistEasySet uses the right set_number
+              // (it reads `state.completed.length` for setNumber).
+              state: EasyExerciseState(
+                displayWeight: 0,
+                reps: 0,
+                targetReps: st.targetReps,
+                targetWeightKg: st.targetWeightKg,
+                totalSets: st.totalSets,
+                completed: List<SetLog>.from(st.completed),
+              ),
+              workoutId: widget.workout.id!,
+              totalTimeSeconds: _timer.workoutSeconds,
+              cachedWorkoutLogId: _workoutLogId,
+            ).then((id) {
+              if (id != null) _workoutLogId = id;
+            }),
+          );
         }
       }
     }
@@ -987,8 +1026,9 @@ class EasyActiveWorkoutScreenState
       builder: (ctx) => AlertDialog(
         title: Text(AppLocalizations.of(context).easyActiveWorkoutQuitWorkout),
         content: const Text(
-            'Your logged sets will still be saved. You can resume this '
-            'workout from Today any time.'),
+          'Your logged sets will still be saved. You can resume this '
+          'workout from Today any time.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
@@ -1009,7 +1049,6 @@ class EasyActiveWorkoutScreenState
       Navigator.of(context).maybePop();
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -1048,8 +1087,9 @@ class EasyActiveWorkoutScreenState
           // the current exercise, the focal stepper is showing that log's
           // value — convert it directly so the in-progress edit is preserved.
           if (_editingSetIndex != null && i == _currentIndex) {
-            final raw =
-                next ? s.displayWeight * 0.453592 : s.displayWeight * 2.20462;
+            final raw = next
+                ? s.displayWeight * 0.453592
+                : s.displayWeight * 2.20462;
             s.displayWeight = snapToRealIncrement(
               raw,
               ex.equipment,
@@ -1059,8 +1099,11 @@ class EasyActiveWorkoutScreenState
           } else {
             s.displayWeight = next
                 ? s.targetWeightKg
-                : kgToDisplayLbs(s.targetWeightKg, ex.equipment,
-                    exerciseName: ex.name);
+                : kgToDisplayLbs(
+                    s.targetWeightKg,
+                    ex.equipment,
+                    exerciseName: ex.name,
+                  );
           }
         }
       });
@@ -1082,11 +1125,11 @@ class EasyActiveWorkoutScreenState
     final double weightStep = useKg
         ? inc.getIncrementKg(exercise.equipment)
         : (inc.unit == 'lbs'
-            ? inc.getIncrement(exercise.equipment)
-            : (() {
-                final lbs = inc.getIncrementKg(exercise.equipment) * 2.20462;
-                return (lbs * 2).round() / 2; // nearest 0.5 lb
-              })());
+              ? inc.getIncrement(exercise.equipment)
+              : (() {
+                  final lbs = inc.getIncrementKg(exercise.equipment) * 2.20462;
+                  return (lbs * 2).round() / 2; // nearest 0.5 lb
+                })());
 
     final mq = MediaQuery.of(context);
     final safeAreaH = mq.size.height - mq.padding.top - mq.padding.bottom;
@@ -1097,8 +1140,8 @@ class EasyActiveWorkoutScreenState
     final nextExerciseName = hasNext ? _exercises[nextIdx].name : null;
     final nextExerciseImageUrl = hasNext
         ? (_exercises[nextIdx].imageS3Path ??
-            _exercises[nextIdx].gifUrl ??
-            _exercises[nextIdx].videoUrl)
+              _exercises[nextIdx].gifUrl ??
+              _exercises[nextIdx].videoUrl)
         : null;
 
     return EasyActiveWorkoutView(
@@ -1125,6 +1168,37 @@ class EasyActiveWorkoutScreenState
       // equipment / how-to. Separate surfaces, distinct content.
       onShowVideo: () => openEasyVideo(context, exercise, ref: ref),
       onShowInfo: () => openEasyInfoSheet(context, exercise),
+      // Form Check — pre-filled with this exercise (editable in the sheet);
+      // the sheet captures the active gym so analyses persist per gym/exercise.
+      onFormCheck: () => showFormAnalysisSheet(
+        context,
+        exerciseName: exercise.name,
+        exerciseId: exercise.exerciseId ?? exercise.libraryId,
+      ),
+      // "How did I do?" — honest critique of the sets just logged. Weights in
+      // `state.completed` are already kg (see _logCurrentSet).
+      onHowDidIDo: () => showHowDidIDoSheet(
+        context,
+        exerciseName: exercise.name,
+        exerciseId: exercise.exerciseId ?? exercise.libraryId,
+        sets: [
+          for (final s in state.completed)
+            {
+              'weight_kg': s.weight,
+              'reps': s.reps,
+              'rir': s.rir,
+              'duration_seconds': s.durationSeconds,
+              'set_type': s.setType,
+            },
+        ],
+        target: {
+          'weight_kg': state.targetWeightKg,
+          'reps': state.completed.isNotEmpty
+              ? state.completed.first.targetReps
+              : state.reps,
+        },
+        useKg: useKg,
+      ),
       onOpenPlan: () => openEasyPlanSheet(
         context: context,
         exercises: _exercises,
@@ -1133,7 +1207,9 @@ class EasyActiveWorkoutScreenState
         onJumpTo: _jumpTo,
       ),
       onMinimize: () {
-        ref.read(workoutMiniPlayerProvider.notifier).minimize(
+        ref
+            .read(workoutMiniPlayerProvider.notifier)
+            .minimize(
               workout: widget.workout,
               workoutSeconds: _timer.workoutSeconds,
               currentExerciseIndex: _currentIndex,
@@ -1154,20 +1230,20 @@ class EasyActiveWorkoutScreenState
       onReturnToCurrent: _returnToCurrentSet,
       onSkipToSet: _skipToSet,
       onAddSet: state.totalSets < _kMaxSetsPerExercise ? _addSet : null,
-      onRemoveSet:
-          state.totalSets > state.completed.length + 1 ? _removeSet : null,
+      onRemoveSet: state.totalSets > state.completed.length + 1
+          ? _removeSet
+          : null,
       lastSet: _lastSetByEx[_currentIndex],
       scoreTarget: _scoreTargetByEx[_currentIndex],
       onEditNote: _openNoteSheet,
       hasNote: _focalSetHasNote,
-      onSkipToNext:
-          _currentIndex < _exercises.length - 1 ? _skipToNextExercise : null,
+      onSkipToNext: _currentIndex < _exercises.length - 1
+          ? _skipToNextExercise
+          : null,
       onShowExerciseActions: _showExerciseActions,
       onQuitWorkout: _quitWorkout,
       onCompleteWorkoutNow: _completeWorkoutNow,
-      allCompletedSets: [
-        for (final s in _perExercise.values) ...s.completed,
-      ],
+      allCompletedSets: [for (final s in _perExercise.values) ...s.completed],
     );
   }
 }
@@ -1185,8 +1261,9 @@ class _EasySavingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bg = isDark ? AppColors.background : Colors.white;
-    final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textColor = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -1212,10 +1289,7 @@ class _EasySavingOverlay extends StatelessWidget {
               SizedBox(
                 width: 40,
                 height: 40,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: accent,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 3, color: accent),
               ),
             ],
           ),

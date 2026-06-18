@@ -21,7 +21,6 @@ import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/glass_sheet.dart';
-import '../models/workout_state.dart';
 import '../shared/set_rail.dart';
 import '../shared/set_rail_overflow_sheet.dart';
 import 'pre_set_coaching_banner.dart';
@@ -30,7 +29,6 @@ import 'voice_set_logging.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 part 'set_tracking_table_part_set_number_badge.dart';
-
 
 /// Data for a single set row
 class SetRowData {
@@ -43,9 +41,11 @@ class SetRowData {
   final double? targetWeight;
   final String? targetReps; // Can be "4-6" range
   final int? targetRir;
+
   /// Per-set hold target in seconds (planks, hollow body, wall sits). When
   /// set, the TARGET cell renders "45s hold" instead of a weight×reps string.
   final int? targetHoldSeconds;
+
   /// Exercise-level duration in seconds for cardio/timed-cardio exercises
   /// (e.g., Walking 300s). Same cell rendering path as targetHoldSeconds but
   /// labeled without "hold".
@@ -68,6 +68,7 @@ class SetRowData {
   /// True when the exercise is time/hold-based — swap reps input for a timer
   /// cell and hide the weight column visually.
   final bool isTimedExercise;
+
   /// True when the exercise uses no external load — skip the "kg" prefix in
   /// the TARGET cell and hide the barbell plate indicator.
   final bool isBodyweight;
@@ -76,21 +77,28 @@ class SetRowData {
   /// User has progressive overload enabled in prefs. When false the trend
   /// pill is suppressed entirely.
   final bool progressiveOverloadEnabled;
+
   /// User manually overrode this set's target — render an "Edited" chip.
   final bool isEdited;
+
   /// Active training block is a deload week — colour the trend pill with
   /// the deload theme rather than red on decreases.
   final bool isDeload;
+
   /// AMRAP set — RIR pill renders "Target RIR · AMRAP" without a number.
   final bool isAmrap;
+
   /// True when there is no prior history for this exercise — render a
   /// "Starter weight" muted hint instead of a trend pill.
   final bool isFirstSetEver;
+
   /// Easy mode hides the RIR pill entirely.
   final bool isEasyMode;
+
   /// Raw set type string ('working' | 'warmup' | 'failure' | 'amrap').
   /// A 'failure' set renders the target-effort pill as "Push to failure".
   final String setType;
+
   /// Previous set's target (in kg, internal unit) for trend delta.
   /// Null on the first set of the exercise.
   final double? previousSetTargetWeight;
@@ -319,8 +327,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     }
     // If the sets list shrinks below the override, clear it so we don't render
     // a stale window that points past the end.
-    if (_focusOverride != null &&
-        _focusOverride! >= widget.sets.length) {
+    if (_focusOverride != null && _focusOverride! >= widget.sets.length) {
       _focusOverride = null;
     }
   }
@@ -341,8 +348,11 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
 
       final displayWeight = widget.useKg
           ? (set.actualWeight ?? 0)
-          : kgToDisplayLbs(set.actualWeight ?? 0, widget.exercise.equipment,
-              exerciseName: widget.exercise.name);
+          : kgToDisplayLbs(
+              set.actualWeight ?? 0,
+              widget.exercise.equipment,
+              exerciseName: widget.exercise.name,
+            );
 
       _editWeightController = TextEditingController(
         text: displayWeight.toStringAsFixed(0),
@@ -387,8 +397,11 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   /// `_saveEditing`'s kg conversion so values round-trip cleanly.
   double _toDisplayWeight(double kg) {
     if (widget.useKg) return kg;
-    return kgToDisplayLbs(kg, widget.exercise.equipment,
-        exerciseName: widget.exercise.name);
+    return kgToDisplayLbs(
+      kg,
+      widget.exercise.equipment,
+      exerciseName: widget.exercise.name,
+    );
   }
 
   /// "Same as last time" for ONE set: copy its previous-session weight/reps
@@ -408,7 +421,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     final isActive = index == widget.activeSetIndex && !set.isCompleted;
     if (isActive) {
       if (prevKg != null) {
-        widget.weightController.text = _toDisplayWeight(prevKg).toStringAsFixed(0);
+        widget.weightController.text = _toDisplayWeight(
+          prevKg,
+        ).toStringAsFixed(0);
       }
       if (prevReps != null) {
         widget.repsController.text = prevReps.toString();
@@ -441,7 +456,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   /// Whether ANY set has previous-session data to copy from — gates the bulk
   /// chip so it never shows for a brand-new exercise.
   bool get _hasAnyPrevious => widget.sets.any(
-      (s) => s.previousWeight != null || s.previousReps != null);
+    (s) => s.previousWeight != null || s.previousReps != null,
+  );
 
   /// Apply a voice-parsed set ("225 for 8") into the ACTIVE set's live inputs.
   /// The parsed weight is in display units (lb unless kg mode) — same space as
@@ -466,17 +482,24 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   Widget _buildFastLogRow(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
+    // Compact LEFT-aligned toolbar directly under the column header: the bulk
+    // "Same as last time" chip + a labeled "Voice" control. Left-aligning the
+    // pair (instead of pushing a lone mic to the far right with a `Spacer`)
+    // kills the empty-band look — voice reads as a small, named action,
+    // distinct from the AI coach chip.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 8, 2),
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 2),
       child: Row(
         children: [
-          if (_hasAnyPrevious)
+          if (_hasAnyPrevious) ...[
             GestureDetector(
               onTap: _applyPreviousAll,
               behavior: HitTestBehavior.opaque,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
@@ -489,20 +512,21 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                     const SizedBox(width: 5),
                     Text(
                       'Same as last time',
-                      style: ZType.lbl(10.5,
-                          color: accent, letterSpacing: 0.5),
+                      style: ZType.lbl(10.5, color: accent, letterSpacing: 0.5),
                     ),
                   ],
                 ),
               ),
             ),
-          const Spacer(),
-          // Voice "225 for 8" — fills the active set hands-free.
+            const SizedBox(width: 8),
+          ],
+          // Voice "225 for 8" — fills the active set hands-free. Labeled pill.
           VoiceSetMicButton(
             onParsed: _applyVoiceToActive,
             useKg: widget.useKg,
-            size: 20,
+            label: 'Voice',
           ),
+          const Spacer(),
         ],
       ),
     );
@@ -550,7 +574,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     // (so it appears above Set 1 at workout start, above Set N if Set 1..N-1
     // are already done). Parent is responsible for null'ing the message once
     // the first working set is logged — no additional guard here.
-    final bool hasBanner = widget.preSetBannerMessage != null &&
+    final bool hasBanner =
+        widget.preSetBannerMessage != null &&
         widget.preSetBannerMessage!.isNotEmpty &&
         widget.onPreSetBannerDismissed != null;
     int? bannerInsertIndex;
@@ -572,19 +597,23 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       final set = widget.sets[index];
 
       if (hasBanner && bannerInsertIndex == index) {
-        final animKey = widget.preSetBannerAnimationKey ??
+        final animKey =
+            widget.preSetBannerAnimationKey ??
             (widget.exercise.id ?? widget.exercise.name);
-        setRows.add(PreSetCoachingBanner(
-          key: ValueKey('pre_set_banner_$animKey'),
-          message: widget.preSetBannerMessage!,
-          onDismiss: widget.onPreSetBannerDismissed!,
-          animationKey: animKey,
-        ));
+        setRows.add(
+          PreSetCoachingBanner(
+            key: ValueKey('pre_set_banner_$animKey'),
+            message: widget.preSetBannerMessage!,
+            onDismiss: widget.onPreSetBannerDismissed!,
+            animationKey: animKey,
+          ),
+        );
       }
 
       // Only allow deletion for pending sets (not completed, not active)
       // Users can swipe to remove future sets they don't want to do.
-      final canDelete = widget.onSetDeleted != null &&
+      final canDelete =
+          widget.onSetDeleted != null &&
           !set.isCompleted &&
           !set.isActive &&
           index > widget.activeSetIndex;
@@ -618,11 +647,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                const Icon(Icons.delete_outline, color: Colors.white, size: 22),
               ],
             ),
           ),
@@ -636,13 +661,17 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
         setRows.add(_buildTimingRow(set, isDark));
       }
 
-      if (set.isActive && !set.isCompleted && widget.onActiveRirChanged != null) {
-        setRows.add(_RirQuickSelectBar(
-          key: AppTourKeys.rirBarKey,
-          selectedRir: widget.activeRir,
-          onRirSelected: widget.onActiveRirChanged!,
-          isDark: isDark,
-        ));
+      if (set.isActive &&
+          !set.isCompleted &&
+          widget.onActiveRirChanged != null) {
+        setRows.add(
+          _RirQuickSelectBar(
+            key: AppTourKeys.rirBarKey,
+            selectedRir: widget.activeRir,
+            onRirSelected: widget.onActiveRirChanged!,
+            isDark: isDark,
+          ),
+        );
       }
 
       if (inlineRestInsertIndex != null && index == inlineRestInsertIndex) {
@@ -715,9 +744,13 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       }
 
       // Pick the most informative weight/rep pair available: actual > target > previous.
-      final double? rawWeight = s.actualWeight ?? s.targetWeight ?? s.previousWeight;
-      final int? displayReps = s.actualReps ??
-          (s.targetReps != null ? int.tryParse(s.targetReps!.split('-').first) : null) ??
+      final double? rawWeight =
+          s.actualWeight ?? s.targetWeight ?? s.previousWeight;
+      final int? displayReps =
+          s.actualReps ??
+          (s.targetReps != null
+              ? int.tryParse(s.targetReps!.split('-').first)
+              : null) ??
           s.previousReps;
 
       String? label;
@@ -725,18 +758,21 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
         final display = widget.useKg
             ? rawWeight
             : WeightUtils.fromKgSnapped(rawWeight, displayInLbs: true);
-        label = '${display.toStringAsFixed(display % 1 == 0 ? 0 : 1)} '
+        label =
+            '${display.toStringAsFixed(display % 1 == 0 ? 0 : 1)} '
             '${widget.useKg ? 'kg' : 'lb'}';
       }
 
-      out.add(RailSetSummary(
-        displayIndex: s.setNumber,
-        status: status,
-        weight: rawWeight,
-        reps: displayReps,
-        weightLabel: label,
-        isBodyweight: s.isBodyweight || rawWeight == null || rawWeight <= 0,
-      ));
+      out.add(
+        RailSetSummary(
+          displayIndex: s.setNumber,
+          status: status,
+          weight: rawWeight,
+          reps: displayReps,
+          weightLabel: label,
+          isBodyweight: s.isBodyweight || rawWeight == null || rawWeight <= 0,
+        ),
+      );
     }
     return out;
   }
@@ -769,7 +805,11 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     final colors = ThemeColors.of(context);
     // Signature column-header: Barlow Condensed, uppercase, tiny + letter-spaced.
     final headerColor = isDark ? AppColors.textMuted : Colors.grey.shade600;
-    final TextStyle headerStyle = ZType.lbl(9.5, color: headerColor, letterSpacing: 1.5);
+    final TextStyle headerStyle = ZType.lbl(
+      9.5,
+      color: headerColor,
+      letterSpacing: 1.5,
+    );
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 2, 12, 6),
@@ -787,7 +827,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           SizedBox(
             width: 32,
             child: Text(
-              AppLocalizations.of(context).workoutSummaryAdvancedSet.toUpperCase(),
+              AppLocalizations.of(
+                context,
+              ).workoutSummaryAdvancedSet.toUpperCase(),
               style: headerStyle,
             ),
           ),
@@ -796,7 +838,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           Expanded(
             flex: 3,
             child: Text(
-              AppLocalizations.of(context).summaryExerciseTablePrevious.toUpperCase(),
+              AppLocalizations.of(
+                context,
+              ).summaryExerciseTablePrevious.toUpperCase(),
               style: headerStyle,
             ),
           ),
@@ -805,7 +849,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
           Expanded(
             flex: 3,
             child: Text(
-              AppLocalizations.of(context).summaryExerciseTableTarget.toUpperCase(),
+              AppLocalizations.of(
+                context,
+              ).summaryExerciseTableTarget.toUpperCase(),
               style: ZType.lbl(9.5, color: colors.accent, letterSpacing: 1.5),
             ),
           ),
@@ -820,17 +866,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (widget.onToggleUnit != null)
-                    Icon(
-                      Icons.swap_horiz,
-                      size: 14,
-                      color: headerColor,
-                    ),
-                  if (widget.onToggleUnit != null)
-                    const SizedBox(width: 2),
-                  Text(
-                    _unit.toUpperCase(),
-                    style: headerStyle,
-                  ),
+                    Icon(Icons.swap_horiz, size: 14, color: headerColor),
+                  if (widget.onToggleUnit != null) const SizedBox(width: 2),
+                  Text(_unit.toUpperCase(), style: headerStyle),
                 ],
               ),
             ),
@@ -847,8 +885,14 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    AppLocalizations.of(context).setTrackingTableLeft.toUpperCase(),
-                    style: ZType.lbl(10, color: headerColor, letterSpacing: 1.5),
+                    AppLocalizations.of(
+                      context,
+                    ).setTrackingTableLeft.toUpperCase(),
+                    style: ZType.lbl(
+                      10,
+                      color: headerColor,
+                      letterSpacing: 1.5,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -862,8 +906,14 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    AppLocalizations.of(context).setTrackingTableRight.toUpperCase(),
-                    style: ZType.lbl(10, color: headerColor, letterSpacing: 1.5),
+                    AppLocalizations.of(
+                      context,
+                    ).setTrackingTableRight.toUpperCase(),
+                    style: ZType.lbl(
+                      10,
+                      color: headerColor,
+                      letterSpacing: 1.5,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ],
@@ -929,7 +979,9 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
   /// Build a compact timing label + divider under a completed set row
   Widget _buildTimingRow(SetRowData set, bool isDark) {
     final textMuted = isDark ? AppColors.textMuted : const Color(0xFF9CA3AF);
-    final borderColor = isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.06);
+    final borderColor = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.06);
 
     final duration = _formatDuration(set.durationSeconds!);
     final setLabel = 'set ${set.setNumber}';
@@ -939,7 +991,8 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       if (set.restDurationSeconds! < 3) {
         label = '$setLabel: $duration · skipped rest';
       } else {
-        label = '$setLabel: $duration · rested ${_formatDuration(set.restDurationSeconds!)}';
+        label =
+            '$setLabel: $duration · rested ${_formatDuration(set.restDurationSeconds!)}';
       }
     }
 
@@ -947,15 +1000,23 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
         children: [
-          Expanded(child: Divider(height: 1, thickness: 0.5, color: borderColor)),
+          Expanded(
+            child: Divider(height: 1, thickness: 0.5, color: borderColor),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
               label,
-              style: TextStyle(fontSize: 11, color: textMuted, fontStyle: FontStyle.italic),
+              style: TextStyle(
+                fontSize: 11,
+                color: textMuted,
+                fontStyle: FontStyle.italic,
+              ),
             ),
           ),
-          Expanded(child: Divider(height: 1, thickness: 0.5, color: borderColor)),
+          Expanded(
+            child: Divider(height: 1, thickness: 0.5, color: borderColor),
+          ),
         ],
       ),
     );
@@ -982,70 +1043,88 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       if (rpe <= 9.5) return 'Just made it';
       return 'Failure';
     }
+
     double selected = 8.0;
     final picked = await showModalBottomSheet<double>(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
-        return StatefulBuilder(builder: (innerCtx, setStateLocal) {
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Theme.of(innerCtx).colorScheme.surface,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 40, height: 4,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  Text('RPE — set ${setIndex + 1}',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
-                  Text(hint(selected),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Theme.of(innerCtx).colorScheme.onSurface.withValues(alpha: 0.65),
-                      )),
-                  const SizedBox(height: 12),
-                  for (final row in grid)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: row.map((rpe) {
-                          final isSel = (rpe - selected).abs() < 0.01;
-                          return ChoiceChip(
-                            label: Text(
-                              rpe.toStringAsFixed(rpe == rpe.roundToDouble() ? 0 : 1),
-                            ),
-                            selected: isSel,
-                            onSelected: (_) => setStateLocal(() => selected = rpe),
-                          );
-                        }).toList(),
+        return StatefulBuilder(
+          builder: (innerCtx, setStateLocal) {
+            return Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(innerCtx).colorScheme.surface,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => Navigator.pop(sheetCtx, selected),
-                      child: Text(AppLocalizations.of(context).buttonSave),
+                    Text(
+                      'RPE — set ${setIndex + 1}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      hint(selected),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(
+                          innerCtx,
+                        ).colorScheme.onSurface.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    for (final row in grid)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: row.map((rpe) {
+                            final isSel = (rpe - selected).abs() < 0.01;
+                            return ChoiceChip(
+                              label: Text(
+                                rpe.toStringAsFixed(
+                                  rpe == rpe.roundToDouble() ? 0 : 1,
+                                ),
+                              ),
+                              selected: isSel,
+                              onSelected: (_) =>
+                                  setStateLocal(() => selected = rpe),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.pop(sheetCtx, selected),
+                        child: Text(AppLocalizations.of(context).buttonSave),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        });
+            );
+          },
+        );
       },
     );
     if (picked != null) {
@@ -1055,7 +1134,12 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
     }
   }
 
-  Widget _buildSetRow(BuildContext context, WorkoutDesignTheme theme, int index, SetRowData set) {
+  Widget _buildSetRow(
+    BuildContext context,
+    WorkoutDesignTheme theme,
+    int index,
+    SetRowData set,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isEditing = _editingSetIndex == index;
     final isActive = set.isActive && !set.isCompleted;
@@ -1118,8 +1202,10 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 // Tap-to-copy "same as last time" — enabled for any set that
                 // has history and isn't in display-only showcase mode. Active
                 // set fills the live controllers; others persist via update.
-                onCopyPrevious: (!widget.showcase &&
-                        (set.previousWeight != null || set.previousReps != null))
+                onCopyPrevious:
+                    (!widget.showcase &&
+                        (set.previousWeight != null ||
+                            set.previousReps != null))
                     ? () => _copyPreviousForSet(index)
                     : null,
               ),
@@ -1169,29 +1255,35 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
               child: set.isTimedExercise
                   ? const _DashCell()
                   : (isEditing
-                      ? _DarkInputField(
-                          controller: _editWeightController!,
-                          onSubmitted: (_) => _saveEditing(),
-                          isDark: isDark,
-                          hintText: set.isBodyweight ? '–' : null,
-                        )
-                      : isActive
-                          ? _DarkInputField(
-                              controller: widget.weightController,
-                              isDark: isDark,
-                              hintText: set.isBodyweight ? '–' : null,
-                            )
-                          : _CompletedValueCell(
-                              value: set.actualWeight != null && set.actualWeight! > 0
-                                  ? (widget.useKg
+                        ? _DarkInputField(
+                            controller: _editWeightController!,
+                            onSubmitted: (_) => _saveEditing(),
+                            isDark: isDark,
+                            hintText: set.isBodyweight ? '–' : null,
+                          )
+                        : isActive
+                        ? _DarkInputField(
+                            controller: widget.weightController,
+                            isDark: isDark,
+                            hintText: set.isBodyweight ? '–' : null,
+                          )
+                        : _CompletedValueCell(
+                            value:
+                                set.actualWeight != null &&
+                                    set.actualWeight! > 0
+                                ? (widget.useKg
                                           ? set.actualWeight!
-                                          : kgToDisplayLbs(set.actualWeight!, widget.exercise.equipment,
-                    exerciseName: widget.exercise.name,))
+                                          : kgToDisplayLbs(
+                                              set.actualWeight!,
+                                              widget.exercise.equipment,
+                                              exerciseName:
+                                                  widget.exercise.name,
+                                            ))
                                       .toStringAsFixed(0)
-                                  : (set.isBodyweight ? '–' : ''),
-                              isCompleted: set.isCompleted,
-                              isDark: isDark,
-                            )),
+                                : (set.isBodyweight ? '–' : ''),
+                            isCompleted: set.isCompleted,
+                            isDark: isDark,
+                          )),
             ),
 
             const SizedBox(width: 8),
@@ -1209,17 +1301,17 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                         hintText: 'L',
                       )
                     : isActive
-                        ? _DarkInputField(
-                            controller: widget.repsController,
-                            isDark: isDark,
-                            hintText: 'L',
-                          )
-                        : _CompletedValueCell(
-                            value: set.actualReps?.toString() ?? '',
-                            isCompleted: set.isCompleted,
-                            isDark: isDark,
-                            label: 'L',
-                          ),
+                    ? _DarkInputField(
+                        controller: widget.repsController,
+                        isDark: isDark,
+                        hintText: 'L',
+                      )
+                    : _CompletedValueCell(
+                        value: set.actualReps?.toString() ?? '',
+                        isCompleted: set.isCompleted,
+                        isDark: isDark,
+                        label: 'L',
+                      ),
               ),
               const SizedBox(width: 6),
               // Right reps input
@@ -1227,23 +1319,27 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 width: 56,
                 child: isEditing
                     ? _DarkInputField(
-                        controller: _editRepsController!, // L/R mode shares a single reps value in the model
+                        controller:
+                            _editRepsController!, // L/R mode shares a single reps value in the model
                         onSubmitted: (_) => _saveEditing(),
                         isDark: isDark,
                         hintText: 'R',
                       )
                     : isActive
-                        ? _DarkInputField(
-                            controller: widget.repsRightController ?? widget.repsController,
-                            isDark: isDark,
-                            hintText: 'R',
-                          )
-                        : _CompletedValueCell(
-                            value: set.actualReps?.toString() ?? '', // L/R mode shares a single reps value in the model
-                            isCompleted: set.isCompleted,
-                            isDark: isDark,
-                            label: 'R',
-                          ),
+                    ? _DarkInputField(
+                        controller:
+                            widget.repsRightController ?? widget.repsController,
+                        isDark: isDark,
+                        hintText: 'R',
+                      )
+                    : _CompletedValueCell(
+                        value:
+                            set.actualReps?.toString() ??
+                            '', // L/R mode shares a single reps value in the model
+                        isCompleted: set.isCompleted,
+                        isDark: isDark,
+                        label: 'R',
+                      ),
               ),
             ] else
               SizedBox(
@@ -1263,21 +1359,21 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                         isDark: isDark,
                       )
                     : (isEditing
-                        ? _DarkInputField(
-                            controller: _editRepsController!,
-                            onSubmitted: (_) => _saveEditing(),
-                            isDark: isDark,
-                          )
-                        : isActive
-                            ? _DarkInputField(
-                                controller: widget.repsController,
-                                isDark: isDark,
-                              )
-                            : _CompletedValueCell(
-                                value: set.actualReps?.toString() ?? '',
-                                isCompleted: set.isCompleted,
-                                isDark: isDark,
-                              )),
+                          ? _DarkInputField(
+                              controller: _editRepsController!,
+                              onSubmitted: (_) => _saveEditing(),
+                              isDark: isDark,
+                            )
+                          : isActive
+                          ? _DarkInputField(
+                              controller: widget.repsController,
+                              isDark: isDark,
+                            )
+                          : _CompletedValueCell(
+                              value: set.actualReps?.toString() ?? '',
+                              isCompleted: set.isCompleted,
+                              isDark: isDark,
+                            )),
               ),
 
             const SizedBox(width: 4),
@@ -1351,11 +1447,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.add_rounded,
-              size: 18,
-              color: accentColor,
-            ),
+            Icon(Icons.add_rounded, size: 18, color: accentColor),
             const SizedBox(width: 7),
             Text(
               AppLocalizations.of(context).setTrackingTableAddSet.toUpperCase(),

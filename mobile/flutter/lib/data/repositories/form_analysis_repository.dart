@@ -68,6 +68,8 @@ class FormAnalysisRepository {
     required String s3Key,
     String mimeType = 'video/mp4',
     String? exerciseName,
+    String? exerciseId,
+    String? gymProfileId,
   }) async {
     final response = await _apiClient.post(
       '/media-jobs/form-analysis',
@@ -76,6 +78,12 @@ class FormAnalysisRepository {
         'mime_type': mimeType,
         if (exerciseName != null && exerciseName.trim().isNotEmpty)
           'exercise_name': exerciseName.trim(),
+        // Bind the saved analysis to the exact exercise + the gym active at
+        // record time, so history is per user / per gym / per exercise (C3).
+        if (exerciseId != null && exerciseId.trim().isNotEmpty)
+          'exercise_id': exerciseId.trim(),
+        if (gymProfileId != null && gymProfileId.trim().isNotEmpty)
+          'gym_profile_id': gymProfileId.trim(),
       },
     );
     if (response.statusCode == 200 && response.data is Map) {
@@ -86,7 +94,8 @@ class FormAnalysisRepository {
       }
     }
     throw Exception(
-        'Failed to start form analysis (HTTP ${response.statusCode})');
+      'Failed to start form analysis (HTTP ${response.statusCode})',
+    );
   }
 
   /// Poll a single form-analysis job. Mirrors
@@ -104,6 +113,8 @@ class FormAnalysisRepository {
   /// either way, server-side). Powers the per-exercise Form history tab.
   Future<List<FormAnalysisHistoryItem>> listAnalyses({
     String? exercise,
+    String? exerciseId,
+    String? gymProfileId,
     int limit = 50,
   }) async {
     final response = await _apiClient.get(
@@ -111,6 +122,11 @@ class FormAnalysisRepository {
       queryParameters: {
         if (exercise != null && exercise.trim().isNotEmpty)
           'exercise': exercise.trim(),
+        // Exact exercise binding (preferred over fuzzy name) + gym scoping.
+        if (exerciseId != null && exerciseId.trim().isNotEmpty)
+          'exercise_id': exerciseId.trim(),
+        if (gymProfileId != null && gymProfileId.trim().isNotEmpty)
+          'gym_profile_id': gymProfileId.trim(),
         'limit': limit,
       },
     );
@@ -118,11 +134,15 @@ class FormAnalysisRepository {
       final items = (response.data['items'] as List?) ?? const [];
       return items
           .whereType<Map>()
-          .map((e) =>
-              FormAnalysisHistoryItem.fromJson(Map<String, dynamic>.from(e)))
+          .map(
+            (e) =>
+                FormAnalysisHistoryItem.fromJson(Map<String, dynamic>.from(e)),
+          )
           .toList();
     }
-    throw Exception('Failed to load form analyses (HTTP ${response.statusCode})');
+    throw Exception(
+      'Failed to load form analyses (HTTP ${response.statusCode})',
+    );
   }
 }
 
@@ -135,11 +155,18 @@ class FormAnalysisHistoryItem {
   /// Scored payload (same shape `FormAnalysisGaugeCard` renders).
   final Map<String, dynamic> result;
 
+  /// Gym this analysis was recorded at (C3). Null for pre-migration records or
+  /// analyses recorded without an active gym profile.
+  final String? gymProfileId;
+  final String? gymName;
+
   const FormAnalysisHistoryItem({
     required this.jobId,
     required this.result,
     this.createdAt,
     this.completedAt,
+    this.gymProfileId,
+    this.gymName,
   });
 
   factory FormAnalysisHistoryItem.fromJson(Map<String, dynamic> json) {
@@ -153,6 +180,8 @@ class FormAnalysisHistoryItem {
           : const <String, dynamic>{},
       createdAt: parse(json['created_at']),
       completedAt: parse(json['completed_at']),
+      gymProfileId: json['gym_profile_id']?.toString(),
+      gymName: json['gym_name']?.toString(),
     );
   }
 
@@ -171,8 +200,8 @@ final formAnalysisRepositoryProvider = Provider<FormAnalysisRepository>((ref) {
 /// Invalidate after a new analysis completes so the tab refreshes.
 final exerciseFormAnalysesProvider = FutureProvider.autoDispose
     .family<List<FormAnalysisHistoryItem>, String>((ref, exerciseName) async {
-  final repo = ref.watch(formAnalysisRepositoryProvider);
-  return repo.listAnalyses(
-    exercise: exerciseName.trim().isEmpty ? null : exerciseName,
-  );
-});
+      final repo = ref.watch(formAnalysisRepositoryProvider);
+      return repo.listAnalyses(
+        exercise: exerciseName.trim().isEmpty ? null : exerciseName,
+      );
+    });

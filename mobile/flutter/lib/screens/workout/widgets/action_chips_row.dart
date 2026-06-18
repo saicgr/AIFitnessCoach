@@ -20,6 +20,10 @@ class ActionChipData {
   final bool isToggle;
   final bool isActive;
 
+  /// Accent-filled, visually dominant styling (vs. the muted outline chips).
+  /// Used to make Form Check stand out as a first-class in-workout action.
+  final bool isHighlighted;
+
   const ActionChipData({
     required this.id,
     required this.label,
@@ -27,6 +31,7 @@ class ActionChipData {
     this.hasNotification = false,
     this.isToggle = false,
     this.isActive = false,
+    this.isHighlighted = false,
   });
 
   ActionChipData copyWith({
@@ -36,6 +41,7 @@ class ActionChipData {
     bool? hasNotification,
     bool? isToggle,
     bool? isActive,
+    bool? isHighlighted,
   }) {
     return ActionChipData(
       id: id ?? this.id,
@@ -44,6 +50,7 @@ class ActionChipData {
       hasNotification: hasNotification ?? this.hasNotification,
       isToggle: isToggle ?? this.isToggle,
       isActive: isActive ?? this.isActive,
+      isHighlighted: isHighlighted ?? this.isHighlighted,
     );
   }
 }
@@ -98,10 +105,7 @@ class ActionChipsRow extends StatelessWidget {
           final chipIndex = showAiChip ? index - 1 : index;
           final chip = chips[chipIndex];
 
-          return _ActionChip(
-            data: chip,
-            onTap: () => onChipTapped(chip.id),
-          );
+          return _ActionChip(data: chip, onTap: () => onChipTapped(chip.id));
         },
       ),
     );
@@ -113,15 +117,13 @@ class _ActionChip extends StatelessWidget {
   final ActionChipData data;
   final VoidCallback onTap;
 
-  const _ActionChip({
-    required this.data,
-    required this.onTap,
-  });
+  const _ActionChip({required this.data, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isActive = data.isActive;
+    final highlighted = data.isHighlighted && !isActive;
 
     return GestureDetector(
       onTap: () {
@@ -135,11 +137,15 @@ class _ActionChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive
               ? (isDark ? Colors.white : Colors.black)
+              : highlighted
+              ? WorkoutDesign.accent.withValues(alpha: 0.16)
               : (isDark ? WorkoutDesign.surface : Colors.white),
           borderRadius: BorderRadius.circular(WorkoutDesign.radiusRound),
           border: Border.all(
-            color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
-            width: 1,
+            color: highlighted
+                ? WorkoutDesign.accent.withValues(alpha: 0.6)
+                : (isDark ? WorkoutDesign.border : WorkoutDesign.borderLight),
+            width: highlighted ? 1.5 : 1,
           ),
         ),
         child: Row(
@@ -151,9 +157,11 @@ class _ActionChip extends StatelessWidget {
                 size: 16,
                 color: isActive
                     ? (isDark ? Colors.black : Colors.white)
+                    : highlighted
+                    ? WorkoutDesign.accent
                     : (isDark
-                        ? WorkoutDesign.textSecondary
-                        : WorkoutDesign.textSecondaryLight),
+                          ? WorkoutDesign.textSecondary
+                          : WorkoutDesign.textSecondaryLight),
               ),
               const SizedBox(width: 6),
             ],
@@ -162,9 +170,12 @@ class _ActionChip extends StatelessWidget {
               style: WorkoutDesign.chipStyle.copyWith(
                 color: isActive
                     ? (isDark ? Colors.black : Colors.white)
+                    : highlighted
+                    ? WorkoutDesign.accent
                     : (isDark
-                        ? WorkoutDesign.textPrimary
-                        : WorkoutDesign.textPrimaryLight),
+                          ? WorkoutDesign.textPrimary
+                          : WorkoutDesign.textPrimaryLight),
+                fontWeight: highlighted ? FontWeight.w700 : null,
               ),
             ),
             if (data.hasNotification) ...[
@@ -190,10 +201,7 @@ class _AiChip extends StatelessWidget {
   final bool hasNotification;
   final VoidCallback? onTap;
 
-  const _AiChip({
-    required this.hasNotification,
-    this.onTap,
-  });
+  const _AiChip({required this.hasNotification, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -272,6 +280,24 @@ class WorkoutActionChips {
     icon: Icons.swap_horiz,
   );
 
+  /// Form Check — accent-filled hero chip. Opens the AI form-analysis sheet
+  /// pre-filled with the current exercise. Pinned near the front, never hidden
+  /// in the overflow menu — it's the product differentiator surfaced in-workout.
+  static const formCheck = ActionChipData(
+    id: 'form_check',
+    label: 'Form',
+    icon: Icons.sports_gymnastics_outlined,
+    isHighlighted: true,
+  );
+
+  /// "How did I do?" — honest AI critique of the sets logged so far on this
+  /// exercise. Surfaced once ≥1 working set is logged.
+  static const howDidIDo = ActionChipData(
+    id: 'how_did_i_do',
+    label: 'How did I do?',
+    icon: Icons.auto_awesome,
+  );
+
   static const note = ActionChipData(
     id: 'note',
     label: 'Note',
@@ -324,27 +350,19 @@ class WorkoutActionChips {
 
   /// Progression model chip — shows current pattern, tap opens selector sheet.
   /// Label is set dynamically (e.g., "Pyramid", "Drop Sets").
-  static ActionChipData progression({required String label, required IconData icon}) =>
-      ActionChipData(
-        id: 'progression',
-        label: label,
-        icon: icon,
-      );
+  static ActionChipData progression({
+    required String label,
+    required IconData icon,
+  }) => ActionChipData(id: 'progression', label: label, icon: icon);
 
   /// Increment display chip — shows current increment (e.g., "±10 lb").
   /// Tap opens the WeightIncrementsSheet.
-  static ActionChipData incrementDisplay({required String label}) => ActionChipData(
-        id: 'increments_display',
-        label: label,
-        icon: Icons.tune,
-      );
+  static ActionChipData incrementDisplay({required String label}) =>
+      ActionChipData(id: 'increments_display', label: label, icon: Icons.tune);
 
   /// Equipment profile chip — shows current gym profile name.
-  static ActionChipData equipment({required String label}) => ActionChipData(
-        id: 'equipment',
-        label: label,
-        icon: Icons.fitness_center,
-      );
+  static ActionChipData equipment({required String label}) =>
+      ActionChipData(id: 'equipment', label: label, icon: Icons.fitness_center);
 
   /// 3-dot "More" menu for History, Increments, etc.
   static const more = ActionChipData(
@@ -363,27 +381,27 @@ class WorkoutActionChips {
   );
 
   static ActionChipData leftRight({bool isActive = false}) => ActionChipData(
-        id: 'lr',
-        label: 'L/R',
-        icon: Icons.swap_vert,
-        isToggle: true,
-        isActive: isActive,
-      );
+    id: 'lr',
+    label: 'L/R',
+    icon: Icons.swap_vert,
+    isToggle: true,
+    isActive: isActive,
+  );
 
   /// Get default chips list
   /// Order: Swap, Adjust first (user-requested quick access — C1), then
   /// Superset, Reorder, Info, etc. Swap also remains available via the
   /// 3-dot overflow menu so users see it in both places.
   static List<ActionChipData> defaultChips({bool showLR = false}) => [
-        swap,
-        adjustToday,
-        superset,
-        reorder,
-        info,
-        warmUp,
-        targets,
-        history,
-        increments,
-        if (showLR) leftRight(),
-      ];
+    swap,
+    adjustToday,
+    superset,
+    reorder,
+    info,
+    warmUp,
+    targets,
+    history,
+    increments,
+    if (showLR) leftRight(),
+  ];
 }

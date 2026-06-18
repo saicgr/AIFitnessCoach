@@ -20,6 +20,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 
 /// Result of parsing a spoken set phrase.
 class ParsedVoiceSet {
@@ -60,33 +61,81 @@ class VoiceSetParser {
   // ambiguously. They live in [_separators] instead. The spelled digit words
   // "four" / "two" remain real numbers.
   static const Map<String, int> _units = {
-    'zero': 0, 'oh': 0, 'one': 1, 'two': 2, 'three': 3,
-    'four': 4, 'five': 5, 'six': 6, 'seven': 7, 'eight': 8,
-    'ate': 8, 'nine': 9, 'ten': 10, 'eleven': 11, 'twelve': 12,
-    'thirteen': 13, 'fourteen': 14, 'fifteen': 15, 'sixteen': 16,
-    'seventeen': 17, 'eighteen': 18, 'nineteen': 19,
+    'zero': 0,
+    'oh': 0,
+    'one': 1,
+    'two': 2,
+    'three': 3,
+    'four': 4,
+    'five': 5,
+    'six': 6,
+    'seven': 7,
+    'eight': 8,
+    'ate': 8,
+    'nine': 9,
+    'ten': 10,
+    'eleven': 11,
+    'twelve': 12,
+    'thirteen': 13,
+    'fourteen': 14,
+    'fifteen': 15,
+    'sixteen': 16,
+    'seventeen': 17,
+    'eighteen': 18,
+    'nineteen': 19,
   };
   static const Map<String, int> _tens = {
-    'twenty': 20, 'thirty': 30, 'forty': 40, 'fifty': 50, 'sixty': 60,
-    'seventy': 70, 'eighty': 80, 'ninety': 90,
+    'twenty': 20,
+    'thirty': 30,
+    'forty': 40,
+    'fifty': 50,
+    'sixty': 60,
+    'seventy': 70,
+    'eighty': 80,
+    'ninety': 90,
   };
-  static const Map<String, int> _scales = {
-    'hundred': 100, 'thousand': 1000,
-  };
+  static const Map<String, int> _scales = {'hundred': 100, 'thousand': 1000};
 
   // Words that separate weight from reps — NOT number words. Note "for" and
   // "to" double as homophones of 4/2, but in a "<num> for <num>" frame they're
   // separators; we resolve this by treating them as separators only when they
   // sit between two already-formed numbers.
   static const Set<String> _separators = {
-    'for', 'to', 'too', 'by', 'x', 'times', 'reps', 'rep', 'at', 'and',
+    'for',
+    'to',
+    'too',
+    'by',
+    'x',
+    'times',
+    'reps',
+    'rep',
+    'at',
+    'and',
   };
 
   // Unit / filler words to drop entirely.
   static const Set<String> _filler = {
-    'pounds', 'pound', 'lbs', 'lb', 'kilos', 'kilo', 'kilograms', 'kilogram',
-    'kg', 'kgs', 'just', 'did', 'i', 'log', 'set', 'a', 'of', 'the', 'with',
-    'weight', 'plus',
+    'pounds',
+    'pound',
+    'lbs',
+    'lb',
+    'kilos',
+    'kilo',
+    'kilograms',
+    'kilogram',
+    'kg',
+    'kgs',
+    'just',
+    'did',
+    'i',
+    'log',
+    'set',
+    'a',
+    'of',
+    'the',
+    'with',
+    'weight',
+    'plus',
   };
 
   /// Parse a raw transcript into weight/reps. [mentionsReps] is derived
@@ -95,14 +144,15 @@ class VoiceSetParser {
     if (transcript.trim().isEmpty) return const ParsedVoiceSet();
 
     final lower = transcript.toLowerCase().trim();
-    final mentionsRepWord =
-        RegExp(r'\breps?\b').hasMatch(lower);
+    final mentionsRepWord = RegExp(r'\breps?\b').hasMatch(lower);
 
     // Tokenize on whitespace and the "x" digit-glue (e.g. "225x8"). Use a
     // mapped replace so $1/$2 expand (replaceAll treats them literally).
     final rawTokens = lower
         .replaceAllMapped(
-            RegExp(r'(\d)\s*[x×]\s*(\d)'), (m) => '${m[1]} x ${m[2]}')
+          RegExp(r'(\d)\s*[x×]\s*(\d)'),
+          (m) => '${m[1]} x ${m[2]}',
+        )
         .replaceAll(RegExp(r'[^a-z0-9.\s]'), ' ')
         .split(RegExp(r'\s+'))
         .where((t) => t.isNotEmpty)
@@ -186,10 +236,7 @@ class VoiceSetParser {
     }
 
     // First = weight, second = reps (industry phrasing "<weight> for <reps>").
-    return ParsedVoiceSet(
-      weight: numbers[0],
-      reps: numbers[1].round(),
-    );
+    return ParsedVoiceSet(weight: numbers[0], reps: numbers[1].round());
   }
 }
 
@@ -210,11 +257,17 @@ class VoiceSetMicButton extends StatefulWidget {
   /// Optional size of the icon button.
   final double size;
 
+  /// When non-null, renders a compact labeled pill (mic + this text) instead
+  /// of a bare icon button — used in the set-table header so voice set-entry
+  /// reads as a distinct, named control rather than a lone floating mic.
+  final String? label;
+
   const VoiceSetMicButton({
     super.key,
     required this.onParsed,
     this.useKg = false,
     this.size = 22,
+    this.label,
   });
 
   @override
@@ -272,96 +325,102 @@ class _VoiceSetMicButtonState extends State<VoiceSetMicButton> {
       isDismissible: true,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
-        return StatefulBuilder(builder: (ctx, setSheet) {
-          // Start listening once the sheet is up.
-          void startListen() {
-            _speech.listen(
-              onResult: (r) {
-                heard = r.recognizedWords;
-                parsed = VoiceSetParser.parse(heard);
-                setSheet(() {});
-                if (r.finalResult) {
-                  // Defer pop so the final transcript paints briefly.
-                  Future.delayed(const Duration(milliseconds: 250), () {
-                    if (!ctx.mounted) return;
-                    if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
-                  });
-                }
-              },
-              listenFor: const Duration(seconds: 8),
-              pauseFor: const Duration(seconds: 3),
-              localeId: null,
-              listenOptions: SpeechListenOptions(
-                partialResults: true,
-                cancelOnError: true,
+        return StatefulBuilder(
+          builder: (ctx, setSheet) {
+            // Start listening once the sheet is up.
+            void startListen() {
+              _speech.listen(
+                onResult: (r) {
+                  heard = r.recognizedWords;
+                  parsed = VoiceSetParser.parse(heard);
+                  setSheet(() {});
+                  if (r.finalResult) {
+                    // Defer pop so the final transcript paints briefly.
+                    Future.delayed(const Duration(milliseconds: 250), () {
+                      if (!ctx.mounted) return;
+                      if (Navigator.of(ctx).canPop()) Navigator.of(ctx).pop();
+                    });
+                  }
+                },
+                listenFor: const Duration(seconds: 8),
+                pauseFor: const Duration(seconds: 3),
+                localeId: null,
+                listenOptions: SpeechListenOptions(
+                  partialResults: true,
+                  cancelOnError: true,
+                ),
+              );
+            }
+
+            // Kick off listening on first build.
+            if (_speech.isNotListening && heard.isEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_speech.isNotListening) startListen();
+              });
+            }
+
+            final unit = widget.useKg ? 'kg' : 'lb';
+            return Container(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.elevated : Colors.white,
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: accent.withValues(alpha: 0.15),
+                    ),
+                    child: Icon(Icons.mic, color: accent, size: 30),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    heard.isEmpty ? 'Listening…' : '"$heard"',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    parsed.isEmpty
+                        ? 'Try "225 for 8"'
+                        : 'Logging '
+                              '${parsed.weight != null ? '${_fmt(parsed.weight!)} $unit' : 'bodyweight'}'
+                              '${parsed.reps != null ? ' × ${parsed.reps}' : ''}',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: parsed.isEmpty
+                          ? (isDark ? Colors.white54 : Colors.black45)
+                          : accent,
+                      fontWeight: parsed.isEmpty
+                          ? FontWeight.w400
+                          : FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      _speech.stop();
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text('Cancel'),
+                  ),
+                ],
               ),
             );
-          }
-
-          // Kick off listening on first build.
-          if (_speech.isNotListening && heard.isEmpty) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_speech.isNotListening) startListen();
-            });
-          }
-
-          final unit = widget.useKg ? 'kg' : 'lb';
-          return Container(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.elevated : Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accent.withValues(alpha: 0.15),
-                  ),
-                  child: Icon(Icons.mic, color: accent, size: 30),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  heard.isEmpty ? 'Listening…' : '"$heard"',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  parsed.isEmpty
-                      ? 'Try "225 for 8"'
-                      : 'Logging '
-                          '${parsed.weight != null ? '${_fmt(parsed.weight!)} $unit' : 'bodyweight'}'
-                          '${parsed.reps != null ? ' × ${parsed.reps}' : ''}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: parsed.isEmpty
-                        ? (isDark ? Colors.white54 : Colors.black45)
-                        : accent,
-                    fontWeight: parsed.isEmpty ? FontWeight.w400 : FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    _speech.stop();
-                    Navigator.of(ctx).pop();
-                  },
-                  child: const Text('Cancel'),
-                ),
-              ],
-            ),
-          );
-        });
+          },
+        );
       },
     );
 
@@ -392,6 +451,34 @@ class _VoiceSetMicButtonState extends State<VoiceSetMicButton> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
+
+    // Labeled pill variant: a compact "🎙 Voice" chip, fully tappable.
+    if (widget.label != null) {
+      return GestureDetector(
+        onTap: _onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: accent.withValues(alpha: 0.35)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.mic_none_rounded, size: 14, color: accent),
+              const SizedBox(width: 5),
+              Text(
+                widget.label!,
+                style: ZType.lbl(10.5, color: accent, letterSpacing: 0.5),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return IconButton(
       tooltip: 'Voice log a set',
       visualDensity: VisualDensity.compact,

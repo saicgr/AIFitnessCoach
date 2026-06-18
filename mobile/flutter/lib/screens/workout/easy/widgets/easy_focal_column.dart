@@ -8,8 +8,11 @@
 //   • Weight + Reps steppers (the editable controls feeding the poster).
 //   • Rounded accent CTA pill (`.rw-cta`) — uppercase Barlow, the only
 //     primary action.
-// `Spacer`s absorb residual height so the focal card breathes up on
-// iPhone Pro Max and down on iPhone SE — never triggers a scroll container.
+// The poster+steppers are centered in the residual height so the focal card
+// breathes up on iPhone Pro Max and compacts down on iPhone SE. When the
+// residual budget is genuinely too small (SE with every insight card present)
+// it scrolls a few px as a last-resort safety net instead of overflowing —
+// the LOG button below stays pinned and fully visible.
 
 import 'package:flutter/material.dart';
 
@@ -20,6 +23,7 @@ import '../../shared/unit_chip.dart';
 import '../easy_active_workout_state_models.dart';
 
 import '../../../../l10n/generated/app_localizations.dart';
+
 class EasyFocalColumn extends StatelessWidget {
   final EasyExerciseState state;
   final bool useKg;
@@ -64,47 +68,76 @@ class EasyFocalColumn extends StatelessWidget {
     final String wTok = state.displayWeight <= 0
         ? 'BW'
         : (state.displayWeight % 1 == 0
-            ? state.displayWeight.toStringAsFixed(0)
-            : state.displayWeight.toStringAsFixed(1));
+              ? state.displayWeight.toStringAsFixed(0)
+              : state.displayWeight.toStringAsFixed(1));
 
     // Timed exercises poster: a single big seconds numeral.
     final List<Widget> posterChildren = state.isTimed
         ? [
-            Text('${state.durationSeconds}',
-                style: ZType.disp(posterSize,
-                    color: colors.textPrimary, letterSpacing: 0)),
+            Text(
+              '${state.durationSeconds}',
+              style: ZType.disp(
+                posterSize,
+                color: colors.textPrimary,
+                letterSpacing: 0,
+              ),
+            ),
             const SizedBox(width: 4),
             Padding(
               padding: EdgeInsets.only(bottom: posterSize * 0.10),
-              child: Text('SEC',
-                  style: ZType.lbl(unitSize,
-                      color: colors.textMuted, letterSpacing: 1.0)),
+              child: Text(
+                'SEC',
+                style: ZType.lbl(
+                  unitSize,
+                  color: colors.textMuted,
+                  letterSpacing: 1.0,
+                ),
+              ),
             ),
           ]
         : [
-            Text(wTok,
-                style: ZType.disp(posterSize,
-                    color: colors.textPrimary, letterSpacing: 0)),
+            Text(
+              wTok,
+              style: ZType.disp(
+                posterSize,
+                color: colors.textPrimary,
+                letterSpacing: 0,
+              ),
+            ),
             if (state.displayWeight > 0) ...[
               const SizedBox(width: 4),
               Padding(
                 padding: EdgeInsets.only(bottom: posterSize * 0.10),
-                child: Text(unit,
-                    style: ZType.lbl(unitSize,
-                        color: colors.textMuted, letterSpacing: 1.0)),
+                child: Text(
+                  unit,
+                  style: ZType.lbl(
+                    unitSize,
+                    color: colors.textMuted,
+                    letterSpacing: 1.0,
+                  ),
+                ),
               ),
             ],
             // The faint Anton "×" between weight and reps (`.rw-poster .x`).
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text('×',
-                  style: ZType.disp(xSize,
-                      color: colors.textMuted.withValues(alpha: 0.55),
-                      letterSpacing: 0)),
+              child: Text(
+                '×',
+                style: ZType.disp(
+                  xSize,
+                  color: colors.textMuted.withValues(alpha: 0.55),
+                  letterSpacing: 0,
+                ),
+              ),
             ),
-            Text('${state.reps}',
-                style: ZType.disp(posterSize,
-                    color: colors.textPrimary, letterSpacing: 0)),
+            Text(
+              '${state.reps}',
+              style: ZType.disp(
+                posterSize,
+                color: colors.textPrimary,
+                letterSpacing: 0,
+              ),
+            ),
           ];
 
     final whisper = _whisperLine(context);
@@ -128,8 +161,7 @@ class EasyFocalColumn extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: ZType.ser(tight ? 14 : 15.5,
-                color: colors.textSecondary),
+            style: ZType.ser(tight ? 14 : 15.5, color: colors.textSecondary),
           ),
         ],
       ],
@@ -145,8 +177,9 @@ class EasyFocalColumn extends StatelessWidget {
       final t = state.durationSeconds;
       return t > 0 ? 'Hold the line. $t seconds.' : null;
     }
-    final targetDisplay =
-        useKg ? state.targetWeightKg : state.targetWeightKg * 2.20462;
+    final targetDisplay = useKg
+        ? state.targetWeightKg
+        : state.targetWeightKg * 2.20462;
     if (targetDisplay > 0 && state.displayWeight > targetDisplay + 0.01) {
       return 'Above target. Own it.';
     }
@@ -173,8 +206,8 @@ class EasyFocalColumn extends StatelessWidget {
     final wTok = state.displayWeight <= 0
         ? 'BW'
         : (state.displayWeight % 1 == 0
-            ? state.displayWeight.toStringAsFixed(0)
-            : state.displayWeight.toStringAsFixed(1));
+              ? state.displayWeight.toStringAsFixed(0)
+              : state.displayWeight.toStringAsFixed(1));
     return 'LOG SET — $wTok × ${state.reps}';
   }
 
@@ -190,8 +223,8 @@ class EasyFocalColumn extends StatelessWidget {
         final availableHeight = constraints.maxHeight.isFinite
             ? constraints.maxHeight
             : 320.0;
-        final tight = compact || availableHeight < 280.0;
-        final stepperCompact = compact || availableHeight < 320.0;
+        final tight = compact || availableHeight < 340.0;
+        final stepperCompact = compact || availableHeight < 380.0;
         final gapBetweenSteppers = tight ? 6.0 : 12.0;
         final logBtnHeight = tight ? 56.0 : 64.0;
         final verticalPad = tight ? 4.0 : 8.0;
@@ -201,9 +234,9 @@ class EasyFocalColumn extends StatelessWidget {
         // duration, not weight × reps. Render a single seconds stepper
         // and write the user's value into SetLog.durationSeconds.
         final timedBody = Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Spacer(),
             // The Anton poster (`.rw-poster`) + Fraunces whisper sit above
             // the hold-seconds stepper, the single dominant focal element.
             _poster(ctx, tight: tight),
@@ -217,10 +250,11 @@ class EasyFocalColumn extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black)
-                          .withValues(alpha: 0.62),
+                      color:
+                          (Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black)
+                              .withValues(alpha: 0.62),
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -237,14 +271,13 @@ class EasyFocalColumn extends StatelessWidget {
               compact: stepperCompact,
               onChanged: onDurationChanged,
             ),
-            const Spacer(),
           ],
         );
 
         final repsBody = Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Spacer(),
             // The Anton poster (`.rw-poster`) + Fraunces whisper — the huge
             // `weight × reps` masthead — dominate the top of the focal
             // column, directly above the editable steppers that feed it.
@@ -260,10 +293,11 @@ class EasyFocalColumn extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: (Theme.of(context).brightness == Brightness.dark
-                              ? Colors.white
-                              : Colors.black)
-                          .withValues(alpha: 0.62),
+                      color:
+                          (Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black)
+                              .withValues(alpha: 0.62),
                       letterSpacing: 0.2,
                     ),
                   ),
@@ -293,7 +327,6 @@ class EasyFocalColumn extends StatelessWidget {
               compact: stepperCompact,
               onChanged: onRepsChanged,
             ),
-            const Spacer(),
           ],
         );
 
@@ -302,7 +335,28 @@ class EasyFocalColumn extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(child: state.isTimed ? timedBody : repsBody),
+              // Center the poster+steppers in the residual space (replacing the
+              // old `Spacer()` centering) but scroll instead of overflowing when
+              // the budget is genuinely too small (iPhone SE with every insight
+              // card present) — `minHeight: maxHeight` makes the column fill and
+              // center when there's slack, and the SingleChildScrollView absorbs
+              // the rare squeeze so the LOG button never gets pushed off-screen.
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (innerCtx, innerC) => SingleChildScrollView(
+                    physics: const ClampingScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: innerC.maxHeight),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [state.isTimed ? timedBody : repsBody],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               // The rounded accent CTA pill (`.rw-cta`): fully-rounded,
               // uppercase Barlow Condensed with wide tracking. Caption shows
               // the live `weight × reps` target so the button restates the
@@ -347,25 +401,29 @@ class EasyFullscreenMediaViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(children: [
-        Center(
-          child: Image.network(
-            url,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const Icon(Icons.broken_image,
-                color: Colors.white54, size: 48),
+      body: Stack(
+        children: [
+          Center(
+            child: Image.network(
+              url,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const Icon(
+                Icons.broken_image,
+                color: Colors.white54,
+                size: 48,
+              ),
+            ),
           ),
-        ),
-        Positioned(
-          top: MediaQuery.of(context).padding.top + 4,
-          right: 4,
-          child: IconButton(
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: () => Navigator.of(context).maybePop(),
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 4,
+            right: 4,
+            child: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
-

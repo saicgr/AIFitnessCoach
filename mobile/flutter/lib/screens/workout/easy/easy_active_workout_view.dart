@@ -14,6 +14,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise.dart';
 import '../models/workout_state.dart';
 import '../shared/pre_set_insight_banner.dart';
+import '../widgets/how_did_i_do_pill.dart';
 import '../widgets/workout_stats_strip.dart';
 import 'easy_active_workout_state_models.dart';
 import 'score_target_service.dart';
@@ -50,6 +51,15 @@ class EasyActiveWorkoutView extends StatelessWidget {
   final VoidCallback onShowVideo;
   final VoidCallback onOpenPlan;
   final VoidCallback onShowInfo;
+
+  /// Opens the AI Form-Check sheet for the current exercise (pre-filled name,
+  /// editable). Drives the accent "Form" chip in the header media row.
+  final VoidCallback? onFormCheck;
+
+  /// Opens the "How did I do?" AI critique for the sets just logged on the
+  /// current exercise. Null until ≥1 working set is logged.
+  final VoidCallback? onHowDidIDo;
+
   final VoidCallback? onMinimize;
   final ValueChanged<double> onWeightChanged;
   final ValueChanged<double> onRepsChanged;
@@ -122,6 +132,8 @@ class EasyActiveWorkoutView extends StatelessWidget {
     required this.onShowVideo,
     required this.onOpenPlan,
     required this.onShowInfo,
+    this.onFormCheck,
+    this.onHowDidIDo,
     this.onMinimize,
     required this.onWeightChanged,
     required this.onRepsChanged,
@@ -150,137 +162,153 @@ class EasyActiveWorkoutView extends StatelessWidget {
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
-        child: Column(children: [
-          EasyTopBar(
-            workoutSeconds: workoutSeconds,
-            onBack: onBack,
-            onMinimize: onMinimize,
-            onCompleteNow: onCompleteWorkoutNow,
-            onQuit: onQuitWorkout,
-            onSkipToNext: onSkipToNext,
-            exercise: exercise,
-          ),
-          WorkoutStatsStrip(
-            workoutSeconds: workoutSeconds,
-            setLogs: allCompletedSets,
-            useKg: useKg,
-            isDark: isDark,
-          ),
-          EasyExerciseHeader(
-            exercise: exercise,
-            currentSet: currentSetNumber,
-            totalSets: state.totalSets,
-            compact: compact,
-            onShowVideo: onShowVideo,
-            onOpenPlan: onOpenPlan,
-            onShowInfo: onShowInfo,
-            onAddSet: onAddSet,
-            onRemoveSet: onRemoveSet,
-            onEditNote: onEditNote,
-            hasNote: hasNote,
-            onShowMore: onShowExerciseActions,
-          ),
-          EasyCompletedDots(
-            completedSetsForCurrentExercise: state.completed,
-            currentSetIndex: state.completedCount,
-            totalSets: state.totalSets,
-            useKg: useKg,
-            editingSetIndex: editingSetIndex,
-            onEditSet: onEditSet,
-            onReturnToCurrent: onReturnToCurrent,
-            onSkipToSet: onSkipToSet,
-          ),
-          // Pre-set AI insight banner. Renders between the completed-dots
-          // strip and the focal stepper column. Collapses to zero height
-          // when `preSetInsight` is null (no history / dismissed /
-          // nothing-to-say), so the fixed-heights budget stays predictable
-          // on iPhone SE.
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: PreSetInsightBanner(
-              exerciseId: exercise.exerciseId ??
-                  exercise.libraryId ??
-                  exercise.name,
-              setIndex: currentSetNumber - 1,
-              insight: preSetInsight,
-              tone: InsightTone.easy,
+        child: Column(
+          children: [
+            EasyTopBar(
+              workoutSeconds: workoutSeconds,
+              onBack: onBack,
+              onMinimize: onMinimize,
+              onCompleteNow: onCompleteWorkoutNow,
+              onQuit: onQuitWorkout,
+              onSkipToNext: onSkipToNext,
+              exercise: exercise,
             ),
-          ),
-          EasyLastTimeChip(
-            weight: lastSet == null
-                ? null
-                : (useKg
-                    ? lastSet!.weightKg
-                    : lastSet!.weightKg * 2.20462),
-            reps: lastSet?.reps,
-            unit: useKg ? 'kg' : 'lb',
-            when: lastSet?.when,
-            // "Same as last time": one tap copies last session's first-set
-            // weight × reps into the current set. Weight is pushed in the
-            // user's display unit — the same value the chip shows and the
-            // stepper edits.
-            onCopy: lastSet == null
-                ? null
-                : () {
-                    final w = useKg
-                        ? lastSet!.weightKg
-                        : lastSet!.weightKg * 2.20462;
-                    onWeightChanged(w);
-                    onRepsChanged(lastSet!.reps.toDouble());
-                  },
-          ),
-          // B6 — Strength-Score target pill: "Hit 80 lb × 8 to level up Chest".
-          // Hides (zero height) when there's no target for this muscle.
-          EasyScoreTargetPill(
-            target: scoreTarget,
-            useKg: useKg,
-            accent: accent,
-          ),
-          Expanded(
-            // Long-press anywhere on the focal column body opens the same
-            // actions sheet as the "•••" header chip. `behavior: deferToChild`
-            // ensures the inner +/− stepper buttons and the big Log set CTA
-            // still get their own taps before this gesture wins.
-            child: GestureDetector(
-              behavior: HitTestBehavior.deferToChild,
-              onLongPress: onShowExerciseActions,
-              child: EasyFocalColumn(
-                state: state,
-                useKg: useKg,
-                weightStep: weightStep,
-                accent: accent,
-                compact: compact,
-                onWeightChanged: onWeightChanged,
-                onRepsChanged: onRepsChanged,
-                onDurationChanged: onDurationChanged,
-                onLogSet: onLogSet,
-                editingSetIndex: editingSetIndex,
+            WorkoutStatsStrip(
+              workoutSeconds: workoutSeconds,
+              setLogs: allCompletedSets,
+              useKg: useKg,
+              isDark: isDark,
+            ),
+            EasyExerciseHeader(
+              exercise: exercise,
+              currentSet: currentSetNumber,
+              totalSets: state.totalSets,
+              compact: compact,
+              onShowVideo: onShowVideo,
+              onOpenPlan: onOpenPlan,
+              onShowInfo: onShowInfo,
+              onFormCheck: onFormCheck,
+              onAddSet: onAddSet,
+              onRemoveSet: onRemoveSet,
+              onEditNote: onEditNote,
+              hasNote: hasNote,
+              onShowMore: onShowExerciseActions,
+            ),
+            EasyCompletedDots(
+              completedSetsForCurrentExercise: state.completed,
+              currentSetIndex: state.completedCount,
+              totalSets: state.totalSets,
+              useKg: useKg,
+              editingSetIndex: editingSetIndex,
+              onEditSet: onEditSet,
+              onReturnToCurrent: onReturnToCurrent,
+              onSkipToSet: onSkipToSet,
+            ),
+            // Pre-set AI insight banner. Renders between the completed-dots
+            // strip and the focal stepper column. Collapses to zero height
+            // when `preSetInsight` is null (no history / dismissed /
+            // nothing-to-say), so the fixed-heights budget stays predictable
+            // on iPhone SE.
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: PreSetInsightBanner(
+                exerciseId:
+                    exercise.exerciseId ?? exercise.libraryId ?? exercise.name,
+                setIndex: currentSetNumber - 1,
+                insight: preSetInsight,
+                tone: InsightTone.easy,
               ),
             ),
-          ),
-          // Up next + Ask-coach share one row so Log Set stays the only
-          // primary CTA. Tap the Up-next chip to SKIP to the next exercise.
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: EasyUpNextChip(
-                    nextExerciseName: nextExerciseName,
-                    nextExerciseImageUrl: nextExerciseImageUrl,
-                    onSkipToNext: onSkipToNext,
+            EasyLastTimeChip(
+              weight: lastSet == null
+                  ? null
+                  : (useKg ? lastSet!.weightKg : lastSet!.weightKg * 2.20462),
+              reps: lastSet?.reps,
+              unit: useKg ? 'kg' : 'lb',
+              when: lastSet?.when,
+              // "Same as last time": one tap copies last session's first-set
+              // weight × reps into the current set. Weight is pushed in the
+              // user's display unit — the same value the chip shows and the
+              // stepper edits.
+              onCopy: lastSet == null
+                  ? null
+                  : () {
+                      final w = useKg
+                          ? lastSet!.weightKg
+                          : lastSet!.weightKg * 2.20462;
+                      onWeightChanged(w);
+                      onRepsChanged(lastSet!.reps.toDouble());
+                    },
+            ),
+            // B6 — Strength-Score target pill: "Hit 80 lb × 8 to level up Chest".
+            // Hides (zero height) when there's no target for this muscle.
+            EasyScoreTargetPill(
+              target: scoreTarget,
+              useKg: useKg,
+              accent: accent,
+            ),
+            // "How did I do?" — appears once ≥1 set is logged for this exercise.
+            // A compact accent pill that opens an honest AI critique of the sets
+            // just logged. Reuses the insight band so it doesn't add a new row to
+            // the (overflow-sensitive) Easy layout.
+            if (onHowDidIDo != null && state.completed.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: HowDidIDoPill(
+                    accent: accent,
+                    compact: compact,
+                    onTap: onHowDidIDo!,
                   ),
                 ),
-                const SizedBox(width: 8),
-                EasyChatPill(
-                  currentExercise: exercise,
-                  currentSetNumber: currentSetNumber,
-                  totalSets: state.totalSets,
+              ),
+            Expanded(
+              // Long-press anywhere on the focal column body opens the same
+              // actions sheet as the "•••" header chip. `behavior: deferToChild`
+              // ensures the inner +/− stepper buttons and the big Log set CTA
+              // still get their own taps before this gesture wins.
+              child: GestureDetector(
+                behavior: HitTestBehavior.deferToChild,
+                onLongPress: onShowExerciseActions,
+                child: EasyFocalColumn(
+                  state: state,
+                  useKg: useKg,
+                  weightStep: weightStep,
+                  accent: accent,
+                  compact: compact,
+                  onWeightChanged: onWeightChanged,
+                  onRepsChanged: onRepsChanged,
+                  onDurationChanged: onDurationChanged,
+                  onLogSet: onLogSet,
+                  editingSetIndex: editingSetIndex,
                 ),
-              ],
+              ),
             ),
-          ),
-        ]),
+            // Up next + Ask-coach share one row so Log Set stays the only
+            // primary CTA. Tap the Up-next chip to SKIP to the next exercise.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: EasyUpNextChip(
+                      nextExerciseName: nextExerciseName,
+                      nextExerciseImageUrl: nextExerciseImageUrl,
+                      onSkipToNext: onSkipToNext,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  EasyChatPill(
+                    currentExercise: exercise,
+                    currentSetNumber: currentSetNumber,
+                    totalSets: state.totalSets,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -56,6 +56,8 @@ import 'models/workout_state.dart';
 import 'providers/active_workout_session_provider.dart';
 import 'providers/active_workout_live_provider.dart';
 import 'widgets/action_chips_row.dart';
+import 'widgets/form_analysis_sheet.dart';
+import 'widgets/how_did_i_do_pill.dart';
 import 'widgets/quick_adjust_sheet.dart';
 import 'widgets/ai_input_preview_sheet.dart';
 import 'widgets/barbell_plate_indicator.dart';
@@ -104,9 +106,17 @@ class ActiveWorkoutScreen extends ConsumerStatefulWidget {
       _ActiveWorkoutScreenState();
 }
 
-class _ActiveWorkoutScreenState
-    extends ConsumerState<ActiveWorkoutScreen>
-    with WidgetsBindingObserver, PRManagerMixin, TimerRestMixin, AIFeaturesMixin, SetLoggingMixin, ExerciseNavigationMixin, WorkoutFlowMixin, WorkoutSheetsMixin, WorkoutUIBuildersMixin {
+class _ActiveWorkoutScreenState extends ConsumerState<ActiveWorkoutScreen>
+    with
+        WidgetsBindingObserver,
+        PRManagerMixin,
+        TimerRestMixin,
+        AIFeaturesMixin,
+        SetLoggingMixin,
+        ExerciseNavigationMixin,
+        WorkoutFlowMixin,
+        WorkoutSheetsMixin,
+        WorkoutUIBuildersMixin {
   // ── Concrete overrides for abstract declarations in mixins ──
   // These delegate to extension methods that provide the actual logic.
 
@@ -114,16 +124,27 @@ class _ActiveWorkoutScreenState
   void showSupersetSheet() => WorkoutSheetsMixinUI(this).showSupersetSheet();
 
   @override
-  void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern, {double? overrideWeight}) =>
-      SetLoggingMixinUI(this).applyProgressionTargets(exerciseIndex, pattern, overrideWeight: overrideWeight);
+  void applyProgressionTargets(
+    int exerciseIndex,
+    SetProgressionPattern pattern, {
+    double? overrideWeight,
+  }) => SetLoggingMixinUI(this).applyProgressionTargets(
+    exerciseIndex,
+    pattern,
+    overrideWeight: overrideWeight,
+  );
 
   @override
   void showBarTypeSelectorImpl(WorkoutExercise exercise) =>
       WorkoutSheetsMixinUI(this).showBarTypeSelectorImpl(exercise);
 
   @override
-  void showNumberInputDialogImpl(TextEditingController controller, bool isDecimal) =>
-      WorkoutSheetsMixinUI(this).showNumberInputDialogImpl(controller, isDecimal);
+  void showNumberInputDialogImpl(
+    TextEditingController controller,
+    bool isDecimal,
+  ) => WorkoutSheetsMixinUI(
+    this,
+  ).showNumberInputDialogImpl(controller, isDecimal);
 
   @override
   void showProgressionPicker(int exerciseIndex) =>
@@ -183,17 +204,20 @@ class _ActiveWorkoutScreenState
         supersetOrder: 1,
       );
       setState(() => exercises = updatedList);
-      snackbarMessage = 'Superset created: ${draggedExercise.name} + ${targetExercise.name}';
+      snackbarMessage =
+          'Superset created: ${draggedExercise.name} + ${targetExercise.name}';
     }
 
     precomputeSupersetIndicesImpl();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Row(children: [
-          const Icon(Icons.link, color: Colors.white, size: 18),
-          const SizedBox(width: 8),
-          Expanded(child: Text(snackbarMessage)),
-        ]),
+        content: Row(
+          children: [
+            const Icon(Icons.link, color: Colors.white, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(snackbarMessage)),
+          ],
+        ),
         duration: const Duration(milliseconds: 1500),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.purple,
@@ -211,16 +235,19 @@ class _ActiveWorkoutScreenState
   /// adoption via `performance_logs.logging_mode` without touching the
   /// shared SetLoggingMixin path.
   @override
-  Future<void> logAllSetPerformances(String workoutLogId, String userId,
-      {String? gymProfileId}) async {
+  Future<void> logAllSetPerformances(
+    String workoutLogId,
+    String userId, {
+    String? gymProfileId,
+  }) async {
     final workoutRepo = ref.read(workoutRepositoryProvider);
 
     final records = <Map<String, dynamic>>[];
     for (int i = 0; i < exercises.length; i++) {
       final exercise = exercises[i];
       final sets = completedSets[i] ?? [];
-      final pattern = _exerciseProgressionPattern[i] ??
-          SetProgressionPattern.pyramidUp;
+      final pattern =
+          _exerciseProgressionPattern[i] ?? SetProgressionPattern.pyramidUp;
 
       for (int j = 0; j < sets.length; j++) {
         final setLog = sets[j];
@@ -280,11 +307,13 @@ class _ActiveWorkoutScreenState
   bool _isResting = false;
   bool _isRestingBetweenExercises = false;
   bool _isPaused = false;
+
   /// True while the app is in the background (paused/inactive/hidden).
   /// Gates per-tick notification refresh so the shade entry doesn't
   /// flicker back into view while the user is looking at the screen.
   bool _isAppBackgrounded = false;
   bool _showInstructions = false;
+
   /// Whether to hide the AI Coach FAB for this session (user long-pressed to hide)
   bool _hideAICoachForSession = false;
 
@@ -292,7 +321,8 @@ class _ActiveWorkoutScreenState
   bool _showCoachTip = false;
   String? _coachTipMessage;
   // ignore: unused_field
-  final bool _coachTipSent = false; // Legacy — tips now tracked per-exercise in AIFeaturesMixin
+  final bool _coachTipSent =
+      false; // Legacy — tips now tracked per-exercise in AIFeaturesMixin
 
   // Video state
   VideoPlayerController? _videoController;
@@ -313,7 +343,8 @@ class _ActiveWorkoutScreenState
   late TextEditingController _repsRightController; // For L/R mode
   late TextEditingController _weightController;
   bool _useKg = true; // Initialized from user preference
-  bool _unitInitialized = false; // Track if unit has been initialized from user preference
+  bool _unitInitialized =
+      false; // Track if unit has been initialized from user preference
   double _weightIncrement = 2.5; // Default weight increment (kg)
 
   // Set tracking overlay
@@ -339,12 +370,15 @@ class _ActiveWorkoutScreenState
   final Map<String, double> _exerciseMaxWeights = {};
   // Per-set timing
   DateTime? _currentSetStartTime;
-  final Map<int, List<int>> _actualRestDurations = {}; // exercise index → rest durations per set gap
+  final Map<int, List<int>> _actualRestDurations =
+      {}; // exercise index → rest durations per set gap
 
   // Per-exercise progression pattern (persisted across sessions)
   final Map<int, SetProgressionPattern> _exerciseProgressionPattern = {};
+
   /// Stored peak/working weight per exercise (derived when pattern is applied).
   final Map<int, double> _exerciseWorkingWeight = {};
+
   /// Override bar type per exercise (null = auto-detect from equipment field).
   final Map<int, String> _exerciseBarType = {};
 
@@ -448,160 +482,318 @@ class _ActiveWorkoutScreenState
   ProviderSubscription<WorkoutUiModeState>? _tierSwitchSub;
 
   // ── Mixin @override getters/setters ──
-  @override PRDetectionService get prDetectionService => _prDetectionService;
-  @override List<WorkoutExercise> get exercises => _exercises;
-  @override set exercises(List<WorkoutExercise> value) => _exercises = value;
-  @override int get currentExerciseIndex => _currentExerciseIndex;
-  @override set currentExerciseIndex(int value) {
+  @override
+  PRDetectionService get prDetectionService => _prDetectionService;
+  @override
+  List<WorkoutExercise> get exercises => _exercises;
+  @override
+  set exercises(List<WorkoutExercise> value) => _exercises = value;
+  @override
+  int get currentExerciseIndex => _currentExerciseIndex;
+  @override
+  set currentExerciseIndex(int value) {
     _currentExerciseIndex = value;
     // Mirror to the shared session so a tier swap lands on the same exercise.
     if (mounted) {
       ref.read(activeWorkoutSessionProvider.notifier).setCurrentIndex(value);
     }
   }
-  @override Map<int, List<SetLog>> get completedSets => _completedSets;
-  @override Map<int, int> get totalSetsPerExercise => _totalSetsPerExercise;
-  @override Map<String, double> get exerciseMaxWeights => _exerciseMaxWeights;
-  @override List<Map<String, dynamic>> get restIntervals => _restIntervals;
-  @override WorkoutTimerController get timerController => _timerController;
-  @override bool get isResting => _isResting;
-  @override set isResting(bool value) => _isResting = value;
-  @override bool get isRestingBetweenExercises => _isRestingBetweenExercises;
-  @override set isRestingBetweenExercises(bool value) => _isRestingBetweenExercises = value;
-  @override String get currentRestMessage => _currentRestMessage;
-  @override set currentRestMessage(String value) => _currentRestMessage = value;
-  @override bool get showInlineRest => _showInlineRest;
-  @override set showInlineRest(bool value) => _showInlineRest = value;
-  @override int get inlineRestDuration => _inlineRestDuration;
-  @override set inlineRestDuration(int value) => _inlineRestDuration = value;
-  @override String? get inlineRestAiTip => _inlineRestAiTip;
-  @override set inlineRestAiTip(String? value) => _inlineRestAiTip = value;
-  @override bool get isLoadingAiTip => _isLoadingAiTip;
-  @override set isLoadingAiTip(bool value) => _isLoadingAiTip = value;
-  @override String? get inlineRestAchievementPrompt => _inlineRestAchievementPrompt;
-  @override set inlineRestAchievementPrompt(String? value) => _inlineRestAchievementPrompt = value;
-  @override int? get inlineRestCurrentRpe => _inlineRestCurrentRpe;
-  @override set inlineRestCurrentRpe(int? value) => _inlineRestCurrentRpe = value;
-  @override AdaptationFeedback? get inlineRestAdaptationFeedback => _inlineRestAdaptationFeedback;
-  @override set inlineRestAdaptationFeedback(AdaptationFeedback? value) => _inlineRestAdaptationFeedback = value;
-  @override RestSuggestion? get restSuggestion => _restSuggestion;
-  @override set restSuggestion(RestSuggestion? value) => _restSuggestion = value;
-  @override bool get isLoadingRestSuggestion => _isLoadingRestSuggestion;
-  @override set isLoadingRestSuggestion(bool value) => _isLoadingRestSuggestion = value;
-  @override int? get lastSetRpe => _lastSetRpe;
-  @override set lastSetRpe(int? value) => _lastSetRpe = value;
-  @override int? get lastSetRir => _lastSetRir;
-  @override set lastSetRir(int? value) => _lastSetRir = value;
-  @override bool get useKg => _useKg;
-  @override set useKg(bool value) => _useKg = value;
-  @override double get weightIncrement => _weightIncrement;
-  @override set weightIncrement(double value) => _weightIncrement = value;
-  @override int get viewingExerciseIndex => _viewingExerciseIndex;
-  @override set viewingExerciseIndex(int value) => _viewingExerciseIndex = value;
-  @override TextEditingController get weightController => _weightController;
-  @override TextEditingController get repsController => _repsController;
-  @override TextEditingController get repsRightController => _repsRightController;
-  @override Map<int, SetProgressionPattern> get exerciseProgressionPattern => _exerciseProgressionPattern;
-  @override Map<int, double> get exerciseWorkingWeight => _exerciseWorkingWeight;
-  @override Map<int, String> get exerciseBarType => _exerciseBarType;
-  @override WeightSuggestion? get currentWeightSuggestion => _currentWeightSuggestion;
-  @override set currentWeightSuggestion(WeightSuggestion? value) => _currentWeightSuggestion = value;
-  @override bool get isLoadingWeightSuggestion => _isLoadingWeightSuggestion;
-  @override set isLoadingWeightSuggestion(bool value) => _isLoadingWeightSuggestion = value;
-  @override FatigueAlertData? get fatigueAlertData => _fatigueAlertData;
-  @override set fatigueAlertData(FatigueAlertData? value) => _fatigueAlertData = value;
-  @override bool get showFatigueAlert => _showFatigueAlert;
-  @override set showFatigueAlert(bool value) => _showFatigueAlert = value;
-  @override bool get showCoachTip => _showCoachTip;
-  @override set showCoachTip(bool value) => _showCoachTip = value;
-  @override String? get coachTipMessage => _coachTipMessage;
-  @override set coachTipMessage(String? value) => _coachTipMessage = value;
-  @override VideoPlayerController? get videoController => _videoController;
-  @override set videoController(VideoPlayerController? value) => _videoController = value;
-  @override bool get isVideoInitialized => _isVideoInitialized;
-  @override set isVideoInitialized(bool value) => _isVideoInitialized = value;
-  @override bool get isVideoPlaying => _isVideoPlaying;
-  @override set isVideoPlaying(bool value) => _isVideoPlaying = value;
-  @override String? get imageUrl => _imageUrl;
-  @override set imageUrl(String? value) => _imageUrl = value;
-  @override bool get isLoadingMedia => _isLoadingMedia;
-  @override set isLoadingMedia(bool value) => _isLoadingMedia = value;
-  @override Map<int, List<Map<String, dynamic>>> get previousSets => _previousSets;
-  @override Map<String, List<SessionSummary>> get preSetHistoryByExerciseName => _preSetHistoryByExerciseName;
-  @override Map<int, RepProgressionType> get repProgressionPerExercise => _repProgressionPerExercise;
-  @override bool get unitInitialized => _unitInitialized;
-  @override SetLog? get pendingSetLog => _pendingSetLog;
-  @override set pendingSetLog(SetLog? value) => _pendingSetLog = value;
-  @override bool get isLeftRightMode => _isLeftRightMode;
-  @override set isLeftRightMode(bool value) => _isLeftRightMode = value;
-  @override bool get isDoneButtonPressed => _isDoneButtonPressed;
-  @override set isDoneButtonPressed(bool value) => _isDoneButtonPressed = value;
-  @override int? get justCompletedSetIndex => _justCompletedSetIndex;
-  @override set justCompletedSetIndex(int? value) => _justCompletedSetIndex = value;
-  @override Map<int, int> get exerciseTimeSeconds => _exerciseTimeSeconds;
-  @override DateTime? get currentExerciseStartTime => _currentExerciseStartTime;
-  @override set currentExerciseStartTime(DateTime? value) => _currentExerciseStartTime = value;
-  @override WorkoutPhase get currentPhase => _currentPhase;
-  @override set currentPhase(WorkoutPhase value) => _currentPhase = value;
-  @override Map<int, Set<int>> get supersetRoundProgress => _supersetRoundProgress;
-  @override Map<int, List<int>> get supersetIndicesCache => _supersetIndicesCache;
-  @override set supersetIndicesCache(Map<int, List<int>> value) => _supersetIndicesCache = value;
-  @override dynamic get workoutWidget => widget;
-  @override int get totalDrinkIntakeMl => _totalDrinkIntakeMl;
-  @override DateTime? get currentSetStartTime => _currentSetStartTime;
-  @override set currentSetStartTime(DateTime? value) => _currentSetStartTime = value;
-  @override Map<int, List<int>> get actualRestDurations => _actualRestDurations;
-  @override set totalDrinkIntakeMl(int value) => _totalDrinkIntakeMl = value;
-  @override List<Map<String, dynamic>> get drinkEvents => _drinkEvents;
-  @override bool get warmupSkipped => _warmupSkipped;
-  @override set warmupSkipped(bool value) => _warmupSkipped = value;
-  @override bool get stretchSkipped => _stretchSkipped;
-  @override set stretchSkipped(bool value) => _stretchSkipped = value;
-  @override List<WarmupExerciseData>? get warmupExercises => _warmupExercises;
-  @override set warmupExercises(List<WarmupExerciseData>? value) => _warmupExercises = value;
-  @override List<StretchExerciseData>? get stretchExercises => _stretchExercises;
-  @override set stretchExercises(List<StretchExerciseData>? value) => _stretchExercises = value;
-  @override bool get isWarmupLoading => _isWarmupLoading;
-  @override set isWarmupLoading(bool value) => _isWarmupLoading = value;
-  @override bool get hideAICoachForSession => _hideAICoachForSession;
-  @override set hideAICoachForSession(bool value) => _hideAICoachForSession = value;
-  @override bool get showInstructions => _showInstructions;
-  @override set showInstructions(bool value) => _showInstructions = value;
-  @override bool get useV2Design => _useV2Design;
-  @override bool get isActiveRowExpanded => _isActiveRowExpanded;
-  @override set isActiveRowExpanded(bool value) => _isActiveRowExpanded = value;
-  @override bool get isDragActive => _isDragActive;
-  @override set isDragActive(bool value) => _isDragActive = value;
-  @override int? get draggedExerciseIndex => _draggedExerciseIndex;
-  @override set draggedExerciseIndex(int? value) => _draggedExerciseIndex = value;
-  @override bool get isPaused => _isPaused;
-  @override set isPaused(bool value) => _isPaused = value;
-  @override Set<int> get skippedExercises => _skippedExercises;
+
+  @override
+  Map<int, List<SetLog>> get completedSets => _completedSets;
+  @override
+  Map<int, int> get totalSetsPerExercise => _totalSetsPerExercise;
+  @override
+  Map<String, double> get exerciseMaxWeights => _exerciseMaxWeights;
+  @override
+  List<Map<String, dynamic>> get restIntervals => _restIntervals;
+  @override
+  WorkoutTimerController get timerController => _timerController;
+  @override
+  bool get isResting => _isResting;
+  @override
+  set isResting(bool value) => _isResting = value;
+  @override
+  bool get isRestingBetweenExercises => _isRestingBetweenExercises;
+  @override
+  set isRestingBetweenExercises(bool value) =>
+      _isRestingBetweenExercises = value;
+  @override
+  String get currentRestMessage => _currentRestMessage;
+  @override
+  set currentRestMessage(String value) => _currentRestMessage = value;
+  @override
+  bool get showInlineRest => _showInlineRest;
+  @override
+  set showInlineRest(bool value) => _showInlineRest = value;
+  @override
+  int get inlineRestDuration => _inlineRestDuration;
+  @override
+  set inlineRestDuration(int value) => _inlineRestDuration = value;
+  @override
+  String? get inlineRestAiTip => _inlineRestAiTip;
+  @override
+  set inlineRestAiTip(String? value) => _inlineRestAiTip = value;
+  @override
+  bool get isLoadingAiTip => _isLoadingAiTip;
+  @override
+  set isLoadingAiTip(bool value) => _isLoadingAiTip = value;
+  @override
+  String? get inlineRestAchievementPrompt => _inlineRestAchievementPrompt;
+  @override
+  set inlineRestAchievementPrompt(String? value) =>
+      _inlineRestAchievementPrompt = value;
+  @override
+  int? get inlineRestCurrentRpe => _inlineRestCurrentRpe;
+  @override
+  set inlineRestCurrentRpe(int? value) => _inlineRestCurrentRpe = value;
+  @override
+  AdaptationFeedback? get inlineRestAdaptationFeedback =>
+      _inlineRestAdaptationFeedback;
+  @override
+  set inlineRestAdaptationFeedback(AdaptationFeedback? value) =>
+      _inlineRestAdaptationFeedback = value;
+  @override
+  RestSuggestion? get restSuggestion => _restSuggestion;
+  @override
+  set restSuggestion(RestSuggestion? value) => _restSuggestion = value;
+  @override
+  bool get isLoadingRestSuggestion => _isLoadingRestSuggestion;
+  @override
+  set isLoadingRestSuggestion(bool value) => _isLoadingRestSuggestion = value;
+  @override
+  int? get lastSetRpe => _lastSetRpe;
+  @override
+  set lastSetRpe(int? value) => _lastSetRpe = value;
+  @override
+  int? get lastSetRir => _lastSetRir;
+  @override
+  set lastSetRir(int? value) => _lastSetRir = value;
+  @override
+  bool get useKg => _useKg;
+  @override
+  set useKg(bool value) => _useKg = value;
+  @override
+  double get weightIncrement => _weightIncrement;
+  @override
+  set weightIncrement(double value) => _weightIncrement = value;
+  @override
+  int get viewingExerciseIndex => _viewingExerciseIndex;
+  @override
+  set viewingExerciseIndex(int value) => _viewingExerciseIndex = value;
+  @override
+  TextEditingController get weightController => _weightController;
+  @override
+  TextEditingController get repsController => _repsController;
+  @override
+  TextEditingController get repsRightController => _repsRightController;
+  @override
+  Map<int, SetProgressionPattern> get exerciseProgressionPattern =>
+      _exerciseProgressionPattern;
+  @override
+  Map<int, double> get exerciseWorkingWeight => _exerciseWorkingWeight;
+  @override
+  Map<int, String> get exerciseBarType => _exerciseBarType;
+  @override
+  WeightSuggestion? get currentWeightSuggestion => _currentWeightSuggestion;
+  @override
+  set currentWeightSuggestion(WeightSuggestion? value) =>
+      _currentWeightSuggestion = value;
+  @override
+  bool get isLoadingWeightSuggestion => _isLoadingWeightSuggestion;
+  @override
+  set isLoadingWeightSuggestion(bool value) =>
+      _isLoadingWeightSuggestion = value;
+  @override
+  FatigueAlertData? get fatigueAlertData => _fatigueAlertData;
+  @override
+  set fatigueAlertData(FatigueAlertData? value) => _fatigueAlertData = value;
+  @override
+  bool get showFatigueAlert => _showFatigueAlert;
+  @override
+  set showFatigueAlert(bool value) => _showFatigueAlert = value;
+  @override
+  bool get showCoachTip => _showCoachTip;
+  @override
+  set showCoachTip(bool value) => _showCoachTip = value;
+  @override
+  String? get coachTipMessage => _coachTipMessage;
+  @override
+  set coachTipMessage(String? value) => _coachTipMessage = value;
+  @override
+  VideoPlayerController? get videoController => _videoController;
+  @override
+  set videoController(VideoPlayerController? value) => _videoController = value;
+  @override
+  bool get isVideoInitialized => _isVideoInitialized;
+  @override
+  set isVideoInitialized(bool value) => _isVideoInitialized = value;
+  @override
+  bool get isVideoPlaying => _isVideoPlaying;
+  @override
+  set isVideoPlaying(bool value) => _isVideoPlaying = value;
+  @override
+  String? get imageUrl => _imageUrl;
+  @override
+  set imageUrl(String? value) => _imageUrl = value;
+  @override
+  bool get isLoadingMedia => _isLoadingMedia;
+  @override
+  set isLoadingMedia(bool value) => _isLoadingMedia = value;
+  @override
+  Map<int, List<Map<String, dynamic>>> get previousSets => _previousSets;
+  @override
+  Map<String, List<SessionSummary>> get preSetHistoryByExerciseName =>
+      _preSetHistoryByExerciseName;
+  @override
+  Map<int, RepProgressionType> get repProgressionPerExercise =>
+      _repProgressionPerExercise;
+  @override
+  bool get unitInitialized => _unitInitialized;
+  @override
+  SetLog? get pendingSetLog => _pendingSetLog;
+  @override
+  set pendingSetLog(SetLog? value) => _pendingSetLog = value;
+  @override
+  bool get isLeftRightMode => _isLeftRightMode;
+  @override
+  set isLeftRightMode(bool value) => _isLeftRightMode = value;
+  @override
+  bool get isDoneButtonPressed => _isDoneButtonPressed;
+  @override
+  set isDoneButtonPressed(bool value) => _isDoneButtonPressed = value;
+  @override
+  int? get justCompletedSetIndex => _justCompletedSetIndex;
+  @override
+  set justCompletedSetIndex(int? value) => _justCompletedSetIndex = value;
+  @override
+  Map<int, int> get exerciseTimeSeconds => _exerciseTimeSeconds;
+  @override
+  DateTime? get currentExerciseStartTime => _currentExerciseStartTime;
+  @override
+  set currentExerciseStartTime(DateTime? value) =>
+      _currentExerciseStartTime = value;
+  @override
+  WorkoutPhase get currentPhase => _currentPhase;
+  @override
+  set currentPhase(WorkoutPhase value) => _currentPhase = value;
+  @override
+  Map<int, Set<int>> get supersetRoundProgress => _supersetRoundProgress;
+  @override
+  Map<int, List<int>> get supersetIndicesCache => _supersetIndicesCache;
+  @override
+  set supersetIndicesCache(Map<int, List<int>> value) =>
+      _supersetIndicesCache = value;
+  @override
+  dynamic get workoutWidget => widget;
+  @override
+  int get totalDrinkIntakeMl => _totalDrinkIntakeMl;
+  @override
+  DateTime? get currentSetStartTime => _currentSetStartTime;
+  @override
+  set currentSetStartTime(DateTime? value) => _currentSetStartTime = value;
+  @override
+  Map<int, List<int>> get actualRestDurations => _actualRestDurations;
+  @override
+  set totalDrinkIntakeMl(int value) => _totalDrinkIntakeMl = value;
+  @override
+  List<Map<String, dynamic>> get drinkEvents => _drinkEvents;
+  @override
+  bool get warmupSkipped => _warmupSkipped;
+  @override
+  set warmupSkipped(bool value) => _warmupSkipped = value;
+  @override
+  bool get stretchSkipped => _stretchSkipped;
+  @override
+  set stretchSkipped(bool value) => _stretchSkipped = value;
+  @override
+  List<WarmupExerciseData>? get warmupExercises => _warmupExercises;
+  @override
+  set warmupExercises(List<WarmupExerciseData>? value) =>
+      _warmupExercises = value;
+  @override
+  List<StretchExerciseData>? get stretchExercises => _stretchExercises;
+  @override
+  set stretchExercises(List<StretchExerciseData>? value) =>
+      _stretchExercises = value;
+  @override
+  bool get isWarmupLoading => _isWarmupLoading;
+  @override
+  set isWarmupLoading(bool value) => _isWarmupLoading = value;
+  @override
+  bool get hideAICoachForSession => _hideAICoachForSession;
+  @override
+  set hideAICoachForSession(bool value) => _hideAICoachForSession = value;
+  @override
+  bool get showInstructions => _showInstructions;
+  @override
+  set showInstructions(bool value) => _showInstructions = value;
+  @override
+  bool get useV2Design => _useV2Design;
+  @override
+  bool get isActiveRowExpanded => _isActiveRowExpanded;
+  @override
+  set isActiveRowExpanded(bool value) => _isActiveRowExpanded = value;
+  @override
+  bool get isDragActive => _isDragActive;
+  @override
+  set isDragActive(bool value) => _isDragActive = value;
+  @override
+  int? get draggedExerciseIndex => _draggedExerciseIndex;
+  @override
+  set draggedExerciseIndex(int? value) => _draggedExerciseIndex = value;
+  @override
+  bool get isPaused => _isPaused;
+  @override
+  set isPaused(bool value) => _isPaused = value;
+  @override
+  Set<int> get skippedExercises => _skippedExercises;
 
   // AI/UI interaction counter getters and setters
-  @override int get aiCoachOpened => _aiCoachOpened;
+  @override
+  int get aiCoachOpened => _aiCoachOpened;
   set aiCoachOpened(int value) => _aiCoachOpened = value;
-  @override int get aiChatMessagesSent => _aiChatMessagesSent;
+  @override
+  int get aiChatMessagesSent => _aiChatMessagesSent;
   set aiChatMessagesSent(int value) => _aiChatMessagesSent = value;
-  @override int get aiWeightSuggestionsShown => _aiWeightSuggestionsShown;
-  @override set aiWeightSuggestionsShown(int value) => _aiWeightSuggestionsShown = value;
-  @override int get aiWeightSuggestionsAccepted => _aiWeightSuggestionsAccepted;
-  @override set aiWeightSuggestionsAccepted(int value) => _aiWeightSuggestionsAccepted = value;
-  @override int get fatigueAlertsTriggered => _fatigueAlertsTriggered;
-  @override set fatigueAlertsTriggered(int value) => _fatigueAlertsTriggered = value;
-  @override int get coachTipsShown => _coachTipsShown;
-  @override set coachTipsShown(int value) => _coachTipsShown = value;
-  @override int get coachTipsDismissed => _coachTipsDismissed;
-  @override set coachTipsDismissed(int value) => _coachTipsDismissed = value;
-  @override int get restSuggestionsShown => _restSuggestionsShown;
-  @override set restSuggestionsShown(int value) => _restSuggestionsShown = value;
-  @override int get exerciseInfoOpened => _exerciseInfoOpened;
-  @override set exerciseInfoOpened(int value) => _exerciseInfoOpened = value;
-  @override int get breathingGuideOpened => _breathingGuideOpened;
-  @override set breathingGuideOpened(int value) => _breathingGuideOpened = value;
-  @override int get exerciseSwapsRequested => _exerciseSwapsRequested;
+  @override
+  int get aiWeightSuggestionsShown => _aiWeightSuggestionsShown;
+  @override
+  set aiWeightSuggestionsShown(int value) => _aiWeightSuggestionsShown = value;
+  @override
+  int get aiWeightSuggestionsAccepted => _aiWeightSuggestionsAccepted;
+  @override
+  set aiWeightSuggestionsAccepted(int value) =>
+      _aiWeightSuggestionsAccepted = value;
+  @override
+  int get fatigueAlertsTriggered => _fatigueAlertsTriggered;
+  @override
+  set fatigueAlertsTriggered(int value) => _fatigueAlertsTriggered = value;
+  @override
+  int get coachTipsShown => _coachTipsShown;
+  @override
+  set coachTipsShown(int value) => _coachTipsShown = value;
+  @override
+  int get coachTipsDismissed => _coachTipsDismissed;
+  @override
+  set coachTipsDismissed(int value) => _coachTipsDismissed = value;
+  @override
+  int get restSuggestionsShown => _restSuggestionsShown;
+  @override
+  set restSuggestionsShown(int value) => _restSuggestionsShown = value;
+  @override
+  int get exerciseInfoOpened => _exerciseInfoOpened;
+  @override
+  set exerciseInfoOpened(int value) => _exerciseInfoOpened = value;
+  @override
+  int get breathingGuideOpened => _breathingGuideOpened;
+  @override
+  set breathingGuideOpened(int value) => _breathingGuideOpened = value;
+  @override
+  int get exerciseSwapsRequested => _exerciseSwapsRequested;
   set exerciseSwapsRequested(int value) => _exerciseSwapsRequested = value;
-  @override int get videoViews => _videoViews;
+  @override
+  int get videoViews => _videoViews;
   set videoViews(int value) => _videoViews = value;
 
   /// Smart rest-timer adaptation.
@@ -784,8 +976,9 @@ class _ActiveWorkoutScreenState
       if (!mounted || restored == null) return;
       if (restored.workoutId != widget.workout.id) return;
 
-      final hasCheckpointSets = restored.completedSets.values
-          .any((l) => l.isNotEmpty);
+      final hasCheckpointSets = restored.completedSets.values.any(
+        (l) => l.isNotEmpty,
+      );
       if (!hasCheckpointSets && restored.elapsedSeconds <= 0) {
         return; // empty checkpoint — nothing worth restoring
       }
@@ -800,8 +993,10 @@ class _ActiveWorkoutScreenState
             }
           }
         });
-        _currentExerciseIndex =
-            restored.currentExerciseIndex.clamp(0, _exercises.length - 1);
+        _currentExerciseIndex = restored.currentExerciseIndex.clamp(
+          0,
+          _exercises.length - 1,
+        );
         _viewingExerciseIndex = _currentExerciseIndex;
         // Skip warmup — a restored session was already past it.
         _currentPhase = WorkoutPhase.active;
@@ -809,14 +1004,16 @@ class _ActiveWorkoutScreenState
       // Restore the workout clock so duration / pace stay accurate.
       if (restored.elapsedSeconds > _timerController.workoutSeconds) {
         _timerController.startWorkoutTimer(
-            initialSeconds: restored.elapsedSeconds);
+          initialSeconds: restored.elapsedSeconds,
+        );
       }
       // Re-seed the input controllers against the restored current exercise.
       initControllersForExercise(_currentExerciseIndex);
       debugPrint(
-          '🔁 [ActiveWorkout] Restored checkpoint: '
-          '${restored.elapsedSeconds}s elapsed, '
-          '${restored.completedSets.values.fold<int>(0, (s, l) => s + l.length)} sets');
+        '🔁 [ActiveWorkout] Restored checkpoint: '
+        '${restored.elapsedSeconds}s elapsed, '
+        '${restored.completedSets.values.fold<int>(0, (s, l) => s + l.length)} sets',
+      );
     } catch (e) {
       debugPrint('⚠️ [ActiveWorkout] checkpoint restore failed: $e');
     }
@@ -843,16 +1040,22 @@ class _ActiveWorkoutScreenState
       try {
         await ImageUrlCache.initialize();
         await ImageUrlCache.batchPreFetch(
-            names.toList(growable: false), ref.read(apiClientProvider));
+          names.toList(growable: false),
+          ref.read(apiClientProvider),
+        );
         if (!mounted) return;
         for (final name in names) {
           final url = ImageUrlCache.get(name);
           if (url == null || url.isEmpty) continue;
           if (!mounted) return;
-          unawaited(precacheImage(
-            CachedNetworkImageProvider(url, maxWidth: 240, maxHeight: 240),
-            context,
-          ).catchError((_) {/* best-effort */}));
+          unawaited(
+            precacheImage(
+              CachedNetworkImageProvider(url, maxWidth: 240, maxHeight: 240),
+              context,
+            ).catchError((_) {
+              /* best-effort */
+            }),
+          );
         }
       } catch (e) {
         debugPrint('⚠️ [ActiveWorkout] illustration prefetch failed: $e');
@@ -906,46 +1109,68 @@ class _ActiveWorkoutScreenState
     _unitInitialized = true;
 
     // Track workout started event
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'workout_started',
-      properties: {
-        'workout_id': widget.workout.id ?? '',
-        'workout_name': widget.workout.name ?? '',
-        'exercise_count': _exercises.length,
-        'challenge_id': widget.challengeId ?? '',
-      },
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'workout_started',
+          properties: {
+            'workout_id': widget.workout.id ?? '',
+            'workout_name': widget.workout.name ?? '',
+            'exercise_count': _exercises.length,
+            'challenge_id': widget.challengeId ?? '',
+          },
+        );
 
     // Check if we're restoring from mini player
     final miniPlayerState = ref.read(workoutMiniPlayerProvider);
-    final isRestoring = miniPlayerState.workout?.id == widget.workout.id &&
+    final isRestoring =
+        miniPlayerState.workout?.id == widget.workout.id &&
         miniPlayerState.workoutSeconds > 0;
-    debugPrint('🔥 [Init] miniPlayer: workoutId=${miniPlayerState.workout?.id}, widgetId=${widget.workout.id}, timer=${miniPlayerState.workoutSeconds}, isRestoring=$isRestoring');
+    debugPrint(
+      '🔥 [Init] miniPlayer: workoutId=${miniPlayerState.workout?.id}, widgetId=${widget.workout.id}, timer=${miniPlayerState.workoutSeconds}, isRestoring=$isRestoring',
+    );
 
     if (isRestoring) {
-      debugPrint('🎬 [ActiveWorkout] Restoring from mini player - timer: ${miniPlayerState.workoutSeconds}s, exercise: ${miniPlayerState.currentExerciseIndex}');
+      debugPrint(
+        '🎬 [ActiveWorkout] Restoring from mini player - timer: ${miniPlayerState.workoutSeconds}s, exercise: ${miniPlayerState.currentExerciseIndex}',
+      );
     }
 
     // Initialize input controllers
-    final initialExerciseIndex = isRestoring ? miniPlayerState.currentExerciseIndex : 0;
-    final initialExercise = _exercises[initialExerciseIndex.clamp(0, _exercises.length - 1)];
+    final initialExerciseIndex = isRestoring
+        ? miniPlayerState.currentExerciseIndex
+        : 0;
+    final initialExercise =
+        _exercises[initialExerciseIndex.clamp(0, _exercises.length - 1)];
     // Use setTargets for initial values if available, fallback to legacy fields
     final firstSetTarget = initialExercise.getTargetForSet(1);
     _repsController = TextEditingController(
-        text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10).toString());
+      text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10)
+          .toString(),
+    );
     _repsRightController = TextEditingController(
-        text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10).toString()); // Same initial reps for L/R
+      text: (firstSetTarget?.targetReps ?? initialExercise.reps ?? 10)
+          .toString(),
+    ); // Same initial reps for L/R
     // Weight: historical/reliable → equipment default → bar minimum → 0
     // Don't trust generic AI weights (e.g., 10 kg for everything)
-    final aiWeight = (firstSetTarget?.targetWeightKg ?? initialExercise.weight ?? 0).toDouble();
-    final useAiWeight = !isGenericWeight(aiWeight, initialExercise.weightSource);
+    final aiWeight =
+        (firstSetTarget?.targetWeightKg ?? initialExercise.weight ?? 0)
+            .toDouble();
+    final useAiWeight = !isGenericWeight(
+      aiWeight,
+      initialExercise.weightSource,
+    );
     final userProfile = ref.read(authStateProvider).user;
     double initWeightDisplay;
     if (useAiWeight) {
       initWeightDisplay = _useKg
           ? aiWeight
-          : kgToDisplayLbs(aiWeight, initialExercise.equipment,
-                exerciseName: initialExercise.name,);
+          : kgToDisplayLbs(
+              aiWeight,
+              initialExercise.equipment,
+              exerciseName: initialExercise.name,
+            );
     } else {
       // Get default in user's display unit (already snapped to real increments)
       initWeightDisplay = getDefaultWeight(
@@ -957,11 +1182,19 @@ class _ActiveWorkoutScreenState
       );
     }
     _weightController = TextEditingController(
-        text: initWeightDisplay > 0 ? initWeightDisplay.toStringAsFixed(initWeightDisplay % 1 == 0 ? 0 : 1) : '');
+      text: initWeightDisplay > 0
+          ? initWeightDisplay.toStringAsFixed(
+              initWeightDisplay % 1 == 0 ? 0 : 1,
+            )
+          : '',
+    );
 
     // Restore exercise index if restoring
     if (isRestoring) {
-      _currentExerciseIndex = miniPlayerState.currentExerciseIndex.clamp(0, _exercises.length - 1);
+      _currentExerciseIndex = miniPlayerState.currentExerciseIndex.clamp(
+        0,
+        _exercises.length - 1,
+      );
       _viewingExerciseIndex = _currentExerciseIndex;
       _isPaused = miniPlayerState.isPaused;
       _isResting = miniPlayerState.isResting;
@@ -993,8 +1226,12 @@ class _ActiveWorkoutScreenState
       setState(() {});
       // Play countdown sound + voice at 3, 2, 1
       if (secondsRemaining <= 3 && secondsRemaining > 0) {
-        ref.read(soundPreferencesProvider.notifier).playCountdown(secondsRemaining);
-        ref.read(voiceAnnouncementsProvider.notifier).announceCountdownIfEnabled(secondsRemaining);
+        ref
+            .read(soundPreferencesProvider.notifier)
+            .playCountdown(secondsRemaining);
+        ref
+            .read(voiceAnnouncementsProvider.notifier)
+            .announceCountdownIfEnabled(secondsRemaining);
       }
     };
     _timerController.onRestComplete = handleRestComplete;
@@ -1015,14 +1252,18 @@ class _ActiveWorkoutScreenState
     loadCoachPersona();
 
     // Start workout timer (restore time if returning from mini player)
-    _timerController.startWorkoutTimer(initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0);
+    _timerController.startWorkoutTimer(
+      initialSeconds: isRestoring ? miniPlayerState.workoutSeconds : 0,
+    );
 
     // Keep the screen on while working out — ignore failure (plugin missing on
     // non-mobile platforms, permission denied, etc.) so we never block the
     // workout from starting.
-    unawaited(WakelockPlus.enable().catchError((e) {
-      debugPrint('⚠️ [Wakelock] enable failed: $e');
-    }));
+    unawaited(
+      WakelockPlus.enable().catchError((e) {
+        debugPrint('⚠️ [Wakelock] enable failed: $e');
+      }),
+    );
 
     // Start the Live Activity (iOS Dynamic Island) / upgraded ongoing
     // notification (Android). Uses current state — will be refreshed on every
@@ -1037,12 +1278,15 @@ class _ActiveWorkoutScreenState
 
     // Announce workout start (only for fresh workouts, not restores)
     if (!isRestoring) {
-      ref.read(voiceAnnouncementsProvider.notifier)
+      ref
+          .read(voiceAnnouncementsProvider.notifier)
           .announceIfEnabled("Let's go! Starting ${widget.workout.name}");
     }
 
     // Restore rest timer if was resting
-    if (isRestoring && miniPlayerState.isResting && miniPlayerState.restSecondsRemaining > 0) {
+    if (isRestoring &&
+        miniPlayerState.isResting &&
+        miniPlayerState.restSecondsRemaining > 0) {
       _timerController.startRestTimer(miniPlayerState.restSecondsRemaining);
     }
 
@@ -1051,7 +1295,8 @@ class _ActiveWorkoutScreenState
       _completedSets[i] = [];
       final exercise = _exercises[i];
       // Use setTargets length if available (includes warmup sets), otherwise fall back to exercise.sets
-      _totalSetsPerExercise[i] = exercise.hasSetTargets && exercise.setTargets!.isNotEmpty
+      _totalSetsPerExercise[i] =
+          exercise.hasSetTargets && exercise.setTargets!.isNotEmpty
           ? exercise.setTargets!.length
           : exercise.sets ?? 3;
       _previousSets[i] = [];
@@ -1063,21 +1308,27 @@ class _ActiveWorkoutScreenState
         final exerciseIndex = entry.key;
         final setMaps = entry.value;
         if (exerciseIndex < _exercises.length) {
-          _completedSets[exerciseIndex] = setMaps.map((map) => SetLog(
-            reps: (map['reps'] as num?)?.toInt() ?? 0,
-            weight: (map['weight'] as num?)?.toDouble() ?? 0.0,
-            setType: map['setType'] as String? ?? 'working',
-            rpe: (map['rpe'] as num?)?.toInt(),
-            rir: (map['rir'] as num?)?.toInt(),
-            aiInputSource: map['aiInputSource'] as String?,
-            // Mini-player restore → user was in Advanced when they minimized
-            // (this screen is the Advanced viewport). Tag accordingly so the
-            // logging_mode on the bulk POST is correct.
-            loggingMode: (map['loggingMode'] as String?) ?? 'advanced',
-          )).toList();
+          _completedSets[exerciseIndex] = setMaps
+              .map(
+                (map) => SetLog(
+                  reps: (map['reps'] as num?)?.toInt() ?? 0,
+                  weight: (map['weight'] as num?)?.toDouble() ?? 0.0,
+                  setType: map['setType'] as String? ?? 'working',
+                  rpe: (map['rpe'] as num?)?.toInt(),
+                  rir: (map['rir'] as num?)?.toInt(),
+                  aiInputSource: map['aiInputSource'] as String?,
+                  // Mini-player restore → user was in Advanced when they minimized
+                  // (this screen is the Advanced viewport). Tag accordingly so the
+                  // logging_mode on the bulk POST is correct.
+                  loggingMode: (map['loggingMode'] as String?) ?? 'advanced',
+                ),
+              )
+              .toList();
         }
       }
-      debugPrint('🎬 [ActiveWorkout] Restored ${miniPlayerState.completedSets.length} exercise completed sets');
+      debugPrint(
+        '🎬 [ActiveWorkout] Restored ${miniPlayerState.completedSets.length} exercise completed sets',
+      );
     }
 
     // Tier-swap restore: if a sister tier (Easy) was active earlier this
@@ -1096,10 +1347,13 @@ class _ActiveWorkoutScreenState
           }
         }
       });
-      _currentExerciseIndex =
-          session.currentExerciseIndex.clamp(0, _exercises.length - 1);
+      _currentExerciseIndex = session.currentExerciseIndex.clamp(
+        0,
+        _exercises.length - 1,
+      );
       debugPrint(
-          '🔁 [ActiveWorkout] Restored ${session.completedSets.length} exercise sets from tier swap');
+        '🔁 [ActiveWorkout] Restored ${session.completedSets.length} exercise sets from tier swap',
+      );
     }
 
     // WF4 — crash-safe checkpoint restore. If the app was killed mid-workout
@@ -1126,7 +1380,8 @@ class _ActiveWorkoutScreenState
 
     // Initialize time tracking
     _currentExerciseStartTime = DateTime.now();
-    _currentSetStartTime = DateTime.now(); // First set starts when exercise loads
+    _currentSetStartTime =
+        DateTime.now(); // First set starts when exercise loads
   }
 
   @override
@@ -1146,7 +1401,9 @@ class _ActiveWorkoutScreenState
     try {
       minimized = ref.read(workoutMiniPlayerProvider).isMinimized;
     } catch (e) {
-      debugPrint('⚠️ [ActiveWorkout] dispose ref unavailable, assuming not minimized: $e');
+      debugPrint(
+        '⚠️ [ActiveWorkout] dispose ref unavailable, assuming not minimized: $e',
+      );
     }
     if (!minimized) {
       cancelWorkoutNotification();
@@ -1155,9 +1412,11 @@ class _ActiveWorkoutScreenState
     // Release screen-wake regardless of minimize state — if the user
     // minimized to the mini-player, the mini-player screen takes over
     // wakelock management if it needs to.
-    unawaited(WakelockPlus.disable().catchError((e) {
-      debugPrint('⚠️ [Wakelock] disable failed: $e');
-    }));
+    unawaited(
+      WakelockPlus.disable().catchError((e) {
+        debugPrint('⚠️ [Wakelock] disable failed: $e');
+      }),
+    );
     _timerController.dispose();
     _videoController?.dispose();
     _repsController.dispose();
@@ -1202,10 +1461,12 @@ class _ActiveWorkoutScreenState
         // timer may not fire first, so flush synchronously here so a kill
         // never loses sets logged since the last debounced write.
         try {
-          unawaited(ref
-              .read(activeWorkoutSessionProvider.notifier)
-              .flushCheckpoint());
-        } catch (_) {/* ref may be unavailable during teardown */}
+          unawaited(
+            ref.read(activeWorkoutSessionProvider.notifier).flushCheckpoint(),
+          );
+        } catch (_) {
+          /* ref may be unavailable during teardown */
+        }
         WorkoutNotificationService.instance.onPauseResumePressed = togglePause;
         WorkoutNotificationService.instance.onStopPressed = () {
           // "Stop" just brings the app forward (showsUserInterface=true on
@@ -1254,13 +1515,16 @@ class _ActiveWorkoutScreenState
 
   @override
   Future<void> toggleFavoriteExercise() async {
-    if (_exercises.isEmpty || _currentExerciseIndex >= _exercises.length) return;
+    if (_exercises.isEmpty || _currentExerciseIndex >= _exercises.length)
+      return;
     final exercise = _exercises[_currentExerciseIndex];
     HapticFeedback.mediumImpact();
-    await ref.read(favoritesProvider.notifier).toggleFavorite(
-      exercise.name,
-      exerciseId: exercise.id ?? exercise.libraryId,
-    );
+    await ref
+        .read(favoritesProvider.notifier)
+        .toggleFavorite(
+          exercise.name,
+          exerciseId: exercise.id ?? exercise.libraryId,
+        );
   }
 
   @override
@@ -1325,8 +1589,11 @@ class _ActiveWorkoutScreenState
         if (currentWeight <= 0 && mounted) {
           final displayWeight = _useKg
               ? prevWeight
-              : kgToDisplayLbs(prevWeight, exercise.equipment,
-                exerciseName: exercise.name,);
+              : kgToDisplayLbs(
+                  prevWeight,
+                  exercise.equipment,
+                  exerciseName: exercise.name,
+                );
           _weightController.text = displayWeight.toStringAsFixed(1);
         }
         return; // Previous session data exists — skip API call
@@ -1359,19 +1626,28 @@ class _ActiveWorkoutScreenState
       if (mounted && suggestion != null && suggestion.suggestedWeight > 0) {
         // Enforce bar minimum and convert to display unit
         var suggestedKg = suggestion.suggestedWeight;
-        final isBarbellExercise = isBarbell(exercise.equipment, exerciseName: exercise.name);
+        final isBarbellExercise = isBarbell(
+          exercise.equipment,
+          exerciseName: exercise.name,
+        );
         final minBarKg = isBarbellExercise
             ? getBarWeight(exercise.equipment, useKg: true)
             : 0.0;
         if (suggestedKg < minBarKg) suggestedKg = minBarKg;
         final displaySuggested = _useKg
             ? suggestedKg
-            : kgToDisplayLbs(suggestedKg, exercise.equipment,
-                exerciseName: exercise.name,);
+            : kgToDisplayLbs(
+                suggestedKg,
+                exercise.equipment,
+                exerciseName: exercise.name,
+              );
         final displayMinBar = _useKg
             ? minBarKg
-            : kgToDisplayLbs(minBarKg, exercise.equipment,
-                exerciseName: exercise.name,);
+            : kgToDisplayLbs(
+                minBarKg,
+                exercise.equipment,
+                exerciseName: exercise.name,
+              );
 
         // Only update if current weight is truly unset or below bar minimum
         // Do NOT override a valid planned weight (e.g., 45 lbs == bar weight)
@@ -1380,9 +1656,11 @@ class _ActiveWorkoutScreenState
           setState(() {
             _weightController.text = displaySuggested.toStringAsFixed(1);
           });
-          debugPrint('✅ [SmartWeight] ${exercise.name}: ${suggestion.suggestedWeight}kg '
-              '(confidence: ${(suggestion.confidence * 100).toInt()}%, '
-              'source: ${suggestion.reasoning})');
+          debugPrint(
+            '✅ [SmartWeight] ${exercise.name}: ${suggestion.suggestedWeight}kg '
+            '(confidence: ${(suggestion.confidence * 100).toInt()}%, '
+            'source: ${suggestion.reasoning})',
+          );
         }
       }
     } catch (e) {
@@ -1438,8 +1716,11 @@ class _ActiveWorkoutScreenState
       } else if (_useKg && aiSet.unit == 'lbs') {
         weight = aiSet.weight / 2.20462;
       } else if (!_useKg && aiSet.unit == 'kg') {
-        weight = kgToDisplayLbs(aiSet.weight, exercise.equipment,
-                exerciseName: exercise.name,);
+        weight = kgToDisplayLbs(
+          aiSet.weight,
+          exercise.equipment,
+          exerciseName: exercise.name,
+        );
       }
 
       // Create a SetLog with AI input source for tracking.
@@ -1457,7 +1738,9 @@ class _ActiveWorkoutScreenState
         notes: (aiSet.notes != null && aiSet.notes!.trim().isNotEmpty)
             ? [aiSet.notes!.trim()]
             : const [],
-        aiInputSource: aiSet.originalInput.isNotEmpty ? aiSet.originalInput : null,
+        aiInputSource: aiSet.originalInput.isNotEmpty
+            ? aiSet.originalInput
+            : null,
         loggingMode: 'advanced',
       );
 
@@ -1506,12 +1789,15 @@ class _ActiveWorkoutScreenState
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack
+        : AppColorsLight.pureWhite;
 
     // Foldable detection
     final windowState = ref.watch(windowModeProvider);
-    final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
+    final isFoldableOpen = FoldableQuizScaffold.shouldUseFoldableLayout(
+      windowState,
+    );
 
     // Route to appropriate phase screen
     // debugPrint('🔥 [Build] _currentPhase=$_currentPhase, _isWarmupLoading=$_isWarmupLoading, _warmupExercises=${_warmupExercises?.length ?? 'null'}');
@@ -1523,7 +1809,9 @@ class _ActiveWorkoutScreenState
         }
         // Skip warmup if API returned no exercises
         if (_warmupExercises == null || _warmupExercises!.isEmpty) {
-          debugPrint('🔥 [Build] Warmup exercises null/empty — auto-skipping to active');
+          debugPrint(
+            '🔥 [Build] Warmup exercises null/empty — auto-skipping to active',
+          );
           // Schedule for next frame to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) handleWarmupComplete();
@@ -1594,21 +1882,22 @@ class _ActiveWorkoutScreenState
     if (type == 'drop') return 1;
 
     // Working sets: progressive RIR decrease (3 → 2 → 1)
-    if (totalWorkingSets <= 1) return 2;  // Single set = moderate intensity
+    if (totalWorkingSets <= 1) return 2; // Single set = moderate intensity
     if (totalWorkingSets == 2) {
-      return setIndex == 0 ? 3 : 1;  // First=3, Last=1
+      return setIndex == 0 ? 3 : 1; // First=3, Last=1
     }
     // 3+ working sets: distribute RIR across thirds (3→2→1)
-    final position = setIndex / (totalWorkingSets - 1);  // 0.0 to 1.0
-    if (position < 0.33) return 3;      // First third: conservative
-    if (position < 0.67) return 2;      // Middle third: moderate
-    return 1;                            // Last third: approaching failure
+    final position = setIndex / (totalWorkingSets - 1); // 0.0 to 1.0
+    if (position < 0.33) return 3; // First third: conservative
+    if (position < 0.67) return 2; // Middle third: moderate
+    return 1; // Last third: approaching failure
   }
 
   @override
   List<SetRowData> buildSetRowsForExercise(int exerciseIndex) {
     final exercise = _exercises[exerciseIndex];
-    final totalSets = _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
+    final totalSets =
+        _totalSetsPerExercise[exerciseIndex] ?? exercise.sets ?? 3;
     final completedSets = _completedSets[exerciseIndex] ?? [];
     final previousSets = _previousSets[exerciseIndex] ?? [];
     final setTargets = exercise.setTargets ?? [];
@@ -1623,7 +1912,8 @@ class _ActiveWorkoutScreenState
 
     for (int i = 0; i < totalSets; i++) {
       final isCompleted = i < completedSets.length;
-      final isActive = i == completedSets.length && exerciseIndex == _viewingExerciseIndex;
+      final isActive =
+          i == completedSets.length && exerciseIndex == _viewingExerciseIndex;
 
       // Get target data from AI
       SetTarget? setTarget;
@@ -1632,8 +1922,10 @@ class _ActiveWorkoutScreenState
       }
 
       // Track working set index for RIR calculation
-      final isWorkingSet = setTarget?.setType.toLowerCase() == 'working' ||
-          (setTarget == null && i >= 0); // Fallback assumes all are working sets
+      final isWorkingSet =
+          setTarget?.setType.toLowerCase() == 'working' ||
+          (setTarget == null &&
+              i >= 0); // Fallback assumes all are working sets
       final currentWorkingIndex = isWorkingSet ? workingSetIndex : 0;
       if (setTarget?.setType.toLowerCase() == 'working') {
         workingSetIndex++;
@@ -1669,9 +1961,14 @@ class _ActiveWorkoutScreenState
         final rpe = setTarget.targetRpe!;
         rirFromRpe = (10 - rpe).clamp(0, 5);
       }
-      final calculatedRir = setTarget?.targetRir ??
+      final calculatedRir =
+          setTarget?.targetRir ??
           rirFromRpe ??
-          _calculateRir(setTarget?.setType, currentWorkingIndex, totalWorkingSets);
+          _calculateRir(
+            setTarget?.setType,
+            currentWorkingIndex,
+            totalWorkingSets,
+          );
 
       // Get actual RIR from completed set log
       int? actualRir;
@@ -1681,66 +1978,81 @@ class _ActiveWorkoutScreenState
 
       // Detect bodyweight / timed so the TARGET cell renders the right shape.
       final eqLower = (exercise.equipment ?? '').toLowerCase();
-      final isBodyweightEx = eqLower.contains('bodyweight') ||
+      final isBodyweightEx =
+          eqLower.contains('bodyweight') ||
           eqLower.contains('body weight') ||
           eqLower == 'none' ||
           eqLower == 'no equipment';
       final isTimedEx = exercise.isTimedExercise;
 
-      rows.add(SetRowData(
-        setNumber: i + 1,
-        isWarmup: setTarget?.isWarmup ?? false,
-        // Raw set type so the TARGET cell can render "Push to failure" for
-        // failure sets (parity with set_row.dart's effort pill).
-        setType: setTarget?.setType ?? 'working',
-        isCompleted: isCompleted,
-        isActive: isActive,
-        isTimedExercise: isTimedEx,
-        isBodyweight: isBodyweightEx,
-        // Per-set hold target (planks, hollow body) — the true target.
-        targetHoldSeconds: setTarget?.targetHoldSeconds ?? exercise.holdSeconds,
-        // Exercise-level duration (cardio-style warmups like Walking).
-        targetDurationSeconds: exercise.durationSeconds,
-        // TARGET weight: use history → AI (if reliable) → equipment default
-        // targetWeight is in kg internally — display layer converts to user's unit
-        targetWeight: (() {
-          // If a progression pattern wrote this setTarget, trust it directly
-          final hasProgression = _exerciseProgressionPattern.containsKey(exerciseIndex);
-          if (hasProgression && setTarget?.targetWeightKg != null && setTarget!.targetWeightKg! > 0) {
-            return setTarget.targetWeightKg!;
-          }
-          // Otherwise: historical → previous session → equipment default
-          final aiWt = setTarget?.targetWeightKg ?? exercise.weight?.toDouble();
-          if (aiWt != null && !isGenericWeight(aiWt, exercise.weightSource)) {
-            return aiWt;
-          }
-          if (prevWeight != null && prevWeight > 0) return prevWeight;
-          final userProfile = ref.read(authStateProvider).user;
-          final defaultDisplay = getDefaultWeight(exercise.equipment,
-            exerciseName: exercise.name,
-            fitnessLevel: userProfile?.fitnessLevel,
-            gender: userProfile?.gender,
-            useKg: _useKg);
-          if (defaultDisplay <= 0) return aiWt;
-          return _useKg ? defaultDisplay : defaultDisplay * 0.453592;
-        })(),
-        targetReps: setTarget?.targetReps != null ? setTarget!.targetReps.toString() : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
-        targetRir: calculatedRir,
-        actualWeight: actualWeight,
-        actualReps: actualReps,
-        actualRir: actualRir,
-        previousWeight: prevWeight,
-        previousReps: prevReps,
-        previousRir: prevRir,
-        durationSeconds: isCompleted ? completedSets[i].durationSeconds : null,
-        // Show rest taken AFTER this set (from actualRestDurations), not rest before
-        restDurationSeconds: isCompleted
-            ? (() {
-                final rests = _actualRestDurations[exerciseIndex];
-                return (rests != null && i < rests.length) ? rests[i] : null;
-              })()
-            : null,
-      ));
+      rows.add(
+        SetRowData(
+          setNumber: i + 1,
+          isWarmup: setTarget?.isWarmup ?? false,
+          // Raw set type so the TARGET cell can render "Push to failure" for
+          // failure sets (parity with set_row.dart's effort pill).
+          setType: setTarget?.setType ?? 'working',
+          isCompleted: isCompleted,
+          isActive: isActive,
+          isTimedExercise: isTimedEx,
+          isBodyweight: isBodyweightEx,
+          // Per-set hold target (planks, hollow body) — the true target.
+          targetHoldSeconds:
+              setTarget?.targetHoldSeconds ?? exercise.holdSeconds,
+          // Exercise-level duration (cardio-style warmups like Walking).
+          targetDurationSeconds: exercise.durationSeconds,
+          // TARGET weight: use history → AI (if reliable) → equipment default
+          // targetWeight is in kg internally — display layer converts to user's unit
+          targetWeight: (() {
+            // If a progression pattern wrote this setTarget, trust it directly
+            final hasProgression = _exerciseProgressionPattern.containsKey(
+              exerciseIndex,
+            );
+            if (hasProgression &&
+                setTarget?.targetWeightKg != null &&
+                setTarget!.targetWeightKg! > 0) {
+              return setTarget.targetWeightKg!;
+            }
+            // Otherwise: historical → previous session → equipment default
+            final aiWt =
+                setTarget?.targetWeightKg ?? exercise.weight?.toDouble();
+            if (aiWt != null && !isGenericWeight(aiWt, exercise.weightSource)) {
+              return aiWt;
+            }
+            if (prevWeight != null && prevWeight > 0) return prevWeight;
+            final userProfile = ref.read(authStateProvider).user;
+            final defaultDisplay = getDefaultWeight(
+              exercise.equipment,
+              exerciseName: exercise.name,
+              fitnessLevel: userProfile?.fitnessLevel,
+              gender: userProfile?.gender,
+              useKg: _useKg,
+            );
+            if (defaultDisplay <= 0) return aiWt;
+            return _useKg ? defaultDisplay : defaultDisplay * 0.453592;
+          })(),
+          targetReps: setTarget?.targetReps != null
+              ? setTarget!.targetReps.toString()
+              : '${exercise.reps ?? 8}-${(exercise.reps ?? 8) + 2}',
+          targetRir: calculatedRir,
+          actualWeight: actualWeight,
+          actualReps: actualReps,
+          actualRir: actualRir,
+          previousWeight: prevWeight,
+          previousReps: prevReps,
+          previousRir: prevRir,
+          durationSeconds: isCompleted
+              ? completedSets[i].durationSeconds
+              : null,
+          // Show rest taken AFTER this set (from actualRestDurations), not rest before
+          restDurationSeconds: isCompleted
+              ? (() {
+                  final rests = _actualRestDurations[exerciseIndex];
+                  return (rests != null && i < rests.length) ? rests[i] : null;
+                })()
+              : null,
+        ),
+      );
     }
 
     return rows;
@@ -1800,8 +2112,9 @@ class _ActiveWorkoutScreenState
 
     final exercise = _exercises[exerciseIndex];
     final sessions = _preSetHistoryByExerciseName[exercise.name] ?? const [];
-    final pattern = _exerciseProgressionPattern[exerciseIndex]
-        ?? SetProgressionPattern.pyramidUp;
+    final pattern =
+        _exerciseProgressionPattern[exerciseIndex] ??
+        SetProgressionPattern.pyramidUp;
 
     // Parse today's target rep range from setTargets[0] → exercise.reps → skip.
     int? tmin;
@@ -1821,16 +2134,22 @@ class _ActiveWorkoutScreenState
       return null;
     }
 
-    final isBodyweight = (exercise.weight == null || exercise.weight == 0) &&
+    final isBodyweight =
+        (exercise.weight == null || exercise.weight == 0) &&
         (exercise.equipment == null ||
-         {'bodyweight', 'bodyweight_only', 'none', ''}
-            .contains(exercise.equipment!.toLowerCase()));
+            {
+              'bodyweight',
+              'bodyweight_only',
+              'none',
+              '',
+            }.contains(exercise.equipment!.toLowerCase()));
 
     final now = DateTime.now();
-    final todayIso = DateTime(now.year, now.month, now.day)
-        .toIso8601String()
-        .split('T')
-        .first;
+    final todayIso = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).toIso8601String().split('T').first;
 
     final input = ExerciseInsightInput(
       exerciseId: exercise.id ?? exercise.name,
@@ -1882,27 +2201,76 @@ class _ActiveWorkoutScreenState
   @override
   List<ActionChipData> buildActionChipsForCurrentExercise() {
     // Get current progression pattern for this exercise
-    final pattern = _exerciseProgressionPattern[_viewingExerciseIndex]
-        ?? SetProgressionPattern.pyramidUp;
+    final pattern =
+        _exerciseProgressionPattern[_viewingExerciseIndex] ??
+        SetProgressionPattern.pyramidUp;
 
     // Get increment display string in user's unit
     final exercise = _exercises[_viewingExerciseIndex];
     final incrementState = ref.read(weightIncrementsProvider);
     final incrementValue = incrementState.getIncrement(exercise.equipment);
     final incrementUnit = incrementState.unit;
-    final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
+    final incrementLabel =
+        '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
+
+    // "How did I do?" only makes sense once at least one set is logged.
+    final hasLoggedSets =
+        (_completedSets[_viewingExerciseIndex]?.isNotEmpty) ?? false;
 
     return [
+      // Form Check — accent-highlighted hero chip, pinned at the front so the
+      // product differentiator is always visible (never hidden behind More).
+      WorkoutActionChips.formCheck,
+      if (hasLoggedSets) WorkoutActionChips.howDidIDo,
       // C1: Swap added as the first chip per user request (kept in More
       // menu too — see WorkoutActionChips.more handler — for discoverability).
       WorkoutActionChips.swap,
       WorkoutActionChips.adjustToday,
-      WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
+      WorkoutActionChips.progression(
+        label: pattern.chipLabel,
+        icon: pattern.icon,
+      ),
       WorkoutActionChips.superset,
       WorkoutActionChips.leftRight(isActive: _isLeftRightMode),
       WorkoutActionChips.incrementDisplay(label: incrementLabel),
       WorkoutActionChips.more,
     ];
+  }
+
+  @override
+  void showFormCheckForCurrentExercise() {
+    final exercise = _exercises[_viewingExerciseIndex];
+    showFormAnalysisSheet(
+      context,
+      exerciseName: exercise.name,
+      exerciseId: exercise.exerciseId ?? exercise.libraryId,
+    );
+  }
+
+  @override
+  void showHowDidIDoForCurrentExercise() {
+    final exercise = _exercises[_viewingExerciseIndex];
+    final logged = _completedSets[_viewingExerciseIndex] ?? const <SetLog>[];
+    if (logged.isEmpty) return;
+    // Advanced stores SetLog.weight in the user's DISPLAY unit (see
+    // _logSetsFromAI) — convert lb→kg for the kg-based critique contract.
+    showHowDidIDoSheet(
+      context,
+      exerciseName: exercise.name,
+      exerciseId: exercise.exerciseId ?? exercise.libraryId,
+      sets: [
+        for (final s in logged)
+          {
+            'weight_kg': _useKg ? s.weight : s.weight * 0.453592,
+            'reps': s.reps,
+            'rir': s.rir,
+            'duration_seconds': s.durationSeconds,
+            'set_type': s.setType,
+          },
+      ],
+      target: {'reps': exercise.reps},
+      useKg: _useKg,
+    );
   }
 
   /// Open the one-tap "Adjust Today" sheet, await server mutation, and
@@ -1926,8 +2294,10 @@ class _ActiveWorkoutScreenState
         estimatedSecondsRemaining += (totalSets - completed) * 90 + 30;
       }
     }
-    final estimatedMinutes =
-        (estimatedSecondsRemaining / 60).ceil().clamp(1, 240);
+    final estimatedMinutes = (estimatedSecondsRemaining / 60).ceil().clamp(
+      1,
+      240,
+    );
 
     // Snapshot for undo. If the user taps undo within 5s we re-assign.
     final snapshot = List<WorkoutExercise>.from(_exercises);
@@ -1945,18 +2315,23 @@ class _ActiveWorkoutScreenState
 
     if (result.shouldReschedule) {
       // Defer the reschedule flow to existing infra — show a confirm sheet.
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result.coachMessage.isNotEmpty
-            ? result.coachMessage
-            : 'Reschedule today\'s workout?'),
-        duration: const Duration(seconds: 4),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.coachMessage.isNotEmpty
+                ? result.coachMessage
+                : 'Reschedule today\'s workout?',
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
       return;
     }
 
     // Apply the server's updated exercises list to in-memory state so the
     // set-tracking table re-renders immediately.
-    if (result.updatedExercises != null && result.updatedExercises!.isNotEmpty) {
+    if (result.updatedExercises != null &&
+        result.updatedExercises!.isNotEmpty) {
       setState(() {
         // Replace exercises with the server-updated list. We convert via the
         // WorkoutExercise model so downstream widgets see the same shape.
@@ -1979,39 +2354,45 @@ class _ActiveWorkoutScreenState
     }
 
     // Non-blocking undo toast.
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(result.coachMessage.isNotEmpty
-          ? result.coachMessage
-          : AppLocalizations.of(context).activeWorkoutScreenWorkoutAdapted),
-      duration: const Duration(seconds: 5),
-      action: SnackBarAction(
-        label: AppLocalizations.of(context).workoutUiBuildersUndo,
-        onPressed: () {
-          if (!mounted) return;
-          setState(() {
-            _exercises = snapshot;
-            _totalSetsPerExercise
-              ..clear()
-              ..addAll(snapshotTotalSets);
-          });
-        },
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.coachMessage.isNotEmpty
+              ? result.coachMessage
+              : AppLocalizations.of(context).activeWorkoutScreenWorkoutAdapted,
+        ),
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: AppLocalizations.of(context).workoutUiBuildersUndo,
+          onPressed: () {
+            if (!mounted) return;
+            setState(() {
+              _exercises = snapshot;
+              _totalSetsPerExercise
+                ..clear()
+                ..addAll(snapshotTotalSets);
+            });
+          },
+        ),
       ),
-    ));
+    );
   }
 
   /// Show progression model selector bottom sheet.
   @override
   void showProgressionSheetImpl() {
     final exercise = _exercises[_viewingExerciseIndex];
-    final currentPattern = _exerciseProgressionPattern[_viewingExerciseIndex]
-        ?? SetProgressionPattern.pyramidUp;
+    final currentPattern =
+        _exerciseProgressionPattern[_viewingExerciseIndex] ??
+        SetProgressionPattern.pyramidUp;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Get working weight and increment for preview strings
     final incrementState = ref.read(weightIncrementsProvider);
     final increment = incrementState.getIncrement(exercise.equipment);
     final unit = incrementState.unit;
-    final workingWeight = exercise.weight?.toDouble() ??
+    final workingWeight =
+        exercise.weight?.toDouble() ??
         (double.tryParse(_weightController.text) ?? 50);
     final baseReps = exercise.reps ?? 10;
     final totalSets = _totalSetsPerExercise[_viewingExerciseIndex] ?? 3;
@@ -2019,7 +2400,9 @@ class _ActiveWorkoutScreenState
     showGlassSheet<SetProgressionPattern>(
       context: context,
       builder: (ctx) => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(GlassSheetStyle.borderRadius),
+        ),
         child: BackdropFilter(
           filter: ImageFilter.blur(
             sigmaX: GlassSheetStyle.blurSigma,
@@ -2028,7 +2411,9 @@ class _ActiveWorkoutScreenState
           child: Container(
             decoration: BoxDecoration(
               color: GlassSheetStyle.backgroundColor(isDark),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(GlassSheetStyle.borderRadius)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(GlassSheetStyle.borderRadius),
+              ),
               border: Border(
                 top: BorderSide(
                   color: GlassSheetStyle.borderColor(isDark),
@@ -2042,8 +2427,14 @@ class _ActiveWorkoutScreenState
               minChildSize: 0.4,
               maxChildSize: 0.9,
               builder: (ctx, scrollController) {
-                final exTypePreview = FatigueService.getExerciseType(exercise.muscleGroup, exercise.name);
-                final userGoalPreview = ref.read(authStateProvider).user?.primaryGoal;
+                final exTypePreview = FatigueService.getExerciseType(
+                  exercise.muscleGroup,
+                  exercise.name,
+                );
+                final userGoalPreview = ref
+                    .read(authStateProvider)
+                    .user
+                    ?.primaryGoal;
                 return _ProgressionSelectorSheet(
                   currentPattern: currentPattern,
                   workingWeight: workingWeight,
@@ -2077,11 +2468,8 @@ class _ActiveWorkoutScreenState
   void showExerciseDetailsSheet(WorkoutExercise exercise) {
     showGlassSheet(
       context: context,
-      builder: (context) => GlassSheet(
-        child: _ExerciseDetailsSheetContent(
-          exercise: exercise,
-        ),
-      ),
+      builder: (context) =>
+          GlassSheet(child: _ExerciseDetailsSheetContent(exercise: exercise)),
     );
   }
 
@@ -2111,8 +2499,8 @@ class _ActiveWorkoutScreenState
         for (int i = oldCount; i < _exercises.length; i++) {
           _completedSets[i] = [];
           final exercise = _exercises[i];
-          _totalSetsPerExercise[i] = exercise.hasSetTargets &&
-                  exercise.setTargets!.isNotEmpty
+          _totalSetsPerExercise[i] =
+              exercise.hasSetTargets && exercise.setTargets!.isNotEmpty
               ? exercise.setTargets!.length
               : exercise.sets ?? 3;
           _previousSets[i] = [];
@@ -2169,11 +2557,7 @@ class _ActiveWorkoutScreenState
     final date = lastSet['date'] as String?;
 
     if (weight != null && reps != null) {
-      return {
-        'weight': weight,
-        'reps': reps,
-        'date': date,
-      };
+      return {'weight': weight, 'reps': reps, 'date': date};
     }
     return null;
   }
@@ -2222,7 +2606,8 @@ class _ActiveWorkoutScreenState
         // Only reinitialize tracking for the swapped exercise — preserve others
         final swappedExercise = _exercises[exerciseIndex];
         _completedSets[exerciseIndex] = [];
-        _totalSetsPerExercise[exerciseIndex] = swappedExercise.hasSetTargets &&
+        _totalSetsPerExercise[exerciseIndex] =
+            swappedExercise.hasSetTargets &&
                 swappedExercise.setTargets!.isNotEmpty
             ? swappedExercise.setTargets!.length
             : swappedExercise.sets ?? 3;
@@ -2231,9 +2616,7 @@ class _ActiveWorkoutScreenState
       // WF4 — the swap clears the swapped exercise's completed sets; mirror
       // the map into the session so the crash-safe checkpoint doesn't keep
       // the pre-swap sets and mis-attribute them on a kill+restore.
-      ref
-          .read(activeWorkoutSessionProvider.notifier)
-          .syncSets(_completedSets);
+      ref.read(activeWorkoutSessionProvider.notifier).syncSets(_completedSets);
       // Publish the mutated workout so the swap survives an Easy<->Advanced
       // tier switch (the other tier remounts from this shared override).
       ref.read(activeWorkoutLiveProvider.notifier).state = updatedWorkout;
@@ -2242,7 +2625,11 @@ class _ActiveWorkoutScreenState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).activeWorkoutScreenExerciseSwappedSuccessfully),
+            content: Text(
+              AppLocalizations.of(
+                context,
+              ).activeWorkoutScreenExerciseSwappedSuccessfully,
+            ),
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -2250,5 +2637,4 @@ class _ActiveWorkoutScreenState
       }
     }
   }
-
 }

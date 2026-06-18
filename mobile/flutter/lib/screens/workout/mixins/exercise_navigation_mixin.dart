@@ -30,7 +30,6 @@ import '../widgets/workout_plan_drawer.dart' as plan_drawer;
 import '../../../l10n/generated/app_localizations.dart';
 part 'exercise_navigation_mixin_ui.dart';
 
-
 /// Mixin providing exercise navigation, reordering, and superset management.
 mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   // ── State access (implemented by main class) ──
@@ -82,6 +81,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     final totalSets = totalSetsPerExercise[exerciseIndex] ?? 3;
     return completedCount >= totalSets;
   }
+
   void precomputeSupersetIndicesImpl();
   void showSwapSheetForIndex(int index);
   void showExerciseAddSheetImpl();
@@ -93,13 +93,18 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     final apiClient = ref.read(apiClientProvider);
     apiClient.getUserId().then((userId) {
       if (userId != null) {
-        apiClient.post('/exercises/dont-recommend', data: {
-          'user_id': userId,
-          'exercise_name': exercise.name,
-          'exercise_id': exercise.exerciseId ?? exercise.libraryId,
-        }).catchError((e) {
-          debugPrint('⚠️ Failed to mark exercise as not recommended: $e');
-        });
+        apiClient
+            .post(
+              '/exercises/dont-recommend',
+              data: {
+                'user_id': userId,
+                'exercise_name': exercise.name,
+                'exercise_id': exercise.exerciseId ?? exercise.libraryId,
+              },
+            )
+            .catchError((e) {
+              debugPrint('⚠️ Failed to mark exercise as not recommended: $e');
+            });
       }
     });
   }
@@ -108,23 +113,27 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
   /// Move to the next incomplete exercise
   void moveToNextExercise() async {
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'exercise_completed',
-      properties: {
-        'exercise_name': exercises[currentExerciseIndex].name,
-        'exercise_index': currentExerciseIndex,
-      },
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'exercise_completed',
+          properties: {
+            'exercise_name': exercises[currentExerciseIndex].name,
+            'exercise_index': currentExerciseIndex,
+          },
+        );
 
     if (currentExerciseStartTime != null) {
-      exerciseTimeSeconds[currentExerciseIndex] =
-          DateTime.now().difference(currentExerciseStartTime!).inSeconds;
+      exerciseTimeSeconds[currentExerciseIndex] = DateTime.now()
+          .difference(currentExerciseStartTime!)
+          .inSeconds;
     }
 
     int? nextIndex;
     for (int i = 1; i <= exercises.length; i++) {
       final candidateIndex = (currentExerciseIndex + i) % exercises.length;
-      if (!isExerciseCompleted(candidateIndex) && !skippedExercises.contains(candidateIndex)) {
+      if (!isExerciseCompleted(candidateIndex) &&
+          !skippedExercises.contains(candidateIndex)) {
         nextIndex = candidateIndex;
         break;
       }
@@ -135,7 +144,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
       final nextExercise = exercises[nextIndex];
 
-      ref.read(voiceAnnouncementsProvider.notifier)
+      ref
+          .read(voiceAnnouncementsProvider.notifier)
           .announceNextExerciseIfEnabled(nextExercise.name);
 
       setState(() {
@@ -163,7 +173,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
       HapticService.workoutComplete();
 
-      ref.read(voiceAnnouncementsProvider.notifier).announceWorkoutCompleteIfEnabled();
+      ref
+          .read(voiceAnnouncementsProvider.notifier)
+          .announceWorkoutCompleteIfEnabled();
 
       final stretchEnabled = ref.read(warmupDurationProvider).stretchEnabled;
       if (stretchEnabled) {
@@ -171,7 +183,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           currentPhase = WorkoutPhase.stretch;
         });
       } else {
-        debugPrint('🏋️ [ActiveWorkout] Stretch disabled, skipping to completion');
+        debugPrint(
+          '🏋️ [ActiveWorkout] Stretch disabled, skipping to completion',
+        );
         handleStretchComplete();
       }
     }
@@ -179,13 +193,15 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
   /// Skip the current exercise
   void skipExercise() {
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'workout_exercise_skipped',
-      properties: {
-        'exercise_name': exercises[currentExerciseIndex].name,
-        'exercise_index': currentExerciseIndex,
-      },
-    );
+    ref
+        .read(posthogServiceProvider)
+        .capture(
+          eventName: 'workout_exercise_skipped',
+          properties: {
+            'exercise_name': exercises[currentExerciseIndex].name,
+            'exercise_index': currentExerciseIndex,
+          },
+        );
     skippedExercises.add(currentExerciseIndex);
     moveToNextExercise();
   }
@@ -198,11 +214,13 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     for (int i = 0; i < exercises.length; i++) {
       final logged = completedSets[i]?.length ?? 0;
       final total = totalSetsPerExercise[i] ?? 3;
-      statuses.add(_ExerciseLogStatus(
-        name: exercises[i].name,
-        loggedSets: logged,
-        totalSets: total,
-      ));
+      statuses.add(
+        _ExerciseLogStatus(
+          name: exercises[i].name,
+          loggedSets: logged,
+          totalSets: total,
+        ),
+      );
     }
     return statuses;
   }
@@ -228,12 +246,25 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700, size: 24),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Colors.orange.shade700,
+                size: 24,
+              ),
               const SizedBox(width: 8),
-              Expanded(child: Text(AppLocalizations.of(context).exerciseNavigationMixinIncompleteExercises, style: TextStyle(fontSize: 18))),
+              Expanded(
+                child: Text(
+                  AppLocalizations.of(
+                    context,
+                  ).exerciseNavigationMixinIncompleteExercises,
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
             ],
           ),
           content: SizedBox(
@@ -243,7 +274,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context).exerciseNavigationMixinSomeExercisesHaveMissing,
+                  AppLocalizations.of(
+                    context,
+                  ).exerciseNavigationMixinSomeExercisesHaveMissing,
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
@@ -259,21 +292,22 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                     itemBuilder: (_, i) {
                       final s = statuses[i];
                       final isComplete = s.loggedSets >= s.totalSets;
-                      final isPartial = s.loggedSets > 0 && s.loggedSets < s.totalSets;
+                      final isPartial =
+                          s.loggedSets > 0 && s.loggedSets < s.totalSets;
                       return Row(
                         children: [
                           Icon(
                             isComplete
                                 ? Icons.check_circle
                                 : isPartial
-                                    ? Icons.remove_circle
-                                    : Icons.cancel,
+                                ? Icons.remove_circle
+                                : Icons.cancel,
                             size: 18,
                             color: isComplete
                                 ? Colors.green
                                 : isPartial
-                                    ? Colors.orange
-                                    : Colors.red.shade400,
+                                ? Colors.orange
+                                : Colors.red.shade400,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -281,9 +315,13 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                               s.name,
                               style: TextStyle(
                                 fontSize: 14,
-                                fontWeight: isComplete ? FontWeight.normal : FontWeight.w600,
+                                fontWeight: isComplete
+                                    ? FontWeight.normal
+                                    : FontWeight.w600,
                                 color: isComplete
-                                    ? (isDark ? Colors.grey.shade400 : Colors.grey.shade600)
+                                    ? (isDark
+                                          ? Colors.grey.shade400
+                                          : Colors.grey.shade600)
                                     : (isDark ? Colors.white : Colors.black87),
                               ),
                               maxLines: 1,
@@ -298,8 +336,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                               color: isComplete
                                   ? Colors.green
                                   : isPartial
-                                      ? Colors.orange
-                                      : Colors.red.shade400,
+                                  ? Colors.orange
+                                  : Colors.red.shade400,
                             ),
                           ),
                         ],
@@ -309,7 +347,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                 ),
                 const SizedBox(height: 16),
                 GestureDetector(
-                  onTap: () => setDialogState(() => dontShowAgain = !dontShowAgain),
+                  onTap: () =>
+                      setDialogState(() => dontShowAgain = !dontShowAgain),
                   child: Row(
                     children: [
                       SizedBox(
@@ -317,17 +356,23 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                         height: 20,
                         child: Checkbox(
                           value: dontShowAgain,
-                          onChanged: (v) => setDialogState(() => dontShowAgain = v ?? false),
+                          onChanged: (v) =>
+                              setDialogState(() => dontShowAgain = v ?? false),
                           activeColor: accentColor,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        AppLocalizations.of(context).exerciseNavigationMixinDoNotShowAgain,
+                        AppLocalizations.of(
+                          context,
+                        ).exerciseNavigationMixinDoNotShowAgain,
                         style: TextStyle(
                           fontSize: 13,
-                          color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                          color: isDark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
                         ),
                       ),
                     ],
@@ -344,7 +389,11 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             FilledButton(
               onPressed: () => Navigator.pop(ctx, true),
               style: FilledButton.styleFrom(backgroundColor: accentColor),
-              child: Text(AppLocalizations.of(context).exerciseNavigationMixinContinueAnyway),
+              child: Text(
+                AppLocalizations.of(
+                  context,
+                ).exerciseNavigationMixinContinueAnyway,
+              ),
             ),
           ],
         ),
@@ -393,10 +442,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         showSupersetSheet();
         break;
       case 'video':
-        showExerciseInfoSheet(
-          context: context,
-          exercise: currentExercise,
-        );
+        showExerciseInfoSheet(context: context, exercise: currentExercise);
         break;
       case 'history':
         showHistorySheet(currentExercise);
@@ -426,6 +472,12 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       case 'adjust_today':
         showQuickAdjustSheetForCurrentWorkout();
         break;
+      case 'form_check':
+        showFormCheckForCurrentExercise();
+        break;
+      case 'how_did_i_do':
+        showHowDidIDoForCurrentExercise();
+        break;
     }
   }
 
@@ -441,10 +493,19 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   void showEquipmentProfileSheetImpl();
   void showProgressionSheetImpl();
   void showBarTypeSelectorImpl(WorkoutExercise exercise);
+
   /// Open the quick-adjust sheet and apply the returned mutation to the
   /// in-memory exercise list. Implementation lives in active_workout_screen
   /// since it needs access to the setState + exercises list + workout id.
   void showQuickAdjustSheetForCurrentWorkout();
+
+  /// Open the AI Form-Check sheet for the current exercise (pre-filled name +
+  /// id + active gym for per-gym/per-exercise persistence).
+  void showFormCheckForCurrentExercise();
+
+  /// Open the "How did I do?" critique for the sets logged so far on the
+  /// current exercise. Implemented in the screen (needs the logged sets).
+  void showHowDidIDoForCurrentExercise();
 
   /// Confirm and delete an exercise from the workout
   void confirmDeleteExercise(int index) {
@@ -459,7 +520,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(context).workoutDetailScreenRemoveExercise),
+        title: Text(
+          AppLocalizations.of(context).workoutDetailScreenRemoveExercise,
+        ),
         content: Text('Remove "${exercise.name}" from this workout?'),
         actions: [
           TextButton(
@@ -488,9 +551,7 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
                 ),
               );
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: Text(AppLocalizations.of(context).workoutPlanDrawerRemove),
           ),
         ],
@@ -503,7 +564,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     if (exerciseIndex >= exercises.length) return;
 
     final exercise = exercises[exerciseIndex];
-    final currentProgression = repProgressionPerExercise[exerciseIndex] ?? RepProgressionType.straight;
+    final currentProgression =
+        repProgressionPerExercise[exerciseIndex] ?? RepProgressionType.straight;
 
     options_sheet.showExerciseOptionsSheet(
       context: context,
@@ -538,15 +600,16 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         );
       },
       onViewInstructions: () {
-        showExerciseInfoSheet(
-          context: context,
-          exercise: exercise,
-        );
+        showExerciseInfoSheet(context: context, exercise: exercise);
       },
       onAddNotes: () {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).exerciseNavigationMixinUseTheNotesSection),
+            content: Text(
+              AppLocalizations.of(
+                context,
+              ).exerciseNavigationMixinUseTheNotesSection,
+            ),
             duration: Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
           ),
@@ -558,7 +621,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       onAddToSuperset: () async {
         HapticFeedback.lightImpact();
         final result = await showSupersetPairSheet(
-          context, ref,
+          context,
+          ref,
           workoutExercises: exercises,
           preselectedExercise: exercise,
         );
@@ -573,7 +637,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Superset: ${result.exercise1.name} + ${result.exercise2.name}'),
+              content: Text(
+                'Superset: ${result.exercise1.name} + ${result.exercise2.name}',
+              ),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -583,7 +649,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         removeExerciseFromWorkout(exerciseIndex);
         removeExerciseAndDontRecommend(exerciseIndex, exercise);
       },
-      onChangeEquipment: (exercise.equipment != null &&
+      onChangeEquipment:
+          (exercise.equipment != null &&
               exercise.equipment!.isNotEmpty &&
               !exercise.equipment!.toLowerCase().contains('bodyweight') &&
               !exercise.equipment!.toLowerCase().contains('body weight') &&
@@ -688,16 +755,16 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         // by one. Push the remapped map into the session so the crash-safe
         // checkpoint attributes logged sets to the CORRECT exercises after a
         // kill+restore (otherwise sets would land on the wrong exercise).
-        ref
-            .read(activeWorkoutSessionProvider.notifier)
-            .syncSets(completedSets);
+        ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
       },
       onAddExercise: () => showExerciseAddSheetImpl(),
     );
   }
 
   /// Handle parsed exercises from the AI text input bar
-  Future<void> handleParsedExercises(List<ParsedExercise> parsedExercises) async {
+  Future<void> handleParsedExercises(
+    List<ParsedExercise> parsedExercises,
+  ) async {
     if (parsedExercises.isEmpty) return;
 
     final confirmedExercises = await showParsedExercisesPreview(
@@ -737,7 +804,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           for (int i = startIndex; i < exercises.length; i++) {
             completedSets[i] = [];
             final ex = exercises[i];
-            totalSetsPerExercise[i] = ex.hasSetTargets && ex.setTargets!.isNotEmpty
+            totalSetsPerExercise[i] =
+                ex.hasSetTargets && ex.setTargets!.isNotEmpty
                 ? ex.setTargets!.length
                 : ex.sets ?? 3;
             previousSets[i] = [];
@@ -746,14 +814,14 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         // WF4 — newly-added exercises get empty completed-set buckets; mirror
         // the map so the checkpoint knows the new exercise count and a
         // restore doesn't drop the just-added slots.
-        ref
-            .read(activeWorkoutSessionProvider.notifier)
-            .syncSets(completedSets);
+        ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Added $addedCount exercise${addedCount == 1 ? '' : 's'}'),
+              content: Text(
+                'Added $addedCount exercise${addedCount == 1 ? '' : 's'}',
+              ),
               backgroundColor: AppColors.green,
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
@@ -821,7 +889,8 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           for (int i = startIndex; i < exercises.length; i++) {
             completedSets[i] = [];
             final ex = exercises[i];
-            totalSetsPerExercise[i] = ex.hasSetTargets && ex.setTargets!.isNotEmpty
+            totalSetsPerExercise[i] =
+                ex.hasSetTargets && ex.setTargets!.isNotEmpty
                 ? ex.setTargets!.length
                 : ex.sets ?? 3;
             previousSets[i] = [];
@@ -830,14 +899,14 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         // WF4 — newly-added exercises get empty completed-set buckets; mirror
         // the map so the checkpoint knows the new exercise count and a
         // restore doesn't drop the just-added slots.
-        ref
-            .read(activeWorkoutSessionProvider.notifier)
-            .syncSets(completedSets);
+        ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Added $addedCount exercise${addedCount == 1 ? '' : 's'}'),
+              content: Text(
+                'Added $addedCount exercise${addedCount == 1 ? '' : 's'}',
+              ),
               backgroundColor: AppColors.green,
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
@@ -883,13 +952,16 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     if (supersetGroupId != null) {
       final otherMemberIndices = <int>[];
       for (int i = 0; i < reorderedList.length; i++) {
-        if (i != newIndex && reorderedList[i].supersetGroup == supersetGroupId) {
+        if (i != newIndex &&
+            reorderedList[i].supersetGroup == supersetGroupId) {
           otherMemberIndices.add(i);
         }
       }
 
       if (otherMemberIndices.isNotEmpty) {
-        final isAdjacentToGroup = otherMemberIndices.any((i) => (i - newIndex).abs() == 1);
+        final isAdjacentToGroup = otherMemberIndices.any(
+          (i) => (i - newIndex).abs() == 1,
+        );
 
         if (!isAdjacentToGroup) {
           exercise = exercise.copyWith(clearSuperset: true);
@@ -898,19 +970,36 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
           if (otherMemberIndices.length == 1) {
             final lastMemberIndex = otherMemberIndices.first;
-            reorderedList[lastMemberIndex] = reorderedList[lastMemberIndex].copyWith(clearSuperset: true);
+            reorderedList[lastMemberIndex] = reorderedList[lastMemberIndex]
+                .copyWith(clearSuperset: true);
           }
         }
       }
     }
 
     final newCompletedSets = _remapIndexMap(completedSets, oldIndex, newIndex);
-    final newTotalSets = _remapIndexMap(totalSetsPerExercise, oldIndex, newIndex);
+    final newTotalSets = _remapIndexMap(
+      totalSetsPerExercise,
+      oldIndex,
+      newIndex,
+    );
     final newPreviousSets = _remapIndexMap(previousSets, oldIndex, newIndex);
-    final newRepProgression = _remapIndexMap(repProgressionPerExercise, oldIndex, newIndex);
+    final newRepProgression = _remapIndexMap(
+      repProgressionPerExercise,
+      oldIndex,
+      newIndex,
+    );
 
-    final newCurrentIndex = remapSingleIndex(currentExerciseIndex, oldIndex, newIndex);
-    final newViewingIndex = remapSingleIndex(viewingExerciseIndex, oldIndex, newIndex);
+    final newCurrentIndex = remapSingleIndex(
+      currentExerciseIndex,
+      oldIndex,
+      newIndex,
+    );
+    final newViewingIndex = remapSingleIndex(
+      viewingExerciseIndex,
+      oldIndex,
+      newIndex,
+    );
 
     setState(() {
       exercises = reorderedList;
@@ -950,7 +1039,11 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   }
 
   /// Helper to remap a map's integer keys after reorder
-  Map<int, V> _remapIndexMap<V>(Map<int, V> original, int oldIndex, int newIndex) {
+  Map<int, V> _remapIndexMap<V>(
+    Map<int, V> original,
+    int oldIndex,
+    int newIndex,
+  ) {
     final result = <int, V>{};
     for (final entry in original.entries) {
       final newKey = remapSingleIndex(entry.key, oldIndex, newIndex);
@@ -987,9 +1080,17 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       final newIdx = insertAt;
       if (oldIdx != newIdx) {
         final newCompletedSets = _remapIndexMap(completedSets, oldIdx, newIdx);
-        final newTotalSets = _remapIndexMap(totalSetsPerExercise, oldIdx, newIdx);
+        final newTotalSets = _remapIndexMap(
+          totalSetsPerExercise,
+          oldIdx,
+          newIdx,
+        );
         final newPreviousSets = _remapIndexMap(previousSets, oldIdx, newIdx);
-        final newRepProgression = _remapIndexMap(repProgressionPerExercise, oldIdx, newIdx);
+        final newRepProgression = _remapIndexMap(
+          repProgressionPerExercise,
+          oldIdx,
+          newIdx,
+        );
 
         completedSets
           ..clear()
@@ -1004,13 +1105,19 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           ..clear()
           ..addAll(newRepProgression);
 
-        currentExerciseIndex = remapSingleIndex(currentExerciseIndex, oldIdx, newIdx);
-        viewingExerciseIndex = remapSingleIndex(viewingExerciseIndex, oldIdx, newIdx);
+        currentExerciseIndex = remapSingleIndex(
+          currentExerciseIndex,
+          oldIdx,
+          newIdx,
+        );
+        viewingExerciseIndex = remapSingleIndex(
+          viewingExerciseIndex,
+          oldIdx,
+          newIdx,
+        );
         // WF4 — moving an exercise into a superset shifts indices; mirror the
         // remapped map so the checkpoint stays correctly attributed.
-        ref
-            .read(activeWorkoutSessionProvider.notifier)
-            .syncSets(completedSets);
+        ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
       }
     }
   }
@@ -1042,15 +1149,16 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     final indices = getSupersetIndices(groupId);
     if (indices.length < 2) return;
     final anchorIdx = indices.first; // sorted by supersetOrder asc
-    final anchorTotal = totalSetsPerExercise[anchorIdx]
-        ?? exercises[anchorIdx].sets
-        ?? 3;
+    final anchorTotal =
+        totalSetsPerExercise[anchorIdx] ?? exercises[anchorIdx].sets ?? 3;
     for (final idx in indices) {
       if (idx == anchorIdx) continue;
       final current = totalSetsPerExercise[idx];
       if (current == null || current != anchorTotal) {
         totalSetsPerExercise[idx] = anchorTotal;
-        debugPrint('🔗 [Superset] Copied anchor totalSets=$anchorTotal onto partner ex=$idx (group=$groupId)');
+        debugPrint(
+          '🔗 [Superset] Copied anchor totalSets=$anchorTotal onto partner ex=$idx (group=$groupId)',
+        );
       }
     }
   }
@@ -1080,7 +1188,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     return showDialog<bool?>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(context).exerciseNavigationMixinApplyToAllLinked),
+        title: Text(
+          AppLocalizations.of(context).exerciseNavigationMixinApplyToAllLinked,
+        ),
         content: Text(
           'Set this count ($newCount sets) on every exercise in the superset group? '
           '"No" keeps the count only on this exercise — the round-robin handles '
@@ -1093,11 +1203,15 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text(AppLocalizations.of(context).exerciseNavigationMixinNoJustThisOne),
+            child: Text(
+              AppLocalizations.of(context).exerciseNavigationMixinNoJustThisOne,
+            ),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(AppLocalizations.of(context).exerciseNavigationMixinYesApplyToAll),
+            child: Text(
+              AppLocalizations.of(context).exerciseNavigationMixinYesApplyToAll,
+            ),
           ),
         ],
       ),
@@ -1165,7 +1279,9 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
   void markSupersetExerciseDoneInRound(int exerciseIndex, int groupId) {
     supersetRoundProgress[groupId] ??= <int>{};
     supersetRoundProgress[groupId]!.add(exerciseIndex);
-    debugPrint('🔗 [Superset] Marked exercise $exerciseIndex done in round for group $groupId. Progress: ${supersetRoundProgress[groupId]}');
+    debugPrint(
+      '🔗 [Superset] Marked exercise $exerciseIndex done in round for group $groupId. Progress: ${supersetRoundProgress[groupId]}',
+    );
   }
 
   /// Reset the superset round progress
@@ -1176,11 +1292,14 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
   /// Navigate to the next exercise in the superset (no rest timer)
   void advanceToSupersetExercise(int nextIndex) {
-    debugPrint('🔗 [Superset] Auto-advancing to exercise $nextIndex: ${exercises[nextIndex].name}');
+    debugPrint(
+      '🔗 [Superset] Auto-advancing to exercise $nextIndex: ${exercises[nextIndex].name}',
+    );
 
     if (currentExerciseStartTime != null) {
-      exerciseTimeSeconds[currentExerciseIndex] =
-          DateTime.now().difference(currentExerciseStartTime!).inSeconds;
+      exerciseTimeSeconds[currentExerciseIndex] = DateTime.now()
+          .difference(currentExerciseStartTime!)
+          .inSeconds;
     }
 
     final nextExercise = exercises[nextIndex];
