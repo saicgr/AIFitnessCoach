@@ -949,19 +949,31 @@ class _CoachNudgeStackState extends ConsumerState<_CoachNudgeStack> {
               final end = (start + _CoachNudgeStack._kCardsPerPage)
                   .clamp(0, ranked.length);
               final slice = ranked.sublist(start, end);
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  for (var i = 0; i < slice.length; i++) ...[
-                    if (i > 0) const SizedBox(height: 8),
-                    CoachContextualNudgeRow(
-                      key: ValueKey(
-                          'nudge_${slice[i].effectiveDedupKey}'),
-                      nudge: slice[i],
-                      ctaColor: ctaColorForNudge(slice[i].id),
-                    ),
+              // The PageView gives every page the ACTIVE page's height. When the
+              // active page holds fewer cards than a neighbour (e.g. a 1-card
+              // tail page next to a full 2-card page), the taller neighbour
+              // would overflow the shorter viewport. A non-scrolling
+              // SingleChildScrollView (the remedy the overflow error itself
+              // suggests) lets the off-screen neighbour clip silently instead of
+              // throwing — the active page is always sized to fit, so it never
+              // clips. mainAxisSize.min is required inside the unbounded scroll.
+              return SingleChildScrollView(
+                physics: const NeverScrollableScrollPhysics(),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    for (var i = 0; i < slice.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 8),
+                      CoachContextualNudgeRow(
+                        key: ValueKey(
+                            'nudge_${slice[i].effectiveDedupKey}'),
+                        nudge: slice[i],
+                        ctaColor: ctaColorForNudge(slice[i].id),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               );
             },
           ),
@@ -1033,7 +1045,13 @@ class _TodoCarousel extends StatefulWidget {
   const _TodoCarousel({required this.tasks});
 
   static const int _kCardsPerPage = 2;
-  static const double _kRowHeight = 80;
+  // Per-card budget the PageView viewport is sized from. A _TodoCard is a
+  // single icon-tile row with two 1-line texts (label + detail) and 10px
+  // vertical padding + border — it measures ~58px, so the old 80 left ~22px of
+  // dead space PER CARD below the stack (the visible gap under the tasks). 62
+  // tracks the real height with a few px of headroom; the non-scrolling
+  // SingleChildScrollView in the page builder absorbs any sub-pixel overshoot.
+  static const double _kRowHeight = 62;
 
   @override
   State<_TodoCarousel> createState() => _TodoCarouselState();
@@ -1097,14 +1115,21 @@ class _TodoCarouselState extends State<_TodoCarousel> {
                 final end = (start + _TodoCarousel._kCardsPerPage)
                     .clamp(0, tasks.length);
                 final slice = tasks.sublist(start, end);
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    for (var i = 0; i < slice.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 8),
-                      _TodoCard(task: slice[i]),
+                // See _CoachNudgeStack: the non-scrolling SingleChildScrollView
+                // lets a taller off-screen page clip silently rather than
+                // overflow the active page's (shorter) viewport.
+                return SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < slice.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 8),
+                        _TodoCard(task: slice[i]),
+                      ],
                     ],
-                  ],
+                  ),
                 );
               },
             ),

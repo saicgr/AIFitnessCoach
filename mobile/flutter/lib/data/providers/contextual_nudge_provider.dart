@@ -54,6 +54,7 @@ import 'ai_settings_provider.dart';
 import 'breakfast_suggestion_provider.dart';
 import 'nudge_snooze_provider.dart';
 import 'today_workout_provider.dart';
+import 'user_cohort_provider.dart';
 import 'training_load_provider.dart';
 import 'usual_meal_provider.dart';
 import 'nudge_packs/phase_bcde_nudges.dart';
@@ -86,6 +87,15 @@ final contextualNudgeProvider =
   }
   if (_inQuietHours(ref, now)) return const [];
   if (_inVacation(ref, now)) return const [];
+  // New-user gate: a brand-new account hasn't generated any real signals yet
+  // (no logged meals, no workout history, no connected health), so the
+  // established-user nudge firehose — "close your move ring", "lunch slipped
+  // past", "refeed day", … — is fabricated noise on first open. Suppress the
+  // entire stack for the account's first day so the coach card opens clean.
+  // Fail-open: when the cohort signal is absent (network failure → createdAt
+  // null) we DON'T suppress, so an established user with a transient cohort
+  // fetch failure keeps their nudges.
+  if (_isBrandNewUser(ref, now)) return const [];
 
   // ── Inputs ────────────────────────────────────────────────────────────
   final nutrition = ref.watch(dailyNutritionProvider(todayNutritionKey()));
@@ -747,6 +757,22 @@ int? _parseHHMM(String? s) {
   if (h == null || m == null) return null;
   if (h < 0 || h > 23 || m < 0 || m > 59) return null;
   return h * 60 + m;
+}
+
+/// True while the signed-in account is in its first 24 hours — a brand-new
+/// user whose coach card should open clean (no fabricated, history-implying
+/// nudges) on first open. Reads the cohort `created_at` (confident server
+/// signal); fails open (returns false) when the cohort hasn't resolved or the
+/// timestamp is absent, so established users are never wrongly suppressed.
+bool _isBrandNewUser(Ref ref, DateTime now) {
+  try {
+    final cohort = ref.watch(userCohortProvider).valueOrNull;
+    final createdAt = cohort?.createdAt;
+    if (createdAt == null) return false;
+    return now.difference(createdAt) < const Duration(hours: 24);
+  } catch (_) {
+    return false;
+  }
 }
 
 bool _inVacation(Ref ref, DateTime now) {
