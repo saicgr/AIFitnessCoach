@@ -16,6 +16,7 @@ import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../workout/widgets/exercise_strength_score_card.dart';
 import '../widgets/gym_progress_filter.dart';
+import 'widgets/ai_progress_pros_cons_card.dart';
 
 /// Detail screen showing progression and history for a specific exercise
 class ExerciseProgressDetailScreen extends ConsumerStatefulWidget {
@@ -310,7 +311,19 @@ class _ProgressTab extends ConsumerWidget {
                   ExerciseSummaryCard(summary: history.summary!),
                 const SizedBox(height: 24),
 
-                // AI Insights
+                // AI Progress Report (Gravl-style pros & cons) — the richer,
+                // on-demand LLM layer. Fetches only when the user taps "Analyze
+                // with AI" so there's no per-open model cost. Sits ABOVE the
+                // always-instant deterministic insights card below.
+                AiProgressProsConsCard(
+                  exerciseName: exerciseName,
+                  gymProfileId:
+                      selection.isAllGyms ? null : selection.gymProfileId,
+                  window: _windowForTimeRange(timeRange),
+                ),
+                const SizedBox(height: 16),
+
+                // AI Insights (deterministic, instant fallback / summary).
                 _ExerciseInsightsCard(
                   summary: history.summary,
                   chartData: history.weightChartData,
@@ -358,6 +371,28 @@ class _ProgressTab extends ConsumerWidget {
         );
       },
     );
+  }
+
+  /// Maps the screen's fine-grained time-range selector onto the four windows
+  /// the progress-analysis endpoint accepts (`'8w'`/`'6m'`/`'1y'`/`'all'`).
+  /// Anything shorter than 8 weeks defaults to `'8w'` — the AI report needs a
+  /// meaningful span to read a trend from.
+  String _windowForTimeRange(ExerciseHistoryTimeRange range) {
+    switch (range) {
+      case ExerciseHistoryTimeRange.sixMonths:
+        return '6m';
+      case ExerciseHistoryTimeRange.oneYear:
+        return '1y';
+      case ExerciseHistoryTimeRange.allTime:
+        return 'all';
+      case ExerciseHistoryTimeRange.oneDay:
+      case ExerciseHistoryTimeRange.threeDays:
+      case ExerciseHistoryTimeRange.sevenDays:
+      case ExerciseHistoryTimeRange.fourWeeks:
+      case ExerciseHistoryTimeRange.eightWeeks:
+      case ExerciseHistoryTimeRange.twelveWeeks:
+        return '8w';
+    }
   }
 
   Widget _buildEmptyState(BuildContext context, ThemeData theme) {
