@@ -1182,20 +1182,34 @@ class LangGraphCoachService:
                 compute_glucose_food_correlations,
                 format_glucose_correlations_for_ai,
             )
+            # Nutrition overhaul — food↔feeling/tag/digestion patterns + goal
+            # gaps so the coach can answer "why do I feel bloated after healthy
+            # meals?". Additive; None on no-signal/error.
+            from services.langgraph_agents.tools.nutrition_context_helpers import (
+                fetch_patterns_context,
+            )
             (
                 _diet_res,
                 _mem_res,
                 _cardio_res,
                 _health_res,
                 _glucose_res,
+                _patterns_res,
             ) = await _asyncio.gather(
                 _asyncio.to_thread(resolve_dietary_constraints, _uid),
                 _asyncio.to_thread(build_memory_block, _uid, _msg, 8),
                 get_cardio_context_for_ai(_uid),
                 UserContextService().get_health_context_for_ai(_uid, days=7),
                 _asyncio.to_thread(compute_glucose_food_correlations, _uid),
+                fetch_patterns_context(_uid, days=90),
                 return_exceptions=True,
             )
+            # patterns_context — None on any failure (additive context only).
+            if isinstance(_patterns_res, Exception):
+                logger.debug(f"[NutritionContext] patterns context skipped: {_patterns_res}")
+                base_state["patterns_context"] = None
+            else:
+                base_state["patterns_context"] = _patterns_res
             # dietary_constraints — fall back to None on any failure.
             if isinstance(_diet_res, Exception):
                 logger.warning(f"[NutritionContext] dietary resolve failed: {_diet_res}")

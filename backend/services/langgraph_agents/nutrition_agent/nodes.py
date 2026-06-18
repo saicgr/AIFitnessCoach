@@ -164,9 +164,11 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
     cardio_block = state.get("cardio_context")
     memory_block = state.get("memory_context")
     health_block = state.get("health_context")
+    patterns_block = state.get("patterns_context")
 
     if not dnc and not workout and not favs and not dietary.get("has_any") \
-            and not cardio_block and not memory_block and not health_block:
+            and not cardio_block and not memory_block and not health_block \
+            and not patterns_block:
         return ""
 
     lines = ["TODAY'S CONTEXT (use when relevant; do NOT narrate it):"]
@@ -188,6 +190,12 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
     glucose_block = state.get("glucose_context")
     if glucose_block:
         lines.append(f"• {str(glucose_block).strip()}")
+
+    # Nutrition overhaul — food↔feeling/tag/digestion correlations + goal gaps.
+    # Already self-formatted (header + bullets + guidance) by
+    # fetch_patterns_context, so append verbatim rather than re-bulleting.
+    if patterns_block:
+        lines.append(str(patterns_block).strip())
 
     if dnc:
         cal_target = dnc.get("target_calories")

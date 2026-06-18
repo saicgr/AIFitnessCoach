@@ -69,6 +69,12 @@ class NutritionAgentState(TypedDict):
     # Gap 15 — glucose↔food correlation block (diabetes users; "" otherwise).
     glucose_context: Optional[str]
 
+    # Nutrition overhaul — food↔feeling/tag/digestion correlations + goal gaps
+    # (from fetch_patterns_context). Lets the coach answer "why do I feel bloated
+    # after healthy meals?" grounded in the user's real foods/tags. None when
+    # there's no signal; never blocks the path.
+    patterns_context: Optional[str]
+
     # Cycle context (Phase F) — phase string + compact summary only, so
     # "what should I eat today" is cycle-aware. Never raw hormone_logs rows.
     cycle_phase: Optional[str]

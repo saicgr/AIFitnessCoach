@@ -336,6 +336,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         logged_at: Optional[str] = None,
         notes: Optional[str] = None,
         food_items: Optional[list] = None,
+        tags: Optional[list] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Update fields on an existing food log. All fields are optional
@@ -381,6 +382,10 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             update_data["notes"] = notes
         if food_items is not None:
             update_data["food_items"] = food_items
+        # Nutrition overhaul — open-vocab food tags (food_logs.tags, mig 2258).
+        # An empty list explicitly clears tags; None leaves them untouched.
+        if tags is not None:
+            update_data["tags"] = tags
 
         # Only updated_at means nothing to change
         if len(update_data) <= 1:

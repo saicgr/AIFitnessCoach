@@ -296,6 +296,191 @@ async def _recovery_target_adjustment(
         return None
 
 
+# ── Patterns context (food↔feeling correlations + goal gaps) ────────────────
+
+async def fetch_patterns_context(
+    user_id: str,
+    days: int = 90,
+) -> Optional[str]:
+    """Summarize the user's food↔feeling/tag/digestion patterns + goal gaps.
+
+    Calls the same correlation engine that backs the Nutrition > Patterns tab —
+    ``get_food_patterns`` (mood/energy + per-symptom counts), the symptom/tag
+    correlation RPC, the digestion-pattern RPC — plus a 4wk-vs-9wk goal-vs-actual
+    comparison, and renders a COMPACT prompt block so the nutrition coach can
+    answer "why do I feel bloated after healthy meals?" with the user's real
+    foods/tags. This is the only place the agent sees patterns; today's day-
+    context (calories/macros) stays separate.
+
+    Fail-open: returns ``None`` when there's no signal or on any error — the
+    coach path is never blocked by patterns being absent. The returned string is
+    short (top draining/energizing foods, dominant symptoms, tag→symptom links,
+    gut links, notable goal gaps) with built-in reasoning guidance.
+    """
+    try:
+        db = get_supabase_db()
+        client = db.client
+
+        # Run the three correlation RPCs concurrently (all read food_logs /
+        # digestion_logs over the same window). Goals come from a cheap select.
+        def _rpc(name, params):
+            return client.rpc(name, params).execute()
+
+        import asyncio as _asyncio
+        food_res, corr_res, dig_res = await _asyncio.gather(
+            _asyncio.to_thread(
+                _rpc, "get_food_patterns",
+                {"p_user_id": user_id, "p_days": days, "p_min_logs": 3,
+                 "p_include_inferred": True, "p_food_names": None},
+            ),
+            _asyncio.to_thread(
+                _rpc, "get_symptom_tag_correlations",
+                {"p_user_id": user_id, "p_days": days, "p_min_logs": 2},
+            ),
+            _asyncio.to_thread(
+                _rpc, "get_digestion_patterns",
+                {"p_user_id": user_id, "p_days": days, "p_lag_min_hours": 6,
+                 "p_lag_max_hours": 72, "p_min_logs": 2},
+            ),
+            return_exceptions=True,
+        )
+
+        food_rows = _safe_rows(food_res)
+        corr_rows = _safe_rows(corr_res)
+        dig_rows = _safe_rows(dig_res)
+
+        lines: List[str] = []
+
+        # Top draining / energizing foods (by score).
+        draining = sorted(
+            (r for r in food_rows if float(r.get("negative_score") or 0) >= 0.5),
+            key=lambda r: float(r.get("negative_score") or 0), reverse=True,
+        )[:3]
+        energizing = sorted(
+            (r for r in food_rows
+             if float(r.get("positive_score") or 0) >= 0.5
+             and float(r.get("positive_score") or 0) >= float(r.get("negative_score") or 0)),
+            key=lambda r: float(r.get("positive_score") or 0), reverse=True,
+        )[:3]
+        if draining:
+            parts = []
+            for r in draining:
+                sym = r.get("dominant_symptom")
+                parts.append(f"{r.get('food_name')}" + (f" → often {sym}" if sym else ""))
+            lines.append("• Foods that seem to DRAIN you: " + "; ".join(parts))
+        if energizing:
+            lines.append(
+                "• Foods that seem to ENERGIZE you: "
+                + ", ".join(r.get("food_name") for r in energizing)
+            )
+
+        # Tag → symptom correlations (the "dairy → bloated 75%" insight).
+        tag_links = [c for c in corr_rows if c.get("bucket_kind") == "tag"]
+        tag_links.sort(key=lambda c: (int(c.get("occurrences") or 0), float(c.get("pct") or 0)), reverse=True)
+        for c in tag_links[:3]:
+            lines.append(
+                f"• When you eat {c.get('tag')}: '{c.get('symptom')}' "
+                f"{c.get('occurrences')}/{c.get('total_with_signal')} times "
+                f"({c.get('pct')}%)"
+            )
+
+        # Digestion: tags preceding irregular days.
+        dig_tags = [d for d in dig_rows if d.get("result_kind") == "tag_correlation"]
+        dig_tags.sort(key=lambda d: float(d.get("irregular_pct") or 0), reverse=True)
+        for d in dig_tags[:2]:
+            if int(d.get("irregular_count") or 0) > 0:
+                lines.append(
+                    f"• Gut: {d.get('tag')} preceded an irregular day "
+                    f"{d.get('irregular_count')}/{d.get('total_count')} times "
+                    f"({d.get('irregular_pct')}%)"
+                )
+
+        # Goal-vs-actual averages (4wk current vs 9wk baseline-ish). Light:
+        # compare a 28-day intake average to the user's goals.
+        goal_gap = await _asyncio.to_thread(_fetch_goal_gap_summary, client, user_id)
+        if goal_gap:
+            lines.append(goal_gap)
+
+        if not lines:
+            return None
+
+        header = (
+            "FOOD↔FEELING PATTERNS (last "
+            f"{days} days — use ONLY to explain how foods make THIS user feel; "
+            "do not narrate as a data dump):"
+        )
+        guidance = (
+            "Guidance: when the user asks why they feel a certain way after "
+            "eating, ground the answer in these real foods/tags. Suggest "
+            "realistic swaps, not rigid plans. Never calorie-shame; frame goal "
+            "gaps as gentle nudges. Correlation ≠ causation — say 'seems to' / "
+            "'often', not 'X causes Y'."
+        )
+        return header + "\n" + "\n".join(lines) + "\n" + guidance
+    except Exception as e:
+        logger.warning(f"fetch_patterns_context skipped for {user_id}: {e}")
+        return None
+
+
+def _safe_rows(res) -> List[Dict[str, Any]]:
+    """Extract .data rows from a possibly-Exception gather result."""
+    if isinstance(res, Exception) or res is None:
+        return []
+    return getattr(res, "data", None) or []
+
+
+def _fetch_goal_gap_summary(client, user_id: str) -> Optional[str]:
+    """Compare ~28-day avg intake (fiber/protein) to goals → one gentle line.
+
+    Sync (runs off the event loop via to_thread). Returns None on no data."""
+    try:
+        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        start = (_dt.now(_tz.utc) - _td(days=28)).isoformat()
+        resp = (
+            client.table("food_logs")
+            .select("logged_at,protein_g,fiber_g")
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .gte("logged_at", start)
+            .execute()
+        )
+        rows = resp.data or []
+        if not rows:
+            return None
+        # Bucket by date for a per-day average.
+        per_day: Dict[str, Dict[str, float]] = {}
+        for r in rows:
+            d = (r.get("logged_at") or "")[:10]
+            b = per_day.setdefault(d, {"protein": 0.0, "fiber": 0.0})
+            b["protein"] += float(r.get("protein_g") or 0)
+            b["fiber"] += float(r.get("fiber_g") or 0)
+        n = len(per_day) or 1
+        avg_protein = round(sum(v["protein"] for v in per_day.values()) / n)
+        avg_fiber = round(sum(v["fiber"] for v in per_day.values()) / n)
+
+        goals_resp = (
+            client.table("nutrition_preferences")
+            .select("target_protein_g,target_fiber_g")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        goals = (goals_resp.data if goals_resp else None) or {}
+        gaps = []
+        fiber_goal = goals.get("target_fiber_g") or 25
+        if avg_fiber < fiber_goal - 3:
+            gaps.append(f"fiber {avg_fiber}g/day vs {fiber_goal}g goal")
+        protein_goal = goals.get("target_protein_g")
+        if protein_goal and avg_protein < protein_goal - 10:
+            gaps.append(f"protein {avg_protein}g/day vs {protein_goal}g goal")
+        if not gaps:
+            return None
+        return "• Goal gaps (28-day avg): " + "; ".join(gaps)
+    except Exception as e:
+        logger.debug(f"goal gap summary skipped for {user_id}: {e}")
+        return None
+
+
 # ── Recent favorites ───────────────────────────────────────────────────────
 
 async def fetch_recent_favorites(

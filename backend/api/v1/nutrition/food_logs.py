@@ -134,6 +134,8 @@ async def list_food_logs(
                 is_ultra_processed=log.get("is_ultra_processed"),
                 image_url=resign_food_image_url(log.get("image_url")),
                 idempotency_key=log.get("idempotency_key"),
+                tags=log.get("tags"),
+                symptoms=log.get("symptoms"),
                 created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
             ))
 
@@ -207,6 +209,8 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             is_ultra_processed=log.get("is_ultra_processed"),
             image_url=log.get("image_url"),
             idempotency_key=log.get("idempotency_key"),
+            tags=log.get("tags"),
+            symptoms=log.get("symptoms"),
             created_at=to_utc_iso(log.get("created_at") or log.get("logged_at")),
         )
 
@@ -290,10 +294,20 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
             logged_at=body.logged_at,
             notes=body.notes,
             food_items=body.food_items,
+            tags=body.tags,
         )
 
         if not updated:
             raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        # Nutrition overhaul — tags feed the correlation engine + Journal chips;
+        # bust the Patterns caches so they reflect the new tags. Best-effort.
+        if body.tags is not None:
+            try:
+                from api.v1.nutrition.food_patterns import invalidate_patterns_cache
+                await invalidate_patterns_cache(str(user_id))
+            except Exception as inv_err:
+                logger.debug(f"patterns cache bust skipped (tags update): {inv_err}")
 
         # Persist any per-field audit rows alongside the update. Audit writes
         # must never fail the update — they are best-effort.
@@ -454,6 +468,10 @@ async def update_food_log_mood(log_id: str, body: UpdateMoodRequest, current_use
             update_data["mood_after"] = body.mood_after
         if body.energy_level is not None:
             update_data["energy_level"] = max(1, min(5, body.energy_level))
+        # Nutrition overhaul — structured post-meal symptoms (food_logs.symptoms,
+        # migration 2258). Optional; an empty list explicitly clears them.
+        if body.symptoms is not None:
+            update_data["symptoms"] = body.symptoms
 
         if not update_data:
             return {"status": "no_changes", "id": log_id}
@@ -466,6 +484,14 @@ async def update_food_log_mood(log_id: str, body: UpdateMoodRequest, current_use
 
         if not result.data:
             raise HTTPException(status_code=404, detail="Food log not found or not owned by user")
+
+        # Symptoms/mood feed the correlation engine → bust the Patterns caches so
+        # the next /food-patterns read reflects this check-in. Best-effort.
+        try:
+            from api.v1.nutrition.food_patterns import invalidate_patterns_cache
+            await invalidate_patterns_cache(str(user_id))
+        except Exception as inv_err:
+            logger.debug(f"patterns cache bust skipped (mood update): {inv_err}")
 
         return {"status": "updated", "id": log_id, **update_data}
 

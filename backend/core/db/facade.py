@@ -652,6 +652,7 @@ class SupabaseDB:
         logged_at: Optional[str] = None,
         notes: Optional[str] = None,
         food_items: Optional[list] = None,
+        tags: Optional[list] = None,
     ) -> Optional[Dict[str, Any]]:
         """Update macros on an existing food log."""
         return self._nutrition_db.update_food_log(
@@ -661,6 +662,7 @@ class SupabaseDB:
             fiber_g=fiber_g, weight_g=weight_g,
             meal_type=meal_type, logged_at=logged_at,
             notes=notes, food_items=food_items,
+            tags=tags,
         )
 
     def delete_food_log(self, log_id: str) -> bool:

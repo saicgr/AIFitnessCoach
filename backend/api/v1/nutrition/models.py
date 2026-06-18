@@ -50,6 +50,12 @@ class FoodLogResponse(BaseModel):
     # Origin-of-log tracking
     source_type: Optional[str] = None  # 'image' | 'barcode' | 'text' | 'chat' | 'restaurant' | 'parse_app_screenshot' | 'parse_nutrition_label'
     user_query: Optional[str] = None   # Originating user input (search query, caption, chat message, product name, etc.)
+    # Nutrition overhaul (migration 2258) — open-vocab capture-layer signals.
+    # tags: user food tags (dairy/gluten/spicy/...); symptoms: post-meal feelings
+    # (bloated/energized/...). NULL when never set. Surfaced so Journal/Patterns
+    # render chips and the correlation engine sees them on the read round-trip.
+    tags: Optional[List[str]] = None
+    symptoms: Optional[List[str]] = None
     # Client double-log guard (migration 2245). Returned so the app can reconcile
     # an optimistic row to this authoritative server row BY KEY — the optimistic
     # row's synthetic id never matches the server UUID, so without the key a
@@ -128,6 +134,9 @@ class UpdateFoodLogRequest(BaseModel):
     food_items: Optional[List[dict]] = None
     # Per-field item edits recorded alongside the update for audit/analytics
     item_edits: Optional[List[FoodItemEdit]] = None
+    # Nutrition overhaul — open-vocab food tags written from the FoodTagChips
+    # widget ({'tags': [...]}). Optional/fail-open: omitted ⇒ unchanged.
+    tags: Optional[List[str]] = None
 
 
 class UpdateMoodRequest(BaseModel):
@@ -135,6 +144,9 @@ class UpdateMoodRequest(BaseModel):
     mood_before: Optional[str] = None
     mood_after: Optional[str] = None
     energy_level: Optional[int] = None  # 1-5
+    # Nutrition overhaul — structured post-meal feelings from the post-meal
+    # review sheet, sent alongside mood/energy. Open-vocab; optional/fail-open.
+    symptoms: Optional[List[str]] = None
 
 
 # ── Summary Models ─────────────────────────────────────���─────────
@@ -924,6 +936,27 @@ class FoodReportResponse(BaseModel):
 
 # ── Food Patterns (Nutrition > Patterns tab) ─────────────────────
 
+class SymptomCounts(BaseModel):
+    """Per-symptom occurrence counts for a single food (nutrition overhaul).
+
+    Sourced from the extended get_food_patterns RPC (migration 2260) which
+    unions the legacy mood vocabulary with the open-vocab food_logs.symptoms[]
+    array. All default to 0 so a food with no symptom signal is well-formed."""
+    bloated: int = 0
+    tired: int = 0
+    stressed: int = 0
+    sluggish: int = 0
+    foggy: int = 0
+    nauseous: int = 0
+    energized: int = 0
+    satisfied: int = 0
+    good_digestion: int = 0
+    # Percentages of this food's check-in logs that carried the symptom.
+    bloated_pct: float = 0.0
+    tired_pct: float = 0.0
+    energized_pct: float = 0.0
+
+
 class FoodPatternEntry(BaseModel):
     """A single food's mood/energy aggregate over the last N days."""
     food_name: str
@@ -939,6 +972,9 @@ class FoodPatternEntry(BaseModel):
     last_logged_at: Optional[str] = None
     negative_score: float
     positive_score: float
+    # Nutrition overhaul — per-symptom counts (additive; absent on legacy data
+    # ⇒ all zeros). Lets the UI show "bloated ×4" not just a dominant symptom.
+    symptom_counts: SymptomCounts = Field(default_factory=SymptomCounts)
 
 
 class FoodPatternsMoodResponse(BaseModel):
@@ -950,6 +986,146 @@ class FoodPatternsMoodResponse(BaseModel):
     oldest_log_date: Optional[str] = None
     checkin_disabled: bool = False
     inference_enabled: bool = True
+    # Nutrition overhaul — flattened symptom→food and tag→symptom correlation
+    # buckets from get_symptom_tag_correlations. Empty when there is no signal.
+    symptom_correlations: List["SymptomCorrelationEntry"] = []
+    tag_correlations: List["TagCorrelationEntry"] = []
+    # FE-D card shape — grouped buckets. `symptom_buckets`: one per symptom, its
+    # top contributing foods. `tag_buckets`: one per tag, its top symptoms-as-
+    # foods (the tag's name carried as the food entry). Same `PatternBucket`
+    # shape the digestion endpoint's `correlations` uses, so the card renders
+    # identically across Patterns sections.
+    symptom_buckets: List["PatternBucket"] = []
+    tag_buckets: List["PatternBucket"] = []
+
+
+class BucketFood(BaseModel):
+    """One contributing food inside a PatternBucket."""
+    food_name: str
+    image_url: Optional[str] = None
+    occurrences: int = 0
+    last_logged_at: Optional[str] = None
+
+
+class PatternBucket(BaseModel):
+    """A grouped correlation bucket for the Patterns cards.
+
+    `key` is the machine token (e.g. 'bloated', 'dairy'); `label` is the
+    human display; `count` is the bucket's total occurrences; `confidence_pct`
+    is how strongly the bucket's foods co-occur with it; `foods` are the top
+    contributors (image-first)."""
+    key: str
+    label: str
+    count: int = 0
+    confidence_pct: float = 0.0
+    foods: List[BucketFood] = []
+
+
+class SymptomCorrelationEntry(BaseModel):
+    """One (symptom, food) co-occurrence bucket — 'before you felt bloated'."""
+    symptom: str
+    food_name: str
+    occurrences: int                   # meals where this food preceded the symptom
+    total_with_signal: int             # meals with this food that had ANY check-in
+    pct: float                         # occurrences / total_with_signal * 100
+    last_image_url: Optional[str] = None
+    last_logged_at: Optional[str] = None
+
+
+class TagCorrelationEntry(BaseModel):
+    """One (tag, symptom) co-occurrence bucket — 'dairy → bloated 75%'."""
+    tag: str
+    symptom: str
+    occurrences: int
+    total_with_signal: int
+    pct: float
+    last_image_url: Optional[str] = None
+    last_logged_at: Optional[str] = None
+
+
+# ── Digestion / gut-health (Phase 6) ─────────────────────────────
+
+class DigestionLogRequest(BaseModel):
+    """POST /nutrition/digestion — one Bristol-scale gut-health entry.
+
+    One-tap-friendly: only bristol_type is required. Everything else optional.
+    `user_id` is accepted for the client contract but the OWNING user is always
+    taken from the JWT, never trusted from the body."""
+    bristol_type: int = Field(..., ge=1, le=7)
+    # FE sends 1-3; DB CHECK allows 1-5, so accept the wider range (a 1-3 client
+    # value validates fine and a future 4-5 won't 422).
+    urgency: Optional[int] = Field(default=None, ge=1, le=5)
+    duration_seconds: Optional[int] = Field(default=None, ge=0)
+    tags: Optional[List[str]] = None
+    notes: Optional[str] = Field(default=None, max_length=1000)
+    # ISO-8601; defaults to server "now" when omitted (matches food-log path).
+    logged_at: Optional[str] = Field(default=None, max_length=40)
+    source: Optional[str] = Field(default="manual", max_length=30)
+    # Accepted but ignored for ownership — JWT user wins (see handler).
+    user_id: Optional[str] = None
+    # Client double-log guard (migration 2261). Reused across an offline replay
+    # so the SAME key dedupes against the unique (user_id, idempotency_key) idx.
+    idempotency_key: Optional[str] = Field(default=None, max_length=64)
+
+
+class DigestionLogResponse(BaseModel):
+    """A single digestion_logs row."""
+    id: str
+    user_id: str
+    logged_at: str
+    bristol_type: int
+    urgency: Optional[int] = None
+    duration_seconds: Optional[int] = None
+    tags: Optional[List[str]] = None
+    notes: Optional[str] = None
+    source: Optional[str] = None
+    idempotency_key: Optional[str] = None
+    created_at: str
+
+
+class DigestionRegularityPoint(BaseModel):
+    """One day in the regularity series."""
+    date: str                          # YYYY-MM-DD
+    worst_bristol: int                 # most-extreme bristol that day
+    avg_bristol: float
+    entry_count: int
+
+
+class DigestionTagCorrelation(BaseModel):
+    """A tag's correlation with irregular gut days over lagged (~72h) windows."""
+    tag: str
+    irregular_count: int               # entries preceded by tag that were irregular
+    regular_count: int
+    total_count: int
+    irregular_pct: float               # irregular_count / total_count * 100
+
+
+class DigestionSeriesPoint(BaseModel):
+    """One day in the FE-D regularity series ({date, count, avg_bristol})."""
+    date: str
+    count: int = 0
+    avg_bristol: float = 0.0
+
+
+class DigestionPatternsResponse(BaseModel):
+    """GET /nutrition/food-patterns/digestion/{user_id} response.
+
+    Carries both the original keys (regularity_series / tag_correlations /
+    total_entries) AND the FE-D card-shaped aliases (series / correlations /
+    avg_per_day / regularity_pct / typical_bristol / days_window) so both the
+    insights surface and the Patterns gut card render from one call."""
+    days_window: int
+    lag_min_hours: float
+    lag_max_hours: float
+    regularity_series: List[DigestionRegularityPoint] = []
+    tag_correlations: List[DigestionTagCorrelation] = []
+    total_entries: int = 0
+    # ── FE-D card shape ──
+    series: List[DigestionSeriesPoint] = []
+    correlations: List["PatternBucket"] = []
+    avg_per_day: float = 0.0
+    regularity_pct: float = 0.0        # % of entries in the ideal 3-5 band
+    typical_bristol: Optional[int] = None  # modal bristol_type
 
 
 class TopFoodEntry(BaseModel):
@@ -998,6 +1174,69 @@ class MacrosSummaryResponse(BaseModel):
     fat_goal: Optional[int] = None
     fiber_goal: Optional[int] = None
     daily_series: List[DailyMacroSeriesPoint]
+    # Nutrition overhaul (Phase 2D) — baseline comparison. Populated only when
+    # `baseline=true` is passed: the avg over the PRIOR window (same length,
+    # immediately before the current window — e.g. current 4wk vs prior weeks)
+    # plus per-macro delta + trend ("up"/"down"/"flat"). All null/absent when
+    # not requested or when there's no prior-window data (fail-open).
+    baseline: Optional["MacrosBaseline"] = None
+    # ── FE-D card shape (populated when include_baseline=true) ──
+    # `goals` + `nutrient_tracks` are per-nutrient rows the gentle-changes cards
+    # render directly; `current_label`/`baseline_label` are the human window
+    # captions ("This month" / "Prev 4 wks").
+    goals: List["NutrientGoal"] = []
+    nutrient_tracks: List["NutrientTrack"] = []
+    current_label: Optional[str] = None
+    baseline_label: Optional[str] = None
+
+
+class NutrientGoal(BaseModel):
+    """One nutrient's current-vs-goal snapshot for the gentle-changes cards."""
+    key: str                           # 'calories' | 'protein' | 'fiber' | ...
+    label: str
+    current: float = 0.0
+    goal: Optional[float] = None
+    unit: str = ""
+
+
+class NutrientTrack(BaseModel):
+    """One nutrient's current vs baseline + its per-day series (FE-D)."""
+    key: str
+    label: str
+    current: float = 0.0
+    goal: Optional[float] = None
+    baseline: Optional[float] = None
+    unit: str = ""
+    series: List[float] = []           # per-day values over the current window
+
+
+class MacrosBaseline(BaseModel):
+    """Prior-window averages + deltas for the 'bigger picture' trend view.
+
+    `current_*` mirrors the response's avg_* for convenience; `prior_*` is the
+    average over the immediately-preceding window of the same length; `*_delta`
+    is current - prior; `*_trend` is one of up | down | flat (|delta| < epsilon
+    ⇒ flat). Days counted in each window are surfaced so the UI can disclose
+    low-confidence comparisons."""
+    prior_start_date: str
+    prior_end_date: str
+    prior_days_counted: int
+    current_days_counted: int
+    prior_avg_calories: int = 0
+    prior_avg_protein_g: float = 0
+    prior_avg_carbs_g: float = 0
+    prior_avg_fat_g: float = 0
+    prior_avg_fiber_g: float = 0
+    calories_delta: int = 0
+    protein_delta_g: float = 0
+    carbs_delta_g: float = 0
+    fat_delta_g: float = 0
+    fiber_delta_g: float = 0
+    calories_trend: str = "flat"
+    protein_trend: str = "flat"
+    carbs_trend: str = "flat"
+    fat_trend: str = "flat"
+    fiber_trend: str = "flat"
 
 
 class PatternsHistoryResponse(BaseModel):
@@ -1017,3 +1256,10 @@ class InferenceConfirmRequest(BaseModel):
         if v not in ("confirm", "dismiss"):
             raise ValueError("action must be 'confirm' or 'dismiss'")
         return v
+
+
+# Resolve forward references for models that reference classes defined later in
+# this module (nutrition overhaul additive fields).
+FoodPatternsMoodResponse.model_rebuild()
+MacrosSummaryResponse.model_rebuild()
+DigestionPatternsResponse.model_rebuild()
