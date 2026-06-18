@@ -153,6 +153,23 @@ class CardEditorController extends ChangeNotifier {
   void setBackground(CardBackground background) =>
       _mutate((d) => d.copyWith(background: background));
 
+  /// Transiently strips the background to nothing (transparent), runs [action]
+  /// (a capture), then restores the original background — **without** recording
+  /// an undo step. Backs the editor's transparent-PNG "cutout" sticker export
+  /// (F6): the captured PNG carries alpha, the working doc is untouched.
+  Future<T> withTransparentBackground<T>(Future<T> Function() action) async {
+    final original = _doc.background;
+    _doc = _doc.copyWith(
+        background: const CardBackground(kind: CardBackgroundKind.none));
+    notifyListeners();
+    try {
+      return await action();
+    } finally {
+      _doc = _doc.copyWith(background: original);
+      notifyListeners();
+    }
+  }
+
   // ─────────────────────────── Accent / palette ──────────────────────────
 
   /// Recolors the whole document's accent — every accent-bound element

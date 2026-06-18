@@ -43,6 +43,7 @@ import 'widgets/sauna_dialog.dart';
 import 'widgets/workout_ai_recap_card.dart'; // B8 — merged post-workout Coach card (recap + muscles + pills + level-up)
 import 'widgets/share_templates/_share_common.dart';
 import '../../shareables/adapters/workout_adapter.dart';
+import '../../shareables/shareable_data.dart';
 import '../../shareables/shareable_sheet.dart';
 // ShareableTemplate.prs — land the instant PR share directly on the PRs card.
 import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
@@ -60,6 +61,11 @@ import '../../data/repositories/sauna_repository.dart';
 import '../../data/services/health_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../data/repositories/workout_photos_repository.dart';
+import '../../data/repositories/strava_export_repository.dart';
 import 'widgets/complete_screen_helper_widgets.dart';
 import '../../widgets/exercise_image.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -320,6 +326,19 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   // Sauna logging state
   int? _saunaMinutes;
   int? _saunaCalories;
+
+  // Optional post-workout photo (Workstream C). Local file path of the picked
+  // image — set immediately on capture so the Share flow can pre-select it via
+  // Shareable.customPhotoPath, while the S3 upload runs in the background.
+  String? _capturedPhotoPath;
+  bool _isUploadingPhoto = false;
+
+  // Workstream E4 — outbound Strava share. Connection capability is loaded
+  // lazily; the "Share to Strava" affordance only renders once we know the
+  // user has an active Strava account. `_sharingToStrava` gates the button
+  // while the manual push round-trips.
+  StravaSharePreference? _stravaPref;
+  bool _sharingToStrava = false;
 
   /// Surface 6c — backfill HR from Apple Health / Health Connect when the
   /// live BLE/Watch capture produced no samples. Reads HR for the workout
@@ -756,6 +775,22 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+              ]
+              // F7 — milestone auto-card. When this session crossed a workout
+              // milestone (but set no PR — PR share already covers that case),
+              // surface a one-tap "Share this milestone" that lands on the
+              // milestoneCard preset.
+              else if (_getWorkoutMilestone() != null) ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ZealovaButton(
+                    label: 'Share this milestone',
+                    onTap: _showMilestoneShareSheet,
+                    variant: ZealovaButtonVariant.ghost,
+                    trailingIcon: Icons.workspace_premium_rounded,
+                  ),
+                ),
+                const SizedBox(height: 10),
               ],
               Row(
                 children: [
@@ -872,6 +907,17 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
                   // XP + streak — the two-cell earned/streak row (Frame 2).
                   // Neutral numerals keep the single orange budget on DONE.
                   _buildXpStreakRow().animate().fadeIn(delay: 240.ms),
+
+                  // Optional post-workout photo (Workstream C). A low-key
+                  // affordance — never competes with the DONE CTA's accent;
+                  // once captured it pre-selects into the Share compose flow.
+                  const SizedBox(height: 12),
+                  _buildAddPhotoSection().animate().fadeIn(delay: 260.ms),
+
+                  // Workstream E4 — "Share to Strava" affordance (renders only
+                  // when a Strava account is connected). Ghost-styled so it
+                  // never competes with the DONE CTA's accent.
+                  _buildShareToStravaSection().animate().fadeIn(delay: 280.ms),
 
                   // Heart Rate Section — live watch/BLE capture takes priority;
                   // otherwise the Apple Health / Health Connect backfill (6c).

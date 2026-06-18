@@ -27,6 +27,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
+import '../../data/repositories/slideshow_repository.dart';
+import '../shareables/transformation_video_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'saved_hub_screen.dart';
 import 'weekly_checkin_sheet.dart';
@@ -1151,6 +1153,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => SavedHubScreen(userId: _userId!, isDark: isDark),
+                    ),
+                  );
+                },
+              ),
+              // Transformation video — stitch the user's logged-meal photos into
+              // a date-ordered montage (server-rendered MP4). Mirrors the
+              // progress-photo transformation entry in Body Analyzer.
+              ListTile(
+                leading: Icon(Icons.movie_creation_outlined, color: textSecondary),
+                title: Text(
+                  'Transformation video',
+                  style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  'Turn your meal photos into a montage',
+                  style: TextStyle(color: textSecondary, fontSize: 12),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const TransformationVideoScreen(
+                        source: SlideshowSource.food,
+                      ),
                     ),
                   );
                 },

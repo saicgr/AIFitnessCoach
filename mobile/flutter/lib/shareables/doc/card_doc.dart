@@ -129,24 +129,32 @@ class DataBinding {
 
 // ─────────────────────────── Element geometry ──────────────────────────────
 
+/// A faux-3D placement of an element, mimicking Gravl's "perspective" sticker
+/// placement. [flat] = no tilt; the wall/floor variants tilt the element on a
+/// `Matrix4` so it reads like it sits on a surface. Append-only for JSON safety.
+enum CardPerspective { flat, leftWall, rightWall, floor }
+
 /// Geometry of one element in the card's fractional design space.
 ///
 /// [position] is the element CENTER, fractional 0..1 of the canvas.
 /// [size] is fractional 0..1 of the canvas (width, height).
 /// [rotation] is radians. [anchor] pins the element to a region of the canvas
 /// so it survives an aspect-ratio change (used by multi-aspect export).
+/// [perspective] applies a faux-3D wall/floor tilt (see [CardPerspective]).
 @immutable
 class ElementTransform {
   final Offset position;
   final Size size;
   final double rotation;
   final Alignment anchor;
+  final CardPerspective perspective;
 
   const ElementTransform({
     this.position = const Offset(0.5, 0.5),
     this.size = const Size(0.6, 0.15),
     this.rotation = 0.0,
     this.anchor = Alignment.center,
+    this.perspective = CardPerspective.flat,
   });
 
   ElementTransform copyWith({
@@ -154,12 +162,14 @@ class ElementTransform {
     Size? size,
     double? rotation,
     Alignment? anchor,
+    CardPerspective? perspective,
   }) =>
       ElementTransform(
         position: position ?? this.position,
         size: size ?? this.size,
         rotation: rotation ?? this.rotation,
         anchor: anchor ?? this.anchor,
+        perspective: perspective ?? this.perspective,
       );
 
   Map<String, Object?> toJson() => {
@@ -167,6 +177,7 @@ class ElementTransform {
         'size': _sizeToJson(size),
         'rotation': rotation,
         'anchor': {'x': anchor.x, 'y': anchor.y},
+        'perspective': perspective.name,
       };
 
   factory ElementTransform.fromJson(Object? v) {
@@ -180,6 +191,8 @@ class ElementTransform {
           ? Alignment((a['x'] as num?)?.toDouble() ?? 0.0,
               (a['y'] as num?)?.toDouble() ?? 0.0)
           : Alignment.center,
+      perspective: _enumFromJson(
+          v['perspective'], CardPerspective.values, CardPerspective.flat),
     );
   }
 }
@@ -279,6 +292,11 @@ class ElementEffects {
 
 enum CardBackgroundKind { solid, linearGradient, photo, blurredPhoto, none }
 
+/// A non-destructive photo treatment applied to a background photo or a photo
+/// element (Gravl-style Original / Darker / B&W, plus warm/cool/fade). The
+/// concrete [ColorFilter] is built in the renderer. Append-only for JSON safety.
+enum PhotoFilter { original, darker, bw, warm, cool, fade }
+
 /// A photo source — either bound to a [Shareable] field or a static path the
 /// user picked inside the editor.
 @immutable
@@ -322,6 +340,7 @@ class CardBackground {
   final Alignment end;
   final CardPhotoRef? photo;
   final BoxFit photoFit;
+  final PhotoFilter filter;
 
   const CardBackground({
     this.kind = CardBackgroundKind.solid,
@@ -331,6 +350,7 @@ class CardBackground {
     this.end = Alignment.bottomCenter,
     this.photo,
     this.photoFit = BoxFit.cover,
+    this.filter = PhotoFilter.original,
   });
 
   static const CardBackground dark =
@@ -344,6 +364,7 @@ class CardBackground {
     Alignment? end,
     CardPhotoRef? photo,
     BoxFit? photoFit,
+    PhotoFilter? filter,
     bool clearStops = false,
     bool clearPhoto = false,
   }) =>
@@ -355,6 +376,7 @@ class CardBackground {
         end: end ?? this.end,
         photo: clearPhoto ? null : (photo ?? this.photo),
         photoFit: photoFit ?? this.photoFit,
+        filter: filter ?? this.filter,
       );
 
   Map<String, Object?> toJson() => {
@@ -365,6 +387,7 @@ class CardBackground {
         'end': {'x': end.x, 'y': end.y},
         if (photo != null) 'photo': photo!.toJson(),
         'photoFit': photoFit.name,
+        'filter': filter.name,
       };
 
   factory CardBackground.fromJson(Object? v) {
@@ -391,6 +414,7 @@ class CardBackground {
           : Alignment.bottomCenter,
       photo: v['photo'] != null ? CardPhotoRef.fromJson(v['photo']) : null,
       photoFit: _enumFromJson(v['photoFit'], BoxFit.values, BoxFit.cover),
+      filter: _enumFromJson(v['filter'], PhotoFilter.values, PhotoFilter.original),
     );
   }
 }
@@ -581,6 +605,10 @@ class TextProps extends ElementProps {
   final String? prefix;
   final String? suffix;
 
+  /// Gravl-style "marker" highlight — a per-line block painted behind the text
+  /// glyphs. Null = no highlight (the plain / glow variants).
+  final Color? highlightColor;
+
   const TextProps({
     this.literal = '',
     this.binding = DataBinding.none,
@@ -595,6 +623,7 @@ class TextProps extends ElementProps {
     this.sizeMode = TextSizeMode.hugContent,
     this.prefix,
     this.suffix,
+    this.highlightColor,
   });
 
   @override
@@ -614,6 +643,8 @@ class TextProps extends ElementProps {
     TextSizeMode? sizeMode,
     String? prefix,
     String? suffix,
+    Color? highlightColor,
+    bool clearHighlight = false,
   }) =>
       TextProps(
         literal: literal ?? this.literal,
@@ -629,6 +660,8 @@ class TextProps extends ElementProps {
         sizeMode: sizeMode ?? this.sizeMode,
         prefix: prefix ?? this.prefix,
         suffix: suffix ?? this.suffix,
+        highlightColor:
+            clearHighlight ? null : (highlightColor ?? this.highlightColor),
       );
 
   @override
@@ -646,6 +679,7 @@ class TextProps extends ElementProps {
         'sizeMode': sizeMode.name,
         if (prefix != null) 'prefix': prefix,
         if (suffix != null) 'suffix': suffix,
+        if (highlightColor != null) 'highlightColor': _colorToJson(highlightColor!),
       };
 
   factory TextProps.fromJson(Map v) => TextProps(
@@ -663,6 +697,9 @@ class TextProps extends ElementProps {
             v['sizeMode'], TextSizeMode.values, TextSizeMode.hugContent),
         prefix: v['prefix'] as String?,
         suffix: v['suffix'] as String?,
+        highlightColor: v['highlightColor'] != null
+            ? _colorFromJson(v['highlightColor'])
+            : null,
       );
 }
 
@@ -678,6 +715,7 @@ class PhotoProps extends ElementProps {
   final double cornerRadius;
   final Color? frameColor;
   final double frameWidth;
+  final PhotoFilter filter;
 
   const PhotoProps({
     this.source = const CardPhotoRef(),
@@ -686,6 +724,7 @@ class PhotoProps extends ElementProps {
     this.cornerRadius = 24,
     this.frameColor,
     this.frameWidth = 0,
+    this.filter = PhotoFilter.original,
   });
 
   @override
@@ -698,6 +737,7 @@ class PhotoProps extends ElementProps {
     double? cornerRadius,
     Color? frameColor,
     double? frameWidth,
+    PhotoFilter? filter,
     bool clearFrame = false,
   }) =>
       PhotoProps(
@@ -707,6 +747,7 @@ class PhotoProps extends ElementProps {
         cornerRadius: cornerRadius ?? this.cornerRadius,
         frameColor: clearFrame ? null : (frameColor ?? this.frameColor),
         frameWidth: frameWidth ?? this.frameWidth,
+        filter: filter ?? this.filter,
       );
 
   @override
@@ -717,6 +758,7 @@ class PhotoProps extends ElementProps {
         'cornerRadius': cornerRadius,
         if (frameColor != null) 'frameColor': _colorToJson(frameColor!),
         'frameWidth': frameWidth,
+        'filter': filter.name,
       };
 
   factory PhotoProps.fromJson(Map v) => PhotoProps(
@@ -727,6 +769,8 @@ class PhotoProps extends ElementProps {
         frameColor:
             v['frameColor'] != null ? _colorFromJson(v['frameColor']) : null,
         frameWidth: (v['frameWidth'] as num?)?.toDouble() ?? 0,
+        filter:
+            _enumFromJson(v['filter'], PhotoFilter.values, PhotoFilter.original),
       );
 }
 
@@ -1879,6 +1923,10 @@ class RingStatProps extends ElementProps {
   final double labelFontSize;
   final int fontIndex;
 
+  /// When true, the track + progress render as nested rounded hexagons (the
+  /// Gravl "idle HR-zone" sticker) instead of circles.
+  final bool hexagon;
+
   const RingStatProps({
     this.progress = 0.72,
     this.valueBinding = DataBinding.none,
@@ -1893,6 +1941,7 @@ class RingStatProps extends ElementProps {
     this.centerFontSize = 64,
     this.labelFontSize = 18,
     this.fontIndex = 0,
+    this.hexagon = false,
   });
 
   @override
@@ -1912,6 +1961,7 @@ class RingStatProps extends ElementProps {
     double? centerFontSize,
     double? labelFontSize,
     int? fontIndex,
+    bool? hexagon,
   }) =>
       RingStatProps(
         progress: progress ?? this.progress,
@@ -1927,6 +1977,7 @@ class RingStatProps extends ElementProps {
         centerFontSize: centerFontSize ?? this.centerFontSize,
         labelFontSize: labelFontSize ?? this.labelFontSize,
         fontIndex: fontIndex ?? this.fontIndex,
+        hexagon: hexagon ?? this.hexagon,
       );
 
   @override
@@ -1944,6 +1995,7 @@ class RingStatProps extends ElementProps {
         'centerFontSize': centerFontSize,
         'labelFontSize': labelFontSize,
         'fontIndex': fontIndex,
+        'hexagon': hexagon,
       };
 
   factory RingStatProps.fromJson(Map v) => RingStatProps(
@@ -1960,6 +2012,7 @@ class RingStatProps extends ElementProps {
         centerFontSize: (v['centerFontSize'] as num?)?.toDouble() ?? 64,
         labelFontSize: (v['labelFontSize'] as num?)?.toDouble() ?? 18,
         fontIndex: (v['fontIndex'] as num?)?.toInt() ?? 0,
+        hexagon: v['hexagon'] as bool? ?? false,
       );
 }
 

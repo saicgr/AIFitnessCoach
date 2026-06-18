@@ -8,6 +8,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -19,6 +20,7 @@ import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/data_cache_service.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../data/repositories/share_growth_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
@@ -624,6 +626,14 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
             );
           },
         ),
+        // F8 — "Try this recipe": mint a level-scaled public link and hand it
+        // to the system share sheet so a non-user gets the recipe to log.
+        _ActionChip(
+          label: 'Try this',
+          icon: Icons.ios_share_rounded,
+          color: accent,
+          onTap: () => _shareTryThisRecipe(r),
+        ),
         _ActionChip(
           label: AppLocalizations.of(context).workoutHistory,
           icon: Icons.history,
@@ -725,6 +735,27 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Couldn't update favorite: $e")),
+      );
+    }
+  }
+
+  /// F8 — "Try this recipe". Mints a public recipe link
+  /// (`GET /share/recipe-link/{id}`) and hands the https URL to the system
+  /// share sheet so a non-user can open it (and is prompted to install).
+  Future<void> _shareTryThisRecipe(Recipe r) async {
+    HapticService.light();
+    try {
+      final link =
+          await ref.read(shareGrowthRepositoryProvider).recipeLink(widget.recipeId);
+      final url = link.webUrl.isNotEmpty ? link.webUrl : link.shareUrl;
+      if (url.isEmpty) throw Exception('No link');
+      await Share.share('Try "${r.name}" on Zealova: $url');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't create a share link. Please try again."),
+        ),
       );
     }
   }

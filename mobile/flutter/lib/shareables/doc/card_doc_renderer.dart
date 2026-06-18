@@ -63,6 +63,54 @@ class CardDocRenderer extends StatelessWidget {
   }
 }
 
+// ─────────────────────────── Photo filters ─────────────────────────────────
+
+/// Builds the [ColorFilter] for a [PhotoFilter] (null for `original`). Shared
+/// by background photos and photo elements so they read identically.
+ColorFilter? photoColorFilter(PhotoFilter f) {
+  switch (f) {
+    case PhotoFilter.original:
+      return null;
+    case PhotoFilter.darker:
+      // Multiply toward black ~40% — Gravl's "low light" look.
+      return const ColorFilter.mode(Color(0x66000000), BlendMode.darken);
+    case PhotoFilter.bw:
+      return const ColorFilter.matrix(<double>[
+        0.2126, 0.7152, 0.0722, 0, 0, //
+        0.2126, 0.7152, 0.0722, 0, 0, //
+        0.2126, 0.7152, 0.0722, 0, 0, //
+        0, 0, 0, 1, 0,
+      ]);
+    case PhotoFilter.warm:
+      return const ColorFilter.matrix(<double>[
+        1.10, 0, 0, 0, 8, //
+        0, 1.02, 0, 0, 2, //
+        0, 0, 0.90, 0, 0, //
+        0, 0, 0, 1, 0,
+      ]);
+    case PhotoFilter.cool:
+      return const ColorFilter.matrix(<double>[
+        0.92, 0, 0, 0, 0, //
+        0, 1.00, 0, 0, 2, //
+        0, 0, 1.12, 0, 8, //
+        0, 0, 0, 1, 0,
+      ]);
+    case PhotoFilter.fade:
+      // Lift blacks + drop contrast for a washed, filmic look.
+      return const ColorFilter.matrix(<double>[
+        0.78, 0, 0, 0, 28, //
+        0, 0.78, 0, 0, 28, //
+        0, 0, 0.78, 0, 28, //
+        0, 0, 0, 1, 0,
+      ]);
+  }
+}
+
+Widget _withFilter(PhotoFilter f, Widget child) {
+  final cf = photoColorFilter(f);
+  return cf == null ? child : ColorFiltered(colorFilter: cf, child: child);
+}
+
 // ─────────────────────────── Background ────────────────────────────────────
 
 class _Background extends StatelessWidget {
@@ -95,7 +143,8 @@ class _Background extends StatelessWidget {
       case CardBackgroundKind.blurredPhoto:
         final url =
             bg.photo != null ? resolvePhotoUrl(bg.photo!, data) : null;
-        final img = FoodImage(url: url, fit: bg.photoFit);
+        Widget img = FoodImage(url: url, fit: bg.photoFit);
+        img = _withFilter(bg.filter, img);
         if (bg.kind == CardBackgroundKind.blurredPhoto) {
           return ImageFiltered(
             imageFilter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
@@ -167,6 +216,18 @@ class _ElementHost extends StatelessWidget {
       }
     }
 
+    Widget rotated = Transform.rotate(
+      angle: t.rotation,
+      child: RepaintBoundary(child: body),
+    );
+    if (t.perspective != CardPerspective.flat) {
+      rotated = Transform(
+        alignment: Alignment.center,
+        transform: _perspectiveMatrix(t.perspective),
+        child: rotated,
+      );
+    }
+
     return Positioned(
       left: cx - w / 2,
       top: cy - h / 2,
@@ -174,12 +235,26 @@ class _ElementHost extends StatelessWidget {
       height: h,
       child: Opacity(
         opacity: element.opacity.clamp(0.0, 1.0),
-        child: Transform.rotate(
-          angle: t.rotation,
-          child: RepaintBoundary(child: body),
-        ),
+        child: rotated,
       ),
     );
+  }
+
+  /// Faux-3D wall/floor tilt — a perspective `Matrix4` rotated about the X or Y
+  /// axis so the element reads like it sits on a surface (Gravl "perspective").
+  static Matrix4 _perspectiveMatrix(CardPerspective p) {
+    const tilt = 0.62; // radians (~36°)
+    final m = Matrix4.identity()..setEntry(3, 2, 0.0011);
+    switch (p) {
+      case CardPerspective.flat:
+        return m;
+      case CardPerspective.leftWall:
+        return m..rotateY(tilt);
+      case CardPerspective.rightWall:
+        return m..rotateY(-tilt);
+      case CardPerspective.floor:
+        return m..rotateX(tilt);
+    }
   }
 }
 
@@ -248,6 +323,15 @@ class _ElementBody extends StatelessWidget {
       fontSize: p.fontSize * textScale,
       letterSpacing: p.letterSpacing,
       height: p.lineHeight,
+      // Gravl-style "marker" — a highlighter block painted per-line behind the
+      // glyphs (slightly inflated stroke so it reads as a marker, not a fill).
+      background: p.highlightColor == null
+          ? null
+          : (Paint()
+            ..color = p.highlightColor!
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = p.fontSize * textScale * 0.92
+            ..strokeJoin = StrokeJoin.round),
     );
     final text = Text(
       value,
@@ -281,6 +365,7 @@ class _ElementBody extends StatelessWidget {
   Widget _photo(PhotoProps p) {
     final url = resolvePhotoUrl(p.source, data);
     Widget img = FoodImage(url: url, fit: p.fit);
+    img = _withFilter(p.filter, img);
     switch (p.mask) {
       case PhotoMask.circle:
         img = ClipOval(child: img);
@@ -992,6 +1077,7 @@ class _ElementBody extends StatelessWidget {
             ringColor: p.ringColor,
             trackColor: p.trackColor,
             strokeFraction: p.strokeFraction,
+            hexagon: p.hexagon,
           ),
         ),
         FittedBox(
@@ -1498,15 +1584,21 @@ class _RingStatPainter extends CustomPainter {
   final Color ringColor;
   final Color trackColor;
   final double strokeFraction;
+  final bool hexagon;
   const _RingStatPainter({
     required this.progress,
     required this.ringColor,
     required this.trackColor,
     required this.strokeFraction,
+    this.hexagon = false,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (hexagon) {
+      _paintHexagon(canvas, size);
+      return;
+    }
     final sw = size.shortestSide * strokeFraction.clamp(0.02, 0.4);
     final c = size.center(Offset.zero);
     final r = size.shortestSide / 2 - sw / 2;
@@ -1530,12 +1622,70 @@ class _RingStatPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round);
   }
 
+  /// Three nested rounded hexagons — the Gravl idle HR-zone look. The outer ring
+  /// glows in [ringColor]; inner rings are [trackColor]. `progress` lifts the
+  /// outer ring's opacity so it animates from idle → active.
+  void _paintHexagon(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final sw = (size.shortestSide * strokeFraction.clamp(0.02, 0.4)) * 0.55;
+    final baseR = size.shortestSide / 2 - sw;
+    if (baseR <= 0) return;
+    const scales = [1.0, 0.74, 0.5];
+    for (var i = 0; i < scales.length; i++) {
+      final r = baseR * scales[i];
+      final isOuter = i == 0;
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = sw
+        ..strokeJoin = StrokeJoin.round
+        ..color = isOuter
+            ? Color.lerp(trackColor, ringColor, 0.35 + 0.65 * progress)!
+            : trackColor;
+      if (isOuter) {
+        paint.maskFilter = MaskFilter.blur(BlurStyle.normal, sw * 0.6);
+      }
+      canvas.drawPath(_roundedHexPath(c, r, r * 0.16), paint);
+    }
+  }
+
+  /// A flat-top rounded hexagon path centered at [c] with circumradius [r].
+  Path _roundedHexPath(Offset c, double r, double corner) {
+    final pts = <Offset>[
+      for (var i = 0; i < 6; i++)
+        Offset(
+          c.dx + r * math.cos(math.pi / 3 * i - math.pi / 6),
+          c.dy + r * math.sin(math.pi / 3 * i - math.pi / 6),
+        ),
+    ];
+    final path = Path();
+    for (var i = 0; i < 6; i++) {
+      final prev = pts[(i - 1 + 6) % 6];
+      final curr = pts[i];
+      final next = pts[(i + 1) % 6];
+      final toPrev = (prev - curr);
+      final toNext = (next - curr);
+      final lenP = toPrev.distance;
+      final lenN = toNext.distance;
+      final a = curr + toPrev * (corner / lenP);
+      final b = curr + toNext * (corner / lenN);
+      if (i == 0) {
+        path.moveTo(a.dx, a.dy);
+      } else {
+        path.lineTo(a.dx, a.dy);
+      }
+      path.quadraticBezierTo(curr.dx, curr.dy, b.dx, b.dy);
+    }
+    path.close();
+    return path;
+  }
+
   @override
   bool shouldRepaint(_RingStatPainter old) =>
       old.progress != progress ||
       old.ringColor != ringColor ||
       old.trackColor != trackColor ||
-      old.strokeFraction != strokeFraction;
+      old.strokeFraction != strokeFraction ||
+      old.hexagon != hexagon;
 }
 
 class _RingTrioPainter extends CustomPainter {

@@ -5,6 +5,16 @@ import '../core/providers/week_start_provider.dart';
 
 import 'doc/card_doc.dart';
 import 'shareable_data.dart';
+// --- F-cheap viral card presets (deterministic; no AI, no backend) ---
+import 'templates/meal_grade_card_doc.dart';
+import 'templates/zealova_score_card_doc.dart';
+import 'templates/macro_week_heatmap_doc.dart';
+import 'templates/volume_week_heatmap_doc.dart';
+import 'templates/before_after_slider_doc.dart';
+import 'templates/add_yours_card_doc.dart';
+import 'templates/milestone_card_doc.dart';
+import 'templates/day_in_proof_doc.dart';
+import 'templates/body_heatmap_doc.dart';
 import 'templates/achievement_hero_template.dart';
 // --- Editable-card doc-builders (one per migrated template) ---
 import 'templates/achievement_hero_doc.dart';
@@ -438,6 +448,17 @@ enum ShareableTemplate {
   softCard,
   dinerMenu,
   cassetteMeal,
+  // --- F-cheap viral card presets (deterministic) ---
+  mealGrade,
+  zealovaScore,
+  macroWeekHeatmap,
+  volumeWeekHeatmap,
+  bodyHeatmap,
+  beforeAfterSlider,
+  addYoursWorkout,
+  addYoursFood,
+  milestoneCard,
+  dayInProof,
   // --- Social (21) ---
   socialBerealDual,
   socialCalendarInvite,
@@ -1833,6 +1854,124 @@ class ShareableCatalog {
         category: ShareableCategory.playful,
         kinds: const {ShareableKind.foodLog},
         docBuilder: cassetteMealDoc,
+      ),
+      // ─────────── F-cheap viral card presets (deterministic) ───────────
+      // F10 — Meal grade A+…D- (food). Letter grade from the existing health
+      // score (see grade.dart); zero AI.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.mealGrade,
+        name: 'Grade',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.foodLog},
+        docBuilder: mealGradeCardDoc,
+      ),
+      // F12 — Zealova Score + percentile (workout). Composite score + "stronger
+      // than X%" from the Discover leaderboard percentile.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.zealovaScore,
+        name: 'Zealova Score',
+        category: ShareableCategory.graph,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.statsOverview,
+          ShareableKind.strength,
+        },
+        docBuilder: zealovaScoreCardDoc,
+      ),
+      // F11b — Macro week heatmap (food). 7-day adherence grid.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroWeekHeatmap,
+        name: 'Macro Week',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.foodLog},
+        docBuilder: macroWeekHeatmapDoc,
+      ),
+      // F11a — Volume week heatmap (workout). 7-day training-volume grid.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.volumeWeekHeatmap,
+        name: 'Train Week',
+        category: ShareableCategory.graph,
+        kinds: const {
+          ShareableKind.weeklyProgress,
+          ShareableKind.weeklySummary,
+          ShareableKind.statsOverview,
+          ShareableKind.workoutComplete,
+        },
+        docBuilder: volumeWeekHeatmapDoc,
+      ),
+      // F11a — Body / muscle heatmap (workout). Doc-native intensity bars from
+      // data.musclesWorked (editor-reachable). The rich full-figure variant is
+      // the existing `muscleMap` / `workoutMuscleCard` widget cards.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.bodyHeatmap,
+        name: 'Body Heatmap',
+        category: ShareableCategory.spark,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.muscleAnalytics,
+          ShareableKind.weeklyProgress,
+          ShareableKind.weeklySummary,
+        },
+        requiresExercises: true,
+        docBuilder: bodyHeatmapDoc,
+      ),
+      // F15 — Before / after slider (progress photos or food plate).
+      ShareableTemplateSpec(
+        template: ShareableTemplate.beforeAfterSlider,
+        name: 'Slider',
+        category: ShareableCategory.studio,
+        kinds: const {
+          ShareableKind.bodyMeasurements,
+          ShareableKind.progressCharts,
+          ShareableKind.statsOverview,
+          ShareableKind.foodLog,
+        },
+        docBuilder: beforeAfterSliderDoc,
+      ),
+      // F6 — "Add Yours" prompt cards (workout + food parity).
+      ShareableTemplateSpec(
+        template: ShareableTemplate.addYoursWorkout,
+        name: 'Add Yours',
+        category: ShareableCategory.playful,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.personalRecords,
+          ShareableKind.statsOverview,
+        },
+        docBuilder: addYoursWorkoutDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.addYoursFood,
+        name: 'Add Yours',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.foodLog},
+        docBuilder: addYoursFoodDoc,
+      ),
+      // F7 — Milestone auto-card (workout + food).
+      ShareableTemplateSpec(
+        template: ShareableTemplate.milestoneCard,
+        name: 'Milestone',
+        category: ShareableCategory.playful,
+        kinds: const {
+          ShareableKind.milestones,
+          ShareableKind.achievements,
+          ShareableKind.workoutComplete,
+          ShareableKind.streak,
+          ShareableKind.foodLog,
+        },
+        docBuilder: milestoneCardDoc,
+      ),
+      // F3 — "Day in Proof" cross-domain card (PR + meal grade + streak + line).
+      // Only Zealova can build it (workout + nutrition in one card).
+      ShareableTemplateSpec(
+        template: ShareableTemplate.dayInProof,
+        name: 'Day in Proof',
+        category: ShareableCategory.graph,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.statsOverview,
+        },
+        docBuilder: dayInProofDoc,
       ),
       // ─── Social ───
       ShareableTemplateSpec(

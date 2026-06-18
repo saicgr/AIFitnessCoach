@@ -212,6 +212,7 @@ import '../screens/wrapped/my_wrapped_screen.dart';
 import '../screens/wrapped/weekly_wrapped_screen.dart';
 import '../screens/dashboard/coach_dashboard_screen.dart';
 import '../screens/gym_profile/find_gyms_screen.dart';
+import '../screens/share/share_hub_screen.dart';
 import '../screens/nutrition/recipes/public_recipe_screen.dart';
 import '../screens/nutrition/meal_planner/meal_planner_screen.dart';
 import '../screens/nutrition/grocery/grocery_list_screen.dart';

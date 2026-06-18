@@ -20,6 +20,13 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const NotificationsScreen(),
       ),
 
+      // Workstream F — "Share & Brag" hub (Day in Proof, Zealova Score, reveal
+      // videos, a-year-ago, friend streaks, invite). Reached from Profile.
+      GoRoute(
+        path: '/share-hub',
+        builder: (context, state) => const ShareHubScreen(),
+      ),
+
       // Feature 3B — Find gyms near me (community catalog). Leaf route; pushed
       // (NOT a shell branch root) from the gym switcher's "Find a gym near me".
       GoRoute(

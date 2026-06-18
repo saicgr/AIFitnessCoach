@@ -7,21 +7,29 @@
 library;
 
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../data/services/share_service.dart';
 import '../doc/card_doc.dart';
 import '../doc/card_doc_bindings.dart';
 import '../doc/card_doc_renderer.dart';
+import '../grade.dart';
 import '../doc/card_palette.dart';
+import '../share_compose_screen.dart';
 import '../shareable_catalog.dart';
 import '../shareable_data.dart';
+import '../stock_backgrounds.dart';
 import '../widgets/food_image.dart';
+import 'ai_share_sheet.dart';
 import 'card_editor_controller.dart';
 import 'card_video_export_screen.dart';
+import 'wrapped_scenes_export_screen.dart';
 import '../../widgets/glass_sheet.dart';
 
 /// Volt-lime — the redesign signature accent (proofs.html). First swatch in
@@ -67,12 +75,104 @@ class CardEditorScreen extends StatefulWidget {
     );
   }
 
+  /// Photo-first entry: builds the default editable card for `data.kind`,
+  /// applies the [compose]-chosen canvas (a picked photo, a stock asset, or
+  /// the preset's own background for the no-photo escape), and opens the
+  /// editor with Story / Save / Share built in. Returns the edited [CardDoc]
+  /// if the user tapped Done (so callers can persist a "recent"), else null.
+  static Future<CardDoc?> openForShare(
+    BuildContext context, {
+    required Shareable data,
+    required ComposeResult compose,
+    ShareableTemplate? initialTemplate,
+    bool showWatermark = true,
+    double textScale = 1.0,
+  }) {
+    final doc = _buildComposedDoc(data, compose, initialTemplate);
+    return Navigator.of(context, rootNavigator: true).push<CardDoc>(
+      MaterialPageRoute(
+        fullscreenDialog: true,
+        builder: (_) => CardEditorScreen(
+          initialDoc: doc,
+          data: data,
+          showWatermark: showWatermark,
+          textScale: textScale,
+        ),
+      ),
+    );
+  }
+
+  /// Resolves the default editable template for the kind, builds its doc, then
+  /// overlays the compose-chosen background. No-photo keeps the preset's own
+  /// background; photo/stock swap in a full-bleed photo background.
+  static CardDoc _buildComposedDoc(
+    Shareable data,
+    ComposeResult compose,
+    ShareableTemplate? initialTemplate,
+  ) {
+    final available =
+        ShareableCatalog.availableFor(data).where((s) => s.isEditable).toList();
+    ShareableTemplateSpec? pick;
+    for (final t in [
+      initialTemplate,
+      ShareableCatalog.defaultTemplateForKind(data.kind),
+    ]) {
+      if (t == null) continue;
+      final m = available.where((s) => s.template == t);
+      if (m.isNotEmpty) {
+        pick = m.first;
+        break;
+      }
+    }
+    pick ??= available.isNotEmpty ? available.first : null;
+    final aspect = data.aspect;
+    final base = pick?.docBuilder?.call(data, aspect) ??
+        CardDoc(
+          aspect: aspect,
+          elements: const [],
+          accentColor: data.accentColor,
+        );
+    switch (compose.mode) {
+      case ComposeMode.noPhoto:
+        return base;
+      case ComposeMode.stock:
+        return base.copyWith(
+          background: CardBackground(
+            kind: CardBackgroundKind.photo,
+            photo: CardPhotoRef(staticPath: compose.assetOrPath),
+            photoFit: BoxFit.cover,
+          ),
+        );
+      case ComposeMode.photo:
+        return base.copyWith(
+          background: CardBackground(
+            kind: CardBackgroundKind.photo,
+            photo: CardPhotoRef(staticPath: compose.assetOrPath),
+            photoFit: BoxFit.cover,
+          ),
+        );
+    }
+  }
+
   @override
   State<CardEditorScreen> createState() => _CardEditorScreenState();
 }
 
+/// The two element-adding trays (Gravl parity): full layouts vs single
+/// stat "stickers". `none` collapses both while an element is selected (its
+/// context panel takes over).
+enum _Tray { custom, templates, none }
+
 class _CardEditorScreenState extends State<CardEditorScreen> {
   late final CardEditorController _c = CardEditorController(widget.initialDoc);
+
+  /// Snapshots the rendered card (only) for Story / Save / Share.
+  final GlobalKey _captureKey = GlobalKey();
+
+  /// Which add-tray is open under the canvas. Custom leads (one-tap stickers).
+  _Tray _tray = _Tray.custom;
+
+  bool _busy = false;
 
   @override
   void initState() {
@@ -115,6 +215,7 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selected = _c.selected;
     return Scaffold(
       backgroundColor: const Color(0xFF0B0C0F),
       body: SafeArea(
@@ -127,13 +228,268 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
                 data: widget.data,
                 showWatermark: widget.showWatermark,
                 textScale: widget.textScale,
+                captureKey: _captureKey,
               ),
             ),
-            _BottomArea(controller: _c),
+            // Editing an element → its context panel takes over the trays.
+            // Cap + scroll so a tall context panel can never overflow on a
+            // small device (iPhone SE) once the action bar is stacked below.
+            if (selected != null)
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.32,
+                ),
+                child: SingleChildScrollView(
+                  child: _BottomArea(controller: _c),
+                ),
+              )
+            else ...[
+              _trayContent(),
+              _traySwitcher(),
+            ],
+            _actionBar(),
           ],
         ),
       ),
     );
+  }
+
+  // ─────────────────────────── Trays (Custom / Templates) ───────────────────
+
+  /// The Custom ↔ Templates segmented switcher (Gravl's two trays).
+  Widget _traySwitcher() {
+    Widget seg(String label, IconData icon, _Tray tray) {
+      final selected = _tray == tray;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _tray = tray);
+          },
+          child: Container(
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: selected
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(19),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon,
+                    size: 16,
+                    color: selected ? Colors.white : Colors.white54),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: selected ? Colors.white : Colors.white54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      color: const Color(0xFF14161B),
+      padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+      child: Row(
+        children: [
+          seg('Custom', Icons.auto_awesome_mosaic_rounded, _Tray.custom),
+          seg('Templates', Icons.dashboard_rounded, _Tray.templates),
+        ],
+      ),
+    );
+  }
+
+  Widget _trayContent() {
+    switch (_tray) {
+      case _Tray.custom:
+        return _CustomTray(controller: _c, data: widget.data);
+      case _Tray.templates:
+        return _TemplatesTray(controller: _c, data: widget.data);
+      case _Tray.none:
+        return const SizedBox.shrink();
+    }
+  }
+
+  // ─────────────────────────── Bottom action bar ────────────────────────────
+
+  /// Story / Save / Share — the terminal actions. Story snaps to 9:16 and
+  /// hands Instagram Stories; Save writes to the gallery; Share opens the
+  /// system sheet. All reuse [ShareService] + the editor's own capture.
+  Widget _actionBar() {
+    Widget action(String label, IconData icon, VoidCallback onTap) {
+      return Expanded(
+        child: TextButton(
+          onPressed: _busy ? null : onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 22,
+                  color: _busy ? Colors.white24 : Colors.white),
+              const SizedBox(height: 3),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: _busy ? Colors.white24 : Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      color: const Color(0xFF101216),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            action('Story', Icons.add_to_home_screen_rounded, _onStory),
+            action('Save', Icons.download_rounded, _onSave),
+            action('Sticker', Icons.auto_fix_high_rounded, _onSticker),
+            action('Share', Icons.ios_share_rounded, _onShare),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─────────────────────────── Capture + share ──────────────────────────────
+
+  /// Snapshots the rendered card at the design resolution for the given aspect.
+  Future<Uint8List?> _capture(ShareableAspect aspect) async {
+    try {
+      _c.deselect();
+      // Let the deselect + any pending layout settle before snapshotting.
+      await WidgetsBinding.instance.endOfFrame;
+      final boundary = _captureKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null || boundary.size.isEmpty) return null;
+      final scale = aspect.size.width / boundary.size.width;
+      final image = await boundary.toImage(pixelRatio: scale.clamp(0.5, 6.0));
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      return byteData?.buffer.asUint8List();
+    } catch (e) {
+      debugPrint('❌ [CardEditor] capture failed: $e');
+      return null;
+    }
+  }
+
+  Future<void> _onStory() async {
+    if (_busy) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _busy = true);
+    try {
+      // Stories require 9:16 — snap the doc, capture, restore.
+      final prev = _c.doc.aspect;
+      if (prev != ShareableAspect.story) {
+        _c.setAspect(ShareableAspect.story);
+        await WidgetsBinding.instance.endOfFrame;
+      }
+      final bytes = await _capture(ShareableAspect.story);
+      if (prev != ShareableAspect.story && mounted) _c.setAspect(prev);
+      if (bytes == null) {
+        _toast('Could not render — try again');
+        return;
+      }
+      final r = await ShareService.shareToInstagramStories(bytes);
+      if (r.success) {
+        await ShareService.saveToGallery(bytes);
+        if (mounted) Navigator.of(context).pop(_c.doc);
+      } else if (r.error != null) {
+        _toast('Could not open Instagram');
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _onSave() async {
+    if (_busy) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _busy = true);
+    try {
+      final bytes = await _capture(_c.doc.aspect);
+      if (bytes == null) {
+        _toast('Could not render — try again');
+        return;
+      }
+      final r = await ShareService.saveToGallery(bytes);
+      if (mounted) {
+        if (r.success) {
+          _toast('Saved to device');
+          Navigator.of(context).pop(_c.doc);
+        } else {
+          _toast(r.error ?? 'Failed to save');
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _onShare() async {
+    if (_busy) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _busy = true);
+    try {
+      final bytes = await _capture(_c.doc.aspect);
+      if (bytes == null) {
+        _toast('Could not render — try again');
+        return;
+      }
+      await ShareService.shareGeneric(bytes, caption: 'My ${widget.data.title}');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// F6 — transparent-PNG "cutout" sticker export. Strips the card background
+  /// to nothing, captures (the PNG keeps alpha), restores, then shares the
+  /// transparent sticker so the user can drop it onto any photo / story.
+  Future<void> _onSticker() async {
+    if (_busy) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _busy = true);
+    try {
+      final bytes = await _c.withTransparentBackground(
+        () => _capture(_c.doc.aspect),
+      );
+      if (bytes == null) {
+        _toast('Could not render — try again');
+        return;
+      }
+      await ShareService.shareGeneric(
+        bytes,
+        caption: 'My ${widget.data.title}',
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _toast(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(msg),
+        behavior: SnackBarBehavior.floating,
+      ));
   }
 
   Widget _topBar() {
@@ -167,6 +523,13 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
             icon: const Icon(Icons.layers_rounded, color: Colors.white),
             onPressed: _openLayers,
           ),
+          // F1/F2 — cost-gated AI touches (restyle photo + insight line). Each
+          // fires only on an explicit tap inside the sheet.
+          IconButton(
+            tooltip: 'AI',
+            icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            onPressed: _openAiSheet,
+          ),
           IconButton(
             tooltip: 'Export as video',
             icon: const Icon(Icons.movie_creation_rounded, color: Colors.white),
@@ -176,6 +539,18 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
               data: widget.data,
             ),
           ),
+          // F13 — Wrapped per-scene export (only for Wrapped-kind shares).
+          if (widget.data.kind == ShareableKind.wrapped)
+            IconButton(
+              tooltip: 'Wrapped scenes',
+              icon: const Icon(Icons.view_carousel_rounded,
+                  color: Colors.white),
+              onPressed: () => WrappedScenesExportScreen.open(
+                context,
+                data: widget.data,
+                showWatermark: widget.showWatermark,
+              ),
+            ),
           // Aspect "magic resize" — cycles 9:16 / 4:5 / 1:1, re-fitting
           // every element's layout to the new canvas.
           TextButton(
@@ -226,6 +601,25 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
           const SizedBox(width: 4),
         ],
       ),
+    );
+  }
+
+  /// F1/F2 — open the AI touches sheet. The restyle target is the doc's
+  /// current photo background (the compose-chosen photo); null when the card
+  /// has a gradient/solid background, in which case the sheet disables restyle
+  /// with a note and still offers the insight line.
+  void _openAiSheet() {
+    HapticFeedback.selectionClick();
+    final bg = _c.doc.background;
+    final photo = (bg.kind == CardBackgroundKind.photo ||
+            bg.kind == CardBackgroundKind.blurredPhoto)
+        ? bg.photo?.staticPath
+        : null;
+    AiShareSheet.show(
+      context,
+      controller: _c,
+      data: widget.data,
+      photoPathOrUrl: photo,
     );
   }
 
@@ -309,11 +703,16 @@ class _EditorCanvas extends StatelessWidget {
   final bool showWatermark;
   final double textScale;
 
+  /// Wraps the rendered card (only) so the editor can snapshot the design at
+  /// full resolution for Story / Save / Share — never the selection chrome.
+  final GlobalKey captureKey;
+
   const _EditorCanvas({
     required this.controller,
     required this.data,
     required this.showWatermark,
     required this.textScale,
+    required this.captureKey,
   });
 
   @override
@@ -346,13 +745,16 @@ class _EditorCanvas extends StatelessWidget {
                 top: origin.dy,
                 width: cardW,
                 height: cardH,
-                child: FittedBox(
-                  fit: BoxFit.fill,
-                  child: CardDocRenderer(
-                    doc: doc,
-                    data: data,
-                    showWatermark: showWatermark,
-                    textScale: textScale,
+                child: RepaintBoundary(
+                  key: captureKey,
+                  child: FittedBox(
+                    fit: BoxFit.fill,
+                    child: CardDocRenderer(
+                      doc: doc,
+                      data: data,
+                      showWatermark: showWatermark,
+                      textScale: textScale,
+                    ),
                   ),
                 ),
               ),
@@ -701,6 +1103,399 @@ class _Toolbar extends StatelessWidget {
   }
 }
 
+// ─────────────────────────── Custom tray (stickers) ───────────────────────
+
+/// One sticker preset — a labelled, one-tap element add.
+class _StickerPreset {
+  final String label;
+  final IconData icon;
+  final CardElement Function() build;
+  const _StickerPreset(this.label, this.icon, this.build);
+}
+
+/// Gravl's "Custom" tray — one-tap stat stickers dropped onto the chosen
+/// photo. Kind-aware: workout shares get workout stickers (big number,
+/// exercise list, week bars, HR-zone hexagon, date marker), food shares get
+/// food stickers (calorie number, macro rings, plate, protein hero, what-I-ate
+/// chips, nutrition label, food-photo coin). Shared stickers (text, photo,
+/// emoji, logo, perspective text) appear for every kind.
+class _CustomTray extends StatelessWidget {
+  final CardEditorController controller;
+  final Shareable data;
+  const _CustomTray({required this.controller, required this.data});
+
+  bool get _isFood =>
+      data.kind == ShareableKind.foodLog ||
+      data.kind == ShareableKind.nutrition;
+
+  static ElementTransform _t(
+          {Offset pos = const Offset(0.5, 0.45),
+          Size size = const Size(0.5, 0.16)}) =>
+      ElementTransform(position: pos, size: size);
+
+  CardElement _el(CardElementType type, ElementProps props,
+          {ElementTransform? transform}) =>
+      CardElement(
+        id: CardDoc.newId(),
+        type: type,
+        transform: transform ?? _t(),
+        props: props,
+      );
+
+  List<_StickerPreset> _presets() {
+    final accent = data.accentColor;
+    final shared = <_StickerPreset>[
+      _StickerPreset('Text', Icons.text_fields_rounded,
+          () => _el(CardElementType.text, const TextProps(literal: 'Text'))),
+      _StickerPreset('Marker', Icons.format_color_text_rounded, () {
+        // Gravl "marker" date variant — highlighted text block.
+        return _el(
+          CardElementType.text,
+          TextProps(
+            literal: 'HIGHLIGHT',
+            fontSize: 56,
+            color: Colors.black,
+            allCaps: true,
+            highlightColor: accent,
+          ),
+          transform: _t(pos: const Offset(0.5, 0.3), size: const Size(0.6, 0.1)),
+        );
+      }),
+      _StickerPreset('Photo', Icons.image_rounded,
+          () => _el(CardElementType.photo, const PhotoProps())),
+      _StickerPreset('Emoji', Icons.emoji_emotions_rounded,
+          () => _el(CardElementType.icon, const IconProps())),
+      _StickerPreset('Date', Icons.calendar_today_rounded,
+          () => _el(CardElementType.dateStamp, const DateStampProps())),
+      _StickerPreset('Logo', Icons.branding_watermark_rounded,
+          () => _el(CardElementType.watermark, const WatermarkProps())),
+    ];
+
+    if (_isFood) {
+      return [
+        _StickerPreset('Calories', Icons.local_fire_department_rounded, () {
+          return _el(
+            CardElementType.text,
+            TextProps(
+              literal: '0',
+              binding: const DataBinding(BindingSource.calories),
+              fontSize: 140,
+              color: accent,
+              align: TextAlign.center,
+              suffix: ' kcal',
+            ),
+            transform:
+                _t(pos: const Offset(0.5, 0.4), size: const Size(0.8, 0.2)),
+          );
+        }),
+        _StickerPreset('Macro rings', Icons.donut_large_rounded,
+            () => _el(CardElementType.chart, const ChartProps())),
+        _StickerPreset(
+            'Macro trio',
+            Icons.blur_circular_rounded,
+            () => _el(CardElementType.ringTrio, const RingTrioProps(),
+                transform:
+                    _t(pos: const Offset(0.5, 0.5), size: const Size(0.8, 0.3)))),
+        _StickerPreset('Protein hero', Icons.fitness_center_rounded, () {
+          return _el(
+            CardElementType.text,
+            TextProps(
+              literal: '0',
+              binding: const DataBinding(BindingSource.proteinG),
+              fontSize: 120,
+              color: accent,
+              align: TextAlign.center,
+              prefix: '',
+              suffix: 'g protein',
+            ),
+            transform:
+                _t(pos: const Offset(0.5, 0.42), size: const Size(0.85, 0.22)),
+          );
+        }),
+        _StickerPreset('What I ate', Icons.restaurant_menu_rounded,
+            () => _el(CardElementType.chipGroup, const ChipGroupProps())),
+        _StickerPreset(
+            'Nutrition label',
+            Icons.receipt_long_rounded,
+            () => _el(CardElementType.table, const TableProps(),
+                transform:
+                    _t(pos: const Offset(0.5, 0.5), size: const Size(0.7, 0.4)))),
+        _StickerPreset('Food coin', Icons.album_rounded, () {
+          return _el(
+            CardElementType.ringStat,
+            RingStatProps(
+              centerBinding: const DataBinding(BindingSource.calories),
+              label: 'KCAL',
+              ringColor: accent,
+            ),
+            transform:
+                _t(pos: const Offset(0.5, 0.45), size: const Size(0.5, 0.28)),
+          );
+        }),
+        _StickerPreset('Score', Icons.workspace_premium_rounded,
+            () => _el(CardElementType.badge, const BadgeProps())),
+        // F10 — meal letter grade sticker. The letter is derived
+        // deterministically from the meal's health score; drop it big.
+        _StickerPreset('Grade', Icons.grade_rounded, () {
+          final grade = letterGrade(data.healthScore ?? 6);
+          return _el(
+            CardElementType.text,
+            TextProps(
+              literal: grade.letter,
+              fontIndex: CardFontIx.display,
+              fontSize: 300,
+              color: grade.color,
+              align: TextAlign.center,
+              maxLines: 1,
+            ),
+            transform:
+                _t(pos: const Offset(0.5, 0.45), size: const Size(0.7, 0.3)),
+          );
+        }),
+        _StickerPreset('Add yours', Icons.add_box_rounded,
+            () => _addYoursSticker(accent, 'Add your meal')),
+        ...shared,
+      ];
+    }
+
+    // Workout (and every non-food kind).
+    return [
+      _StickerPreset('Big number', Icons.tag_rounded, () {
+        return _el(
+          CardElementType.text,
+          TextProps(
+            literal: data.heroValue != null ? '${data.heroValue}' : '0',
+            binding: const DataBinding(BindingSource.heroString),
+            fontSize: 150,
+            color: accent,
+            align: TextAlign.center,
+          ),
+          transform:
+              _t(pos: const Offset(0.5, 0.4), size: const Size(0.85, 0.22)),
+        );
+      }),
+      _StickerPreset(
+          'Exercises',
+          Icons.format_list_bulleted_rounded,
+          () => _el(CardElementType.repeater, const RepeaterProps(),
+              transform:
+                  _t(pos: const Offset(0.5, 0.5), size: const Size(0.8, 0.4)))),
+      _StickerPreset(
+          'Week bars',
+          Icons.bar_chart_rounded,
+          () => _el(CardElementType.gridHeatmap, const GridHeatmapProps(),
+              transform:
+                  _t(pos: const Offset(0.5, 0.5), size: const Size(0.8, 0.25)))),
+      _StickerPreset('Stat strip', Icons.grid_view_rounded,
+          () => _el(CardElementType.statGrid, const StatGridProps(),
+              transform:
+                  _t(pos: const Offset(0.5, 0.6), size: const Size(0.85, 0.2)))),
+      _StickerPreset('HR zone', Icons.favorite_rounded, () {
+        // The one Gravl Custom format we were missing — an idle HR-zone
+        // hexagon (RingStatProps with hexagon:true).
+        return _el(
+          CardElementType.ringStat,
+          RingStatProps(
+            hexagon: true,
+            centerValue: 'Z3',
+            label: 'HR ZONE',
+            ringColor: accent,
+          ),
+          transform:
+              _t(pos: const Offset(0.5, 0.45), size: const Size(0.5, 0.3)),
+        );
+      }),
+      _StickerPreset('Calendar', Icons.calendar_month_rounded,
+          () => _el(CardElementType.gridHeatmap, const GridHeatmapProps(),
+              transform:
+                  _t(pos: const Offset(0.5, 0.55), size: const Size(0.8, 0.3)))),
+      _StickerPreset('Score', Icons.workspace_premium_rounded,
+          () => _el(CardElementType.badge, const BadgeProps())),
+      _StickerPreset('Add yours', Icons.add_box_rounded,
+          () => _addYoursSticker(accent, 'Add your lift')),
+      ...shared,
+    ];
+  }
+
+  /// A single "Add Yours"-style prompt chip — a highlighted, pill-tinted text
+  /// block the user drops to seed an Instagram Add-Yours chain. One element so
+  /// it works as a Custom-tray sticker (F6).
+  CardElement _addYoursSticker(Color accent, String prompt) => _el(
+        CardElementType.text,
+        TextProps(
+          literal: '➕  $prompt',
+          fontIndex: CardFontIx.cond,
+          fontSize: 40,
+          color: const Color(0xFF111111),
+          align: TextAlign.center,
+          highlightColor: Colors.white,
+          maxLines: 1,
+        ),
+        transform: _t(pos: const Offset(0.5, 0.2), size: const Size(0.8, 0.1)),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final presets = _presets();
+    return Container(
+      height: 86,
+      color: const Color(0xFF14161B),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: presets.length,
+        itemBuilder: (_, i) {
+          final p = presets[i];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: SizedBox(
+              width: 72,
+              child: TextButton(
+                onPressed: () {
+                  HapticFeedback.selectionClick();
+                  controller.addElement(p.build());
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(p.icon, color: Colors.white, size: 24),
+                    const SizedBox(height: 4),
+                    Text(
+                      p.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 10.5),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ─────────────────────────── Templates tray ───────────────────────────────
+
+/// Gravl's "Templates" tray — the kind-filtered [ShareableCatalog] gallery as
+/// an inline horizontal strip. Tapping one rebuilds the whole [CardDoc] from
+/// that template's `docBuilder` (one undo step), preserving the chosen photo
+/// background.
+class _TemplatesTray extends StatelessWidget {
+  final CardEditorController controller;
+  final Shareable data;
+  const _TemplatesTray({required this.controller, required this.data});
+
+  List<ShareableTemplateSpec> _specs() => ShareableCatalog.availableFor(data)
+      .where((s) => s.docBuilder != null)
+      .toList(growable: false);
+
+  @override
+  Widget build(BuildContext context) {
+    final specs = _specs();
+    final aspect = controller.doc.aspect;
+    final currentPreset = controller.doc.presetId;
+    // Preserve the user's chosen photo background across a template swap.
+    final bg = controller.doc.background;
+    final keepPhoto = bg.kind == CardBackgroundKind.photo ||
+        bg.kind == CardBackgroundKind.blurredPhoto;
+    if (specs.isEmpty) {
+      return Container(
+        height: 86,
+        color: const Color(0xFF14161B),
+        alignment: Alignment.center,
+        child: const Text('No other layouts for this share',
+            style: TextStyle(color: Colors.white54, fontSize: 12)),
+      );
+    }
+    return Container(
+      height: 132,
+      color: const Color(0xFF14161B),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: specs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) {
+          final spec = specs[i];
+          final selected = spec.template.name == currentPreset;
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              var next = spec.docBuilder!(data, aspect);
+              if (keepPhoto) next = next.copyWith(background: bg);
+              controller.swapDoc(next);
+            },
+            child: SizedBox(
+              width: 78,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: selected ? _kVoltLime : Colors.white12,
+                            width: selected ? 2.4 : 1,
+                          ),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: FittedBox(
+                          fit: BoxFit.cover,
+                          clipBehavior: Clip.hardEdge,
+                          child: SizedBox(
+                            width: aspect.size.width,
+                            height: aspect.size.height,
+                            child: Directionality(
+                              textDirection:
+                                  Directionality.maybeOf(context) ??
+                                      TextDirection.ltr,
+                              child: CardDocRenderer(
+                                doc: keepPhoto
+                                    ? spec
+                                        .docBuilder!(data, aspect)
+                                        .copyWith(background: bg)
+                                    : spec.docBuilder!(data, aspect),
+                                data: data,
+                                showWatermark: false,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    spec.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected ? _kVoltLime : Colors.white70,
+                      fontSize: 10.5,
+                      fontWeight:
+                          selected ? FontWeight.w800 : FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
 /// Per-element editing controls. Text gets full controls; every type gets
 /// the common opacity / layer / duplicate / delete row.
 class _ContextPanel extends StatelessWidget {
@@ -816,6 +1611,9 @@ class _ContextPanel extends StatelessWidget {
               controller.bringSelectedToFront),
           btn(Icons.flip_to_back_rounded, 'Back',
               controller.sendSelectedToBack),
+          // 3D perspective (B2) — cube sheet of Flat / Left / Right / Floor.
+          btn(Icons.view_in_ar_rounded, 'Perspective',
+              () => _openPerspective(context)),
           btn(Icons.copy_rounded, 'Duplicate', controller.duplicateSelected),
           btn(
             element.locked ? Icons.lock_rounded : Icons.lock_open_rounded,
@@ -835,6 +1633,57 @@ class _ContextPanel extends StatelessWidget {
           btn(Icons.check_rounded, 'Done', controller.deselect,
               color: const Color(0xFF3B82F6)),
         ],
+      ),
+    );
+  }
+
+  /// Cube "Perspective" sheet (B2) — tilts the selected element on a faux-3D
+  /// wall/floor plane.
+  void _openPerspective(BuildContext context) {
+    final current = element.transform.perspective;
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Perspective',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final p in CardPerspective.values)
+                      ChoiceChip(
+                        label: Text(_perspectiveLabel(p)),
+                        selected: current == p,
+                        onSelected: (_) {
+                          HapticFeedback.selectionClick();
+                          controller.updateSelected(
+                            (e) => e.copyWith(
+                              transform:
+                                  e.transform.copyWith(perspective: p),
+                            ),
+                          );
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -923,6 +1772,69 @@ class _TextControls extends StatelessWidget {
             ],
           ),
         ),
+        const SizedBox(height: 6),
+        // Marker / highlight (B4) — a per-line block painted behind the glyphs
+        // (Gravl's "marker" date variant). First chip clears it.
+        Row(
+          children: [
+            const Text('Marker',
+                style: TextStyle(color: Colors.white54, fontSize: 12)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => controller.updateSelected(
+                        (e) => e.copyWith(
+                            props: props.copyWith(clearHighlight: true)),
+                      ),
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: props.highlightColor == null
+                                ? const Color(0xFF3B82F6)
+                                : Colors.white24,
+                            width: props.highlightColor == null ? 3 : 1,
+                          ),
+                        ),
+                        child: const Icon(Icons.format_color_reset_rounded,
+                            size: 15, color: Colors.white54),
+                      ),
+                    ),
+                    for (final c in _kTextColors.where((c) => c != Colors.white))
+                      GestureDetector(
+                        onTap: () => controller.updateSelected(
+                          (e) =>
+                              e.copyWith(props: props.copyWith(highlightColor: c)),
+                        ),
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: c,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: props.highlightColor == c
+                                  ? const Color(0xFF3B82F6)
+                                  : Colors.white24,
+                              width: props.highlightColor == c ? 3 : 1,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -971,6 +1883,38 @@ const List<Color> _kTextColors = [
   Color(0xFF22C55E),
   Color(0xFFF97316),
 ];
+
+/// Short UI label for a [PhotoFilter] (✨ effects row + background filter row).
+String _photoFilterLabel(PhotoFilter f) {
+  switch (f) {
+    case PhotoFilter.original:
+      return 'Original';
+    case PhotoFilter.darker:
+      return 'Darker';
+    case PhotoFilter.bw:
+      return 'B&W';
+    case PhotoFilter.warm:
+      return 'Warm';
+    case PhotoFilter.cool:
+      return 'Cool';
+    case PhotoFilter.fade:
+      return 'Fade';
+  }
+}
+
+/// Short UI label for a [CardPerspective] (cube "Perspective" sheet).
+String _perspectiveLabel(CardPerspective p) {
+  switch (p) {
+    case CardPerspective.flat:
+      return 'Flat';
+    case CardPerspective.leftWall:
+      return 'Left wall';
+    case CardPerspective.rightWall:
+      return 'Right wall';
+    case CardPerspective.floor:
+      return 'Floor';
+  }
+}
 
 // ─────────────────────────── Chart controls ───────────────────────────────
 
@@ -1084,6 +2028,35 @@ class _PhotoControls extends StatelessWidget {
                 ),
             ],
           ),
+        ),
+        const SizedBox(height: 4),
+        // ✨ Photo effects (B1) — Original / Darker / B&W / Warm / Cool / Fade.
+        Row(
+          children: [
+            const Icon(Icons.auto_awesome_rounded,
+                size: 15, color: Colors.white54),
+            const SizedBox(width: 6),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final f in PhotoFilter.values)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        child: ChoiceChip(
+                          label: Text(_photoFilterLabel(f)),
+                          selected: props.filter == f,
+                          onSelected: (_) => controller.updateSelected(
+                            (e) => e.copyWith(props: props.copyWith(filter: f)),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -2443,29 +3416,10 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
     [Color(0xFF6366F1), Color(0xFF0D1117)],
   ];
 
-  /// Bundled background packs (foundation A1 shipped them to
-  /// `assets/images/shareable_backgrounds/{pack}`). Each entry is an asset
-  /// path; applying it sets a photo CardBackground whose `staticPath` is the
-  /// asset. See INTEGRATION NEEDED: the renderer's image resolver must learn
-  /// to load `assets/`-prefixed paths for these to paint (today they fall to
-  /// FoodImage's File branch).
-  static final Map<String, List<String>> _packs = {
-    'Workout': [
-      for (var i = 1; i <= 20; i++)
-        'assets/images/shareable_backgrounds/workout/'
-            'bg-${i.toString().padLeft(2, '0')}.jpg',
-    ],
-    'Nutrition': [
-      for (var i = 1; i <= 16; i++)
-        'assets/images/shareable_backgrounds/nutrition/'
-            'bg-${i.toString().padLeft(2, '0')}.jpg',
-    ],
-    'Abstract': [
-      for (var i = 21; i <= 26; i++)
-        'assets/images/shareable_backgrounds/abstract/'
-            'bg-${i.toString().padLeft(2, '0')}.jpg',
-    ],
-  };
+  /// Bundled background packs — drawn from the shared
+  /// [kStockBackgroundPacks] registry (`stock_backgrounds.dart`) so the
+  /// compose screen and this sheet stay in sync. Applying one sets a photo
+  /// [CardBackground] whose `staticPath` is the asset.
 
   /// Colours extracted from the user's meal photo (the AI palette assist).
   List<Color> _photoPalette = const [];
@@ -2549,6 +3503,40 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w800)),
+                  // ✨ Photo effects (B1) for a photo/stock background.
+                  if (widget.controller.doc.background.kind ==
+                          CardBackgroundKind.photo ||
+                      widget.controller.doc.background.kind ==
+                          CardBackgroundKind.blurredPhoto) ...[
+                    const SizedBox(height: 12),
+                    const Text('Photo effect',
+                        style:
+                            TextStyle(color: Colors.white54, fontSize: 12)),
+                    const SizedBox(height: 6),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final f in PhotoFilter.values)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 3),
+                              child: ChoiceChip(
+                                label: Text(_photoFilterLabel(f)),
+                                selected:
+                                    widget.controller.doc.background.filter ==
+                                        f,
+                                onSelected: (_) =>
+                                    widget.controller.setBackground(
+                                  widget.controller.doc.background
+                                      .copyWith(filter: f),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                   if (_photoPalette.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     const Text('From your photo',
@@ -2594,9 +3582,9 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
                     ),
                   ],
                   // ── Bundled background packs ──
-                  for (final entry in _packs.entries) ...[
+                  for (final pack in kStockBackgroundPacks) ...[
                     const SizedBox(height: 14),
-                    Text(entry.key,
+                    Text(pack.name,
                         style: const TextStyle(
                             color: Colors.white54, fontSize: 12)),
                     const SizedBox(height: 6),
@@ -2604,10 +3592,10 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
                       height: 84,
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        itemCount: entry.value.length,
+                        itemCount: pack.assets.length,
                         separatorBuilder: (_, __) => const SizedBox(width: 10),
                         itemBuilder: (_, i) =>
-                            _packTile(entry.value[i]),
+                            _packTile(pack.assets[i]),
                       ),
                     ),
                   ],

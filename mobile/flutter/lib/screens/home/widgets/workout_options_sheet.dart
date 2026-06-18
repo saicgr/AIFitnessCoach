@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
@@ -10,6 +11,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/repositories/share_growth_repository.dart';
 import '../../../shareables/adapters/workout_adapter.dart';
 import '../../../shareables/shareable_sheet.dart';
 import '../../../widgets/app_dialog.dart';
@@ -86,6 +88,9 @@ Future<void> showWorkoutOptionsSheet(
                     () => _regenerate(context, ref, workout)),
                 tile(Icons.share_outlined, 'Share to Social',
                     () => _shareToSocial(context, ref, workout)),
+                if (workout.id != null)
+                  tile(Icons.directions_run_rounded, 'Share "Do my workout"',
+                      () => _shareDoMyWorkout(context, ref, workout)),
                 tile(Icons.check_circle_outline, 'Mark as Done',
                     () => _markAsDone(context, ref, workout),
                     color: AppColors.success),
@@ -319,6 +324,36 @@ void _shareToSocial(BuildContext context, WidgetRef ref, Workout workout) {
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     }
   });
+}
+
+/// F8 — "Do my workout". Mints a public share link for this workout
+/// (`GET /share/workout-link/{id}`) and hands the https URL to the system
+/// share sheet. A non-user who opens it gets the workout auto-scaled to their
+/// level (server-side `resolve-workout`) and is prompted to install.
+Future<void> _shareDoMyWorkout(
+    BuildContext context, WidgetRef ref, Workout workout) async {
+  HapticService.light();
+  final id = workout.id;
+  if (id == null || id.isEmpty) return;
+  if (!ref.read(publicShareLinksProvider)) {
+    if (context.mounted) {
+      _snack(context, 'Enable public share links in Settings to share workouts.',
+          AppColors.textMuted);
+    }
+    return;
+  }
+  try {
+    final link = await ref.read(shareGrowthRepositoryProvider).workoutLink(id);
+    final url = link.webUrl.isNotEmpty ? link.webUrl : link.shareUrl;
+    if (url.isEmpty) throw Exception('No link');
+    final name = workout.name ?? 'my workout';
+    await Share.share('Try "$name" on Zealova — it scales to your level: $url');
+  } catch (e) {
+    if (context.mounted) {
+      _snack(context, "Couldn't create a share link. Please try again.",
+          AppColors.textMuted);
+    }
+  }
 }
 
 void _glanceWorkout(BuildContext context, Workout workout) {

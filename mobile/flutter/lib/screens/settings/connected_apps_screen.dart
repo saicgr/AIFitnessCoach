@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/sync_repository.dart';
+import '../../data/repositories/strava_export_repository.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -287,6 +288,9 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
                 disabled: _busy,
                 onChanged: _updateFlag,
               ),
+              // Strava-only: outbound auto-share of completed Zealova workouts.
+              if (e.slug == 'strava')
+                _StravaAutoShareToggle(accent: widget.accent),
             ],
             const SizedBox(height: 10),
             _buildActionRow(status, account),
@@ -715,6 +719,127 @@ class _AccountToggles extends StatelessWidget {
           activeColor: accent,
           onChanged: disabled ? null : onChanged,
         ),
+      ],
+    );
+  }
+}
+
+/// Strava-only outbound auto-share toggle (Workstream E4). When ON, every
+/// completed Zealova workout is pushed to Strava as a manual activity (the
+/// activity links back to Zealova; the photo, if any, is shared client-side via
+/// the OS share-sheet since Strava's API can't attach photos to activities).
+///
+/// Lives below the per-account import toggles. Loads its own preference so the
+/// switch reflects the server state on open. When the account lacks the
+/// `activity:write` scope (granted only after Strava's app review) we show a
+/// reconnect hint and keep the switch interactive but warn on enable.
+class _StravaAutoShareToggle extends ConsumerStatefulWidget {
+  const _StravaAutoShareToggle({required this.accent});
+  final Color accent;
+
+  @override
+  ConsumerState<_StravaAutoShareToggle> createState() =>
+      _StravaAutoShareToggleState();
+}
+
+class _StravaAutoShareToggleState
+    extends ConsumerState<_StravaAutoShareToggle> {
+  StravaSharePreference? _pref;
+  bool _loading = true;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    try {
+      final pref =
+          await ref.read(stravaExportRepositoryProvider).getPreference();
+      if (!mounted) return;
+      setState(() {
+        _pref = pref;
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ [StravaAutoShare] load failed: $e');
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _setAutoShare(bool value) async {
+    final pref = _pref;
+    if (pref == null) return;
+    setState(() => _saving = true);
+    try {
+      final updated =
+          await ref.read(stravaExportRepositoryProvider).setAutoShare(value);
+      if (!mounted) return;
+      setState(() => _pref = updated);
+      if (value && !updated.canWrite && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Reconnect Strava to grant write access before auto-share can post.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not update Strava sharing: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 6),
+        child: LinearProgressIndicator(minHeight: 2),
+      );
+    }
+    final pref = _pref;
+    // If the preference couldn't load (e.g. transient error), hide the row
+    // rather than show a broken toggle.
+    if (pref == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'Auto-share completed workouts to Strava',
+                style: TextStyle(fontSize: 13),
+              ),
+            ),
+            Switch.adaptive(
+              value: pref.autoShareToStrava,
+              activeColor: widget.accent,
+              onChanged: _saving ? null : _setAutoShare,
+            ),
+          ],
+        ),
+        if (!pref.canWrite)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 4),
+            child: Text(
+              'Reconnect Strava to enable posting (write access).',
+              style: TextStyle(fontSize: 11, color: Colors.orange.shade800),
+            ),
+          ),
       ],
     );
   }

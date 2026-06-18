@@ -19,6 +19,10 @@ import '../../data/providers/fitness_profile_provider.dart';
 import '../../data/providers/fitness_shape_history_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../shareables/adapters/zealova_score_adapter.dart';
+import '../../shareables/shareable_catalog.dart' show ShareableTemplate;
+import '../../shareables/shareable_data.dart';
+import '../../shareables/shareable_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/top_segmented_control.dart';
 import '../../widgets/tooltips/tooltips.dart';
@@ -125,6 +129,35 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     super.dispose();
   }
 
+  /// F12/F13 — build the Zealova Score [Shareable] from the live Discover
+  /// snapshot (deterministic percentile + composite score) and open the share
+  /// sheet on the `zealovaScore` preset. Returns gracefully when the viewer is
+  /// not ranked yet (no honest percentile to brag about).
+  Future<void> _shareMyScore() async {
+    HapticService.light();
+    Shareable? data;
+    try {
+      data = await ZealovaScoreAdapter.fromProviders(ref);
+    } catch (_) {
+      // surfaced below
+    }
+    if (!mounted) return;
+    if (data == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("You're not ranked yet — log a few workouts and check back."),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    await ShareableSheet.show(
+      context,
+      data: data,
+      initialTemplate: ShareableTemplate.zealovaScore,
+    );
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState appState) {
     super.didChangeAppLifecycleState(appState);
@@ -216,6 +249,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                             valueColor: AlwaysStoppedAnimation(accent),
                           ),
                         ),
+                      // F12/F13 — Share my Zealova Score (composite + percentile).
+                      IconButton(
+                        icon: Icon(Icons.ios_share_rounded,
+                            color: textColor, size: 20),
+                        tooltip: 'Share my Score',
+                        onPressed: _shareMyScore,
+                      ),
                     ],
                   ),
                 ),

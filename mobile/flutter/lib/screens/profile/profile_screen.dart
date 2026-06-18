@@ -180,6 +180,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // Stats and Inventory live in the You hub → Stats & Rewards now.
     final rows = [
       _AccountRowData(
+        icon: Icons.auto_awesome_rounded,
+        iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
+        title: 'Share & Brag',
+        onTap: () => context.push('/share-hub'),
+      ),
+      _AccountRowData(
         icon: Icons.shield_outlined,
         iconColor: AppColors.info,
         title: AppLocalizations.of(context).profileAiPrivacy,

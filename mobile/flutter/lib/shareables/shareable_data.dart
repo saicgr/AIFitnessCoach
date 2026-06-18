@@ -405,6 +405,19 @@ class Shareable {
   /// Recovery readiness percentage (0-100).
   final int? recoveryPct;
 
+  // ─── Source identity (F2/F3/F8/F16 query keys, all optional) ─────────────
+  /// Backing workout id — lets the AI insight line (F2) / do-my-workout link
+  /// (F8) query the right source. Null for non-workout shares.
+  final String? workoutId;
+
+  /// Backing food-log id — lets the AI insight line (F2) query a single meal.
+  /// Null for non-food shares.
+  final String? foodLogId;
+
+  /// The day this share represents, `YYYY-MM-DD` (F2 day insight / F3 / F16).
+  /// Null falls back to "today" server-side.
+  final String? dateIso;
+
   final Color accentColor;
   final String? deepLinkUrl;
   final ShareableAspect aspect;
@@ -444,6 +457,9 @@ class Shareable {
     this.rank,
     this.socialHandle,
     this.recoveryPct,
+    this.workoutId,
+    this.foodLogId,
+    this.dateIso,
     this.deepLinkUrl,
     this.aspect = ShareableAspect.story,
     this.caption,
@@ -508,6 +524,9 @@ class Shareable {
       rank: rank,
       socialHandle: socialHandle,
       recoveryPct: recoveryPct,
+      workoutId: workoutId,
+      foodLogId: foodLogId,
+      dateIso: dateIso,
       accentColor: accentColor ?? this.accentColor,
       deepLinkUrl: deepLinkUrl ?? this.deepLinkUrl,
       aspect: aspect ?? this.aspect,

@@ -10,6 +10,8 @@ import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/body_analyzer.dart';
 import '../../data/repositories/body_analyzer_repository.dart';
 import 'body_analyzer_capture_screen.dart';
+import '../../data/repositories/slideshow_repository.dart';
+import '../shareables/transformation_video_screen.dart';
 import 'widgets/body_age_badge.dart';
 import 'widgets/body_analyzer_hero.dart';
 import 'widgets/posture_findings_card.dart';
@@ -261,6 +263,17 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
         ),
         title: Text(AppLocalizations.of(context).progressScreenUiBodyAnalyzer),
         actions: [
+          IconButton(
+            tooltip: 'Transformation video',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const TransformationVideoScreen(
+                  source: SlideshowSource.progressPhotos,
+                ),
+              ),
+            ),
+            icon: const Icon(Icons.movie_creation_outlined),
+          ),
           if (_latest != null)
             IconButton(
               tooltip: AppLocalizations.of(context).commonShare,

@@ -46,6 +46,11 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
 
     _loadAICoachFeedback();
 
+    // Workstream E4 — discover whether the user has a Strava connection so the
+    // "Share to Strava" affordance can render. Best-effort; a failure just
+    // leaves the affordance hidden.
+    _loadStravaSharePref();
+
     // Load total workout count for milestone detection
     _loadTotalWorkoutCount();
 
@@ -782,6 +787,332 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
   }
 
 
+  // ──────────────────────────────────────────────────────────────────────
+  // Workstream C — optional post-workout photo capture
+  // ──────────────────────────────────────────────────────────────────────
+
+  /// Optional "Add a photo" affordance on the completion screen. Low-key by
+  /// design — it must never compete with the single accent DONE CTA, so it is
+  /// a hairline-outlined ghost card. After a photo is picked it shows a small
+  /// thumbnail with replace / remove controls; the picked file is also
+  /// pre-selected into the Share compose flow via [Shareable.customPhotoPath].
+  Widget _buildAddPhotoSection() {
+    final tc = ThemeColors.of(context);
+    final hairline = tc.textSecondary.withValues(alpha: 0.18);
+
+    if (_capturedPhotoPath != null) {
+      return Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: tc.elevated,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: hairline),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.file(
+                File(_capturedPhotoPath!),
+                width: 56,
+                height: 56,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  width: 56,
+                  height: 56,
+                  color: tc.surface,
+                  child: Icon(Icons.broken_image_outlined,
+                      color: tc.textSecondary, size: 22),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _isUploadingPhoto ? 'Saving photo…' : 'Photo added',
+                    style: ZType.lbl(13, color: tc.textPrimary),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'It will be pre-selected when you share',
+                    style: ZType.ser(12, color: tc.textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              tooltip: 'Replace',
+              onPressed: _pickWorkoutPhoto,
+              icon: Icon(Icons.swap_horiz_rounded,
+                  color: tc.textSecondary, size: 20),
+            ),
+            IconButton(
+              tooltip: 'Remove',
+              onPressed: () => setState(() => _capturedPhotoPath = null),
+              icon: Icon(Icons.close_rounded,
+                  color: tc.textSecondary, size: 20),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: _pickWorkoutPhoto,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: tc.textPrimary,
+          side: BorderSide(color: hairline),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        icon: Icon(Icons.add_a_photo_outlined, size: 18, color: tc.textSecondary),
+        label: Text(
+          'Add a photo',
+          style: ZType.lbl(13, color: tc.textPrimary),
+        ),
+      ),
+    );
+  }
+
+  /// Present a camera / gallery choice, pick an image, set it locally for
+  /// instant Share pre-select, then upload to S3 in the background.
+  Future<void> _pickWorkoutPhoto() async {
+    HapticFeedback.selectionClick();
+    final tc = ThemeColors.of(context);
+
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor: tc.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(Icons.camera_alt_outlined, color: tc.textPrimary),
+              title: Text('Take a photo',
+                  style: ZType.lbl(14, color: tc.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
+            ),
+            ListTile(
+              leading: Icon(Icons.photo_library_outlined, color: tc.textPrimary),
+              title: Text('Choose from gallery',
+                  style: ZType.lbl(14, color: tc.textPrimary)),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null || !mounted) return;
+
+    try {
+      final picker = ImagePicker();
+      final picked = await picker.pickImage(
+        source: source,
+        maxWidth: 2000,
+        maxHeight: 2000,
+        imageQuality: 90,
+      );
+      if (picked == null || !mounted) return;
+
+      setState(() => _capturedPhotoPath = picked.path);
+
+      // Upload in the background — the local path is enough for the Share
+      // pre-select, so we don't block the UI on the round-trip.
+      unawaited(_uploadWorkoutPhotoInBackground(picked.path));
+    } catch (e) {
+      debugPrint('❌ [WorkoutPhoto] pick failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not add photo: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Persist the picked photo to S3 via the repository. Best-effort: a failure
+  /// here does NOT clear the local path (the user can still share the photo);
+  /// it only means the photo isn't stored server-side for slideshow/Strava.
+  Future<void> _uploadWorkoutPhotoInBackground(String path) async {
+    if (!mounted) return;
+    setState(() => _isUploadingPhoto = true);
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null) {
+        debugPrint('⚠️ [WorkoutPhoto] no user id — skipping S3 upload');
+        return;
+      }
+      final repo = ref.read(workoutPhotosRepositoryProvider);
+      await repo.uploadPhoto(
+        userId: userId,
+        imageFile: File(path),
+        workoutId: widget.workout.id,
+        takenAt: DateTime.now(),
+      );
+      debugPrint('✅ [WorkoutPhoto] uploaded to S3');
+    } catch (e) {
+      debugPrint('❌ [WorkoutPhoto] background upload failed (non-blocking): $e');
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
+  // Workstream E4 — outbound "Share to Strava"
+  // ──────────────────────────────────────────────────────────────────────
+
+  /// Load the user's Strava connection capability so the affordance only
+  /// renders when there's an active Strava account. Best-effort: any failure
+  /// silently leaves `_stravaPref` null (affordance hidden).
+  Future<void> _loadStravaSharePref() async {
+    try {
+      final pref =
+          await ref.read(stravaExportRepositoryProvider).getPreference();
+      if (!mounted) return;
+      setState(() => _stravaPref = pref);
+    } catch (e) {
+      debugPrint('🟧 [Strava] share-pref load skipped: $e');
+    }
+  }
+
+  /// Low-key "Share to Strava" affordance. Renders only when the user has an
+  /// active Strava connection. Hairline ghost styling so it never competes with
+  /// the single accent DONE CTA.
+  Widget _buildShareToStravaSection() {
+    final pref = _stravaPref;
+    if (pref == null || !pref.connected) return const SizedBox.shrink();
+    final tc = ThemeColors.of(context);
+    final hairline = tc.textSecondary.withValues(alpha: 0.18);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          onPressed: _sharingToStrava ? null : _shareToStrava,
+          style: OutlinedButton.styleFrom(
+            foregroundColor: tc.textPrimary,
+            side: BorderSide(color: hairline),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+          ),
+          icon: _sharingToStrava
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(tc.textSecondary),
+                  ),
+                )
+              : const Icon(Icons.directions_run, size: 18,
+                  color: Color(0xFFFC4C02)),
+          label: Text(
+            _sharingToStrava ? 'Sharing to Strava…' : 'Share to Strava',
+            style: ZType.lbl(13, color: tc.textPrimary),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Push this completed workout to Strava (manual endpoint) AND, if a photo was
+  /// captured, hand the photo to the Strava app via the OS share-sheet — Strava's
+  /// public API can't attach a photo to an activity, so the photo path is the
+  /// client share-sheet, not a server upload.
+  Future<void> _shareToStrava() async {
+    final workoutId = widget.workout.id;
+    if (workoutId == null || workoutId.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This workout can\'t be shared to Strava yet.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+    HapticFeedback.mediumImpact();
+    setState(() => _sharingToStrava = true);
+    try {
+      // (a) Push the activity to Strava (links back to Zealova in description).
+      final result =
+          await ref.read(stravaExportRepositoryProvider).shareWorkout(workoutId);
+      debugPrint('🟧 [Strava] pushed activity=${result.activityId}');
+
+      // (b) Hand the captured photo to the Strava app via the OS share-sheet so
+      //     the user can attach it to the just-pushed activity post.
+      if (_capturedPhotoPath != null && File(_capturedPhotoPath!).existsSync()) {
+        await Share.shareXFiles(
+          [XFile(_capturedPhotoPath!)],
+          text: 'Shared from Zealova — ${widget.workout.name ?? 'Workout'}',
+        );
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              result.activityId != null
+                  ? 'Pushed to Strava 🎉'
+                  : 'Shared to Strava',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [Strava] share failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Couldn\'t share to Strava: ${_humanizeStravaError(e)}'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sharingToStrava = false);
+    }
+  }
+
+  /// Map common Strava push failures to a short, user-facing message. The
+  /// backend surfaces 401 (reconnect) / 409 (not connected) / 502 (API error).
+  String _humanizeStravaError(Object e) {
+    final s = e.toString().toLowerCase();
+    if (s.contains('401') || s.contains('write') || s.contains('reauth') ||
+        s.contains('scope')) {
+      return 'reconnect Strava to grant write access';
+    }
+    if (s.contains('409') || s.contains('not connected')) {
+      return 'Strava is not connected';
+    }
+    return 'please try again';
+  }
+
   /// Show the share workout bottom sheet — delegates to the unified
   /// `ShareableSheet` via `WorkoutAdapter` so the captured card always
   /// shows real volume / sets / reps (Bug #10), uses neutral charcoal
@@ -826,11 +1157,16 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       );
       return;
     }
+    // Workstream C contract: if the user captured a post-workout photo, pre-
+    // select it into the compose flow so photo templates render it full-bleed.
+    final shareableWithPhoto = _capturedPhotoPath != null
+        ? shareable.copyWith(customPhotoPath: _capturedPhotoPath)
+        : shareable;
     final workoutLogId = widget.workoutLogId;
     final allowPublicLinks = ref.read(publicShareLinksProvider);
     await ShareableSheet.show(
       context,
-      data: shareable,
+      data: shareableWithPhoto,
       // Privacy gate: when the user has disabled public share links the
       // pill is hidden entirely so no URL ever gets generated.
       onGenerateShareLink: !allowPublicLinks ||
@@ -867,9 +1203,49 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
     }
     await ShareableSheet.show(
       context,
-      data: shareable,
+      data: _capturedPhotoPath != null
+          ? shareable.copyWith(customPhotoPath: _capturedPhotoPath)
+          : shareable,
       // Land directly on the PRs card so the share is truly one-tap.
       initialTemplate: ShareableTemplate.prs,
+    );
+  }
+
+  /// F7 — milestone auto-card. Builds a celebratory milestone [Shareable] from
+  /// the crossed workout-count milestone and lands the share sheet directly on
+  /// the `milestoneCard` preset. Deterministic (no AI): the count is the hero.
+  Future<void> _showMilestoneShareSheet() async {
+    HapticFeedback.mediumImpact();
+    final milestone = _getWorkoutMilestone();
+    if (milestone == null) return;
+
+    final name = ref.read(authStateProvider).user?.displayName;
+    final streak = _achievements?['streak_days'] as int?;
+    final shareable = Shareable(
+      kind: ShareableKind.milestones,
+      title: '$milestone Workouts',
+      periodLabel: 'MILESTONE',
+      heroValue: milestone,
+      heroUnitSingular: 'workout',
+      highlights: [
+        const ShareableMetric(label: 'MILESTONE', value: 'Unlocked'),
+        ShareableMetric(
+          label: 'TOTAL WORKOUTS',
+          value: '$milestone',
+        ),
+      ],
+      currentStreak: streak,
+      userDisplayName: name,
+      accentColor: const Color(0xFFD8FF3A),
+    );
+
+    if (!mounted) return;
+    await ShareableSheet.show(
+      context,
+      data: _capturedPhotoPath != null
+          ? shareable.copyWith(customPhotoPath: _capturedPhotoPath)
+          : shareable,
+      initialTemplate: ShareableTemplate.milestoneCard,
     );
   }
 
