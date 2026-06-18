@@ -880,11 +880,28 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
             children: [
               // Blurred exercise art (or accent gradient when none).
               _buildCompletedBackground(c, accent),
-              // Frosted accent-green tint over the blur — keeps the check, text
-              // and buttons legible over any image and gives the card its hue.
+              // Legibility scrim. The old flat 28-34% green tint was far too
+              // weak: over a LIGHT blurred exercise photo it barely darkened
+              // anything, so the white "Workout complete" title + name + button
+              // labels vanished into the pale wash (the user reported "I can't
+              // see the words at all"). Replace it with a dark-green vertical
+              // scrim — the accent darkened toward black at high opacity — so
+              // white text always clears ~6:1 contrast while the card keeps its
+              // green identity, regardless of how bright the art behind it is.
               DecoratedBox(
                 decoration: BoxDecoration(
-                  color: accent.withValues(alpha: isDark ? 0.34 : 0.28),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color.alphaBlend(
+                        Colors.black.withValues(alpha: 0.30), accent)
+                          .withValues(alpha: 0.82),
+                      Color.alphaBlend(
+                        Colors.black.withValues(alpha: 0.52), accent)
+                          .withValues(alpha: 0.88),
+                    ],
+                  ),
                 ),
               ),
               Padding(

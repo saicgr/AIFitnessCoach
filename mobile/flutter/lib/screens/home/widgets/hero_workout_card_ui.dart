@@ -23,8 +23,23 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
       borderRadius: BorderRadius.circular(22),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-        child: Container(
-          color: accent.withValues(alpha: isDark ? 0.25 : 0.2),
+        child: DecoratedBox(
+          // Dark-accent legibility scrim (was a flat 20-25% tint that left the
+          // headline + name unreadable over light blurred art). White text now
+          // clears contrast in both themes, so the labels below are forced
+          // white rather than theme-aware black.
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Color.alphaBlend(Colors.black.withValues(alpha: 0.30), accent)
+                    .withValues(alpha: 0.82),
+                Color.alphaBlend(Colors.black.withValues(alpha: 0.52), accent)
+                    .withValues(alpha: 0.88),
+              ],
+            ),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -52,8 +67,8 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
               const SizedBox(height: 12),
               Text(
                 headline,
-                style: TextStyle(
-                  color: isDark ? Colors.white : Colors.black87,
+                style: const TextStyle(
+                  color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -61,8 +76,8 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
               const SizedBox(height: 4),
               Text(
                 workout.name ?? '',
-                style: TextStyle(
-                  color: isDark ? Colors.white70 : Colors.black54,
+                style: const TextStyle(
+                  color: Colors.white70,
                   fontSize: 14,
                 ),
               ),
@@ -129,27 +144,24 @@ extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.15)
-              : Colors.black.withValues(alpha: 0.08),
+          // Frosted-white pills over the dark scrim — white in both themes so
+          // the icon + label stay legible (the scrim is dark regardless of
+          // theme now).
+          color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.22),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withValues(alpha: 0.2)
-                : Colors.black.withValues(alpha: 0.1),
-          ),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.32)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 16, color: isDark ? Colors.white : Colors.black87),
+            Icon(icon, size: 16, color: Colors.white),
             const SizedBox(width: 6),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : Colors.black87,
+                color: Colors.white,
               ),
             ),
           ],
