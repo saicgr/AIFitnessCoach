@@ -19,6 +19,7 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as sb show AuthState;
 import '../../core/constants/api_constants.dart';
+import '../../core/providers/subscription_provider.dart';
 import '../local/database.dart';
 import '../local/database_provider.dart';
 import '../models/ai_profile_payload.dart';
@@ -547,10 +548,20 @@ class AuthRepository {
           );
     });
     await _runSignOutStep('revenuecat.logOut', () async {
-      // Purchases.logOut() throws if no user is currently identified
-      // (e.g., the SDK was never configured because the user signed up
-      // and immediately signed out without hitting the paywall).
-      // Swallow that specific failure mode rather than aborting cleanup.
+      // If the SDK was never configured (e.g. a build shipped without the
+      // RevenueCat API key, or the user signed up and signed out before the
+      // paywall), Purchases.logOut() hits a Swift precondition that surfaces
+      // as a NATIVE EXC_BREAKPOINT — which a Dart try/catch CANNOT catch, so
+      // it crashes the whole sign-out (Sentry FITWIZ-FLUTTER-E3). Gate on the
+      // configured flag and skip entirely when unconfigured.
+      if (!SubscriptionNotifier.isRevenueCatReady) {
+        if (kDebugMode) {
+          debugPrint('ℹ️ [SignOut] RevenueCat not configured — skipping logOut');
+        }
+        return;
+      }
+      // logOut() also throws (catchable Dart error) if no user is currently
+      // identified; swallow that rather than aborting cleanup.
       try {
         await Purchases.logOut();
       } catch (e) {

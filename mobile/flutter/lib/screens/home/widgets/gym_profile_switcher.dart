@@ -162,12 +162,19 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
         children: [
           Icon(Icons.refresh_rounded, size: 16, color: color),
           const SizedBox(width: 6),
-          Text(
-            AppLocalizations.of(context).upNextCardTapToRetry,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: color,
+          // Flexible + ellipsis: this row can be hosted in the narrow (~67px)
+          // Workouts masthead pill, where an unshrinkable label overflows.
+          Flexible(
+            child: Text(
+              AppLocalizations.of(context).upNextCardTapToRetry,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -190,12 +197,19 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
         children: [
           Icon(Icons.add_circle_outline_rounded, size: 16, color: color),
           const SizedBox(width: 6),
-          Text(
-            AppLocalizations.of(context).gymProfileSwitcherAddGym,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: color,
+          // Flexible + ellipsis: hosted in the narrow (~67px) Workouts masthead
+          // pill, "Add gym" alone (icon + text ≈ 85px) overflowed by ~18px.
+          Flexible(
+            child: Text(
+              AppLocalizations.of(context).gymProfileSwitcherAddGym,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
             ),
           ),
         ],
@@ -252,12 +266,19 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
               color: secondaryColor,
             ),
             const SizedBox(width: 2),
-            Text(
-              activeProfile.timeSlotShortLabel ?? '',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: secondaryColor,
+            // Flexible + ellipsis so the time-slot label also shrinks in the
+            // narrow masthead pill instead of overflowing past the name.
+            Flexible(
+              child: Text(
+                activeProfile.timeSlotShortLabel ?? '',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: secondaryColor,
+                ),
               ),
             ),
           ],
