@@ -241,23 +241,26 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Eyebrow row: the "My Gym" switcher fills the LEFT (so the top
-              // isn't empty after the wordmark removal), action pills on the right.
+              // Masthead row: the big Anton hero on the LEFT, action pills on
+              // the right. On a TRAINING day today's split name leads; on a
+              // REST/complete day the GYM leads (big name + dropdown) instead
+              // of a giant date — the date drops to the muted sub-line below.
+              // (User: "do we need the date big? make My gym like that with a
+              // dropdown in the same place.")
               Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsetsDirectional.only(
-                          start: 12, end: 10, top: 6, bottom: 6),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface2,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.cardBorder),
-                      ),
-                      child: const GymProfileSwitcher(),
-                    ),
+                  Expanded(
+                    child: mhHasSplit
+                        ? Text(
+                            mhTodayName!.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: ZType.disp(30, color: textPrimary),
+                          )
+                        : const GymProfileSwitcher(large: true),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   _HairlineActionPill(
                     icon: Icons.bar_chart_rounded,
                     tint: accentColor,
@@ -292,33 +295,29 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              // Contextual Anton masthead: today's split (or the date on a
-              // rest/no-plan day), with a muted date line beneath the split.
-              if (mhHasSplit) ...[
-                Text(
-                  mhTodayName!.toUpperCase(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: ZType.disp(30, color: textPrimary),
-                ),
-                const SizedBox(height: 2),
+              const SizedBox(height: 2),
+              // Sub-line. Training day: the gym switcher (demoted here since the
+              // split leads) + the date. Rest/complete day: just the date (the
+              // gym already leads above).
+              if (mhHasSplit)
+                Row(
+                  children: [
+                    // Gym shrinks (ellipsis) when long; the short date keeps its
+                    // natural width so the two never split the row 50/50.
+                    const Flexible(child: GymProfileSwitcher()),
+                    Text(
+                      '  ·  $mhWeekday  ·  $mhMonthDay',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.lbl(12.5,
+                          color: tc.textMuted, letterSpacing: 1.5),
+                    ),
+                  ],
+                )
+              else
                 Text(
                   '$mhWeekday  ·  $mhMonthDay',
                   style: ZType.lbl(12.5, color: tc.textMuted, letterSpacing: 1.5),
-                ),
-              ] else
-                RichText(
-                  text: TextSpan(
-                    text: mhWeekday,
-                    style: ZType.disp(30, color: textPrimary),
-                    children: [
-                      TextSpan(
-                        text: '  ·  $mhMonthDay',
-                        style: ZType.disp(30, color: tc.textMuted),
-                      ),
-                    ],
-                  ),
                 ),
             ],
           ),

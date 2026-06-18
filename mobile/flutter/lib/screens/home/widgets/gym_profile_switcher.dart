@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -33,10 +34,17 @@ class GymProfileSwitcher extends ConsumerStatefulWidget {
   /// Callback when profile is switched
   final VoidCallback? onProfileSwitched;
 
+  /// When true the active gym name renders as the big Anton masthead hero
+  /// (with a larger dropdown chevron and no time-slot sub-label) — used on the
+  /// Workouts tab so the gym leads the header instead of the date. Tap still
+  /// opens the same profile picker.
+  final bool large;
+
   const GymProfileSwitcher({
     super.key,
     this.collapsed = false,
     this.onProfileSwitched,
+    this.large = false,
   });
 
   @override
@@ -246,19 +254,22 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
           // overflow in the Workouts masthead's gym switcher).
           Flexible(
             child: Text(
-              activeProfile.name,
+              widget.large ? activeProfile.name.toUpperCase() : activeProfile.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: textColor,
-              ),
+              style: widget.large
+                  ? ZType.disp(30, color: textColor, letterSpacing: 0.5)
+                  : TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: textColor,
+                    ),
             ),
           ),
-          // Show time slot indicator if set
-          if (activeProfile.hasTimePreference) ...[
+          // Show time slot indicator if set (suppressed in large/masthead mode
+          // — the hero shows just the gym name + chevron).
+          if (!widget.large && activeProfile.hasTimePreference) ...[
             const SizedBox(width: 6),
             Icon(
               activeProfile.timeSlotIcon,
@@ -282,10 +293,10 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
               ),
             ),
           ],
-          const SizedBox(width: 4),
+          SizedBox(width: widget.large ? 2 : 4),
           Icon(
             Icons.keyboard_arrow_down_rounded,
-            size: 20,
+            size: widget.large ? 30 : 20,
             color: secondaryColor,
           ),
         ],
@@ -644,7 +655,10 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                     Expanded(
                       child: ReorderableListView.builder(
                         scrollController: scrollController,
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                        // Small bottom gap only — the add button is now docked
+                        // in its own strip below the list (was 100 to clear the
+                        // floating FAB that overlapped the last card).
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                         buildDefaultDragHandles: false,
                         itemCount: _profiles.length,
                         proxyDecorator: (child, index, animation) {
@@ -677,39 +691,46 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                         },
                       ),
                     ),
-                  ],
-                ),
-
-                // Floating Add Button
-                Positioned(
-                  right: 20,
-                  bottom: 24 + MediaQuery.of(context).padding.bottom,
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      widget.onAddProfile();
-                    },
-                    child: Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: appAccentColor,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: appAccentColor.withValues(alpha: 0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                    // Docked add button — its own strip beneath the list so the
+                    // "+" can never float over a gym card (it used to overlap
+                    // the active profile's content + clip its "Active" badge).
+                    Padding(
+                      padding: EdgeInsets.only(
+                        right: 20,
+                        top: 4,
+                        bottom: 12 + MediaQuery.of(context).padding.bottom,
                       ),
-                      child: Icon(
-                        Icons.add_rounded,
-                        color: accentContrastColor,
-                        size: 28,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                          onTap: () {
+                            HapticService.light();
+                            widget.onAddProfile();
+                          },
+                          child: Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: appAccentColor,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: appAccentColor.withValues(alpha: 0.4),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: accentContrastColor,
+                              size: 28,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
