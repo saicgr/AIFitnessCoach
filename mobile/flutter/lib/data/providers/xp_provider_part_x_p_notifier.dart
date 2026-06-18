@@ -983,6 +983,41 @@ class XPNotifier extends StateNotifier<XPState> {
     return awardFirstTimeBonus('first_chat');
   }
 
+  /// Finish the Get Started Challenge: awards the 100 XP completion bonus
+  /// (with the +XP float animation) and grants a reward crate. Idempotent.
+  Future<OnboardingChallengeResult> completeOnboardingChallenge() async {
+    if (state.awardedBonuses.contains('onboarding_complete')) {
+      return const OnboardingChallengeResult(
+        awarded: false,
+        xp: 0,
+        crateGranted: false,
+        crateType: null,
+        message: 'Already completed',
+      );
+    }
+    final result = await _repository.completeOnboardingChallenge();
+    if (result.awarded) {
+      state = state.copyWith(
+        awardedBonuses: {...state.awardedBonuses, 'onboarding_complete'},
+      );
+      if (result.xp > 0) {
+        state = state.copyWith(
+          lastXPEarnedEvent: XPEarnedAnimationEvent(
+            xpAmount: result.xp,
+            goalType: XPGoalType.dailyLogin,
+          ),
+        );
+      }
+      await loadUserXP(userId: _currentUserId, showLoading: false);
+    } else {
+      // Backend says already done — sync local state so we don't retry.
+      state = state.copyWith(
+        awardedBonuses: {...state.awardedBonuses, 'onboarding_complete'},
+      );
+    }
+    return result;
+  }
+
   /// Award first habit bonus (25 XP)
   Future<int> checkFirstHabitBonus() async {
     return awardFirstTimeBonus('first_habit');

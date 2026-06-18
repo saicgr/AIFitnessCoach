@@ -436,6 +436,26 @@ class XPRepository {
     }
   }
 
+  /// Finish the new-user Get Started Challenge: idempotently awards the
+  /// completion bonus (100 XP) and, on first completion, grants a reward crate.
+  Future<OnboardingChallengeResult> completeOnboardingChallenge() async {
+    try {
+      final response =
+          await _client.post('/xp/complete-onboarding-challenge');
+      return OnboardingChallengeResult.fromJson(
+          response.data as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('Error completing onboarding challenge: $e');
+      return const OnboardingChallengeResult(
+        awarded: false,
+        xp: 0,
+        crateGranted: false,
+        crateType: null,
+        message: 'Error completing challenge',
+      );
+    }
+  }
+
   // =========================================================================
   // Consumables System
   // =========================================================================

@@ -54,6 +54,35 @@ class FirstTimeBonusResult {
 }
 
 
+/// Result of completing the new-user Get Started Challenge.
+/// [awarded] is true only on the first completion (XP + crate granted).
+class OnboardingChallengeResult {
+  final bool awarded;
+  final int xp;
+  final bool crateGranted;
+  final String? crateType;
+  final String message;
+
+  const OnboardingChallengeResult({
+    required this.awarded,
+    required this.xp,
+    required this.crateGranted,
+    required this.crateType,
+    required this.message,
+  });
+
+  factory OnboardingChallengeResult.fromJson(Map<String, dynamic> json) {
+    return OnboardingChallengeResult(
+      awarded: json['awarded'] as bool? ?? false,
+      xp: (json['xp'] as num?)?.toInt() ?? 0,
+      crateGranted: json['crate_granted'] as bool? ?? false,
+      crateType: json['crate_type'] as String?,
+      message: json['message'] as String? ?? '',
+    );
+  }
+}
+
+
 /// Info about an awarded first-time bonus
 class FirstTimeBonusInfo {
   final String bonusType;

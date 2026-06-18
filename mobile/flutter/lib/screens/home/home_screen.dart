@@ -1171,9 +1171,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // user dismisses.
               const SliverToBoxAdapter(child: CalibrationBanner()),
 
-              // F3.1 Setup Checklist — self-collapses when complete, past
-              // day 7, or dismissed for the week.
-              const SliverToBoxAdapter(child: SetupChecklistCard()),
+              // Get Started Challenge (new-user onboarding checklist) is no
+              // longer mounted here — it is spliced in directly BELOW the Next
+              // Workout hero inside _homeSectionSlivers so it sits where the
+              // reference design places it. It self-collapses when complete,
+              // past the 14-day window, or dismissed.
 
               // One-time cycle-tracking setup invitation for existing
               // eligible users (Phase E). Self-collapses to zero height
@@ -1297,6 +1299,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // so the coach action items sit closer to first glance.
       final gap = visible[i] == HomeSection.quickActions ? 6.0 : kHomeGap;
       slivers.add(SliverToBoxAdapter(child: SizedBox(height: gap)));
+      // Get Started Challenge sits directly below the Next Workout hero
+      // (matches the reference). Self-hides to zero height when not applicable,
+      // and provides its own vertical margin — so no trailing gap sliver here,
+      // else a hidden card would leave a phantom void.
+      if (visible[i] == HomeSection.workoutCard) {
+        slivers.add(const SliverToBoxAdapter(child: SetupChecklistCard()));
+      }
     }
 
     // Below-the-fold: a single lazily-building SliverList. Each visible
@@ -1327,6 +1336,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     _widgetForSection(section),
+                    // If a My Space reorder pushed the workout card below the
+                    // fold, keep the Get Started Challenge directly beneath it.
+                    if (section == HomeSection.workoutCard)
+                      const SetupChecklistCard(),
                     SizedBox(height: gap),
                   ],
                 ),
