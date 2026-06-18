@@ -674,6 +674,21 @@ async def complete_workout(
         background_tasks.add_task(_send_post_workout_nutrition_nudge, user_id=user_id, workout_name=workout_name)
         background_tasks.add_task(_send_streak_celebration_if_milestone, user_id=user_id)
 
+        # Workstream E3 — auto-push the completed workout to Strava (FAIL-OPEN).
+        # Only fires if the user has a connected Strava account with
+        # `auto_share_to_strava` ON and the `activity:write` scope.
+        # `maybe_push_to_strava` swallows + logs EVERY error internally — a
+        # Strava outage / dead token / missing scope must NEVER affect workout
+        # completion (feedback_workout_gen_zero_regression). Strava's public API
+        # has no photo-attach endpoint, so this pushes the activity only; the
+        # post-workout photo reaches Strava via the client OS share-sheet.
+        from services.sync.strava_export import maybe_push_to_strava
+        background_tasks.add_task(
+            maybe_push_to_strava,
+            user_id=user_id,
+            workout_id=str(workout_id),
+        )
+
         # Trophies + masteries recompute. Previously neither fired after
         # complete_workout — users could finish 10 sessions and still see
         # Lv.0 / "No badges". Spawned via asyncio.create_task (not

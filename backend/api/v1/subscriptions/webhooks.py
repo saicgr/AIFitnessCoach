@@ -159,6 +159,15 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
         .upsert(sub_data, on_conflict="user_id")\
         .execute()
 
+    # F5 referral reward — flip the referred user's referral row to 'qualified'
+    # and record the pending two-sided reward now that they've subscribed. Fail
+    # open: referral bookkeeping must NEVER block entitlement provisioning.
+    try:
+        from services.referral_service import mark_referral_subscribed
+        mark_referral_subscribed(user_id)
+    except Exception as e:
+        logger.warning(f"mark_referral_subscribed failed for user={user_id}: {e}")
+
     # Onboarding v5: anchor trial_start_date on the user record so the
     # home-screen "Day X / 7" widget, goal-date math, Day 6 coach message,
     # and Day 7 trial summary cron all have a single authoritative date.

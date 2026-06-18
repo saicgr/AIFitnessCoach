@@ -58,8 +58,10 @@ STRAVA_TOKEN_URL = "https://www.strava.com/api/v3/oauth/token"
 STRAVA_API_BASE = "https://www.strava.com/api/v3"
 STRAVA_PUSH_BASE = "https://www.strava.com/api/v3/push_subscriptions"
 
-# Scopes we request. "activity:read_all" includes private activities.
-STRAVA_SCOPES = ["read", "activity:read_all", "profile:read_all"]
+# Scopes we request. "activity:read_all" includes private activities;
+# "activity:write" lets us push completed workouts back as Strava activities
+# (outbound export — requires a Strava app review to be granted in production).
+STRAVA_SCOPES = ["read", "activity:read_all", "activity:write", "profile:read_all"]
 
 # Strava activity_type → our cardio enum + "skip" marker for strength.
 _ACTIVITY_TYPE_MAP: Dict[str, Optional[str]] = {
@@ -206,6 +208,67 @@ class StravaProvider(SyncProvider):
             f"🏃 [strava] fetched {len(rows)} activities for user={account.user_id} since={since.isoformat()}"
         )
         return rows
+
+    # ─────────────────────────── Outbound export ─────────────────────
+    #
+    # NOTE on photos: Strava's PUBLIC API has no endpoint to attach a photo to
+    # an activity (`/uploads` accepts only fit/gpx/tcx activity *files*, not
+    # images). So the post-workout photo reaches a Strava post via the OS
+    # share-sheet to the Strava app (handled on the client); here we push the
+    # activity itself and link the Zealova share card in the description.
+
+    def create_activity(
+        self,
+        account: SyncAccount,
+        *,
+        name: str,
+        activity_type: str = "WeightTraining",
+        start_date: datetime,
+        elapsed_time_sec: int,
+        description: Optional[str] = None,
+        calories: Optional[float] = None,
+        distance_m: Optional[float] = None,
+    ) -> Dict[str, Any]:
+        """Push a completed workout to Strava as a manual activity.
+
+        Requires the ``activity:write`` scope (granted only after a Strava app
+        review). Returns the created activity JSON (includes ``id``). Raises
+        ``ReauthRequiredError`` if the account lacks the write scope so callers
+        can prompt a re-authorize.
+        """
+        if "activity:write" not in (account.scopes or []):
+            raise ReauthRequiredError(
+                "Strava account missing activity:write scope — re-authorize required"
+            )
+        headers = {"Authorization": f"Bearer {account.access_token}"}
+        # Strava expects start_date_local as ISO8601; ensure tz-aware → UTC Z.
+        sd = start_date.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        form: Dict[str, Any] = {
+            "name": name,
+            "type": activity_type,
+            "sport_type": activity_type,
+            "start_date_local": sd,
+            "elapsed_time": max(int(elapsed_time_sec), 1),
+        }
+        if description:
+            form["description"] = description
+        if distance_m is not None:
+            form["distance"] = distance_m
+        resp = httpx.post(
+            f"{STRAVA_API_BASE}/activities",
+            data=form,
+            headers=headers,
+            timeout=30.0,
+        )
+        if resp.status_code == 401:
+            raise ReauthRequiredError("Strava access token rejected")
+        if resp.status_code == 429:
+            raise ProviderRateLimitedError()
+        data = _raise_for_status_and_parse(resp)
+        logger.info(
+            f"🏋️ [strava] pushed activity id={data.get('id')} for user={account.user_id}"
+        )
+        return data
 
     # ──────────────────────────── Webhook ────────────────────────────
 

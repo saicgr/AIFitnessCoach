@@ -27,6 +27,7 @@ from api.v1 import sauna  # Sauna session logging
 from api.v1 import recovery_modalities  # Cold plunge / contrast / massage logging (Gap 8)
 from api.v1 import race  # Race/event goal + periodization (Gap 11)
 from api.v1 import progress_photos  # Progress photos with before/after comparisons
+from api.v1 import workout_photos  # Casual per-workout photos (gym selfie / lift snapshot)
 from api.v1 import scores  # Strength scores, readiness scores, personal records
 from api.v1 import workout_history  # Manual workout history import for AI learning
 from api.v1 import workout_history_file  # File-upload import (Hevy/Strong/Fitbod/Nippard/etc.)
@@ -100,6 +101,7 @@ from api.v1 import media_jobs  # Top-level media_analysis_jobs polling (cross-fe
 from api.v1 import daily_schedule  # Daily schedule planner
 from api.v1 import sync  # Offline sync bulk upload and import
 from api.v1 import oauth_sync  # OAuth two-way sync (Strava / Garmin / Fitbit / Apple Health / Peloton)
+from api.v1 import strava_export  # Strava outbound share (auto-push completed workouts + manual share)
 from api.v1 import exercise_popularity  # Collaborative filtering exercise scores
 from api.v1 import beast_mode  # Beast mode custom training preferences
 from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
@@ -155,6 +157,10 @@ router.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
 # validation instead of falling through. (Fixes the prod reschedule-slot 422.)
 from api.v1 import home_signals as _home_signals_early  # noqa: E402
 router.include_router(_home_signals_early.workouts_router, prefix="/workouts", tags=["Workouts"])
+# strava_export carries a LITERAL /workouts/{workout_id}/share-to-strava path —
+# register it before workouts.router for the same registration-order reason as
+# home_signals above. It also owns /strava-export/preference (no prefix).
+router.include_router(strava_export.router, tags=["Strava Export"])
 router.include_router(workouts.router, prefix="/workouts", tags=["Workouts"])
 router.include_router(equipment.router, prefix="/equipment", tags=["Equipment"])
 router.include_router(periodization.router, tags=["Periodization"])  # /periodization/state, /periodization/force-deload, /periodization/bonus-workout
@@ -287,6 +293,9 @@ router.include_router(race.router, prefix="/race", tags=["Race"])
 
 # Progress photos with before/after comparisons
 router.include_router(progress_photos.router, prefix="/progress-photos", tags=["Progress Photos"])
+
+# Casual per-workout photos (routes already carry the /workout-photos prefix)
+router.include_router(workout_photos.router, tags=["Workout Photos"])
 
 # Scores: strength scores, readiness scores, personal records
 router.include_router(scores.router, prefix="/scores", tags=["Scores"])
@@ -691,3 +700,26 @@ router.include_router(_content_catalogs_module.router, tags=["Content Catalogs"]
 # absolute paths (/mindfulness/*) so no prefix is set here.
 from . import mindfulness as _mindfulness_module
 router.include_router(_mindfulness_module.router, tags=["Mindfulness"])
+
+# ── Share viral layer (Workstream F) — cost-disciplined AI + growth + social ──
+# These routers carry ABSOLUTE literal paths under /share, /s, and /friend-streak.
+# They DO NOT collide with the existing Imports module (share.py: /share/classify,
+# /share/import-*, /share/history; share_orchestrator.py: /share/fetch-url,
+# /share/import-audio, /share/import-pdf) — the new nouns (ai-restyle, insight-line,
+# day-in-proof, referral-link, workout-link, recipe-link, resolve-workout,
+# on-this-day) are distinct, so no prefix is set here.
+#
+# F1 photo-restyle (capped+cached), F2 insight line (deterministic-first),
+# F3 Day-in-Proof. Kill-switches: SHARE_AI_RESTYLE_ENABLED / SHARE_AI_INSIGHT_ENABLED.
+from . import share_ai as _share_ai_module
+router.include_router(_share_ai_module.router, tags=["Share AI"])
+
+# F5 referral + deferred deep-link resolver (/s/{token}), F8 do-my-workout /
+# try-this-recipe links + level-scaled resolution, F16 "a year ago today".
+from . import share_growth as _share_growth_module
+router.include_router(_share_growth_module.router, tags=["Share Growth"])
+
+# F14 Friend Streak — 1:1 shared streak (workout|food), invite/accept/list +
+# cron-protected daily evaluator. No public feed.
+from . import friend_streak as _friend_streak_module
+router.include_router(_friend_streak_module.router, tags=["Friend Streak"])
