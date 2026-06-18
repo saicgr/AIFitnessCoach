@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_links.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../features/feature_voting_screen.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -19,23 +18,21 @@ class _ComingSoonScreenState extends ConsumerState<ComingSoonScreen> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.background;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
         title: AppLocalizations.of(context).settingsComingSoon,
         actions: [
-          if (AppLinks.hasFeatureRequestLink)
-            PillAppBarAction(
-              icon: Icons.lightbulb_outline,
-              iconColor: AppColors.orange,
-              onTap: () async {
-                try {
-                  await launchUrl(Uri.parse(AppLinks.featureRequests), mode: LaunchMode.externalApplication);
-                } catch (_) {}
-              },
+          // Open the in-app feature-request board (submit, vote, discuss).
+          PillAppBarAction(
+            icon: Icons.how_to_vote_outlined,
+            iconColor: AppColors.orange,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const FeatureVotingScreen()),
             ),
+          ),
         ],
       ),
       body: _RoadmapTab(),

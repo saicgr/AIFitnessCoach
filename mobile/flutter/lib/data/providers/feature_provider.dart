@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/feature_request.dart';
+import '../../models/feature_comment.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/feature_repository.dart';
 
@@ -39,24 +40,57 @@ class FeaturesNotifier extends StateNotifier<AsyncValue<List<FeatureRequest>>> {
   final FeatureRepository _repository;
   final String? _userId;
 
+  // Board-wide filters (apply across all status tabs).
+  String _sort = 'trending';
+  String _query = '';
+  String? _category; // null = all categories
+
+  String get sort => _sort;
+  String get query => _query;
+  String? get category => _category;
+
   FeaturesNotifier(this._repository, this._userId)
       : super(const AsyncValue.loading()) {
     refresh();
   }
 
-  /// Refresh features list
+  /// Refresh features list with the current filters.
   Future<void> refresh({String? status}) async {
     state = const AsyncValue.loading();
     try {
       final features = await _repository.getFeatures(
         status: status,
         userId: _userId,
+        sort: _sort,
+        query: _query,
+        category: _category,
       );
       state = AsyncValue.data(features);
     } catch (e, stackTrace) {
       debugPrint('❌ [FeaturesNotifier] Error refreshing features: $e');
       state = AsyncValue.error(e, stackTrace);
     }
+  }
+
+  /// Change the sort mode (trending / top / new) and refetch.
+  Future<void> setSort(String sort) async {
+    if (sort == _sort) return;
+    _sort = sort;
+    await refresh();
+  }
+
+  /// Change the search query and refetch. Pass empty string to clear.
+  Future<void> setSearch(String query) async {
+    if (query == _query) return;
+    _query = query;
+    await refresh();
+  }
+
+  /// Change the category filter (null = all) and refetch.
+  Future<void> setCategory(String? category) async {
+    if (category == _category) return;
+    _category = category;
+    await refresh();
   }
 
   /// Toggle vote for a feature (optimistic update with rollback on error)
@@ -166,3 +200,12 @@ class FeaturesNotifier extends StateNotifier<AsyncValue<List<FeatureRequest>>> {
     );
   }
 }
+
+/// Threaded comments for a single feature (oldest-first).
+/// `.autoDispose` — only alive while the feature detail sheet is open.
+final featureCommentsProvider = FutureProvider.autoDispose
+    .family<List<FeatureComment>, String>((ref, featureId) async {
+  final repository = ref.watch(featureRepositoryProvider);
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  return repository.getComments(featureId, userId: userId);
+});

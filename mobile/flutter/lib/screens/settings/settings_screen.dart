@@ -30,7 +30,7 @@ import '../../widgets/level_up_dialog.dart';
 import '../../data/models/user.dart' as app_user;
 import '../../data/models/user_xp.dart';
 import 'beast_mode_unlock_dialog.dart';
-import 'coming_soon_screen.dart';
+import '../features/feature_voting_screen.dart';
 import 'meal_reminders_settings_screen.dart';
 import '../../core/providers/subscription_provider.dart';
 import '../../core/services/posthog_service.dart';
@@ -768,10 +768,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
             title: AppLocalizations.of(context).settingsComingSoon,
             value: AppLocalizations.of(context).settings24UpcomingFeatures,
-            sectionKeys: const ['coming_soon', 'upcoming', 'new_features'],
+            sectionKeys: const [
+              'coming_soon', 'upcoming', 'new_features',
+              'feature requests', 'roadmap', 'vote', 'suggest',
+            ],
             onTap: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ComingSoonScreen()),
+              MaterialPageRoute(builder: (_) => const FeatureVotingScreen()),
             ),
           ),
         ],

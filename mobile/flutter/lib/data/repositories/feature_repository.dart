@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/feature_request.dart';
+import '../../models/feature_comment.dart';
 import '../services/api_client.dart';
 
 /// Feature repository provider
@@ -16,17 +17,28 @@ class FeatureRepository {
 
   FeatureRepository(this._apiClient);
 
-  /// Get all feature requests with optional status filter
+  /// Get all feature requests with optional status / sort / search / category filters
   Future<List<FeatureRequest>> getFeatures({
     String? status,
     String? userId,
+    String? sort,
+    String? query,
+    String? category,
   }) async {
     try {
-      debugPrint('🔍 [Features] Fetching features (status=$status, userId=$userId)');
+      debugPrint(
+        '🔍 [Features] Fetching features (status=$status, sort=$sort, '
+        'category=$category, q=${query == null || query.isEmpty ? "no" : "yes"})',
+      );
 
       final queryParams = <String, dynamic>{};
       if (status != null) queryParams['status'] = status;
       if (userId != null) queryParams['user_id'] = userId;
+      if (sort != null) queryParams['sort'] = sort;
+      if (query != null && query.trim().isNotEmpty) {
+        queryParams['q'] = query.trim();
+      }
+      if (category != null) queryParams['category'] = category;
 
       final response = await _apiClient.get(
         '/features/list',
@@ -159,6 +171,69 @@ class FeatureRepository {
       throw Exception('Failed to get remaining submissions');
     } catch (e) {
       debugPrint('❌ [Features] Error getting remaining submissions: $e');
+      rethrow;
+    }
+  }
+
+  /// Get comments for a feature (oldest-first; client renders the thread tree).
+  Future<List<FeatureComment>> getComments(
+    String featureId, {
+    String? userId,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{};
+      if (userId != null) queryParams['user_id'] = userId;
+
+      final response = await _apiClient.get(
+        '/features/$featureId/comments',
+        queryParameters: queryParams,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data as List;
+        return data
+            .map((json) =>
+                FeatureComment.fromJson(json as Map<String, dynamic>))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      debugPrint('❌ [Features] Error fetching comments: $e');
+      rethrow;
+    }
+  }
+
+  /// Add a comment to a feature (optionally threaded under [parentId]).
+  Future<FeatureComment> addComment({
+    required String featureId,
+    required String userId,
+    required String body,
+    String? authorName,
+    String? parentId,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/features/$featureId/comment',
+        data: {
+          'user_id': userId,
+          'body': body,
+          if (authorName != null) 'author_name': authorName,
+          if (parentId != null) 'parent_id': parentId,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        return FeatureComment.fromJson(response.data as Map<String, dynamic>);
+      }
+      throw Exception('Failed to add comment');
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 429) {
+        throw Exception('You are commenting too fast. Try again shortly.');
+      }
+      debugPrint('❌ [Features] Error adding comment: $e');
+      rethrow;
+    } catch (e) {
+      debugPrint('❌ [Features] Error adding comment: $e');
       rethrow;
     }
   }

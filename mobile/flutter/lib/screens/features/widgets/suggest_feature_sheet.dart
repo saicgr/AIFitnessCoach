@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/feature_provider.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -43,6 +44,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final onAccent = accent.computeLuminance() > 0.55 ? Colors.black : Colors.white;
     final remainingAsync = ref.watch(remainingSubmissionsProvider);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
@@ -121,7 +124,7 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                       return Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.1),
+                          color: Colors.orange.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -231,8 +234,8 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                       onSelected: (selected) {
                         setState(() => _selectedCategory = cat['value'] as String);
                       },
-                      selectedColor: const Color(0xFF00D9FF).withOpacity(0.2),
-                      checkmarkColor: const Color(0xFF00D9FF),
+                      selectedColor: accent.withValues(alpha: 0.2),
+                      checkmarkColor: accent,
                     );
                   }).toList(),
                 ),
@@ -245,19 +248,20 @@ class _SuggestFeatureSheetState extends ConsumerState<SuggestFeatureSheet> {
                   child: FilledButton(
                     onPressed: _isSubmitting ? null : _handleSubmit,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF00D9FF),
+                      backgroundColor: accent,
+                      foregroundColor: onAccent,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: _isSubmitting
-                        ? const SizedBox(
+                        ? SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: onAccent,
                             ),
                           )
                         : Text(

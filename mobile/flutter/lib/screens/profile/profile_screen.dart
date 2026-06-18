@@ -192,6 +192,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         onTap: () => context.push('/glossary'),
       ),
       _AccountRowData(
+        icon: Icons.how_to_vote_outlined,
+        iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+        title: 'Feature Requests',
+        onTap: () => context.push('/features'),
+      ),
+      _AccountRowData(
         icon: Icons.card_membership,
         iconColor: isDark ? AppColors.success : AppColorsLight.success,
         title: AppLocalizations.of(context).profileManageMembership,

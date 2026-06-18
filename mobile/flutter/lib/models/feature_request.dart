@@ -6,6 +6,7 @@ class FeatureRequest {
   final String category;
   final String status;
   final int voteCount;
+  final int commentCount;
   final DateTime? releaseDate;
   final bool userHasVoted;
   final DateTime createdAt;
@@ -18,6 +19,7 @@ class FeatureRequest {
     required this.category,
     required this.status,
     required this.voteCount,
+    this.commentCount = 0,
     this.releaseDate,
     required this.userHasVoted,
     required this.createdAt,
@@ -32,6 +34,7 @@ class FeatureRequest {
       category: json['category'] as String,
       status: json['status'] as String,
       voteCount: json['vote_count'] as int? ?? 0,
+      commentCount: json['comment_count'] as int? ?? 0,
       releaseDate: json['release_date'] != null
           ? DateTime.parse(json['release_date'] as String)
           : null,
@@ -49,6 +52,7 @@ class FeatureRequest {
       'category': category,
       'status': status,
       'vote_count': voteCount,
+      'comment_count': commentCount,
       'release_date': releaseDate?.toIso8601String(),
       'user_has_voted': userHasVoted,
       'created_at': createdAt.toIso8601String(),
@@ -84,8 +88,10 @@ class FeatureRequest {
     }
   }
 
-  /// Check if feature is planned (has release date)
-  bool get isPlanned => status == 'planned' && releaseDate != null;
+  /// Check if feature is planned. (A planned item shows in the Planned tab
+  /// whether or not it has a release date; the countdown only renders when a
+  /// release date is present.)
+  bool get isPlanned => status == 'planned';
 
   /// Check if feature is in voting phase
   bool get isVoting => status == 'voting';
@@ -144,6 +150,7 @@ class FeatureRequest {
     String? category,
     String? status,
     int? voteCount,
+    int? commentCount,
     DateTime? releaseDate,
     bool? userHasVoted,
     DateTime? createdAt,
@@ -156,6 +163,7 @@ class FeatureRequest {
       category: category ?? this.category,
       status: status ?? this.status,
       voteCount: voteCount ?? this.voteCount,
+      commentCount: commentCount ?? this.commentCount,
       releaseDate: releaseDate ?? this.releaseDate,
       userHasVoted: userHasVoted ?? this.userHasVoted,
       createdAt: createdAt ?? this.createdAt,
