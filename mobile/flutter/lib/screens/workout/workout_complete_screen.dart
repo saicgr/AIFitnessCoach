@@ -178,6 +178,15 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   // Whether to show detailed feedback (difficulty, per-exercise, subjective)
   bool _showDetailedFeedback = false;
 
+  // AI coach post-workout summary. Populated by `_loadAICoachFeedback()`
+  // (called from initState) — the real backend feedback, or a deterministic
+  // fallback if the API is unavailable. `_isLoadingSummary` gates the UI's
+  // loading state until the first value lands.
+  // ignore: unused_field
+  String? _aiSummary;
+  // ignore: unused_field
+  bool _isLoadingSummary = true;
+
   // Achievements state
   Map<String, dynamic>? _achievements;
   bool _isLoadingAchievements = true;
