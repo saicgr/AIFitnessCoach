@@ -1325,3 +1325,519 @@ def _deterministic_recap(
         "coaching_cue": cue,
         "notes_reference": None,
     }
+
+
+# =============================================================================
+# Signature v2 — per-exercise AI critique + detailed post-workout breakdown
+#
+# Two MARKDOWN-emitting coach surfaces, distinct from the structured-JSON recap
+# above:
+#   - generate_exercise_critique: a short, strict critique of the sets just
+#     logged for ONE exercise (bold lead sentence + <=3 bullets, exactly one
+#     concrete cue). Used inline as the user finishes an exercise.
+#   - generate_detailed_workout_summary: a longer, sectioned post-workout
+#     breakdown (**Strengths** / **Weaknesses** / **What to improve** /
+#     **What to do next**), persisted per (user, workout) like /recap.
+#
+# Both ground STRICTLY in the numbers handed to them, never invent figures, and
+# FAIL OPEN to a deterministic markdown string so the client is never blank.
+# =============================================================================
+
+_LB_PER_KG = 2.2046226218
+
+
+def _fmt_weight(weight_kg: Optional[float], use_kg: bool) -> str:
+    """Format a kg-stored weight for display in the user's preferred unit.
+
+    Workouts are logged in lb for this user (see feedback_weight_units), so when
+    use_kg is False we convert and label in lb; otherwise we keep kg.
+    """
+    if weight_kg is None:
+        return "bodyweight"
+    if weight_kg <= 0:
+        return "bodyweight"
+    if use_kg:
+        return f"{weight_kg:.0f}kg" if weight_kg >= 10 else f"{weight_kg:.1f}kg"
+    lb = weight_kg * _LB_PER_KG
+    return f"{lb:.0f}lb" if lb >= 10 else f"{lb:.1f}lb"
+
+
+def _summarize_exercise_sets(
+    sets: List[Dict[str, Any]],
+    use_kg: bool,
+) -> Dict[str, Any]:
+    """Deterministic stats over the logged sets for one exercise (no LLM).
+
+    Returns total working sets, total reps, top set, whether load dropped across
+    sets (fatigue), whether RIR was logged, and a human per-set line list. Used
+    both to build the model prompt and the deterministic fallback critique.
+    """
+    working = [
+        s for s in sets
+        if (s.get("set_type") or "working") not in ("warmup", "warm_up", "warm-up")
+    ]
+    considered = working or sets or []
+
+    weights = [float(s.get("weight_kg") or 0) for s in considered]
+    reps = [int(s.get("reps") or 0) for s in considered]
+    rirs = [s.get("rir") for s in considered if s.get("rir") is not None]
+    durations = [
+        int(s.get("duration_seconds") or 0)
+        for s in considered
+        if s.get("duration_seconds")
+    ]
+
+    total_reps = sum(reps)
+    top_weight = max(weights) if weights else 0.0
+    top_reps = 0
+    for w, r in zip(weights, reps):
+        if w == top_weight:
+            top_reps = max(top_reps, r)
+
+    # Fatigue signal: load fell from the first to the last working set.
+    load_dropped = bool(len(weights) >= 2 and weights[-1] < weights[0])
+    # Rep dropoff: reps fell across sets at a roughly held load.
+    rep_dropped = bool(len(reps) >= 2 and reps[-1] < reps[0])
+
+    set_lines = []
+    for i, s in enumerate(considered, 1):
+        w = _fmt_weight(s.get("weight_kg"), use_kg)
+        r = int(s.get("reps") or 0)
+        dur = s.get("duration_seconds")
+        if dur:
+            set_lines.append(f"Set {i}: {int(dur)}s @ {w}")
+        else:
+            line = f"Set {i}: {r} reps @ {w}"
+            if s.get("rir") is not None:
+                line += f" (RIR {s.get('rir')})"
+            set_lines.append(line)
+
+    return {
+        "set_count": len(considered),
+        "total_reps": total_reps,
+        "top_weight_kg": top_weight,
+        "top_reps": top_reps,
+        "rirs": rirs,
+        "avg_rir": (sum(rirs) / len(rirs)) if rirs else None,
+        "has_rir": bool(rirs),
+        "load_dropped": load_dropped,
+        "rep_dropped": rep_dropped,
+        "durations": durations,
+        "set_lines": set_lines,
+    }
+
+
+def _deterministic_exercise_critique(
+    exercise_name: str,
+    target: Optional[Dict[str, Any]],
+    stats: Dict[str, Any],
+    use_kg: bool,
+) -> str:
+    """No-LLM, data-grounded critique markdown (bold lead + <=3 bullets, ONE cue).
+
+    Used on model failure / missing API key so the critique card is never blank.
+    """
+    set_count = stats["set_count"]
+    top_w = _fmt_weight(stats["top_weight_kg"], use_kg) if stats["top_weight_kg"] else "bodyweight"
+
+    if set_count == 0:
+        return (
+            f"**No sets were logged for {exercise_name}, so there is nothing to critique yet.**\n"
+            f"- Log at least one working set next time so progress can be tracked.\n"
+            f"- **Next time:** record reps and load for every set so the numbers tell the story."
+        )
+
+    lead = (
+        f"**Solid work on {exercise_name} — {set_count} "
+        f"{'set' if set_count == 1 else 'sets'} logged, top set {stats['top_reps']} reps at {top_w}.**"
+    )
+
+    bullets: List[str] = []
+
+    # Compare to target if provided.
+    if target:
+        tgt_w = target.get("weight_kg")
+        tgt_reps = target.get("reps")
+        if tgt_w and stats["top_weight_kg"]:
+            diff = stats["top_weight_kg"] - float(tgt_w)
+            if diff >= 1:
+                bullets.append(
+                    f"- You went heavier than the {_fmt_weight(tgt_w, use_kg)} target — clean progression."
+                )
+            elif diff <= -1:
+                bullets.append(
+                    f"- Top set was below the {_fmt_weight(tgt_w, use_kg)} target; aim to close that gap next time."
+                )
+        if tgt_reps and stats["top_reps"] and stats["top_reps"] < int(tgt_reps):
+            bullets.append(
+                f"- You fell short of the {int(tgt_reps)}-rep target on your top set — chase those last reps."
+            )
+
+    if stats["load_dropped"]:
+        bullets.append("- Load dropped across your sets, a normal fatigue signal — keep the top set as the benchmark.")
+    elif stats["rep_dropped"]:
+        bullets.append("- Reps tapered off across sets; tighten rest a touch to hold output if that wasn't intentional.")
+
+    if stats["has_rir"] and stats["avg_rir"] is not None:
+        if stats["avg_rir"] >= 3:
+            bullets.append(
+                f"- You averaged ~{stats['avg_rir']:.0f} reps in reserve — there's room to add load."
+            )
+        elif stats["avg_rir"] <= 0.5:
+            bullets.append("- You took these close to failure — strong intent, watch recovery.")
+
+    # Always end on exactly one concrete cue.
+    if stats["has_rir"] and stats["avg_rir"] is not None and stats["avg_rir"] >= 2:
+        cue = "- **Next time:** add a small load increase (about 2.5kg) — your reps in reserve say you have it."
+    elif stats["load_dropped"]:
+        cue = "- **Next time:** repeat today's top-set load and try to hold it across all sets before adding weight."
+    else:
+        cue = "- **Next time:** add one rep to your top set, then add load once you clear the rep target."
+
+    # Cap to 3 bullets total INCLUDING the cue.
+    bullets = bullets[:2]
+    bullets.append(cue)
+    return lead + "\n" + "\n".join(bullets)
+
+
+async def generate_exercise_critique(
+    gemini_service: GeminiService,
+    exercise_name: str,
+    sets: List[Dict[str, Any]],
+    target: Optional[Dict[str, Any]] = None,
+    use_kg: bool = False,
+    exercise_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Short, strict, honest AI critique of the sets just logged for ONE exercise.
+
+    Mirrors `generate_workout_recap`'s contract: same Gemini client, strict
+    system prompt (elite coach, data-grounded, NEVER invent numbers), exactly
+    ONE concrete actionable cue. Output is short MARKDOWN (bold lead sentence +
+    <=3 bullets). FAILS OPEN to a deterministic critique from the numbers.
+
+    Args:
+        gemini_service: Gemini service for the LLM call.
+        exercise_name: Display name of the exercise.
+        sets: Logged sets, each {weight_kg, reps, rir, duration_seconds, set_type}.
+        target: Optional {weight_kg, reps, rir} prescription to compare against.
+        use_kg: When False, weights are phrased in lb (this user trains in lb).
+        exercise_id: Optional exercise UUID (passed through, not required).
+
+    Returns:
+        {"critique_markdown": str, "is_fallback": bool}. Never raises.
+    """
+    from google.genai import types
+    from services.gemini.constants import gemini_generate_with_retry
+
+    stats = _summarize_exercise_sets(sets or [], use_kg)
+
+    # Build the deterministic, numbers-only context the model must ground on.
+    set_block = "\n".join(stats["set_lines"]) if stats["set_lines"] else "No sets logged."
+    target_line = "No target prescribed."
+    if target:
+        tw = _fmt_weight(target.get("weight_kg"), use_kg)
+        tr = target.get("reps")
+        trir = target.get("rir")
+        target_line = f"Target: {tr if tr is not None else '?'} reps @ {tw}"
+        if trir is not None:
+            target_line += f" (RIR {trir})"
+
+    unit = "kilograms" if use_kg else "pounds"
+
+    system_prompt = (
+        "You are an elite strength coach giving a SHORT, honest, data-grounded "
+        "critique of the sets a client just logged for ONE exercise. Be specific; "
+        "never generic. Use ONLY the numbers provided — NEVER invent reps, loads, "
+        "or RIR. Weights are in " + unit + "; keep them in that unit. "
+        "Output MARKDOWN: a single bold lead sentence, then AT MOST 3 bullet "
+        "points. Exactly ONE bullet is a concrete, actionable cue for next time, "
+        "tied to the actual numbers. No emojis. No headers. Keep it tight."
+    )
+
+    user_prompt = f"""Critique this exercise based ONLY on the data below.
+
+Exercise: {exercise_name}
+{target_line}
+
+Sets logged:
+{set_block}
+
+Summary (use these, do not change them):
+- Working sets: {stats['set_count']}
+- Total reps: {stats['total_reps']}
+- Top set: {stats['top_reps']} reps at {_fmt_weight(stats['top_weight_kg'], use_kg) if stats['top_weight_kg'] else 'bodyweight'}
+- Reps in reserve logged: {'yes, avg ' + format(stats['avg_rir'], '.1f') if stats['has_rir'] else 'no'}
+- Load dropped across sets: {'yes' if stats['load_dropped'] else 'no'}
+
+Write a bold one-sentence lead, then up to 3 bullets, one of which is a single concrete cue for next time."""
+
+    try:
+        response = await gemini_generate_with_retry(
+            model=gemini_service.model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.55,
+                max_output_tokens=400,
+            ),
+            timeout=20,
+            method_name="exercise_critique",
+        )
+        text = (response.text or "").strip()
+        if not text:
+            raise ValueError("Empty critique response")
+        logger.info(f"[critique] Generated for {exercise_name}: {text[:50]!r}")
+        return {"critique_markdown": text, "is_fallback": False}
+    except Exception as e:
+        logger.warning(f"[critique] LLM critique failed, using deterministic fallback: {e}")
+        return {
+            "critique_markdown": _deterministic_exercise_critique(
+                exercise_name, target, stats, use_kg
+            ),
+            "is_fallback": True,
+        }
+
+
+# ---------------------------------------------------------------------------
+# Detailed post-workout summary (sectioned markdown), persisted like /recap.
+# ---------------------------------------------------------------------------
+
+_DETAILED_SECTIONS = ("Strengths", "Weaknesses", "What to improve", "What to do next")
+
+
+def _deterministic_detailed_summary(
+    current_session: Dict[str, Any],
+    current_volume: float,
+    previous_volume: Optional[float],
+    delta_pct: Optional[float],
+    comparable_name: Optional[str],
+    earned_prs: Optional[List[Dict[str, Any]]],
+    skipped_names: List[str],
+    completion_rate: float,
+) -> str:
+    """No-LLM sectioned markdown breakdown (used on model failure / no API key).
+
+    Sections, in order: **Strengths**, **Weaknesses**, **What to improve**,
+    **What to do next** — honest and grounded in the session totals.
+    """
+    name = current_session.get("workout_name", "your workout")
+    total_sets = current_session.get("total_sets", 0)
+    duration_min = (current_session.get("total_time_seconds", 0) or 0) // 60
+
+    strengths: List[str] = []
+    if delta_pct is not None and delta_pct >= 1:
+        strengths.append(f"Total volume was up {delta_pct:.0f}% over your last {comparable_name or 'comparable session'}.")
+    if earned_prs:
+        pr_names = ", ".join(p.get("exercise_name", "a lift") for p in earned_prs[:3])
+        strengths.append(f"You set {len(earned_prs)} personal record(s) — {pr_names}.")
+    if completion_rate >= 90:
+        strengths.append(f"You completed {completion_rate:.0f}% of the planned work — full effort.")
+    if total_sets:
+        strengths.append(f"You logged {total_sets} working sets across {duration_min} minutes.")
+    if not strengths:
+        strengths.append("You showed up and got the session in — consistency is the foundation.")
+
+    weaknesses: List[str] = []
+    if skipped_names:
+        weaknesses.append(f"You skipped {len(skipped_names)} exercise(s): {', '.join(skipped_names)}.")
+    if delta_pct is not None and delta_pct < -5:
+        weaknesses.append(f"Total volume fell {abs(delta_pct):.0f}% versus your last comparable session.")
+    if completion_rate < 70:
+        weaknesses.append(f"Only {completion_rate:.0f}% of the planned work was completed.")
+    if not weaknesses:
+        weaknesses.append("Nothing major stood out as a weakness — keep the standard high.")
+
+    improve: List[str] = []
+    if skipped_names:
+        improve.append("Protect time for the full session so nothing gets dropped at the end.")
+    if delta_pct is not None and delta_pct < -1:
+        improve.append("Rebuild volume gradually — match last session's top sets before adding load.")
+    improve.append("Log reps in reserve on your main lifts so load can be tuned precisely.")
+
+    next_steps: List[str] = []
+    if earned_prs:
+        next_steps.append("Repeat the load that earned today's PR once more to cement it before progressing.")
+    else:
+        next_steps.append("Add a small load increase (about 2.5kg) on your strongest lift next session.")
+    if skipped_names:
+        next_steps.append(f"Prioritize {skipped_names[0]} early in your next session.")
+
+    def _bullets(items: List[str]) -> str:
+        return "\n".join(f"- {x}" for x in items)
+
+    return (
+        f"**Strengths**\n{_bullets(strengths[:4])}\n\n"
+        f"**Weaknesses**\n{_bullets(weaknesses[:4])}\n\n"
+        f"**What to improve**\n{_bullets(improve[:4])}\n\n"
+        f"**What to do next**\n{_bullets(next_steps[:4])}"
+    )
+
+
+async def generate_detailed_workout_summary(
+    gemini_service: GeminiService,
+    rag_service: WorkoutFeedbackRAGService,
+    user_id: str,
+    current_session: Dict[str, Any],
+    earned_prs: Optional[List[Dict[str, Any]]] = None,
+    logged_notes: Optional[List[str]] = None,
+    total_workouts_completed: Optional[int] = None,
+) -> Dict[str, Any]:
+    """Longer, strict, honest post-workout breakdown as sectioned MARKDOWN.
+
+    Sections, exactly and in order: **Strengths**, **Weaknesses**,
+    **What to improve**, **What to do next**. Grounded ONLY in the provided data
+    (volume vs last comparable session, PRs, completion %, skipped exercises,
+    rest, RIR). FAILS OPEN to a deterministic structured summary.
+
+    Reuses the same comparison machinery as `generate_workout_recap`.
+
+    Returns:
+        {"summary_markdown": str, "is_fallback": bool}. Never raises.
+    """
+    from google.genai import types
+    from services.gemini.constants import gemini_generate_with_retry
+
+    # --- Gather comparison context (deterministic, no LLM), concurrently. ---
+    ex_names = [
+        ex.get("name", "")
+        for ex in (current_session.get("exercises", []) or [])[:5]
+        if ex.get("name")
+    ]
+    gathered = await asyncio.gather(
+        rag_service.get_user_workout_history(user_id, n_results=10),
+        *[
+            rag_service.get_exercise_weight_history(user_id, n, n_results=5)
+            for n in ex_names
+        ],
+        return_exceptions=True,
+    )
+    history_result = gathered[0]
+    past_sessions = history_result if not isinstance(history_result, Exception) else []
+    if isinstance(history_result, Exception):
+        logger.warning(f"[detailed] workout history fetch failed: {history_result}")
+
+    weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
+    for ex_name, history in zip(ex_names, gathered[1:]):
+        if history and not isinstance(history, Exception):
+            weight_progressions[ex_name] = history
+
+    comparable = _find_last_comparable_session(current_session, past_sessions)
+
+    current_volume = float(current_session.get("total_volume_kg", 0) or 0)
+    previous_volume: Optional[float] = None
+    comparable_name: Optional[str] = None
+    delta_pct: Optional[float] = None
+    if comparable:
+        cmeta = comparable.get("metadata", {}) or {}
+        comparable_name = cmeta.get("workout_name")
+        try:
+            previous_volume = float(cmeta.get("total_volume_kg", 0) or 0)
+        except (TypeError, ValueError):
+            previous_volume = None
+        if previous_volume and previous_volume > 0:
+            delta_pct = round((current_volume - previous_volume) / previous_volume * 100, 1)
+
+    # Completion / skip analysis (deterministic). Compare case-insensitively but
+    # keep the planned exercise's ORIGINAL casing for display.
+    exercises = current_session.get("exercises", []) or []
+    planned = current_session.get("planned_exercises", []) or []
+    completed_lower = {e.get("name", "").lower() for e in exercises if e.get("name")}
+    skipped_names = [
+        e.get("name")
+        for e in planned
+        if e.get("name") and e.get("name", "").lower() not in completed_lower
+    ]
+    total_planned = len(planned) if planned else len(exercises)
+    completion_rate = (len(exercises) / total_planned * 100) if total_planned > 0 else 100.0
+
+    context = rag_service.format_feedback_context(
+        current_session, past_sessions, weight_progressions
+    )
+
+    if previous_volume and delta_pct is not None:
+        direction = "up" if delta_pct >= 0 else "down"
+        vol_line = (
+            f"Total volume this session: {current_volume:.0f}kg. "
+            f"Last comparable session ('{comparable_name}'): {previous_volume:.0f}kg "
+            f"({direction} {abs(delta_pct):.1f}%)."
+        )
+    else:
+        vol_line = (
+            f"Total volume this session: {current_volume:.0f}kg. "
+            f"No comparable prior session (first of its kind)."
+        )
+
+    pr_lines = ""
+    if earned_prs:
+        pr_lines = "PRs hit this session:\n" + "\n".join(
+            f"- {pr.get('exercise_name', 'exercise')}: {pr.get('detail') or pr.get('description') or 'new personal record'}"
+            for pr in earned_prs[:5]
+        )
+
+    notes_block = ""
+    if logged_notes:
+        notes_block = "User logged notes this session:\n" + "\n".join(
+            f"- {n}" for n in logged_notes[:8] if n
+        )
+
+    consistency_line = ""
+    if total_workouts_completed:
+        consistency_line = f"Lifetime workouts completed: {total_workouts_completed}."
+
+    system_prompt = (
+        "You are an elite strength coach writing a HONEST, data-grounded breakdown "
+        "of a client's just-finished workout. Be specific; never generic. Use ONLY "
+        "the numbers provided — NEVER invent volume, weights, PRs, or completion "
+        "figures. Output MARKDOWN with EXACTLY these four bold section headers, in "
+        "this order, each followed by 1-4 bullet points:\n"
+        "**Strengths**\n**Weaknesses**\n**What to improve**\n**What to do next**\n"
+        "Do not add other sections or headers. No emojis. Keep each bullet to one "
+        "sentence. 'What to do next' must contain concrete, actionable steps tied "
+        "to the data."
+    )
+
+    user_prompt = f"""Write the four-section breakdown of this workout, grounded only in the data below.
+
+{context}
+
+VOLUME COMPARISON (use these exact numbers):
+{vol_line}
+
+COMPLETION: {len(exercises)}/{total_planned} exercises completed ({completion_rate:.0f}%).{(' Skipped: ' + ', '.join(skipped_names) + '.') if skipped_names else ''}
+
+{pr_lines}
+
+{notes_block}
+
+{consistency_line}
+
+Output the four bold sections (**Strengths**, **Weaknesses**, **What to improve**, **What to do next**), each with 1-4 one-sentence bullets, honest and specific."""
+
+    try:
+        response = await gemini_generate_with_retry(
+            model=gemini_service.model,
+            contents=user_prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                temperature=0.6,
+                max_output_tokens=1100,
+            ),
+            timeout=30,
+            method_name="detailed_summary",
+        )
+        text = (response.text or "").strip()
+        # Validate the four required headers are present; otherwise fall open so
+        # the client always gets the agreed structure.
+        if not text or not all(f"**{s}**" in text for s in _DETAILED_SECTIONS):
+            raise ValueError("Detailed summary missing required sections")
+        logger.info(f"[detailed] Generated for user {user_id} (Δvol={delta_pct})")
+        return {"summary_markdown": text, "is_fallback": False}
+    except Exception as e:
+        logger.warning(f"[detailed] LLM summary failed, using deterministic fallback: {e}")
+        return {
+            "summary_markdown": _deterministic_detailed_summary(
+                current_session, current_volume, previous_volume, delta_pct,
+                comparable_name, earned_prs, skipped_names, completion_rate,
+            ),
+            "is_fallback": True,
+        }

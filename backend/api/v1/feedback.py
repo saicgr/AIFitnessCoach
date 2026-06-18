@@ -31,6 +31,8 @@ from services.workout_feedback_rag_service import (
     WorkoutFeedbackRAGService,
     generate_workout_feedback,
     generate_workout_recap,
+    generate_exercise_critique,
+    generate_detailed_workout_summary,
 )
 from services.feedback_analysis_service import (
     update_exercise_mastery,
@@ -1109,6 +1111,251 @@ async def generate_recap_endpoint(
     except Exception as e:
         logger.error(f"[recap] generation failed: {e}", exc_info=True)
         raise safe_internal_error(e, "workout_recap")
+
+
+# ============================================
+# Signature v2 — per-exercise AI critique
+# ============================================
+
+class ExerciseCritiqueSet(BaseModel):
+    """One logged set for the exercise being critiqued."""
+    weight_kg: Optional[float] = None
+    reps: Optional[int] = None
+    rir: Optional[int] = None
+    duration_seconds: Optional[int] = None
+    set_type: Optional[str] = "working"
+
+
+class ExerciseCritiqueTarget(BaseModel):
+    """Optional prescribed target to compare the logged sets against."""
+    weight_kg: Optional[float] = None
+    reps: Optional[int] = None
+    rir: Optional[int] = None
+
+
+class ExerciseCritiqueRequest(BaseModel):
+    """Request body for POST /feedback/exercise-critique."""
+    exercise_name: str
+    exercise_id: Optional[str] = None
+    target: Optional[ExerciseCritiqueTarget] = None
+    sets: List[ExerciseCritiqueSet] = []
+    use_kg: bool = False
+
+
+class ExerciseCritiqueResponse(BaseModel):
+    """Response from POST /feedback/exercise-critique."""
+    critique_markdown: str
+    is_fallback: bool = False
+
+
+@router.post("/exercise-critique", response_model=ExerciseCritiqueResponse)
+@limiter.limit("20/minute")
+async def exercise_critique_endpoint(
+    request: Request,
+    body: ExerciseCritiqueRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Short, strict, honest AI critique of the sets just logged for ONE exercise.
+
+    Bold lead sentence + up to 3 markdown bullets, exactly one of which is a
+    concrete cue for next time. Grounded ONLY in the provided numbers; fails open
+    to a deterministic critique so the card is never blank. Not persisted — this
+    is an inline, ephemeral coaching beat as the user finishes an exercise.
+    """
+    try:
+        gemini_service = get_gemini_service()
+        result = await generate_exercise_critique(
+            gemini_service=gemini_service,
+            exercise_name=body.exercise_name,
+            sets=[s.model_dump() for s in body.sets],
+            target=body.target.model_dump() if body.target else None,
+            use_kg=body.use_kg,
+            exercise_id=body.exercise_id,
+        )
+        return ExerciseCritiqueResponse(
+            critique_markdown=result["critique_markdown"],
+            is_fallback=result.get("is_fallback", False),
+        )
+    except Exception as e:
+        # generate_exercise_critique already fails open, so reaching here is rare
+        # (e.g. service construction). Never 500 the client — return a minimal cue.
+        logger.error(f"[critique] endpoint failed: {e}", exc_info=True)
+        return ExerciseCritiqueResponse(
+            critique_markdown=(
+                f"**Set logged for {body.exercise_name}.**\n"
+                f"- **Next time:** add a rep or a small load increase to keep progressing."
+            ),
+            is_fallback=True,
+        )
+
+
+# ============================================
+# Signature v2 — detailed post-workout breakdown (persisted per workout)
+# ============================================
+
+class DetailedSummaryResponse(BaseModel):
+    """Response from POST /feedback/recap/detailed and its GET counterpart."""
+    summary_markdown: str
+    is_fallback: bool = False
+    cached: bool = False
+
+
+@router.get("/recap/detailed/{workout_id}", response_model=DetailedSummaryResponse)
+async def get_detailed_workout_summary(
+    workout_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Fetch the persisted detailed post-workout summary (instant, no LLM).
+
+    Returns the cached `detailed_summary_md` stored on the workout's recap row.
+    404 when none has been generated yet — the client then POSTs to generate.
+    """
+    try:
+        db = get_supabase_db()
+        supabase = db.client
+        user_id = current_user["id"]
+
+        result = (
+            supabase.table("workout_ai_recaps")
+            .select("detailed_summary_md")
+            .eq("user_id", user_id)
+            .eq("workout_id", workout_id)
+            .limit(1)
+            .execute()
+        )
+        rows = result.data or []
+        summary = rows[0].get("detailed_summary_md") if rows else None
+        if not summary:
+            raise HTTPException(status_code=404, detail="Detailed summary not found")
+        return DetailedSummaryResponse(
+            summary_markdown=summary, is_fallback=False, cached=True
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[detailed] fetch failed for {workout_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_detailed_summary")
+
+
+@router.post("/recap/detailed", response_model=DetailedSummaryResponse)
+@limiter.limit("10/minute")
+async def generate_detailed_summary_endpoint(
+    request: Request,
+    body: GenerateRecapRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate + persist a longer, sectioned post-workout breakdown.
+
+    Reuses the SAME request shape as POST /feedback/recap. Sections, in order:
+    **Strengths**, **Weaknesses**, **What to improve**, **What to do next**.
+    Idempotent per (user_id, workout_id): a cached summary is returned without
+    re-calling Gemini unless `force` is set. Persists onto the existing recap
+    row's `detailed_summary_md` column (migration 2257). Fails open to a
+    deterministic structured summary so the card is never blank.
+    """
+    if str(current_user["id"]) != str(body.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        db = get_supabase_db()
+        supabase = db.client
+        user_id = current_user["id"]
+
+        # Idempotency: return the cached detailed summary unless forced.
+        if not body.force:
+            existing = (
+                supabase.table("workout_ai_recaps")
+                .select("detailed_summary_md")
+                .eq("user_id", user_id)
+                .eq("workout_id", body.workout_id)
+                .limit(1)
+                .execute()
+            )
+            cached = (existing.data or [{}])[0].get("detailed_summary_md") if existing.data else None
+            if cached:
+                logger.info(f"[detailed] returning cached summary for workout {body.workout_id}")
+                return DetailedSummaryResponse(
+                    summary_markdown=cached, is_fallback=False, cached=True
+                )
+
+        gemini_service = get_gemini_service()
+        rag_service = get_feedback_rag_service()
+
+        exercises_data = [
+            {
+                "name": ex.name,
+                "sets": ex.sets,
+                "reps": ex.reps,
+                "weight_kg": ex.weight_kg,
+                "time_seconds": ex.time_seconds,
+            }
+            for ex in body.exercises
+        ]
+        planned_data = [
+            {
+                "name": ex.name,
+                "target_sets": ex.sets,
+                "target_reps": ex.reps,
+                "target_weight_kg": ex.weight_kg,
+            }
+            for ex in body.planned_exercises
+        ]
+        current_session = {
+            "workout_log_id": body.workout_log_id,
+            "workout_id": body.workout_id,
+            "workout_name": body.workout_name,
+            "workout_type": body.workout_type,
+            "exercises": exercises_data,
+            "planned_exercises": planned_data,
+            "total_time_seconds": body.total_time_seconds,
+            "total_rest_seconds": body.total_rest_seconds,
+            "avg_rest_seconds": body.avg_rest_seconds,
+            "calories_burned": body.calories_burned,
+            "total_sets": body.total_sets,
+            "total_reps": body.total_reps,
+            "total_volume_kg": body.total_volume_kg,
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        result = await generate_detailed_workout_summary(
+            gemini_service=gemini_service,
+            rag_service=rag_service,
+            user_id=body.user_id,
+            current_session=current_session,
+            earned_prs=body.earned_prs,
+            logged_notes=body.logged_notes,
+            total_workouts_completed=body.total_workouts_completed,
+        )
+        summary_md = result["summary_markdown"]
+
+        # Persist onto the recap row (upsert on user_id,workout_id). Never fail
+        # the request on a write error — the user still gets their summary.
+        now = datetime.now(timezone.utc).isoformat()
+        try:
+            supabase.table("workout_ai_recaps").upsert(
+                {
+                    "user_id": user_id,
+                    "workout_id": body.workout_id,
+                    "workout_log_id": body.workout_log_id,
+                    "detailed_summary_md": summary_md,
+                    "updated_at": now,
+                },
+                on_conflict="user_id,workout_id",
+            ).execute()
+        except Exception as persist_err:
+            logger.warning(f"[detailed] persist failed (returning summary anyway): {persist_err}")
+
+        return DetailedSummaryResponse(
+            summary_markdown=summary_md,
+            is_fallback=result.get("is_fallback", False),
+            cached=False,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[detailed] generation failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_detailed_summary")
 
 
 # Include secondary endpoints

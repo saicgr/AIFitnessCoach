@@ -97,6 +97,7 @@ class MediaJobService:
         mime_types: List[str],
         media_types: List[str],
         params: Optional[Dict[str, Any]] = None,
+        gym_profile_id: Optional[str] = None,
     ) -> str:
         """Create a new media analysis job. Returns job_id.
 
@@ -107,6 +108,10 @@ class MediaJobService:
             mime_types: List of MIME types corresponding to s3_keys.
             media_types: List of media types ('image' or 'video') corresponding to s3_keys.
             params: Optional dict with extra parameters (exercise_name, user_context, labels, etc.).
+            gym_profile_id: Optional gym profile this analysis was performed at.
+                Persisted on the nullable media_analysis_jobs.gym_profile_id column
+                (migration 2257) so form analyses are queryable per-gym. None =
+                unassigned / combined.
 
         Returns:
             The newly created job ID.
@@ -121,7 +126,7 @@ class MediaJobService:
         if self.use_db:
             try:
                 db = get_supabase_db()
-                result = db.client.table("media_analysis_jobs").insert({
+                insert_row: Dict[str, Any] = {
                     "user_id": user_id,
                     "job_type": job_type,
                     "status": "pending",
@@ -129,7 +134,14 @@ class MediaJobService:
                     "mime_types": mime_types,
                     "media_types": media_types,
                     "params": params or {},
-                }).execute()
+                }
+                # Only set the column when provided so the insert stays
+                # backward-compatible if the (nullable) column isn't present yet.
+                if gym_profile_id:
+                    insert_row["gym_profile_id"] = gym_profile_id
+                result = db.client.table("media_analysis_jobs").insert(
+                    insert_row
+                ).execute()
 
                 job_id = result.data[0]["id"]
                 logger.info(f"Created media job {job_id} ({job_type}) for user {user_id}")
@@ -150,6 +162,7 @@ class MediaJobService:
             "mime_types": mime_types,
             "media_types": media_types,
             "params": params or {},
+            "gym_profile_id": gym_profile_id,
             "result": None,
             "error_message": None,
             "retry_count": 0,

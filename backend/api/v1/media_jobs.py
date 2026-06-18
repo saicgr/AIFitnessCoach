@@ -11,6 +11,7 @@ response shape matching what both the gym_profile and custom_exercise Flutter
 repositories expect (`result_json`, `job_type`, `error_message`).
 """
 import asyncio
+from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -37,6 +38,16 @@ class FormAnalysisSubmitRequest(BaseModel):
         default=None,
         description="Exercise being performed. Optional — the analyzer "
                     "auto-identifies the movement when omitted.",
+    )
+    exercise_id: str | None = Field(
+        default=None,
+        description="Exercise UUID this analysis is bound to. Stored in params "
+                    "so the per-exercise Form history can filter by exact id.",
+    )
+    gym_profile_id: str | None = Field(
+        default=None,
+        description="Gym profile this analysis was performed at. Persisted on the "
+                    "media_analysis_jobs.gym_profile_id column for per-gym history.",
     )
 
 
@@ -71,8 +82,10 @@ async def submit_form_analysis(
             media_types=["video"],
             params={
                 "exercise_name": body.exercise_name,
+                "exercise_id": body.exercise_id,
                 "source": "workout",
             },
+            gym_profile_id=body.gym_profile_id,
         )
     except HTTPException:
         # create_job raises 402 when the free-tier form-analysis gate is hit.
@@ -91,18 +104,25 @@ async def submit_form_analysis(
 async def list_form_analyses(
     request: Request,
     exercise: str | None = None,
+    exercise_id: str | None = None,
+    gym_profile_id: str | None = None,
     limit: int = 50,
     current_user: dict = Depends(get_current_user),
 ):
     """List the user's completed form-analysis results, newest first.
 
-    Powers the per-exercise Form history tab. When `exercise` is provided we
-    filter to results whose identified exercise matches (case-insensitive
-    substring either way, so 'Cable Row' matches 'Seated Cable Row').
+    Powers the per-exercise / per-gym Form history tab.
 
-    Returns a list of {job_id, created_at, completed_at, result} where `result`
-    is the same scored payload `FormAnalysisService.analyze_form` returns (so
-    the client renders it with the shared form gauge).
+    Filtering:
+      - `exercise_id`  → EXACT match on the bound exercise UUID stored in
+        params.exercise_id (preferred — precise, not fuzzy).
+      - `exercise`     → fuzzy fallback when no id: case-insensitive substring
+        either way ('Cable Row' matches 'Seated Cable Row').
+      - `gym_profile_id` → only analyses performed at that gym.
+
+    Returns {job_id, created_at, completed_at, gym_profile_id, gym_name, result}
+    where `result` is the same scored payload `FormAnalysisService.analyze_form`
+    returns (so the client renders it with the shared form gauge).
     """
     from core.db import get_supabase_db
 
@@ -112,13 +132,18 @@ async def list_form_analyses(
 
     try:
         db = get_supabase_db()
-        rows = (
+        query = (
             db.client.table("media_analysis_jobs")
-            .select("id, result, params, created_at, completed_at")
+            .select("id, result, params, gym_profile_id, created_at, completed_at")
             .eq("user_id", user_id)
             .eq("job_type", "form_analysis")
             .eq("status", "completed")
-            .order("completed_at", desc=True)
+        )
+        # Push the gym filter to the DB (the column is indexed).
+        if gym_profile_id:
+            query = query.eq("gym_profile_id", gym_profile_id)
+        rows = (
+            query.order("completed_at", desc=True)
             .limit(min(max(limit, 1), 100))
             .execute()
         ).data or []
@@ -126,24 +151,50 @@ async def list_form_analyses(
         logger.warning(f"[MediaJobs] form-analyses list failed for {user_id}: {e}")
         return {"items": []}
 
+    # Resolve gym names in one round-trip (null-safe; older rows have no gym).
+    gym_names: Dict[str, str] = {}
+    gym_ids = {r.get("gym_profile_id") for r in rows if r.get("gym_profile_id")}
+    if gym_ids:
+        try:
+            gp_rows = (
+                db.client.table("gym_profiles")
+                .select("id, name")
+                .in_("id", list(gym_ids))
+                .execute()
+            ).data or []
+            gym_names = {g["id"]: g.get("name") for g in gp_rows}
+        except Exception as e:
+            logger.warning(f"[MediaJobs] gym name lookup failed: {e}")
+
+    want_id = (exercise_id or "").strip()
     needle = (exercise or "").strip().lower()
     items = []
     for r in rows:
         result = r.get("result") or {}
         if not isinstance(result, dict):
             continue
-        if needle:
+        params = r.get("params") or {}
+
+        if want_id:
+            # Exact exercise_id match (precise, not fuzzy).
+            if str(params.get("exercise_id") or "") != want_id:
+                continue
+        elif needle:
             identified = str(
                 result.get("exercise_identified")
-                or (r.get("params") or {}).get("exercise_name")
+                or params.get("exercise_name")
                 or ""
             ).lower()
             if not identified or (needle not in identified and identified not in needle):
                 continue
+
+        gid = r.get("gym_profile_id")
         items.append({
             "job_id": r.get("id"),
             "created_at": r.get("created_at"),
             "completed_at": r.get("completed_at"),
+            "gym_profile_id": gid,
+            "gym_name": gym_names.get(gid) if gid else None,
             "result": result,
         })
     return {"items": items}
