@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/models/quick_action.dart';
 import '../../../../data/providers/content_catalogs_provider.dart';
@@ -10,6 +11,7 @@ import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../nutrition/log_meal_sheet.dart';
+import '../../../nutrition/widgets/gut_health_card.dart';
 import '../../../workout/widgets/equipment_snap_flow.dart';
 import '../../../workout/widgets/form_analysis_sheet.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
@@ -166,6 +168,14 @@ Future<bool> launchQuickAction(
       // sheet, customize grid) through this one path.
       HapticService.light();
       await showFormAnalysisSheet(context);
+      return true;
+    case 'gut_health':
+      // Opens the same one-tap Bristol-scale log sheet as the Nutrition Daily
+      // tile; feeds the Patterns "Your natural rhythm" section.
+      HapticService.light();
+      final gutUid = Supabase.instance.client.auth.currentUser?.id;
+      if (gutUid == null || gutUid.isEmpty) return false;
+      await showGutHealthSheet(context: context, userId: gutUid);
       return true;
     case 'meditate':
       // INSTANT: never block on the /meditation/today network call (that was

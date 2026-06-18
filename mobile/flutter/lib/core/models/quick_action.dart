@@ -30,6 +30,9 @@ enum QuickActionBehavior {
   // Opens the create-custom-exercise sheet (Fill-with-AI). Surfaced so a user
   // can add a movement from Quick Actions, not just deep in the Library.
   addExercise,
+  // Opens the gut-health (Bristol-scale) log sheet — the same one-tap sheet on
+  // the Nutrition Daily tab. Feeds the Patterns "Your natural rhythm" section.
+  gutHealth,
 }
 
 class QuickAction {
@@ -326,6 +329,13 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/nutrition/from-fridge',
   ),
+  'gut_health': QuickAction(
+    id: 'gut_health',
+    label: 'Gut Health',
+    icon: Icons.spa_outlined,
+    color: Color(0xFF14B8A6),
+    behavior: QuickActionBehavior.gutHealth,
+  ),
   'custom_trends': QuickAction(
     id: 'custom_trends',
     label: 'Custom Trends',
@@ -392,6 +402,9 @@ const defaultQuickActionOrder = [
   'travel_mode',
   // Calorii-audit surfacing tiles — More-only by default, pinnable.
   'meal_planner', 'recipe_creator', 'from_fridge', 'custom_trends',
+  // Gut-health one-tap logger — More-only by default, pinnable. Same sheet as
+  // the Nutrition Daily tile; feeds the Patterns "natural rhythm" section.
+  'gut_health',
   // Gravl-parity additions — More-only by default, pinnable. Form Check rides
   // the AI form-analysis flow (no exercise name → AI auto-detects); Add
   // Exercise opens the Fill-with-AI create-exercise sheet.
