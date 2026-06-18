@@ -285,12 +285,12 @@ def _sanitize_chips(raw: Any) -> Optional[List[Dict[str, Any]]]:
 # Response model
 # ---------------------------------------------------------------------------
 class CtaModel(BaseModel):
-    # The LLM (and some legacy cached rows) occasionally emit {"text": ...}
-    # instead of {"label": ...}; accept either so the endpoint never 500s on a
-    # well-formed-but-mislabelled CTA. `route` defaults to the coach so a
-    # missing route degrades to "open chat" rather than a validation error.
+    # The LLM (and some legacy cached rows) occasionally emit {"text": ...} or
+    # {"title": ...} instead of {"label": ...}; accept any so the endpoint never
+    # 500s on a well-formed-but-mislabelled CTA. `route` defaults to the coach so
+    # a missing route degrades to "open chat" rather than a validation error.
     model_config = ConfigDict(populate_by_name=True)
-    label: str = Field(validation_alias=AliasChoices("label", "text"))
+    label: str = Field(validation_alias=AliasChoices("label", "text", "title"))
     route: str = "/chat"
 
 
