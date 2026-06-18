@@ -13,6 +13,7 @@ The AI Coach uses this data to provide personalized, short feedback after each w
 """
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+import asyncio
 import uuid
 import json
 
@@ -1089,7 +1090,33 @@ async def generate_workout_recap(
     from services.gemini.constants import gemini_generate_with_retry
 
     # --- Gather comparison context (deterministic, no LLM) ----------------
-    past_sessions = await rag_service.get_user_workout_history(user_id, n_results=10)
+    # Fetch workout history + per-exercise weight histories CONCURRENTLY. These
+    # are independent ChromaDB/embedding round-trips; running them in parallel
+    # (instead of a sequential await loop) cuts ~5-10s of latency to ~1-2s.
+    ex_names = [
+        ex.get("name", "")
+        for ex in (current_session.get("exercises", []) or [])[:5]
+        if ex.get("name")
+    ]
+    gathered = await asyncio.gather(
+        rag_service.get_user_workout_history(user_id, n_results=10),
+        *[
+            rag_service.get_exercise_weight_history(user_id, n, n_results=5)
+            for n in ex_names
+        ],
+        return_exceptions=True,
+    )
+    history_result = gathered[0]
+    past_sessions = history_result if not isinstance(history_result, Exception) else []
+    if isinstance(history_result, Exception):
+        logger.warning(f"[recap] workout history fetch failed: {history_result}")
+
+    # Per-exercise weight progression (reuse existing RAG helper).
+    weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
+    for ex_name, history in zip(ex_names, gathered[1:]):
+        if history and not isinstance(history, Exception):
+            weight_progressions[ex_name] = history
+
     comparable = _find_last_comparable_session(current_session, past_sessions)
 
     current_volume = float(current_session.get("total_volume_kg", 0) or 0)
@@ -1105,17 +1132,6 @@ async def generate_workout_recap(
             previous_volume = None
         if previous_volume and previous_volume > 0:
             delta_pct = round((current_volume - previous_volume) / previous_volume * 100, 1)
-
-    # Per-exercise weight progression (reuse existing RAG helper).
-    weight_progressions: Dict[str, List[Dict[str, Any]]] = {}
-    for ex in (current_session.get("exercises", []) or [])[:5]:
-        ex_name = ex.get("name", "")
-        if ex_name:
-            history = await rag_service.get_exercise_weight_history(
-                user_id, ex_name, n_results=5
-            )
-            if history:
-                weight_progressions[ex_name] = history
 
     context = rag_service.format_feedback_context(
         current_session, past_sessions, weight_progressions

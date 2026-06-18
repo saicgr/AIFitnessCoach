@@ -224,6 +224,26 @@ def _compact_recent_workouts(snapshot: Dict[str, Any]) -> List[Dict[str, Any]]:
     return out
 
 
+def _acute_recovery_signal(sb, user_id: str) -> Optional[Dict[str, Any]]:
+    """Acute recovery read from recently-imported cardio + effort rating.
+
+    Thin, fail-open wrapper over ``recovery_signal_service`` so the briefing
+    can lean on the import-loop signal. Returns the compact snapshot dict only
+    when there is an ACTIONABLE recovery story (go_lighter / active_recovery);
+    affirming "as_planned" light cardio is noise the briefing doesn't need.
+    Any failure → None (briefing behaves exactly as before).
+    """
+    try:
+        from services.recovery_signal_service import compute_recovery_signal
+
+        sig = compute_recovery_signal(sb, user_id)
+        if sig is not None and sig.recommendation in ("go_lighter", "active_recovery"):
+            return sig.to_snapshot_dict()
+    except Exception as e:
+        logger.debug(f"[smart_briefing] recovery signal skipped for {user_id}: {e}")
+    return None
+
+
 def _build_context(
     sb,
     user_id: str,
@@ -293,6 +313,12 @@ def _build_context(
             "tier": recovery.get("tier"),
             "adjustment": recovery.get("adjustment"),
         },
+        # Recovery-aware import loop: an ACUTE read of recently-imported cardio
+        # + the user's "Rate your Effort" rating (last 48h). Closes the loop so
+        # a Hard external session yesterday tilts today's briefing toward an
+        # easier/active-recovery day. Deterministic + fail-open; _prune drops it
+        # when None so the briefing behaves exactly as before with no signal.
+        "recovery_signal": _acute_recovery_signal(sb, user_id),
         "heart_rate": {
             "resting": heart_rate.get("resting"),
             "resting_baseline": heart_rate.get("resting_baseline"),

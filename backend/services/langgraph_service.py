@@ -1318,6 +1318,7 @@ class LangGraphCoachService:
                 fetch_daily_nutrition_context,
             )
             from services.coach.self_tracking_context import build_self_tracking_context
+            from services.coach.form_verdict_context import build_form_verdict_context
             (
                 _health_res,
                 _mem_res,
@@ -1325,6 +1326,7 @@ class LangGraphCoachService:
                 _cardio,
                 _nutri,
                 _selftrack_res,
+                _formverdict_res,
             ) = await asyncio.gather(
                 UserContextService().get_health_context_for_ai(_cuid, days=7),
                 asyncio.to_thread(
@@ -1334,6 +1336,7 @@ class LangGraphCoachService:
                 get_cardio_context_for_ai(_cuid),
                 fetch_daily_nutrition_context(_cuid, user_tz or "UTC"),
                 build_self_tracking_context(_cuid, user_tz),
+                build_form_verdict_context(_cuid),
                 return_exceptions=True,
             )
 
@@ -1353,6 +1356,16 @@ class LangGraphCoachService:
                 base_state["self_tracking_context"] = ""
             else:
                 base_state["self_tracking_context"] = _selftrack_res or ""
+
+            # Closed-loop form verdicts (video-analyzed): the user's recent
+            # form-analysis scores + standout issues + per-exercise trend, so the
+            # coach grounds form feedback in what it actually saw on video instead
+            # of generic advice. "" on any error so the coach path is never broken.
+            if isinstance(_formverdict_res, Exception):
+                logger.warning(f"[CoachState] form_verdict_context pre-fetch failed: {_formverdict_res}")
+                base_state["form_verdict_context"] = ""
+            else:
+                base_state["form_verdict_context"] = _formverdict_res or ""
 
             # 2. memory_context / memory_ref_ids (mig 2217) — durable facts the
             # user told the coach (back pain, dietary prefs, goals) + open loops,

@@ -48,6 +48,7 @@ from .tools import (
     create_superset,
     break_superset,
     reorder_exercises,
+    add_set,
 )
 
 # === Issue 2: equipment identify ===
@@ -89,6 +90,7 @@ __all__ = [
     "create_superset",
     "break_superset",
     "reorder_exercises",
+    "add_set",
     # === Issue 2: equipment identify ===
     "identify_equipment",
 ]

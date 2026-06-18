@@ -67,6 +67,18 @@ _BASE_STYLE = (
     "'tonight' or 'before bed'. Never say 'after lunch' in an evening "
     "notification or 'tonight' in a morning one.\n"
     "9. Stay completely in character. Output ONLY the JSON object described.\n"
+    "10. RECOVERY-AWARE IMPORT LOOP: if DATA carries a ``recovery_signal`` "
+    "object, it is an ACUTE read of the user's recently-imported cardio plus "
+    "their own effort rating, and it OUTRANKS the slower training-load state "
+    "for what to do TODAY. When ``recovery_signal.recommendation`` is "
+    "'active_recovery', steer to a rest, mobility, or easy-movement day plus "
+    "recovery food. When it is 'go_lighter', steer toward an easier session "
+    "today. Ground it in the object's own fields: quote the cause from "
+    "``recovery_signal.reason`` qualitatively (for example 'you ran hard "
+    "yesterday'), and you MAY cite ``recovery_signal.hours_since_peak`` (an "
+    "'Xh ago') and ``recovery_signal.recovery_days_suggested`` ('give it about "
+    "N days') since both are in DATA. Do not invent an effort or number the "
+    "object does not list.\n"
 )
 
 _MOMENT_GUIDANCE = {

@@ -744,6 +744,99 @@ async def log_set_endpoint(
         raise safe_internal_error(e, "workout_operations")
 
 
+@router.post("/{workout_id}/add-set")
+@limiter.limit("60/minute")
+async def add_set_endpoint(
+    request: Request,
+    workout_id: str,
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """Add a planned set (or a drop set) to an exercise in the active workout.
+
+    Used by the AI coach's ``add_set`` / ``add_drop_set`` mutation tools when a
+    user says "add a set to bench" or "add a drop set to leg press" mid-workout.
+
+    Mutates ``exercises_json`` only — bumps the target exercise's planned ``sets``
+    count by one so the extra set row renders on the active-workout screen. For a
+    drop set, also records the new slot in the exercise's ``drop_sets`` list so the
+    UI can mark it (lighter weight, no rest) without changing how sets are logged.
+    Optimistic-concurrency stamped via ``last_modified_at`` like the other tools.
+    """
+    try:
+        db = get_supabase_db()
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        exercise_ref = str(payload.get("exercise_id") or payload.get("exercise_name") or "")
+        if not exercise_ref:
+            raise HTTPException(status_code=400, detail="exercise_id or exercise_name required")
+        is_drop_set = bool(payload.get("is_drop_set", False))
+
+        exercises = _exercises_from_workout(workout)
+        target = None
+        for ex in exercises:
+            if str(ex.get("exercise_id") or ex.get("id") or ex.get("library_id") or "") == exercise_ref:
+                target = ex
+                break
+            if ex.get("name", "").lower() == exercise_ref.lower():
+                target = ex
+                break
+        if not target:
+            raise HTTPException(status_code=404, detail="Exercise not in workout")
+
+        try:
+            current_sets = int(target.get("sets") or 0)
+        except (TypeError, ValueError):
+            current_sets = 0
+        if current_sets < 1:
+            current_sets = 1  # normalize malformed/absent set counts
+
+        new_set_index = current_sets + 1  # 1-based slot of the appended set
+        target["sets"] = new_set_index
+
+        if is_drop_set:
+            # Record which slot(s) are drop sets so the UI can render them as a
+            # back-off (lighter, no rest) without altering the logging contract.
+            drops = target.get("drop_sets")
+            if not isinstance(drops, list):
+                drops = []
+            drops.append(new_set_index)
+            target["drop_sets"] = drops
+
+        update_data = {
+            "exercises_json": json.dumps(exercises),
+            "last_modified_at": datetime.now().isoformat(),
+            "last_modified_method": "ai_add_drop_set" if is_drop_set else "ai_add_set",
+        }
+        updated = db.update_workout(workout_id, update_data)
+        if not updated:
+            raise safe_internal_error(ValueError("Failed to update workout"), "workout_operations")
+
+        log_workout_change(
+            workout_id,
+            workout.get("user_id"),
+            "drop_set_add" if is_drop_set else "set_add",
+            "exercises_json",
+            str(current_sets),
+            str(new_set_index),
+        )
+
+        return {
+            "success": True,
+            "exercise_name": target.get("name"),
+            "sets": new_set_index,
+            "set_index": new_set_index,
+            "is_drop_set": is_drop_set,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"add-set failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
+
+
 def _exercises_from_workout(workout: Dict[str, Any]) -> List[Dict[str, Any]]:
     raw = workout.get("exercises_json") or workout.get("exercises") or []
     if isinstance(raw, str):

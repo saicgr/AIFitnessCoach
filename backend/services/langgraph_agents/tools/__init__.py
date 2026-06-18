@@ -57,6 +57,7 @@ from .workout_mutation_tools import (
     create_superset,
     break_superset,
     reorder_exercises,
+    add_set,
     ISSUE_3_MUTATION_TOOLS,
 )
 
@@ -224,6 +225,7 @@ __all__ = [
     "create_superset",
     "break_superset",
     "reorder_exercises",
+    "add_set",
     "ISSUE_3_MUTATION_TOOLS",
     # Issue 2: equipment identify tool
     "identify_equipment",

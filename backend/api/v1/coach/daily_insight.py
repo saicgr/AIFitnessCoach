@@ -549,6 +549,26 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     except Exception as e:
         logger.debug(f"[daily_insight] training load lookup skipped: {e}")
 
+    # --- Recovery-aware import loop (close the loop) -------------------------
+    # The chronic ACWR block above is slow to react to a single hard session.
+    # This ACUTE signal reads the user's recently-imported external cardio +
+    # their "Rate your Effort" rating (Light/Moderate/Hard) from the last 48h
+    # and, combined with the chronic state, recommends go_lighter /
+    # active_recovery / as_planned. Previously the import effort fed nothing;
+    # this surfaces it so the morning/evening brief can say "you ran hard
+    # yesterday — take today lighter". Deterministic (no LLM), fail-open: a
+    # None result simply omits the block and the brief behaves exactly as
+    # before. NEVER touches workout generation — advice-only context.
+    try:
+        from services.recovery_signal_service import compute_recovery_signal
+        sig = compute_recovery_signal(sb, user_id)
+        # Only surface when there is an actionable recovery story — affirming
+        # "as_planned" with light cardio is noise the brief doesn't need.
+        if sig is not None and sig.recommendation in ("go_lighter", "active_recovery"):
+            snapshot["recovery_signal"] = sig.to_snapshot_dict()
+    except Exception as e:
+        logger.debug(f"[daily_insight] recovery signal skipped: {e}")
+
     # --- This week (last 7 days) — so the coach opening references recent
     # history, not just today. Each sub-block best-effort. -------------------
     weekly: Dict[str, Any] = {}

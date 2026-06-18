@@ -1297,6 +1297,14 @@ def _build_coach_response_prompt(state: CoachAgentState):
     if self_tracking_context:
         context_parts.append(f"\n{self_tracking_context}")
 
+    # === Closed-loop form verdicts (video-analyzed) ===
+    # Recent form-analysis scores + standout issues + per-exercise trend. Cite
+    # ONLY what's here — never invent a verdict. Omitted when the user has no
+    # completed form analyses (the block is "" in that case).
+    form_verdict_context = state.get("form_verdict_context")
+    if form_verdict_context:
+        context_parts.append(f"\n{form_verdict_context}")
+
     # === Cardio activity context (SLICE_COACH) ===
     # Sibling to health_context. Same "cite only what's here" rule applies —
     # never invent pace, distance, VO2max, or training-load numbers.
@@ -1480,6 +1488,13 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     self_tracking_context = state.get("self_tracking_context")
     if self_tracking_context:
         context_parts.append(f"\n{self_tracking_context}")
+
+    # === Closed-loop form verdicts (video-analyzed) — mirrors
+    # `_build_coach_response_prompt`; edit both together. "" when the user has
+    # no completed form analyses (the coach must never invent a verdict). ===
+    form_verdict_context = state.get("form_verdict_context")
+    if form_verdict_context:
+        context_parts.append(f"\n{form_verdict_context}")
 
     # === Cardio activity context (SLICE_COACH) — mirrors
     # `_build_coach_response_prompt`; edit both together. ===

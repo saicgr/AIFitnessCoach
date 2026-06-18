@@ -67,6 +67,13 @@ class CoachAgentState(TypedDict):
     # services.coach.self_tracking_context.build_self_tracking_context.
     self_tracking_context: Optional[str]
 
+    # Closed-loop form verdicts: the user's recent video-analyzed form scores +
+    # standout issues + per-exercise trend, so the coach can reference real form
+    # findings ("your squat depth regressed — here's a cue"). "" when the user
+    # has no completed form analyses — the coach must then never invent a verdict.
+    # Built by services.coach.form_verdict_context.build_form_verdict_context.
+    form_verdict_context: Optional[str]
+
     # Cardio activity context (SLICE_COACH) — compact prompt string of the
     # user's recent cardio picture (sessions, VO2max, training-load ACWR,
     # PRs, and optionally a THIS-session focus line). Pre-fetched by the

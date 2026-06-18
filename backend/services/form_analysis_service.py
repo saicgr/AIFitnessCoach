@@ -63,6 +63,25 @@ FORM_ANALYSIS_SCHEMA = {
             "minimum": 1,
             "maximum": 10
         },
+        "subscores": {
+            "type": "object",
+            "properties": {
+                "form": {
+                    "type": "integer", "minimum": 1, "maximum": 10,
+                    "description": "Body positioning / technique quality: alignment, bracing, joint tracking, bar path. 1-10."
+                },
+                "tempo": {
+                    "type": "integer", "minimum": 1, "maximum": 10,
+                    "description": "Rep speed control and consistency (no bouncing, controlled eccentric). 1-10."
+                },
+                "range_of_motion": {
+                    "type": "integer", "minimum": 1, "maximum": 10,
+                    "description": "Completeness of range of motion through each rep (full depth/lockout). 1-10."
+                }
+            },
+            "required": ["form", "tempo", "range_of_motion"],
+            "description": "Component sub-scores that roll up into form_score. Score each independently from what is visible."
+        },
         "overall_assessment": {
             "type": "string",
             "description": "Brief overall assessment of the form (1-2 sentences)"
@@ -172,7 +191,7 @@ FORM_ANALYSIS_SCHEMA = {
             "description": "Assessment of the recording quality"
         }
     },
-    "required": ["content_type", "exercise_identified", "form_score", "overall_assessment", "issues", "positives", "breathing_analysis", "tempo_analysis", "recommendations", "video_quality"]
+    "required": ["content_type", "exercise_identified", "form_score", "subscores", "overall_assessment", "issues", "positives", "breathing_analysis", "tempo_analysis", "recommendations", "video_quality"]
 }
 
 # Structured JSON schema for multi-video form comparison

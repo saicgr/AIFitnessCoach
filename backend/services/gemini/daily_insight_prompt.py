@@ -109,11 +109,23 @@ priority order, and build the body around it (do not list several):
      number. (Do NOT ask an open-loop check-in question here — that is a briefing
      behaviour; home just personalizes.)
   2. injury: if present, keep the advice injury-aware (work around body_part).
-  3. recovery/load: if training_load_state is "overreaching" (especially with
-     short sleep OR readiness.muscle_soreness "high" / readiness.sleep_quality
-     "poor"), steer toward a lighter session + recovery food. Describe readiness
-     and soreness QUALITATIVELY (e.g. "well recovered", "high soreness"); you may
-     cite readiness.readiness_score_0to100 as a number. Do NOT print the raw 1-7
+  3. recovery/load: if recovery_signal is present, it is an ACUTE read of the
+     user's recently-imported cardio + their own effort rating — it OUTRANKS
+     the slower training_load_state for "what to do today". When
+     recovery_signal.recommendation is "active_recovery", steer firmly to a
+     rest / mobility / easy-movement day + recovery food. When it is
+     "go_lighter", steer toward an easier session today. Ground it in the
+     real fields: name the effort QUALITATIVELY using recovery_signal.reason
+     (e.g. "you ran hard yesterday"), and you MAY cite
+     recovery_signal.hours_since_peak (e.g. "14h ago") and
+     recovery_signal.recovery_days_suggested (e.g. "give it ~2 days") since
+     both are snapshot-backed. Do NOT invent an effort the snapshot doesn't
+     list. Otherwise, if training_load_state is "overreaching" (especially
+     with short sleep OR readiness.muscle_soreness "high" /
+     readiness.sleep_quality "poor"), steer toward a lighter session +
+     recovery food. Describe readiness and soreness QUALITATIVELY (e.g. "well
+     recovered", "high soreness"); you may cite
+     readiness.readiness_score_0to100 as a number. Do NOT print the raw 1-7
      scale.
   4. otherwise: the biggest unmet (or impressively-met) pillar, grounded in a
      REAL number from the snapshot (protein logged vs target, steps vs goal,

@@ -606,6 +606,67 @@ def reorder_exercises(
     )
 
 
+@tool
+def add_set(
+    workout_id: str,
+    exercise_name: str,
+    is_drop_set: bool = False,
+) -> Dict[str, Any]:
+    """
+    Add one more set (or a drop set) to an exercise in the active workout.
+
+    Use this when the user says "add a set to bench", "give me one more set of
+    squats", or "add a drop set to leg press" mid-workout. A drop set is a
+    back-off set at a lighter load with little/no rest — set ``is_drop_set=True``
+    for that, otherwise it's a normal working set.
+
+    Args:
+        workout_id: UUID of the active workout.
+        exercise_name: Name of the exercise to add the set to (as it appears in
+            the workout, e.g. "Leg Press").
+        is_drop_set: True to mark the new set as a drop set (lighter, no rest).
+
+    Returns:
+        Strict tool envelope. action_data.action = "add_set" with
+        ``is_drop_set`` carried through so the frontend confirm-card and the
+        ``/add-set`` endpoint render/apply it correctly.
+    """
+    action = "add_set"
+    if not _is_uuid(workout_id):
+        return _fail(action, f"Invalid workout id: {workout_id}.")
+
+    workout = _load_workout(workout_id)
+    if not workout:
+        return _fail(action, f"Workout {workout_id} not found.")
+
+    exercises = _exercises_list(workout)
+    target = next(
+        (e for e in exercises if e.get("name", "").lower() == exercise_name.lower()),
+        None,
+    )
+    if not target:
+        return _fail(
+            action,
+            f"'{exercise_name}' isn't in this workout right now.",
+            {"workout_id": workout_id},
+        )
+
+    kind = "drop set" if is_drop_set else "set"
+    summary = f"Add a {kind} to {target.get('name')}"
+
+    return _ok(
+        action,
+        summary,
+        {
+            "workout_id": workout_id,
+            "exercise_id": _ensure_exercise_id(target),
+            "exercise_name": target.get("name"),
+            "is_drop_set": is_drop_set,
+        },
+        requires_confirmation=True,
+    )
+
+
 # Public registry — appended to ALL_TOOLS via tools/__init__.py
 ISSUE_3_MUTATION_TOOLS = [
     swap_single_exercise,
@@ -613,4 +674,5 @@ ISSUE_3_MUTATION_TOOLS = [
     create_superset,
     break_superset,
     reorder_exercises,
+    add_set,
 ]

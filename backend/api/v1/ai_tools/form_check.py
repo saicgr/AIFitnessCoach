@@ -230,8 +230,10 @@ async def analyze_lift_form(video_bytes: bytes, exercise: str) -> Dict[str, Any]
             temperature=0.2,
         ),
         method_name="ai_tools_form_check",
-        # GPT/Gemini vision over multiple frames is slow — generous timeout.
-        timeout=120.0,
+        # flash-lite vision over ~5 keyframes returns in ~3-8s. Cap tightly so a
+        # stalled call fails fast (and the client can retry) instead of hanging
+        # the user on a spinner for up to two minutes.
+        timeout=20.0,
     )
 
     raw = (response.text or "").strip()

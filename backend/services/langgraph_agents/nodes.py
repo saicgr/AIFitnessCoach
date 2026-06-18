@@ -723,6 +723,26 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
     action_data = None
 
     for result in tool_results:
+        # Issue 3 in-workout mutation tools (swap_single_exercise, add_set,
+        # log_set, create_superset, …) return the strict envelope
+        # {success, action_data:{action,…}, summary_text, requires_confirmation}
+        # — the action is NESTED, not top-level like the legacy tools below.
+        # Forward that envelope verbatim so the Flutter ChatActionConfirmCard
+        # renders an Apply/Cancel card before the change is committed.
+        nested = result.get("action_data")
+        if isinstance(nested, dict) and nested.get("action"):
+            action_data = dict(nested)
+            if result.get("summary_text") is not None:
+                action_data["summary_text"] = result.get("summary_text")
+            if result.get("requires_confirmation") is not None:
+                action_data["requires_confirmation"] = result.get("requires_confirmation")
+            logger.info(
+                f"[Action Data] Passthrough mutation envelope: "
+                f"action={nested.get('action')}, "
+                f"requires_confirmation={action_data.get('requires_confirmation')}"
+            )
+            continue
+
         action = result.get("action")
         # Use the workout_id from the tool result, which may be different from current workout
         result_workout_id = result.get("workout_id")

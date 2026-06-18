@@ -26,6 +26,12 @@ from ..tools import (
     check_exercise_form,
     compare_exercise_form,
     suggest_actions,
+    # Issue 3 granular in-workout mutations — let the workout agent perform
+    # precise, single-exercise edits mid-workout ("swap leg press for hack
+    # squat", "add a drop set") that render a confirm-card before applying,
+    # instead of falling back to the coarse replace_all_exercises path.
+    swap_single_exercise,
+    add_set,
 )
 from ..personality import build_personality_prompt, sanitize_coach_name
 from models.chat import AISettings
@@ -49,6 +55,9 @@ WORKOUT_TOOLS = [
     check_exercise_form,
     compare_exercise_form,
     suggest_actions,
+    # Granular in-workout mutations (confirm-card path).
+    swap_single_exercise,
+    add_set,
 ]
 
 # Tools for non-creation requests (excludes generate_quick_workout to prevent
@@ -64,6 +73,10 @@ WORKOUT_QUERY_TOOLS = [
     check_exercise_form,
     compare_exercise_form,
     suggest_actions,
+    # Granular in-workout mutations (confirm-card path) — the common
+    # mid-workout asks "swap X for Y" / "add a set / drop set".
+    swap_single_exercise,
+    add_set,
 ]
 
 # Workout expertise base prompt template (coach name is inserted dynamically)
@@ -410,6 +423,8 @@ CONTEXT:
 AVAILABLE TOOLS:
 - add_exercise_to_workout(workout_id, exercise_names) - Add exercises to a workout
 - remove_exercise_from_workout(workout_id, exercise_names) - Remove exercises from a workout
+- swap_single_exercise(workout_id, old_exercise_name, new_exercise_name, reason) - Swap ONE exercise for another mid-workout ("swap leg press for hack squat", "replace X with Y"). Prefer this over replace_all_exercises when the user names a single exercise to change. Renders a confirm card.
+- add_set(workout_id, exercise_name, is_drop_set) - Add one more set to an exercise mid-workout ("add a set to bench", "give me one more set of squats"). Pass is_drop_set=true for a drop set ("add a drop set to leg press"). Renders a confirm card.
 - replace_all_exercises(workout_id, muscle_group, num_exercises) - Replace ALL exercises with new ones targeting a muscle group
 - modify_workout_intensity(workout_id, modification) - Change intensity (easier/harder/shorter/longer)
 - reschedule_workout(workout_id, new_date, reason) - Move workout to a different date
@@ -820,6 +835,27 @@ async def workout_action_data_node(state: WorkoutAgentState) -> Dict[str, Any]:
         # Only process successful tool results
         if not result.get("success"):
             logger.info(f"[Workout Action Data] Skipping failed result: {result.get('message', 'unknown error')}")
+            continue
+
+        # Issue 3 in-workout mutation tools (swap_single_exercise, add_set, …)
+        # return the strict envelope {success, action_data:{action,…},
+        # summary_text, requires_confirmation} — the action is NESTED, not at
+        # the top level like the legacy tools below. Pass that envelope through
+        # verbatim so the Flutter ChatActionConfirmCard renders an Apply/Cancel
+        # card before the change is committed. (Same shape the generic coach
+        # node already forwards.)
+        nested = result.get("action_data")
+        if isinstance(nested, dict) and nested.get("action"):
+            action_data = dict(nested)
+            if result.get("summary_text") is not None:
+                action_data["summary_text"] = result.get("summary_text")
+            if result.get("requires_confirmation") is not None:
+                action_data["requires_confirmation"] = result.get("requires_confirmation")
+            logger.info(
+                f"[Workout Action Data] Passthrough mutation envelope: "
+                f"action={nested.get('action')}, "
+                f"requires_confirmation={action_data.get('requires_confirmation')}"
+            )
             continue
 
         action = result.get("action")

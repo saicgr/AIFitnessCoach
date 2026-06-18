@@ -157,15 +157,16 @@ async def extract_key_frames(
             logger.warning("Frame extraction timed out at %.2fs", timestamp, exc_info=True)
             return None
 
-    def _extract_all() -> List[Tuple[bytes, str]]:
-        result = []
-        for ts in timestamps:
-            jpeg_data = _extract_frame(ts)
-            if jpeg_data:
-                result.append((jpeg_data, "image/jpeg"))
-        return result
-
-    frames = await asyncio.to_thread(_extract_all)
+    # Extract every frame CONCURRENTLY. Each ffmpeg seek is an independent
+    # subprocess, so running them in parallel threads cuts wall-clock from
+    # sum-of-all-frames (~5-15s for a serial loop) to roughly a single frame
+    # (~1-3s). gather() preserves timestamp order.
+    extracted = await asyncio.gather(
+        *[asyncio.to_thread(_extract_frame, ts) for ts in timestamps]
+    )
+    frames: List[Tuple[bytes, str]] = [
+        (jpeg_data, "image/jpeg") for jpeg_data in extracted if jpeg_data
+    ]
 
     logger.info(
         "Extracted %d/%d keyframes from video (duration=%.1fs)",

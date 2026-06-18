@@ -151,6 +151,11 @@ class AnalyzePhotoResponse(BaseModel):
     secondary_muscles: List[str] = Field(default_factory=list, description="Secondary muscle groups involved")
 
 
+class AnalyzeTextRequest(BaseModel):
+    """Request to fill exercise details from just a typed name/description."""
+    raw_text: str = Field(..., description="Exercise name or short description (e.g. 'Kettlebell torso rotation')")
+
+
 class ImportExerciseRequest(BaseModel):
     """
     Request body for POST /custom-exercises/{user_id}/import.
@@ -559,6 +564,74 @@ VALID_EQUIPMENT = [
 ]
 
 
+def _project_payload_to_analyze_response(payload: Dict[str, Any]) -> "AnalyzePhotoResponse":
+    """Project a full AiExerciseExtractor payload down to the narrow review
+    shape the create-exercise form fills (name/primary/equipment/compound/
+    instructions/secondary). Shared by analyze-photo and analyze-text."""
+    target_muscles = payload.get("target_muscles") or []
+    primary = target_muscles[0] if target_muscles else "full body"
+    if primary not in VALID_MUSCLE_GROUPS:
+        primary = "full body"
+
+    equipment = payload.get("equipment") or "other"
+    if equipment not in VALID_EQUIPMENT:
+        equipment = "other"
+
+    secondary = [
+        m for m in (payload.get("secondary_muscles") or [])
+        if isinstance(m, str) and m in VALID_MUSCLE_GROUPS
+    ]
+
+    # Compound heuristic: more than one target or secondary muscle.
+    is_compound = (len(target_muscles) + len(secondary)) > 1
+    instructions_field = payload.get("instructions") or "No instructions available."
+
+    return AnalyzePhotoResponse(
+        name=payload.get("name") or "Unknown Exercise",
+        primary_muscle=primary,
+        equipment=equipment,
+        is_compound=is_compound,
+        instructions=instructions_field,
+        secondary_muscles=secondary,
+    )
+
+
+@router.post("/{user_id}/analyze-text", response_model=AnalyzePhotoResponse)
+async def analyze_exercise_text(
+    user_id: str,
+    request: AnalyzeTextRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Fill exercise details from a typed name/description WITHOUT persisting.
+
+    The "Fill with AI" button in the create-exercise form: the user types a
+    name (e.g. "Kettlebell torso rotation") and we return structured fields for
+    them to review and edit before saving. Synchronous, ~1-2s. Mirrors
+    analyze-photo; the persisting path is POST /{user_id}/import (source=text).
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    raw_text = (request.raw_text or "").strip()
+    if not raw_text:
+        raise HTTPException(status_code=400, detail="raw_text is required")
+
+    try:
+        logger.info(f"🤖 Filling exercise from text for user {user_id}: {raw_text!r}")
+        extractor = get_ai_exercise_extractor()
+        payload = await extractor.extract_from_text(raw_text=raw_text, user_hint=None)
+        analysis = _project_payload_to_analyze_response(payload)
+        logger.info(f"✅ Exercise text-filled: '{analysis.name}'")
+        return analysis
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        raise HTTPException(status_code=502, detail=str(ve))
+    except Exception as e:
+        logger.error(f"❌ Failed to fill exercise from text: {e}", exc_info=True)
+        raise safe_internal_error(e, "custom_exercises")
+
+
 @router.post("/{user_id}/analyze-photo", response_model=AnalyzePhotoResponse)
 async def analyze_exercise_photo(
     user_id: str,
@@ -594,34 +667,7 @@ async def analyze_exercise_photo(
             user_hint=None,
         )
 
-        # Project payload down to the legacy response model.
-        target_muscles = payload.get("target_muscles") or []
-        primary = target_muscles[0] if target_muscles else "full body"
-        if primary not in VALID_MUSCLE_GROUPS:
-            primary = "full body"
-
-        equipment = payload.get("equipment") or "other"
-        if equipment not in VALID_EQUIPMENT:
-            equipment = "other"
-
-        secondary = [
-            m for m in (payload.get("secondary_muscles") or [])
-            if isinstance(m, str) and m in VALID_MUSCLE_GROUPS
-        ]
-
-        # Compound heuristic: more than one target or secondary muscle.
-        is_compound = (len(target_muscles) + len(secondary)) > 1
-
-        instructions_field = payload.get("instructions") or "No instructions available."
-
-        analysis = AnalyzePhotoResponse(
-            name=payload.get("name") or "Unknown Exercise",
-            primary_muscle=primary,
-            equipment=equipment,
-            is_compound=is_compound,
-            instructions=instructions_field,
-            secondary_muscles=secondary,
-        )
+        analysis = _project_payload_to_analyze_response(payload)
 
         logger.info(
             f"✅ Exercise photo analyzed: '{analysis.name}' "
