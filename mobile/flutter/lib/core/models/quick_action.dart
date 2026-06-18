@@ -4,9 +4,9 @@ enum QuickActionBehavior {
   route,
   waterQuickAdd,
   foodLog,
-  foodScan,    // Opens LogMealSheet and immediately launches multi-image food scan
-  menuScan,    // Opens LogMealSheet and immediately launches menu scan
-  foodPhoto,   // Opens LogMealSheet and immediately fires the single-photo camera flow
+  foodScan, // Opens LogMealSheet and immediately launches multi-image food scan
+  menuScan, // Opens LogMealSheet and immediately launches menu scan
+  foodPhoto, // Opens LogMealSheet and immediately fires the single-photo camera flow
   foodBarcode, // Opens LogMealSheet and immediately fires the barcode scanner
   weightLog,
   moodLog,
@@ -354,9 +354,10 @@ const quickActionRegistry = <String, QuickAction>{
   ),
 };
 
-// Home shortcut bar layout (home-v27 redesign — `CompactQuickActionsRow`):
-//   Single-row mode  → slots 1-5 are the first 5 entries; slot 6 = fixed "More".
-//   Two-row mode     → slots 1-11 are the first 11 entries; slot 12 = fixed "More".
+// Home shortcut bar layout (`CompactQuickActionsRow`):
+//   A single fixed row → slots 1-6 are the first 6 entries; slot 7 = fixed
+//   "More". The row is hidden by default and shown via the customize sheet's
+//   "Show on home screen" toggle.
 // The user reorders this list in the customize sheet; "More" is never an
 // entry here — it is appended by the row widget. Anything past the visible
 // cutoff stays reachable inside the full QuickActionsSheet (via More).
@@ -371,11 +372,11 @@ const quickActionRegistry = <String, QuickAction>{
 // above so users who want a second entry point (e.g. as a quick-action
 // shortcut) can re-pin it via the customize sheet.
 const defaultQuickActionOrder = [
-  // Default row 1 (single-row mode shows the first 6, scrollable; trailing
-  // More tile is appended by the row widget):
+  // The pinned row shows the first 6 (trailing More tile is appended by the
+  // row widget):
   //   Log Food · Scan Menu · Water · Weight · Snap Food · Meditate
   'food', 'scan_menu', 'water', 'weight', 'photo_food', 'meditate',
-  // Two-row mode fills the next slots from here (slot 12 = More):
+  // Everything past slot 6 lives in the More sheet unless reordered up:
   'photo', 'mood', 'scan_food', 'barcode_food', 'measure', 'hydration',
   // ─── long-tail (More sheet only unless reordered up):
   'quick_workout', 'workout', 'history', 'steps', 'programs',

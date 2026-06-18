@@ -26,9 +26,13 @@ import '../../../../l10n/generated/app_localizations.dart';
 part 'quick_actions_row_part_hero_action_card.dart';
 part 'quick_actions_row_part_more_actions_button.dart';
 
-
 /// Maps action IDs to the correct widget
-Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context, WidgetRef ref) {
+Widget buildQuickActionWidget(
+  String actionId,
+  bool isDark,
+  BuildContext context,
+  WidgetRef ref,
+) {
   switch (actionId) {
     case 'water':
       return _WaterGridActionItem(isDark: isDark);
@@ -63,7 +67,8 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       return _GridActionItem(
         icon: Icons.flash_on,
         label: AppLocalizations.of(context).quickActionsRowQuick,
-        iconColor: quickActionRegistry['quick_workout']?.color ?? AppColors.accent,
+        iconColor:
+            quickActionRegistry['quick_workout']?.color ?? AppColors.accent,
         onTap: () => launchQuickAction(context, ref, 'quick_workout'),
         isDark: isDark,
       );
@@ -79,7 +84,9 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final photoFood = quickActionRegistry['photo_food'];
       return _GridActionItem(
         icon: photoFood?.icon ?? Icons.lunch_dining_outlined,
-        label: photoFood?.label ?? AppLocalizations.of(context).quickActionsRowPhotoLog,
+        label:
+            photoFood?.label ??
+            AppLocalizations.of(context).quickActionsRowPhotoLog,
         iconColor: photoFood?.color ?? AppColors.accent,
         // Snap-your-plate flow — shared launcher hops to Nutrition then opens
         // the single-photo camera path.
@@ -90,7 +97,9 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final barcodeFood = quickActionRegistry['barcode_food'];
       return _GridActionItem(
         icon: barcodeFood?.icon ?? Icons.qr_code_scanner_outlined,
-        label: barcodeFood?.label ?? AppLocalizations.of(context).quickActionsRowBarcode,
+        label:
+            barcodeFood?.label ??
+            AppLocalizations.of(context).quickActionsRowBarcode,
         iconColor: barcodeFood?.color ?? AppColors.accent,
         onTap: () => launchQuickAction(context, ref, 'barcode_food'),
         isDark: isDark,
@@ -114,7 +123,9 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final identify = quickActionRegistry['identify_equipment'];
       return _GridActionItem(
         icon: identify?.icon ?? Icons.camera_alt_outlined,
-        label: identify?.label ?? AppLocalizations.of(context).sectionHeaderWhatSThis,
+        label:
+            identify?.label ??
+            AppLocalizations.of(context).sectionHeaderWhatSThis,
         iconColor: identify?.color ?? AppColors.accent,
         onTap: () => launchQuickAction(context, ref, 'identify_equipment'),
         isDark: isDark,
@@ -123,7 +134,8 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       final scanMenu = quickActionRegistry['scan_menu'];
       return _GridActionItem(
         icon: scanMenu?.icon ?? Icons.menu_book_outlined,
-        label: scanMenu?.label ?? AppLocalizations.of(context).quickActionsRowMenu,
+        label:
+            scanMenu?.label ?? AppLocalizations.of(context).quickActionsRowMenu,
         iconColor: scanMenu?.color ?? AppColors.accent,
         onTap: () => launchQuickAction(context, ref, 'scan_menu'),
         isDark: isDark,
@@ -225,7 +237,14 @@ class QuickActionsGrid extends ConsumerWidget {
               children: [
                 for (int i = 0; i < 4 && i < gridActions.length; i++) ...[
                   if (i > 0) const SizedBox(width: 4),
-                  Expanded(child: buildQuickActionWidget(gridActions[i].id, isDark, context, ref)),
+                  Expanded(
+                    child: buildQuickActionWidget(
+                      gridActions[i].id,
+                      isDark,
+                      context,
+                      ref,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -235,7 +254,14 @@ class QuickActionsGrid extends ConsumerWidget {
               children: [
                 for (int i = 4; i < 8 && i < gridActions.length; i++) ...[
                   if (i > 4) const SizedBox(width: 4),
-                  Expanded(child: buildQuickActionWidget(gridActions[i].id, isDark, context, ref)),
+                  Expanded(
+                    child: buildQuickActionWidget(
+                      gridActions[i].id,
+                      isDark,
+                      context,
+                      ref,
+                    ),
+                  ),
                 ],
               ],
             ),
@@ -260,145 +286,106 @@ class QuickActionsRow extends StatelessWidget {
 /// special-cased to the branded [_CoachQuickAction] gradient tile; every
 /// other ID routes through [buildQuickActionWidget] so the home row and the
 /// customize sheet stay driven by the exact same slot model.
-Widget _buildHomeSlot(String actionId, bool isDark, BuildContext context,
-    WidgetRef ref) {
+Widget _buildHomeSlot(
+  String actionId,
+  bool isDark,
+  BuildContext context,
+  WidgetRef ref,
+) {
   if (actionId == 'chat') {
     return _CoachQuickAction(isDark: isDark);
   }
   return buildQuickActionWidget(actionId, isDark, context, ref);
 }
 
-/// Quick actions — a customizable shortcut bar that honors the user's
-/// "Show two rows" preference (`quickActionsExpandedProvider`) and the
-/// per-slot order they set in the customize sheet.
+/// Quick actions — a customizable shortcut bar that the user opts into with
+/// the "Show on home screen" toggle (`quickActionsHomeVisibleProvider`,
+/// default OFF) and orders in the customize sheet.
 ///
-///   Single-row mode (toggle OFF) → 1 row of 6: slots 1-5 from the user's
-///     order + a fixed "More" tile in slot 6.
-///   Two-row mode (toggle ON)     → 2 rows of 6 (12 slots): slots 1-11 from
-///     the user's order + a fixed "More" tile in slot 12.
+/// When the toggle is OFF → renders nothing (`SizedBox.shrink()`), so home
+/// stays clean. When ON → a single fixed row of the first 6 ordered/pinned
+/// actions + a trailing "More" tile (7 tiles total). The legacy "Show two
+/// rows" mode is retired.
 ///
 /// Default order (D3): Coach · Log Food · Scan Menu · Water · Weight · More.
 /// "Workout" is intentionally not pinned — the Workouts tab covers it.
-///
-/// The legacy "2×5 grid" layout is retired — this is the v27 compact row(s).
 class CompactQuickActionsRow extends ConsumerWidget {
   const CompactQuickActionsRow({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Hidden by default — the user surfaces the row from the customize sheet.
+    // SizedBox.shrink keeps the home layout gap-free when the row is off.
+    final homeVisible = ref.watch(quickActionsHomeVisibleProvider);
+    if (!homeVisible) return const SizedBox.shrink();
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final order = ref.watch(quickActionOrderProvider);
-    final expanded = ref.watch(quickActionsExpandedProvider);
 
-    // Two-row expanded mode keeps the historical 11-cap (slot 12 = More)
-    // because it's laid out as a fixed 2×6 grid. Single-row scrollable mode
-    // shows EXACTLY 6 user-configured slots + a trailing More chip — never
-    // more, never less. 5 fit fully on a 390pt iPhone with the 6th peeking,
-    // scroll right to reveal the 6th + More.
-    // Gap 6 — drop the water quick-action when hydration tracking is off.
-    final hideWater = !(ref
-            .watch(nutritionPreferencesProvider)
-            .preferences
-            ?.hydrationTrackingEnabled ??
-        true);
-    final slotIds = expanded
-        ? homeQuickActionSlotIds(order, expanded: true, hideWater: hideWater)
-        : order
-            .where((id) => quickActionRegistry.containsKey(id))
-            .where((id) => !(hideWater && id == 'water'))
-            .take(6)
-            .toList();
+    // A single fixed row shows EXACTLY 6 user-configured slots + a trailing
+    // More chip. Gap 6 — drop the water quick-action when hydration tracking
+    // is off.
+    final hideWater =
+        !(ref
+                .watch(nutritionPreferencesProvider)
+                .preferences
+                ?.hydrationTrackingEnabled ??
+            true);
+    final slotIds = homeQuickActionSlotIds(order, hideWater: hideWater);
 
-    // Lay the slots out 6-per-row. The final slot is always the "More" tile.
+    // De-boxed (Round 4 / Task C): no outer panel, no per-tile card —
+    // just colored icon chips with labels on the plain home background.
+    //
+    // The 6 pinned chips + the trailing More chip are laid out as a single
+    // fixed row sized to fit a standard width; on a narrow device (iPhone SE)
+    // each cell scales down so the seven tiles never overflow.
+    return Padding(
+      // 16pt to match the week strip below it + the home-screen standard
+      // (kHomeHPad) so the row shares the same left/right edges.
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: _FixedQuickRow(slotIds: slotIds, isDark: isDark),
+    );
+  }
+}
+
+/// A single fixed quick-actions row: the configured slots + a trailing "More"
+/// tile, each in an `Expanded` cell so the seven tiles share the available
+/// width evenly and never overflow — labels wrap/ellipsize within the fixed
+/// cell, so the row adapts from iPhone SE up to iPad without a horizontal
+/// scroll.
+class _FixedQuickRow extends ConsumerWidget {
+  final List<String> slotIds;
+  final bool isDark;
+  const _FixedQuickRow({required this.slotIds, required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final List<Widget> tiles = [
       for (final id in slotIds) _buildHomeSlot(id, isDark, context, ref),
       _MoreActionsButton(isDark: isDark),
     ];
 
-    Widget buildRow(int start, int end) {
-      final children = <Widget>[];
-      for (int i = start; i < end; i++) {
-        if (i > start) children.add(const SizedBox(width: 4));
-        children.add(Expanded(
-          child: i < tiles.length ? tiles[i] : const SizedBox.shrink(),
-        ));
-      }
-      return Row(children: children);
+    final children = <Widget>[];
+    for (int i = 0; i < tiles.length; i++) {
+      if (i > 0) children.add(const SizedBox(width: 4));
+      // Each tile's icon chip is a fixed 40px square. On a wide device the
+      // Expanded cell is comfortably wider than that; on a narrow device
+      // (iPhone SE — 7 cells across ~288pt usable ≈ 41pt each) the chip would
+      // otherwise edge over its cell, so FittedBox(scaleDown) shrinks the tile
+      // to fit rather than overflow. align top so labels stay baseline-aligned.
+      children.add(
+        Expanded(
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.topCenter,
+            child: SizedBox(width: 48, child: tiles[i]),
+          ),
+        ),
+      );
     }
-
-    // De-boxed (Round 4 / Task C): no outer panel, no per-tile card —
-    // just colored icon chips with labels on the plain home background.
-    //
-    // Single-row mode is HORIZONTALLY SCROLLABLE with a small "peek" of the
-    // next chip past the viewport edge to signal scrollability (Oura-style),
-    // and the More chip is PINNED at the right edge via a Stack so it stays
-    // reachable without scrolling. Two-row "expanded" mode keeps the existing
-    // 2x6 layout — it's the deliberate "show me everything" toggle.
-    return Padding(
-      // 16pt to match the week strip below it + the home-screen standard
-      // (kHomeHPad) so the two rows share the same left/right edges.
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: expanded
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                buildRow(0, 6),
-                const SizedBox(height: 8),
-                buildRow(6, 12),
-              ],
-            )
-          : _ScrollableQuickRow(
-              slotIds: slotIds,
-              isDark: isDark,
-            ),
-    );
-  }
-}
-
-/// Horizontally scrollable quick-actions row.
-///
-/// All configured slots + the More chip live in a single horizontal
-/// `ListView`. The first 5 chips fit on a 390pt iPhone; the rest (plus More
-/// as the last cell) become reachable by scrolling. No pinned overlay, no
-/// fade — just clean scroll behaviour so the user never sees a seam.
-///
-/// Honors `feedback_quick_actions_layout.md` — More is still always present,
-/// just as the last item in the scroll instead of a pinned chip.
-class _ScrollableQuickRow extends ConsumerWidget {
-  final List<String> slotIds;
-  final bool isDark;
-  const _ScrollableQuickRow({required this.slotIds, required this.isDark});
-
-  /// Width per chip cell — tuned so the user's 5 configured slots
-  /// (Coach / Log Food / Scan Menu / Water / Weight by default) are FULLY
-  /// visible and the 6th cell (the trailing More chip) peeks ~60% past the
-  /// right edge of the viewport (Oura's scroll-affordance pattern). On a
-  /// 390pt iPhone (358pt usable after the 16pt outer padding on each side),
-  /// 64pt cells render 5 full chips + ~38pt of More peeking. On iPhone SE
-  /// (288pt usable) we get 4 full + ~32pt peek of the 5th.
-  static const double _chipWidth = 64;
-
-  /// Row height must clear the chip cell's intrinsic min:
-  /// 4 + 40 (icon chip) + 5 + 24 (2-line label) + 4 = 77pt. 80 = 3pt cushion.
-  static const double _rowHeight = 80;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cellCount = slotIds.length + 1; // +1 for the trailing More chip
-    return SizedBox(
-      height: _rowHeight,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        // No outer horizontal padding here — the parent already adds 16pt.
-        itemCount: cellCount,
-        itemBuilder: (context, i) {
-          final child = i == slotIds.length
-              ? _MoreActionsButton(isDark: isDark)
-              : _buildHomeSlot(slotIds[i], isDark, context, ref);
-          return SizedBox(width: _chipWidth, child: child);
-        },
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: children,
     );
   }
 }
@@ -441,17 +428,19 @@ class _DeboxedActionTileState extends State<_DeboxedActionTile> {
   @override
   Widget build(BuildContext context) {
     final isDark = widget.isDark;
-    final textColor =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textColor = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     // Chip background carries the visual identity. In dark mode the tint is
     // boosted (0.22 vs 0.14) so the chip stays legible against the dark
     // home background without the old card frame behind it.
     final chipColor = widget.muteChip
         ? (isDark
-            ? Colors.white.withValues(alpha: 0.12)
-            : Colors.black.withValues(alpha: 0.06))
+              ? Colors.white.withValues(alpha: 0.12)
+              : Colors.black.withValues(alpha: 0.06))
         : widget.iconColor.withValues(alpha: isDark ? 0.22 : 0.14);
-    final iconRender = widget.iconChild ??
+    final iconRender =
+        widget.iconChild ??
         Icon(
           widget.icon,
           size: 18,
@@ -478,8 +467,7 @@ class _DeboxedActionTileState extends State<_DeboxedActionTile> {
               // ≥44px tap target even without the card padding.
               constraints: const BoxConstraints(minHeight: 44),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -563,8 +551,7 @@ class _CoachQuickActionState extends ConsumerState<_CoachQuickAction> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 44),
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -609,4 +596,3 @@ class _CoachQuickActionState extends ConsumerState<_CoachQuickAction> {
     );
   }
 }
-

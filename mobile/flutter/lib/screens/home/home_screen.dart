@@ -78,7 +78,16 @@ import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
 import '../../data/providers/xp_provider.dart' as xp_provider;
-import '../../data/providers/xp_provider.dart' show xpProvider, xpCurrentStreakProvider, streakMilestoneProvider, xpEarnedEventProvider, XPEarnedAnimationEvent, coachBannerEventProvider, CoachBannerEvent, CoachBannerKind;
+import '../../data/providers/xp_provider.dart'
+    show
+        xpProvider,
+        xpCurrentStreakProvider,
+        streakMilestoneProvider,
+        xpEarnedEventProvider,
+        XPEarnedAnimationEvent,
+        coachBannerEventProvider,
+        CoachBannerEvent,
+        CoachBannerKind;
 import '../ai_settings/ai_settings_screen.dart' show aiSettingsProvider;
 import '../../data/models/coach_persona.dart';
 import '../../widgets/coach_banner_overlay.dart';
@@ -93,6 +102,7 @@ import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
+import '../../data/providers/quick_action_provider.dart';
 import '../settings/sections/nutrition_fasting_section.dart';
 import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
@@ -110,7 +120,6 @@ part 'home_screen_ui_3.dart';
 
 part 'home_screen_ui.dart';
 
-
 /// The main home screen displaying workouts, progress, and quick actions
 class HomeScreen extends ConsumerStatefulWidget {
   final bool startEditMode;
@@ -122,7 +131,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin, ResponsiveMixin, WidgetsBindingObserver, PillSwipeNavigationMixin {
+    with
+        SingleTickerProviderStateMixin,
+        ResponsiveMixin,
+        WidgetsBindingObserver,
+        PillSwipeNavigationMixin {
   // PillSwipeNavigationMixin: Home is index 0 (For You)
   @override
   int get currentPillIndex => 0;
@@ -216,7 +229,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         position: TooltipPosition.above,
       ),
     ];
-    ref.read(appTourControllerProvider.notifier).checkAndShow('nav_tour', steps);
+    ref
+        .read(appTourControllerProvider.notifier)
+        .checkAndShow('nav_tour', steps);
   }
 
   @override
@@ -263,9 +278,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Re-fetch XP on resume so the level ring updates when a workout the
       // user completed on another device (or via a background process)
       // bumped their total — without forcing them to pull-to-refresh.
-      unawaited(
-        ref.read(xpProvider.notifier).loadUserXP(showLoading: false),
-      );
+      unawaited(ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
     } catch (e) {
       debugPrint('⚠️ [Home] lifecycle resume skipped post-dispose: $e');
     }
@@ -342,7 +355,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           Future.sync(() => ref.read(authStateProvider.notifier).refreshUser()),
           workoutsNotifier.refresh(),
           Future.sync(
-              () => ref.read(healthSyncProvider.notifier).refreshConnectionStatus()),
+            () =>
+                ref.read(healthSyncProvider.notifier).refreshConnectionStatus(),
+          ),
         ];
         await Future.wait(futures, eagerError: false);
 
@@ -459,14 +474,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (importState.pendingImports.isEmpty) return;
 
     // Auto-import all detected workouts
-    final count =
-        await ref.read(healthImportProvider.notifier).autoImportAll();
+    final count = await ref.read(healthImportProvider.notifier).autoImportAll();
     if (!mounted) return;
 
     if (count > 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context)!.homeScreenImportedWorkouts(count)),
+          content: Text(
+            AppLocalizations.of(context)!.homeScreenImportedWorkouts(count),
+          ),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           // Gap 4 — auto-detected workouts import frictionlessly, but the user
@@ -572,7 +588,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     if (save && _editingTiles.isNotEmpty) {
       // Save the updated tiles (casting is safe since this dead code is never executed)
-      await ref.read(activeLayoutProvider.notifier).updateTiles(_editingTiles.cast<HomeTile>());
+      await ref
+          .read(activeLayoutProvider.notifier)
+          .updateTiles(_editingTiles.cast<HomeTile>());
       HapticService.success();
     }
 
@@ -642,7 +660,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // Show confirmation dialog
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     showDialog(
@@ -655,11 +675,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                AppLocalizations.of(context)!.homeScreenApplyPreset(preset.name),
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: 18,
-                ),
+                AppLocalizations.of(
+                  context,
+                )!.homeScreenApplyPreset(preset.name),
+                style: TextStyle(color: textPrimary, fontSize: 18),
               ),
             ),
           ],
@@ -667,7 +686,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         content: Text(
           AppLocalizations.of(context)!.homeScreenApplyPresetBody(preset.name),
           style: TextStyle(
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            color: isDark
+                ? AppColors.textSecondary
+                : AppColorsLight.textSecondary,
           ),
         ),
         actions: [
@@ -676,7 +697,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Text(
               AppLocalizations.of(context)!.homeScreenCancel,
               style: TextStyle(
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                color: isDark
+                    ? AppColors.textSecondary
+                    : AppColorsLight.textSecondary,
               ),
             ),
           ),
@@ -689,7 +712,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // picks "Nutrition Focus" lands on the Nutrition hero, not the
               // workout one.
               if (preset.isNutritionFocused) {
-                ref.read(homeFocusProvider.notifier).state = HomeFocus.nutrition;
+                ref.read(homeFocusProvider.notifier).state =
+                    HomeFocus.nutrition;
               } else {
                 ref.read(homeFocusProvider.notifier).state = HomeFocus.workout;
               }
@@ -697,7 +721,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!.homeScreenPresetApplied(preset.name)),
+                    content: Text(
+                      AppLocalizations.of(
+                        context,
+                      )!.homeScreenPresetApplied(preset.name),
+                    ),
                     backgroundColor: AppColors.success,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -720,7 +748,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // Show confirmation dialog
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textPrimary = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     showDialog(
@@ -734,10 +764,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             Expanded(
               child: Text(
                 AppLocalizations.of(context)!.homeScreenResetToDefault,
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: 18,
-                ),
+                style: TextStyle(color: textPrimary, fontSize: 18),
               ),
             ),
           ],
@@ -745,7 +772,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         content: Text(
           AppLocalizations.of(context)!.homeScreenResetToDefaultBody,
           style: TextStyle(
-            color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+            color: isDark
+                ? AppColors.textSecondary
+                : AppColorsLight.textSecondary,
           ),
         ),
         actions: [
@@ -754,7 +783,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: Text(
               AppLocalizations.of(context)!.homeScreenCancel,
               style: TextStyle(
-                color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
+                color: isDark
+                    ? AppColors.textSecondary
+                    : AppColorsLight.textSecondary,
               ),
             ),
           ),
@@ -765,12 +796,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               final minimalistPreset = layoutPresets.firstWhere(
                 (p) => p.id == 'minimalist',
               );
-              await ref.read(localLayoutProvider.notifier).applyPreset(minimalistPreset);
+              await ref
+                  .read(localLayoutProvider.notifier)
+                  .applyPreset(minimalistPreset);
               HapticService.success();
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!.homeScreenDefaultRestored),
+                    content: Text(
+                      AppLocalizations.of(context)!.homeScreenDefaultRestored,
+                    ),
                     backgroundColor: AppColors.success,
                     behavior: SnackBarBehavior.floating,
                   ),
@@ -793,7 +828,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     debugPrint('HomeScreen: Checking pending action: $pendingAction');
     if (pendingAction == PendingWidgetAction.showLogMealSheet) {
       // Clear the pending action
-      ref.read(pendingWidgetActionProvider.notifier).state = PendingWidgetAction.none;
+      ref.read(pendingWidgetActionProvider.notifier).state =
+          PendingWidgetAction.none;
       // Show the meal log sheet after a short delay to ensure screen is ready
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
@@ -818,7 +854,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final userId = ref.read(authStateProvider).user?.id;
     if (userId == null) return;
     ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId);
-    ref.read(hydrationProvider.notifier).loadTodaySummary(userId, showLoading: false);
+    ref
+        .read(hydrationProvider.notifier)
+        .loadTodaySummary(userId, showLoading: false);
   }
 
   /// Load nutrition & hydration data so TodayStatsRow shows on first launch.
@@ -849,10 +887,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Fire-and-forget — providers are cache-first so the UI shows data
     // immediately and the network refresh resolves silently. Not awaited so
     // the postFrame init chain stays unblocked.
-    unawaited(ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId));
+    unawaited(
+      ref
+          .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+          .load(userId),
+    );
     unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
     unawaited(
-        ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
+      ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
+    );
   }
 
   /// A8 — predictive prefetch. Once Home is interactive and idle, warm the
@@ -884,18 +927,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!mounted) return;
 
     // (1) Today's workout detail — warm the workout repository cache.
-    final todayWorkout = _getTodayWorkoutFromState(ref.read(todayWorkoutProvider));
+    final todayWorkout = _getTodayWorkoutFromState(
+      ref.read(todayWorkoutProvider),
+    );
     final workoutId = todayWorkout?.id;
     if (workoutId != null && workoutId.isNotEmpty) {
       // Fire-and-forget; getWorkout populates the repo's cache so the detail
       // screen's _loadWorkout resolves instantly.
       unawaited(
-        ref.read(workoutRepositoryProvider).getWorkout(workoutId).catchError(
-          (e) {
-            debugPrint('🔍 [Home] prefetch workout detail skipped: $e');
-            return null;
-          },
-        ),
+        ref.read(workoutRepositoryProvider).getWorkout(workoutId).catchError((
+          e,
+        ) {
+          debugPrint('🔍 [Home] prefetch workout detail skipped: $e');
+          return null;
+        }),
       );
     }
 
@@ -904,10 +949,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // _initializeNutritionAndHydration already populated them.
     final userId = ref.read(authStateProvider).user?.id;
     if (userId != null) {
-      unawaited(ref.read(dailyNutritionProvider(todayNutritionKey()).notifier).load(userId));
-      unawaited(ref
-          .read(hydrationProvider.notifier)
-          .loadTodaySummary(userId, showLoading: false));
+      unawaited(
+        ref
+            .read(dailyNutritionProvider(todayNutritionKey()).notifier)
+            .load(userId),
+      );
+      unawaited(
+        ref
+            .read(hydrationProvider.notifier)
+            .loadTodaySummary(userId, showLoading: false),
+      );
     }
   }
 
@@ -992,8 +1043,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor =
-        isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    final backgroundColor = isDark
+        ? AppColors.pureBlack
+        : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
     // Perf marker: 'home_first_content'. `_isInitializing` is true until the
@@ -1016,22 +1068,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final currentStreak = ref.read(xpCurrentStreakProvider);
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            showStreakMilestoneDialog(
-              context,
-              next,
-              currentStreak,
-              () {
-                // Clear the streak milestone after dialog is dismissed
-                ref.read(xpProvider.notifier).clearStreakMilestone();
-              },
-            );
+            showStreakMilestoneDialog(context, next, currentStreak, () {
+              // Clear the streak milestone after dialog is dismissed
+              ref.read(xpProvider.notifier).clearStreakMilestone();
+            });
           }
         });
       }
     });
 
     // Listen for XP earned events and show animation
-    ref.listen<XPEarnedAnimationEvent?>(xpEarnedEventProvider, (previous, next) {
+    ref.listen<XPEarnedAnimationEvent?>(xpEarnedEventProvider, (
+      previous,
+      next,
+    ) {
       if (next != null && previous == null) {
         // XP earned - show floating toast animation
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1058,7 +1108,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           final aiSettings = ref.read(aiSettingsProvider);
-          final coach = CoachPersona.findById(aiSettings.coachPersonaId) ??
+          final coach =
+              CoachPersona.findById(aiSettings.coachPersonaId) ??
               CoachPersona.defaultCoach;
           switch (next.kind) {
             case CoachBannerKind.stepsGoal:
@@ -1084,81 +1135,82 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       body: RefreshIndicator(
-          onRefresh: () async {
-            debugPrint('🔄 [Home] Pull-to-refresh triggered');
-            _lastRefreshTime = DateTime.now();
-            // Reset carousel auto-generation so it can re-evaluate
-            HeroWorkoutCarousel.resetAutoGeneration();
-            // Refresh user data (picks up workout days, preferences changes)
-            await ref.read(authStateProvider.notifier).refreshUser();
-            // Silently reload layout from SharedPreferences (not a provider)
-            ref.read(localLayoutProvider.notifier).reload();
-            // Single consolidated invalidation of every Home-tier provider
-            // (today workout, gym profiles, workouts, discover, nutrition,
-            // hydration, billing renewal, celebrations, xp, consistency,
-            // weekly plan, habits) + prewarmer + bootstrap prefetch.
-            await refreshAllHome(ref);
-            debugPrint('✅ [Home] Pull-to-refresh complete');
-          },
-          color: AppColors.cyan,
-          backgroundColor: elevatedColor,
-          child: SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                // Header — greeting + streak + bell + overflow. Fixed chrome.
-                const SliverToBoxAdapter(child: MinimalHeader()),
+        onRefresh: () async {
+          debugPrint('🔄 [Home] Pull-to-refresh triggered');
+          _lastRefreshTime = DateTime.now();
+          // Reset carousel auto-generation so it can re-evaluate
+          HeroWorkoutCarousel.resetAutoGeneration();
+          // Refresh user data (picks up workout days, preferences changes)
+          await ref.read(authStateProvider.notifier).refreshUser();
+          // Silently reload layout from SharedPreferences (not a provider)
+          ref.read(localLayoutProvider.notifier).reload();
+          // Single consolidated invalidation of every Home-tier provider
+          // (today workout, gym profiles, workouts, discover, nutrition,
+          // hydration, billing renewal, celebrations, xp, consistency,
+          // weekly plan, habits) + prewarmer + bootstrap prefetch.
+          await refreshAllHome(ref);
+          debugPrint('✅ [Home] Pull-to-refresh complete');
+        },
+        color: AppColors.cyan,
+        backgroundColor: elevatedColor,
+        child: SafeArea(
+          child: CustomScrollView(
+            slivers: [
+              // Header — greeting + streak + bell + overflow. Fixed chrome.
+              const SliverToBoxAdapter(child: MinimalHeader()),
 
-                // Stacked notification-panel banners + rating prompt — fixed
-                // system chrome, always directly under the header. Both
-                // self-collapse to zero height when there's nothing to show.
-                const SliverToBoxAdapter(child: StackedBannerPanel()),
-                const SliverToBoxAdapter(child: RatingPromptBanner()),
+              // Stacked notification-panel banners + rating prompt — fixed
+              // system chrome, always directly under the header. Both
+              // self-collapse to zero height when there's nothing to show.
+              const SliverToBoxAdapter(child: StackedBannerPanel()),
+              const SliverToBoxAdapter(child: RatingPromptBanner()),
 
-                // First-7-days calibration banner. Sets expectations so users
-                // don't churn at Day 3 thinking the AI is dumb — it's
-                // learning. Self-collapses past the 7-day window or after
-                // user dismisses.
-                const SliverToBoxAdapter(child: CalibrationBanner()),
+              // First-7-days calibration banner. Sets expectations so users
+              // don't churn at Day 3 thinking the AI is dumb — it's
+              // learning. Self-collapses past the 7-day window or after
+              // user dismisses.
+              const SliverToBoxAdapter(child: CalibrationBanner()),
 
-                // F3.1 Setup Checklist — self-collapses when complete, past
-                // day 7, or dismissed for the week.
-                const SliverToBoxAdapter(child: SetupChecklistCard()),
+              // F3.1 Setup Checklist — self-collapses when complete, past
+              // day 7, or dismissed for the week.
+              const SliverToBoxAdapter(child: SetupChecklistCard()),
 
-                // One-time cycle-tracking setup invitation for existing
-                // eligible users (Phase E). Self-collapses to zero height
-                // when the user is ineligible, already set up, or has
-                // dismissed it once.
-                const SliverToBoxAdapter(child: CycleSetupHomePrompt()),
+              // One-time cycle-tracking setup invitation for existing
+              // eligible users (Phase E). Self-collapses to zero height
+              // when the user is ineligible, already set up, or has
+              // dismissed it once.
+              const SliverToBoxAdapter(child: CycleSetupHomePrompt()),
 
-                // SIGNATURE V2 — glanceable metrics strip directly under the
-                // masthead: STEPS · SLEEP · READY · SCORE, tappable, so the
-                // day's key numbers are seen without scrolling. The full metric
-                // deck (ring + tiles + trends) stays below the fold.
-                const SliverToBoxAdapter(child: HomeMetricsStrip()),
-                const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
+              // SIGNATURE V2 — glanceable metrics strip directly under the
+              // masthead: STEPS · SLEEP · READY · SCORE, tappable, so the
+              // day's key numbers are seen without scrolling. The full metric
+              // deck (ring + tiles + trends) stays below the fold.
+              const SliverToBoxAdapter(child: HomeMetricsStrip()),
+              const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)),
 
-                // User-customizable sections, rendered in the order and
-                // visibility chosen via "My Space" (homeSectionsProvider).
-                ..._homeSectionSlivers(ref.watch(homeSectionsProvider)),
+              // User-customizable sections, rendered in the order and
+              // visibility chosen via "My Space" (homeSectionsProvider).
+              ..._homeSectionSlivers(ref.watch(homeSectionsProvider)),
 
-                // Bottom padding for the floating nav. Derived from the
-                // actual safe-area inset + the nav-bar intrinsic height
-                // + breathing room (Surface 1.9: 32 so the last sliver
-                // clears the nav-shadow margin on every tested device,
-                // iPhone SE → 16 Pro Max). Heights now come from
-                // chrome_constants.dart so the nav and its consumers can't
-                // drift apart.
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: MediaQuery.viewPaddingOf(context).bottom +
-                        kMainNavBarHeight +
-                        kHomeBottomBreathingRoom,
-                  ),
+              // Bottom padding for the floating nav. Derived from the
+              // actual safe-area inset + the nav-bar intrinsic height
+              // + breathing room (Surface 1.9: 32 so the last sliver
+              // clears the nav-shadow margin on every tested device,
+              // iPhone SE → 16 Pro Max). Heights now come from
+              // chrome_constants.dart so the nav and its consumers can't
+              // drift apart.
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height:
+                      MediaQuery.viewPaddingOf(context).bottom +
+                      kMainNavBarHeight +
+                      kHomeBottomBreathingRoom,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
+      ),
     );
   }
 
@@ -1211,8 +1263,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Timeline (timeline appended separately). The weekly Report + "Your Week"
     // recap were RELOCATED off Home (Reports → Progress, Recap → You/Wrapped)
     // to keep Home lean per the spec.
+    // The pinned quick-actions row is opt-in (default OFF). Only insert the
+    // section when the user has turned on "Show on home screen" so the row
+    // sits BETWEEN the coach card and the workout card, with no phantom gap
+    // when it's hidden (mirrors the strainCoach/cycle filtering above).
+    final quickActionsOnHome = ref.watch(quickActionsHomeVisibleProvider);
     final visible = <HomeSection>[
       HomeSection.coachHero,
+      if (quickActionsOnHome) HomeSection.quickActions,
       HomeSection.workoutCard,
       HomeSection.nutritionCard,
       HomeSection.todayScore,
@@ -1230,8 +1288,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final slivers = <Widget>[];
 
     // Above-the-fold: eager adapters, preserving the per-section gap.
-    final eagerCount =
-        visible.length < _eagerSectionCount ? visible.length : _eagerSectionCount;
+    final eagerCount = visible.length < _eagerSectionCount
+        ? visible.length
+        : _eagerSectionCount;
     for (var i = 0; i < eagerCount; i++) {
       slivers.add(SliverToBoxAdapter(child: _widgetForSection(visible[i])));
       // Quick actions hugs the card below it (the coach card) — a tighter gap
@@ -1250,8 +1309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final section = lazySections[index];
-              final gap =
-                  section == HomeSection.quickActions ? 6.0 : kHomeGap;
+              final gap = section == HomeSection.quickActions ? 6.0 : kHomeGap;
               // Stable per-section identity (key + findChildIndexCallback): when
               // the visible-section set reorders or a section self-hides (the
               // menstrual gate resolving async, a card dropping out, a My Space
@@ -1375,9 +1433,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   /// Check if workout is being generated from state
   bool _isGeneratingFromState(AsyncValue<TodayWorkoutResponse?> state) {
     return state.whenOrNull(
-      loading: () => true,
-      data: (response) => response?.isGenerating ?? false,
-    ) ?? false;
+          loading: () => true,
+          data: (response) => response?.isGenerating ?? false,
+        ) ??
+        false;
   }
 
   /// Handle day tap in week strip
@@ -1469,4 +1528,3 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 }
 
 // WorkoutCategoryPills has been extracted to widgets/workout_category_pills.dart
-

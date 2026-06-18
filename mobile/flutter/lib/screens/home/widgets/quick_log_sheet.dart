@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/models/quick_action.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../data/repositories/hydration_repository.dart';
@@ -16,19 +17,44 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/quick_actions_sheet.dart';
 import '../../nutrition/log_meal_sheet.dart';
 import '../../workout/widgets/hydration_dialog.dart';
+import '../../workout/widgets/quick_workout_sheet.dart';
 
 /// One quick-log action. [isMore] flags the trailing "More" tile, which is
 /// styled as system chrome (muted) and opens the full quick-actions sheet.
-/// [color] tints the action's icon/chip so each surface is visually distinct
-/// (the user asked for per-action colors); "More" passes null → muted chrome.
+///
+/// Icon + color are derived from [quickActionRegistry] via [registryId] so the
+/// LOG sheet, the home shortcut row, and the customize grid render an identical
+/// glyph/color per shared action (no per-surface divergence). [iconOverride]
+/// keeps a distinct glyph where intended (e.g. "Quick add" keeps its +1 mark)
+/// while still inheriting the registry color. "More" passes a null
+/// [registryId] → muted system chrome.
 class _QuickAction {
-  final IconData icon;
+  /// Registry id this action mirrors (icon + color). Null only for "More".
+  final String? registryId;
+
+  /// Optional glyph that overrides the registry icon (color still inherited).
+  final IconData? iconOverride;
+
+  /// Fallback glyph used when the registry has no matching entry.
+  final IconData fallbackIcon;
   final String label;
-  final Color? color;
   final void Function(BuildContext, WidgetRef) onTap;
   final bool isMore;
-  const _QuickAction(this.icon, this.label, this.color, this.onTap,
-      {this.isMore = false});
+  const _QuickAction({
+    required this.label,
+    required this.onTap,
+    this.registryId,
+    this.iconOverride,
+    this.fallbackIcon = Icons.bolt_outlined,
+    this.isMore = false,
+  });
+
+  /// Resolved icon — override → registry → fallback.
+  IconData get icon =>
+      iconOverride ?? quickActionRegistry[registryId]?.icon ?? fallbackIcon;
+
+  /// Resolved color — registry tint, or null for the muted "More" chrome.
+  Color? get color => quickActionRegistry[registryId]?.color;
 }
 
 void _closeThen(BuildContext context, VoidCallback action) {
@@ -46,97 +72,111 @@ Future<void> _logWater(BuildContext context, WidgetRef ref) async {
   if (result == null) return;
   final userId = await ref.read(apiClientProvider).getUserId();
   if (userId == null) return;
-  await ref.read(hydrationProvider.notifier).quickLog(
+  await ref
+      .read(hydrationProvider.notifier)
+      .quickLog(
         userId: userId,
         drinkType: result.drinkType.name,
         amountMl: result.amountMl,
       );
 }
 
-/// Full log surface (issue: 3×4 grid with per-action color). Eleven highest-
-/// frequency log/coach actions + a trailing "More" tile that opens the full
-/// quick-actions sheet so nothing is lost. Grouped by row: food logging /
-/// body + activity / wellness + coach.
+/// Open the workout generator from the sheet, then push the generated workout
+/// (mirrors `quick_action_launcher.dart`'s `quick_workout` case). Distinct from
+/// "Log workout", which routes to the Workouts tab to log a finished session.
+Future<void> _generateWorkout(BuildContext context, WidgetRef ref) async {
+  final workout = await showQuickWorkoutSheet(context, ref);
+  if (workout != null && context.mounted) {
+    context.push('/workout/${workout.id}', extra: workout);
+  }
+}
+
+/// Full log surface — highest-frequency log/coach actions + a trailing "More"
+/// tile that opens the full quick-actions sheet so nothing is lost. Each tile's
+/// ICON + COLOR are inherited from [quickActionRegistry] (via `registryId`) so
+/// this sheet stays in lock-step with the home row + customize grid; only the
+/// onTap routing is local. Grouped by row: food logging / body + activity /
+/// wellness + coach.
 final List<_QuickAction> _actions = [
   // Row 1 — food logging
   _QuickAction(
-    Icons.photo_camera_outlined,
-    'Snap meal',
-    const Color(0xFF34D399),
-    (c, ref) =>
+    registryId: 'photo_food',
+    label: 'Snap meal',
+    onTap: (c, ref) =>
         _closeThen(c, () => showLogMealSheet(c, ref, autoOpenCamera: true)),
   ),
   _QuickAction(
-    Icons.restaurant_menu_outlined,
-    'Scan menu',
-    const Color(0xFF2DD4BF),
-    (c, ref) =>
+    registryId: 'scan_menu',
+    label: 'Scan menu',
+    onTap: (c, ref) =>
         _closeThen(c, () => showLogMealSheet(c, ref, autoOpenMenuScan: true)),
   ),
   _QuickAction(
-    Icons.search_rounded,
-    'Search food',
-    const Color(0xFF38BDF8),
-    (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
+    registryId: 'food',
+    iconOverride: Icons.search_rounded,
+    label: 'Search food',
+    onTap: (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
   ),
   // "Quick add" = drop in calories/macros without searching a food (the
-  // MyFitnessPal-style manual entry inside the log-meal sheet).
+  // MyFitnessPal-style manual entry). Keeps its +1 glyph, inherits the
+  // registry green so it reads as a food action.
   _QuickAction(
-    Icons.exposure_plus_1_rounded,
-    'Quick add',
-    const Color(0xFFFBBF24),
-    (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
+    registryId: 'food',
+    iconOverride: Icons.exposure_plus_1_rounded,
+    label: 'Quick add',
+    onTap: (c, ref) => _closeThen(c, () => showLogMealSheet(c, ref)),
   ),
   // Row 2 — body + activity
   _QuickAction(
-    Icons.local_drink_outlined,
-    'Log water',
-    const Color(0xFF22D3EE),
-    (c, ref) => _closeThen(c, () => _logWater(c, ref)),
+    registryId: 'water',
+    label: 'Log water',
+    onTap: (c, ref) => _closeThen(c, () => _logWater(c, ref)),
+  ),
+  // Generate a fresh workout (AI generator), then launch it. Distinct from
+  // "Log workout" below, which logs a finished session.
+  _QuickAction(
+    registryId: 'quick_workout',
+    label: 'Generate workout',
+    onTap: (c, ref) => _closeThen(c, () => _generateWorkout(c, ref)),
   ),
   _QuickAction(
-    Icons.fitness_center_rounded,
-    'Log workout',
-    const Color(0xFFF87171),
-    (c, ref) => _closeThen(c, () => c.go('/workouts')),
+    registryId: 'workout',
+    label: 'Log workout',
+    onTap: (c, ref) => _closeThen(c, () => c.go('/workouts')),
   ),
   _QuickAction(
-    Icons.monitor_weight_outlined,
-    'Weigh in',
-    const Color(0xFFA855F7),
-    (c, ref) => _closeThen(c, () => c.go('/profile?tab=body')),
+    registryId: 'weight',
+    label: 'Weigh in',
+    onTap: (c, ref) => _closeThen(c, () => c.go('/profile?tab=body')),
   ),
   _QuickAction(
-    Icons.mood_outlined,
-    'Log mood',
-    const Color(0xFFFB7185),
-    (c, ref) => _closeThen(c, () => c.push('/recovery')),
+    registryId: 'mood',
+    label: 'Log mood',
+    onTap: (c, ref) => _closeThen(c, () => c.push('/recovery')),
   ),
   // Row 3 — wellness + coach
   _QuickAction(
-    Icons.self_improvement_outlined,
-    'Mindful',
-    const Color(0xFF818CF8),
-    (c, ref) => _closeThen(
-        c, () => c.push('/mindfulness/session?source=breathwork&duration=5')),
+    registryId: 'meditate',
+    label: 'Mindful',
+    onTap: (c, ref) => _closeThen(
+      c,
+      () => c.push('/mindfulness/session?source=breathwork&duration=5'),
+    ),
   ),
   _QuickAction(
-    Icons.timelapse_rounded,
-    'Start fast',
-    const Color(0xFFFB923C),
-    (c, ref) => _closeThen(c, () => c.push('/fasting')),
+    registryId: 'fasting',
+    label: 'Start fast',
+    onTap: (c, ref) => _closeThen(c, () => c.push('/fasting')),
   ),
   _QuickAction(
-    Icons.auto_awesome,
-    'Ask coach',
-    const Color(0xFFFACC15),
-    (c, ref) => _closeThen(c, () => c.push('/chat?source=quick_log')),
+    registryId: 'chat',
+    label: 'Ask coach',
+    onTap: (c, ref) => _closeThen(c, () => c.push('/chat?source=quick_log')),
   ),
   _QuickAction(
-    Icons.more_horiz_rounded,
-    'More',
-    null,
-    (c, ref) => _closeThen(c, () => showQuickActionsSheet(c, ref)),
+    label: 'More',
+    fallbackIcon: Icons.more_horiz_rounded,
+    onTap: (c, ref) => _closeThen(c, () => showQuickActionsSheet(c, ref)),
     isMore: true,
   ),
 ];

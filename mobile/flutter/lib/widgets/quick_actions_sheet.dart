@@ -21,9 +21,12 @@ import 'quick_action_tile.dart';
 import '../l10n/generated/app_localizations.dart';
 part 'quick_actions_sheet_part_hero_action_card.dart';
 
-
 /// Shows the quick actions bottom sheet when + button is tapped
-void showQuickActionsSheet(BuildContext context, WidgetRef ref, {bool editMode = false}) {
+void showQuickActionsSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  bool editMode = false,
+}) {
   HapticFeedback.mediumImpact();
 
   // Hide nav bar while sheet is open
@@ -32,7 +35,8 @@ void showQuickActionsSheet(BuildContext context, WidgetRef ref, {bool editMode =
   showGlassSheet(
     context: context,
     useRootNavigator: true,
-    builder: (context) => _QuickActionsSheet(ref: ref, startInEditMode: editMode),
+    builder: (context) =>
+        _QuickActionsSheet(ref: ref, startInEditMode: editMode),
   ).then((_) {
     // Show nav bar when sheet is closed
     ref.read(floatingNavBarVisibleProvider.notifier).state = true;
@@ -56,14 +60,34 @@ const _categories = <String, List<String>>{
   // LOG: every "I just did X" entry-point — food logging variants, weight,
   // water, mood, photo, measurements.
   'Log': [
-    'food', 'photo_food', 'scan_food', 'scan_menu', 'barcode_food',
-    'weight', 'water', 'photo', 'mood', 'measure',
+    'food',
+    'photo_food',
+    'scan_food',
+    'scan_menu',
+    'barcode_food',
+    'weight',
+    'water',
+    'photo',
+    'mood',
+    'measure',
   ],
   // PLAN: workout flows + review/progress surfaces + meal planning.
   'Plan': [
-    'meal_planner', 'recipe_creator', 'from_fridge',
-    'quick_workout', 'workout', 'steps', 'library',
-    'schedule', 'habits', 'history', 'progress', 'stats', 'custom_trends', 'summaries', 'achievements',
+    'meal_planner',
+    'recipe_creator',
+    'from_fridge',
+    'quick_workout',
+    'workout',
+    'steps',
+    'library',
+    'schedule',
+    'habits',
+    'history',
+    'progress',
+    'stats',
+    'custom_trends',
+    'summaries',
+    'achievements',
   ],
   // TOOLS: chat, hydration, settings.
   'Tools': ['chat', 'hydration', 'settings'],
@@ -103,7 +127,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           Navigator.pop(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).quickActionsRowPleaseLogInTo),
+              content: Text(
+                AppLocalizations.of(context).quickActionsRowPleaseLogInTo,
+              ),
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -111,11 +137,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         return;
       }
 
-      final success = await ref.read(hydrationProvider.notifier).quickLog(
-            userId: userId,
-            drinkType: 'water',
-            amountMl: 500,
-          );
+      final success = await ref
+          .read(hydrationProvider.notifier)
+          .quickLog(userId: userId, drinkType: 'water', amountMl: 500);
 
       if (mounted) {
         Navigator.pop(context);
@@ -127,21 +151,33 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 children: [
                   const Icon(Icons.check_circle, color: Colors.white, size: 20),
                   const SizedBox(width: 8),
-                  Text(AppLocalizations.of(context).quickActions500mlWaterLogged),
+                  Text(
+                    AppLocalizations.of(context).quickActions500mlWaterLogged,
+                  ),
                 ],
               ),
               backgroundColor: const Color(0xFF2D2D2D),
               behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
+              margin: const EdgeInsetsDirectional.only(
+                bottom: 80,
+                start: 16,
+                end: 16,
+              ),
               duration: const Duration(seconds: 2),
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppLocalizations.of(context).quickActionsRowFailedToLogWater),
+              content: Text(
+                AppLocalizations.of(context).quickActionsRowFailedToLogWater,
+              ),
               behavior: SnackBarBehavior.floating,
-              margin: EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
+              margin: EdgeInsetsDirectional.only(
+                bottom: 80,
+                start: 16,
+                end: 16,
+              ),
             ),
           );
         }
@@ -151,7 +187,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(AppLocalizations.of(context).quickActionsRowFailedToLogWater),
+            content: Text(
+              AppLocalizations.of(context).quickActionsRowFailedToLogWater,
+            ),
             behavior: SnackBarBehavior.floating,
             margin: EdgeInsetsDirectional.only(bottom: 80, start: 16, end: 16),
           ),
@@ -164,7 +202,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     }
   }
 
-  Widget _buildActionChip(QuickAction action, bool isDark, BuildContext context, {bool isPinned = false}) {
+  Widget _buildActionChip(
+    QuickAction action,
+    bool isDark,
+    BuildContext context, {
+    bool isPinned = false,
+  }) {
     Future<void> handleTap() async {
       HapticFeedback.lightImpact();
 
@@ -190,26 +233,36 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           return;
         case 'scan_food':
           Navigator.pop(context);
-          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenMultiImage: true));
+          runAfterPop(
+            () => showLogMealSheet(rootCtx, ref, autoOpenMultiImage: true),
+          );
           return;
         case 'scan_menu':
           Navigator.pop(context);
-          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenMenuScan: true));
+          runAfterPop(
+            () => showLogMealSheet(rootCtx, ref, autoOpenMenuScan: true),
+          );
           return;
         case 'photo_food':
           Navigator.pop(context);
-          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenCamera: true));
+          runAfterPop(
+            () => showLogMealSheet(rootCtx, ref, autoOpenCamera: true),
+          );
           return;
         case 'barcode_food':
           Navigator.pop(context);
-          runAfterPop(() => showLogMealSheet(rootCtx, ref, autoOpenBarcode: true));
+          runAfterPop(
+            () => showLogMealSheet(rootCtx, ref, autoOpenBarcode: true),
+          );
           return;
         case 'quick_workout':
           final workout = await showQuickWorkoutSheet(context, widget.ref);
           if (!mounted) return;
           Navigator.pop(context);
           if (workout != null) {
-            runAfterPop(() => rootCtx.push('/workout/${workout.id}', extra: workout));
+            runAfterPop(
+              () => rootCtx.push('/workout/${workout.id}', extra: workout),
+            );
           }
           return;
         case 'fasting':
@@ -232,16 +285,15 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           final uid = await ref.read(apiClientProvider).getUserId();
           if (!mounted) return;
           Navigator.pop(context);
-          runAfterPop(() => showGlassSheet<void>(
-                context: rootCtx,
-                useRootNavigator: true,
-                builder: (_) => GlassSheet(
-                  child: RecipeBuilderSheet(
-                    userId: uid ?? '',
-                    isDark: isDark,
-                  ),
-                ),
-              ));
+          runAfterPop(
+            () => showGlassSheet<void>(
+              context: rootCtx,
+              useRootNavigator: true,
+              builder: (_) => GlassSheet(
+                child: RecipeBuilderSheet(userId: uid ?? '', isDark: isDark),
+              ),
+            ),
+          );
           return;
         default:
           Navigator.pop(context);
@@ -262,7 +314,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   }
 
   Widget _buildNormalMode(BuildContext context, bool isDark) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textColor = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accentColor = isDark ? AppColors.teal : AppColorsLight.teal;
     final pinnedActions = ref.watch(pinnedQuickActionsProvider);
@@ -271,13 +325,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     // Filter all actions by search query
     final allActionIds = _categories.values.expand((ids) => ids).toSet();
     final filteredActions = isSearching
-        ? allActionIds
-            .where((id) {
-              final action = quickActionRegistry[id];
-              return action != null &&
-                  action.label.toLowerCase().contains(_searchQuery);
-            })
-            .toList()
+        ? allActionIds.where((id) {
+            final action = quickActionRegistry[id];
+            return action != null &&
+                action.label.toLowerCase().contains(_searchQuery);
+          }).toList()
         : <String>[];
 
     return GlassSheet(
@@ -321,17 +373,32 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           controller: _searchController,
                           style: TextStyle(fontSize: 14, color: textColor),
                           decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context).quickActionsSearchActions,
-                            hintStyle: TextStyle(fontSize: 14, color: textMuted),
-                            prefixIcon: Icon(Icons.search, size: 18, color: textMuted),
+                            hintText: AppLocalizations.of(
+                              context,
+                            ).quickActionsSearchActions,
+                            hintStyle: TextStyle(
+                              fontSize: 14,
+                              color: textMuted,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.search,
+                              size: 18,
+                              color: textMuted,
+                            ),
                             suffixIcon: _searchQuery.isNotEmpty
                                 ? GestureDetector(
                                     onTap: () => _searchController.clear(),
-                                    child: Icon(Icons.close, size: 16, color: textMuted),
+                                    child: Icon(
+                                      Icons.close,
+                                      size: 16,
+                                      color: textMuted,
+                                    ),
                                   )
                                 : null,
                             border: InputBorder.none,
-                            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
                             isDense: true,
                           ),
                         ),
@@ -370,17 +437,21 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
 
               const SizedBox(height: 12),
 
-              // Two-row toggle for home screen shortcut bar
+              // "Show on home screen" toggle — surfaces the pinned shortcut
+              // row on home (default OFF).
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: GestureDetector(
                   onTap: () {
                     HapticFeedback.lightImpact();
-                    ref.read(quickActionsExpandedProvider.notifier).toggle();
+                    ref.read(quickActionsHomeVisibleProvider.notifier).toggle();
                   },
                   behavior: HitTestBehavior.opaque,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: isDark
                           ? Colors.white.withValues(alpha: 0.06)
@@ -395,11 +466,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                     child: Row(
                       children: [
                         Icon(
-                          ref.watch(quickActionsExpandedProvider)
-                              ? Icons.view_column_rounded
-                              : Icons.view_stream_rounded,
+                          ref.watch(quickActionsHomeVisibleProvider)
+                              ? Icons.home_rounded
+                              : Icons.home_outlined,
                           size: 18,
-                          color: ref.watch(quickActionsExpandedProvider)
+                          color: ref.watch(quickActionsHomeVisibleProvider)
                               ? accentColor
                               : textMuted,
                         ),
@@ -409,7 +480,7 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                AppLocalizations.of(context).quickActionsShowTwoRows,
+                                'Show on home screen',
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.w500,
@@ -417,17 +488,22 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                                 ),
                               ),
                               Text(
-                                AppLocalizations.of(context).quickActionsDisplayExtraShortcutsOn,
-                                style: TextStyle(fontSize: 11, color: textMuted),
+                                'Display your pinned shortcuts on the home screen',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: textMuted,
+                                ),
                               ),
                             ],
                           ),
                         ),
                         Switch.adaptive(
-                          value: ref.watch(quickActionsExpandedProvider),
+                          value: ref.watch(quickActionsHomeVisibleProvider),
                           onChanged: (_) {
                             HapticFeedback.lightImpact();
-                            ref.read(quickActionsExpandedProvider.notifier).toggle();
+                            ref
+                                .read(quickActionsHomeVisibleProvider.notifier)
+                                .toggle();
                           },
                           // Material 3 on Android renders an unstyled
                           // `activeColor` thumb on a gray track. Force the
@@ -445,10 +521,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             (states) => states.contains(WidgetState.selected)
                                 ? accentColor
                                 : (isDark
-                                    ? Colors.white.withValues(alpha: 0.2)
-                                    : Colors.black.withValues(alpha: 0.15)),
+                                      ? Colors.white.withValues(alpha: 0.2)
+                                      : Colors.black.withValues(alpha: 0.15)),
                           ),
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
                         ),
                       ],
                     ),
@@ -467,7 +544,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Center(
                             child: Text(
-                              AppLocalizations.of(context).quickActionsNoActionsFound,
+                              AppLocalizations.of(
+                                context,
+                              ).quickActionsNoActionsFound,
                               style: TextStyle(fontSize: 14, color: textMuted),
                             ),
                           ),
@@ -503,13 +582,15 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Builder(builder: (context) {
-                      final actions = entry.value
-                          .map((id) => quickActionRegistry[id])
-                          .whereType<QuickAction>()
-                          .toList();
-                      return _buildTileGrid(actions, isDark, context);
-                    }),
+                    child: Builder(
+                      builder: (context) {
+                        final actions = entry.value
+                            .map((id) => quickActionRegistry[id])
+                            .whereType<QuickAction>()
+                            .toList();
+                        return _buildTileGrid(actions, isDark, context);
+                      },
+                    ),
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -545,7 +626,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
           children: actions.map((action) {
             return SizedBox(
               width: tileWidth,
-              child: _buildActionChip(action, isDark, context, isPinned: pinned),
+              child: _buildActionChip(
+                action,
+                isDark,
+                context,
+                isPinned: pinned,
+              ),
             );
           }).toList(),
         );
@@ -569,16 +655,16 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
   }
 
   Widget _buildEditMode(BuildContext context, bool isDark) {
-    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textColor = isDark
+        ? AppColors.textPrimary
+        : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final order = ref.watch(quickActionOrderProvider);
-    final expanded = ref.watch(quickActionsExpandedProvider);
-    // D2: the customize list drives the SAME slot model the home row renders.
-    //   Single-row mode → first 5 are visible (slot 6 = More).
-    //   Two-row mode    → first 11 are visible (slots 7-11 = row 2, slot 12 = More).
-    final row1Cutoff = 5;
-    final visibleCutoff = expanded ? 11 : 5;
+    // The customize list drives the SAME slot model the home row renders: the
+    // first 6 entries are the visible pinned slots (slot 7 = the fixed "More"
+    // tile, appended by the row widget).
+    const visibleCutoff = 6;
 
     return GlassSheet(
       // Cap the sheet at 75%. A3: the body below uses Expanded so the
@@ -597,7 +683,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      AppLocalizations.of(context).quickActionsCustomizeQuickActions,
+                      AppLocalizations.of(
+                        context,
+                      ).quickActionsCustomizeQuickActions,
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -612,7 +700,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? AppColors.cyan : const Color(0xFF0891B2),
+                        color: isDark
+                            ? AppColors.cyan
+                            : const Color(0xFF0891B2),
                       ),
                     ),
                   ),
@@ -622,11 +712,8 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                expanded
-                    ? 'Drag to reorder. The top 11 fill your shortcut bar — '
-                        'slots 1–6 (row 1) and 7–11 (row 2); slot 12 is More.'
-                    : 'Drag to reorder. The top 5 fill your shortcut bar; '
-                        'slot 6 is More. Turn on "Show two rows" for 12 slots.',
+                'Drag to reorder. The top 6 fill your home shortcut row; '
+                'slot 7 is More. Turn on "Show on home screen" to display them.',
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
@@ -640,7 +727,10 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                   return AnimatedBuilder(
                     animation: animation,
                     builder: (context, child) {
-                      final elevation = Tween<double>(begin: 0, end: 8).evaluate(animation);
+                      final elevation = Tween<double>(
+                        begin: 0,
+                        end: 8,
+                      ).evaluate(animation);
                       return Material(
                         elevation: elevation,
                         borderRadius: BorderRadius.circular(12),
@@ -654,19 +744,19 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 onReorderStart: (_) => HapticFeedback.mediumImpact(),
                 onReorder: (oldIndex, newIndex) {
                   HapticFeedback.lightImpact();
-                  ref.read(quickActionOrderProvider.notifier).reorder(oldIndex, newIndex);
+                  ref
+                      .read(quickActionOrderProvider.notifier)
+                      .reorder(oldIndex, newIndex);
                 },
                 itemCount: order.length,
                 itemBuilder: (context, index) {
                   final actionId = order[index];
                   final action = quickActionRegistry[actionId]!;
-                  // Slot model mirrors the home CompactQuickActionsRow:
-                  // first `row1Cutoff` = row 1, the rest up to `visibleCutoff`
-                  // = row 2 (only in two-row mode). "More" is a fixed tile
-                  // appended by the row widget — not part of this list.
-                  final isRow1 = index < row1Cutoff;
-                  final isRow2 = index >= row1Cutoff && index < visibleCutoff;
-                  final isVisibleInBar = isRow1 || isRow2;
+                  // Slot model mirrors the home CompactQuickActionsRow: the
+                  // first `visibleCutoff` (6) entries are the visible pinned
+                  // slots. "More" is a fixed tile appended by the row widget —
+                  // not part of this list.
+                  final isVisibleInBar = index < visibleCutoff;
 
                   return Container(
                     key: ValueKey(actionId),
@@ -677,7 +767,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           : elevatedColor,
                       borderRadius: BorderRadius.circular(12),
                       border: isVisibleInBar
-                          ? Border.all(color: action.color.withValues(alpha: 0.3))
+                          ? Border.all(
+                              color: action.color.withValues(alpha: 0.3),
+                            )
                           : null,
                     ),
                     child: Row(
@@ -686,7 +778,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                           index: index,
                           child: Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Icon(Icons.drag_handle, color: textMuted, size: 20),
+                            child: Icon(
+                              Icons.drag_handle,
+                              color: textMuted,
+                              size: 20,
+                            ),
                           ),
                         ),
                         Container(
@@ -696,7 +792,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                             color: action.color.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(action.icon, color: action.color, size: 18),
+                          child: Icon(
+                            action.icon,
+                            color: action.color,
+                            size: 18,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -714,8 +814,11 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                               ),
                               if (isVisibleInBar)
                                 Text(
-                                  isRow1 ? AppLocalizations.of(context).quickActionsRow1 : AppLocalizations.of(context).quickActionsRow2,
-                                  style: TextStyle(fontSize: 11, color: textMuted),
+                                  'On home',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: textMuted,
+                                  ),
                                 ),
                             ],
                           ),
@@ -782,4 +885,3 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     return _buildNormalMode(context, isDark);
   }
 }
-

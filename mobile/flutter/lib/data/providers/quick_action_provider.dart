@@ -5,7 +5,10 @@ import '../../core/models/quick_action.dart';
 import 'nutrition_preferences_provider.dart';
 
 const _quickActionOrderKey = 'quick_action_order';
-const _quickActionExpandedKey = 'quick_action_expanded';
+// `_quickActionExpandedKey` retired — signature-v2 dropped the "Show two rows"
+// mode for a single fixed pinned row. Replaced by `_quickActionsHomeVisibleKey`
+// below (the "Show on home screen" toggle, default OFF).
+const _quickActionsHomeVisibleKey = 'quick_actions_home_visible';
 // One-shot migration flag — bumped 2026-04-25 when slot-5 default was
 // flipped from 'scan_food' (document scanner) to 'photo_food' (single
 // camera shot of a meal). Users who customized their layout before that
@@ -18,13 +21,17 @@ const _quickActionMigrationV3Key = 'quick_action_migration_v3';
 
 final quickActionOrderProvider =
     StateNotifierProvider<QuickActionOrderNotifier, List<String>>((ref) {
-  return QuickActionOrderNotifier();
-});
+      return QuickActionOrderNotifier();
+    });
 
-final quickActionsExpandedProvider =
-    StateNotifierProvider<QuickActionsExpandedNotifier, bool>((ref) {
-  return QuickActionsExpandedNotifier();
-});
+/// Whether the pinned quick-actions row is shown on the home screen.
+/// SharedPreferences-backed, DEFAULT FALSE — the home screen is clean unless
+/// the user explicitly opts into surfacing their pinned shortcuts. Replaces the
+/// retired `quickActionsExpandedProvider` ("Show two rows").
+final quickActionsHomeVisibleProvider =
+    StateNotifierProvider<QuickActionsHomeVisibleNotifier, bool>((ref) {
+      return QuickActionsHomeVisibleNotifier();
+    });
 
 class QuickActionOrderNotifier extends StateNotifier<List<String>> {
   QuickActionOrderNotifier() : super(List.from(defaultQuickActionOrder)) {
@@ -36,8 +43,9 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
     final json = prefs.getString(_quickActionOrderKey);
     if (json != null) {
       final saved = List<String>.from(jsonDecode(json));
-      List<String> valid =
-          saved.where((id) => quickActionRegistry.containsKey(id)).toList();
+      List<String> valid = saved
+          .where((id) => quickActionRegistry.containsKey(id))
+          .toList();
 
       // Migration v2: swap legacy 'scan_food' in the first 5 slots
       // (Pinned / home row 1) for the new 'photo_food' default. Keep
@@ -48,7 +56,8 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
       if (!migrated) {
         final pinnedCount = 5;
         final scanIdx = valid.indexOf('scan_food');
-        if (scanIdx != -1 && scanIdx < pinnedCount &&
+        if (scanIdx != -1 &&
+            scanIdx < pinnedCount &&
             !valid.contains('photo_food')) {
           valid[scanIdx] = 'photo_food';
           // Append the original scan_food + barcode_food so they live in
@@ -97,56 +106,60 @@ class QuickActionOrderNotifier extends StateNotifier<List<String>> {
   }
 }
 
-class QuickActionsExpandedNotifier extends StateNotifier<bool> {
-  QuickActionsExpandedNotifier() : super(false) {
+class QuickActionsHomeVisibleNotifier extends StateNotifier<bool> {
+  QuickActionsHomeVisibleNotifier() : super(false) {
     _load();
   }
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    // Default OFF — home shows a single quick-actions row unless the user
-    // explicitly opts into two rows.
-    state = prefs.getBool(_quickActionExpandedKey) ?? false;
+    // Default OFF — the pinned quick-actions row only appears on home once the
+    // user turns on "Show on home screen" in the customize sheet.
+    state = prefs.getBool(_quickActionsHomeVisibleKey) ?? false;
   }
 
   Future<void> toggle() async {
     state = !state;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_quickActionExpandedKey, state);
+    await prefs.setBool(_quickActionsHomeVisibleKey, state);
   }
 }
 
 /// Home `CompactQuickActionsRow` slot IDs.
 ///
-/// Single-row mode → first 5 IDs (slot 6 = the fixed "More" tile, appended
-/// by the row widget). Two-row mode → first 11 IDs (slot 12 = "More").
-/// "More" is never part of the order list — it is rendered separately in
-/// [quick_actions_row.dart].
-List<String> homeQuickActionSlotIds(List<String> order,
-    {required bool expanded, bool hideWater = false}) {
-  final visibleCount = expanded ? 11 : 5;
+/// A single fixed row of the first 6 ordered/pinned IDs (slot 7 = the fixed
+/// "More" tile, appended by the row widget). "More" is never part of the order
+/// list — it is rendered separately in [quick_actions_row.dart]. The old
+/// two-row "expanded" mode was retired in signature-v2.
+List<String> homeQuickActionSlotIds(
+  List<String> order, {
+  bool hideWater = false,
+}) {
   return order
       .where((id) => quickActionRegistry.containsKey(id))
       // Gap 6 — drop the water quick-action when hydration tracking is off.
       .where((id) => !(hideWater && id == 'water'))
-      .take(visibleCount)
+      .take(6)
       .toList();
 }
 
 /// Gap 6 — true when the user has water tracking enabled (default true).
 bool _hydrationEnabled(Ref ref) =>
-    ref.watch(nutritionPreferencesProvider).preferences
+    ref
+        .watch(nutritionPreferencesProvider)
+        .preferences
         ?.hydrationTrackingEnabled ??
     true;
 
-/// Row 1 of the shortcut bar — first 5 actions in the user's order.
+/// The pinned shortcut bar — first 6 actions in the user's order (slot 7 =
+/// the fixed "More" tile, appended by the row widget).
 final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   final hideWater = !_hydrationEnabled(ref);
   return order
       .where((id) => quickActionRegistry.containsKey(id))
       .where((id) => !(hideWater && id == 'water'))
-      .take(5)
+      .take(6)
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });

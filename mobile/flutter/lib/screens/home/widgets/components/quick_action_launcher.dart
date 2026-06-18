@@ -11,6 +11,7 @@ import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../../../workout/widgets/equipment_snap_flow.dart';
+import '../../../workout/widgets/form_analysis_sheet.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
 
 /// SharedPreferences key storing the gym profile id that was active BEFORE the
@@ -97,11 +98,7 @@ Future<bool> launchQuickAction(
       return true;
     case 'identify_equipment':
       HapticService.light();
-      await showEquipmentSnapFlow(
-        context,
-        ref,
-        mode: SnapMode.identify,
-      );
+      await showEquipmentSnapFlow(context, ref, mode: SnapMode.identify);
       if (context.mounted) {
         // After identification, drop the user into chat so the
         // identify_equipment result + EquipmentMatchCard renders there.
@@ -127,8 +124,9 @@ Future<bool> launchQuickAction(
           await prefs.setString(kPreTravelActiveGymIdPrefKey, priorGymId);
         }
 
-        final travel =
-            await ref.read(gymProfilesProvider.notifier).activateTravelMode();
+        final travel = await ref
+            .read(gymProfilesProvider.notifier)
+            .activateTravelMode();
 
         // Mirror the gym switcher's post-activate refresh so Today/Workouts
         // regenerate against bodyweight immediately.
@@ -140,14 +138,20 @@ Future<bool> launchQuickAction(
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('${travel.name} on. Bodyweight workouts ready.')),
+            SnackBar(
+              content: Text('${travel.name} on. Bodyweight workouts ready.'),
+            ),
           );
         }
       } catch (e) {
         debugPrint('❌ [QuickActionLauncher] Travel Mode failed: $e');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Couldn't switch to Travel Mode. Please try again.")),
+            const SnackBar(
+              content: Text(
+                "Couldn't switch to Travel Mode. Please try again.",
+              ),
+            ),
           );
         }
       }
@@ -155,6 +159,13 @@ Future<bool> launchQuickAction(
     case 'workout':
       HapticService.light();
       context.push(quickActionRegistry['workout']?.route ?? '/workouts');
+      return true;
+    case 'form_check':
+      // AI Form Analysis with NO exercise name — the analyzer auto-detects the
+      // movement from the clip. Record/upload from anywhere (home row, More
+      // sheet, customize grid) through this one path.
+      HapticService.light();
+      await showFormAnalysisSheet(context);
       return true;
     case 'meditate':
       // INSTANT: never block on the /meditation/today network call (that was
