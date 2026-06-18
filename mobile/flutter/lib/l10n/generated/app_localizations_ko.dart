@@ -24357,6 +24357,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get nutritionPatternsSignInToSee => '로그인하여 패턴 확인하기';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => '패턴';
 
   @override

@@ -25485,6 +25485,9 @@ class AppLocalizationsOr extends AppLocalizations {
       'ଆପଣଙ୍କ ପ୍ୟାଟର୍ନ୍ ଦେଖିବା ପାଇଁ ସାଇନ୍ ଇନ୍ କରନ୍ତୁ';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'ପ୍ୟାଟର୍ନ୍';
 
   @override

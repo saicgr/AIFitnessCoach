@@ -25344,6 +25344,9 @@ class AppLocalizationsHi extends AppLocalizations {
       'अपने पैटर्न देखने के लिए साइन इन करें';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'पैटर्न';
 
   @override

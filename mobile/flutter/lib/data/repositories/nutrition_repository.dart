@@ -1603,6 +1603,86 @@ class NutritionRepository {
     );
   }
 
+  // ── Deepened Patterns (Phase 4B/4C — FE-D) ────────────────────────────────
+  //
+  // These return RAW decoded maps rather than typed models so the Patterns tab
+  // can tolerate the backend (BE-1) shipping fields incrementally — every new
+  // bucket is read defensively at the widget layer. All three fail-open
+  // (return an empty envelope) so a missing/unmigrated endpoint degrades to a
+  // gentle empty state instead of blanking the whole tab.
+
+  /// Extended mood/symptom/tag correlations. Same `/mood` endpoint the typed
+  /// [getMoodPatterns] uses, but returns the raw map so the new per-symptom
+  /// (`bloated_count`/`bloated_pct`…) and tag-bucketed fields BE-1 is adding
+  /// are accessible before the typed model is regenerated (build_runner is
+  /// forbidden in this repo). Returns `{}` on failure.
+  Future<Map<String, dynamic>> getMoodPatternsRaw(
+    String userId, {
+    int days = 90,
+    int minLogs = 3,
+  }) async {
+    try {
+      final resp = await _client.get(
+        '/nutrition/food-patterns/mood/$userId',
+        queryParameters: {'days': days, 'min_logs': minLogs},
+      );
+      return Map<String, dynamic>.from(resp.data as Map);
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] getMoodPatternsRaw failed: $e');
+      return const {};
+    }
+  }
+
+  /// Macros summary WITH the baseline-window comparison BE-1 is adding
+  /// (current-window avg vs prior-window avg + delta/trend, plus goals).
+  /// `baselineWindows` requests the N-week-vs-prior framing (e.g. 4 ⇒ last 4wk
+  /// vs the 4wk before that). Returns the raw map; the typed
+  /// [getMacrosSummary] still serves the legacy pie/series. Returns `{}` on
+  /// failure so the gentle-changes cards degrade to "not enough data yet".
+  Future<Map<String, dynamic>> getMacrosSummaryWithBaseline(
+    String userId, {
+    String range = 'month',
+    String? date,
+    int baselineWeeks = 4,
+  }) async {
+    try {
+      final resp = await _client.get(
+        '/nutrition/food-patterns/macros-summary/$userId',
+        queryParameters: {
+          'range': range,
+          if (date != null) 'date': date,
+          'baseline_weeks': baselineWeeks,
+          'include_baseline': true,
+        },
+      );
+      return Map<String, dynamic>.from(resp.data as Map);
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] getMacrosSummaryWithBaseline failed: $e');
+      return const {};
+    }
+  }
+
+  /// Gut-health / digestion correlations (Phase 4C). NEW endpoint BE-1 is
+  /// building: a daily regularity series + food/tag → gut correlations
+  /// ("tags before irregular days") over lagged windows. Returns `{}` if the
+  /// endpoint or `digestion_logs` table isn't live yet so the section shows a
+  /// gentle "start logging" empty state rather than an error.
+  Future<Map<String, dynamic>> getDigestionPatterns(
+    String userId, {
+    int days = 90,
+  }) async {
+    try {
+      final resp = await _client.get(
+        '/nutrition/food-patterns/digestion/$userId',
+        queryParameters: {'days': days},
+      );
+      return Map<String, dynamic>.from(resp.data as Map);
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] getDigestionPatterns failed: $e');
+      return const {};
+    }
+  }
+
   Future<PatternsSettings> updatePatternsSettings(
     String userId, {
     bool? postMealCheckinDisabled,

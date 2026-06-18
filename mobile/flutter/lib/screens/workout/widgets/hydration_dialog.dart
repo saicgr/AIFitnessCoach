@@ -5,6 +5,25 @@ import '../../../data/models/hydration.dart';
 import '../../../widgets/glass_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
+/// Signature de-slop: map each drink type to a Material glyph instead of the
+/// decorative emoji on `DrinkType.emoji`. The design system forbids emoji for
+/// UI affordances — drink selectors are affordances, so they get outline/rounded
+/// Material icons (the emoji stays on the enum for any backend-driven display).
+IconData _drinkIcon(DrinkType type) {
+  switch (type) {
+    case DrinkType.water:
+      return Icons.water_drop_rounded;
+    case DrinkType.proteinShake:
+      return Icons.local_drink_rounded;
+    case DrinkType.sportsDrink:
+      return Icons.bolt_rounded;
+    case DrinkType.coffee:
+      return Icons.coffee_rounded;
+    case DrinkType.other:
+      return Icons.local_bar_rounded;
+  }
+}
+
 /// Result from the hydration dialog
 class HydrationDialogResult {
   final DrinkType drinkType;
@@ -83,9 +102,10 @@ Future<HydrationDialogResult?> showHydrationDialog({
                 // Title row with close button
                 Row(
                   children: [
-                    Text(
-                      selectedDrinkType.emoji,
-                      style: const TextStyle(fontSize: 28),
+                    Icon(
+                      _drinkIcon(selectedDrinkType),
+                      size: 26,
+                      color: drinkColor,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -166,7 +186,11 @@ Future<HydrationDialogResult?> showHydrationDialog({
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(type.emoji, style: const TextStyle(fontSize: 16)),
+                                Icon(
+                                  _drinkIcon(type),
+                                  size: 16,
+                                  color: isSelected ? typeColor : textMuted,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   type.label,

@@ -25762,6 +25762,9 @@ class AppLocalizationsMl extends AppLocalizations {
       'നിങ്ങളുടെ പാറ്റേണുകൾ കാണാൻ സൈൻ ഇൻ ചെയ്യുക';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'പാറ്റേണുകൾ';
 
   @override

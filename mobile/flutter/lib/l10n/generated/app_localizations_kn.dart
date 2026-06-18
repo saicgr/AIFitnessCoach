@@ -25565,6 +25565,9 @@ class AppLocalizationsKn extends AppLocalizations {
       'ನಿಮ್ಮ ಪ್ಯಾಟರ್ನ್‌ಗಳನ್ನು ನೋಡಲು ಸೈನ್ ಇನ್ ಮಾಡಿ';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'ಮಾದರಿಗಳು';
 
   @override

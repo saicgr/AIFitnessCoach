@@ -25352,6 +25352,9 @@ class AppLocalizationsMr extends AppLocalizations {
       'तुमचे पॅटर्न पाहण्यासाठी साइन इन करा';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'पॅटर्न';
 
   @override

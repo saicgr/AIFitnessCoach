@@ -22,6 +22,10 @@ import '../../../widgets/design_system/zealova.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
+import '../../../core/animations/app_animations.dart';
+import '../../../data/repositories/digestion_repository.dart';
+import '../hydration_detail_screen.dart';
+import 'gut_health_card.dart';
 import 'hydration_summary_block.dart';
 import 'optional_trackers_strip.dart';
 import 'coach_recommends_card.dart';
@@ -148,6 +152,15 @@ class _DailyTabState extends ConsumerState<DailyTab>
     super.initState();
     _loadFavorites();
     if (widget.initialFuelSection == 'water') _scheduleScrollToHydration();
+    // Seed today's gut-health count so the Daily card reflects what's already
+    // logged (disk-cache-first; silent network refresh). Fail-open in the repo.
+    if (widget.userId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(digestionProvider.notifier).loadToday(widget.userId);
+        }
+      });
+    }
   }
 
   @override
@@ -202,6 +215,16 @@ class _DailyTabState extends ConsumerState<DailyTab>
           drinkType: result.drinkType.name,
           amountMl: result.amountMl,
         );
+  }
+
+  /// Open the full hydration tracker (liquid-body fill, saved bottles, drink
+  /// breakdown, today's log, goal settings). Wired to the card's whole-tap and
+  /// the "LOG WATER" button — the split is: card `+` quick-logs fast
+  /// (`_logWaterFromCard`), tapping the card / the button opens the tracker.
+  void _openHydrationTracker() {
+    Navigator.of(context).push(
+      AppPageRoute(builder: (_) => const HydrationDetailScreen()),
+    );
   }
 
   Future<void> _loadFavorites() async {
@@ -479,7 +502,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _LogWaterButton(onTap: _logWaterFromCard)),
+                        Expanded(child: _LogWaterButton(onTap: _openHydrationTracker)),
                         const SizedBox(width: 10),
                         const Expanded(child: _FastingActiveBar()),
                       ],
@@ -655,12 +678,25 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   HydrationSummaryBlock(
                     key: _hydrationKey,
                     isDark: widget.isDark,
-                    // Old `/hydration` route only redirected back into the
-                    // Nutrition tabs (and mis-landed on Patterns); tapping the
-                    // card now opens the drink-log sheet inline.
-                    onTap: _logWaterFromCard,
-                    // Explicit "+" quick-log affordance on the card header.
+                    // Tapping the card opens the full hydration tracker (the
+                    // restored Fuel-tab experience), now hosted in
+                    // HydrationDetailScreen.
+                    onTap: _openHydrationTracker,
+                    // Explicit "+" quick-log affordance on the card header —
+                    // stays the fast drink-log sheet (log without leaving Daily).
                     onAdd: _logWaterFromCard,
+                  ),
+                ],
+
+                // Gut-health one-tap log (Bristol Stool Scale) — sibling tile
+                // to hydration, only on today. Tap / "+" opens the Bristol
+                // picker; offline-safe + fail-open (queues if the backend
+                // endpoint isn't live yet).
+                if (widget.userId.isNotEmpty && widget.isViewingToday) ...[
+                  const SizedBox(height: 12),
+                  GutHealthCard(
+                    userId: widget.userId,
+                    isDark: widget.isDark,
                   ),
                 ],
 

@@ -42510,6 +42510,12 @@ abstract class AppLocalizations {
   /// **'Sign in to see your patterns'**
   String get nutritionPatternsSignInToSee;
 
+  /// No description provided for @nutritionJournalTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Journal'**
+  String get nutritionJournalTab;
+
   /// No description provided for @nutritionPatternsTab.
   ///
   /// In en, this message translates to:

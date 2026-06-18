@@ -24346,6 +24346,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'サインインしてパターンを表示';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'パターン';
 
   @override

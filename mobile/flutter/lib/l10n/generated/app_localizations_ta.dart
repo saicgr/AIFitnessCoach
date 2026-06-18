@@ -25745,6 +25745,9 @@ class AppLocalizationsTa extends AppLocalizations {
       'உங்கள் வடிவங்களைக் காண உள்நுழையவும்';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'வடிவங்கள்';
 
   @override

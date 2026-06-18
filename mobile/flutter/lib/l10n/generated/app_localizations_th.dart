@@ -25297,6 +25297,9 @@ class AppLocalizationsTh extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'ลงชื่อเข้าใช้เพื่อดูรูปแบบของคุณ';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'รูปแบบ';
 
   @override

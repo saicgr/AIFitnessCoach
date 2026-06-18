@@ -28,6 +28,7 @@ import '../screens/library/screens/all_splits_screen.dart';
 import '../screens/mindfulness/mindfulness_session_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
 import '../screens/nutrition/nutrition_settings_screen.dart';
+import '../screens/nutrition/hydration_detail_screen.dart';
 import '../screens/nutrition/micros_detail_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';
 import '../screens/fasting/fasting_body_status_screen.dart';
@@ -257,8 +258,11 @@ String? _handleDeepLinkRedirect(GoRouterState state, {PosthogService? posthog}) 
   final matched = state.matchedLocation;
   String? redirect;
   if (matched == '/add') {
-    debugPrint('Router: Widget deep link /add -> /nutrition?tab=2');
-    redirect = '/nutrition?tab=2';
+    // The "add" widget shortcut should add food: land on Daily and open the
+    // log sheet. (Was ?tab=2 which after the Journal-tab insertion now points
+    // at Journal, and previously at Patterns — neither is an "add" surface.)
+    debugPrint('Router: Widget deep link /add -> /nutrition?tab=0&openLog=true');
+    redirect = '/nutrition?tab=0&openLog=true';
   } else if (matched == '/share') {
     debugPrint('Router: Widget deep link /share -> /social');
     redirect = '/social';

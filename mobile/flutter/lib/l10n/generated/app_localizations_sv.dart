@@ -25285,6 +25285,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Logga in för att se dina mönster';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Mönster';
 
   @override

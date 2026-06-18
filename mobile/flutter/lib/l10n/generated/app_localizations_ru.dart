@@ -25462,6 +25462,9 @@ class AppLocalizationsRu extends AppLocalizations {
       'Войдите, чтобы увидеть свои закономерности';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Привычки';
 
   @override

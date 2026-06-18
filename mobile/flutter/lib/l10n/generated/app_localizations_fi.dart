@@ -25398,6 +25398,9 @@ class AppLocalizationsFi extends AppLocalizations {
       'Kirjaudu sisään nähdäksesi kaavasi';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Kuviot';
 
   @override

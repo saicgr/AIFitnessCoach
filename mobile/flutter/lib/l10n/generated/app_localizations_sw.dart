@@ -25438,6 +25438,9 @@ class AppLocalizationsSw extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Ingia ili kuona mienendo yako';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Mienendo';
 
   @override

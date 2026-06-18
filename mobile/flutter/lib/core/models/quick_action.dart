@@ -251,7 +251,7 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.local_drink_outlined,
     color: Color(0xFF3B82F6),
     behavior: QuickActionBehavior.route,
-    route: '/nutrition?tab=2',
+    route: '/hydration',
   ),
   'summaries': QuickAction(
     id: 'summaries',

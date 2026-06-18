@@ -25408,6 +25408,9 @@ class AppLocalizationsNl extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Log in om je patronen te zien';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Patronen';
 
   @override

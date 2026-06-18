@@ -25482,6 +25482,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Inicie sessão para ver os seus padrões';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Padrões';
 
   @override

@@ -25548,6 +25548,9 @@ class AppLocalizationsDe extends AppLocalizations {
       'Melde dich an, um deine Muster zu sehen';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Muster';
 
   @override

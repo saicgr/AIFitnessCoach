@@ -25098,6 +25098,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'سجل الدخول لرؤية أنماطك';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'أنماط';
 
   @override

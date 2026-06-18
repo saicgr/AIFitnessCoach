@@ -25682,6 +25682,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Connectez-vous pour voir vos tendances';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Tendances';
 
   @override

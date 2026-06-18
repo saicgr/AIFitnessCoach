@@ -549,13 +549,15 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
-      // Hydration — water now lives INLINE on the Nutrition Daily tab (the
-      // Fuel sub-tab was retired). tab=0 (Daily) + fuelSection=water makes the
-      // Daily tab auto-scroll to the hydration card. The old tab=2 mis-landed
-      // on the Patterns tab.
+      // Hydration — the full rich tracker (liquid-body fill, saved bottles,
+      // drink breakdown, today's log, goal settings) restored as a dedicated
+      // screen. Previously this route only redirected back into the Nutrition
+      // Daily tab (and the inline card just opened the quick-log sheet), which
+      // orphaned the tracker. Deep-links (Home "Water" card, hydration
+      // reminders) now land on the real tracker again.
       GoRoute(
         path: '/hydration',
-        redirect: (context, state) => '/nutrition?tab=0&fuelSection=water',
+        builder: (context, state) => const HydrationDetailScreen(),
       ),
 
       // Habit Detail - View habit detail with yearly heatmap and stats

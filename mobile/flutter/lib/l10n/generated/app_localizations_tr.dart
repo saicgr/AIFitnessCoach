@@ -25341,6 +25341,9 @@ class AppLocalizationsTr extends AppLocalizations {
       'Desenlerinizi görmek için giriş yapın';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Örüntüler';
 
   @override

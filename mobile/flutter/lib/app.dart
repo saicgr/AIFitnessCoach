@@ -714,9 +714,11 @@ class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
           router.go('/nutrition');
           break;
         case 'hydration_reminder':
-          // tab=3 is Fuel; fuelSection=water opens the Water pill directly
-          // so the user lands on the log-water affordance, not Patterns.
-          router.go('/nutrition?tab=3&fuelSection=water');
+          // Hydration now has a dedicated tracker screen (the Fuel sub-tab was
+          // retired and the Nutrition tabs gained Journal, so the old
+          // ?tab=3&fuelSection=water landed on Patterns). Route straight to the
+          // restored full hydration tracker / log affordance.
+          router.go('/hydration');
           break;
         case 'streak_alert':
           router.push('/achievements');

@@ -25413,6 +25413,9 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার প্যাটার্ন দেখতে সাইন ইন করুন';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'প্যাটার্ন';
 
   @override

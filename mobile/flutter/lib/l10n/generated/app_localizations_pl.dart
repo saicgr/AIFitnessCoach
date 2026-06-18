@@ -25445,6 +25445,9 @@ class AppLocalizationsPl extends AppLocalizations {
       'Zaloguj się, aby zobaczyć swoje wzorce';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Wzorce';
 
   @override

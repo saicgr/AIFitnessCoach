@@ -25598,6 +25598,9 @@ class AppLocalizationsTl extends AppLocalizations {
       'Mag-sign in para makita ang iyong mga pattern';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Mga pattern';
 
   @override

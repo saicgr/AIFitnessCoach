@@ -27,7 +27,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
-import 'food_history_screen.dart';
 import 'nutrition_settings_screen.dart';
 import 'saved_hub_screen.dart';
 import 'weekly_checkin_sheet.dart';
@@ -46,6 +45,7 @@ import '../../core/theme/accent_color_provider.dart';
 // for the saved-foods grid; alias our real Recipes tab to disambiguate.
 import 'widgets/recipes_tab.dart' as recipes_tab show RecipesTab;
 import 'widgets/nutrition_patterns_tab.dart';
+import 'widgets/nutrition_journal_tab.dart';
 import 'widgets/post_meal_review_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/repositories/hydration_repository.dart';
@@ -154,6 +154,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   /// strip. Refreshed on init + after every successful log.
   Set<String> _loggedDateKeys = const <String>{};
 
+  /// Whether the horizontally-scrolling date strip is shown above the
+  /// sub-tabs. User-controllable via the header kebab (mirrors the existing
+  /// `hide_post_meal_review` SharedPreferences pattern). Default visible.
+  bool _showDateStrip = true;
+
   @override
   void initState() {
     super.initState();
@@ -171,9 +176,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // The "Fuel" sub-tab was dropped. If a deep link still passes
     // initialTab=3 (legacy Fuel target), clamp it to Daily so the tab
     // controller never sits on an invalid index.
-    final clampedInitial = widget.initialTab.clamp(0, 2);
+    final clampedInitial = widget.initialTab.clamp(0, 3);
     _tabController = TabController(
-      length: 3,
+      length: 4,
       vsync: this,
       initialIndex: clampedInitial,
       animationDuration: const Duration(milliseconds: 260),
@@ -183,6 +188,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // network refresh that follows is stale-while-revalidate.
     _hydrateFromDisk();
     _loadData();
+    _loadDateStripPref();
     _tourResolution = _resolveNutritionTourActive();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
@@ -251,6 +257,31 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         sp.getBool('has_seen_empty_tour_${TooltipIds.nutrition}') ?? false;
     if (!mounted || seen) return;
     setState(() => _nutritionTourActive = true);
+  }
+
+  /// Load the persisted "show date strip" preference. Mirrors the
+  /// `hide_post_meal_review` SharedPreferences pattern used in
+  /// `nutrition_settings_screen.dart`. Defaults to visible.
+  Future<void> _loadDateStripPref() async {
+    final sp = await SharedPreferences.getInstance();
+    final show = sp.getBool('show_date_strip') ?? true;
+    if (!mounted) return;
+    if (show != _showDateStrip) {
+      setState(() => _showDateStrip = show);
+    }
+  }
+
+  /// Flip the date-strip visibility, update both the screen and the open
+  /// kebab sheet, and persist. [setSheetState] rebuilds the Switch inside
+  /// the glass sheet (a separate route the screen's setState can't reach).
+  Future<void> _setDateStripVisible(
+      bool value, void Function(void Function()) setSheetState) async {
+    HapticService.light();
+    _showDateStrip = value;
+    setSheetState(() {});
+    if (mounted) setState(() {});
+    final sp = await SharedPreferences.getInstance();
+    await sp.setBool('show_date_strip', value);
   }
 
   /// Wrap [child] in the tour anchor [key] ONLY while the first-run tour is
@@ -803,13 +834,22 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             // Horizontally-scrolling date strip. Replaces the chevron+pill
             // navigator and adds a meal-logged dot under each day for at-
             // a-glance density.
-            _tourAnchor(
-              TooltipAnchors.nutritionDateNav,
-              DateStrip(
-                selectedDate: _selectedDate,
-                loggedDateKeys: _loggedDateKeys,
-                onDaySelected: _jumpToDate,
-              ),
+            // Date strip — user can hide it via the header kebab toggle.
+            // AnimatedSize gives a smooth collapse/expand when toggled.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: _showDateStrip
+                  ? _tourAnchor(
+                      TooltipAnchors.nutritionDateNav,
+                      DateStrip(
+                        selectedDate: _selectedDate,
+                        loggedDateKeys: _loggedDateKeys,
+                        onDaySelected: _jumpToDate,
+                      ),
+                    )
+                  : const SizedBox.shrink(),
             ),
             // Sub-tab switcher — top segmented control (chrome consolidation
             // Variant A, 2026-06). Replaces the floating glassmorphic pill
@@ -825,6 +865,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                   tabs: [
                     AppLocalizations.of(context).nutritionDailyTab,
                     AppLocalizations.of(context).nutritionRecipesTab,
+                    AppLocalizations.of(context).nutritionJournalTab,
                     AppLocalizations.of(context).nutritionPatternsTab,
                   ],
                   activeIndex: _tabController.index,
@@ -916,6 +957,14 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                           // Recipes Tab — full feature (search, build, import, fridge,
                           // schedule, planner, grocery, sharing, versioning, leftovers)
                           recipes_tab.RecipesTab(userId: _userId ?? '', isDark: isDark),
+
+                          // Journal Tab — image-first food memory (calendar +
+                          // photo feed + My Foods grid). Order MUST match the
+                          // tab labels: [Daily, Recipes, Journal, Patterns].
+                          NutritionJournalTab(
+                            userId: _userId ?? '',
+                            isDark: isDark,
+                          ),
 
                           // Patterns Tab (macros, top foods, mood patterns, history)
                           NutritionPatternsTab(
@@ -1071,21 +1120,25 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: Icon(Icons.history, color: textSecondary),
-                title: Text(
-                  'Food history',
-                  style: TextStyle(color: textPrimary, fontWeight: FontWeight.w600),
+              // "Food history" moved into the JOURNAL tab (it supersedes the
+              // standalone history screen). Date-strip visibility toggle takes
+              // its place — mirrors the `hide_post_meal_review` pref pattern.
+              StatefulBuilder(
+                builder: (_, setSheetState) => ListTile(
+                  leading: Icon(Icons.calendar_view_week_rounded,
+                      color: textSecondary),
+                  title: Text(
+                    'Show date strip',
+                    style: TextStyle(
+                        color: textPrimary, fontWeight: FontWeight.w600),
+                  ),
+                  trailing: Switch(
+                    value: _showDateStrip,
+                    onChanged: (v) => _setDateStripVisible(v, setSheetState),
+                  ),
+                  onTap: () =>
+                      _setDateStripVisible(!_showDateStrip, setSheetState),
                 ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    AppPageRoute(
-                      builder: (_) => FoodHistoryScreen(userId: _userId!),
-                    ),
-                  );
-                },
               ),
               ListTile(
                 leading: Icon(Icons.bookmark_outline_rounded, color: textSecondary),

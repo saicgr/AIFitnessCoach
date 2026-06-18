@@ -25554,6 +25554,9 @@ class AppLocalizationsEs extends AppLocalizations {
       'Inicia sesión para ver tus patrones';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Patrones';
 
   @override

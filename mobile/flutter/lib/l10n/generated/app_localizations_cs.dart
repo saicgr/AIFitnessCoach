@@ -25334,6 +25334,9 @@ class AppLocalizationsCs extends AppLocalizations {
       'Přihlaste se, abyste viděli své vzorce';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Vzorce';
 
   @override

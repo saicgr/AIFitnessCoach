@@ -25402,6 +25402,9 @@ class AppLocalizationsMs extends AppLocalizations {
       'Log masuk untuk melihat corak anda';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Corak';
 
   @override

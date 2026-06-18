@@ -142,6 +142,16 @@ class FoodLog {
   /// legacy rows + paths that don't supply one.
   @JsonKey(name: 'idempotency_key')
   final String? idempotencyKey;
+  /// User-applied food tags (open vocabulary — suggested chips + free-text).
+  /// Serialized as `tags` (Postgres text[] → JSON array). Powers tag-based
+  /// correlations in Patterns and organization in the Journal. NULL for rows
+  /// logged before tagging existed.
+  final List<String>? tags;
+  /// Structured post-meal feelings captured on the check-in sheet (open
+  /// vocabulary: bloated/sluggish/energized/foggy/… + appetite). Serialized as
+  /// `symptoms` (Postgres text[] → JSON array). Feeds per-symptom correlations.
+  /// NULL when the user skipped the symptom row.
+  final List<String>? symptoms;
   @JsonKey(name: 'created_at', fromJson: _parseDateTimeOrNow)
   final DateTime createdAt;
 
@@ -194,6 +204,8 @@ class FoodLog {
     this.sourceType,
     this.userQuery,
     this.idempotencyKey,
+    this.tags,
+    this.symptoms,
     required this.createdAt,
   });
 
@@ -228,6 +240,8 @@ class FoodLog {
     String? id,
     String? idempotencyKey,
     String? imageUrl,
+    List<String>? tags,
+    List<String>? symptoms,
   }) =>
       FoodLog(
         id: id ?? this.id,
@@ -278,6 +292,8 @@ class FoodLog {
         sourceType: sourceType,
         userQuery: userQuery,
         idempotencyKey: idempotencyKey ?? this.idempotencyKey,
+        tags: tags ?? this.tags,
+        symptoms: symptoms ?? this.symptoms,
         createdAt: createdAt,
       );
 }

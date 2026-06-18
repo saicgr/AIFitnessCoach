@@ -25324,6 +25324,9 @@ class AppLocalizationsPa extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'ਆਪਣੇ ਪੈਟਰਨ ਦੇਖਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'ਪੈਟਰਨ';
 
   @override

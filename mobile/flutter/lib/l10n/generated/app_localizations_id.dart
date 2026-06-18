@@ -25375,6 +25375,9 @@ class AppLocalizationsId extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Masuk untuk melihat pola Anda';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Pola';
 
   @override

@@ -10,6 +10,7 @@ import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 const _kHidePostMealReviewKey = 'hide_post_meal_review';
@@ -76,6 +77,38 @@ class _PostMealReviewSheet extends ConsumerStatefulWidget {
   ConsumerState<_PostMealReviewSheet> createState() => _PostMealReviewSheetState();
 }
 
+/// A post-meal feeling/symptom option. Open vocabulary — these are the
+/// convenience chips; the persisted value is the lowercase [value] string so
+/// the backend per-symptom correlations stay stable. NO emoji — Material icons
+/// only (signature de-slop rule). `value` matches the slugs the patterns engine
+/// buckets on (bloated/sluggish/energized/foggy/nauseous/good_digestion/
+/// jittery/satisfied + the appetite indicators).
+class _SymptomOption {
+  final String value;
+  final String label;
+  final IconData icon;
+  const _SymptomOption(this.value, this.label, this.icon);
+}
+
+const List<_SymptomOption> _kSymptomOptions = [
+  _SymptomOption('energized', 'Energized', Icons.bolt_outlined),
+  _SymptomOption('satisfied', 'Satisfied', Icons.sentiment_satisfied_outlined),
+  _SymptomOption('good_digestion', 'Good digestion', Icons.spa_outlined),
+  _SymptomOption('bloated', 'Bloated', Icons.air_outlined),
+  _SymptomOption('sluggish', 'Sluggish', Icons.hourglass_empty_outlined),
+  _SymptomOption('foggy', 'Foggy', Icons.cloud_outlined),
+  _SymptomOption('nauseous', 'Nauseous', Icons.sick_outlined),
+  _SymptomOption('jittery', 'Jittery', Icons.vibration_outlined),
+];
+
+/// Appetite indicator — a separate single-pick row (still skippable, still
+/// persisted into the same `symptoms` array prefixed `appetite_*`).
+const List<_SymptomOption> _kAppetiteOptions = [
+  _SymptomOption('appetite_still_hungry', 'Still hungry', Icons.restaurant_outlined),
+  _SymptomOption('appetite_just_right', 'Just right', Icons.check_circle_outline),
+  _SymptomOption('appetite_too_full', 'Too full', Icons.dinner_dining_outlined),
+];
+
 class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
   FoodMood? _moodBefore;
   FoodMood? _moodAfter;
@@ -83,6 +116,10 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
   bool _showWhyItMatters = false;
   bool _isSaving = false;
   bool _isDismissing = false;
+  // Optional, low-friction feeling/symptom multi-select. Empty = skipped.
+  final Set<String> _selectedSymptoms = {};
+  // Appetite is single-pick within its row; null = skipped.
+  String? _appetite;
 
   @override
   Widget build(BuildContext context) {
@@ -264,13 +301,67 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
                   Icon(Icons.battery_full, size: 16, color: accent),
                 ],
               ),
+              const SizedBox(height: 14),
+
+              // How your body feels (optional symptom multi-select). Signature
+              // ZealovaChip, Material icons only — no emoji. Skippable; an
+              // empty selection simply persists no symptoms.
+              Text(
+                'HOW YOUR BODY FEELS',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final s in _kSymptomOptions)
+                    ZealovaChip(
+                      label: s.label,
+                      icon: s.icon,
+                      selected: _selectedSymptoms.contains(s.value),
+                      onTap: () => setState(() {
+                        if (!_selectedSymptoms.remove(s.value)) {
+                          _selectedSymptoms.add(s.value);
+                        }
+                      }),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 14),
+
+              // Appetite indicator — single-pick row.
+              Text(
+                'APPETITE',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: textMuted, letterSpacing: 0.3),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final a in _kAppetiteOptions)
+                    ZealovaChip(
+                      label: a.label,
+                      icon: a.icon,
+                      selected: _appetite == a.value,
+                      onTap: () => setState(() {
+                        _appetite = _appetite == a.value ? null : a.value;
+                      }),
+                    ),
+                ],
+              ),
               const SizedBox(height: 16),
 
               // Save button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: (_moodBefore != null || _moodAfter != null) && !_isSaving
+                  onPressed: (_moodBefore != null ||
+                              _moodAfter != null ||
+                              _selectedSymptoms.isNotEmpty ||
+                              _appetite != null) &&
+                          !_isSaving
                       ? () => _saveMoodReview(teal)
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -373,10 +464,17 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     }
 
     final apiClient = ref.read(apiClientProvider);
+    // Combine the body-feeling multi-select with the single-pick appetite into
+    // one `symptoms` array (open vocabulary; the backend buckets per slug).
+    final symptoms = <String>[
+      ..._selectedSymptoms,
+      if (_appetite != null) _appetite!,
+    ];
     final payload = <String, dynamic>{
       if (_moodBefore != null) 'mood_before': _moodBefore!.value,
       if (_moodAfter != null) 'mood_after': _moodAfter!.value,
       'energy_level': _energyLevel,
+      if (symptoms.isNotEmpty) 'symptoms': symptoms,
     };
 
     unawaited(() async {

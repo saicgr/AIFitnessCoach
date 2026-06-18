@@ -101,6 +101,10 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   sourceType: json['source_type'] as String?,
   userQuery: json['user_query'] as String?,
   idempotencyKey: json['idempotency_key'] as String?,
+  tags: (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList(),
+  symptoms: (json['symptoms'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
   createdAt: _parseDateTimeOrNow(json['created_at'] as String?),
 );
 
@@ -153,6 +157,8 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'source_type': instance.sourceType,
   'user_query': instance.userQuery,
   'idempotency_key': instance.idempotencyKey,
+  'tags': instance.tags,
+  'symptoms': instance.symptoms,
   'created_at': instance.createdAt.toIso8601String(),
 };
 

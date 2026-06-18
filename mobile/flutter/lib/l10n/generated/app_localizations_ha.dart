@@ -25439,6 +25439,9 @@ class AppLocalizationsHa extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Shiga don ganin tsarinka';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Tsarurruka';
 
   @override

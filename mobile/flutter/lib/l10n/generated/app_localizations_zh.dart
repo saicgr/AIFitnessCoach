@@ -24042,6 +24042,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nutritionPatternsSignInToSee => '登录以查看你的模式';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => '模式';
 
   @override

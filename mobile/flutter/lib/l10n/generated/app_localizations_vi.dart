@@ -25383,6 +25383,9 @@ class AppLocalizationsVi extends AppLocalizations {
       'Đăng nhập để xem các mô hình của bạn';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Mẫu';
 
   @override

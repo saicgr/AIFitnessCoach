@@ -25182,6 +25182,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nutritionPatternsSignInToSee => 'Sign in to see your patterns';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Patterns';
 
   @override

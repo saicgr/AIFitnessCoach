@@ -25554,6 +25554,9 @@ class AppLocalizationsTe extends AppLocalizations {
       'మీ ప్యాటర్న్స్‌ను చూడటానికి సైన్ ఇన్ చేయండి';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'నమూనాలు';
 
   @override

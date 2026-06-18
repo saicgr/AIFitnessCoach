@@ -25368,6 +25368,9 @@ class AppLocalizationsUr extends AppLocalizations {
       'اپنے پیٹرن دیکھنے کے لیے سائن ان کریں';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'نمونے';
 
   @override

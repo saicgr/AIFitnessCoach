@@ -9,11 +9,13 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/services/data_cache_service.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/trends/trend_chart.dart';
-import '../../../widgets/trends/trend_correlation.dart';
+import '../../../widgets/trends/trend_correlation.dart' show TrendPoint;
 import '../../../data/models/food_patterns.dart';
 import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/design_system/zealova.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,7 +48,10 @@ import '../../../l10n/generated/app_localizations.dart';
 const String _kMacrosCacheKey = 'cache_nutrition_patterns_macros';
 const String _kTopFoodsCacheKey = 'cache_nutrition_patterns_topfoods';
 const String _kMoodCacheKey = 'cache_nutrition_patterns_mood';
-const String _kHistoryCacheKey = 'cache_nutrition_patterns_history';
+// Disk-cache slots for the deepened Patterns sections (Phase 4B/4C — FE-D).
+const String _kSymptomTagCacheKey = 'cache_nutrition_patterns_symptomtag';
+const String _kGentleCacheKey = 'cache_nutrition_patterns_gentle';
+const String _kGutCacheKey = 'cache_nutrition_patterns_gut';
 
 /// Build a fully-faceted cache key. The range + date (+ optional metric) are
 /// folded into the key so switching the sticky range picker never shows the
@@ -186,17 +191,38 @@ class _NutritionPatternsTabState extends ConsumerState<NutritionPatternsTab>
               isDark: widget.isDark,
             ),
           ),
+          // "Ask about your food" — natural-language entry into the nutrition
+          // coach (Phase 2E wires the patterns engine into the coach prompt).
+          SliverToBoxAdapter(
+            child: _AskAboutFoodCard(isDark: widget.isDark),
+          ),
           SliverToBoxAdapter(
             child: _MoodSection(
               userId: userId,
               isDark: widget.isDark,
             ),
           ),
+          // Per-symptom + per-tag correlation buckets (image-first). Extends
+          // "Your Body's Responses" with structured how-you-felt signal.
           SliverToBoxAdapter(
-            child: _HistorySection(
+            child: _SymptomTagSection(
               userId: userId,
-              range: _range,
-              date: _anchorDateStr,
+              isDark: widget.isDark,
+            ),
+          ),
+          // "Gentle changes" — fiber/protein/veggies/consistency vs goals,
+          // each with a sparkline + baseline delta. Encouraging, non-judgmental.
+          SliverToBoxAdapter(
+            child: _GentleChangesSection(
+              userId: userId,
+              isDark: widget.isDark,
+            ),
+          ),
+          // Gut-health insights — regularity chart + natural-rhythm stats +
+          // food/tag → gut correlations. Cozy, non-clinical.
+          SliverToBoxAdapter(
+            child: _GutHealthSection(
+              userId: userId,
               isDark: widget.isDark,
             ),
           ),
@@ -1377,280 +1403,6 @@ class _MoodFoodTile extends ConsumerWidget {
       raw.isEmpty ? raw : raw[0].toUpperCase() + raw.substring(1);
 }
 
-// ── Section 4: Meal log history ─────────────────────────────────────────────
-
-class _HistorySection extends ConsumerStatefulWidget {
-  final String userId;
-  final String range;
-  final String date;
-  final bool isDark;
-  const _HistorySection({
-    required this.userId,
-    required this.range,
-    required this.date,
-    required this.isDark,
-  });
-
-  @override
-  ConsumerState<_HistorySection> createState() => _HistorySectionState();
-}
-
-class _HistorySectionState extends ConsumerState<_HistorySection> {
-  /// Disk-cached meal-history rows for the current (range, date) bucket. The
-  /// provider returns a `List<Map>` which is already JSON-serializable, so it
-  /// is wrapped under a `{'rows': [...]}` envelope for [DataCacheService].
-  List<Map<String, dynamic>>? _cached;
-  bool _cacheChecked = false;
-  String? _cachedKey;
-
-  String get _key => _patternsCacheKey(_kHistoryCacheKey,
-      range: widget.range, date: widget.date);
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCache();
-  }
-
-  @override
-  void didUpdateWidget(covariant _HistorySection old) {
-    super.didUpdateWidget(old);
-    if (old.range != widget.range || old.date != widget.date) {
-      _cached = null;
-      _cacheChecked = false;
-      _loadCache();
-    }
-  }
-
-  Future<void> _loadCache() async {
-    final key = _key;
-    List<Map<String, dynamic>>? rows;
-    try {
-      final raw =
-          await DataCacheService.instance.getCached(key, userId: widget.userId);
-      final list = raw?['rows'];
-      if (list is List) {
-        rows = list
-            .whereType<Map>()
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-      }
-    } catch (e) {
-      debugPrint('💾 [Patterns] history cache read failed: $e');
-    }
-    if (!mounted) return;
-    setState(() {
-      if (key == _key) {
-        _cached = rows;
-        _cachedKey = key;
-      }
-      _cacheChecked = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final async = ref.watch(patternsHistoryProvider(
-      HistoryQuery(
-          userId: widget.userId, range: widget.range, date: widget.date),
-    ));
-
-    final fresh = async.valueOrNull;
-    if (fresh != null) {
-      // Persist the (capped) rows under a JSON envelope. Cap mirrors the 25
-      // rows the UI actually renders so the blob stays small.
-      _writePatternsCache(_key, widget.userId,
-          {'rows': fresh.take(25).toList()});
-    }
-    final rows = fresh ?? (_cachedKey == _key ? _cached : null);
-
-    return _SectionContainer(
-      title: AppLocalizations.of(context).nutritionPatternsMealHistory,
-      isDark: widget.isDark,
-      child: Builder(builder: (context) {
-        if (rows != null) {
-          if (rows.isEmpty) {
-            return _EmptyStub(
-              icon: Icons.event_note_outlined,
-              title: 'No meals this ${widget.range}',
-              subtitle: AppLocalizations.of(context).nutritionPatternsLoggedMealsWillShow,
-            );
-          }
-          // Cap at 25 visible rows, built lazily so off-screen rows are not
-          // constructed until the column is laid out.
-          final visible = rows.take(25).toList();
-          return ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: visible.length,
-            itemBuilder: (_, i) =>
-                _HistoryRow(row: visible[i], isDark: widget.isDark),
-          );
-        }
-        if (_cacheChecked && async.hasError) {
-          return _ErrorStub(message: 'Couldn\'t load history');
-        }
-        // Cold start — 4 layout-matched history-row skeletons.
-        return const _HistorySkeleton();
-      }),
-    );
-  }
-}
-
-/// Layout-matched skeleton for the meal-history list — 4 rows mirroring a
-/// [_HistoryRow] (48px leading thumbnail + three stacked text lines).
-class _HistorySkeleton extends StatelessWidget {
-  const _HistorySkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: List.generate(4, (_) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: const [
-              SkeletonBox(width: 48, height: 48, radius: 10),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SkeletonBox(width: 150, height: 13),
-                    SizedBox(height: 6),
-                    SkeletonBox(width: 90, height: 11),
-                    SizedBox(height: 6),
-                    SkeletonBox(width: 170, height: 11),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _HistoryRow extends StatelessWidget {
-  final Map<String, dynamic> row;
-  final bool isDark;
-  const _HistoryRow({required this.row, required this.isDark});
-
-  String _name() {
-    final items = row['food_items'] as List<dynamic>? ?? const [];
-    if (items.isEmpty) return 'Meal';
-    final names = items
-        .take(3)
-        .map((e) => (e as Map)['name'] as String? ?? '')
-        .where((s) => s.isNotEmpty)
-        .toList();
-    if (names.isEmpty) return 'Meal';
-    final more = items.length - names.length;
-    return more > 0 ? '${names.join(', ')} +$more' : names.join(', ');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final logged = row['logged_at'] as String?;
-    final time = logged != null
-        ? DateFormat('MMM d · h:mm a').format(DateTime.parse(logged).toLocal())
-        : '';
-    final cal = (row['total_calories'] as num?)?.toInt() ?? 0;
-    final p = (row['protein_g'] as num?)?.toDouble() ?? 0;
-    final c = (row['carbs_g'] as num?)?.toDouble() ?? 0;
-    final f = (row['fat_g'] as num?)?.toDouble() ?? 0;
-    final score = row['health_score'] as int?;
-    final mood = row['mood_after'] as String?;
-    final imageUrl = row['image_url'] as String?;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(
-              color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-              image: imageUrl != null
-                  ? DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover)
-                  : null,
-            ),
-            child: imageUrl == null
-                ? Icon(Icons.restaurant, size: 22, color: textMuted)
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _name(),
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: textPrimary),
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  time,
-                  style: TextStyle(fontSize: 11, color: textMuted),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '$cal kcal · P ${p.toStringAsFixed(0)}g · C ${c.toStringAsFixed(0)}g · F ${f.toStringAsFixed(0)}g',
-                  style: TextStyle(fontSize: 11, color: textMuted),
-                ),
-              ],
-            ),
-          ),
-          if (mood != null) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: AppColors.purple.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                mood,
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppColors.purple),
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-          if (score != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: _scoreColor(score).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Text(
-                '$score',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _scoreColor(score)),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Color _scoreColor(int score) {
-    if (score >= 80) return AppColors.success;
-    if (score >= 60) return AppColors.cyan;
-    if (score >= 40) return AppColors.orange;
-    return AppColors.error;
-  }
-}
 
 // ── Section 5: Settings row ─────────────────────────────────────────────────
 
@@ -1863,6 +1615,1183 @@ class _EmptyStub extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Deepened Patterns (Phase 4B/4C — FE-D)
+// ═══════════════════════════════════════════════════════════════════════════
+//
+// Three new analytical sections + an "ask your food" entry. All follow the
+// established widget-layer disk-cache-first pattern (cache read on init →
+// instant render → silent provider refresh → write-through). Every section
+// fails open: a missing/unmigrated backend field degrades to a gentle empty
+// state, never a blanked tab or a thrown error. Copy uses ≥4-variant pools
+// keyed off real data so the prose never reads robotic, and is non-judgmental
+// throughout (the "no calorie-shaming" principle).
+
+// ── Copy variant pools ──────────────────────────────────────────────────────
+// Picked deterministically off a stable seed (a food name / goal key) so the
+// same row always reads the same line within a render, but the set as a whole
+// feels hand-written rather than templated.
+
+String _pick(List<String> pool, String seed) {
+  if (pool.isEmpty) return '';
+  var h = 0;
+  for (final c in seed.codeUnits) {
+    h = (h * 31 + c) & 0x7fffffff;
+  }
+  return pool[h % pool.length];
+}
+
+// ── "Ask about your food" card ──────────────────────────────────────────────
+
+/// Natural-language entry into the nutrition coach. The coach prompt is wired
+/// to the patterns engine (Phase 2E) so questions like "why do I feel bloated
+/// after healthy meals?" get a meal-aware answer. Deep-links to `/chat` with a
+/// prefilled prompt + a source tag so the coach knows it came from Patterns.
+class _AskAboutFoodCard extends StatelessWidget {
+  final bool isDark;
+  const _AskAboutFoodCard({required this.isDark});
+
+  static const _prompts = <String>[
+    'Why do I feel bloated after some meals?',
+    'Which foods give me the most energy?',
+    'What should I eat more of this week?',
+    'Are my eating patterns helping my goals?',
+  ];
+
+  void _ask(BuildContext context, String prompt) {
+    HapticService.light();
+    final encoded = Uri.encodeComponent(prompt);
+    context.push('/chat?source=nutrition_patterns&prompt=$encoded');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.hero,
+        onTap: () => _ask(context, 'Tell me about my eating patterns.'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome_outlined, size: 18, color: tc.accent),
+                const SizedBox(width: 8),
+                Text('ASK ABOUT YOUR FOOD',
+                    style: ZType.lbl(12, color: tc.textPrimary)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Your coach can see these patterns. Ask anything.',
+              style: ZType.ser(14, color: tc.textMuted),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final p in _prompts)
+                  _AskChip(label: p, onTap: () => _ask(context, p)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AskChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _AskChip({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.cardBorder),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                label,
+                style: ZType.ser(12.5, color: tc.textPrimary),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.north_east, size: 12, color: tc.accent),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Section: Symptom / tag correlation buckets ──────────────────────────────
+
+class _SymptomTagSection extends ConsumerStatefulWidget {
+  final String userId;
+  final bool isDark;
+  const _SymptomTagSection({required this.userId, required this.isDark});
+
+  @override
+  ConsumerState<_SymptomTagSection> createState() => _SymptomTagSectionState();
+}
+
+class _SymptomTagSectionState extends ConsumerState<_SymptomTagSection> {
+  SymptomTagCorrelations? _cached;
+  bool _cacheChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  Future<void> _loadCache() async {
+    final v = await _readPatternsCache(
+        _kSymptomTagCacheKey, widget.userId, SymptomTagCorrelations.fromJson);
+    if (!mounted) return;
+    setState(() {
+      _cached = v;
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(symptomTagCorrelationsProvider(widget.userId));
+    final fresh = async.valueOrNull;
+    // Note: this typed model has no toJson; we persist a compact re-encodable
+    // shape so the next cold start is instant. (Buckets keep only what the UI
+    // renders.) See _encodeSymptomTag.
+    if (fresh != null) {
+      _writePatternsCache(
+          _kSymptomTagCacheKey, widget.userId, _encodeSymptomTag(fresh));
+    }
+    final data = fresh ?? _cached;
+    final isDark = widget.isDark;
+
+    // Hide the whole section when there's genuinely nothing to show yet — the
+    // legacy _MoodSection above already covers the "no patterns yet" empty
+    // state, so a second empty card would be noise.
+    if (data != null && data.isEmpty) {
+      if (async.isLoading) return const SizedBox.shrink();
+      return const SizedBox.shrink();
+    }
+
+    return _SectionContainer(
+      title: 'How foods sat with you',
+      subtitle: 'Grouped by how you felt and what you tagged',
+      isDark: isDark,
+      child: Builder(builder: (context) {
+        if (data != null && !data.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final b in data.symptomBuckets)
+                _CorrelationBucketCard(
+                  bucket: b,
+                  isSymptom: true,
+                  isDark: isDark,
+                ),
+              for (final b in data.tagBuckets)
+                _CorrelationBucketCard(
+                  bucket: b,
+                  isSymptom: false,
+                  isDark: isDark,
+                ),
+            ],
+          );
+        }
+        if (_cacheChecked && async.hasError) {
+          // Fail open — never blank the tab; just hide this analytical extra.
+          return const SizedBox.shrink();
+        }
+        return const _CorrelationSkeleton();
+      }),
+    );
+  }
+}
+
+/// Persist only the fields the UI renders so the cached blob is small and
+/// re-decodable by [SymptomTagCorrelations.fromJson].
+Map<String, dynamic> _encodeSymptomTag(SymptomTagCorrelations c) {
+  Map<String, dynamic> bucket(SymptomBucket b) => {
+        'key': b.key,
+        'label': b.label,
+        'count': b.count,
+        'confidence_pct': b.confidencePct,
+        'foods': [
+          for (final f in b.foods)
+            {
+              'food_name': f.name,
+              'image_url': f.imageUrl,
+              'occurrences': f.occurrences,
+              'last_logged_at': f.lastLoggedAt,
+            }
+        ],
+      };
+  return {
+    'symptom_buckets': [for (final b in c.symptomBuckets) bucket(b)],
+    'tag_buckets': [for (final b in c.tagBuckets) bucket(b)],
+    'days_window': c.daysWindow,
+    'total_logs_analyzed': c.totalLogs,
+  };
+}
+
+class _CorrelationBucketCard extends StatelessWidget {
+  final SymptomBucket bucket;
+  final bool isSymptom;
+  final bool isDark;
+  const _CorrelationBucketCard({
+    required this.bucket,
+    required this.isSymptom,
+    required this.isDark,
+  });
+
+  // ── Non-judgmental header copy ──
+  static const _beforeSymptom = <String>[
+    'Often before you felt {x}',
+    'Showed up when you felt {x}',
+    'In the mix on your {x} days',
+    'Around the times you felt {x}',
+  ];
+  static const _tagged = <String>[
+    'Your {x} meals',
+    'When you tagged {x}',
+    'Tagged {x}',
+    'Your {x}-tagged foods',
+  ];
+
+  String _header() {
+    final pool = isSymptom ? _beforeSymptom : _tagged;
+    return _pick(pool, bucket.key).replaceAll('{x}', bucket.label.toLowerCase());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _header(),
+                  style: ZType.lbl(12.5, color: textPrimary),
+                ),
+              ),
+              if (bucket.confidencePct > 0)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: tc.accent.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${bucket.confidencePct}% match',
+                    style: ZType.lbl(9.5, color: tc.accent, letterSpacing: 0.8),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Image-first: a horizontal rail of the actual food photos.
+          SizedBox(
+            height: 92,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: bucket.foods.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => _CorrelatedFoodTile(
+                food: bucket.foods[i],
+                isDark: isDark,
+              ),
+            ),
+          ),
+          if (bucket.count > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              _pick(const [
+                'Seen across {n} meals',
+                'From {n} logged meals',
+                'Based on {n} meals',
+                '{n} meals in this pattern',
+              ], bucket.key).replaceAll('{n}', '${bucket.count}'),
+              style: TextStyle(fontSize: 11, color: textMuted),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _CorrelatedFoodTile extends StatelessWidget {
+  final CorrelatedFood food;
+  final bool isDark;
+  const _CorrelatedFoodTile({required this.food, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return SizedBox(
+      width: 80,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 80,
+            height: 64,
+            decoration: BoxDecoration(
+              color: (isDark ? Colors.white : Colors.black)
+                  .withValues(alpha: 0.06),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.cardBorder),
+              image: food.imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(food.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: food.imageUrl == null
+                ? Icon(Icons.restaurant, size: 22, color: textMuted)
+                : null,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            food.name.isEmpty
+                ? 'Meal'
+                : food.name[0].toUpperCase() + food.name.substring(1),
+            style: TextStyle(
+                fontSize: 10.5, color: textPrimary, fontWeight: FontWeight.w600),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (food.occurrences > 0)
+            Text('${food.occurrences}×',
+                style: TextStyle(fontSize: 9.5, color: textMuted)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CorrelationSkeleton extends StatelessWidget {
+  const _CorrelationSkeleton();
+  @override
+  Widget build(BuildContext context) {
+    Widget block() => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SkeletonBox(width: 180, height: 13),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 64,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: 4,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, __) =>
+                    const SkeletonBox(width: 80, height: 64, radius: 12),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        );
+    return Column(children: [block(), block()]);
+  }
+}
+
+// ── Section: "Gentle changes" goal cards ────────────────────────────────────
+
+class _GentleChangesSection extends ConsumerStatefulWidget {
+  final String userId;
+  final bool isDark;
+  const _GentleChangesSection({required this.userId, required this.isDark});
+
+  @override
+  ConsumerState<_GentleChangesSection> createState() =>
+      _GentleChangesSectionState();
+}
+
+class _GentleChangesSectionState
+    extends ConsumerState<_GentleChangesSection> {
+  MacrosBaseline? _cached;
+  bool _cacheChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  Future<void> _loadCache() async {
+    final v = await _readPatternsCache(
+        _kGentleCacheKey, widget.userId, MacrosBaseline.fromJson);
+    if (!mounted) return;
+    setState(() {
+      _cached = v;
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(macrosBaselineProvider(widget.userId));
+    final fresh = async.valueOrNull;
+    if (fresh != null) {
+      _writePatternsCache(_kGentleCacheKey, widget.userId, _encodeBaseline(fresh));
+    }
+    final data = fresh ?? _cached;
+    final isDark = widget.isDark;
+
+    if (data != null && data.goals.isEmpty && data.nutrientTracks.isEmpty) {
+      // Nothing to encourage yet — hide rather than show an empty card.
+      return const SizedBox.shrink();
+    }
+
+    return _SectionContainer(
+      title: 'Gentle changes',
+      subtitle: 'Small nudges toward how you want to eat',
+      isDark: isDark,
+      child: Builder(builder: (context) {
+        if (data != null && data.goals.isNotEmpty) {
+          return Column(
+            children: [
+              for (final g in data.goals)
+                _GentleGoalCard(goal: g, isDark: isDark),
+              if (data.nutrientTracks.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _BaselineTrendsBlock(
+                  tracks: data.nutrientTracks,
+                  currentLabel: data.currentLabel,
+                  baselineLabel: data.baselineLabel,
+                  isDark: isDark,
+                ),
+              ],
+            ],
+          );
+        }
+        // If only nutrient tracks came back (no explicit goals), still show
+        // the bigger-picture baselines.
+        if (data != null && data.nutrientTracks.isNotEmpty) {
+          return _BaselineTrendsBlock(
+            tracks: data.nutrientTracks,
+            currentLabel: data.currentLabel,
+            baselineLabel: data.baselineLabel,
+            isDark: isDark,
+          );
+        }
+        if (_cacheChecked && async.hasError) {
+          return const SizedBox.shrink();
+        }
+        return const _GentleSkeleton();
+      }),
+    );
+  }
+}
+
+Map<String, dynamic> _encodeBaseline(MacrosBaseline b) {
+  Map<String, dynamic> goal(GentleGoal g) => {
+        'key': g.key,
+        'label': g.label,
+        'current': g.current,
+        'goal': g.goal,
+        'baseline': g.baseline,
+        'unit': g.unit,
+        'series': g.series,
+      };
+  return {
+    'goals': [for (final g in b.goals) goal(g)],
+    'nutrient_tracks': [for (final g in b.nutrientTracks) goal(g)],
+    'current_label': b.currentLabel,
+    'baseline_label': b.baselineLabel,
+  };
+}
+
+class _GentleGoalCard extends StatelessWidget {
+  final GentleGoal goal;
+  final bool isDark;
+  const _GentleGoalCard({required this.goal, required this.isDark});
+
+  // Encouraging, non-judgmental delta copy. Never "you failed" — always a
+  // nudge or a celebration.
+  static const _up = <String>[
+    'trending up',
+    'climbing',
+    'nudging higher',
+    'on the rise',
+  ];
+  static const _down = <String>[
+    'a touch lower lately',
+    'easing off',
+    'dipping a little',
+    'softer this stretch',
+  ];
+  static const _flat = <String>[
+    'holding steady',
+    'right where it was',
+    'staying consistent',
+    'level lately',
+  ];
+
+  String _deltaPhrase() {
+    switch (goal.trend) {
+      case 1:
+        return _pick(_up, goal.key);
+      case -1:
+        return _pick(_down, goal.key);
+      default:
+        return _pick(_flat, goal.key);
+    }
+  }
+
+  String _fmt(double v) =>
+      v >= 10 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final accent = _goalColor(goal.key, isDark, tc);
+
+    final goalVal = goal.goal;
+    final progress = goal.progress;
+    final summary = goalVal != null
+        ? '${_fmt(goal.current)}${goal.unit} avg vs ${_fmt(goalVal)}${goal.unit} goal — ${_deltaPhrase()}'
+        : '${_fmt(goal.current)}${goal.unit} avg — ${_deltaPhrase()}';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: (isDark ? AppColors.elevated : AppColorsLight.elevated)
+            .withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(goal.label.toUpperCase(),
+                        style: ZType.lbl(11.5, color: textPrimary)),
+                    const SizedBox(width: 6),
+                    Icon(
+                      goal.trend == 1
+                          ? Icons.trending_up
+                          : goal.trend == -1
+                              ? Icons.trending_down
+                              : Icons.trending_flat,
+                      size: 14,
+                      color: goal.trend == -1 ? textMuted : accent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(summary,
+                    style: TextStyle(
+                        fontSize: 11.5, color: textMuted, height: 1.35)),
+                if (progress != null) ...[
+                  const SizedBox(height: 8),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 5,
+                      backgroundColor: (isDark ? Colors.white : Colors.black)
+                          .withValues(alpha: 0.08),
+                      valueColor: AlwaysStoppedAnimation(accent),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (goal.series.length >= 2) ...[
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 64,
+              height: 36,
+              child: _Sparkline(values: goal.series, color: accent),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+Color _goalColor(String key, bool isDark, ThemeColors tc) {
+  switch (key) {
+    case 'protein':
+      return isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+    case 'carbs':
+      return isDark ? AppColors.macroCarbs : AppColorsLight.macroCarbs;
+    case 'fat':
+      return isDark ? AppColors.macroFat : AppColorsLight.macroFat;
+    case 'fiber':
+    case 'veggies':
+      return AppColors.limeGreen;
+    default:
+      return tc.accent;
+  }
+}
+
+/// Lightweight fl_chart sparkline — no axes, no grid, just the trend curve.
+class _Sparkline extends StatelessWidget {
+  final List<double> values;
+  final Color color;
+  const _Sparkline({required this.values, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    if (values.length < 2) return const SizedBox.shrink();
+    final spots = <FlSpot>[
+      for (var i = 0; i < values.length; i++)
+        FlSpot(i.toDouble(), values[i]),
+    ];
+    final minY = values.reduce((a, b) => a < b ? a : b);
+    final maxY = values.reduce((a, b) => a > b ? a : b);
+    final pad = (maxY - minY).abs() * 0.1 + 0.01;
+    return LineChart(
+      LineChartData(
+        minY: minY - pad,
+        maxY: maxY + pad,
+        gridData: const FlGridData(show: false),
+        titlesData: const FlTitlesData(show: false),
+        borderData: FlBorderData(show: false),
+        lineTouchData: const LineTouchData(enabled: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: spots,
+            isCurved: true,
+            color: color,
+            barWidth: 2,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              color: color.withValues(alpha: 0.12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Bigger-picture trends — the 4wk-vs-9wk (current vs baseline) framing across
+/// macros/nutrients, each a compact row with the delta + a sparkline.
+class _BaselineTrendsBlock extends StatelessWidget {
+  final List<GentleGoal> tracks;
+  final String currentLabel;
+  final String baselineLabel;
+  final bool isDark;
+  const _BaselineTrendsBlock({
+    required this.tracks,
+    required this.currentLabel,
+    required this.baselineLabel,
+    required this.isDark,
+  });
+
+  String _fmt(double v) =>
+      v >= 10 ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final compare = (currentLabel.isNotEmpty && baselineLabel.isNotEmpty)
+        ? '$currentLabel vs $baselineLabel'
+        : 'Recent weeks vs before';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8, top: 4),
+          child: Row(children: [
+            Container(width: 4, height: 14, color: tc.accent),
+            const SizedBox(width: 8),
+            Text('THE BIGGER PICTURE',
+                style: ZType.lbl(12, color: textPrimary)),
+          ]),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(compare,
+              style: TextStyle(fontSize: 11, color: textMuted)),
+        ),
+        for (final t in tracks)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(t.label,
+                          style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary)),
+                      const SizedBox(height: 2),
+                      Text(
+                        t.baseline != null
+                            ? '${_fmt(t.current)}${t.unit} now · ${_fmt(t.baseline!)}${t.unit} before'
+                            : '${_fmt(t.current)}${t.unit} now',
+                        style: TextStyle(fontSize: 11, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                if (t.delta != null)
+                  _DeltaPill(delta: t.delta!, unit: t.unit, isDark: isDark),
+                if (t.series.length >= 2) ...[
+                  const SizedBox(width: 10),
+                  SizedBox(
+                    width: 56,
+                    height: 30,
+                    child: _Sparkline(
+                        values: t.series,
+                        color: _goalColor(t.key, isDark, tc)),
+                  ),
+                ],
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _DeltaPill extends StatelessWidget {
+  final double delta;
+  final String unit;
+  final bool isDark;
+  const _DeltaPill({required this.delta, required this.unit, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final up = delta >= 0;
+    final color = up ? AppColors.success : AppColors.warning;
+    final v = delta.abs();
+    final txt = '${up ? '+' : '−'}${v >= 10 ? v.toStringAsFixed(0) : v.toStringAsFixed(1)}$unit';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(txt,
+          style: ZType.data(10.5, color: color)),
+    );
+  }
+}
+
+class _GentleSkeleton extends StatelessWidget {
+  const _GentleSkeleton();
+  @override
+  Widget build(BuildContext context) {
+    Widget row() => Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: const [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 90, height: 12),
+                    SizedBox(height: 8),
+                    SkeletonBox(width: 200, height: 11),
+                    SizedBox(height: 8),
+                    SkeletonBox(width: double.infinity, height: 5, radius: 999),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12),
+              SkeletonBox(width: 64, height: 36, radius: 8),
+            ],
+          ),
+        );
+    return Column(children: [row(), row(), row()]);
+  }
+}
+
+// ── Section: Gut-health insights (Phase 4C) ─────────────────────────────────
+
+class _GutHealthSection extends ConsumerStatefulWidget {
+  final String userId;
+  final bool isDark;
+  const _GutHealthSection({required this.userId, required this.isDark});
+
+  @override
+  ConsumerState<_GutHealthSection> createState() => _GutHealthSectionState();
+}
+
+class _GutHealthSectionState extends ConsumerState<_GutHealthSection> {
+  DigestionPatterns? _cached;
+  bool _cacheChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  Future<void> _loadCache() async {
+    final v = await _readPatternsCache(
+        _kGutCacheKey, widget.userId, DigestionPatterns.fromJson);
+    if (!mounted) return;
+    setState(() {
+      _cached = v;
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(digestionPatternsProvider(widget.userId));
+    final fresh = async.valueOrNull;
+    if (fresh != null) {
+      _writePatternsCache(_kGutCacheKey, widget.userId, _encodeDigestion(fresh));
+    }
+    final data = fresh ?? _cached;
+    final isDark = widget.isDark;
+
+    // Backend not live yet / no data at all → hide entirely (gut tracking is
+    // opt-in; surfacing an empty clinical card to non-trackers is noise).
+    if (data != null && data.isEmpty && !async.isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    return _SectionContainer(
+      title: 'Your natural rhythm',
+      subtitle: 'How your gut has been, in your own words',
+      isDark: isDark,
+      child: Builder(builder: (context) {
+        if (data != null && !data.isEmpty) {
+          if (data.hasNoData) {
+            return _EmptyStub(
+              icon: Icons.spa_outlined,
+              title: 'Nothing logged yet',
+              subtitle:
+                  'Tap the gut-health tile on Daily to start — a few taps is all it takes.',
+            );
+          }
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _RhythmStatsRow(data: data, isDark: isDark),
+              const SizedBox(height: 14),
+              _RegularityChart(series: data.series, isDark: isDark),
+              if (data.correlations.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _GutCorrelationsList(
+                    correlations: data.correlations, isDark: isDark),
+              ],
+            ],
+          );
+        }
+        if (_cacheChecked && async.hasError) {
+          return const SizedBox.shrink();
+        }
+        return const _GutSkeleton();
+      }),
+    );
+  }
+}
+
+Map<String, dynamic> _encodeDigestion(DigestionPatterns d) => {
+      'series': [
+        for (final s in d.series)
+          {'date': s.date, 'count': s.count, 'avg_bristol': s.avgBristol}
+      ],
+      'correlations': [
+        for (final c in d.correlations)
+          {
+            'key': c.key,
+            'label': c.label,
+            'count': c.count,
+            'confidence_pct': c.confidencePct,
+            'foods': [
+              for (final f in c.foods)
+                {
+                  'food_name': f.name,
+                  'image_url': f.imageUrl,
+                  'occurrences': f.occurrences,
+                  'last_logged_at': f.lastLoggedAt,
+                }
+            ],
+          }
+      ],
+      'avg_per_day': d.avgPerDay,
+      'regularity_pct': d.regularityPct,
+      'typical_bristol': d.typicalBristol,
+      'days_window': d.daysWindow,
+    };
+
+class _RhythmStatsRow extends StatelessWidget {
+  final DigestionPatterns data;
+  final bool isDark;
+  const _RhythmStatsRow({required this.data, required this.isDark});
+
+  // Cozy, non-clinical Bristol descriptors (no graphic detail).
+  static const _bristolWord = <int, String>{
+    1: 'on the firm side',
+    2: 'firm',
+    3: 'just right',
+    4: 'just right',
+    5: 'on the soft side',
+    6: 'soft',
+    7: 'very soft',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    Widget stat(String value, String label, {Color? valueColor}) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(value,
+                  style: ZType.disp(24, color: valueColor ?? textPrimary)),
+              const SizedBox(height: 2),
+              Text(label.toUpperCase(),
+                  style: ZType.lbl(10, color: textMuted, letterSpacing: 1.2)),
+            ],
+          ),
+        );
+
+    final perDay = data.avgPerDay;
+    final reg = data.regularityPct;
+    final typical = data.typicalBristol;
+
+    return Row(
+      children: [
+        if (perDay != null)
+          stat(perDay.toStringAsFixed(perDay >= 10 ? 0 : 1), 'avg / day',
+              valueColor: tc.accent),
+        if (reg != null)
+          stat('${(reg * 100).round()}%', 'regular days'),
+        if (typical != null)
+          stat(
+            '#$typical',
+            _bristolWord[typical] ?? 'typical',
+          ),
+      ],
+    );
+  }
+}
+
+/// A cozy per-day regularity strip — one soft bar per day, taller = more
+/// movements. Non-clinical: no Bristol numbers on the axis.
+class _RegularityChart extends StatelessWidget {
+  final List<RegularityDay> series;
+  final bool isDark;
+  const _RegularityChart({required this.series, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    if (series.isEmpty) {
+      return SizedBox(
+        height: 48,
+        child: Center(
+          child: Text('Not enough days yet',
+              style: TextStyle(fontSize: 12, color: textMuted)),
+        ),
+      );
+    }
+    // Show the most recent ~28 days so the strip stays readable.
+    final recent =
+        series.length > 28 ? series.sublist(series.length - 28) : series;
+    final maxCount = recent.fold<int>(
+        1, (m, d) => d.count > m ? d.count : m);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: 44,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              for (final d in recent)
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: Container(
+                      height: d.count == 0
+                          ? 4
+                          : 8 + (d.count / maxCount) * 32,
+                      decoration: BoxDecoration(
+                        color: d.count == 0
+                            ? (isDark ? Colors.white : Colors.black)
+                                .withValues(alpha: 0.07)
+                            : tc.accent.withValues(
+                                alpha: 0.35 + (d.count / maxCount) * 0.45),
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(_relLabel(recent.first.date),
+                style: TextStyle(fontSize: 10, color: textMuted)),
+            Text('today', style: TextStyle(fontSize: 10, color: textMuted)),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _relLabel(String iso) {
+    final dt = DateTime.tryParse(iso);
+    if (dt == null) return '';
+    return DateFormat('MMM d').format(dt.toLocal());
+  }
+}
+
+class _GutCorrelationsList extends StatelessWidget {
+  final List<SymptomBucket> correlations;
+  final bool isDark;
+  const _GutCorrelationsList(
+      {required this.correlations, required this.isDark});
+
+  // Gentle "X days → Y" framing, non-alarming.
+  static const _phrases = <String>[
+    'On your {x} days, things ran {dir}',
+    '{x} seemed to make things {dir}',
+    'After {x}, your gut leaned {dir}',
+    '{x} days trended {dir}',
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('WHAT SEEMS CONNECTED',
+            style: ZType.lbl(12, color: textPrimary)),
+        const SizedBox(height: 8),
+        for (final c in correlations)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 5),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.eco_outlined, size: 15, color: textMuted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _line(c),
+                    style: TextStyle(
+                        fontSize: 12.5, color: textPrimary, height: 1.35),
+                  ),
+                ),
+                if (c.confidencePct > 0)
+                  Text('${c.confidencePct}%',
+                      style: TextStyle(fontSize: 11, color: textMuted)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  String _line(SymptomBucket c) {
+    // "looser"/"firmer" hint pulled from the bucket label if the backend
+    // provides a direction; otherwise neutral "differently".
+    final lbl = c.label.toLowerCase();
+    String dir = 'differently';
+    if (lbl.contains('loose') || lbl.contains('soft')) dir = 'softer';
+    if (lbl.contains('firm') || lbl.contains('hard')) dir = 'firmer';
+    final foods = c.foods.isNotEmpty
+        ? c.foods.first.name
+        : (c.key.isNotEmpty ? c.key : 'those');
+    return _pick(_phrases, c.key)
+        .replaceAll('{x}', foods)
+        .replaceAll('{dir}', dir);
+  }
+}
+
+class _GutSkeleton extends StatelessWidget {
+  const _GutSkeleton();
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(width: 60, height: 26)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(width: 60, height: 26)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(width: 60, height: 26)),
+          ],
+        ),
+        SizedBox(height: 16),
+        SkeletonBox(width: double.infinity, height: 44, radius: 8),
+      ],
     );
   }
 }

@@ -25361,6 +25361,9 @@ class AppLocalizationsJv extends AppLocalizations {
       'Mlebu kanggo ndeleng pola sampeyan';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'Pola';
 
   @override

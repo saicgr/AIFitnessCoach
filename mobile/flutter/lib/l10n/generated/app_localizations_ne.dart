@@ -25483,6 +25483,9 @@ class AppLocalizationsNe extends AppLocalizations {
       'तपाईंको ढाँचाहरू हेर्न साइन इन गर्नुहोस्';
 
   @override
+  String get nutritionJournalTab => 'Journal';
+
+  @override
   String get nutritionPatternsTab => 'ढाँचा';
 
   @override
