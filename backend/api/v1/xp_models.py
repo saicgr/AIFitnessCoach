@@ -254,6 +254,20 @@ class FirstTimeBonusInfo(NullTolerantResponse):
     awarded_at: str
 
 
+class OnboardingChallengeCompleteResponse(NullTolerantResponse):
+    """Result of finishing the new-user Get Started Challenge.
+
+    `awarded` is True only on the first successful completion (when the
+    onboarding_complete bonus + reward crate are granted); subsequent calls
+    are idempotent no-ops with awarded=False.
+    """
+    awarded: bool
+    xp: int
+    crate_granted: bool
+    crate_type: Optional[str] = None
+    message: str
+
+
 # =============================================================================
 # CONSUMABLES / CRATES
 # =============================================================================

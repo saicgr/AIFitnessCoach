@@ -1034,6 +1034,10 @@ FIRST_TIME_BONUSES = {
     # Account Milestones (Welcome Bonus is handled by daily login's first_login)
     "first_chat": 15,               # First Chat with AI Coach (reduced to prevent level inflation)
     "first_complete_profile": 0,    # Complete Profile (no XP - happens during onboarding)
+    # Get Started Challenge (new-user onboarding checklist — see GetStartedChallengeCard)
+    "first_goal_set": 25,           # Set your goal (often already done in onboarding)
+    "first_plan_generated": 50,     # Generate your first workout plan
+    "onboarding_complete": 100,     # Finish all Get Started Challenge items (+ reward crate)
     # First Meal Logs
     "first_breakfast": 50,
     "first_lunch": 50,
@@ -1144,6 +1148,105 @@ async def award_first_time_bonus(
         raise
     except Exception as e:
         logger.error(f"[XP] Error awarding first-time bonus: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
+@router.post("/complete-onboarding-challenge", response_model=OnboardingChallengeCompleteResponse)
+async def complete_onboarding_challenge(
+    current_user=Depends(get_current_user)
+):
+    """
+    Finish the new-user Get Started Challenge.
+
+    Idempotently awards the `onboarding_complete` first-time bonus (100 XP) and,
+    on the FIRST successful completion only, grants a reward crate (a
+    `fitness_crate` consumable the user can open via POST /xp/open-crate).
+
+    Dedup rides on the same `user_first_time_bonuses` table used by
+    award_first_time_bonus — calling this more than once is a safe no-op.
+    """
+    CRATE_TYPE = "fitness_crate"
+    BONUS_TYPE = "onboarding_complete"
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        xp_amount = FIRST_TIME_BONUSES[BONUS_TYPE]
+
+        # Already completed? -> idempotent no-op.
+        existing = db.client.table("user_first_time_bonuses").select("id").eq(
+            "user_id", user_id
+        ).eq(
+            "bonus_type", BONUS_TYPE
+        ).execute()
+
+        if existing.data and len(existing.data) > 0:
+            logger.info(f"[XP] Onboarding challenge already completed for user {user_id}")
+            return OnboardingChallengeCompleteResponse(
+                awarded=False,
+                xp=0,
+                crate_granted=False,
+                crate_type=None,
+                message="Get Started Challenge already completed",
+            )
+
+        # Ensure user has a user_xp record (mirrors award_first_time_bonus).
+        try:
+            db.client.table("user_xp").upsert({
+                "user_id": user_id,
+                "total_xp": 0,
+                "current_level": 1,
+                "title": "Novice",
+                "trust_level": 1
+            }, on_conflict="user_id", ignore_duplicates=True).execute()
+        except Exception as init_err:
+            logger.warning(f"[XP] Could not ensure user_xp record: {init_err}", exc_info=True)
+
+        # Record the completion bonus (the unique (user_id, bonus_type) row is
+        # what makes this idempotent).
+        db.client.table("user_first_time_bonuses").insert({
+            "user_id": user_id,
+            "bonus_type": BONUS_TYPE,
+            "xp_awarded": xp_amount
+        }).execute()
+
+        # Award the completion XP.
+        db.client.rpc(
+            "award_xp",
+            {
+                "p_user_id": user_id,
+                "p_xp_amount": xp_amount,
+                "p_source": "first_time_bonus",
+                "p_source_id": BONUS_TYPE,
+                "p_description": "Completed the Get Started Challenge",
+                "p_is_verified": False
+            }
+        ).execute()
+
+        # Grant the reward crate as an openable consumable. Best-effort: a crate
+        # failure must not roll back the (already-awarded) XP, so we don't raise.
+        crate_granted = False
+        try:
+            db.client.rpc(
+                "add_consumable",
+                {"p_user_id": user_id, "p_item_type": CRATE_TYPE, "p_quantity": 1}
+            ).execute()
+            crate_granted = True
+        except Exception as crate_err:
+            logger.error(f"[XP] Onboarding crate grant failed for user {user_id}: {crate_err}", exc_info=True)
+
+        logger.info(f"[XP] Onboarding challenge completed: +{xp_amount} XP, crate_granted={crate_granted} (user {user_id})")
+        return OnboardingChallengeCompleteResponse(
+            awarded=True,
+            xp=xp_amount,
+            crate_granted=crate_granted,
+            crate_type=CRATE_TYPE if crate_granted else None,
+            message=f"Get Started Challenge complete! +{xp_amount} XP" + (" and a reward crate!" if crate_granted else ""),
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] Error completing onboarding challenge: {e}", exc_info=True)
         raise safe_internal_error(e, "xp")
 
 
