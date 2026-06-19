@@ -178,6 +178,371 @@ def _is_trivial_message(message: str) -> bool:
 
 
 # ──────────────────────────────────────────────
+# Persona-aware trivial fast-path replies
+# ──────────────────────────────────────────────
+#
+# The trivial fast-path ("Hi" → instant canned reply) must NOT call Gemini, but
+# it must still sound like the user's chosen coach. We map the user's
+# `coaching_style` (the strongest voice signal — e.g. "drill-sergeant" vs
+# "friendly") into one of five TONE BUCKETS, and give each bucket a variant pool
+# (≥4 phrasings) per trivial category. `communication_tone` is used as a
+# tiebreaker / secondary nudge for a couple of styles that are tone-defined
+# rather than style-defined (e.g. roast-mode).
+#
+# Buckets:
+#   - "tough"       — drill-sergeant, tough-love, college-coach, roast-mode tone
+#   - "supportive"  — friendly, motivational, encouraging tone
+#   - "professional"— professional, scientist, formal tone
+#   - "zen"         — zen-master
+#   - "playful"     — hype-beast, comedian, old-school, gen-z/surfer/pirate/anime tones
+# Anything unknown falls back to "neutral" (style-blind, used when ai_settings
+# is None or the style/tone is unrecognized).
+
+# coaching_style → bucket. This is the PRIMARY differentiator.
+_STYLE_TO_BUCKET: Dict[str, str] = {
+    "drill-sergeant": "tough",
+    "tough-love": "tough",
+    "college-coach": "tough",
+    "friendly": "supportive",
+    "motivational": "supportive",
+    "professional": "professional",
+    "scientist": "professional",
+    "zen-master": "zen",
+    "hype-beast": "playful",
+    "comedian": "playful",
+    "old-school": "playful",
+}
+
+# communication_tone → bucket. Used only when the style didn't resolve a
+# distinctive bucket (i.e. style is "motivational"/missing) OR when the tone is
+# itself a strong voice (roast-mode, gen-z, etc.). Style wins over tone when both
+# map; tone only overrides the soft default "supportive".
+_TONE_TO_BUCKET: Dict[str, str] = {
+    "roast-mode": "tough",
+    "sarcastic": "tough",
+    "formal": "professional",
+    "gen-z": "playful",
+    "surfer": "playful",
+    "pirate": "playful",
+    "anime": "playful",
+    "british": "professional",
+    "casual": "supportive",
+    "encouraging": "supportive",
+}
+
+# Variant pools. Each bucket has ≥4 distinct phrasings per category. "{name}"
+# is substituted with the user's coach_name where a line references the coach.
+# Lines are deliberately written in-voice, not just name-prepended.
+_TRIVIAL_VARIANTS: Dict[str, Dict[str, List[str]]] = {
+    "tough": {
+        "greeting": [
+            "You showed up. Good. What are we training today?",
+            "No small talk — tell me what we're working on.",
+            "Drop and tell me what we're hitting today.",
+            "You're here for a reason. What's the mission?",
+        ],
+        "thanks": [
+            "Don't thank me — go earn it. 💪",
+            "Save it for after the set. What's next?",
+            "Gratitude's nice. Reps are better. Keep moving.",
+            "Noted. Now back to work.",
+        ],
+        "goodbye": [
+            "Out already? Fine — but you better show up tomorrow.",
+            "Go. And don't skip leg day on me.",
+            "Dismissed. Rest hard, train harder.",
+            "We're done for now. Don't get comfortable.",
+        ],
+        "morning": [
+            "Up and at it. No excuses today — what's the plan?",
+            "Morning. The work doesn't do itself. Let's move.",
+            "Sun's up, so are you. Good. What are we training?",
+            "First rep of the day starts now. What's the target?",
+        ],
+        "afternoon": [
+            "Half the day's gone. What have you done with it?",
+            "Afternoon. Still time to put in work. Let's go.",
+            "You've got hours left — use them. What's the plan?",
+            "No coasting into the evening. What are we hitting?",
+        ],
+        "affirmation": [
+            "Good. Now prove it.",
+            "Locked in. Let's go. 💪",
+            "That's the attitude. Keep it.",
+            "Understood. Move.",
+        ],
+    },
+    "supportive": {
+        "greeting": [
+            "Hey! So glad you're here — what's on your mind today?",
+            "Hey, good to see you! Workout, nutrition, or just checking in?",
+            "Hey there! How are you feeling today — what can I help with?",
+            "Hi! Always happy to hear from you. What's up today?",
+        ],
+        "thanks": [
+            "Anytime — that's what I'm here for! 💪",
+            "Of course! You're doing great. What's next?",
+            "Always happy to help. Proud of you for showing up. 🙌",
+            "You got it! Let me know what else you need.",
+        ],
+        "goodbye": [
+            "Talk soon — keep showing up, you're doing amazing! 👋",
+            "Catch you later! Rest up and be kind to yourself. 💙",
+            "See you soon! Proud of the work you're putting in.",
+            "Bye for now — I'm rooting for you. 👋",
+        ],
+        "morning": [
+            "Good morning! Ready to make today a good one? ☀️",
+            "Morning! Hope you slept well — what's the plan today?",
+            "Good morning! So glad you're starting the day with me. 💪",
+            "Morning! Let's ease into a great day together.",
+        ],
+        "afternoon": [
+            "Good afternoon! How's your day going so far?",
+            "Afternoon! Hope it's been a good one — what can I help with?",
+            "Hey, good afternoon! Need a little mid-day boost?",
+            "Good afternoon! Still time to make today count. 💪",
+        ],
+        "affirmation": [
+            "Love it! 🙌",
+            "Awesome — I'm here whenever you need me!",
+            "Perfect! You've got this. 💪",
+            "Great! Let me know what's next.",
+        ],
+    },
+    "professional": {
+        "greeting": [
+            "Hello. How can I help you today?",
+            "Hi there. What would you like to work on — training or nutrition?",
+            "Good to connect. What can I assist you with?",
+            "Hello. Let me know what you'd like to cover.",
+        ],
+        "thanks": [
+            "You're welcome. Let me know if anything else comes up.",
+            "Happy to help. What's next on your agenda?",
+            "Of course. I'm here if you need further detail.",
+            "Glad that was useful.",
+        ],
+        "goodbye": [
+            "Take care. We'll pick this up next time.",
+            "Goodbye for now. Stay consistent.",
+            "Until next time. Rest well.",
+            "Talk soon. Keep up the good work.",
+        ],
+        "morning": [
+            "Good morning. What's on the agenda today?",
+            "Morning. Let me know how I can support your training today.",
+            "Good morning. Ready when you are.",
+            "Morning. What would you like to focus on?",
+        ],
+        "afternoon": [
+            "Good afternoon. How can I help?",
+            "Afternoon. What would you like to work on?",
+            "Good afternoon. Let me know what you need.",
+            "Afternoon. Ready when you are.",
+        ],
+        "affirmation": [
+            "Understood.",
+            "Noted. Let me know if you need anything else.",
+            "Got it.",
+            "Sounds good.",
+        ],
+    },
+    "zen": {
+        "greeting": [
+            "Welcome. Take a breath — what's present for you today?",
+            "Good to see you. Where shall we begin?",
+            "Hello. One step at a time. What's on your mind?",
+            "Welcome back. What does your body need today?",
+        ],
+        "thanks": [
+            "You're welcome. The effort is yours.",
+            "Of course. Carry that calm with you.",
+            "It's my honor. Stay present.",
+            "Gratitude received. Breathe, and continue.",
+        ],
+        "goodbye": [
+            "Go gently. Until we meet again.",
+            "Rest well. The journey continues tomorrow.",
+            "Be at peace. One day at a time.",
+            "Farewell for now. Honor the rest.",
+        ],
+        "morning": [
+            "Good morning. Begin slowly — the day will meet you.",
+            "Morning. Breathe in. What feels right today?",
+            "A new morning, a fresh page. Where shall we start?",
+            "Morning. One mindful breath, then we begin.",
+        ],
+        "afternoon": [
+            "Good afternoon. Take a moment to settle in.",
+            "Afternoon. How is your energy flowing?",
+            "Good afternoon. Be where your feet are. What's next?",
+            "Afternoon. Pause, then we continue.",
+        ],
+        "affirmation": [
+            "Good. Stay with it.",
+            "Mm. One breath at a time.",
+            "Just so. Continue.",
+            "Noted. Be present.",
+        ],
+    },
+    "playful": {
+        "greeting": [
+            "Heyyy! 🔥 What are we getting into today?",
+            "What's good?! Ready to make some gains?",
+            "Yo! Let's get after it — what's the move today?",
+            "Hey hey! 💪 What's the plan, let's make it fun!",
+        ],
+        "thanks": [
+            "Anytime, legend! 🙌",
+            "You got it! Now go be awesome. 🔥",
+            "No prob! That's what I'm here for. 💪",
+            "Heck yeah — anytime!",
+        ],
+        "goodbye": [
+            "Later, champ! Go crush it. 🔥",
+            "Peace out! Catch you next round. ✌️",
+            "See ya! Stay legendary. 💪",
+            "Bye for now — don't be a stranger! 👋",
+        ],
+        "morning": [
+            "GOOD MORNING! ☀️ Let's make today legendary!",
+            "Morning, sunshine! 🔥 Ready to move?",
+            "Rise and grind! What are we hitting today? 💪",
+            "Mornin'! New day, new gains. Let's go!",
+        ],
+        "afternoon": [
+            "Afternoon vibes! ☀️ What's the move?",
+            "Heyyy, good afternoon! Ready for round two?",
+            "Afternoon! Still plenty of day to get after it. 🔥",
+            "What's good this afternoon? Let's make it count!",
+        ],
+        "affirmation": [
+            "LET'S GOOO! 🔥",
+            "Heck yeah! 💪",
+            "That's a W! 🙌",
+            "Love it — keep that energy!",
+        ],
+    },
+    "neutral": {
+        "greeting": [
+            "Hey! What's on your mind today — workout, nutrition, or something else?",
+            "Hi there! How can I help you today?",
+            "Hey! What can I help you with — training, food, or a quick question?",
+            "Hello! What would you like to work on today?",
+        ],
+        "thanks": [
+            "Anytime! Let me know what's next. 💪",
+            "You're welcome! What else can I help with?",
+            "Of course! Happy to help.",
+            "No problem — just say the word.",
+        ],
+        "goodbye": [
+            "Talk soon — keep showing up. 👋",
+            "Catch you later!",
+            "See you next time. Stay consistent. 💪",
+            "Bye for now!",
+        ],
+        "morning": [
+            "Morning! Ready to crush today's session?",
+            "Good morning! What's the plan today?",
+            "Morning! How can I help you start the day?",
+            "Good morning! Let's make it a good one.",
+        ],
+        "afternoon": [
+            "Good afternoon! How can I help?",
+            "Afternoon! What can I do for you?",
+            "Good afternoon! What's on your mind?",
+            "Hey, good afternoon — what's up?",
+        ],
+        "affirmation": [
+            "👍",
+            "Got it!",
+            "Sounds good!",
+            "Perfect.",
+        ],
+    },
+}
+
+# Emoji-stripping for users who turned emojis off. Covers the BMP + common
+# pictographic ranges used in the pools above. Pure regex — no I/O.
+_EMOJI_RE = re.compile(
+    "[\U0001F300-\U0001FAFF\U00002600-\U000027BF\U0001F1E6-\U0001F1FF←-⇿⬀-⯿️]+",
+    flags=re.UNICODE,
+)
+
+
+def _strip_emojis(text: str) -> str:
+    """Remove emojis and collapse the whitespace they leave behind."""
+    cleaned = _EMOJI_RE.sub("", text)
+    return re.sub(r"\s{2,}", " ", cleaned).strip()
+
+
+def _resolve_coach_name(ai_settings: Any) -> str:
+    """Resolve the user's coach display name, sanitized.
+
+    Falls back to "Coach" only as a neutral last resort — and even then we avoid
+    *hardcoding* the literal "Coach" into greeting copy (the pools above don't
+    reference {name} unless a coach name is actually set in a tough/playful line).
+    """
+    if ai_settings is None:
+        return "Coach"
+    raw = getattr(ai_settings, "coach_name", None)
+    if not raw:
+        return "Coach"
+    # Strip anything that isn't a normal name character (defense-in-depth, mirrors
+    # personality.sanitize_coach_name without importing it — keeps this a leaf fn).
+    cleaned = re.sub(r"[^a-zA-Z0-9\s\-\']", "", str(raw))[:30].strip()
+    return cleaned or "Coach"
+
+
+def _resolve_tone_bucket(ai_settings: Any) -> str:
+    """Map the persona's coaching_style (primary) + communication_tone (secondary)
+    to one of the variant-pool buckets. Returns "neutral" when nothing resolves."""
+    if ai_settings is None:
+        return "neutral"
+
+    style = (getattr(ai_settings, "coaching_style", None) or "").strip().lower()
+    tone = (getattr(ai_settings, "communication_tone", None) or "").strip().lower()
+
+    # Style is the strongest signal — use it first.
+    bucket = _STYLE_TO_BUCKET.get(style)
+    if bucket:
+        # A strongly tone-defined voice (e.g. roast-mode) can still override a
+        # soft "supportive" style default like "motivational".
+        if bucket == "supportive":
+            tone_bucket = _TONE_TO_BUCKET.get(tone)
+            if tone_bucket and tone_bucket != "supportive":
+                return tone_bucket
+        return bucket
+
+    # Style unknown/unset — fall back to the tone mapping.
+    tone_bucket = _TONE_TO_BUCKET.get(tone)
+    if tone_bucket:
+        return tone_bucket
+
+    return "neutral"
+
+
+def _pick_trivial_variant(bucket: str, category: str, coach_name: str) -> str:
+    """Select one variant from a bucket's pool for the given category.
+
+    Varies within the pool with random.choice (pure CPU — keeps the fast-path
+    instant) while the bucket keeps the register consistent for a given coach.
+    Substitutes {name} with the user's coach_name where the line uses it.
+    """
+    import random
+
+    pool = _TRIVIAL_VARIANTS.get(bucket, _TRIVIAL_VARIANTS["neutral"]).get(category)
+    if not pool:
+        pool = _TRIVIAL_VARIANTS["neutral"].get(category) or ["Hey! How can I help?"]
+    line = random.choice(pool)
+    if "{name}" in line:
+        line = line.replace("{name}", coach_name)
+    return line
+
+
+# ──────────────────────────────────────────────
 # @mention patterns for direct agent routing
 AGENT_MENTION_PATTERNS = {
     r"@nutrition\b": AgentType.NUTRITION,
@@ -450,21 +815,64 @@ class LangGraphCoachService:
             logger.warning(f"Media usage check failed (non-blocking): {e}", exc_info=True)
 
     @staticmethod
-    def _fast_trivial_reply(message: str) -> str:
-        """Canned reply for trivial greetings/thanks/goodbyes. No Gemini call."""
+    def _fast_trivial_reply(message: str, ai_settings: Any = None) -> str:
+        """Persona-aware canned reply for trivial greetings/thanks/goodbyes.
+
+        This is the instant fast-path: NO Gemini call, NO I/O, pure function.
+        The whole point is sub-100ms latency, so we never touch the network or
+        the DB here. Persona comes entirely from the ``ai_settings`` object the
+        caller already loaded for the normal reply path (``request.ai_settings``),
+        so making greetings persona-aware costs zero extra round trips.
+
+        Why personas matter here: previously every coach returned the IDENTICAL
+        line ("Hey! What's on your mind today …"), so swapping "Coach Mike" for
+        "Sergeant Max" felt fake. Greetings are *motivational* copy (per the
+        project transactional-vs-motivational rule), so they SHOULD speak in the
+        user's chosen coach voice — including the coach's actual name.
+
+        Args:
+            message: The user's raw trivial message ("Hi", "thanks", "bye", …).
+            ai_settings: The user's ``AISettings`` (or anything exposing
+                ``coaching_style`` / ``communication_tone`` / ``coach_name`` /
+                ``use_emojis``). May be ``None`` — we degrade to the neutral pool.
+
+        Returns:
+            A canned reply string whose VOICE reflects the persona's tone bucket
+            and whose name references use the user's real coach_name.
+        """
         m = message.strip().lower().rstrip("!.?,")
-        if m in {"thanks", "thank you", "thx", "ty", "cheers"}:
-            return "Anytime! Let me know what's next 💪"
-        if m in {"bye", "goodbye", "cya", "see ya", "later", "good night", "gn"}:
-            return "Talk soon — keep showing up. 👋"
-        if m in {"good morning", "gm"}:
-            return "Morning! Ready to crush today's session?"
-        if m in {"good afternoon", "good evening"}:
-            return f"Good {m.split()[-1]}! How can I help?"
-        if m in {"ok", "okay", "cool", "nice", "great", "awesome", "sweet"}:
-            return "👍"
-        # default greeting
-        return "Hey! What's on your mind today — workout, nutrition, or something else?"
+
+        # Resolve the persona's tone bucket + name from whatever settings object
+        # the caller had in scope. Everything below is defensive getattr so a
+        # plain dict, a pydantic model, or None all work without throwing on the
+        # hot path.
+        bucket = _resolve_tone_bucket(ai_settings)
+        coach_name = _resolve_coach_name(ai_settings)
+        use_emojis = True
+        if ai_settings is not None:
+            use_emojis = bool(getattr(ai_settings, "use_emojis", True))
+
+        # Pick the category, then select a variant from the bucket's pool. We
+        # vary WITHIN a pool with random.choice (fine here — pure CPU, no I/O),
+        # but the PRIMARY differentiator is `bucket`, so the same coach stays
+        # consistent in register and two different coaches sound different.
+        if m in {"thanks", "thank you", "thx", "ty", "cheers", "appreciate it", "tysm"}:
+            category = "thanks"
+        elif m in {"bye", "goodbye", "cya", "see ya", "later", "good night", "gn", "night"}:
+            category = "goodbye"
+        elif m in {"good morning", "gm", "morning", "mornin"}:
+            category = "morning"
+        elif m in {"good afternoon", "good evening", "good evening!", "afternoon", "evening"}:
+            category = "afternoon"
+        elif m in {"ok", "okay", "k", "cool", "nice", "great", "awesome", "sweet", "got it", "gotcha"}:
+            category = "affirmation"
+        else:
+            category = "greeting"
+
+        line = _pick_trivial_variant(bucket, category, coach_name)
+        if not use_emojis:
+            line = _strip_emojis(line)
+        return line
 
     def _detect_agent_mention(self, message: str) -> Tuple[Optional[AgentType], str]:
         """
@@ -1524,7 +1932,9 @@ class LangGraphCoachService:
                 and not getattr(request, "video_frames", None)
                 and _is_trivial_message(cleaned_message)
             ):
-                trivial_reply = self._fast_trivial_reply(cleaned_message)
+                trivial_reply = self._fast_trivial_reply(
+                    cleaned_message, getattr(request, "ai_settings", None)
+                )
                 logger.info(f"Trivial fast-path hit for message: {cleaned_message[:30]!r}")
                 return ChatResponse(
                     message=trivial_reply,
@@ -1813,7 +2223,9 @@ class LangGraphCoachService:
             and not getattr(request, "video_frames", None)
             and _is_trivial_message(cleaned_message)
         ):
-            trivial_reply = self._fast_trivial_reply(cleaned_message)
+            trivial_reply = self._fast_trivial_reply(
+                cleaned_message, getattr(request, "ai_settings", None)
+            )
             logger.info(f"Trivial fast-path hit (stream): {cleaned_message[:30]!r}")
             yield {"type": "token", "delta": trivial_reply}
             yield {
