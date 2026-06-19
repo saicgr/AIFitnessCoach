@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — Onboarding & Paywall: Authority · Timeline · N× Faster (Before / After)</title>
+<style>
+  :root{
+    --orange:#F97316;        /* onboarding accent */
+    --orange-deep:#EA580C;
+    --paywall:#FC4C02;       /* paywall accent */
+    --bg:#0b0b0d; --card:#141416; --elev:#1c1c20;
+    --line:#26262a; --t1:#FAFAFA; --t2:#A1A1AA; --t3:#7d7d85;
+    --green:#16A34A; --grey:#6b6b73;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#050505;color:var(--t1);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;
+    padding:40px 24px 80px}
+  h1{font-size:26px;letter-spacing:-.5px;margin:0 0 4px}
+  .sub{color:var(--t2);font-size:14px;margin:0 0 32px;max-width:820px;line-height:1.5}
+  .pattern{margin:0 0 56px}
+  .pattern > h2{font-size:19px;margin:0 0 2px;color:var(--orange)}
+  .pattern .note{color:var(--t2);font-size:13px;margin:0 0 18px;max-width:860px;line-height:1.5}
+  .row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .tag{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+    padding:4px 10px;border-radius:20px}
+  .tag.before{background:#2a2a2e;color:var(--t2)}
+  .tag.after{background:rgba(252,76,2,.16);color:var(--paywall);border:1px solid rgba(252,76,2,.4)}
+  /* phone frame */
+  .phone{width:300px;border-radius:34px;background:var(--bg);border:1px solid #2a2a2e;
+    padding:18px 16px 20px;box-shadow:0 24px 60px rgba(0,0,0,.55);position:relative;overflow:hidden}
+  .phone::before{content:"";position:absolute;top:0;left:0;right:0;height:160px;pointer-events:none;
+    background:radial-gradient(120% 80% at 50% -20%, rgba(249,115,22,.16), transparent 60%)}
+  .phone.pw::before{background:radial-gradient(120% 80% at 50% -20%, rgba(252,76,2,.18), transparent 60%)}
+  .h-title{font-size:18px;font-weight:800;letter-spacing:-.3px;line-height:1.25;margin:6px 2px 2px}
+  .h-title .accent{color:var(--orange)}
+  .h-sub{font-size:11.5px;color:var(--t2);margin:0 2px 12px;line-height:1.4}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:10px 0}
+  .stat{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 9px}
+  .stat .l{font-size:10px;color:var(--t2);display:flex;gap:4px;align-items:center}
+  .stat .v{font-size:14px;font-weight:700;margin-top:3px}
+  .chips{display:flex;gap:7px;margin:10px 0 2px}
+  .chip{font-size:10.5px;padding:5px 9px;border-radius:18px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);color:var(--t2);font-weight:600}
+  .chip.sel{border-color:var(--orange);background:rgba(249,115,22,.14);color:#ffd9bf}
+  .legend{display:flex;gap:16px;justify-content:center;font-size:11px;color:var(--t2);font-weight:600;margin:8px 0 2px}
+  .legend i{display:inline-block;width:14px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+  .legend i.solo{height:0;border-top:2px dashed var(--grey)}
+  /* the N× chip (timeline) */
+  .nx-chip{display:inline-flex;align-items:center;gap:7px;margin-top:9px;padding:8px 12px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(249,115,22,.18),rgba(249,115,22,.07));
+    border:1px solid rgba(249,115,22,.32);font-size:13px}
+  .nx-chip b{color:var(--orange);font-weight:900;font-size:16px}
+  .cite{font-size:11px;margin-top:8px;color:var(--orange);font-weight:600}
+  .cite u{text-decoration:underline;text-underline-offset:2px}
+  .cite .lead{color:rgba(249,115,22,.8);font-weight:500}
+  .cite.muted{color:var(--t2)} .cite.muted .lead{color:var(--t3)}
+  .band-note{display:flex;gap:6px;font-size:11px;color:var(--t2);margin-top:8px;line-height:1.35}
+  .btn{margin-top:14px;width:100%;padding:13px;border-radius:14px;text-align:center;font-weight:800;font-size:14px;
+    background:linear-gradient(135deg,var(--orange),var(--orange-deep));color:#160b03;
+    box-shadow:0 8px 20px rgba(249,115,22,.4)}
+  /* paywall */
+  .pw .btab{display:flex;gap:6px;background:var(--card);border-radius:12px;padding:4px;margin:12px 0}
+  .pw .btab div{flex:1;text-align:center;font-size:12px;font-weight:700;padding:9px 0;border-radius:9px;color:var(--t2)}
+  .pw .btab .on{background:var(--elev);color:var(--t1);border:1px solid rgba(252,76,2,.4)}
+  .pw .save{font-size:9px;color:var(--paywall);display:block;font-weight:800}
+  .plan{border:2px solid var(--paywall);border-radius:16px;padding:13px;margin-top:4px;background:var(--card)}
+  .plan .price{font-size:24px;font-weight:900}.plan .price s{font-size:14px;color:var(--t3);font-weight:600;margin-right:6px}
+  .plan .billed{font-size:11px;color:var(--t2);margin-top:2px}
+  .pw .pwbtn{margin-top:14px;width:100%;padding:14px;border-radius:14px;text-align:center;font-weight:800;font-size:15px;
+    background:var(--paywall);color:#fff;box-shadow:0 8px 22px rgba(252,76,2,.4)}
+  /* the hero N× module */
+  .hero{border:1px solid rgba(252,76,2,.35);border-radius:20px;padding:18px 16px 16px;text-align:center;
+    background:linear-gradient(135deg,rgba(252,76,2,.16),rgba(252,76,2,.06));margin:6px 0 4px;position:relative;overflow:hidden}
+  .hero .kick{font-size:12px;color:var(--t2);font-weight:600}
+  .hero .big{position:relative;height:64px;display:flex;align-items:center;justify-content:center;gap:6px;margin:2px 0}
+  .hero .glow{position:absolute;inset:0;background:radial-gradient(50% 70% at 50% 50%,rgba(252,76,2,.32),transparent 70%);
+    animation:pulse 2.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.55;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}}
+  .hero .bolt{font-size:28px;filter:drop-shadow(0 0 10px rgba(252,76,2,.8));z-index:1}
+  .hero .mult{font-size:50px;font-weight:900;letter-spacing:-1.5px;color:var(--paywall);z-index:1;
+    text-shadow:0 4px 18px rgba(252,76,2,.45)}
+  .hero .faster{font-size:17px;font-weight:900;align-self:flex-end;margin-bottom:8px;z-index:1}
+  .hero .vs{font-size:12.5px;color:var(--t2);font-weight:500}
+  /* spark */
+  .spark{position:absolute;top:34px;left:50%;width:120px;height:120px;transform:translate(-50%,-50%);z-index:0;
+    animation:spark 2.6s ease-out infinite}
+  @keyframes spark{0%{opacity:.9;transform:translate(-50%,-50%) scale(.2)}40%,100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+  /* trial timeline nodes (Today / Day 5 / Day 7) */
+  .tnode{display:flex;gap:10px;align-items:flex-start;position:relative;padding-bottom:12px}
+  .tnode:not(.last)::before{content:"";position:absolute;left:14px;top:30px;bottom:-2px;width:2px;background:rgba(252,76,2,.25)}
+  .tnode .tico{width:30px;height:30px;border-radius:50%;background:rgba(252,76,2,.15);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;z-index:1}
+  .tnode .tt{font-size:13px;font-weight:800}
+  .tnode .ts{font-size:11px;color:var(--t2);line-height:1.35;margin-top:1px}
+  .pw .ptile{flex:1;border:1.5px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+  .pw .ptile.on{border-color:var(--paywall);background:rgba(252,76,2,.06)}
+  .pw .ptile .rb{font-size:8px;font-weight:800;color:var(--paywall);display:block;margin-bottom:3px}
+  .pw .ptile .pp{font-size:17px;font-weight:900}.pw .ptile .pu{font-size:11px;color:var(--t2)}
+  .annot{max-width:300px;font-size:12px;color:var(--t2);line-height:1.5;margin-top:4px}
+  .annot b{color:var(--t1)}
+  /* science cards */
+  .sci-card{background:var(--elev);border:1px solid var(--line);border-radius:13px;padding:12px;margin-bottom:10px}
+  .sci-card .ico{width:30px;height:30px;border-radius:9px;background:rgba(249,115,22,.15);display:flex;align-items:center;justify-content:center;margin-bottom:7px}
+  .sci-card .claim{font-size:12.5px;font-weight:600;line-height:1.4;margin-bottom:6px}
+  .trust-bullet{background:var(--elev);border:1px solid rgba(249,115,22,.18);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+  .trust-bullet .bt{font-size:13px;font-weight:700}
+  .trust-bullet .bd{font-size:11.5px;color:var(--t2);line-height:1.35;margin-top:2px}
+  svg{display:block}
+  .key{font-size:12px;color:var(--t3);margin-top:6px}
+</style>
+</head>
+<body>
+<h1>Onboarding & Paywall — Authority · Goal Timeline · N× Faster</h1>
+<p class="sub">Before / after proofs of the three shipped patterns. Every number shown is either the user's own input or tappable to a real peer-reviewed source — no fabricated "4.2×". The paywall multiplier is <b>derived per-user</b> from the same plan-vs-solo engine that drives the timeline. New surfaces are flag-gated OFF (ship dark, A/B on).</p>
+
+<!-- ============ PATTERN 2 — GOAL TIMELINE ============ -->
+<div class="pattern">
+  <h2>Pattern 2 · Goal timeline (primary)</h2>
+  <p class="note">Was a single orange line (reads like a guarantee). Now: a fanned <b>confidence band</b> (estimate, not promise), a grey dashed <b>“On your own”</b> curve that visibly lags, the substantiated <b>⚡ N× faster</b> chip, and tappable NHS / Obesity-Reviews citations. Dragging the pace chips re-animates the curve + multiplier live with haptics.</p>
+  <div class="row">
+    <!-- BEFORE -->
+    <div class="col">
+      <span class="tag before">Before</span>
+      <div class="phone">
+        <div class="h-title">At this rate you'll reach your goal by <span class="accent">Mar, 2027</span></div>
+        <div class="h-sub">Your personalized plan is ready to help you reach your goal weight safely.</div>
+        <svg width="268" height="120" viewBox="0 0 268 120">
+          <defs><linearGradient id="b1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F97316" stop-opacity=".3"/><stop offset="1" stop-color="#F97316" stop-opacity="0"/></linearGradient></defs>
+          <path d="M8,18 C70,30 120,70 260,98 L260,120 L8,120 Z" fill="url(#b1)"/>
+          <path d="M8,18 C70,30 120,70 260,98" fill="none" stroke="#F97316" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="8" cy="18" r="5" fill="#F97316" stroke="#fff" stroke-width="2"/>
+          <circle cx="260" cy="98" r="5" fill="#F97316" stroke="#fff" stroke-width="2"/>
+        </svg>
+        <div class="chips"><span class="chip">Slow</span><span class="chip sel">Moderate</span><span class="chip">Fast</span></div>
+        <div class="stats">
+          <div class="stat"><div class="l">⚖︎ Current</div><div class="v">198 lbs</div></div>
+          <div class="stat"><div class="l">⚑ Goal</div><div class="v">176 lbs</div></div>
+        </div>
+        <div class="btn">Continue</div>
+      </div>
+    </div>
+    <!-- AFTER -->
+    <div class="col">
+      <span class="tag after">After</span>
+      <div class="phone">
+        <div class="h-title">At this rate you'll reach your goal by <span class="accent">Mar, 2027</span></div>
+        <div class="h-sub">Your personalized plan is ready to help you reach your goal weight safely.</div>
+        <svg width="268" height="120" viewBox="0 0 268 120">
+          <defs>
+            <linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F97316" stop-opacity=".18"/><stop offset="1" stop-color="#F97316" stop-opacity=".05"/></linearGradient>
+            <linearGradient id="pl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#F97316"/><stop offset="1" stop-color="#EA580C"/></linearGradient>
+          </defs>
+          <!-- confidence band (fans out toward goal) -->
+          <path d="M8,18 C70,28 120,62 260,86 C120,78 70,40 8,22 Z" fill="url(#band)"/>
+          <!-- solo dashed (lags, stays high) -->
+          <path d="M8,18 C80,24 150,32 260,46" fill="none" stroke="#6b6b73" stroke-width="2.4" stroke-dasharray="6 5" stroke-linecap="round"/>
+          <!-- plan line -->
+          <path d="M8,18 C70,30 120,68 260,96" fill="none" stroke="url(#pl)" stroke-width="3.5" stroke-linecap="round"/>
+          <circle cx="8" cy="18" r="5" fill="#F97316" stroke="#fff" stroke-width="2"/>
+          <circle cx="260" cy="96" r="6" fill="#F97316" stroke="#fff" stroke-width="2"/>
+          <!-- goal chip -->
+          <g transform="translate(206,2)"><rect width="58" height="20" rx="9" fill="#F97316"/><text x="29" y="14" font-size="10.5" font-weight="800" fill="#160b03" text-anchor="middle">🎯 Mar 4</text></g>
+        </svg>
+        <div class="legend"><span><i style="background:#F97316"></i>Your plan</span><span><i class="solo"></i>On your own</span></div>
+        <div class="chips"><span class="chip">Slow</span><span class="chip sel">Moderate</span><span class="chip">Fast</span></div>
+        <div style="text-align:center"><span class="nx-chip">⚡ <b>3.2×</b> faster <span style="color:var(--t2);font-size:12px">than going solo</span></span></div>
+        <div class="cite">↳ <span class="lead">Why this works — </span><u>Obesity Reviews, 2021</u> ↗</div>
+        <div class="band-note">ⓘ <div>Shaded band is an estimated range — actual results vary.<br><span class="cite muted" style="margin-top:2px;display:inline-block"><span class="lead">Safe rate: </span><u>NHS Weight Loss Guidance</u> ↗</span></div></div>
+        <div class="btn">Continue</div>
+      </div>
+    </div>
+    <p class="annot"><b>What changed:</b> dual curve + fanned band, ⚡3.2× chip (derived from this user's 198→176 lb at moderate pace), two tappable citations, safe-rate cap enforced, live animated recompute on pace-drag.</p>
+    <div class="col">
+      <span class="tag after">Interactive · tap/drag the line</span>
+      <div style="width:280px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;position:relative">
+        <div style="font-size:12px;color:var(--t2);margin-bottom:8px">Tap or drag anywhere on the curve — a tooltip follows your finger with both values at that date:</div>
+        <div style="background:var(--elev);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:inline-block">
+          <div style="font-size:12.5px;font-weight:800">Aug 2026</div>
+          <div style="font-size:12px;margin-top:3px"><span style="color:var(--orange);font-weight:700">Your plan&nbsp;&nbsp;</span><b>184.3 lbs</b></div>
+          <div style="font-size:12px;margin-top:2px"><span style="color:var(--t2);font-weight:600">On your own&nbsp;&nbsp;</span><b style="color:var(--t2)">193.1 lbs</b></div>
+        </div>
+        <div style="font-size:11px;color:var(--t3);margin-top:10px;line-height:1.5">• 26px hit-area for easy grabbing<br>• guide line + enlarged dot snaps to the point<br>• one combined box (no clutter from band/solo)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PATTERN 3 — PAYWALL N× FASTER ============ -->
+<div class="pattern">
+  <h2>Pattern 3 · Paywall “⚡ N× FASTER” hero (primary)</h2>
+  <p class="note">This is the page new users land on — <b>“Start your 7-day FREE trial”</b> with the <b>Today → In 5 Days → In 7 Days</b> trial timeline and the plan tiles. <b>The timeline is untouched / NOT replaced.</b> The new ⚡ hero is <b>inserted between the timeline and the plan tiles</b> — a count-up multiplier (glow + spark + haptic) and dual plan-vs-solo mini-curve. The number is the user’s own projection, never a fixed un-cited “4.2×”.</p>
+  <div class="row">
+    <!-- BEFORE -->
+    <div class="col">
+      <span class="tag before">Before · trial-timeline page (unchanged)</span>
+      <div class="phone pw">
+        <div class="h-title">Start your 7-day <span style="color:var(--paywall)">FREE</span> trial to continue</div>
+        <div style="margin-top:16px">
+          <div class="tnode"><div class="tico">🔓</div><div><div class="tt">Today</div><div class="ts">Unlock unlimited AI workouts, food scan & macros, form analysis, and full progress tracking.</div></div></div>
+          <div class="tnode"><div class="tico">🔔</div><div><div class="tt">In 5 Days</div><div class="ts">We'll send you a reminder that your trial is ending soon.</div></div></div>
+          <div class="tnode last"><div class="tico">💳</div><div><div class="tt">In 7 Days</div><div class="ts">You'll be charged unless you cancel anytime before.</div></div></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <div class="ptile"><span class="pp">$7.99</span><span class="pu">/mo</span></div>
+          <div class="ptile on"><span class="rb">7 DAYS FREE · SAVE 37%</span><span class="pp">$59.99</span><span class="pu">/yr · = $5.00/mo</span></div>
+        </div>
+        <div class="pwbtn">Start Free Trial</div>
+      </div>
+    </div>
+    <!-- AFTER -->
+    <div class="col">
+      <span class="tag after">After · same page + ⚡ hero above tiles</span>
+      <div class="phone pw">
+        <div class="h-title">Start your 7-day <span style="color:var(--paywall)">FREE</span> trial to continue</div>
+        <div style="margin-top:16px">
+          <div class="tnode"><div class="tico">🔓</div><div><div class="tt">Today</div><div class="ts">Unlock unlimited AI workouts, food scan & macros, form analysis, and full progress tracking.</div></div></div>
+          <div class="tnode"><div class="tico">🔔</div><div><div class="tt">In 5 Days</div><div class="ts">We'll send you a reminder that your trial is ending soon.</div></div></div>
+          <div class="tnode last"><div class="tico">💳</div><div><div class="tt">In 7 Days</div><div class="ts">You'll be charged unless you cancel anytime before.</div></div></div>
+        </div>
+        <!-- HERO inserted here (between timeline & plan tiles) -->
+        <div class="hero">
+          <div class="glow"></div>
+          <svg class="spark" viewBox="0 0 120 120"><g stroke="#FC4C02" stroke-width="2" stroke-linecap="round" opacity=".7">
+            <line x1="60" y1="22" x2="60" y2="6"/><line x1="98" y1="60" x2="114" y2="60"/><line x1="60" y1="98" x2="60" y2="114"/><line x1="22" y1="60" x2="6" y2="60"/>
+            <line x1="87" y1="33" x2="99" y2="21"/><line x1="87" y1="87" x2="99" y2="99"/><line x1="33" y1="87" x2="21" y2="99"/><line x1="33" y1="33" x2="21" y2="21"/></g></svg>
+          <div class="kick">Reach your goal</div>
+          <div class="big"><span class="bolt">⚡</span><span class="mult">3.8×</span><span class="faster">FASTER</span></div>
+          <div class="vs">with your plan vs. going solo</div>
+          <svg width="240" height="64" viewBox="0 0 240 64" style="margin:10px auto 6px">
+            <defs><linearGradient id="pf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FC4C02" stop-opacity=".22"/><stop offset="1" stop-color="#FC4C02" stop-opacity="0"/></linearGradient></defs>
+            <path d="M6,12 C60,18 110,40 234,54 L234,64 L6,64 Z" fill="url(#pf)"/>
+            <path d="M6,12 C70,16 140,22 234,30" fill="none" stroke="#9b9ba3" stroke-width="2" stroke-dasharray="5 4"/>
+            <path d="M6,12 C60,18 110,40 234,54" fill="none" stroke="#FC4C02" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="234" cy="54" r="4" fill="#FC4C02" stroke="#fff" stroke-width="2"/>
+          </svg>
+          <div class="legend"><span><i style="background:#FC4C02"></i>Your plan</span><span><i class="solo"></i>On your own</span></div>
+          <div class="cite" style="color:#FC4C02;margin-top:9px"><span class="lead" style="color:rgba(252,76,2,.8)">Based on your goal + </span><u>Obesity Reviews, 2021</u> ↗</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <div class="ptile"><span class="pp">$7.99</span><span class="pu">/mo</span></div>
+          <div class="ptile on"><span class="rb">7 DAYS FREE · SAVE 37%</span><span class="pp">$59.99</span><span class="pu">/yr · = $5.00/mo</span></div>
+        </div>
+        <div class="pwbtn">Start Free Trial</div>
+      </div>
+    </div>
+    <p class="annot"><b>Placement:</b> the <b>Today/Day 5/Day 7 timeline stays exactly as-is</b> — the ⚡ hero is added directly below it, right above the plan tiles. Animated count-up 1.0→3.8×, pulsing glow, one-shot spark, lagging solo mini-curve, tappable citation. Falls back to a cited “2× more likely” line if metrics are missing. Flag <code>paywall_goal_speed_comparison</code> (default OFF).</p>
+  </div>
+</div>
+
+  <!-- placement comparison: below-timeline (shipped) vs value-first -->
+  <p class="note" style="margin-top:26px"><b>Placement options</b> — same hero, two positions. Left = below the timeline (what's wired now). Right = <b>value-first</b>: the ⚡ multiplier hits immediately after the headline, then the trial timeline, then the tiles.</p>
+  <div class="row">
+    <div class="col">
+      <span class="tag before">Option A · below timeline (shipped)</span>
+      <div class="phone pw">
+        <div class="h-title" style="font-size:15px">Start your 7-day <span style="color:var(--paywall)">FREE</span> trial</div>
+        <div style="margin-top:10px">
+          <div class="tnode"><div class="tico">🔓</div><div><div class="tt">Today</div><div class="ts">Unlock everything.</div></div></div>
+          <div class="tnode"><div class="tico">🔔</div><div><div class="tt">In 5 Days</div><div class="ts">Reminder before trial ends.</div></div></div>
+          <div class="tnode last"><div class="tico">💳</div><div><div class="tt">In 7 Days</div><div class="ts">Charged unless you cancel.</div></div></div>
+        </div>
+        <div class="hero" style="padding:12px 12px 10px">
+          <div class="glow"></div>
+          <div class="big" style="height:48px"><span class="bolt" style="font-size:22px">⚡</span><span class="mult" style="font-size:38px">3.8×</span><span class="faster" style="font-size:13px;margin-bottom:6px">FASTER</span></div>
+          <div class="vs" style="font-size:11px">with your plan vs. going solo</div>
+          <div class="cite" style="color:#FC4C02;margin-top:6px;font-size:10px"><u>Obesity Reviews, 2021</u> ↗</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <div class="ptile"><span class="pp">$7.99</span><span class="pu">/mo</span></div>
+          <div class="ptile on"><span class="rb">SAVE 37%</span><span class="pp">$59.99</span><span class="pu">/yr</span></div>
+        </div>
+        <div class="pwbtn">Start Free Trial</div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="tag after">Option B · value-first (hero above timeline)</span>
+      <div class="phone pw">
+        <div class="h-title" style="font-size:15px">Start your 7-day <span style="color:var(--paywall)">FREE</span> trial</div>
+        <div class="hero" style="padding:12px 12px 10px;margin-top:10px">
+          <div class="glow"></div>
+          <svg class="spark" viewBox="0 0 120 120" style="top:30px"><g stroke="#FC4C02" stroke-width="2" stroke-linecap="round" opacity=".7">
+            <line x1="60" y1="22" x2="60" y2="6"/><line x1="98" y1="60" x2="114" y2="60"/><line x1="60" y1="98" x2="60" y2="114"/><line x1="22" y1="60" x2="6" y2="60"/>
+            <line x1="87" y1="33" x2="99" y2="21"/><line x1="87" y1="87" x2="99" y2="99"/><line x1="33" y1="87" x2="21" y2="99"/><line x1="33" y1="33" x2="21" y2="21"/></g></svg>
+          <div class="kick" style="font-size:11px">Reach your goal</div>
+          <div class="big" style="height:52px"><span class="bolt" style="font-size:24px">⚡</span><span class="mult" style="font-size:42px">3.8×</span><span class="faster" style="font-size:14px;margin-bottom:6px">FASTER</span></div>
+          <div class="vs" style="font-size:11px">with your plan vs. going solo</div>
+          <svg width="220" height="50" viewBox="0 0 220 50" style="margin:8px auto 4px">
+            <defs><linearGradient id="pf2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FC4C02" stop-opacity=".22"/><stop offset="1" stop-color="#FC4C02" stop-opacity="0"/></linearGradient></defs>
+            <path d="M6,10 C55,15 100,32 214,42 L214,50 L6,50 Z" fill="url(#pf2)"/>
+            <path d="M6,10 C64,13 130,18 214,24" fill="none" stroke="#9b9ba3" stroke-width="2" stroke-dasharray="5 4"/>
+            <path d="M6,10 C55,15 100,32 214,42" fill="none" stroke="#FC4C02" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <div class="cite" style="color:#FC4C02;margin-top:2px;font-size:10px"><u>Obesity Reviews, 2021</u> ↗</div>
+        </div>
+        <div style="margin-top:12px">
+          <div class="tnode"><div class="tico">🔓</div><div><div class="tt">Today</div><div class="ts">Unlock everything.</div></div></div>
+          <div class="tnode"><div class="tico">🔔</div><div><div class="tt">In 5 Days</div><div class="ts">Reminder before trial ends.</div></div></div>
+          <div class="tnode last"><div class="tico">💳</div><div><div class="tt">In 7 Days</div><div class="ts">Charged unless you cancel.</div></div></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <div class="ptile"><span class="pp">$7.99</span><span class="pu">/mo</span></div>
+          <div class="ptile on"><span class="rb">SAVE 37%</span><span class="pp">$59.99</span><span class="pu">/yr</span></div>
+        </div>
+        <div class="pwbtn">Start Free Trial</div>
+      </div>
+    </div>
+    <p class="annot"><b>Trade-off:</b> Option B leads with the emotional hook (the ⚡ number is the first thing they see), then the trial mechanics reassure, then the price. Conversion playbooks (Cal AI / Noom) tend to put the <b>value/outcome before the mechanics</b> — so Option B is the stronger bet. One-line move in code (the hero just shifts above the timeline nodes).</p>
+  </div>
+
+<!-- ============ PATTERN 1 — AUTHORITY ============ -->
+<div class="pattern">
+  <h2>Pattern 1 · Medical / scientific authority</h2>
+  <p class="note">Credibility was non-tappable “trust-me” text. Now every authority claim is <b>tappable to its primary source</b> (“verify-me”), plus a new science-grounding screen before the paywall.</p>
+  <div class="row">
+    <!-- credibility strip before/after -->
+    <div class="col">
+      <span class="tag before">Before · credibility strip</span>
+      <div class="phone" style="padding:20px 16px">
+        <div style="text-align:center;font-size:12px;color:var(--t2);margin-bottom:10px">★★★★★ trusted methodology</div>
+        <div class="chips" style="justify-content:center;flex-wrap:wrap">
+          <span class="chip">✦ Powered by Google Gemini</span><span class="chip">🎓 Grounded in NSCA &amp; NASM</span><span class="chip">🛡 Injury-aware</span>
+        </div>
+        <div class="key">Static text — nothing tappable.</div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="tag after">After · credibility strip</span>
+      <div class="phone" style="padding:20px 16px">
+        <div style="text-align:center;font-size:12px;color:var(--t2);margin-bottom:10px">★★★★★ trusted methodology</div>
+        <div class="chips" style="justify-content:center;flex-wrap:wrap">
+          <span class="chip">✦ Powered by Google Gemini</span>
+          <span class="chip sel" style="border-color:rgba(252,76,2,.5)">🎓 <u>Grounded in NSCA &amp; NASM</u> ↗</span>
+          <span class="chip">🛡 Injury-aware</span>
+        </div>
+        <div class="key">NSCA/NASM chip → opens ACSM position stand. Press-scale + haptic.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:24px">
+    <!-- trust bullet before/after -->
+    <div class="col">
+      <span class="tag before">Before · trust bullet</span>
+      <div class="phone" style="padding:20px 16px">
+        <div class="trust-bullet"><div class="bt">Real change shows up by day 14–21</div><div class="bd">By day 14-21 your body has adapted. That's when most users see visible progress.</div></div>
+        <div class="key">Claim with no source.</div>
+      </div>
+    </div>
+    <div class="col">
+      <span class="tag after">After · trust bullet</span>
+      <div class="phone" style="padding:20px 16px">
+        <div class="trust-bullet"><div class="bt">Real change shows up by day 14–21</div><div class="bd">By day 14-21 your body has adapted. That's when most users see visible progress.</div>
+          <div class="cite" style="margin-top:7px"><span class="lead">Source — </span><u>ACSM Position Stand, 2009</u> ↗</div></div>
+        <div class="key">Same copy + a tappable peer-reviewed citation.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:24px">
+    <!-- NEW science screen -->
+    <div class="col">
+      <span class="tag after">New · /science-grounding screen</span>
+      <div class="phone">
+        <div class="h-title">Your plan is built on <span class="accent">real science</span></div>
+        <div class="h-sub">The methods behind every workout and target — with the research to back them.</div>
+        <div style="margin-top:12px">
+          <div class="sci-card"><div class="ico">📈</div><div class="claim">Gradually increasing load (progressive overload) is the evidence-based driver of strength and muscle gains.</div><div class="cite"><span class="lead">— </span><u>ACSM Position Stand, 2009</u> ↗</div></div>
+          <div class="sci-card"><div class="ico">🍗</div><div class="claim">Adequate, well-timed protein supports muscle growth and recovery.</div><div class="cite"><span class="lead">— </span><u>ISSN Position Stand, 2017</u> ↗</div></div>
+          <div class="sci-card"><div class="ico">📝</div><div class="claim">People who track consistently are ~2× as likely to reach a meaningful goal.</div><div class="cite"><span class="lead">— </span><u>Obesity Reviews, 2021</u> ↗</div></div>
+        </div>
+        <div class="btn">Continue</div>
+      </div>
+    </div>
+    <p class="annot"><b>New screen</b> inserted post-fitness-assessment, pre-paywall (flag <code>onboarding_science_screen</code>, default OFF). Cards stagger in; each citation is tappable with press-scale + haptic. Falls through to today's exact flow when the flag is off.</p>
+  </div>
+</div>
+
+</body>
+</html>

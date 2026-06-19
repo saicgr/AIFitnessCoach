@@ -41,7 +41,10 @@ __pycache__/
 venv/
 env/
 .venv/
-
+.venv*/
+venv*/
+*.venv*/
+batch-**.md
 # Node
 node_modules/
 dist/
