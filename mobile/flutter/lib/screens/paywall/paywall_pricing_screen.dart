@@ -23,6 +23,8 @@ import '../../data/services/notification_service.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/inline_referral_expander.dart';
 import 'widgets/credibility_strip.dart';
+import 'widgets/goal_speed_comparison.dart';
+import '../onboarding/goal_speed_calculator.dart';
 import 'paywall_experiments.dart';
 import '../onboarding/onboarding_experiments.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
@@ -1434,7 +1436,32 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
               letterSpacing: -0.4,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
+
+          // ⚡ N× FASTER comparison hero — VALUE-FIRST placement: the derived
+          // per-user multiplier hits immediately after the headline, before
+          // the trial-mechanics timeline and the plan tiles (Cal AI / Noom
+          // pattern: outcome before mechanics). Ships dark; the A/B treatment
+          // is the PostHog flag `paywall_goal_speed_comparison`. Degrades to a
+          // cited "~2× more likely" line when body metrics are missing.
+          if (_experiments.goalSpeedComparison) ...[
+            Builder(builder: (context) {
+              final quiz = ref.read(preAuthQuizProvider);
+              final proj = GoalSpeedCalculator.compute(
+                currentWeightKg: quiz.weightKg ?? 0,
+                goalWeightKg: quiz.goalWeightKg ?? 0,
+                weightChangeRate: quiz.weightChangeRate,
+              );
+              return GoalSpeedComparison(
+                projection: proj,
+                colors: colors,
+                accent: _paywallAccent,
+              );
+            }),
+            const SizedBox(height: 20),
+          ],
+
+          const SizedBox(height: 6),
           _TimelineNode(
             icon: Icons.lock_open_rounded,
             iconBg: _paywallAccent.withValues(alpha: 0.15),

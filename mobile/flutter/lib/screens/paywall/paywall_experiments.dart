@@ -85,6 +85,21 @@ class PaywallExperiments {
   /// otherwise dormant and the purchase keeps using the standard package.
   final bool monthlyIntro;
 
+  /// Bold "⚡ N× FASTER with your plan" comparison module on the pricing page.
+  ///
+  /// Renders a per-user, DERIVED speed multiplier (the user's own plan-vs-solo
+  /// projection from [GoalSpeedCalculator], anchored to a tappable cited
+  /// basis) above the plan tiles. NOT a fixed/un-cited "4.2×" — the number is
+  /// the user's data × a cited factor, so it is substantiated and survives
+  /// Apple 3.1.2 / FTC review and the no-fabricated-stats policy.
+  ///
+  /// Defaults to FALSE so it ships DARK and is turned on as the A/B treatment
+  /// via the PostHog flag [flagGoalSpeedComparison] — absent flag → control
+  /// (today's pricing page, unchanged). Degrades gracefully to a cited
+  /// "~2× more likely to hit your goal" line when body metrics are missing or
+  /// the user is maintaining (no multiplier rendered).
+  final bool goalSpeedComparison;
+
   const PaywallExperiments({
     required this.noPaymentMicrocopy,
     required this.secureCheckoutBadge,
@@ -94,6 +109,7 @@ class PaywallExperiments {
     required this.softPaywallExitOffer,
     required this.hardGate,
     required this.monthlyIntro,
+    required this.goalSpeedComparison,
   });
 
   /// Shipped defaults: the honest, no-discount conversion levers ON; both
@@ -109,6 +125,7 @@ class PaywallExperiments {
     softPaywallExitOffer: false,
     hardGate: false,
     monthlyIntro: false,
+    goalSpeedComparison: false,
   );
 
   /// PostHog flag keys, one per lever. Create these in PostHog to A/B test;
@@ -121,6 +138,7 @@ class PaywallExperiments {
   static const String flagSoftPaywallExitOffer = 'paywall_soft_exit_offer';
   static const String flagHardGate = 'paywall_hard_gate';
   static const String flagMonthlyIntro = 'paywall_monthly_intro';
+  static const String flagGoalSpeedComparison = 'paywall_goal_speed_comparison';
 }
 
 /// Maps a raw PostHog flag value to an enabled/disabled bool.
@@ -187,6 +205,8 @@ Future<PaywallExperiments> loadPaywallExperiments(
         defaults.hardGate),
     resolve(PaywallExperiments.flagMonthlyIntro,
         defaults.monthlyIntro),
+    resolve(PaywallExperiments.flagGoalSpeedComparison,
+        defaults.goalSpeedComparison),
   ]);
 
   if (kDebugMode) {
@@ -198,7 +218,8 @@ Future<PaywallExperiments> loadPaywallExperiments(
         'hardPaywallDiscount=${results[4]}, '
         'softPaywallExitOffer=${results[5]}, '
         'hardGate=${results[6]}, '
-        'monthlyIntro=${results[7]}');
+        'monthlyIntro=${results[7]}, '
+        'goalSpeedComparison=${results[8]}');
   }
 
   return PaywallExperiments(
@@ -210,5 +231,6 @@ Future<PaywallExperiments> loadPaywallExperiments(
     softPaywallExitOffer: results[5],
     hardGate: results[6],
     monthlyIntro: results[7],
+    goalSpeedComparison: results[8],
   );
 }
