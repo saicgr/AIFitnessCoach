@@ -8,7 +8,6 @@ import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
 import '../../core/constants/synced_workout_kinds.dart';
 import '../../data/providers/synced_workouts_provider.dart';
-import '../../data/providers/today_workout_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
@@ -134,12 +133,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             CustomScrollView(
               controller: _scrollController,
               slivers: [
-                // Top padding for the floating masthead (eyebrow row + Anton
-                // title + gym pill). ~118 = 6 top + ~22 eyebrow + 4 + 30 Anton
-                // + 8 + ~33 gym pill + 10 bottom from _buildFloatingHeader.
+                // Top padding for the floating masthead. The masthead is now a
+                // compact 2-line block (gym-switcher row + date sub-line) since
+                // the big split-name title moved onto the carousel — so this
+                // reserve dropped from 118 to ~78 (2 top + ~40 gym/pill row +
+                // 2 + ~16 date + 10 bottom) to kill the dead gap that opened up
+                // above the date strip.
                 SliverToBoxAdapter(
                   child: SizedBox(
-                      height: MediaQuery.of(context).padding.top + 118),
+                      height: MediaQuery.of(context).padding.top + 78),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load
@@ -211,12 +213,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     final mhNow = DateTime.now();
     final mhWeekday = _mhWeekdays[mhNow.weekday - 1];
     final mhMonthDay = '${_mhMonths[mhNow.month - 1]} ${mhNow.day}';
-    final mhTodayName =
-        ref.watch(todayWorkoutProvider).valueOrNull?.todayWorkout?.name;
-    final mhHasSplit = mhTodayName != null &&
-        mhTodayName.trim().isNotEmpty &&
-        mhTodayName != 'Generating...' &&
-        mhTodayName != 'Workout';
 
     return PositionedDirectional(
       top: 0,
@@ -241,24 +237,16 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Masthead row: the big Anton hero on the LEFT, action pills on
-              // the right. On a TRAINING day today's split name leads; on a
-              // REST/complete day the GYM leads (big name + dropdown) instead
-              // of a giant date — the date drops to the muted sub-line below.
-              // (User: "do we need the date big? make My gym like that with a
-              // dropdown in the same place.")
+              // Masthead row: the GYM leads (big name + dropdown) with the
+              // action pills on the right. The big split-name title was removed
+              // here — the workout carousel below now carries today's split
+              // name, so leading the masthead with it too was a duplicate. The
+              // date drops to the muted sub-line below.
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Expanded(
-                    child: mhHasSplit
-                        ? Text(
-                            mhTodayName!.toUpperCase(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: ZType.disp(30, color: textPrimary),
-                          )
-                        : const GymProfileSwitcher(large: true),
+                  const Expanded(
+                    child: GymProfileSwitcher(large: true),
                   ),
                   const SizedBox(width: 8),
                   _HairlineActionPill(
@@ -296,29 +284,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                 ],
               ),
               const SizedBox(height: 2),
-              // Sub-line. Training day: the gym switcher (demoted here since the
-              // split leads) + the date. Rest/complete day: just the date (the
-              // gym already leads above).
-              if (mhHasSplit)
-                Row(
-                  children: [
-                    // Gym shrinks (ellipsis) when long; the short date keeps its
-                    // natural width so the two never split the row 50/50.
-                    const Flexible(child: GymProfileSwitcher()),
-                    Text(
-                      '  ·  $mhWeekday  ·  $mhMonthDay',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: ZType.lbl(12.5,
-                          color: tc.textMuted, letterSpacing: 1.5),
-                    ),
-                  ],
-                )
-              else
-                Text(
-                  '$mhWeekday  ·  $mhMonthDay',
-                  style: ZType.lbl(12.5, color: tc.textMuted, letterSpacing: 1.5),
-                ),
+              // Sub-line — the date, always muted under the gym lead.
+              Text(
+                '$mhWeekday  ·  $mhMonthDay',
+                style: ZType.lbl(12.5, color: tc.textMuted, letterSpacing: 1.5),
+              ),
             ],
           ),
         ),
@@ -351,13 +321,14 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     // HISTORY. The `_planSectionKey` (floating-bar "Plan" jump target — bar
     // removed) and the `workoutsToday` tour anchor now wrap the TODAY block.
     final children = <Widget>[
+        // NOTE: the `workoutsToday` tour anchor is NOT wrapped here — it now
+        // lives inside WorkoutPlannerSection (scoped to the carousel card), so
+        // wrapping the whole body with the same GlobalKey would crash with a
+        // duplicate-GlobalKey error.
         KeyedSubtree(
           key: _planSectionKey,
-          child: KeyedSubtree(
-            key: TooltipAnchors.workoutsToday,
-            child: WorkoutsSignatureBody(
-              exercisePreferencesKey: _exercisePreferencesKey,
-            ),
+          child: WorkoutsSignatureBody(
+            exercisePreferencesKey: _exercisePreferencesKey,
           ),
         ),
 

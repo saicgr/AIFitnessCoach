@@ -46,12 +46,20 @@ class DateStrip extends ConsumerStatefulWidget {
   /// health screens pass a smaller value matching their backfill window.
   final int weeksBack;
 
+  /// When true, future days are rendered normally and remain tappable instead
+  /// of dimmed + disabled. The nutrition / health screens leave this false
+  /// (you can't log a future meal / a future night has no data), but the
+  /// Workouts tab sets it true so upcoming training days in the current week
+  /// can be tapped to preview the scheduled workout.
+  final bool allowFuture;
+
   const DateStrip({
     super.key,
     required this.selectedDate,
     required this.loggedDateKeys,
     required this.onDaySelected,
     this.weeksBack = 53,
+    this.allowFuture = false,
   });
 
   @override
@@ -110,7 +118,9 @@ class _DateStripState extends ConsumerState<DateStrip> {
       context: context,
       initialDate: widget.selectedDate,
       firstDate: now.subtract(Duration(days: widget.weeksBack * 7)),
-      lastDate: now,
+      // Allow forward picks when the host opts in (Workouts tab) so a user can
+      // jump to an upcoming scheduled session; otherwise cap at today.
+      lastDate: widget.allowFuture ? now.add(const Duration(days: 365)) : now,
       initialEntryMode: DatePickerEntryMode.calendar,
     );
     if (picked != null) {
@@ -156,6 +166,7 @@ class _DateStripState extends ConsumerState<DateStrip> {
                     weekConfig: weekConfig,
                     accentColor: accentColor,
                     isDark: isDark,
+                    allowFuture: widget.allowFuture,
                     onDaySelected: widget.onDaySelected,
                   );
                 },
@@ -189,6 +200,7 @@ class _WeekRow extends StatelessWidget {
   final WeekDisplayConfig weekConfig;
   final Color accentColor;
   final bool isDark;
+  final bool allowFuture;
   final ValueChanged<DateTime> onDaySelected;
 
   const _WeekRow({
@@ -199,6 +211,7 @@ class _WeekRow extends StatelessWidget {
     required this.weekConfig,
     required this.accentColor,
     required this.isDark,
+    required this.allowFuture,
     required this.onDaySelected,
   });
 
@@ -224,10 +237,11 @@ class _WeekRow extends StatelessWidget {
           isToday: isToday,
           isSelected: isSelected,
           isFuture: isFuture,
+          allowFuture: allowFuture,
           hasLog: hasLog,
           accentColor: accentColor,
           isDark: isDark,
-          onTap: isFuture
+          onTap: (isFuture && !allowFuture)
               ? null
               : () {
                   HapticService.selection();
@@ -246,6 +260,7 @@ class _DayCell extends StatelessWidget {
   final bool isToday;
   final bool isSelected;
   final bool isFuture;
+  final bool allowFuture;
   final bool hasLog;
   final Color accentColor;
   final bool isDark;
@@ -258,6 +273,7 @@ class _DayCell extends StatelessWidget {
     required this.isToday,
     required this.isSelected,
     required this.isFuture,
+    required this.allowFuture,
     required this.hasLog,
     required this.accentColor,
     required this.isDark,
@@ -272,7 +288,10 @@ class _DayCell extends StatelessWidget {
     final parts = <String>[
       dateText,
       if (isToday) 'today',
-      if (isFuture) 'unavailable' else (hasLog ? 'logged' : 'no entries'),
+      if (isFuture && !allowFuture)
+        'unavailable'
+      else
+        (hasLog ? 'logged' : 'no entries'),
     ];
     return parts.join(', ');
   }
@@ -281,7 +300,7 @@ class _DayCell extends StatelessWidget {
     return Semantics(
       button: true,
       selected: isSelected,
-      enabled: !isFuture,
+      enabled: allowFuture || !isFuture,
       label: _semanticLabel(context),
       excludeSemantics: true,
       child: child,
@@ -302,7 +321,7 @@ class _DayCell extends StatelessWidget {
     Color? cellBg;
     Border? cellBorder;
 
-    if (isFuture) {
+    if (isFuture && !allowFuture) {
       // white38/black45 (not 24/26) — the dimmer values fall below WCAG
       // contrast even for a disabled affordance.
       dateColor = isDark ? Colors.white38 : Colors.black45;

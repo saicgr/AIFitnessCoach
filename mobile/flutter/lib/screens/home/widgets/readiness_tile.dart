@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
@@ -27,12 +28,15 @@ import '../../../l10n/generated/app_localizations.dart';
 ///
 /// The composer (Wave 2) is responsible for inserting this tile in the home
 /// vertical stack; this widget owns layout + interaction only. Tapping
-/// pushes the named route `/readiness-detail` (the destination screen is
-/// owned by the Phase A.5 refactor agent).
+/// pushes the readiness detail route `/stats/readiness` (the Comprehensive
+/// Stats screen opened on its Readiness tab).
 class ReadinessTile extends ConsumerWidget {
   const ReadinessTile({super.key});
 
-  static const String routeName = '/readiness-detail';
+  /// GoRouter path for the readiness detail surface. Was the never-registered
+  /// `/readiness-detail` named route (crashed on tap: "Navigator.onGenerateRoute
+  /// was null"); the real destination is the stats screen's Readiness tab.
+  static const String routeName = '/stats/readiness';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -77,7 +81,7 @@ class _CheckedInTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             HapticService.light();
-            Navigator.of(context).pushNamed(ReadinessTile.routeName);
+            context.push(ReadinessTile.routeName);
           },
           child: Container(
             padding: const EdgeInsets.all(16),
@@ -144,7 +148,7 @@ class _CalibrationTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             HapticService.light();
-            Navigator.of(context).pushNamed(ReadinessTile.routeName);
+            context.push(ReadinessTile.routeName);
           },
           child: Container(
             padding: const EdgeInsets.all(16),

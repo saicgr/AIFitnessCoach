@@ -3,20 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/providers/user_provider.dart';
-import '../../../core/providers/week_start_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/workout_screen_summary.dart';
 import '../../../data/providers/branded_program_provider.dart';
-import '../../../data/providers/gym_profile_provider.dart';
-import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/design_system/zealova.dart';
 import '../../workout/widgets/quick_workout_sheet.dart';
 import 'exercise_preferences_card.dart';
 import 'workout_library_grid.dart';
+import 'workout_planner_section.dart';
 
 /// Signature v2 body for the Workouts tab.
 ///
@@ -53,253 +50,50 @@ class WorkoutsSignatureBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const _TodayBlock(),
-          const SizedBox(height: 22),
-          // QUICK GENERATE — one-tap AI workout for "I just want to train
-          // now" days. Launches the existing quick-workout sheet (5–30 min,
-          // built around equipment + recovery) and jumps to the result.
-          const _QuickGenerateBlock(),
-          const SizedBox(height: 26),
-          const _ThisWeekStrip(),
-          const SizedBox(height: 26),
-          const _ProgramBlock(),
-          const SizedBox(height: 24),
-          // BROWSE BY TYPE — the 3×2 category grid (Strength / Cardio /
-          // Mobility / HIIT / Yoga / Saved), each tile deep-links into the
-          // library pre-filtered to that category.
-          const _BrowseByTypeBlock(),
-          const SizedBox(height: 22),
-          // EXERCISE PREFERENCES — the real expandable card (its header is a
-          // label + chevron row). Kept inline so every preference sub-route
-          // (favorites / staples / avoided / queue / warmup / increments)
-          // stays reachable; margin zeroed to align with the body's padding.
-          KeyedSubtree(
-            key: exercisePreferencesKey,
-            child: const ExercisePreferencesCard(
-              margin: EdgeInsets.zero,
-            ),
-          ),
-          const SizedBox(height: 24),
-          const _HistoryBlock(),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// 1. TODAY block
-// ─────────────────────────────────────────────────────────────────────────
-
-class _TodayBlock extends ConsumerWidget {
-  const _TodayBlock();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tc = ThemeColors.of(context);
-    final today = ref.watch(todayWorkoutProvider).valueOrNull;
-
-    // Resolve the displayable workout summary for today (or the next one).
-    final TodayWorkoutSummary? summary = today?.completedWorkout ??
-        today?.todayWorkout ??
-        today?.nextWorkout;
-
-    // Rest-day branch — no scheduled workout today, but there may be a next.
-    final bool isRestDay = summary == null ||
-        (today?.todayWorkout == null &&
-            today?.completedWorkout == null &&
-            (today?.restDayMessage != null || today?.nextWorkout != null));
-
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          isRestDay && today?.nextWorkout != null ? 'NEXT UP' : 'TODAY',
-          style: ZType.lbl(11, color: tc.accent, letterSpacing: 2.6),
-        ),
-        const SizedBox(height: 8),
-        if (isRestDay && today?.nextWorkout == null) ...[
-          // True rest day with nothing scheduled next.
-          Text('REST DAY', style: ZType.disp(34, color: tc.textPrimary)),
-          const SizedBox(height: 8),
-          Text(
-            today?.restDayMessage?.trim().isNotEmpty == true
-                ? today!.restDayMessage!.trim()
-                : 'Recovery is part of the program. Let the work land.',
-            style: ZType.ser(12.5, color: tc.textSecondary),
-          ),
-        ] else ...[
-          Text(
-            (summary?.name ?? 'WORKOUT').toUpperCase(),
-            style: ZType.disp(34, color: tc.textPrimary),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _metaLine(summary),
-            style: ZType.lbl(12.5, color: tc.textMuted, letterSpacing: 0.6),
-          ),
-        ],
-        const SizedBox(height: 18),
-        _TodayActions(
-          summary: summary,
-          isRestDay: isRestDay && today?.todayWorkout == null,
-          alreadyCompleted: today?.completedToday == true,
-        ),
-      ],
-    );
-  }
-
-  /// "Chest & Triceps · 8 exercises · 52 min" — muscles + count + duration,
-  /// all from real summary fields. Each segment is omitted if it has no data
-  /// so the line never reads "· 0 exercises ·".
-  String _metaLine(TodayWorkoutSummary? s) {
-    if (s == null) return '';
-    final parts = <String>[];
-    final muscles = _muscleLabel(s.primaryMuscles);
-    if (muscles != null) parts.add(muscles);
-    if (s.exerciseCount > 0) {
-      parts.add('${s.exerciseCount} exercise${s.exerciseCount == 1 ? '' : 's'}');
-    }
-    final dur = s.formattedDurationShort.replaceAll('m', ' min');
-    parts.add(dur);
-    return parts.join('  ·  ');
-  }
-
-  String? _muscleLabel(List<String> muscles) {
-    if (muscles.isEmpty) return null;
-    final cleaned = muscles
-        .map((m) => m.trim())
-        .where((m) => m.isNotEmpty)
-        .map((m) => '${m[0].toUpperCase()}${m.substring(1).toLowerCase()}')
-        .toSet()
-        .take(2)
-        .toList();
-    if (cleaned.isEmpty) return null;
-    return cleaned.join(' & ');
-  }
-}
-
-class _TodayActions extends ConsumerWidget {
-  final TodayWorkoutSummary? summary;
-  final bool isRestDay;
-  final bool alreadyCompleted;
-
-  const _TodayActions({
-    required this.summary,
-    required this.isRestDay,
-    required this.alreadyCompleted,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final workout = summary?.toWorkout();
-
-    // Rest day with a next workout queued → single ghost preview link.
-    if (isRestDay) {
-      if (workout == null) return const SizedBox.shrink();
-      return Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: _GhostLinkButton(
-          label: 'PREVIEW TOMORROW',
-          onTap: () {
-            HapticService.light();
-            context.push('/workout/${workout.id}', extra: workout);
-          },
-        ),
-      );
-    }
-
-    if (workout == null) return const SizedBox.shrink();
-
-    // Completed today → no "Start", just a recap link.
-    if (alreadyCompleted) {
-      return Align(
-        alignment: AlignmentDirectional.centerStart,
-        child: _GhostLinkButton(
-          label: 'VIEW RECAP',
-          onTap: () {
-            HapticService.light();
-            context.push('/workout-summary/${workout.id}?tab=summary');
-          },
-        ),
-      );
-    }
-
-    return Row(
-      children: [
-        // THE one reserved-accent CTA on this screen.
-        Flexible(
-          child: ZealovaButton(
-            label: 'Start workout',
-            trailingIcon: Icons.arrow_forward,
-            variant: ZealovaButtonVariant.primary,
-            expand: false,
-            height: 50,
-            onTap: () {
-              HapticService.medium();
-              context.push('/active-workout', extra: workout);
-            },
-          ),
-        ),
-        const SizedBox(width: 12),
-        _GhostLinkButton(
-          label: 'PREVIEW PLAN',
-          onTap: () {
-            HapticService.light();
-            context.push('/workout/${workout.id}', extra: workout);
-          },
-        ),
-      ],
-    );
-  }
-}
-
-/// A hairline ghost text link with a trailing › — used for secondary actions
-/// (preview plan / preview tomorrow / view recap).
-class _GhostLinkButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  const _GhostLinkButton({required this.label, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = ThemeColors.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(25),
-        child: Container(
-          height: 50,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.cardBorder),
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        // TODAY — the image-backed workout carousel + the nutrition-style
+        // date strip (swipeable, date numbers + today pill + logged dots),
+        // self-contained with two-way strip↔carousel sync. Rendered full-bleed
+        // (outside the body's 20px gutter) so the carousel can peek the next
+        // card exactly like Home. Replaces the old flat _TodayBlock + the
+        // letter-only _ThisWeekStrip.
+        const WorkoutPlannerSection(),
+        const SizedBox(height: 22),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                label.toUpperCase(),
-                style: ZType.lbl(12.5,
-                    color: tc.textSecondary, letterSpacing: 1.8),
+              // QUICK GENERATE — one-tap AI workout for "I just want to train
+              // now" days. Launches the existing quick-workout sheet (5–30 min,
+              // built around equipment + recovery) and jumps to the result.
+              const _QuickGenerateBlock(),
+              const SizedBox(height: 26),
+              const _ProgramBlock(),
+              const SizedBox(height: 24),
+              // BROWSE BY TYPE — the 3×2 category grid (Strength / Cardio /
+              // Mobility / HIIT / Yoga / Saved), each tile deep-links into the
+              // library pre-filtered to that category.
+              const _BrowseByTypeBlock(),
+              const SizedBox(height: 22),
+              // EXERCISE PREFERENCES — the real expandable card (its header is a
+              // label + chevron row). Kept inline so every preference sub-route
+              // (favorites / staples / avoided / queue / warmup / increments)
+              // stays reachable; margin zeroed to align with the body's padding.
+              KeyedSubtree(
+                key: exercisePreferencesKey,
+                child: const ExercisePreferencesCard(
+                  margin: EdgeInsets.zero,
+                ),
               ),
-              const SizedBox(width: 5),
-              Text('›',
-                  style: TextStyle(
-                      color: tc.textMuted,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600)),
+              const SizedBox(height: 24),
+              const _HistoryBlock(),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -414,194 +208,6 @@ class _BrowseByTypeBlock extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const WorkoutLibraryGrid(padding: EdgeInsets.zero),
-      ],
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// 2. THIS WEEK strip
-// ─────────────────────────────────────────────────────────────────────────
-
-class _ThisWeekStrip extends ConsumerWidget {
-  const _ThisWeekStrip();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final tc = ThemeColors.of(context);
-    final user = ref.watch(currentUserProvider).valueOrNull;
-    final weekConfig = ref.watch(weekDisplayConfigProvider);
-
-    final activeGymProfile = ref.watch(activeGymProfileProvider);
-    final workoutDays = (activeGymProfile?.workoutDays.isNotEmpty == true)
-        ? activeGymProfile!.workoutDays
-        : (user?.workoutDays ?? const <int>[]);
-
-    final workouts = ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[];
-    // Merge the live /today response so completion/type flips show immediately.
-    final todayResp = ref.watch(todayWorkoutProvider).valueOrNull;
-    final merged = <Workout>[...workouts];
-    void mergeIfNew(Workout? w) {
-      if (w == null || w.id == null) return;
-      if (merged.any((e) => e.id == w.id)) return;
-      merged.add(w);
-    }
-    mergeIfNew(todayResp?.todayWorkout?.toWorkout());
-    mergeIfNew(todayResp?.completedWorkout?.toWorkout());
-    mergeIfNew(todayResp?.nextWorkout?.toWorkout());
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final todayWeekday = today.weekday - 1; // 0 = Mon
-    final weekStart = weekConfig.weekStart(today);
-
-    final cells = <Widget>[];
-    for (int displayIndex = 0; displayIndex < 7; displayIndex++) {
-      final dataIndex = weekConfig.displayOrder[displayIndex];
-      final dayDate = weekStart.add(Duration(days: displayIndex));
-      final dateKey =
-          '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
-
-      // Find a scheduled (non-synced) workout for this day.
-      Workout? dayWorkout;
-      for (final w in merged) {
-        final raw = w.scheduledDate;
-        if (raw == null || raw.length < 10) continue;
-        if (raw.substring(0, 10) != dateKey) continue;
-        if (w.isSyncedFromHealthApp) continue;
-        dayWorkout = w;
-        break;
-      }
-
-      final bool isWorkoutDay =
-          workoutDays.contains(dataIndex) || dayWorkout != null;
-      final String label = dayWorkout != null
-          ? _typeLabel(dayWorkout)
-          : (isWorkoutDay ? 'TRAIN' : 'REST');
-      final bool completed = dayWorkout?.isCompleted == true;
-      final bool isToday = dataIndex == todayWeekday;
-
-      cells.add(
-        Expanded(
-          child: _WeekDayCell(
-            weekdayLetter: _weekdayLetter(dataIndex),
-            typeLabel: label,
-            isWorkoutDay: isWorkoutDay,
-            completed: completed,
-            isToday: isToday,
-            accent: tc.accent,
-          ),
-        ),
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('THIS WEEK',
-            style: ZType.lbl(11, color: tc.textMuted, letterSpacing: 2.4)),
-        const SizedBox(height: 12),
-        const ZealovaRule(),
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Row(children: cells),
-        ),
-        const ZealovaRule(),
-      ],
-    );
-  }
-
-  String _weekdayLetter(int dataIndex) {
-    // 0=Mon .. 6=Sun
-    const letters = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-    return letters[dataIndex.clamp(0, 6)];
-  }
-
-  String _typeLabel(Workout w) {
-    final name = w.name?.trim() ?? '';
-    final upper = name.toUpperCase();
-    // Prefer a recognizable split token baked into the workout name.
-    for (final token in const [
-      'PUSH',
-      'PULL',
-      'LEGS',
-      'UPPER',
-      'LOWER',
-      'FULL',
-      'CORE',
-      'ARMS',
-      'CHEST',
-      'BACK',
-    ]) {
-      if (upper.contains(token)) return token;
-    }
-    final type = w.type?.trim();
-    if (type != null && type.isNotEmpty) {
-      return type.toUpperCase();
-    }
-    return 'TRAIN';
-  }
-}
-
-class _WeekDayCell extends StatelessWidget {
-  final String weekdayLetter;
-  final String typeLabel;
-  final bool isWorkoutDay;
-  final bool completed;
-  final bool isToday;
-  final Color accent;
-
-  const _WeekDayCell({
-    required this.weekdayLetter,
-    required this.typeLabel,
-    required this.isWorkoutDay,
-    required this.completed,
-    required this.isToday,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final tc = ThemeColors.of(context);
-    final Color letterColor = isToday ? accent : tc.textMuted;
-    final Color labelColor = !isWorkoutDay
-        ? tc.textMuted.withValues(alpha: 0.55)
-        : (isToday ? tc.textPrimary : tc.textSecondary);
-    final Color dotColor = !isWorkoutDay
-        ? AppColors.hairlineStrong
-        : completed
-            ? accent
-            : (isToday ? accent : tc.textSecondary);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          weekdayLetter,
-          style: ZType.lbl(11, color: letterColor, letterSpacing: 0.5),
-        ),
-        const SizedBox(height: 7),
-        // Small status dot — filled accent for completed/today, hollow ring
-        // for scheduled, faint for rest.
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: (completed || (isToday && isWorkoutDay))
-                ? dotColor
-                : Colors.transparent,
-            border: Border.all(color: dotColor, width: 1.2),
-          ),
-        ),
-        const SizedBox(height: 7),
-        Text(
-          typeLabel,
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          textAlign: TextAlign.center,
-          style: ZType.lbl(8.5, color: labelColor, letterSpacing: 0.3),
-        ),
       ],
     );
   }

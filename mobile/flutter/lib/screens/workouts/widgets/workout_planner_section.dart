@@ -11,9 +11,9 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/tooltips/tooltip_anchors.dart';
+import '../../../widgets/date_strip.dart';
 import '../../home/widgets/hero_workout_carousel.dart';
 import '../../home/widgets/hero_workout_card.dart' show GeneratingHeroCard;
-import '../../home/widgets/week_calendar_strip.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// The workout date strip + carousel, moved out of the home screen onto the
@@ -34,7 +34,14 @@ class WorkoutPlannerSection extends ConsumerStatefulWidget {
 class _WorkoutPlannerSectionState
     extends ConsumerState<WorkoutPlannerSection> {
   late final PageController _carouselPageController;
-  int _selectedWeekDay = DateTime.now().weekday - 1; // 0 = Mon
+  // Selected day driving the carousel, as a normalized local-midnight date so
+  // the strip (now the nutrition-style DateStrip) and the carousel stay in
+  // sync two-ways. Defaults to today.
+  DateTime _selectedDate = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
   List<CarouselItem> _carouselItems = [];
 
   @override
@@ -60,7 +67,7 @@ class _WorkoutPlannerSectionState
         // The calendar tune-menu now lives inline on the gym-switcher row
         // (see workouts_screen.dart) — no standalone line here, so the week
         // strip sits directly under the switcher with no wasted gap.
-        _buildWeekCalendarStrip(),
+        _buildDateStrip(),
         const SizedBox(height: 8),
         // `workouts_v1` tour step 1 ("Start a workout") anchors here — the
         // today/hero workout card only, NOT the date strip above. Keying
@@ -107,9 +114,16 @@ class _WorkoutPlannerSectionState
     );
   }
 
-  /// Builds the week calendar strip with per-day workout status.
-  /// Status: true = completed, false = scheduled, null = not a workout day.
-  Widget _buildWeekCalendarStrip() {
+  /// Builds the nutrition-style [DateStrip] (date numbers + today pill +
+  /// logged dots, swipeable across weeks). Unifies the Workouts week strip
+  /// with the Nutrition tab's date navigator. `allowFuture` is on so upcoming
+  /// scheduled training days in the current week can be tapped to preview them.
+  ///
+  /// Dot logic: a day gets an accent dot when it has a real (non-synced)
+  /// scheduled workout, OR when it is one of this week's scheduled training
+  /// days (so a training day reads as "active" even before its workout
+  /// materialises).
+  Widget _buildDateStrip() {
     final user = ref.watch(currentUserProvider).valueOrNull;
     if (user == null) return const SizedBox.shrink();
 
@@ -117,7 +131,6 @@ class _WorkoutPlannerSectionState
     final workoutDays = (activeGymProfile?.workoutDays.isNotEmpty == true)
         ? activeGymProfile!.workoutDays
         : user.workoutDays;
-    if (workoutDays.isEmpty) return const SizedBox.shrink();
 
     final weekConfig = ref.watch(weekDisplayConfigProvider);
     final workoutsAsync = ref.watch(workoutsProvider);
@@ -140,51 +153,37 @@ class _WorkoutPlannerSectionState
       mergeIfNew(extra.toWorkout());
     }
 
-    final Map<int, bool?> statusMap = {};
+    // Build the set of dotted day-keys.
+    final loggedKeys = <String>{};
+    for (final w in mergedWorkouts) {
+      if (w.isSyncedFromHealthApp) continue;
+      final raw = w.scheduledDate;
+      if (raw == null || raw.length < 10) continue;
+      loggedKeys.add(raw.substring(0, 10));
+    }
+    // This week's scheduled training days (even without a materialised workout).
     for (int displayIndex = 0; displayIndex < 7; displayIndex++) {
       final i = weekConfig.displayOrder[displayIndex];
-      if (!workoutDays.contains(i)) {
-        statusMap[i] = null;
-        continue;
-      }
-      final dayDate = weekStart.add(Duration(days: displayIndex));
-      final dateKey =
-          '${dayDate.year}-${dayDate.month.toString().padLeft(2, '0')}-${dayDate.day.toString().padLeft(2, '0')}';
-
-      final dayWorkouts = mergedWorkouts.where((w) {
-        if (w.scheduledDate == null) return false;
-        final raw = w.scheduledDate!;
-        final dateOnly = raw.length >= 10 ? raw.substring(0, 10) : raw;
-        return dateOnly == dateKey;
-      }).toList();
-
-      // Only Zealova-authored workouts paint the completion dot — synced
-      // Health-Connect imports surface in their own UI.
-      final zealovaCompleted = dayWorkouts.any(
-        (w) => w.isCompleted == true && !w.isSyncedFromHealthApp,
-      );
-      statusMap[i] =
-          (dayWorkouts.isNotEmpty && zealovaCompleted) ? true : false;
+      if (!workoutDays.contains(i)) continue;
+      final d = weekStart.add(Duration(days: displayIndex));
+      loggedKeys.add(
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}');
     }
 
-    return WeekCalendarStrip(
-      workoutDays: workoutDays,
-      workoutStatusMap: statusMap,
-      selectedDayIndex: _selectedWeekDay,
-      onDaySelected: _onWeekDaySelected,
+    return DateStrip(
+      selectedDate: _selectedDate,
+      loggedDateKeys: loggedKeys,
+      allowFuture: true,
+      onDaySelected: _onDateSelected,
     );
   }
 
   /// Strip day tapped — animate the carousel to that day's card, or open the
   /// workout directly if no card exists for it.
-  void _onWeekDaySelected(int dayIndex) {
-    setState(() => _selectedWeekDay = dayIndex);
+  void _onDateSelected(DateTime date) {
+    final tappedDate = DateTime(date.year, date.month, date.day);
+    setState(() => _selectedDate = tappedDate);
 
-    final weekConfig = ref.read(weekDisplayConfigProvider);
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekStart = weekConfig.weekStart(today);
-    final tappedDate = weekConfig.dateForDataIndex(weekStart, dayIndex);
     final tappedKey =
         '${tappedDate.year}-${tappedDate.month.toString().padLeft(2, '0')}-${tappedDate.day.toString().padLeft(2, '0')}';
 
@@ -243,14 +242,15 @@ class _WorkoutPlannerSectionState
     }
   }
 
-  /// Carousel page changed — sync the strip highlight.
+  /// Carousel page changed — sync the strip highlight to the focused card's
+  /// date so the DateStrip pages/highlights to match.
   void _onCarouselPageChanged(int pageIndex) {
     if (pageIndex < 0 || pageIndex >= _carouselItems.length) return;
     final itemDate = _carouselItems[pageIndex].date;
     if (itemDate == null) return;
-    final weekdayIndex = itemDate.weekday - 1; // 0 = Mon
-    if (weekdayIndex != _selectedWeekDay) {
-      setState(() => _selectedWeekDay = weekdayIndex);
+    final normalized = DateTime(itemDate.year, itemDate.month, itemDate.day);
+    if (normalized != _selectedDate) {
+      setState(() => _selectedDate = normalized);
     }
   }
 }
