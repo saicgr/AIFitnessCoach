@@ -17,6 +17,21 @@ from core.db.nutrition_db_helpers_part2 import NutritionDBPart2
 
 logger = logging.getLogger(__name__)
 
+# Allowlist enforced by the DB CHECK constraint `food_logs_source_type_check`
+# (migration 1960_food_logs_source_input_normalization.sql). Any value outside
+# this set makes the INSERT 500. The frozenset is the single source of truth for
+# the write-guard in create_food_log — keep it in sync with the migration.
+_FOOD_LOG_SOURCE_TYPES = frozenset({
+    "text", "image", "barcode", "restaurant",
+    "menu", "buffet", "watch", "history", "manual",
+    # Internal provenances added in migration 2272 (scheduled meal-log worker +
+    # meal-plan service write these directly; preserved, not normalized away).
+    "scheduled_log", "meal_plan",
+})
+# Where to map an out-of-allowlist value. 'history' is the closest bucket for
+# re-logs/copies of a prior entry (the most common offender, e.g. 'recent').
+_FOOD_LOG_SOURCE_TYPE_FALLBACK = "history"
+
 
 class NutritionDB(NutritionDBPart2, BaseDB):
     """
@@ -134,6 +149,21 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         Returns:
             Created food log record or None
         """
+        # Write-guard: the DB CHECK constraint food_logs_source_type_check only
+        # permits the values in _FOOD_LOG_SOURCE_TYPES. A caller passing anything
+        # else (e.g. the frontend's "recent" re-log bucket) would 500 the insert.
+        # Normalize at this single chokepoint so no caller can ever violate it,
+        # and log a warning (fail-open + observability) naming the bad value.
+        normalized_source_type = (source_type or "").lower()
+        if normalized_source_type not in _FOOD_LOG_SOURCE_TYPES:
+            logger.warning(
+                "[NutritionDB] Invalid food_logs.source_type=%r "
+                "(user_id=%s); normalizing to %r to satisfy "
+                "food_logs_source_type_check",
+                source_type, user_id, _FOOD_LOG_SOURCE_TYPE_FALLBACK,
+            )
+            normalized_source_type = _FOOD_LOG_SOURCE_TYPE_FALLBACK
+
         data = {
             "user_id": user_id,
             "meal_type": meal_type,
@@ -145,7 +175,7 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             "fiber_g": fiber_g,
             "ai_feedback": ai_feedback,
             "health_score": health_score,
-            "source_type": source_type,
+            "source_type": normalized_source_type,
         }
         if idempotency_key:
             data["idempotency_key"] = idempotency_key
