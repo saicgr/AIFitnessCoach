@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — AI Recommend Targets · Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Semi+Condensed:wght@600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --panel:#0d0d0d; --elevated:#141414; --elevated2:#181818;
+    --border:#262626; --border2:#2f2f2f; --text:#f4f4f4; --muted:#8a8a8a; --muted2:#6a6a6a;
+    --accent:#F2A33C; --accent-dim:#7a5a25; --p:#A78BFA; --c:#38BDF8; --f:#FB923C;
+    --good:#4ADE80; --warn:#F87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#070707;color:var(--text);font-family:'Barlow',sans-serif;padding:40px 20px 120px;-webkit-font-smoothing:antialiased;}
+  h1{font-family:'Barlow Semi Condensed';font-weight:800;font-size:30px;text-transform:uppercase;letter-spacing:1px;text-align:center;}
+  .sub{text-align:center;color:var(--muted);max-width:740px;margin:8px auto 30px;font-size:14px;line-height:1.55;}
+  .sub b{color:var(--accent);}
+  .lbl{font-family:'Barlow';text-transform:uppercase;letter-spacing:1.6px;font-weight:800;font-size:11px;color:var(--muted);}
+  .grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start;}
+  .col{display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .cap{max-width:340px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .cap b{color:var(--accent);}
+  .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:rgba(242,163,60,.14);color:var(--accent);margin-bottom:4px;}
+  .phone{width:400px;background:var(--bg);border-radius:42px;border:1px solid #1c1c1c;padding:16px 14px;box-shadow:0 30px 70px rgba(0,0,0,.6);position:relative;overflow:hidden;}
+
+  .card{background:var(--elevated);border:1px solid var(--border);border-radius:18px;padding:14px;width:100%;}
+  .seg{display:flex;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:4px;gap:4px;margin-bottom:14px;}
+  .seg div{flex:1;text-align:center;color:var(--muted);font-family:'Barlow';font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1px;padding:9px 4px;border-radius:9px;}
+  .seg div.on{background:var(--accent);color:#1a1205;}
+
+  /* AI button */
+  .aibtn{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;border-radius:26px;padding:15px;cursor:pointer;
+    font-family:'Barlow';font-weight:800;letter-spacing:1.3px;text-transform:uppercase;font-size:13px;color:#1a1205;
+    background:linear-gradient(100deg,#F2A33C,#f5b860);box-shadow:0 6px 22px rgba(242,163,60,.28);border:none;}
+  .aibtn.ghost{background:transparent;border:1px solid var(--accent-dim);color:var(--accent);box-shadow:none;}
+  .hint{font-size:11.5px;color:var(--muted);line-height:1.45;margin:10px 4px 0;text-align:center;}
+
+  /* analyzing */
+  .analyze{display:flex;flex-direction:column;align-items:center;gap:14px;padding:30px 10px;}
+  .spinner{width:54px;height:54px;border-radius:50%;border:4px solid #2a2a2a;border-top-color:var(--accent);animation:spin 0.9s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .analyze .steps{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.7;}
+  .analyze .steps b{color:var(--text);font-weight:700;}
+
+  /* recommendation sheet */
+  .rechdr{display:flex;align-items:center;gap:9px;margin-bottom:4px;}
+  .rechdr .t{font-family:'Barlow Semi Condensed';font-weight:800;font-size:17px;text-transform:uppercase;letter-spacing:.5px;}
+  .conf{margin-left:auto;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:var(--good);background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:20px;padding:3px 9px;}
+  .basis{font-size:11.5px;color:var(--muted);margin-bottom:14px;line-height:1.4;}
+
+  .rsec{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:13px;margin-bottom:11px;}
+  .rsec .head{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .rsec .head .nm{font-weight:800;font-size:14px;}
+  .applybtn{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--accent);
+    border:1px solid var(--accent-dim);border-radius:20px;padding:6px 13px;cursor:pointer;white-space:nowrap;}
+  .applybtn.done{color:var(--good);border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.10);}
+  .row{display:flex;gap:8px;margin-bottom:9px;}
+  .stat{flex:1;background:var(--elevated2);border:1px solid var(--border);border-radius:11px;padding:9px 7px;text-align:center;}
+  .stat .v{font-family:'Anton';font-size:20px;line-height:1;}
+  .stat.cal .v{color:var(--accent);} .stat.p .v{color:var(--p);} .stat.c .v{color:var(--c);} .stat.f .v{color:var(--f);}
+  .stat .k{font-size:8.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);font-weight:800;margin-top:3px;}
+  .stat .d{font-size:9px;font-weight:800;margin-top:2px;}
+  .d.up{color:var(--good);} .d.down{color:var(--warn);} .d.same{color:var(--muted2);}
+  .why{font-family:'Fraunces';font-size:12.5px;color:#bdbdbd;line-height:1.45;}
+  .mealmini{display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-top:1px solid #1c1c1c;}
+  .mealmini:first-of-type{border-top:none;}
+  .mealmini .mn{font-weight:700;} .mealmini .mm{color:var(--muted);}
+  .mealmini .mm .pp{color:var(--p);} .mealmini .mm .cc{color:var(--c);} .mealmini .mm .ff{color:var(--f);}
+  .wk{display:flex;gap:5px;margin:4px 0 9px;}
+  .wk span{flex:1;text-align:center;padding:6px 0;border-radius:8px;font-size:11px;font-weight:800;background:var(--elevated2);border:1px solid var(--border);color:var(--muted);}
+  .wk span.hi{background:rgba(242,163,60,.16);border-color:var(--accent-dim);color:var(--accent);}
+  .clampnote{display:flex;gap:7px;align-items:flex-start;background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.28);border-radius:10px;padding:9px 10px;margin:4px 0 12px;}
+  .clampnote .x{font-size:13px;} .clampnote div{font-size:11px;color:#a9d8ee;line-height:1.4;}
+  .applyall{width:100%;border-radius:26px;padding:14px;text-align:center;font-family:'Barlow';font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:12px;background:var(--accent);color:#1a1205;cursor:pointer;border:none;margin-top:4px;}
+  .editlink{text-align:center;font-size:11px;color:var(--muted);margin-top:10px;}
+  .sectionhdr{width:100%;text-align:center;margin:50px 0 6px;}
+  .sectionhdr h2{font-family:'Barlow Semi Condensed';font-weight:800;font-size:22px;text-transform:uppercase;}
+  .sectionhdr p{color:var(--muted);font-size:13px;max-width:560px;margin:6px auto 0;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<h1>AI Recommend Targets</h1>
+<p class="sub">A <b>✨ AI Recommend</b> button in Edit Targets. Tap it → the AI analyzes your profile, weight trend, logging adherence &amp; workout schedule → proposes <b>Daily</b>, <b>Per-Meal</b> and <b>Per-Day</b> targets, each with a reason and its own <b>Apply</b>. <b>Full-AI</b> writes the numbers; safety clamps keep them in safe ranges. <i style="color:var(--muted2)">Click the button below — it's interactive.</i></p>
+
+<div class="grid">
+  <!-- State 1: button -->
+  <div class="col">
+    <span class="tag">Entry point</span>
+    <div class="phone">
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px">Edit Daily Targets</div>
+        <div class="seg"><div>Daily</div><div class="on">Per&nbsp;Meal</div><div>By&nbsp;Day</div></div>
+        <button class="aibtn" onclick="startAnalyze()">✨ AI Recommend Targets</button>
+        <div class="hint">Analyzes your last 14 days — profile, weight trend, what &amp; when you log, and your training days.</div>
+        <div style="height:14px"></div>
+        <div class="lbl" style="opacity:.5;margin-bottom:8px">— or set manually below —</div>
+        <div style="height:60px;border:1px dashed var(--border2);border-radius:12px;display:grid;place-items:center;color:var(--muted2);font-size:11px">manual sliders / fields…</div>
+      </div>
+    </div>
+    <p class="cap">Sits at the top of every tab. Manual editing stays exactly where it is — the AI button <b>augments</b>, never replaces it.</p>
+  </div>
+
+  <!-- State 2/3: live (analyzing -> recommendation) -->
+  <div class="col">
+    <span class="tag">Tap result (live)</span>
+    <div class="phone">
+      <div class="card" id="live">
+        <!-- filled by JS -->
+      </div>
+    </div>
+    <p class="cap">Tap <b>✨ AI Recommend</b> on the left → this panel shows the analyzing state, then the recommendation with per-section Apply. Click the Apply buttons.</p>
+  </div>
+</div>
+
+<div class="sectionhdr">
+  <h2>What the AI uses &amp; returns</h2>
+  <p>Full-AI proposes the numbers from your data; every value is clamped to safe ranges (never below the calorie floor, protein within sane g/kg) and the reason explains the "why". You review and apply per section or all at once — applied through the same save path as manual edits.</p>
+</div>
+
+<script>
+const REC = {
+  conf: 'High confidence',
+  basis: 'Based on 14 days · 12 logged · weight −0.3 kg/wk · trains Mon/Wed/Fri',
+  daily: {cal:1650, p:175, c:150, f:50, dcal:'+150', dp:'+82', dc:'−18', df:'0',
+    why:'Your logs show a steady deficit but protein’s been low for your training volume — nudging calories up slightly and protein well up to protect muscle while you lean out.'},
+  meal: {why:'You log ~55% of calories at dinner and skip breakfast often — front-loading a touch but keeping dinner the biggest meal so the plan matches how you actually eat.',
+    rows:[['Breakfast','38P · 35C · 12F','430'],['Lunch','62P · 50C · 18F','610'],['Dinner','75P · 65C · 20F','740']]},
+  day: {why:'You train Mon/Wed/Fri — steering more carbs to those days for performance and pulling them back on rest days, same protein throughout.',
+    high:'P175 · C200 · F50', base:'P175 · C120 · F50'},
+  clamped:'Fat was raised to 50g — the AI’s 38g fell below the essential-fat floor for your weight.'
+};
+
+function startAnalyze(){
+  const live=document.getElementById('live');
+  live.innerHTML = `
+    <div class="analyze">
+      <div class="spinner"></div>
+      <div class="steps">
+        <b>Analyzing your nutrition…</b><br>
+        Profile &amp; goal · weight trend · 14-day logs · training schedule
+      </div>
+    </div>`;
+  setTimeout(renderRec, 1600);
+}
+
+function renderRec(){
+  const d=REC.daily, m=REC.meal, day=REC.day;
+  document.getElementById('live').innerHTML = `
+    <div class="rechdr">✨ <span class="t">AI Recommendation</span><span class="conf">${REC.conf}</span></div>
+    <div class="basis">${REC.basis}</div>
+
+    <div class="rsec">
+      <div class="head"><span class="nm">Daily target</span><span class="applybtn" onclick="apply(this)">Apply</span></div>
+      <div class="row">
+        <div class="stat cal"><div class="v">${d.cal}</div><div class="k">kcal</div><div class="d up">${d.dcal}</div></div>
+        <div class="stat p"><div class="v">${d.p}</div><div class="k">P</div><div class="d up">${d.dp}</div></div>
+        <div class="stat c"><div class="v">${d.c}</div><div class="k">C</div><div class="d down">${d.dc}</div></div>
+        <div class="stat f"><div class="v">${d.f}</div><div class="k">F</div><div class="d same">${d.df}</div></div>
+      </div>
+      <div class="why">${d.why}</div>
+    </div>
+
+    <div class="rsec">
+      <div class="head"><span class="nm">Per-meal split</span><span class="applybtn" onclick="apply(this)">Apply</span></div>
+      ${m.rows.map(r=>`<div class="mealmini"><span class="mn">${r[0]}</span><span class="mm">${colorMeal(r[1])} · ${r[2]} kcal</span></div>`).join('')}
+      <div class="why" style="margin-top:9px">${m.why}</div>
+    </div>
+
+    <div class="rsec">
+      <div class="head"><span class="nm">By-day (high / base)</span><span class="applybtn" onclick="apply(this)">Apply</span></div>
+      <div class="wk"><span class="hi">M</span><span>T</span><span class="hi">W</span><span>T</span><span class="hi">F</span><span>S</span><span>S</span></div>
+      <div style="font-size:11.5px;margin-bottom:3px"><b style="color:var(--accent)">High days</b> <span style="color:var(--muted)">${colorMeal(day.high)}</span></div>
+      <div style="font-size:11.5px;margin-bottom:9px"><b style="color:var(--muted)">Base days</b> <span style="color:var(--muted)">${colorMeal(day.base)}</span></div>
+      <div class="why">${day.why}</div>
+    </div>
+
+    <div class="clampnote"><span class="x">🛡️</span><div><b style="color:#cfeeff">Kept safe:</b> ${REC.clamped}</div></div>
+
+    <button class="applyall" onclick="applyAll(this)">Apply all</button>
+    <div class="editlink">or tweak any value manually after applying</div>
+  `;
+}
+function colorMeal(s){
+  return s.replace(/(\d+P)/g,'<span style="color:var(--p)">$1</span>')
+          .replace(/(\d+C)/g,'<span style="color:var(--c)">$1</span>')
+          .replace(/(\d+F)/g,'<span style="color:var(--f)">$1</span>');
+}
+function apply(el){el.textContent='Applied ✓';el.classList.add('done');}
+function applyAll(el){document.querySelectorAll('.applybtn').forEach(b=>{b.textContent='Applied ✓';b.classList.add('done');});el.textContent='All applied ✓';el.style.background='rgba(74,222,128,.15)';el.style.color='var(--good)';}
+
+// initial state for the live panel
+document.getElementById('live').innerHTML = `
+  <div class="lbl" style="margin-bottom:12px">Edit Daily Targets</div>
+  <div class="seg"><div>Daily</div><div class="on">Per&nbsp;Meal</div><div>By&nbsp;Day</div></div>
+  <button class="aibtn" onclick="startAnalyze()">✨ AI Recommend Targets</button>
+  <div class="hint">← tap to analyze &amp; reveal the recommendation</div>`;
+</script>
+</body>
+</html>

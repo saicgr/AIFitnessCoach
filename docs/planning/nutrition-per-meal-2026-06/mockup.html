@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zealova — Per-Meal Targets + Home Polish · Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Semi+Condensed:wght@600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#000; --panel:#0d0d0d; --elevated:#141414; --elevated2:#181818;
+    --border:#262626; --border2:#2f2f2f;
+    --text:#f4f4f4; --muted:#8a8a8a; --muted2:#6a6a6a;
+    --accent:#F2A33C; --accent-dim:#7a5a25;
+    --p:#A78BFA; --c:#38BDF8; --f:#FB923C;
+    --good:#4ADE80; --warn:#F87171;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#070707;color:var(--text);font-family:'Barlow',sans-serif;
+    padding:40px 20px 120px;-webkit-font-smoothing:antialiased;}
+  .anton{font-family:'Anton',sans-serif;letter-spacing:.5px;}
+  .lbl{font-family:'Barlow',sans-serif;text-transform:uppercase;letter-spacing:1.6px;font-weight:800;font-size:11px;color:var(--muted);}
+  .ser{font-family:'Fraunces',serif;}
+  h1{font-family:'Barlow Semi Condensed';font-weight:800;font-size:30px;text-transform:uppercase;letter-spacing:1px;text-align:center;}
+  .sub{text-align:center;color:var(--muted);max-width:760px;margin:8px auto 36px;font-size:14px;line-height:1.55;}
+  .grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start;}
+  .col{display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .cap{max-width:300px;text-align:center;font-size:12.5px;color:var(--muted);line-height:1.5;}
+  .cap b{color:var(--accent);}
+  .tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;
+    padding:3px 9px;border-radius:20px;background:rgba(242,163,60,.14);color:var(--accent);margin-bottom:4px;}
+  .phone{width:392px;background:var(--bg);border-radius:42px;border:1px solid #1c1c1c;
+    padding:16px 14px;box-shadow:0 30px 70px rgba(0,0,0,.6);position:relative;overflow:hidden;}
+  .sectionhdr{grid-column:1/-1;width:100%;text-align:center;margin:70px 0 10px;}
+  .sectionhdr .n{font-family:'Anton';font-size:13px;color:var(--accent);letter-spacing:3px;}
+  .sectionhdr h2{font-family:'Barlow Semi Condensed';font-weight:800;font-size:24px;text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+  .sectionhdr p{color:var(--muted);font-size:13px;max-width:620px;margin:8px auto 0;line-height:1.5;}
+
+  /* generic card */
+  .card{background:var(--elevated);border:1px solid var(--border);border-radius:18px;padding:14px;width:100%;}
+  .seg{display:flex;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:4px;gap:4px;margin-bottom:14px;}
+  .seg button{flex:1;border:none;background:transparent;color:var(--muted);font-family:'Barlow';font-weight:800;
+    font-size:12px;text-transform:uppercase;letter-spacing:1px;padding:9px 4px;border-radius:9px;cursor:pointer;}
+  .seg button.on{background:var(--accent);color:#1a1205;}
+  .tabpane{display:none;} .tabpane.on{display:block;}
+
+  /* daily total banner */
+  .dtot{display:flex;align-items:baseline;justify-content:space-between;background:linear-gradient(90deg,rgba(242,163,60,.10),transparent);
+    border:1px solid var(--accent-dim);border-radius:14px;padding:11px 14px;margin-bottom:14px;}
+  .dtot .big{font-family:'Anton';font-size:30px;line-height:.9;}
+  .dtot .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:800;}
+  .dtot .m{font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:600;}
+  .dtot .m .pp{color:var(--p);} .dtot .m .cc{color:var(--c);} .dtot .m .ff{color:var(--f);}
+
+  /* meal editor card */
+  .mealcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 13px;margin-bottom:11px;}
+  .mealcard .hdr{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+  .mealcard .hdr .nm{font-weight:800;font-size:14px;}
+  .pill{font-size:8.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;padding:2px 7px;border-radius:6px;background:rgba(255,255,255,.07);color:var(--muted);}
+  .pill.edited{background:rgba(242,163,60,.16);color:var(--accent);}
+  .kcal{margin-left:auto;font-family:'Barlow';font-weight:700;font-size:13px;color:var(--text);}
+  .kcal small{color:var(--muted);font-weight:600;font-size:10px;}
+  .lock{display:flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;
+    border:1px solid var(--border2);border-radius:8px;padding:3px 8px;}
+  .lock.on{color:var(--accent);border-color:var(--accent-dim);background:rgba(242,163,60,.08);}
+  .mrow{display:flex;align-items:center;gap:10px;margin:7px 0;}
+  .mrow .ml{width:46px;font-weight:800;font-size:12.5px;}
+  .mrow.p .ml{color:var(--p);} .mrow.c .ml{color:var(--c);} .mrow.f .ml{color:var(--f);}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:5px;border-radius:6px;flex:1;outline:none;background:#262626;}
+  .mrow.p input{background:linear-gradient(90deg,var(--p) var(--pct,40%),#262626 var(--pct,40%));}
+  .mrow.c input{background:linear-gradient(90deg,var(--c) var(--pct,40%),#262626 var(--pct,40%));}
+  .mrow.f input{background:linear-gradient(90deg,var(--f) var(--pct,40%),#262626 var(--pct,40%));}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.5);}
+  .footbtns{display:flex;gap:10px;margin-top:14px;}
+  .btn{flex:1;border-radius:26px;padding:14px;text-align:center;font-family:'Barlow';font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:12px;cursor:pointer;}
+  .btn.ghost{background:transparent;border:1px solid var(--border2);color:var(--text);}
+  .btn.solid{background:var(--accent);color:#1a1205;border:none;}
+  .hint{font-size:11px;color:var(--muted);line-height:1.45;margin:2px 2px 12px;}
+  .hint b{color:var(--accent);}
+
+  /* by-day weekday chips */
+  .wkrow{display:flex;gap:6px;margin:6px 0 14px;}
+  .wk{flex:1;text-align:center;padding:9px 0;border-radius:11px;border:1px solid var(--border);background:var(--panel);
+    font-weight:800;font-size:12px;color:var(--muted);cursor:pointer;}
+  .wk.on{background:rgba(242,163,60,.16);border-color:var(--accent-dim);color:var(--accent);}
+  .wk small{display:block;font-size:8px;letter-spacing:.5px;color:var(--muted2);margin-top:2px;font-weight:700;}
+  .wk.on small{color:var(--accent);}
+  .daycard{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:12px;}
+
+  /* nutrition headline */
+  .headline .top{display:flex;align-items:flex-end;gap:12px;}
+  .headline .num{font-family:'Anton';font-size:52px;line-height:.9;}
+  .chip{border:1px solid var(--border2);border-radius:20px;padding:7px 13px;font-size:11px;font-weight:800;letter-spacing:1px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:7px;display:inline-flex;gap:6px;align-items:center;}
+  .track{height:3px;border-radius:3px;background:#222;margin:11px 0 9px;overflow:hidden;}
+  .track i{display:block;height:100%;background:#9a9a9a;border-radius:3px;}
+  .macros{display:flex;gap:16px;}
+  .macros .ms{font-size:13px;font-weight:700;}
+  .macros .ms .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle;}
+  .macros .ms b{font-family:'Anton';font-weight:400;font-size:18px;letter-spacing:.5px;}
+  .macros .ms small{color:var(--muted);}
+  .leftline{margin-top:10px;font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;font-weight:800;color:var(--muted);}
+  .coachline{margin-top:9px;font-family:'Fraunces';font-size:13.5px;color:#bdbdbd;}
+
+  /* compact meal card (logged) */
+  .ring{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;flex:none;
+    background:conic-gradient(var(--accent) calc(var(--rp,43%) ),#242424 0);}
+  .ring .in{width:36px;height:36px;border-radius:50%;background:var(--elevated);display:grid;place-items:center;}
+  .ring .in span{font-family:'Anton';font-size:13px;line-height:1;}
+  .lmeal{background:var(--elevated);border:1px solid var(--border);border-radius:16px;padding:12px;margin-bottom:11px;}
+  .lmeal .top{display:flex;align-items:center;gap:11px;}
+  .lmeal .nm{font-family:'Barlow Semi Condensed';font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:15px;}
+  .lmeal .ct{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .chiprow{display:flex;gap:7px;margin-left:auto;}
+  .mchip{font-size:10.5px;font-weight:800;padding:3px 7px;border-radius:7px;background:var(--panel);border:1px solid var(--border);}
+  .mchip.p{color:var(--p);} .mchip.c{color:var(--c);} .mchip.f{color:var(--f);}
+  .mchip small{color:var(--muted);font-weight:700;}
+  .fooditem{display:flex;align-items:center;gap:10px;padding:9px 2px;border-top:1px solid #1c1c1c;}
+  .fooditem:first-of-type{margin-top:9px;}
+  .ficon{width:30px;height:30px;border-radius:9px;background:var(--panel);display:grid;place-items:center;color:var(--muted);font-size:14px;flex:none;}
+  .fmeta{flex:1;min-width:0;}
+  .fmeta .fn{font-weight:700;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .fmeta .fa{font-size:11px;color:var(--muted);margin-top:1px;}
+  .fright{text-align:right;}
+  .fright .fc{font-family:'Anton';font-size:15px;}
+  .fright .fm{font-size:10.5px;margin-top:1px;}
+  .fright .fm .pp{color:var(--p);} .fright .fm .cc{color:var(--c);} .fright .fm .ff{color:var(--f);}
+  .expand{text-align:center;font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:9px 0 2px;cursor:pointer;}
+
+  /* coach / fuel / hero / timeline */
+  .coach{background:var(--elevated);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:16px;padding:14px;}
+  .coach .ttl{display:flex;align-items:center;gap:7px;}
+  .coach .ttl .lbl{font-size:10.5px;}
+  .coach h3{font-family:'Barlow';font-weight:800;font-size:18px;margin:9px 0 5px;}
+  .coach p{font-size:13px;color:#b3b3b3;line-height:1.5;}
+  .statband{display:flex;gap:8px;margin:12px 0 4px;}
+  .stat{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:10px 11px;}
+  .stat .k{font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:800;}
+  .stat .v{font-family:'Anton';font-size:24px;line-height:1;margin-top:5px;}
+  .stat .v small{font-family:'Barlow';font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.3px;}
+  .stat.p .v{color:var(--p);} .stat.cal .v{color:var(--accent);}
+  .todo{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px;margin-top:9px;display:flex;align-items:center;gap:10px;}
+  .todo .box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border2);flex:none;}
+  .todo .tt{flex:1;} .todo .tt .a{font-weight:800;font-size:13.5px;} .todo .tt .b{font-size:11px;color:var(--muted);margin-top:1px;}
+  .todo .cta{font-size:11px;font-weight:800;color:var(--accent);border:1px solid var(--accent-dim);border-radius:18px;padding:6px 12px;}
+
+  .fuel{background:var(--elevated);border:1px solid var(--border);border-radius:16px;padding:13px 15px;}
+  .fuel .row1{display:flex;align-items:flex-end;gap:10px;}
+  .fuel .lbl{font-size:10px;}
+  .fuel .num{font-family:'Anton';font-size:30px;line-height:.85;}
+  .fuel .of{font-size:11px;color:var(--muted);font-weight:700;margin-bottom:3px;}
+  .fuel .leftbig{margin-left:auto;text-align:right;}
+  .fuel .leftbig .v{font-family:'Anton';font-size:22px;color:var(--accent);line-height:1;}
+  .fuel .leftbig .v.p{color:var(--p);}
+  .fuel .leftbig .k{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:800;}
+  .fuel .leftrow{display:flex;gap:9px;margin-top:11px;}
+  .fuel .lcell{flex:1;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:8px 9px;text-align:center;}
+  .fuel .lcell .v{font-family:'Anton';font-size:17px;}
+  .fuel .lcell.p .v{color:var(--p);} .fuel .lcell.c .v{color:var(--c);} .fuel .lcell.f .v{color:var(--f);}
+  .fuel .lcell .k{font-size:8.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:800;margin-top:2px;}
+
+  .hero{position:relative;border-radius:18px;overflow:hidden;height:200px;display:flex;flex-direction:column;justify-content:flex-end;padding:16px;
+    background:#3a3a3a url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="%23444"/></svg>');}
+  .hero.before::after,.hero.after::after{content:"";position:absolute;inset:0;}
+  .hero.before::after{background:linear-gradient(180deg,rgba(0,0,0,.4),rgba(0,0,0,.28) 45%,rgba(0,0,0,.5));}
+  .hero.after::after{background:linear-gradient(180deg,rgba(0,0,0,.30) 0%,rgba(0,0,0,.45) 38%,rgba(0,0,0,.82) 72%,rgba(0,0,0,.95) 100%);}
+  .hero > *{position:relative;z-index:2;}
+  .hero .badge{position:absolute;top:14px;right:14px;font-size:9px;font-weight:800;letter-spacing:1px;border:1px solid rgba(255,255,255,.5);
+    border-radius:8px;padding:4px 8px;color:#fff;background:rgba(0,0,0,.3);}
+  .hero h3{font-family:'Barlow Semi Condensed';font-weight:800;text-transform:uppercase;font-size:26px;line-height:.95;color:#fff;}
+  .hero .mt{font-size:11px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.92);margin-top:6px;}
+  .hero.before h3,.hero.before .mt{text-shadow:0 1px 3px rgba(0,0,0,.4);color:rgba(255,255,255,.78);}
+  .hero.after h3{text-shadow:0 2px 10px rgba(0,0,0,.9);}
+  .hero.after .mt{text-shadow:0 1px 6px rgba(0,0,0,.9);color:#fff;}
+  .startbtn{margin-top:12px;background:var(--accent);color:#1a1205;border-radius:14px;padding:13px;text-align:center;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;font-size:13px;}
+
+  .sechdr-out{display:flex;align-items:center;gap:7px;padding:0 4px 8px;}
+  .sechdr-out .lbl{font-size:11px;}
+  .tlbox{background:var(--elevated);border:1px solid var(--border);border-radius:18px;padding:14px;}
+  .tlinner{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px;}
+  .badlbl{display:flex;align-items:center;gap:7px;margin-bottom:11px;}
+  .badge-x{font-size:9px;background:var(--warn);color:#1a0505;border-radius:5px;padding:2px 6px;font-weight:800;}
+  .badge-ok{font-size:9px;background:var(--good);color:#06150a;border-radius:5px;padding:2px 6px;font-weight:800;}
+</style>
+</head>
+<body>
+
+<h1>Zealova — Per-Meal Targets &amp; Home Polish</h1>
+<p class="sub">Interactive mockup for the 10 requests. The per-meal sliders below are <b style="color:var(--accent)">live</b> — drag protein with the lock on and watch carbs/fat adapt while the meal's calories hold, and the daily total at the top re-sum. This is a visual proof, not the final pixels.</p>
+
+<!-- ============ SECTION 1: EDIT TARGETS — TABBED ============ -->
+<div class="sectionhdr">
+  <div class="n">REQUEST 2 · 3 · 4 · &amp; "200g some days"</div>
+  <h2>Edit Targets → tabbed: Daily · Per Meal · By Day</h2>
+  <p>No more scrolling deep to find per-meal targets. A segmented switcher splits the three modes. "Meals drive the day" — the daily total is the live sum of your meals. Each meal has a calorie LOCK: drag one macro, the other two adapt to hold that meal's calories.</p>
+</div>
+
+<div class="grid">
+  <div class="col">
+    <span class="tag">Per Meal tab — interactive</span>
+    <div class="phone">
+      <div class="card">
+        <div class="lbl" style="margin-bottom:12px;">Edit Daily Targets</div>
+        <div class="seg">
+          <button onclick="tab(this,'t-daily')">Daily</button>
+          <button class="on" onclick="tab(this,'t-meal')">Per&nbsp;Meal</button>
+          <button onclick="tab(this,'t-day')">By&nbsp;Day</button>
+        </div>
+
+        <!-- PER MEAL -->
+        <div id="t-meal" class="tabpane on">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 13px;background:var(--panel);border:1px solid var(--border);border-radius:13px;margin-bottom:14px">
+            <div style="flex:1">
+              <div class="lbl" style="color:var(--text)">Per-meal targets</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Split your daily macros across each meal</div>
+            </div>
+            <div style="width:48px;height:28px;border-radius:20px;background:var(--accent);position:relative;flex:none">
+              <div style="width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px"></div>
+            </div>
+          </div>
+          <div class="dtot">
+            <div>
+              <div class="l">Daily total — sum of meals</div>
+              <div class="m"><span class="pp">P <b id="dP">150</b>g</span> · <span class="cc">C <b id="dC">168</b>g</span> · <span class="ff">F <b id="dF">50</b>g</span></div>
+            </div>
+            <div style="text-align:right"><span class="big" id="dKcal">1,722</span><div class="l">kcal</div></div>
+          </div>
+          <div style="display:flex;align-items:center;margin:2px 2px 8px">
+            <div class="hint" style="margin:0;flex:1">Drag a macro. With the <b>🔒 lock</b> on, the meal's calories stay fixed and the other two macros rebalance. Lock off = calories follow your macros.</div>
+            <span class="lock" style="color:var(--accent);border-color:var(--accent-dim);white-space:nowrap" onclick="resetMeals()">↺ Reset to recommended</span>
+          </div>
+
+          <!-- meal template rendered by JS -->
+          <div id="meals"></div>
+
+          <div class="footbtns">
+            <div class="btn ghost">Use Recommended</div>
+            <div class="btn solid">Save Targets</div>
+          </div>
+        </div>
+
+        <!-- DAILY (static preview) -->
+        <div id="t-daily" class="tabpane">
+          <div style="display:flex;align-items:center;margin-bottom:8px">
+            <div class="hint" style="margin:0;flex:1">Total calories &amp; macros, with the existing <b>lock-calories</b> chip so editing one macro rebalances the rest.</div>
+            <span class="lock" style="color:var(--accent);border-color:var(--accent-dim);white-space:nowrap">↺ Reset to recommended</span>
+          </div>
+          <div class="mealcard"><div class="mrow"><div class="ml" style="color:var(--accent)">Cal</div><input type="range" min="800" max="3500" value="1722" style="background:linear-gradient(90deg,var(--accent) 40%,#262626 40%)"><div class="kcal">1,722</div></div></div>
+          <div class="mealcard">
+            <div class="mrow p"><div class="ml">P</div><input type="range" min="0" max="300" value="150" style="--pct:50%"><div class="kcal">150g</div></div>
+            <div class="mrow c"><div class="ml">C</div><input type="range" min="0" max="400" value="168" style="--pct:42%"><div class="kcal">168g</div></div>
+            <div class="mrow f"><div class="ml">F</div><input type="range" min="0" max="150" value="50" style="--pct:33%"><div class="kcal">50g</div></div>
+          </div>
+          <div class="hint">🔒 <b>Lock calories</b> &nbsp;·&nbsp; Grams / % toggle &nbsp;·&nbsp; diet presets — all unchanged from today, just relocated under this tab.</div>
+
+          <div class="mealcard" style="display:flex;align-items:center;gap:12px;padding:13px">
+            <div style="flex:1">
+              <div style="font-weight:800;font-size:13.5px">Boost calories on workout days</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Adds <b style="color:var(--accent)">+200 kcal</b> · +10% protein · +15% carbs on days you train</div>
+            </div>
+            <div style="width:46px;height:27px;border-radius:20px;background:var(--accent);position:relative;flex:none">
+              <div style="width:21px;height:21px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px"></div>
+            </div>
+          </div>
+          <div class="hint" style="margin-top:-4px">Turn this <b>off</b> to keep one flat target every day. (There's a matching "Reduce on rest days" toggle too.) When <b>By Day</b> is on, this boost is replaced by your day targets.</div>
+        </div>
+
+        <!-- BY DAY -->
+        <div id="t-day" class="tabpane">
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 13px;background:var(--panel);border:1px solid var(--border);border-radius:13px;margin-bottom:14px">
+            <div style="flex:1">
+              <div class="lbl" style="color:var(--text)">By-day targets</div>
+              <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Different macros on different days of the week</div>
+            </div>
+            <div style="width:48px;height:28px;border-radius:20px;background:var(--accent);position:relative;flex:none">
+              <div style="width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;margin-bottom:8px">
+            <div class="hint" style="margin:0;flex:1"><b>"200g protein on some days"</b> — built on the training/rest-day engine that already exists. Tap the days that should use a higher protein target.</div>
+            <span class="lock" style="color:var(--accent);border-color:var(--accent-dim);white-space:nowrap">↺ Reset to recommended</span>
+          </div>
+          <div class="wkrow">
+            <div class="wk on" onclick="this.classList.toggle('on')">M<small>HIGH</small></div>
+            <div class="wk" onclick="this.classList.toggle('on')">T<small>base</small></div>
+            <div class="wk on" onclick="this.classList.toggle('on')">W<small>HIGH</small></div>
+            <div class="wk" onclick="this.classList.toggle('on')">T<small>base</small></div>
+            <div class="wk on" onclick="this.classList.toggle('on')">F<small>HIGH</small></div>
+            <div class="wk" onclick="this.classList.toggle('on')">S<small>base</small></div>
+            <div class="wk" onclick="this.classList.toggle('on')">S<small>base</small></div>
+          </div>
+          <div class="daycard" style="margin-bottom:10px">
+            <div class="lbl" style="color:var(--accent)">High days (M·W·F)</div>
+            <div class="mrow p"><div class="ml">P</div><input type="range" min="0" max="300" value="200" style="--pct:67%"><div class="kcal">200g</div></div>
+            <div class="mrow c"><div class="ml">C</div><input type="range" min="0" max="400" value="180" style="--pct:45%"><div class="kcal">180g</div></div>
+            <div class="mrow f"><div class="ml">F</div><input type="range" min="0" max="150" value="55" style="--pct:37%"><div class="kcal">55g</div></div>
+          </div>
+          <div class="daycard">
+            <div class="lbl">Base days</div>
+            <div class="mrow p"><div class="ml">P</div><input type="range" min="0" max="300" value="150" style="--pct:50%"><div class="kcal">150g</div></div>
+            <div class="mrow c"><div class="ml">C</div><input type="range" min="0" max="400" value="168" style="--pct:42%"><div class="kcal">168g</div></div>
+            <div class="mrow f"><div class="ml">F</div><input type="range" min="0" max="150" value="50" style="--pct:33%"><div class="kcal">50g</div></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:flex-start;background:rgba(248,113,113,.10);border:1px solid rgba(248,113,113,.35);border-radius:11px;padding:10px 11px;margin-top:12px">
+            <span style="font-size:14px">⚠️</span>
+            <div style="font-size:11.5px;color:#e7b3b3;line-height:1.45">While By-Day is on, the automatic <b style="color:#fff">+200 kcal workout-day boost is replaced</b> by your day targets — so today shows exactly what you set, never a surprise number.</div>
+          </div>
+          <div class="hint" style="margin-top:12px">Option: bind "high" to <b>training days</b> automatically (reads your workout schedule) instead of fixed weekdays. Both surface a small "High-protein day" badge on Home.</div>
+        </div>
+      </div>
+    </div>
+    <p class="cap"><b>Tabs</b> fix the "buried deep" problem. <b>Per Meal</b> answers "total didn't change" — the daily total is now the live sum. <b>By Day</b> answers "200g some days" by extending the existing day-type engine.</p>
+  </div>
+</div>
+
+<!-- ============ SECTION 2: HEADLINE REFLECTS PER-MEAL ============ -->
+<div class="sectionhdr">
+  <div class="n">REQUEST 3</div>
+  <h2>Daily headline reflects per-meal targets</h2>
+  <p>Today the headline always shows the raw daily target (why you saw "1,500 kcal / 93 P" after setting per-meal). After: when per-meal is on, the headline total = the sum of your meal targets.</p>
+</div>
+<div class="grid">
+  <div class="col">
+    <span class="tag" style="background:rgba(248,113,113,.14);color:var(--warn)">Before</span>
+    <div class="phone"><div class="headline" style="padding:6px 4px">
+      <div class="top"><div class="num">222</div><div class="chip">Targets · 1,500 kcal ›</div></div>
+      <div class="track"><i style="width:15%"></i></div>
+      <div class="macros">
+        <div class="ms"><span class="dot" style="background:var(--p)"></span><b>11</b><small>/93 P</small></div>
+        <div class="ms"><span class="dot" style="background:var(--c)"></span><b>35</b><small>/168 C</small></div>
+        <div class="ms"><span class="dot" style="background:var(--f)"></span><b>5</b><small>/50 F</small></div>
+      </div>
+      <div class="leftline">82g protein left · 1278 kcal left</div>
+    </div></div>
+    <p class="cap">Per-meal set to 50g protein each → 150g total, but the headline still reads the stale daily 93 P / 1,500 kcal.</p>
+  </div>
+  <div class="col">
+    <span class="tag">After</span>
+    <div class="phone"><div class="headline" style="padding:6px 4px">
+      <div class="top"><div class="num">222</div><div class="chip" style="border-color:var(--accent-dim);color:var(--accent)">Targets · 1,722 kcal · per-meal ›</div></div>
+      <div class="track"><i style="width:13%"></i></div>
+      <div class="macros">
+        <div class="ms"><span class="dot" style="background:var(--p)"></span><b>11</b><small>/150 P</small></div>
+        <div class="ms"><span class="dot" style="background:var(--c)"></span><b>35</b><small>/168 C</small></div>
+        <div class="ms"><span class="dot" style="background:var(--f)"></span><b>5</b><small>/50 F</small></div>
+      </div>
+      <div class="leftline">139g protein left · 1500 kcal left</div>
+      <div class="coachline">Per-meal plan active — 3 meals mapped.</div>
+    </div></div>
+    <p class="cap">Total + macros now match the per-meal plan, and the chip flags <b>per-meal</b> is driving it.</p>
+  </div>
+</div>
+
+<!-- ============ SECTION 3: COMPACT MEAL CARD ============ -->
+<div class="sectionhdr">
+  <div class="n">REQUEST 5</div>
+  <h2>Compact meal card — calorie ring + chips, food first</h2>
+  <p>You asked which macro the ring shows: the <b>ring is calories</b> (eaten / meal target). P·C·F ride alongside as small chips. The three tall progress bars collapse so your logged food is visible immediately — tap to expand full per-macro bars.</p>
+</div>
+<div class="grid">
+  <div class="col">
+    <span class="tag" style="background:rgba(248,113,113,.14);color:var(--warn)">Before</span>
+    <div class="phone"><div class="lmeal">
+      <div class="top"><div>🔍 <span class="nm">Breakfast</span> <span style="color:var(--muted);font-size:12px">222 cal</span></div><div style="margin-left:auto;color:var(--muted);font-size:11px">2 ITEMS ⌄</div></div>
+      <div style="font-size:12px;margin:8px 0 4px"><span style="color:var(--p)">11P</span> · <span style="color:var(--c)">35C</span> · <span style="color:var(--f)">5F</span></div>
+      <div style="margin:8px 0"><div style="font-size:11px;color:var(--p)">P 11/50g</div><div class="track" style="margin:3px 0 8px"><i style="width:22%;background:var(--p)"></i></div>
+      <div style="font-size:11px;color:var(--c)">C 35/47g</div><div class="track" style="margin:3px 0 8px"><i style="width:74%;background:var(--c)"></i></div>
+      <div style="font-size:11px;color:var(--f)">F 5/14g</div><div class="track" style="margin:3px 0 0"><i style="width:36%;background:var(--f)"></i></div></div>
+      <div style="color:var(--muted);font-size:11px;margin-top:10px;font-style:italic">…food items pushed way down here ↓</div>
+    </div></div>
+    <p class="cap">Three full-width bars (~90px tall) sit between the header and your food — feels like a wall to scroll past.</p>
+  </div>
+  <div class="col">
+    <span class="tag">After</span>
+    <div class="phone"><div class="lmeal">
+      <div class="top">
+        <div class="ring" style="--rp:43%"><div class="in"><span>43%</span></div></div>
+        <div><div class="nm">Breakfast</div><div class="ct">222 / 514 cal · 2 items</div></div>
+        <div class="chiprow">
+          <div class="mchip p">11<small>/50</small></div>
+          <div class="mchip c">35<small>/47</small></div>
+          <div class="mchip f">5<small>/14</small></div>
+        </div>
+      </div>
+      <div class="fooditem">
+        <div class="ficon">Tᴛ</div>
+        <div class="fmeta"><div class="fn">Yogurt (Plain, Low-Fat)</div><div class="fa">100g · 9:18 AM</div></div>
+        <div class="fright"><div class="fc">63</div><div class="fm"><span class="pp">5P</span>·<span class="cc">7C</span>·<span class="ff">2F</span></div></div>
+      </div>
+      <div class="fooditem">
+        <div class="ficon">Tᴛ</div>
+        <div class="fmeta"><div class="fn">Oatmeal (Cooked)</div><div class="fa">234g · 9:16 AM</div></div>
+        <div class="fright"><div class="fc">159</div><div class="fm"><span class="pp">6P</span>·<span class="cc">28C</span>·<span class="ff">3F</span></div></div>
+      </div>
+      <div class="expand">Tap header for full P·C·F bars ⌄</div>
+    </div></div>
+    <p class="cap">Ring (<b>calories</b>) + three macro chips in one header row. Food rows start immediately — no scrolling past a bar wall.</p>
+  </div>
+</div>
+
+<!-- ============ SECTION 4: HOME — COACH / FUEL / HERO / TIMELINE ============ -->
+<div class="sectionhdr">
+  <div class="n">REQUEST 6 · 7 · 8 · 9 · 10</div>
+  <h2>Home polish</h2>
+  <p>Prominent "protein / calories left", confirmed-dynamic coach tasks, readable workout card, and the Timeline label moved outside its box for consistency.</p>
+</div>
+
+<div class="grid">
+  <!-- coach -->
+  <div class="col">
+    <span class="tag">Request 6 · 7 — Coach card</span>
+    <div class="phone"><div class="coach">
+      <div class="ttl">✦ <span class="lbl" style="color:var(--text)">Your Coach</span> <span class="lbl">· Today's focus</span></div>
+      <h3>Sai, let's fuel your day.</h3>
+      <div class="statband">
+        <div class="stat p"><div class="k">Protein left</div><div class="v">82<small>g</small></div></div>
+        <div class="stat cal"><div class="k">Calories left</div><div class="v">1,278</div></div>
+      </div>
+      <div class="todo"><div class="box"></div><div class="tt"><div class="a">Hit 93g protein</div><div class="b">82g to go · log a high-protein meal</div></div><div class="cta">Log meal</div></div>
+      <div class="todo"><div class="box"></div><div class="tt"><div class="a">Stay hydrated</div><div class="b">0.0L so far — top up</div></div><div class="cta">Log water</div></div>
+    </div></div>
+    <p class="cap"><b>Request 6:</b> protein/calorie left promoted into a big stat band. <b>Request 7:</b> confirmed — the to-dos are <b>fully dynamic</b> (live protein, workout, hydration, sleep providers); nothing static.</p>
+  </div>
+
+  <!-- fuel -->
+  <div class="col">
+    <span class="tag">Request 9 — Home Fuel tile</span>
+    <div class="phone"><div class="fuel">
+      <div class="row1">
+        <div><div class="lbl">Fuel</div><div style="display:flex;align-items:flex-end;gap:8px"><div class="num">222</div><div class="of">/ 1,500</div></div></div>
+        <div class="leftbig"><div class="v">1,278</div><div class="k">kcal left</div></div>
+      </div>
+      <div class="leftrow">
+        <div class="lcell p"><div class="v">82</div><div class="k">P left</div></div>
+        <div class="lcell c"><div class="v">133</div><div class="k">C left</div></div>
+        <div class="lcell f"><div class="v">45</div><div class="k">F left</div></div>
+      </div>
+    </div></div>
+    <p class="cap">"left" is now the headline value (Anton, accent), plus a per-macro <b>left</b> row — not just eaten totals in tiny text.</p>
+  </div>
+
+  <!-- hero before/after -->
+  <div class="col">
+    <span class="tag">Request 8 — Workout card text</span>
+    <div class="phone" style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div class="lbl" style="margin:0 4px 6px;color:var(--warn)">Before — washed out</div>
+        <div class="hero before"><div class="badge">Tomorrow</div><h3>Hwarang Upper Body Ease</h3><div class="mt">Tomorrow · Upper · 60m · 6 exercises</div></div>
+      </div>
+      <div>
+        <div class="lbl" style="margin:0 4px 6px;color:var(--good)">After — stronger scrim</div>
+        <div class="hero after"><div class="badge">Tomorrow</div><h3>Hwarang Upper Body Ease</h3><div class="mt">Triceps &amp; Chest · Upper · 60m · 6 exercises</div><div class="startbtn">Start Workout →</div></div>
+      </div>
+    </div>
+    <p class="cap">Bottom-weighted gradient scrim + stronger text shadow so the title &amp; meta stay legible over any illustration (the light-mode white scrim was the culprit).</p>
+  </div>
+
+  <!-- timeline -->
+  <div class="col">
+    <span class="tag">Request 10 — Timeline label</span>
+    <div class="phone" style="display:flex;flex-direction:column;gap:18px">
+      <div>
+        <div class="lbl" style="margin:0 4px 6px;color:var(--warn)">Before — label inside box</div>
+        <div class="tlbox"><div class="badlbl">✓ <span class="lbl" style="color:var(--text)">Timeline</span> <span class="badge-x">old check icon</span></div><div class="tlinner"><span class="lbl" style="color:var(--good)">🍎 Calories</span><div class="num anton" style="font-size:26px;margin-top:4px">222</div></div></div>
+      </div>
+      <div>
+        <div class="lbl" style="margin:0 4px 6px;color:var(--good)">After — label outside (matches Your Habits)</div>
+        <div class="sechdr-out">⟫ <span class="lbl" style="color:var(--text)">Timeline</span> <span class="badge-ok">new timeline icon</span></div>
+        <div class="tlbox"><div class="tlinner"><span class="lbl" style="color:var(--good)">🍎 Calories</span><div class="num anton" style="font-size:26px;margin-top:4px">222</div></div></div>
+      </div>
+    </div>
+    <p class="cap">Label lifts out above the container, matching "Your Habits" / "Today's Log".</p>
+  </div>
+</div>
+
+<div class="sectionhdr" style="margin-top:60px">
+  <div class="n">REQUEST 1</div>
+  <h2>Fresh-install instant home (no mockup — perf)</h2>
+  <p>Not a visual change: the coach card &amp; nutrition will be folded into the <b>/home/bootstrap</b> prefetch so a fresh install paints real content instead of a long skeleton. The skeleton stays only as a sub-300ms flash.</p>
+</div>
+
+<script>
+function tab(btn,id){
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('#t-daily,#t-meal,#t-day').forEach(p=>p.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ---- live per-meal lock demo ----
+const KCAL={p:4,c:4,f:9};
+let meals=[
+  {name:'Breakfast',p:50,c:47,f:14,lock:true,edited:true},
+  {name:'Lunch',p:50,c:56,f:17,lock:true,edited:true},
+  {name:'Dinner',p:50,c:65,f:19,lock:true,edited:true},
+];
+function kcalOf(m){return Math.round(m.p*KCAL.p+m.c*KCAL.c+m.f*KCAL.f);}
+function renderMeals(){
+  const host=document.getElementById('meals'); if(!host) return;
+  host.innerHTML=meals.map((m,i)=>`
+    <div class="mealcard">
+      <div class="hdr">
+        <span class="nm">${m.name}</span>
+        <span class="pill ${m.edited?'edited':''}">${m.edited?'EDITED':'AUTO'}</span>
+        <span class="kcal" id="k${i}">${kcalOf(m)} <small>kcal</small></span>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin:-4px 0 6px">
+        <span class="lock ${m.lock?'on':''}" onclick="toggleLock(${i})">${m.lock?'🔒 Calories locked':'🔓 Calories follow'}</span>
+      </div>
+      ${row(i,'p','P',m.p,300)}
+      ${row(i,'c','C',m.c,400)}
+      ${row(i,'f','F',m.f,150)}
+    </div>`).join('');
+  refreshFills();
+  updateTotal();
+}
+function row(i,k,label,val,max){
+  return `<div class="mrow ${k}"><div class="ml">${label}</div>
+    <input type="range" min="0" max="${max}" value="${val}" data-i="${i}" data-k="${k}" data-max="${max}" oninput="onDrag(this)">
+    <div class="kcal" id="g${i}${k}">${val}g</div></div>`;
+}
+function refreshFills(){
+  document.querySelectorAll('#meals input[type=range]').forEach(inp=>{
+    const pct=(inp.value/inp.dataset.max*100).toFixed(0);
+    inp.style.setProperty('--pct',pct+'%');
+  });
+}
+function onDrag(inp){
+  const i=+inp.dataset.i, k=inp.dataset.k, m=meals[i];
+  let v=+inp.value;
+  if(m.lock && (k==='p'||k==='c'||k==='f')){
+    const T=m.lockedKcal;            // captured ONCE when lock turned on — never drifts
+    if(k==='p'){
+      const maxP=Math.floor(T/KCAL.p);          // hard-stop: protein can't exceed the meal budget
+      if(v>maxP){v=maxP; inp.value=v;}
+      const rem=T - v*KCAL.p;
+      const cK=m.c*KCAL.c, fK=m.f*KCAL.f, tot=cK+fK||1;   // preserve current C:F ratio
+      let c=Math.max(0,Math.round((rem*(cK/tot))/KCAL.c));
+      let f=Math.max(0,Math.round((rem - c*KCAL.c)/KCAL.f));
+      if(f<0){f=0;c=Math.max(0,Math.round(rem/KCAL.c));}
+      m.p=v;m.c=c;m.f=f;
+    } else if(k==='c'){                           // protein + calories held → fat absorbs
+      const maxC=Math.max(0,Math.floor((T - m.p*KCAL.p)/KCAL.c));
+      if(v>maxC){v=maxC; inp.value=v;}
+      m.c=v;m.f=Math.max(0,Math.round((T - m.p*KCAL.p - v*KCAL.c)/KCAL.f));
+    } else {                                      // fat changed → carbs absorb
+      const maxF=Math.max(0,Math.floor((T - m.p*KCAL.p)/KCAL.f));
+      if(v>maxF){v=maxF; inp.value=v;}
+      m.f=v;m.c=Math.max(0,Math.round((T - m.p*KCAL.p - v*KCAL.f)/KCAL.c));
+    }
+    // reconcile integer-rounding drift into carbs so the meal kcal == T exactly
+    const drift=Math.round((T - kcalOf(m))/KCAL.c);
+    if(drift!==0 && m.c+drift>=0) m.c+=drift;
+  } else {
+    m[k]=v; // unlocked: calories follow macros
+  }
+  m.edited=true;
+  // update this card's inputs + readouts
+  ['p','c','f'].forEach(kk=>{
+    const g=document.getElementById('g'+i+kk); if(g)g.textContent=m[kk]+'g';
+    const inp2=document.querySelector(`#meals input[data-i="${i}"][data-k="${kk}"]`);
+    if(inp2){inp2.value=m[kk];inp2.style.setProperty('--pct',(m[kk]/inp2.dataset.max*100).toFixed(0)+'%');}
+  });
+  const kc=document.getElementById('k'+i); if(kc)kc.innerHTML=kcalOf(m)+' <small>kcal</small>';
+  const pill=document.querySelectorAll('#meals .pill')[i]; if(pill){pill.textContent='EDITED';pill.classList.add('edited');}
+  updateTotal();
+}
+function toggleLock(i){meals[i].lock=!meals[i].lock; if(meals[i].lock) meals[i].lockedKcal=kcalOf(meals[i]); renderMeals();}
+const RECO=[{p:38,c:50,f:16},{p:45,c:60,f:21},{p:52,c:70,f:24}];
+function resetMeals(){meals=RECO.map((r,i)=>({name:meals[i].name,p:r.p,c:r.c,f:r.f,lock:true,edited:false}));meals.forEach(m=>m.lockedKcal=kcalOf(m));renderMeals();}
+function updateTotal(){
+  const P=meals.reduce((a,m)=>a+m.p,0), C=meals.reduce((a,m)=>a+m.c,0), F=meals.reduce((a,m)=>a+m.f,0);
+  const K=meals.reduce((a,m)=>a+kcalOf(m),0);
+  dP.textContent=P;dC.textContent=C;dF.textContent=F;dKcal.textContent=K.toLocaleString();
+}
+meals.forEach(m=>m.lockedKcal=kcalOf(m));   // capture each meal's locked budget at start
+renderMeals();
+</script>
+</body>
+</html>
