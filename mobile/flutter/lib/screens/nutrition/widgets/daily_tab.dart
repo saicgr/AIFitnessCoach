@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/chrome_constants.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/nutrition.dart';
 import 'nutrition_catalog_view.dart';
@@ -1353,10 +1354,37 @@ class _NutritionHeadline extends ConsumerWidget {
     final eatenC = (summary?.totalCarbsG ?? 0).round();
     final eatenF = (summary?.totalFatG ?? 0).round();
 
-    final calTarget = configured ? prefs.currentCalorieTarget : 0;
-    final pTarget = configured ? prefs.currentProteinTarget : 0;
-    final cTarget = configured ? prefs.currentCarbsTarget : 0;
-    final fTarget = configured ? prefs.currentFatTarget : 0;
+    // "Meals drive the day": when per-meal targets are enabled and at least one
+    // meal is configured, the headline target = the live SUM over each meal's
+    // per-meal targets (calories/P/C/F). This is the fix for "I set per-meal
+    // targets but the headline still shows my old daily 1,500 kcal / 93 P".
+    // When per-meal is off (or no meals mapped) the headline keeps the existing
+    // daily-target behavior.
+    final perMeal = configured ? prefs.perMealTargetsToday : null;
+    final perMealDriven = perMeal != null && perMeal.isNotEmpty;
+
+    final int calTarget;
+    final int pTarget;
+    final int cTarget;
+    final int fTarget;
+    if (perMealDriven) {
+      double sumCal = 0, sumP = 0, sumC = 0, sumF = 0;
+      for (final t in perMeal.values) {
+        sumCal += t.calories;
+        sumP += t.proteinG;
+        sumC += t.carbsG;
+        sumF += t.fatG;
+      }
+      calTarget = sumCal.round();
+      pTarget = sumP.round();
+      cTarget = sumC.round();
+      fTarget = sumF.round();
+    } else {
+      calTarget = configured ? prefs.currentCalorieTarget : 0;
+      pTarget = configured ? prefs.currentProteinTarget : 0;
+      cTarget = configured ? prefs.currentCarbsTarget : 0;
+      fTarget = configured ? prefs.currentFatTarget : 0;
+    }
 
     final calLeft = (calTarget - eatenCal);
     final pLeft = (pTarget - eatenP);
@@ -1387,6 +1415,7 @@ class _NutritionHeadline extends ConsumerWidget {
       calTarget: calTarget,
       pLeft: pLeft,
       hasMeals: (summary?.meals ?? const []).isNotEmpty,
+      perMealCount: perMealDriven ? perMeal.length : 0,
     );
 
     return Padding(
@@ -1411,8 +1440,11 @@ class _NutritionHeadline extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: _TargetsChip(
                   label: configured
-                      ? 'Targets · ${_formatThousands(calTarget)} kcal'
+                      ? (perMealDriven
+                          ? 'Targets · ${_formatThousands(calTarget)} kcal · per-meal'
+                          : 'Targets · ${_formatThousands(calTarget)} kcal')
                       : 'Set a target',
+                  highlighted: perMealDriven,
                   onTap: onEditTargets,
                 ),
               ),
@@ -1486,10 +1518,17 @@ class _NutritionHeadline extends ConsumerWidget {
     required int calTarget,
     required int pLeft,
     required bool hasMeals,
+    int perMealCount = 0,
   }) {
     if (!isViewingToday) return null;
     if (!configured) {
       return 'Set your targets and I’ll keep your day on track.';
+    }
+    // Per-meal plan active and nothing logged yet → confirm the plan is live
+    // (mirrors the mockup "Per-meal plan active — N meals mapped.").
+    if (perMealCount > 0 && eatenCal == 0 && !hasMeals) {
+      return 'Per-meal plan active — $perMealCount '
+          '${perMealCount == 1 ? 'meal' : 'meals'} mapped.';
     }
     if (eatenCal == 0 && !hasMeals) {
       return 'Fresh page. Log your first meal when you’re ready.';
@@ -1523,11 +1562,22 @@ class _NutritionHeadline extends ConsumerWidget {
 class _TargetsChip extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
-  const _TargetsChip({required this.label, required this.onTap});
+  /// When true the chip adopts an accent outline + accent text — used to flag
+  /// that per-meal targets (not the raw daily target) are driving the headline.
+  final bool highlighted;
+  const _TargetsChip({
+    required this.label,
+    required this.onTap,
+    this.highlighted = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final tc = ThemeColors.of(context);
+    final accent = AccentColorScope.of(context).getColor(tc.isDark);
+    final borderColor =
+        highlighted ? accent.withValues(alpha: 0.5) : tc.cardBorder;
+    final textColor = highlighted ? accent : tc.textSecondary;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -1536,21 +1586,24 @@ class _TargetsChip extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
           decoration: BoxDecoration(
-            color: tc.surface,
+            color: highlighted ? accent.withValues(alpha: 0.08) : tc.surface,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: tc.cardBorder),
+            border: Border.all(color: borderColor),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 label.toUpperCase(),
-                style: ZType.lbl(10.5, color: tc.textSecondary, letterSpacing: 1.0),
+                style: ZType.lbl(10.5, color: textColor, letterSpacing: 1.0),
               ),
               if (onTap != null) ...[
                 const SizedBox(width: 5),
                 Icon(Icons.chevron_right_rounded,
-                    size: 15, color: tc.textMuted),
+                    size: 15,
+                    color: highlighted
+                        ? accent.withValues(alpha: 0.8)
+                        : tc.textMuted),
               ],
             ],
           ),

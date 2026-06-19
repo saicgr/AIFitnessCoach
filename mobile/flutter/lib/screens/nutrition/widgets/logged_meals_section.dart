@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -4144,9 +4145,14 @@ class _MealSection extends StatefulWidget {
 }
 
 class _MealSectionState extends State<_MealSection> {
-  bool? _userExpanded; // null = use smart default from typeMeals
+  bool? _userExpanded; // null = use smart default
 
-  bool get _isExpanded => _userExpanded ?? widget.typeMeals.isNotEmpty;
+  /// Food rows now render directly under the header regardless of this flag —
+  /// the chevron only reveals the full eaten/target P·C·F bar wall (or the
+  /// empty-state prompt). Default is COLLAPSED so the bars stay tucked away
+  /// (Request 5: "no tall bar wall by default"); empty sections default open
+  /// so the "tap to add" prompt is visible.
+  bool get _isExpanded => _userExpanded ?? widget.typeMeals.isEmpty;
 
   void _toggle() {
     HapticFeedback.selectionClick();
@@ -4177,51 +4183,137 @@ class _MealSectionState extends State<_MealSection> {
         : '${hasMenuScan ? 'menu scan · ' : ''}$itemCount '
             '${itemCount == 1 ? 'item' : 'items'}';
 
+    // Per-meal target for THIS meal (Request 5 compact card). When present we
+    // render a calorie ring (eaten / meal-target kcal) plus three macro chips
+    // (eaten/target denominators). When absent (feature off / no target for
+    // this meal) we fall back to the plain "· N cal" calorie count — no
+    // ring, no denominators — so the non-per-meal view never regresses.
+    final mealTarget = owner.perMealTargets?[
+        LoggedMealsSection._targetKeyForMealId(widget.mealId)];
+    final hasMealTarget = mealTarget != null;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Surface 3.4 — section header: tap-row opens log sheet (single
-        // primary action), chevron toggles expansion. Signature: emoji +
-        // Barlow-uppercase meal name + tabular calorie + count, on a hairline.
+        // Surface 3.4 / Request 5 — compact section header. Tap-row opens the
+        // log sheet (single primary action); chevron toggles the full P/C/F
+        // bars. With a per-meal target the row carries a calorie RING +
+        // "X / Y cal · N items" + three macro chips; without one it keeps the
+        // signature emoji + name + "· N cal" + count line.
         Padding(
           padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
           child: Row(
             children: [
+              if (hasMealTarget) ...[
+                Padding(
+                  padding: const EdgeInsets.only(left: 2, right: 11),
+                  child: _CalorieRing(
+                    eaten: totalCal,
+                    target: mealTarget.calories,
+                    isDark: isDark,
+                    accent: accent,
+                  ),
+                ),
+              ],
               Expanded(
                 child: InkWell(
                   onTap: () => owner.onLogMeal(widget.mealId),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 9, 4, 9),
-                    child: Row(
-                      children: [
-                        Text(widget.emoji, style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 9),
-                        Text(
-                          widget.label.toUpperCase(),
-                          style: ZType.lbl(11.5, color: textPrimary, letterSpacing: 2),
-                        ),
-                        if (totalCal > 0) ...[
-                          const SizedBox(width: 8),
-                          // "· 222 cal" on line 1. The P/C/F triplet moved to
-                          // its own line below the header so nothing truncates
-                          // (was an inline RichText that ellipsed to "11P…").
-                          Text(
-                            '$totalCal cal',
-                            style: ZType.data(11.5, color: textPrimary),
+                    padding: EdgeInsets.fromLTRB(
+                        hasMealTarget ? 0 : 4, 9, 4, 9),
+                    child: hasMealTarget
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(widget.emoji,
+                                      style: const TextStyle(fontSize: 14)),
+                                  const SizedBox(width: 7),
+                                  Flexible(
+                                    child: Text(
+                                      widget.label.toUpperCase(),
+                                      style: ZType.lbl(11.5,
+                                          color: textPrimary,
+                                          letterSpacing: 1.5),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                // "222 / 514 cal · 2 items"
+                                '$totalCal / ${mealTarget.calories} cal'
+                                '${countLabel != null ? ' · $itemCount ${itemCount == 1 ? 'item' : 'items'}' : ''}',
+                                style: ZType.data(11, color: textMuted),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Text(widget.emoji,
+                                  style: const TextStyle(fontSize: 16)),
+                              const SizedBox(width: 9),
+                              Text(
+                                widget.label.toUpperCase(),
+                                style: ZType.lbl(11.5,
+                                    color: textPrimary, letterSpacing: 2),
+                              ),
+                              if (totalCal > 0) ...[
+                                const SizedBox(width: 8),
+                                Text(
+                                  '$totalCal cal',
+                                  style: ZType.data(11.5, color: textPrimary),
+                                ),
+                              ],
+                              const Spacer(),
+                              if (countLabel != null)
+                                Text(
+                                  countLabel.toUpperCase(),
+                                  style: ZType.lbl(9,
+                                      color: textMuted, letterSpacing: 1.5),
+                                ),
+                            ],
                           ),
-                        ],
-                        const Spacer(),
-                        if (countLabel != null)
-                          Text(
-                            countLabel.toUpperCase(),
-                            style: ZType.lbl(9, color: textMuted, letterSpacing: 1.5),
-                          ),
-                      ],
-                    ),
                   ),
                 ),
               ),
+              // Three macro chips (eaten/meal-target) — only with a per-meal
+              // target. "11/50" style, each in its semantic color.
+              if (hasMealTarget) ...[
+                const SizedBox(width: 8),
+                _MacroChip(
+                  eaten: totalProtein,
+                  target: mealTarget.proteinG,
+                  color: isDark
+                      ? AppColors.macroProtein
+                      : AppColorsLight.macroProtein,
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 5),
+                _MacroChip(
+                  eaten: totalCarbs,
+                  target: mealTarget.carbsG,
+                  color: isDark
+                      ? AppColors.macroCarbs
+                      : AppColorsLight.macroCarbs,
+                  isDark: isDark,
+                ),
+                const SizedBox(width: 5),
+                _MacroChip(
+                  eaten: totalFat,
+                  target: mealTarget.fatG,
+                  color:
+                      isDark ? AppColors.macroFat : AppColorsLight.macroFat,
+                  isDark: isDark,
+                ),
+              ],
               if (widget.typeMeals.isNotEmpty)
                 IconButton(
                   onPressed: () => owner.onShareMealGroup(widget.mealId),
@@ -4242,16 +4334,19 @@ class _MealSectionState extends State<_MealSection> {
                 visualDensity: VisualDensity.compact,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 30, minHeight: 34),
-                tooltip: _isExpanded ? 'Collapse' : 'Expand',
+                tooltip: _isExpanded
+                    ? 'Collapse'
+                    : (hasMealTarget ? 'Show full P·C·F bars' : 'Expand'),
               ),
             ],
           ),
         ),
-        // Per-meal P/C/F on its OWN line below the header (full triplet in
-        // semantic macro colors — protein violet · carbs cyan · fat orange).
-        // Sharing the header row truncated it to "11P…" on narrow screens, so
-        // it now gets a dedicated line that never has to compete for width.
-        if (totalCal > 0 && (totalProtein + totalCarbs + totalFat) > 0)
+        // Per-meal P/C/F triplet on its OWN line below the header — ONLY when
+        // there is no per-meal target (the chips already carry P/C/F when a
+        // target exists). Keeps the legacy non-per-meal view intact.
+        if (!hasMealTarget &&
+            totalCal > 0 &&
+            (totalProtein + totalCarbs + totalFat) > 0)
           Padding(
             padding: const EdgeInsets.fromLTRB(31, 0, 6, 8),
             child: owner._macroTriplet(
@@ -4261,16 +4356,50 @@ class _MealSectionState extends State<_MealSection> {
               fontSize: 11,
             ),
           ),
-        // Per-meal targets (Phase 1c): thin eaten/target progress bars under
-        // the P/C/F line. Self-hides when the feature is off or no target
-        // exists for this meal. Shows even with 0 eaten so the target reads.
-        owner._buildPerMealProgress(
-          mealId: widget.mealId,
-          eatenProtein: totalProtein,
-          eatenCarbs: totalCarbs,
-          eatenFat: totalFat,
-        ),
-        // Items or empty state
+        // Food rows render IMMEDIATELY beneath the header — no wall of bars to
+        // scroll past. They are always visible (independent of the chevron).
+        if (widget.typeMeals.isNotEmpty)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...widget.typeMeals.map((meal) {
+                if (meal.foodItems.length <= 1) {
+                  final food = meal.foodItems.isEmpty
+                      ? null
+                      : meal.foodItems.first;
+                  return owner._buildFoodItemRow(
+                    context: context,
+                    meal: meal,
+                    foodName: food?.name ?? (meal.userQuery ?? 'Food'),
+                    calories: food?.calories ?? meal.totalCalories,
+                    amount: food?.amount,
+                    proteinG: food?.proteinG ?? meal.proteinG,
+                    carbsG: food?.carbsG ?? meal.carbsG,
+                    fatG: food?.fatG ?? meal.fatG,
+                    inflammationScore:
+                        food?.inflammationScore ?? meal.inflammationScore,
+                    time: meal.loggedAt,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    accent: accent,
+                  );
+                }
+                return _FoodGroup(
+                  meal: meal,
+                  owner: owner,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  accent: accent,
+                  cardBorder: cardBorder,
+                );
+              }),
+              const SizedBox(height: 4),
+            ],
+          ),
+        // Expanded detail: the full eaten/target P/C/F bars + (when empty) the
+        // "tap to add" prompt. Tap the chevron to reveal. With a per-meal
+        // target this is the bar wall, now collapsed by default; without one
+        // it stays the legacy empty-state prompt.
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 180),
           crossFadeState: _isExpanded
@@ -4288,44 +4417,13 @@ class _MealSectionState extends State<_MealSection> {
                     ),
                   ),
                 )
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ...widget.typeMeals.map((meal) {
-                      if (meal.foodItems.length <= 1) {
-                        // Single-item log → flat row
-                        final food = meal.foodItems.isEmpty
-                            ? null
-                            : meal.foodItems.first;
-                        return owner._buildFoodItemRow(
-                          context: context,
-                          meal: meal,
-                          foodName: food?.name ?? (meal.userQuery ?? 'Food'),
-                          calories: food?.calories ?? meal.totalCalories,
-                          amount: food?.amount,
-                          proteinG: food?.proteinG ?? meal.proteinG,
-                          carbsG: food?.carbsG ?? meal.carbsG,
-                          fatG: food?.fatG ?? meal.fatG,
-                          inflammationScore:
-                              food?.inflammationScore ?? meal.inflammationScore,
-                          time: meal.loggedAt,
-                          textPrimary: textPrimary,
-                          textMuted: textMuted,
-                          accent: accent,
-                        );
-                      }
-                      // Multi-item log → group parent + indented children
-                      return _FoodGroup(
-                        meal: meal,
-                        owner: owner,
-                        textPrimary: textPrimary,
-                        textMuted: textMuted,
-                        accent: accent,
-                        cardBorder: cardBorder,
-                      );
-                    }),
-                    const SizedBox(height: 4),
-                  ],
+              // Full eaten/target P/C/F bars (Phase 1c) — the detail body the
+              // compact card collapses. Self-hides when no per-meal target.
+              : owner._buildPerMealProgress(
+                  mealId: widget.mealId,
+                  eatenProtein: totalProtein,
+                  eatenCarbs: totalCarbs,
+                  eatenFat: totalFat,
                 ),
         ),
       ],
@@ -4775,6 +4873,147 @@ class _GlFodmapChip extends StatelessWidget {
               Icon(Icons.info_outline, size: 12, color: color.withValues(alpha: 0.7)),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// _CalorieRing — small 44px progress ring for the compact meal card header
+// (Request 5). Shows eaten / meal-target calories as a swept accent arc with
+// the percent (or eaten kcal when no target) at its center. Over-target caps
+// the arc at full (non-punitive) — the "+over" reads in the count line.
+// ============================================
+
+class _CalorieRing extends StatelessWidget {
+  final int eaten;
+  final int target;
+  final bool isDark;
+  final Color accent;
+
+  const _CalorieRing({
+    required this.eaten,
+    required this.target,
+    required this.isDark,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final track = isDark ? AppColors.hairlineStrong : AppColorsLight.cardBorder;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final pct = target <= 0 ? 0.0 : (eaten / target).clamp(0.0, 1.0);
+    final label = target <= 0 ? '$eaten' : '${(pct * 100).round()}%';
+    return SizedBox(
+      width: 44,
+      height: 44,
+      child: CustomPaint(
+        painter: _RingPainter(progress: pct, color: accent, track: track),
+        child: Center(
+          child: Text(
+            label,
+            style: ZType.disp(target <= 0 ? 11 : 12.5, color: textPrimary)
+                .copyWith(height: 1.0),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  final Color track;
+
+  const _RingPainter({
+    required this.progress,
+    required this.color,
+    required this.track,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const stroke = 4.0;
+    final rect = Offset.zero & size;
+    final center = rect.center;
+    final radius = (size.shortestSide - stroke) / 2;
+
+    final trackPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = stroke
+      ..color = track;
+    canvas.drawCircle(center, radius, trackPaint);
+
+    if (progress > 0) {
+      final arcPaint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = stroke
+        ..strokeCap = StrokeCap.round
+        ..color = color;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -math.pi / 2, // start at 12 o'clock
+        2 * math.pi * progress,
+        false,
+        arcPaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RingPainter old) =>
+      old.progress != progress || old.color != color || old.track != track;
+}
+
+// ============================================
+// _MacroChip — "11/50" style macro pill for the compact meal card header.
+// Eaten value in the macro's semantic color, "/target" muted. Used for P/C/F
+// when a per-meal target exists (the three full bars then live behind the
+// chevron). Rounds grams to int.
+// ============================================
+
+class _MacroChip extends StatelessWidget {
+  final double eaten;
+  final double target;
+  final Color color;
+  final bool isDark;
+
+  const _MacroChip({
+    required this.eaten,
+    required this.target,
+    required this.color,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final panel = isDark ? AppColors.surface2 : AppColorsLight.surface;
+    final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: panel,
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: border),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '${eaten.round()}',
+              style: TextStyle(
+                  color: color, fontWeight: FontWeight.w800, fontSize: 10.5),
+            ),
+            TextSpan(
+              text: '/${target.round()}',
+              style: TextStyle(
+                  color: muted, fontWeight: FontWeight.w700, fontSize: 9.5),
+            ),
+          ],
         ),
       ),
     );
