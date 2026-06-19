@@ -40,6 +40,12 @@ class DataCacheService {
   // them even before the TTL fires.
   static const String chatMorningBriefKey = 'cache_chat_morning_brief';
   static const String chatEveningRecapKey = 'cache_chat_evening_recap';
+  // Light "greeting" coach-open insight (the non-brief hours). Was uncached —
+  // re-fetched fresh on EVERY Ask Coach open, a 5-10s Gemini round-trip each
+  // time. Now cached (short TTL) and served stale-while-revalidate so a repeat
+  // open paints instantly AND rotates in the background; tz-sensitive so a
+  // calendar rollover refreshes it.
+  static const String chatGreetingKey = 'cache_chat_greeting';
   static const String nutritionDailyKey = 'cache_nutrition_daily';
   // "Ask Coach" conversation list — paints instantly on open, then silently
   // revalidates. NOT tz-sensitive (sessions aren't a "today" surface).
@@ -67,6 +73,7 @@ class DataCacheService {
   static const int _firstPaintTtlMs = 24 * 60 * 60 * 1000; // 24 hours — first-paint tab data survives overnight
   static const int _dailyActivityTtlMs = 6 * 60 * 60 * 1000; // 6 hours — step count drifts intraday; refresh sooner
   static const int _statsTtlMs = 12 * 60 * 60 * 1000; // 12 hours — stat aggregates change slowly
+  static const int _greetingTtlMs = 90 * 60 * 1000; // 90 min — short enough to track time-of-day, long enough to make repeat coach opens instant
 
   /// Keys whose envelopes must also match the user's local wall-clock date.
   /// Used to defend against timezone rollover (e.g. LAX → JFK flight) where
@@ -81,6 +88,7 @@ class DataCacheService {
     coachInsightKey,
     chatMorningBriefKey,
     chatEveningRecapKey,
+    chatGreetingKey,
     nutritionDailyKey,
     combinedHealthKey,
   };
@@ -112,6 +120,8 @@ class DataCacheService {
     coachInsightKey: _statsTtlMs,
     chatMorningBriefKey: _statsTtlMs, // 12h — within a phase the brief is stable
     chatEveningRecapKey: _statsTtlMs,
+    chatGreetingKey: _greetingTtlMs, // 90m — bounds worst-case stale paint; stale-while-revalidate rotates it every open
+
     nutritionDailyKey: _firstPaintTtlMs,
     chatSessionsKey: _firstPaintTtlMs, // 24h — survives overnight reopens; always revalidated
     combinedHealthKey: _dailyActivityTtlMs, // 6h — step/zone data drifts intraday
@@ -407,6 +417,7 @@ class DataCacheService {
         coachInsightKey,
         chatMorningBriefKey,
         chatEveningRecapKey,
+        chatGreetingKey,
         nutritionDailyKey,
         combinedHealthKey,
       ];

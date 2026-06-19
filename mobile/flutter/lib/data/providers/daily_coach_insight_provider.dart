@@ -348,16 +348,17 @@ String chatOpenSourceForHour(int hour) {
 ///
 /// Same gating as the home provider: wait for the timezone to settle and a
 /// Supabase session to exist; otherwise return the deterministic fallback so
-/// the open state never blanks. The greeting source rotates server-side on
-/// every call, so this provider is `.autoDispose` — each fresh chat open
-/// re-fetches a new greeting.
+/// the open state never blanks. All three sources are served cache-first with
+/// stale-while-revalidate (rich briefings 12h, light greeting 90m): a warm open
+/// paints instantly AND a background refresh rotates the value for the next
+/// open, so it's instant without going stale. `.autoDispose` so each open
+/// re-runs and picks up the freshly-revalidated cache.
 final chatOpenInsightProvider =
     FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
-  // NOTE: intentionally NOT keepAlive — the greeting source rotates server-side
-  // on every call, so each fresh chat open must re-fetch a new greeting. The
-  // RICH briefings (morning_brief / evening_recap) are instead served
-  // cache-first below so the chat open paints them instantly on a warm second
-  // open instead of blocking on the Gemini round-trip.
+  // NOTE: autoDispose (not keepAlive) so each open re-runs and reads the
+  // freshly-revalidated disk cache. All three sources are served cache-first
+  // below (see cacheKey) with stale-while-revalidate — a warm re-open paints
+  // instantly instead of blocking 5-10s on the Gemini round-trip every time.
   final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   final tzState = ref.watch(timezoneProvider);
   if (tzState.isLoading || userId == null || userId.isEmpty) {
@@ -371,24 +372,42 @@ final chatOpenInsightProvider =
     source: source,
   );
 
-  // Cache-first for the rich briefings only (mirrors dailyCoachInsightProvider).
-  // The light `greeting` rotates server-side, so it stays uncached and fetches
-  // fresh every open. A non-expired, same-local-day cached briefing paints
-  // instantly; the REAL response is written through on success by _fetchInsight.
+  // Cache-first for ALL three sources (mirrors dailyCoachInsightProvider). The
+  // rich briefings use a 12h TTL; the light `greeting` uses a short 90m TTL
+  // (DataCacheService.chatGreetingKey). On a cache hit we paint instantly AND
+  // kick a background revalidation (see below), so the greeting is both instant
+  // and rotates every open — the 90m TTL only bounds the worst-case STALE paint
+  // (e.g. after a long idle) before a blocking refetch. A non-expired,
+  // same-local-day cached value paints instantly; the REAL response is written
+  // through on success by _fetchInsight.
   final cacheKey = source == 'morning_brief'
       ? DataCacheService.chatMorningBriefKey
       : source == 'evening_recap'
           ? DataCacheService.chatEveningRecapKey
-          : null;
-  if (cacheKey != null) {
-    final uid = Supabase.instance.client.auth.currentUser?.id;
-    final cached = await DataCacheService.instance.getCached(
-      cacheKey,
-      userId: uid,
-    );
-    if (cached != null) {
-      return DailyCoachInsight.fromJson(cached);
-    }
+          : DataCacheService.chatGreetingKey;
+  final uid = Supabase.instance.client.auth.currentUser?.id;
+  final cached = await DataCacheService.instance.getCached(
+    cacheKey,
+    userId: uid,
+  );
+  if (cached != null) {
+    // Stale-while-revalidate: paint the cached value INSTANTLY, then silently
+    // revalidate in the background so the NEXT open rotates — instant AND
+    // fresh, instead of trading one for the other. _fetchInsight reads
+    // apiClientProvider synchronously (before its first await) and, with
+    // pin:false, never calls ref.keepAlive() — so the refresh captures what it
+    // needs now and survives this autoDispose provider tearing down once it has
+    // returned the cached value below. The background write only touches the
+    // disk cache; the current view keeps the value it already painted (no
+    // jarring mid-view swap), and the freshly-written greeting surfaces on the
+    // next open. Failures are swallowed — the cached greeting we returned
+    // stands and the next open retries.
+    unawaited(() async {
+      try {
+        await _fetchInsight(ref, args, cacheKey: cacheKey, pin: false);
+      } catch (_) {/* transient/offline — keep the cached greeting */}
+    }());
+    return DailyCoachInsight.fromJson(cached);
   }
 
   return _fetchInsight(ref, args, cacheKey: cacheKey);

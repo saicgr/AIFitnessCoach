@@ -393,8 +393,19 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   bool get isLoading => _isLoading;
 
-  /// Whether more messages are available for pagination (#16)
-  bool get hasMoreMessages => _hasMoreMessages;
+  /// Whether more messages are available for pagination (#16).
+  ///
+  /// Gated on [_initialHistoryLoaded]: `_hasMoreMessages` defaults to `true`
+  /// (optimistic — we don't yet know if older pages exist), so before the
+  /// first history fetch settles it would make the chat render a "loading
+  /// older messages" spinner at the list top. On a fresh/organic open (where
+  /// the open-ladder optimistically seeds a greeting bubble while the history
+  /// call is still in flight on a slow backend) that spinner hangs for the
+  /// whole 5-10s load and reads as "stuck loading". Reporting `false` until
+  /// the initial load has settled kills that phantom spinner; the internal
+  /// pagination path still reads the `_hasMoreMessages` field directly, so
+  /// loading older messages is unaffected.
+  bool get hasMoreMessages => _hasMoreMessages && _initialHistoryLoaded;
 
   /// Update the status of a specific message in the current state (#14)
   void _updateMessageStatus(ChatMessage target, MessageStatus newStatus) {
