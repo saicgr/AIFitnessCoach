@@ -69,6 +69,8 @@ from api.v1.nutrition import (
     recipe_improvize,
     # Daily / weekly AI nutrition reports (item 14)
     reports,
+    # AI "Recommend Targets" — Full-AI daily/per-meal/per-day proposal + clamps
+    ai_recommend,
 )
 
 router = APIRouter()
@@ -123,6 +125,8 @@ router.include_router(food_reports.router)
 router.include_router(quick_suggestion.router)
 router.include_router(companions.router)
 router.include_router(reports.router)
+# AI "Recommend Targets" — POST /nutrition/ai-recommend-targets
+router.include_router(ai_recommend.router)
 
 # Re-export commonly used models for backward compatibility with test imports
 from api.v1.nutrition.models import (  # noqa: E402, F401

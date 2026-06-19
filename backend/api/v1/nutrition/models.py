@@ -552,6 +552,12 @@ class NutritionPreferencesResponse(BaseModel):
     # _compute_per_meal_targets in preferences.py for the contract.
     per_meal_targets_enabled: bool = False
     per_meal_macro_targets: Optional[dict] = None
+    # Per-weekday (high/base day) macro targets (migration 2276). When
+    # enabled, the dynamic-targets endpoint resolves a "high" vs "base" day and
+    # applies the absolute macros for that day type, REPLACING the automatic
+    # training/rest calorie bump for the date. NULL/enabled=false ⇒ off. Shape:
+    # {enabled, bind_to_training_days, high_days:[0..6], high:{...}, base:{...}}.
+    per_weekday_targets: Optional[dict] = None
 
 
 class NutritionPreferencesUpdate(BaseModel):
@@ -599,6 +605,11 @@ class NutritionPreferencesUpdate(BaseModel):
     # (mode/split/overrides). Passed straight through to nutrition_preferences.
     per_meal_targets_enabled: Optional[bool] = None
     per_meal_macro_targets: Optional[dict] = None
+    # Per-weekday (high/base day) macro targets (migration 2276). The JSONB
+    # config {enabled, bind_to_training_days, high_days, high, base}. Passed
+    # straight through to nutrition_preferences (persisted by the generic
+    # model_dump loop in update_nutrition_preferences).
+    per_weekday_targets: Optional[dict] = None
 
 
 class DynamicTargetsResponse(BaseModel):
@@ -630,6 +641,16 @@ class DynamicTargetsResponse(BaseModel):
     # These inherit the daily dynamic adjustments above automatically since
     # they're derived from the post-adjustment daily target.
     per_meal_targets: Optional[dict] = None
+    # ── Per-weekday (high/base day) targets (migration 2276) ─────────────
+    # Populated only when per_weekday_targets.enabled. `is_high_day` is true
+    # when the resolved day is a "high" day (training day if bound, else a
+    # configured high_days weekday); false on a base day; None when the
+    # weekday-targets feature is off. `target_source` attributes which rule
+    # set the day's base macros: "weekday_high" / "weekday_base" (weekday
+    # override active), else the existing day-type source "training" / "rest"
+    # / "base". Lets the UI badge "High-protein day" without recomputing.
+    is_high_day: Optional[bool] = None
+    target_source: Optional[str] = None
 
 
 # ── Weight Tracking Models ───────────────────────────────────────
@@ -1272,6 +1293,94 @@ class InferenceConfirmRequest(BaseModel):
     def action_must_be_allowed(cls, v):
         if v not in ("confirm", "dismiss"):
             raise ValueError("action must be 'confirm' or 'dismiss'")
+        return v
+
+
+# ── AI "Recommend Targets" (Full-AI + safety clamps) ─────────────────────────
+# Response contract for POST /nutrition/ai-recommend-targets. This shape is
+# LOCKED — the Flutter AI-recommend preview sheet parses it exactly. Each of the
+# three sections (daily / per_meal / per_day) carries the AI-proposed ABSOLUTE
+# numbers, the section reasoning (coach voice), and — for per_meal/per_day —
+# whether the AI suggests turning that mode's master toggle on. Every numeric
+# value has already been run through the safety clamp before serialization; any
+# value the clamp adjusted is named in `clamped[]` with a human note.
+
+class MacroTriple(BaseModel):
+    """A per-meal / per-day P/C/F block. Keys match the per_meal_macro_targets
+    `overrides` contract and the per_weekday_targets high/base contract so the
+    frontend can drop them straight into those configs on Apply."""
+    protein_g: int = 0
+    carbs_g: int = 0
+    fat_g: int = 0
+
+
+class CurrentDailyTarget(BaseModel):
+    """The user's CURRENT daily target (pre-recommendation) for delta display.
+    A full quad (calories + P/C/F) per the locked contract. All-zero when the
+    user has no target set yet."""
+    calories: int = 0
+    protein_g: int = 0
+    carbs_g: int = 0
+    fat_g: int = 0
+
+
+class DailyTargetBlock(BaseModel):
+    """The recommended daily target plus the user's current daily target for
+    delta display, and the AI's reasoning."""
+    calories: int = 0
+    protein_g: int = 0
+    carbs_g: int = 0
+    fat_g: int = 0
+    # The user's CURRENT daily target so the UI can render +/- delta chips
+    # without a second fetch. Locked shape: {calories, protein_g, carbs_g, fat_g}.
+    current: CurrentDailyTarget = Field(default_factory=CurrentDailyTarget)
+    reasoning: str = ""
+
+
+class PerMealRecommendation(BaseModel):
+    """Per-meal split recommendation. `meals` is keyed ONLY by the user's active
+    meal ids (breakfast/lunch/dinner[/snacks]) so the keys match the
+    per_meal_macro_targets.overrides contract exactly."""
+    enabled_suggested: bool = False
+    meals: dict = Field(default_factory=dict)   # {mealId: MacroTriple-shaped dict}
+    reasoning: str = ""
+
+
+class PerDayRecommendation(BaseModel):
+    """Per-day (high/base) recommendation. `high_days` is 0=Mon..6=Sun and
+    matches the backend dynamic-targets + gym_profiles.workout_days contract.
+    `high`/`base` are absolute P/C/F for each day type."""
+    enabled_suggested: bool = False
+    bind_to_training_days: bool = True
+    high_days: List[int] = Field(default_factory=list)   # 0=Mon..6=Sun
+    high: MacroTriple = Field(default_factory=MacroTriple)
+    base: MacroTriple = Field(default_factory=MacroTriple)
+    reasoning: str = ""
+
+
+class NutritionTargetsRecommendation(BaseModel):
+    """LOCKED response for POST /nutrition/ai-recommend-targets."""
+    confidence: str = "medium"               # "high" | "medium" | "low"
+    basis: str = ""                          # one-line "Based on 14 days · ..."
+    daily: DailyTargetBlock = Field(default_factory=DailyTargetBlock)
+    per_meal: PerMealRecommendation = Field(default_factory=PerMealRecommendation)
+    per_day: PerDayRecommendation = Field(default_factory=PerDayRecommendation)
+    clamped: List[str] = Field(default_factory=list)   # human notes; [] if none
+    generated_at: str = ""                   # ISO
+    cached: bool = False
+
+
+class AIRecommendTargetsRequest(BaseModel):
+    """POST /nutrition/ai-recommend-targets request. `user_id` is accepted for
+    the client contract but ownership is always taken from the JWT."""
+    user_id: str
+    context_window_days: int = 14
+    force: bool = False
+
+    @validator('user_id')
+    def user_id_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError('user_id cannot be empty')
         return v
 
 
