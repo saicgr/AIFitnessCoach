@@ -9,12 +9,19 @@ import '../doc/card_doc.dart';
 import '../shareable_data.dart';
 
 class CardEditorController extends ChangeNotifier {
-  CardEditorController(CardDoc initial) : _doc = initial {
+  CardEditorController(CardDoc initial)
+      : _doc = initial,
+        _initialDoc = initial {
     CardDoc.seedIdCounter(initial);
   }
 
   CardDoc _doc;
   CardDoc get doc => _doc;
+
+  /// The document the editor opened with — used by "Reset all" to discard every
+  /// edit and return to the freshly-generated card. Captured once at construction
+  /// and never mutated.
+  final CardDoc _initialDoc;
 
   String? _selectedId;
   String? get selectedId => _selectedId;
@@ -162,6 +169,13 @@ class CardEditorController extends ChangeNotifier {
     _doc = _doc.copyWith(
         background: const CardBackground(kind: CardBackgroundKind.none));
     notifyListeners();
+    // Wait for the transparent rebuild to actually PAINT before the capture
+    // runs — otherwise `RenderRepaintBoundary.toImage()` can grab the previous
+    // (opaque) frame and the exported "sticker" ships with its old background,
+    // looking identical to a normal Share. Two end-of-frame waits guarantee the
+    // listener rebuild (scheduled by notifyListeners) has been laid out + drawn.
+    await WidgetsBinding.instance.endOfFrame;
+    await WidgetsBinding.instance.endOfFrame;
     try {
       return await action();
     } finally {
@@ -173,10 +187,44 @@ class CardEditorController extends ChangeNotifier {
   // ─────────────────────────── Accent / palette ──────────────────────────
 
   /// Recolors the whole document's accent — every accent-bound element
-  /// (charts, badges, score rings, accent text) repaints. One undo step.
+  /// (charts, badges, score rings) repaints. ALSO retints any text element that
+  /// was painted in the OLD accent as a static colour (eyebrows, metric labels,
+  /// stat captions are baked with a literal `Color`, not a live accent binding),
+  /// so the palette actually changes something visible on photo-forward cards
+  /// that carry no chart. One undo step.
   void setAccentColor(Color color) {
-    if (_doc.accentColor == color) return;
-    _mutate((d) => d.copyWith(accentColor: color));
+    final old = _doc.accentColor;
+    // Compare by packed ARGB — Flutter's `Color ==` also compares colour space
+    // + float components, so two visually-identical colours built differently
+    // are NOT `==`. That mismatch made the retint silently no-op ("palette does
+    // nothing"). `.toARGB32()` is what the rest of the editor compares with.
+    if (old.toARGB32() == color.toARGB32()) return;
+    _mutate((d) {
+      var nd = d.copyWith(accentColor: color);
+      for (final e in d.elements) {
+        final p = e.props;
+        if (p is TextProps && p.color.toARGB32() == old.toARGB32()) {
+          nd = nd.withElement(
+            e.id,
+            (el) => el.copyWith(
+              props: (el.props as TextProps).copyWith(color: color),
+            ),
+          );
+        }
+      }
+      return nd;
+    });
+  }
+
+  /// Discards every edit and restores the document the editor opened with.
+  /// Recorded as ONE undo step so the user can step back if they hit it by
+  /// mistake. Clears any stale selection.
+  void resetToInitial() {
+    _snapshot();
+    _doc = _initialDoc;
+    CardDoc.seedIdCounter(_initialDoc);
+    _selectedId = null;
+    notifyListeners();
   }
 
   // ─────────────────────────── Variations (swap template) ────────────────

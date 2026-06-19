@@ -220,10 +220,11 @@ class _ElementHost extends StatelessWidget {
       angle: t.rotation,
       child: RepaintBoundary(child: body),
     );
-    if (t.perspective != CardPerspective.flat) {
+    final perspectiveMatrix = _perspectiveMatrix(t);
+    if (perspectiveMatrix != null) {
       rotated = Transform(
         alignment: Alignment.center,
-        transform: _perspectiveMatrix(t.perspective),
+        transform: perspectiveMatrix,
         child: rotated,
       );
     }
@@ -240,21 +241,47 @@ class _ElementHost extends StatelessWidget {
     );
   }
 
-  /// Faux-3D wall/floor tilt — a perspective `Matrix4` rotated about the X or Y
-  /// axis so the element reads like it sits on a surface (Gravl "perspective").
-  static Matrix4 _perspectiveMatrix(CardPerspective p) {
+  /// Faux-3D tilt — a perspective `Matrix4` rotated about the X (pitch) and/or
+  /// Y (yaw) axis so the element reads like it sits on a surface.
+  ///
+  /// Free-drag [ElementTransform.tiltX]/[ElementTransform.tiltY] (radians) drive
+  /// the tilt when either is non-zero; otherwise the legacy
+  /// [ElementTransform.perspective] enum is mapped to fixed angles so existing
+  /// saved docs render identically to before. Returns `null` when there is no
+  /// tilt at all, so the caller can skip the `Transform` wrapper (matching the
+  /// old `flat` behavior).
+  static Matrix4? _perspectiveMatrix(ElementTransform t) {
     const tilt = 0.62; // radians (~36°)
-    final m = Matrix4.identity()..setEntry(3, 2, 0.0011);
-    switch (p) {
-      case CardPerspective.flat:
-        return m;
-      case CardPerspective.leftWall:
-        return m..rotateY(tilt);
-      case CardPerspective.rightWall:
-        return m..rotateY(-tilt);
-      case CardPerspective.floor:
-        return m..rotateX(tilt);
+    double effTiltX;
+    double effTiltY;
+    if (t.tiltX != 0 || t.tiltY != 0) {
+      effTiltX = t.tiltX;
+      effTiltY = t.tiltY;
+    } else {
+      switch (t.perspective) {
+        case CardPerspective.flat:
+          effTiltX = 0;
+          effTiltY = 0;
+          break;
+        case CardPerspective.leftWall:
+          effTiltX = 0;
+          effTiltY = tilt;
+          break;
+        case CardPerspective.rightWall:
+          effTiltX = 0;
+          effTiltY = -tilt;
+          break;
+        case CardPerspective.floor:
+          effTiltX = tilt;
+          effTiltY = 0;
+          break;
+      }
     }
+    if (effTiltX == 0 && effTiltY == 0) return null;
+    return Matrix4.identity()
+      ..setEntry(3, 2, 0.0011)
+      ..rotateX(effTiltX)
+      ..rotateY(effTiltY);
   }
 }
 

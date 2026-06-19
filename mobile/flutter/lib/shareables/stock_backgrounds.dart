@@ -42,14 +42,14 @@ const List<String> _workoutBgs = [
   'assets/images/shareable_backgrounds/workout/bg-10.jpg',
   'assets/images/shareable_backgrounds/workout/bg-11.jpg',
   'assets/images/shareable_backgrounds/workout/bg-12.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-13.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-14.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-15.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-16.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-17.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-18.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-19.jpg',
-  'assets/images/shareable_backgrounds/workout/bg-20.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-21.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-22.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-23.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-24.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-25.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-26.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-27.jpg',
+  'assets/images/shareable_backgrounds/workout/bg-28.jpg',
 ];
 
 const List<String> _nutritionBgs = [
@@ -63,12 +63,12 @@ const List<String> _nutritionBgs = [
   'assets/images/shareable_backgrounds/nutrition/bg-08.jpg',
   'assets/images/shareable_backgrounds/nutrition/bg-09.jpg',
   'assets/images/shareable_backgrounds/nutrition/bg-10.jpg',
-  'assets/images/shareable_backgrounds/nutrition/bg-11.jpg',
-  'assets/images/shareable_backgrounds/nutrition/bg-12.jpg',
-  'assets/images/shareable_backgrounds/nutrition/bg-13.jpg',
-  'assets/images/shareable_backgrounds/nutrition/bg-14.jpg',
-  'assets/images/shareable_backgrounds/nutrition/bg-15.jpg',
-  'assets/images/shareable_backgrounds/nutrition/bg-16.jpg',
+  'assets/images/shareable_backgrounds/nutrition/bg-21.jpg',
+  'assets/images/shareable_backgrounds/nutrition/bg-22.jpg',
+  'assets/images/shareable_backgrounds/nutrition/bg-23.jpg',
+  'assets/images/shareable_backgrounds/nutrition/bg-24.jpg',
+  'assets/images/shareable_backgrounds/nutrition/bg-25.jpg',
+  'assets/images/shareable_backgrounds/nutrition/bg-26.jpg',
 ];
 
 const List<String> _abstractBgs = [

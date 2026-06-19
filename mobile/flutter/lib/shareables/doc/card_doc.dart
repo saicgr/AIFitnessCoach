@@ -149,12 +149,22 @@ class ElementTransform {
   final Alignment anchor;
   final CardPerspective perspective;
 
+  /// Free-drag perspective pitch around the X axis, in radians. Overrides the
+  /// legacy [perspective] enum when non-zero (see renderer).
+  final double tiltX;
+
+  /// Free-drag perspective yaw around the Y axis, in radians. Overrides the
+  /// legacy [perspective] enum when non-zero (see renderer).
+  final double tiltY;
+
   const ElementTransform({
     this.position = const Offset(0.5, 0.5),
     this.size = const Size(0.6, 0.15),
     this.rotation = 0.0,
     this.anchor = Alignment.center,
     this.perspective = CardPerspective.flat,
+    this.tiltX = 0.0,
+    this.tiltY = 0.0,
   });
 
   ElementTransform copyWith({
@@ -163,6 +173,8 @@ class ElementTransform {
     double? rotation,
     Alignment? anchor,
     CardPerspective? perspective,
+    double? tiltX,
+    double? tiltY,
   }) =>
       ElementTransform(
         position: position ?? this.position,
@@ -170,6 +182,8 @@ class ElementTransform {
         rotation: rotation ?? this.rotation,
         anchor: anchor ?? this.anchor,
         perspective: perspective ?? this.perspective,
+        tiltX: tiltX ?? this.tiltX,
+        tiltY: tiltY ?? this.tiltY,
       );
 
   Map<String, Object?> toJson() => {
@@ -178,6 +192,8 @@ class ElementTransform {
         'rotation': rotation,
         'anchor': {'x': anchor.x, 'y': anchor.y},
         'perspective': perspective.name,
+        'tiltX': tiltX,
+        'tiltY': tiltY,
       };
 
   factory ElementTransform.fromJson(Object? v) {
@@ -193,6 +209,8 @@ class ElementTransform {
           : Alignment.center,
       perspective: _enumFromJson(
           v['perspective'], CardPerspective.values, CardPerspective.flat),
+      tiltX: (v['tiltX'] as num?)?.toDouble() ?? 0.0,
+      tiltY: (v['tiltY'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }

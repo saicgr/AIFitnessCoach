@@ -148,10 +148,19 @@ class _AiShareSheetState extends ConsumerState<AiShareSheet> {
         _quota = result.quota;
         _restyling = false;
       });
+      // Capture the root messenger BEFORE popping — once this sheet is
+      // dismissed `mounted` is false and `_toast` would silently no-op, which
+      // made a successful restyle look like nothing happened.
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      _toast(result.cached
-          ? 'Restyled (from cache — free)'
-          : 'Restyled with AI');
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(result.cached
+              ? 'Restyled (from cache — free)'
+              : 'Restyled with AI'),
+          behavior: SnackBarBehavior.floating,
+        ));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -240,7 +249,16 @@ class _AiShareSheetState extends ConsumerState<AiShareSheet> {
       _addLineElement(line.line);
       if (!mounted) return;
       setState(() => _fetchingLine = false);
+      // Capture the root messenger before popping (see _restyle) so the
+      // success confirmation actually shows after the sheet closes.
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(
+          content: Text('Insight line added — drag to position it.'),
+          behavior: SnackBarBehavior.floating,
+        ));
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -258,20 +276,26 @@ class _AiShareSheetState extends ConsumerState<AiShareSheet> {
   }
 
   void _addLineElement(String text) {
+    // A roomy low-third caption block: tall enough that multi-line AI copy stays
+    // readable instead of shrinking into a microscopic sliver. White text + a
+    // soft drop shadow keeps it legible over any photo/restyle background.
     widget.controller.addElement(
       CardElement(
         id: CardDoc.newId(),
         type: CardElementType.text,
         transform: const ElementTransform(
-          position: Offset(0.5, 0.82),
-          size: Size(0.84, 0.1),
+          position: Offset(0.5, 0.62),
+          size: Size(0.86, 0.30),
+        ),
+        effects: const ElementEffects(
+          shadow: ShadowSpec(blur: 18),
         ),
         props: TextProps(
           literal: text,
           fontSize: 40,
           color: Colors.white,
           align: TextAlign.center,
-          maxLines: 3,
+          maxLines: 5,
           sizeMode: TextSizeMode.shrinkToFit,
         ),
       ),

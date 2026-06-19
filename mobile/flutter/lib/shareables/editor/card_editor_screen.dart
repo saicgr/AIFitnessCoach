@@ -36,6 +36,34 @@ import '../../widgets/glass_sheet.dart';
 /// the palette panel and the default the Studio nudges users toward.
 const Color _kVoltLime = Color(0xFFD8FF3A);
 
+/// Wraps the editor's body + every glass sheet in a readable Chip theme. The
+/// Material-default selected ChoiceChip (purple fill + light label) was
+/// unreadable across the option rows; this single chokepoint makes every
+/// selected chip a volt fill with a dark label.
+Widget _editorChrome(BuildContext context, {required Widget child}) {
+  final base = Theme.of(context);
+  return Theme(
+    data: base.copyWith(
+      chipTheme: ChipThemeData(
+        backgroundColor: Colors.white.withValues(alpha: 0.07),
+        selectedColor: _kVoltLime,
+        secondarySelectedColor: _kVoltLime,
+        showCheckmark: false,
+        side: const BorderSide(color: Colors.white24),
+        shape: const StadiumBorder(),
+        labelStyle: const TextStyle(
+            color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+        secondaryLabelStyle: const TextStyle(
+            color: Color(0xFF0B0C0F),
+            fontWeight: FontWeight.w800,
+            fontSize: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      ),
+    ),
+    child: child,
+  );
+}
+
 /// The editor's selection-chrome accent (kept neutral so it never clashes
 /// with a card whose own accent is volt-lime).
 const Color _kEditorAccent = Color(0xFF3B82F6);
@@ -158,21 +186,16 @@ class CardEditorScreen extends StatefulWidget {
   State<CardEditorScreen> createState() => _CardEditorScreenState();
 }
 
-/// The two element-adding trays (Gravl parity): full layouts vs single
-/// stat "stickers". `none` collapses both while an element is selected (its
-/// context panel takes over).
-enum _Tray { custom, templates, none }
-
 class _CardEditorScreenState extends State<CardEditorScreen> {
   late final CardEditorController _c = CardEditorController(widget.initialDoc);
 
   /// Snapshots the rendered card (only) for Story / Save / Share.
   final GlobalKey _captureKey = GlobalKey();
 
-  /// Which add-tray is open under the canvas. Custom leads (one-tap stickers).
-  _Tray _tray = _Tray.custom;
-
   bool _busy = false;
+
+  /// The last curated look applied by Remix — so the next tap won't repeat it.
+  String? _lastRemixLook;
 
   @override
   void initState() {
@@ -218,106 +241,154 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     final selected = _c.selected;
     return Scaffold(
       backgroundColor: const Color(0xFF0B0C0F),
-      body: SafeArea(
-        child: Column(
-          children: [
-            _topBar(),
-            Expanded(
-              child: _EditorCanvas(
-                controller: _c,
-                data: widget.data,
-                showWatermark: widget.showWatermark,
-                textScale: widget.textScale,
-                captureKey: _captureKey,
+      // Immersive shell: the canvas occupies all the space ABOVE the chrome
+      // (it is NOT drawn behind the bottom tool strip — that was confusing), and
+      // the back · aspect · undo/redo controls float over the canvas top.
+      body: _editorChrome(
+        context,
+        child: Stack(
+        children: [
+          Column(
+            children: [
+              // The canvas takes every pixel above the bottom chrome, so the
+              // card is always fully visible and never tucked behind the dock.
+              Expanded(
+                child: _EditorCanvas(
+                  controller: _c,
+                  data: widget.data,
+                  showWatermark: widget.showWatermark,
+                  textScale: widget.textScale,
+                  captureKey: _captureKey,
+                ),
               ),
-            ),
-            // Editing an element → its context panel takes over the trays.
-            // Cap + scroll so a tall context panel can never overflow on a
-            // small device (iPhone SE) once the action bar is stacked below.
-            if (selected != null)
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.32,
-                ),
-                child: SingleChildScrollView(
-                  child: _BottomArea(controller: _c),
-                ),
-              )
-            else ...[
-              _trayContent(),
-              _traySwitcher(),
+              // Bottom chrome: the element context panel (when something's
+              // selected) or the labeled tool dock, plus the action bar.
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Editing an element → its context panel takes over the dock.
+                  // Cap + scroll so a tall context panel can't overflow on a
+                  // small device once the action bar is stacked below.
+                  if (selected != null)
+                    Container(
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF14161B),
+                        border: Border(top: BorderSide(color: Colors.white10)),
+                      ),
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.34,
+                      ),
+                      child: SingleChildScrollView(
+                        child: _BottomArea(controller: _c),
+                      ),
+                    )
+                  else
+                    _toolDock(),
+                  _actionBar(),
+                ],
+              ),
             ],
-            _actionBar(),
-          ],
+          ),
+          // Floating top controls (back · aspect · undo/redo) over the canvas.
+          SafeArea(
+            bottom: false,
+            child: _floatingTopControls(),
+          ),
+        ],
         ),
       ),
     );
   }
 
-  // ─────────────────────────── Trays (Custom / Templates) ───────────────────
+  // ─────────────────────────── Floating chrome ──────────────────────────────
 
-  /// The Custom ↔ Templates segmented switcher (Gravl's two trays).
-  Widget _traySwitcher() {
-    Widget seg(String label, IconData icon, _Tray tray) {
-      final selected = _tray == tray;
-      return Expanded(
-        child: GestureDetector(
-          onTap: () {
-            HapticFeedback.selectionClick();
-            setState(() => _tray = tray);
-          },
-          child: Container(
-            height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: selected
-                  ? Colors.white.withValues(alpha: 0.10)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(19),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon,
-                    size: 16,
-                    color: selected ? Colors.white : Colors.white54),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: selected ? Colors.white : Colors.white54,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      color: const Color(0xFF14161B),
-      padding: const EdgeInsets.fromLTRB(10, 0, 10, 6),
+  /// Floating top controls that sit OVER the full-bleed canvas: close (left),
+  /// the aspect-ratio pill (center, cycles 9:16 / 4:5 / 1:1), and undo/redo
+  /// (right). Replaces the old solid top toolbar — the creative tools moved to
+  /// the labeled bottom dock so the canvas can go edge-to-edge.
+  Widget _floatingTopControls() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 6, 10, 0),
       child: Row(
         children: [
-          seg('Custom', Icons.auto_awesome_mosaic_rounded, _Tray.custom),
-          seg('Templates', Icons.dashboard_rounded, _Tray.templates),
+          _FloatingRoundButton(icon: Icons.arrow_back_rounded, onTap: _close),
+          const Spacer(),
+          _AspectChip(
+            label: _c.doc.aspect.label,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              const order = ShareableAspect.values;
+              _c.setAspect(
+                order[(order.indexOf(_c.doc.aspect) + 1) % order.length],
+              );
+            },
+          ),
+          const Spacer(),
+          _FloatingRoundButton(
+            icon: Icons.undo_rounded,
+            enabled: _c.canUndo,
+            onTap: _c.canUndo ? () => _c.undo() : null,
+          ),
+          const SizedBox(width: 8),
+          _FloatingRoundButton(
+            icon: Icons.redo_rounded,
+            enabled: _c.canRedo,
+            onTap: _c.canRedo ? () => _c.redo() : null,
+          ),
         ],
       ),
     );
   }
 
-  Widget _trayContent() {
-    switch (_tray) {
-      case _Tray.custom:
-        return _CustomTray(controller: _c, data: widget.data);
-      case _Tray.templates:
-        return _TemplatesTray(controller: _c, data: widget.data);
-      case _Tray.none:
-        return const SizedBox.shrink();
-    }
+  /// The immersive labeled tool dock — a translucent rail floating above the
+  /// action bar. Every creative tool is shown WITH a label and the row scrolls
+  /// horizontally, so nothing is hidden and it can never overflow.
+  Widget _toolDock() {
+    final tools = <_ToolSpec>[
+      _ToolSpec(Icons.shuffle_rounded, 'Remix', _remix),
+      _ToolSpec(Icons.dashboard_rounded, 'Templates', _openTemplates),
+      _ToolSpec(Icons.add_box_rounded, 'Add', _openAddElement),
+      _ToolSpec(Icons.palette_rounded, 'Palette', _openPalette),
+      _ToolSpec(Icons.gradient_rounded, 'Backdrop', _editBackground),
+      _ToolSpec(Icons.layers_rounded, 'Layers', _openLayers),
+      _ToolSpec(Icons.auto_awesome_rounded, 'AI', _openAiSheet),
+      _ToolSpec(Icons.restart_alt_rounded, 'Reset', _confirmReset),
+      _ToolSpec(
+        Icons.movie_creation_rounded,
+        'Video',
+        () => CardVideoExportScreen.open(
+          context,
+          doc: _c.doc,
+          data: widget.data,
+        ),
+      ),
+      if (widget.data.kind == ShareableKind.wrapped)
+        _ToolSpec(
+          Icons.view_carousel_rounded,
+          'Scenes',
+          () => WrappedScenesExportScreen.open(
+            context,
+            data: widget.data,
+            showWatermark: widget.showWatermark,
+          ),
+        ),
+    ];
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF14161B).withValues(alpha: 0.94),
+        border: const Border(top: BorderSide(color: Colors.white10)),
+      ),
+      child: SizedBox(
+        height: 68,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          itemCount: tools.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 2),
+          itemBuilder: (_, i) => _ToolButton(spec: tools[i]),
+        ),
+      ),
+    );
   }
 
   // ─────────────────────────── Bottom action bar ────────────────────────────
@@ -326,44 +397,123 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
   /// hands Instagram Stories; Save writes to the gallery; Share opens the
   /// system sheet. All reuse [ShareService] + the editor's own capture.
   Widget _actionBar() {
-    Widget action(String label, IconData icon, VoidCallback onTap) {
-      return Expanded(
-        child: TextButton(
-          onPressed: _busy ? null : onTap,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon,
-                  size: 22,
-                  color: _busy ? Colors.white24 : Colors.white),
-              const SizedBox(height: 3),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: _busy ? Colors.white24 : Colors.white,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
     return Container(
-      color: const Color(0xFF101216),
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFF101216),
+        border: Border(top: BorderSide(color: Colors.white10)),
+      ),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       child: SafeArea(
         top: false,
+        // Every child is Flexible (not Expanded) so they can shrink below
+        // their flex share on narrow (360–390px) screens instead of forcing a
+        // RenderFlex overflow. The Story CTA carries the most weight (flex 4)
+        // but still yields when space is tight; the circle actions each get a
+        // thin gap so the row never demands more than the available width.
         child: Row(
           children: [
-            action('Story', Icons.add_to_home_screen_rounded, _onStory),
-            action('Save', Icons.download_rounded, _onSave),
-            action('Sticker', Icons.auto_fix_high_rounded, _onSticker),
-            action('Share', Icons.ios_share_rounded, _onShare),
+            // Bold volt Story CTA — the primary share path, like the reference.
+            Flexible(flex: 4, child: _voltStoryButton()),
+            const SizedBox(width: 6),
+            Flexible(
+                flex: 2,
+                child: _circleAction(
+                    'Save', Icons.download_rounded, _onSave)),
+            Flexible(
+                flex: 2,
+                child: _circleAction(
+                    'Sticker', Icons.auto_fix_high_rounded, _onSticker)),
+            Flexible(
+                flex: 2,
+                child:
+                    _circleAction('Share', Icons.ios_share_rounded, _onShare)),
+            Flexible(
+                flex: 2,
+                child: _circleAction(
+                    'Done', Icons.check_rounded,
+                    () => Navigator.of(context).pop(_c.doc),
+                    volt: true)),
           ],
         ),
+      ),
+    );
+  }
+
+  /// The headline volt "Story" pill.
+  Widget _voltStoryButton() {
+    return Opacity(
+      opacity: _busy ? 0.5 : 1,
+      child: Material(
+        color: _kVoltLime,
+        borderRadius: BorderRadius.circular(26),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(26),
+          onTap: _busy ? null : _onStory,
+          child: const SizedBox(
+            height: 48,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.camera_alt_rounded,
+                    size: 18, color: Color(0xFF0B0C0F)),
+                SizedBox(width: 8),
+                Flexible(
+                  child: Text('Story',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: Color(0xFF0B0C0F),
+                          fontWeight: FontWeight.w900,
+                          fontSize: 15)),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A compact circular icon action with a label below (Save / Sticker / Share
+  /// / Done). [volt] fills it with the accent for the terminal Done action.
+  Widget _circleAction(String label, IconData icon, VoidCallback onTap,
+      {bool volt = false}) {
+    final disabled = _busy;
+    final fg = volt ? const Color(0xFF0B0C0F) : Colors.white;
+    return TextButton(
+      onPressed: disabled ? null : onTap,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        minimumSize: const Size(0, 0),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: volt ? _kVoltLime : Colors.white.withValues(alpha: 0.08),
+              shape: BoxShape.circle,
+              border: volt ? null : Border.all(color: Colors.white24),
+            ),
+            child: Icon(icon,
+                size: 18, color: disabled ? Colors.white24 : fg),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: disabled ? Colors.white24 : Colors.white70,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -492,114 +642,28 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
       ));
   }
 
-  Widget _topBar() {
-    return Container(
-      height: 52,
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      color: const Color(0xFF14161B),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.close_rounded, color: Colors.white),
-            onPressed: _close,
-          ),
-          IconButton(
-            tooltip: 'Variations',
-            icon: const Icon(Icons.grid_view_rounded, color: Colors.white),
-            onPressed: _openVariations,
-          ),
-          IconButton(
-            tooltip: 'Palette',
-            icon: const Icon(Icons.palette_rounded, color: Colors.white),
-            onPressed: _openPalette,
-          ),
-          IconButton(
-            tooltip: 'Background',
-            icon: const Icon(Icons.gradient_rounded, color: Colors.white),
-            onPressed: _editBackground,
-          ),
-          IconButton(
-            tooltip: 'Layers',
-            icon: const Icon(Icons.layers_rounded, color: Colors.white),
-            onPressed: _openLayers,
-          ),
-          // F1/F2 — cost-gated AI touches (restyle photo + insight line). Each
-          // fires only on an explicit tap inside the sheet.
-          IconButton(
-            tooltip: 'AI',
-            icon: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-            onPressed: _openAiSheet,
-          ),
-          IconButton(
-            tooltip: 'Export as video',
-            icon: const Icon(Icons.movie_creation_rounded, color: Colors.white),
-            onPressed: () => CardVideoExportScreen.open(
-              context,
-              doc: _c.doc,
-              data: widget.data,
-            ),
-          ),
-          // F13 — Wrapped per-scene export (only for Wrapped-kind shares).
-          if (widget.data.kind == ShareableKind.wrapped)
-            IconButton(
-              tooltip: 'Wrapped scenes',
-              icon: const Icon(Icons.view_carousel_rounded,
-                  color: Colors.white),
-              onPressed: () => WrappedScenesExportScreen.open(
-                context,
-                data: widget.data,
-                showWatermark: widget.showWatermark,
-              ),
-            ),
-          // Aspect "magic resize" — cycles 9:16 / 4:5 / 1:1, re-fitting
-          // every element's layout to the new canvas.
-          TextButton(
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              const order = ShareableAspect.values;
-              _c.setAspect(
-                order[(order.indexOf(_c.doc.aspect) + 1) % order.length],
-              );
-            },
-            child: Text(
-              _c.doc.aspect.label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          const Spacer(),
-          IconButton(
-            tooltip: 'Undo',
-            icon: Icon(Icons.undo_rounded,
-                color: _c.canUndo ? Colors.white : Colors.white24),
-            onPressed: _c.canUndo
-                ? () {
-                    HapticFeedback.selectionClick();
-                    _c.undo();
-                  }
-                : null,
-          ),
-          IconButton(
-            tooltip: 'Redo',
-            icon: Icon(Icons.redo_rounded,
-                color: _c.canRedo ? Colors.white : Colors.white24),
-            onPressed: _c.canRedo
-                ? () {
-                    HapticFeedback.selectionClick();
-                    _c.redo();
-                  }
-                : null,
-          ),
-          const SizedBox(width: 4),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(_c.doc),
-            child: const Text('Done'),
-          ),
-          const SizedBox(width: 4),
-        ],
+  /// Open the Templates browser (the pill-filtered Variations grid) as a sheet.
+  void _openTemplates() {
+    HapticFeedback.selectionClick();
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _VariationsSheet(controller: _c, data: widget.data),
+      ),
+    );
+  }
+
+  /// Open the "Add element" sheet — the labeled element presets (Big number,
+  /// Exercises, Week bars, Stat strip, HR zone, …). Replaces the old Custom
+  /// tray; lives behind the dock's labeled "Add" tool.
+  void _openAddElement() {
+    HapticFeedback.selectionClick();
+    showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _AddElementSheet(controller: _c, data: widget.data),
       ),
     );
   }
@@ -623,17 +687,6 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
     );
   }
 
-  void _openVariations() {
-    HapticFeedback.selectionClick();
-    showGlassSheet<void>(
-      context: context,
-      builder: (_) => GlassSheet(
-        opaque: true,
-        child: _VariationsSheet(controller: _c, data: widget.data),
-      ),
-    );
-  }
-
   void _openPalette() {
     HapticFeedback.selectionClick();
     showGlassSheet<void>(
@@ -648,9 +701,12 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
   void _editBackground() {
     showGlassSheet<void>(
       context: context,
-      builder: (_) => GlassSheet(
-        opaque: true,
-        child: _BackgroundSheet(controller: _c, data: widget.data),
+      builder: (ctx) => _editorChrome(
+        ctx,
+        child: GlassSheet(
+          opaque: true,
+          child: _BackgroundSheet(controller: _c, data: widget.data),
+        ),
       ),
     );
   }
@@ -661,6 +717,318 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
       builder: (_) => GlassSheet(
         opaque: true,
         child: _LayersSheet(controller: _c),
+      ),
+    );
+  }
+
+  /// **Remix** — instantly reshuffles the card into a fresh, cohesive look from a
+  /// curated catalogue ([_kRemixLooks]): a new template (no-repeat), a vetted
+  /// accent + headline face + photo filter, with contrast/legibility guardrails.
+  /// Deterministic, offline, free, tappable as often as you like. ONE undo step.
+  void _remix() {
+    HapticFeedback.mediumImpact();
+    final rnd = math.Random();
+
+    // Pick a curated look favoured by this kind, avoiding the previous one.
+    final kind = widget.data.kind;
+    final favoured = _kRemixLooks
+        .where((l) => l.favoredKinds.isEmpty || l.favoredKinds.contains(kind))
+        .toList(growable: false);
+    final lookPool = favoured.isEmpty ? _kRemixLooks : favoured;
+    var look = lookPool[rnd.nextInt(lookPool.length)];
+    for (var i = 0;
+        i < 6 && lookPool.length > 1 && look.name == _lastRemixLook;
+        i++) {
+      look = lookPool[rnd.nextInt(lookPool.length)];
+    }
+    _lastRemixLook = look.name;
+
+    // Pick a template, avoiding the current one when there's a choice. Null when
+    // there are no editable templates → restyle the current doc in place.
+    final specs = ShareableCatalog.availableFor(widget.data)
+        .where((s) => s.docBuilder != null)
+        .toList(growable: false);
+    ShareableTemplateSpec? spec;
+    if (specs.isNotEmpty) {
+      final current = _c.doc.presetId;
+      var pool = specs.where((s) => s.template.name != current).toList();
+      if (pool.isEmpty) pool = specs; // only the current template is available
+      spec = pool[rnd.nextInt(pool.length)];
+    }
+
+    _applyRemix(_RemixRecipe(
+      spec: spec,
+      accent: look.accent,
+      headlineFont: look.headlineFont,
+      filter: look.filter,
+    ));
+    _toastRemix('${look.name} ✨');
+  }
+
+  /// Builds the card from [r] (or restyles the current doc when [r.spec] is
+  /// null) and swaps it in as ONE undo step. Handles photo preservation,
+  /// contrast and legibility guardrails — see the inline notes.
+  void _applyRemix(_RemixRecipe r) {
+    final aspect = _c.doc.aspect;
+    var next = r.spec != null ? r.spec!.docBuilder!(widget.data, aspect) : _c.doc;
+
+    // Photo preservation: the user's OWN photo (upload / log photo) is always
+    // kept across a template swap; a stock/bound photo is kept only when the new
+    // template doesn't already bring its own.
+    final bg = _c.doc.background;
+    if (r.spec != null) {
+      final nextIsPhoto = next.background.kind == CardBackgroundKind.photo ||
+          next.background.kind == CardBackgroundKind.blurredPhoto;
+      final hasPhotoBg = bg.kind == CardBackgroundKind.photo ||
+          bg.kind == CardBackgroundKind.blurredPhoto;
+      if (_isUsersOwnPhoto(bg) || (hasPhotoBg && !nextIsPhoto)) {
+        next = next.copyWith(background: bg);
+      }
+    }
+
+    // Accent (contrast-guarded for flat backgrounds) + retint the text baked in
+    // the OLD accent so eyebrows/labels recolor with it.
+    final accent = _ensureAccentContrast(r.accent, next.background);
+    final oldAccent = widget.data.accentColor;
+    next = next.copyWith(accentColor: accent);
+    for (final e in next.elements) {
+      final p = e.props;
+      if (p is TextProps && p.color.toARGB32() == oldAccent.toARGB32()) {
+        next = next.withElement(
+          e.id,
+          (el) => el.copyWith(
+              props: (el.props as TextProps).copyWith(color: accent)),
+        );
+      }
+    }
+
+    // Headline face → the largest text element (watermark/date are not TextProps
+    // so they're naturally excluded). No text element → harmless no-op.
+    String? heroId;
+    var maxFs = 0.0;
+    for (final e in next.elements) {
+      final p = e.props;
+      if (p is TextProps && p.fontSize > maxFs) {
+        maxFs = p.fontSize;
+        heroId = e.id;
+      }
+    }
+    if (heroId != null) {
+      next = next.withElement(
+        heroId,
+        (el) => el.copyWith(
+            props: (el.props as TextProps).copyWith(fontIndex: r.headlineFont)),
+      );
+    }
+
+    // Photo filter (photo backdrops only). If a photo ended up over a template
+    // with NO scrim, force a darkening filter so overlaid text stays legible.
+    final finalIsPhoto = next.background.kind == CardBackgroundKind.photo ||
+        next.background.kind == CardBackgroundKind.blurredPhoto;
+    if (finalIsPhoto) {
+      final hasScrim =
+          next.elements.any((e) => e.type == CardElementType.scrim);
+      var filter = r.filter;
+      if (!hasScrim && filter == PhotoFilter.original) {
+        filter = PhotoFilter.darker;
+      }
+      next = next.copyWith(background: next.background.copyWith(filter: filter));
+    }
+
+    _c.swapDoc(next);
+  }
+
+  void _toastRemix(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(SnackBar(
+        content: Text(msg),
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+      ));
+  }
+
+  /// **Reset all** — discards every edit and restores the card the editor
+  /// opened with (still undoable).
+  Future<void> _confirmReset() async {
+    HapticFeedback.selectionClick();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF14161B),
+        title: const Text('Reset card?',
+            style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Discards all your edits and restores the original card. '
+          'You can still undo afterwards.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Reset',
+                style: TextStyle(color: Color(0xFFFF6B6B))),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) _c.resetToInitial();
+  }
+}
+
+// ─────────────────────────── Immersive chrome widgets ─────────────────────
+
+/// A translucent round button that floats over the canvas (back / undo / redo)
+/// — the "options on top of the image" affordance from the reference.
+class _FloatingRoundButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool enabled;
+  const _FloatingRoundButton({
+    required this.icon,
+    this.onTap,
+    this.enabled = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.42),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: Icon(icon,
+            size: 20, color: enabled ? Colors.white : Colors.white30),
+      ),
+    );
+  }
+}
+
+/// Floating aspect-ratio pill (9:16 / 4:5 / 1:1) — taps cycle the ratio.
+class _AspectChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _AspectChip({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.42),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.aspect_ratio_rounded,
+                size: 14, color: Colors.white70),
+            const SizedBox(width: 6),
+            Text(label,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12.5)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// A labeled tool in the bottom dock.
+class _ToolSpec {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ToolSpec(this.icon, this.label, this.onTap);
+}
+
+/// One icon-over-label button in the scrollable tool dock.
+class _ToolButton extends StatelessWidget {
+  final _ToolSpec spec;
+  const _ToolButton({required this.spec});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 60,
+      child: TextButton(
+        onPressed: spec.onTap,
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          minimumSize: const Size(0, 0),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(spec.icon, size: 22, color: Colors.white),
+            const SizedBox(height: 4),
+            Text(
+              spec.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Add element" sheet — wraps the labeled element-preset strip ([_CustomTray])
+/// behind a titled glass sheet. Replaces the inline Custom tray.
+class _AddElementSheet extends StatelessWidget {
+  final CardEditorController controller;
+  final Shareable data;
+  const _AddElementSheet({required this.controller, required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Text('Add element',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800)),
+                Spacer(),
+                Text('tap to add',
+                    style: TextStyle(color: Colors.white38, fontSize: 11)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            _CustomTray(controller: controller, data: data),
+          ],
+        ),
       ),
     );
   }
@@ -696,6 +1064,22 @@ class _CanvasGeometry {
 }
 
 // ─────────────────────────── Canvas ────────────────────────────────────────
+
+/// Orders elements for hit-testing: visible & unlocked only, LARGEST boxes
+/// first (rendered at the back of the gesture stack) so the SMALLEST box wins a
+/// tap. Pure ordering — does NOT affect how the card paints.
+List<CardElement> _hitOrder(List<CardElement> elements) {
+  final list = [
+    for (final e in elements)
+      if (!e.hidden && !e.locked) e,
+  ];
+  list.sort((a, b) {
+    final aa = a.transform.size.width * a.transform.size.height;
+    final bb = b.transform.size.width * b.transform.size.height;
+    return bb.compareTo(aa);
+  });
+  return list;
+}
 
 class _EditorCanvas extends StatelessWidget {
   final CardEditorController controller;
@@ -759,13 +1143,17 @@ class _EditorCanvas extends StatelessWidget {
                 ),
               ),
               // One transparent gesture box per element (front-most wins).
-              for (final element in doc.elements)
-                if (!element.hidden && !element.locked)
-                  _ElementGestureBox(
-                    controller: controller,
-                    element: element,
-                    geo: geo,
-                  ),
+              // Hit-test order: largest boxes at the BACK, smallest on TOP, so a
+              // tap selects the MOST SPECIFIC element under the finger (text
+              // boxes often overlap a big scrim/metric box — front-most-wins used
+              // to grab the wrong one, which read as "I set black but it stayed
+              // white"). Visual paint order (doc.elements) is unaffected.
+              for (final element in _hitOrder(doc.elements))
+                _ElementGestureBox(
+                  controller: controller,
+                  element: element,
+                  geo: geo,
+                ),
               // Selection chrome — drawn last, never part of the card.
               if (controller.selected != null)
                 _SelectionOverlay(
@@ -1277,7 +1665,9 @@ class _CustomTray extends StatelessWidget {
       _StickerPreset(
           'Exercises',
           Icons.format_list_bulleted_rounded,
-          () => _el(CardElementType.repeater, const RepeaterProps(),
+          // exerciseMode renders the workout's actual exercises (the default
+          // RepeaterProps is food-item mode, which showed nothing for workouts).
+          () => _el(CardElementType.repeater, const RepeaterProps(exerciseMode: true),
               transform:
                   _t(pos: const Offset(0.5, 0.5), size: const Size(0.8, 0.4)))),
       _StickerPreset(
@@ -1337,44 +1727,36 @@ class _CustomTray extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final presets = _presets();
-    return Container(
-      height: 86,
-      color: const Color(0xFF14161B),
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
+    final bg = controller.doc.background;
+    final accent = controller.doc.accentColor;
+    final aspect = controller.doc.aspect;
+    // A rendered preview GRID (like the Templates browser) so the user sees what
+    // each element actually is before adding it — not a row of ambiguous icons.
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxHeight: 420),
+      child: GridView.builder(
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 0.62,
+        ),
         itemCount: presets.length,
         itemBuilder: (_, i) {
           final p = presets[i];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: SizedBox(
-              width: 72,
-              child: TextButton(
-                onPressed: () {
-                  HapticFeedback.selectionClick();
-                  controller.addElement(p.build());
-                },
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(p.icon, color: Colors.white, size: 24),
-                    const SizedBox(height: 4),
-                    Text(
-                      p.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.white70, fontSize: 10.5),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          return _ElementPresetTile(
+            preset: p,
+            data: data,
+            aspect: aspect,
+            background: bg,
+            accentColor: accent,
+            onTap: () {
+              HapticFeedback.selectionClick();
+              controller.addElement(p.build());
+              Navigator.of(context).pop();
+            },
           );
         },
       ),
@@ -1382,118 +1764,129 @@ class _CustomTray extends StatelessWidget {
   }
 }
 
-// ─────────────────────────── Templates tray ───────────────────────────────
-
-/// Gravl's "Templates" tray — the kind-filtered [ShareableCatalog] gallery as
-/// an inline horizontal strip. Tapping one rebuilds the whole [CardDoc] from
-/// that template's `docBuilder` (one undo step), preserving the chosen photo
-/// background.
-class _TemplatesTray extends StatelessWidget {
-  final CardEditorController controller;
+/// A live preview tile for one "Add element" preset: the element rendered over
+/// the card's current background, so the user sees exactly what it adds.
+class _ElementPresetTile extends StatelessWidget {
+  final _StickerPreset preset;
   final Shareable data;
-  const _TemplatesTray({required this.controller, required this.data});
+  final ShareableAspect aspect;
+  final CardBackground background;
+  final Color accentColor;
+  final VoidCallback onTap;
 
-  List<ShareableTemplateSpec> _specs() => ShareableCatalog.availableFor(data)
-      .where((s) => s.docBuilder != null)
-      .toList(growable: false);
+  const _ElementPresetTile({
+    required this.preset,
+    required this.data,
+    required this.aspect,
+    required this.background,
+    required this.accentColor,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final specs = _specs();
-    final aspect = controller.doc.aspect;
-    final currentPreset = controller.doc.presetId;
-    // Preserve the user's chosen photo background across a template swap.
-    final bg = controller.doc.background;
-    final keepPhoto = bg.kind == CardBackgroundKind.photo ||
-        bg.kind == CardBackgroundKind.blurredPhoto;
-    if (specs.isEmpty) {
-      return Container(
-        height: 86,
-        color: const Color(0xFF14161B),
-        alignment: Alignment.center,
-        child: const Text('No other layouts for this share',
-            style: TextStyle(color: Colors.white54, fontSize: 12)),
-      );
-    }
-    return Container(
-      height: 132,
-      color: const Color(0xFF14161B),
-      padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: specs.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final spec = specs[i];
-          final selected = spec.template.name == currentPreset;
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              var next = spec.docBuilder!(data, aspect);
-              if (keepPhoto) next = next.copyWith(background: bg);
-              controller.swapDoc(next);
-            },
-            child: SizedBox(
-              width: 78,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: selected ? _kVoltLime : Colors.white12,
-                            width: selected ? 2.4 : 1,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: FittedBox(
-                          fit: BoxFit.cover,
-                          clipBehavior: Clip.hardEdge,
-                          child: SizedBox(
-                            width: aspect.size.width,
-                            height: aspect.size.height,
-                            child: Directionality(
-                              textDirection:
-                                  Directionality.maybeOf(context) ??
-                                      TextDirection.ltr,
-                              child: CardDocRenderer(
-                                doc: keepPhoto
-                                    ? spec
-                                        .docBuilder!(data, aspect)
-                                        .copyWith(background: bg)
-                                    : spec.docBuilder!(data, aspect),
-                                data: data,
-                                showWatermark: false,
-                              ),
-                            ),
-                          ),
-                        ),
+    final design = aspect.size;
+    final doc = CardDoc(
+      aspect: aspect,
+      background: background,
+      accentColor: accentColor,
+      elements: [preset.build()],
+    );
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.white12),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  clipBehavior: Clip.hardEdge,
+                  child: SizedBox(
+                    width: design.width,
+                    height: design.height,
+                    child: Directionality(
+                      textDirection:
+                          Directionality.maybeOf(context) ?? TextDirection.ltr,
+                      child: CardDocRenderer(
+                        doc: doc,
+                        data: data,
+                        showWatermark: false,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    spec.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: selected ? _kVoltLime : Colors.white70,
-                      fontSize: 10.5,
-                      fontWeight:
-                          selected ? FontWeight.w800 : FontWeight.w500,
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(preset.icon, color: Colors.white54, size: 13),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  preset.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
+}
+
+/// A header icon for the selected element's type.
+IconData _elementIcon(ElementProps p) {
+  if (p is TextProps) return Icons.text_fields_rounded;
+  if (p is PhotoProps || p is ImageProps) return Icons.image_rounded;
+  if (p is ChartProps || p is RingTrioProps) return Icons.donut_large_rounded;
+  if (p is ShapeProps) return Icons.category_rounded;
+  if (p is BadgeProps) return Icons.workspace_premium_rounded;
+  if (p is DateStampProps) return Icons.calendar_today_rounded;
+  if (p is IconProps) return Icons.emoji_emotions_rounded;
+  if (p is WatermarkProps) return Icons.branding_watermark_rounded;
+  if (p is RepeaterProps) return Icons.format_list_bulleted_rounded;
+  if (p is StatGridProps) return Icons.grid_view_rounded;
+  if (p is GridHeatmapProps) return Icons.calendar_month_rounded;
+  if (p is RingStatProps) return Icons.favorite_rounded;
+  if (p is BarcodeProps) return Icons.qr_code_rounded;
+  return Icons.widgets_rounded;
+}
+
+/// A friendly name for the selected element (text elements show a snippet so
+/// the user knows exactly which one they're editing).
+String _elementLabel(ElementProps p) {
+  if (p is TextProps) {
+    final t = p.literal.trim();
+    if (t.isEmpty) return 'Text';
+    return t.length <= 24 ? 'Text · $t' : 'Text · ${t.substring(0, 24)}…';
+  }
+  if (p is PhotoProps) return 'Photo';
+  if (p is ImageProps) return 'Image';
+  if (p is ChartProps) return 'Macro rings';
+  if (p is RingTrioProps) return 'Macro trio';
+  if (p is ShapeProps) return 'Shape';
+  if (p is BadgeProps) return 'Score';
+  if (p is DateStampProps) return 'Date';
+  if (p is IconProps) return 'Sticker';
+  if (p is WatermarkProps) return 'Logo';
+  if (p is RepeaterProps) return p.exerciseMode ? 'Exercises' : 'List';
+  if (p is StatGridProps) return 'Stat strip';
+  if (p is GridHeatmapProps) return 'Grid';
+  if (p is RingStatProps) return 'HR zone';
+  if (p is BarcodeProps) return 'Barcode';
+  return 'Element';
 }
 
 /// Per-element editing controls. Text gets full controls; every type gets
@@ -1509,6 +1902,56 @@ class _ContextPanel extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Header: names the element being edited (so it's clear WHAT is
+        // selected) and a prominent Done to deselect without hunting for empty
+        // canvas to tap.
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Row(
+            children: [
+              Icon(_elementIcon(props), size: 16, color: _kVoltLime),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _elementLabel(props),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  controller.deselect();
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: _kVoltLime,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_rounded,
+                          size: 16, color: Color(0xFF0B0C0F)),
+                      SizedBox(width: 4),
+                      Text('Done',
+                          style: TextStyle(
+                              color: Color(0xFF0B0C0F),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
         if (props is TextProps)
           _TextControls(controller: controller, props: props),
         if (props is ChartProps)
@@ -1637,52 +2080,216 @@ class _ContextPanel extends StatelessWidget {
     );
   }
 
-  /// Cube "Perspective" sheet (B2) — tilts the selected element on a faux-3D
-  /// wall/floor plane.
+  /// Cube "Perspective" sheet (B2) — a draggable 2-axis tilt pad (free angle)
+  /// plus the quick wall/floor presets.
   void _openPerspective(BuildContext context) {
-    final current = element.transform.perspective;
     showGlassSheet<void>(
       context: context,
       builder: (_) => GlassSheet(
         opaque: true,
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: _PerspectiveSheet(controller: controller, element: element),
+      ),
+    );
+  }
+}
+
+/// Free-drag perspective control: a square pad whose knob maps to the element's
+/// `tiltX` (pitch) / `tiltY` (yaw) in radians, with live preview on the canvas
+/// behind. The legacy wall/floor presets remain as one-tap shortcuts. The whole
+/// drag is ONE undo step (begin/live/end gesture).
+class _PerspectiveSheet extends StatefulWidget {
+  final CardEditorController controller;
+  final CardElement element;
+  const _PerspectiveSheet({required this.controller, required this.element});
+
+  @override
+  State<_PerspectiveSheet> createState() => _PerspectiveSheetState();
+}
+
+class _PerspectiveSheetState extends State<_PerspectiveSheet> {
+  static const double _maxTilt = 0.95; // radians at the pad edge
+  static const double _padSize = 200;
+
+  late double _tiltX;
+  late double _tiltY;
+
+  @override
+  void initState() {
+    super.initState();
+    final t = widget.element.transform;
+    if (t.tiltX != 0 || t.tiltY != 0) {
+      _tiltX = t.tiltX;
+      _tiltY = t.tiltY;
+    } else {
+      final a = _enumAngles(t.perspective);
+      _tiltX = a.dx;
+      _tiltY = a.dy;
+    }
+  }
+
+  // dx = tiltX (pitch), dy = tiltY (yaw).
+  Offset _enumAngles(CardPerspective p) {
+    switch (p) {
+      case CardPerspective.leftWall:
+        return const Offset(0, 0.62);
+      case CardPerspective.rightWall:
+        return const Offset(0, -0.62);
+      case CardPerspective.floor:
+        return const Offset(0.62, 0);
+      case CardPerspective.flat:
+        return Offset.zero;
+    }
+  }
+
+  void _apply({bool live = false}) {
+    final id = widget.controller.selectedId;
+    if (id == null) return;
+    CardElement fn(CardElement e) => e.copyWith(
+          transform: e.transform.copyWith(tiltX: _tiltX, tiltY: _tiltY),
+        );
+    if (live) {
+      widget.controller.updateElementLive(id, fn);
+    } else {
+      widget.controller.updateSelected(fn);
+    }
+  }
+
+  void _setFromLocal(Offset local) {
+    final half = _padSize / 2;
+    final nx = ((local.dx - half) / half).clamp(-1.0, 1.0);
+    final ny = ((local.dy - half) / half).clamp(-1.0, 1.0);
+    _tiltY = nx * _maxTilt; // drag right → yaw right
+    _tiltX = -ny * _maxTilt; // drag up → pitch up
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final knobX = _padSize / 2 + (_tiltY / _maxTilt) * (_padSize / 2);
+    final knobY = _padSize / 2 - (_tiltX / _maxTilt) * (_padSize / 2);
+    final degX = (_tiltX * 180 / math.pi).round();
+    final degY = (_tiltY * 180 / math.pi).round();
+
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
                 const Text('Perspective',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w800)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    for (final p in CardPerspective.values)
-                      ChoiceChip(
-                        label: Text(_perspectiveLabel(p)),
-                        selected: current == p,
-                        onSelected: (_) {
-                          HapticFeedback.selectionClick();
-                          controller.updateSelected(
-                            (e) => e.copyWith(
-                              transform:
-                                  e.transform.copyWith(perspective: p),
-                            ),
-                          );
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                  ],
+                const Spacer(),
+                Text('X $degX°   Y $degY°',
+                    style: const TextStyle(
+                        color: Colors.white54, fontSize: 12)),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _tiltX = 0;
+                      _tiltY = 0;
+                    });
+                    _apply();
+                  },
+                  child: const Text('Reset',
+                      style: TextStyle(
+                          color: Color(0xFF3B82F6),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700)),
                 ),
               ],
             ),
-          ),
+            const SizedBox(height: 6),
+            const Text('Drag to tilt freely',
+                style: TextStyle(color: Colors.white38, fontSize: 11)),
+            const SizedBox(height: 12),
+            Center(
+              child: GestureDetector(
+                onPanStart: (d) {
+                  widget.controller.beginGesture();
+                  setState(() => _setFromLocal(d.localPosition));
+                  _apply(live: true);
+                },
+                onPanUpdate: (d) {
+                  setState(() => _setFromLocal(d.localPosition));
+                  _apply(live: true);
+                },
+                onPanEnd: (_) => widget.controller.endGesture(),
+                child: Container(
+                  width: _padSize,
+                  height: _padSize,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: Stack(
+                    children: [
+                      // Cross-hairs.
+                      Positioned(
+                        left: _padSize / 2 - 0.5,
+                        top: 0,
+                        bottom: 0,
+                        child: Container(
+                            width: 1,
+                            color: Colors.white.withValues(alpha: 0.10)),
+                      ),
+                      Positioned(
+                        top: _padSize / 2 - 0.5,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                            height: 1,
+                            color: Colors.white.withValues(alpha: 0.10)),
+                      ),
+                      // Knob.
+                      Positioned(
+                        left: knobX - 14,
+                        top: knobY - 14,
+                        child: Container(
+                          width: 28,
+                          height: 28,
+                          decoration: BoxDecoration(
+                            color: _kVoltLime,
+                            shape: BoxShape.circle,
+                            border:
+                                Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                for (final p in CardPerspective.values)
+                  _EditorChip(
+                    label: _perspectiveLabel(p),
+                    selected: false,
+                    onTap: () {
+                      final a = _enumAngles(p);
+                      setState(() {
+                        _tiltX = a.dx;
+                        _tiltY = a.dy;
+                      });
+                      _apply();
+                    },
+                  ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1712,29 +2319,62 @@ class _TextControls extends StatelessWidget {
             Text('Size', style: TextStyle(color: Colors.white54, fontSize: 12)),
             SizedBox(
               width: 160,
-              child: Slider(
-                value: props.fontSize.clamp(12, 320),
-                min: 12,
-                max: 320,
-                onChanged: (v) => controller.updateSelected(
-                  (e) => e.copyWith(props: props.copyWith(fontSize: v)),
-                ),
+              // The "Size" slider scales the element's BOX (and, for text, its
+              // font together) so it visibly resizes — editing `fontSize` alone
+              // did nothing for shrink-to-fit text (a FittedBox just rescaled it
+              // back to the same box).
+              child: Builder(
+                builder: (context) {
+                  final t = controller.selected?.transform;
+                  final w = (t?.size.width ?? 0.6).clamp(0.08, 1.0);
+                  return Slider(
+                    value: w.toDouble(),
+                    min: 0.08,
+                    max: 1.0,
+                    onChanged: t == null
+                        ? null
+                        : (v) {
+                            final cur = controller.selected!.transform.size;
+                            final factor =
+                                cur.width <= 0 ? 1.0 : v / cur.width;
+                            controller.updateSelected((e) {
+                              final s = e.transform.size;
+                              final ns = Size(
+                                (s.width * factor).clamp(0.05, 1.5),
+                                (s.height * factor).clamp(0.02, 1.5),
+                              );
+                              final p = e.props;
+                              final np = p is TextProps
+                                  ? p.copyWith(
+                                      fontSize:
+                                          (p.fontSize * factor).clamp(8.0, 400.0))
+                                  : p;
+                              return e.copyWith(
+                                transform: e.transform.copyWith(size: ns),
+                                props: np,
+                              );
+                            });
+                          },
+                  );
+                },
               ),
             ),
           ],
         ),
-        // Font presets.
+        // Font presets — each chip previews its OWN typeface so the visual
+        // difference is obvious; distinct families lead (see _kFontDisplayOrder).
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              for (var i = 0; i < kCardFonts.length; i++)
+              for (final i in _kFontDisplayOrder)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 3),
-                  child: ChoiceChip(
-                    label: Text(kCardFonts[i].label),
+                  child: _EditorChip(
+                    label: kCardFonts[i].label,
                     selected: props.fontIndex == i,
-                    onSelected: (_) => controller.updateSelected(
+                    labelStyle: kCardFonts[i].style.copyWith(fontSize: 15),
+                    onTap: () => controller.updateSelected(
                       (e) => e.copyWith(props: props.copyWith(fontIndex: i)),
                     ),
                   ),
@@ -1761,10 +2401,10 @@ class _TextControls extends StatelessWidget {
                       color: c,
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: props.color == c
+                        color: props.color.toARGB32() == c.toARGB32()
                             ? const Color(0xFF3B82F6)
                             : Colors.white24,
-                        width: props.color == c ? 3 : 1,
+                        width: props.color.toARGB32() == c.toARGB32() ? 3 : 1,
                       ),
                     ),
                   ),
@@ -1821,10 +2461,14 @@ class _TextControls extends StatelessWidget {
                             color: c,
                             borderRadius: BorderRadius.circular(6),
                             border: Border.all(
-                              color: props.highlightColor == c
+                              color: props.highlightColor?.toARGB32() ==
+                                      c.toARGB32()
                                   ? const Color(0xFF3B82F6)
                                   : Colors.white24,
-                              width: props.highlightColor == c ? 3 : 1,
+                              width: props.highlightColor?.toARGB32() ==
+                                      c.toARGB32()
+                                  ? 3
+                                  : 1,
                             ),
                           ),
                         ),
@@ -1883,6 +2527,159 @@ const List<Color> _kTextColors = [
   Color(0xFF22C55E),
   Color(0xFFF97316),
 ];
+
+/// A curated, cohesive "look" the Remix tool shuffles through — a hand-vetted
+/// accent + headline face + photo filter that always reads well together (random
+/// combos don't). [favoredKinds] biases a look toward share kinds it suits;
+/// empty = universal. This is the whole "intelligence" of Remix: instant,
+/// deterministic, offline — no model call on the hot path.
+class _RemixLook {
+  final String name;
+  final Color accent;
+  final int headlineFont; // kCardFonts index
+  final PhotoFilter filter; // applied only when the backdrop is a photo
+  final Set<ShareableKind> favoredKinds;
+  const _RemixLook(
+    this.name,
+    this.accent,
+    this.headlineFont,
+    this.filter, [
+    this.favoredKinds = const {},
+  ]);
+}
+
+/// The Remix catalogue. Each look is a tested pairing; the engine layers it over
+/// a (separately shuffled) template, with contrast + legibility guardrails.
+const List<_RemixLook> _kRemixLooks = [
+  _RemixLook('Neon Wrapped', Color(0xFFCCFF00), CardFontIx.display,
+      PhotoFilter.darker, {ShareableKind.wrapped, ShareableKind.workoutComplete}),
+  _RemixLook('Editorial', Color(0xFFFFFFFF), CardFontIx.serif, PhotoFilter.bw),
+  _RemixLook('Sunset Poster', Color(0xFFF97316), CardFontIx.grotesk,
+      PhotoFilter.warm),
+  _RemixLook('Coral Pop', Color(0xFFFF6B6B), CardFontIx.display,
+      PhotoFilter.original),
+  _RemixLook('Cyber', Color(0xFF06B6D4), CardFontIx.cond, PhotoFilter.cool,
+      {ShareableKind.personalRecords, ShareableKind.strength, ShareableKind.oneRm}),
+  _RemixLook('Mono Minimal', Color(0xFF9CA3AF), CardFontIx.mono, PhotoFilter.bw),
+  _RemixLook('Amber Heat', Color(0xFFFFD23F), CardFontIx.display,
+      PhotoFilter.warm, {ShareableKind.workoutComplete, ShareableKind.streak}),
+  _RemixLook('Mint Fresh', Color(0xFF34D399), CardFontIx.grotesk,
+      PhotoFilter.fade, {ShareableKind.nutrition, ShareableKind.foodLog}),
+  _RemixLook('Violet Night', Color(0xFFA855F7), CardFontIx.display,
+      PhotoFilter.darker),
+  _RemixLook('Magazine', Color(0xFFFF2D55), CardFontIx.serif, PhotoFilter.fade),
+  _RemixLook('Ocean', Color(0xFF3B82F6), CardFontIx.cond, PhotoFilter.cool),
+  _RemixLook('Greenprint', Color(0xFF22C55E), CardFontIx.grotesk,
+      PhotoFilter.original, {ShareableKind.progressCharts, ShareableKind.weeklyProgress}),
+  _RemixLook('Indigo Press', Color(0xFF6366F1), CardFontIx.condMid,
+      PhotoFilter.darker),
+  _RemixLook('Hot Magenta', Color(0xFFEC4899), CardFontIx.display,
+      PhotoFilter.original),
+  _RemixLook('Classic Serif', Color(0xFFF97316), CardFontIx.serif,
+      PhotoFilter.original),
+  _RemixLook('Volt Mono', Color(0xFFCCFF00), CardFontIx.mono, PhotoFilter.darker),
+];
+
+/// A resolved Remix recipe — the template to build from (null = restyle the
+/// current doc in place) plus the cohesive accent / headline font / filter.
+class _RemixRecipe {
+  final ShareableTemplateSpec? spec;
+  final Color accent;
+  final int headlineFont;
+  final PhotoFilter filter;
+  const _RemixRecipe({
+    required this.spec,
+    required this.accent,
+    required this.headlineFont,
+    required this.filter,
+  });
+}
+
+/// True when the background is a photo the USER brought (a gallery upload or
+/// this log's own photo) — never a bundled stock asset. Remix must preserve it.
+bool _isUsersOwnPhoto(CardBackground bg) {
+  if (bg.kind != CardBackgroundKind.photo &&
+      bg.kind != CardBackgroundKind.blurredPhoto) {
+    return false;
+  }
+  final ref = bg.photo;
+  if (ref == null) return false;
+  if (!ref.binding.isLiteral) return true; // bound to this log's own photo
+  final sp = ref.staticPath;
+  return sp != null && sp.isNotEmpty && !sp.startsWith('assets/');
+}
+
+/// Ensures [accent] is legible on a flat (solid/gradient) background; photo
+/// backdrops rely on their scrim so are left alone. Falls back to a vivid
+/// contrasting hue when the look's accent would wash out.
+Color _ensureAccentContrast(Color accent, CardBackground bg) {
+  if (bg.kind != CardBackgroundKind.solid &&
+      bg.kind != CardBackgroundKind.linearGradient) {
+    return accent;
+  }
+  final base = bg.colors.isNotEmpty ? bg.colors.first : const Color(0xFF000000);
+  final bgLum = base.computeLuminance();
+  final acLum = accent.computeLuminance();
+  final hi = math.max(bgLum, acLum) + 0.05;
+  final lo = math.min(bgLum, acLum) + 0.05;
+  if (hi / lo >= 2.3) return accent; // enough contrast
+  // Too close: dark bg → bright volt; light bg → hot red.
+  return bgLum > 0.5 ? const Color(0xFFFF2D55) : const Color(0xFFCCFF00);
+}
+
+/// Font-row display order: lead with the visually DISTINCT typefaces (so the
+/// user immediately sees real differences), then the weight/spacing variants of
+/// the base sans. Indices are the stable `kCardFonts` indices — never reordered
+/// in the model, only in this picker. Every font index 0..16 appears once.
+const List<int> _kFontDisplayOrder = [
+  11, 14, 8, 10, 15, 16, 4, 3, // Anton, Fraunces, Masthead, Condensed, Archivo, Space Mono, Mono, Serif
+  9, 12, 13, // Editorial, Barlow, Barlow Mid
+  0, 1, 2, 6, 7, 5, // Classic, Heavy, Light, Italic, Pop, Wide (base-sans variants)
+];
+
+/// A readable selectable chip for the editor's option rows. The bare Material
+/// [ChoiceChip] rendered an unreadable purple-fill / light-text selected state;
+/// this uses the volt accent + dark label so the selection is obvious.
+/// [labelStyle] lets the font row preview each typeface in its own face.
+class _EditorChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final TextStyle? labelStyle;
+  const _EditorChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.labelStyle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected ? _kVoltLime : Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? _kVoltLime : Colors.white24),
+        ),
+        child: Text(
+          label,
+          style: (labelStyle ?? const TextStyle()).copyWith(
+            color: selected ? const Color(0xFF0B0C0F) : Colors.white,
+            fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+            fontSize: labelStyle?.fontSize ?? 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Short UI label for a [PhotoFilter] (✨ effects row + background filter row).
 String _photoFilterLabel(PhotoFilter f) {
@@ -3484,6 +4281,61 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
         CardBackground(kind: CardBackgroundKind.solid, colors: [c]),
       );
 
+  /// Imports a photo from the device gallery as the card background. The picked
+  /// file path is stored as the background's `staticPath`; [FoodImage] renders
+  /// on-device file paths directly.
+  Future<void> _pickCustomPhoto({bool blurred = false}) async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2160,
+        maxHeight: 2160,
+        imageQuality: 92,
+      );
+      if (picked == null) return;
+      widget.controller.setBackground(
+        CardBackground(
+          kind: blurred
+              ? CardBackgroundKind.blurredPhoto
+              : CardBackgroundKind.photo,
+          photo: CardPhotoRef(staticPath: picked.path),
+          photoFit: BoxFit.cover,
+        ),
+      );
+    } catch (_) {
+      /* picker cancelled / unavailable */
+    }
+  }
+
+  /// A dashed "add from gallery" tile for the Your-photo row.
+  Widget _addPhotoTile({required String label, required bool blurred}) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _pickCustomPhoto(blurred: blurred);
+      },
+      child: Container(
+        width: 96,
+        height: 84,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(blurred ? Icons.blur_on_rounded : Icons.add_photo_alternate_rounded,
+                color: Colors.white70, size: 24),
+            const SizedBox(height: 4),
+            Text(label,
+                style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
@@ -3503,6 +4355,18 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w800)),
+                  // ── Your own photo (gallery import) ──
+                  const SizedBox(height: 12),
+                  const Text('Your photo',
+                      style: TextStyle(color: Colors.white54, fontSize: 12)),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      _addPhotoTile(label: 'Add photo', blurred: false),
+                      const SizedBox(width: 10),
+                      _addPhotoTile(label: 'Add · blur', blurred: true),
+                    ],
+                  ),
                   // ✨ Photo effects (B1) for a photo/stock background.
                   if (widget.controller.doc.background.kind ==
                           CardBackgroundKind.photo ||
@@ -3768,21 +4632,44 @@ class _BackgroundSheetState extends State<_BackgroundSheet> {
 /// fits the current [Shareable.kind], rendered as a live thumbnail. Tapping
 /// one rebuilds the whole [CardDoc] from that template's `docBuilder` (one
 /// undo step). Keeps the current aspect so the layout reflows in place.
-class _VariationsSheet extends StatelessWidget {
+class _VariationsSheet extends StatefulWidget {
   final CardEditorController controller;
   final Shareable data;
   const _VariationsSheet({required this.controller, required this.data});
 
+  @override
+  State<_VariationsSheet> createState() => _VariationsSheetState();
+}
+
+class _VariationsSheetState extends State<_VariationsSheet> {
+  /// Selected category pill — null = "All".
+  ShareableCategory? _cat;
+
   /// Editable templates available for this payload, in catalog order.
-  List<ShareableTemplateSpec> _specs() => ShareableCatalog.availableFor(data)
-      .where((s) => s.docBuilder != null)
-      .toList(growable: false);
+  List<ShareableTemplateSpec> _allSpecs() =>
+      ShareableCatalog.availableFor(widget.data)
+          .where((s) => s.docBuilder != null)
+          .toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
-    final specs = _specs();
-    final aspect = controller.doc.aspect;
-    final currentPreset = controller.doc.presetId;
+    final all = _allSpecs();
+    final aspect = widget.controller.doc.aspect;
+    final currentPreset = widget.controller.doc.presetId;
+    // Preserve the user's chosen photo background across a template swap.
+    final bg = widget.controller.doc.background;
+    final keepPhoto = bg.kind == CardBackgroundKind.photo ||
+        bg.kind == CardBackgroundKind.blurredPhoto;
+
+    // Distinct, canonical categories actually present (rich aliases to Cards).
+    final cats = <ShareableCategory>[
+      for (final c in ShareableCategory.values)
+        if (c.effective == c && all.any((s) => s.category.effective == c)) c,
+    ];
+    final specs = _cat == null
+        ? all
+        : all.where((s) => s.category.effective == _cat).toList();
+
     return SafeArea(
       top: false,
       child: Padding(
@@ -3793,7 +4680,7 @@ class _VariationsSheet extends StatelessWidget {
           children: [
             const Row(
               children: [
-                Text('Variations',
+                Text('Templates',
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -3804,7 +4691,7 @@ class _VariationsSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            if (specs.isEmpty)
+            if (all.isEmpty)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 24),
                 child: Center(
@@ -3812,9 +4699,25 @@ class _VariationsSheet extends StatelessWidget {
                       style: TextStyle(color: Colors.white54, fontSize: 13)),
                 ),
               )
-            else
+            else ...[
+              // Category pills — filter the grid by template family.
+              SizedBox(
+                height: 34,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _catPill('All', null, _cat == null),
+                    for (final c in cats) ...[
+                      const SizedBox(width: 8),
+                      _catPill(c.label, c, _cat == c,
+                          icon: c.icon, iconOnly: c.iconOnly),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
               ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 360),
+                constraints: const BoxConstraints(maxHeight: 420),
                 child: GridView.builder(
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
@@ -3831,21 +4734,69 @@ class _VariationsSheet extends StatelessWidget {
                     final selected = spec.template.name == currentPreset;
                     return _VariationTile(
                       spec: spec,
-                      data: data,
+                      data: widget.data,
                       aspect: aspect,
                       selected: selected,
                       onTap: () {
                         HapticFeedback.selectionClick();
                         // Build at the editor's current aspect so the swap
-                        // lands in the same ratio the user is editing in.
-                        final next = spec.docBuilder!(data, aspect);
-                        controller.swapDoc(next);
+                        // lands in the same ratio the user is editing in;
+                        // keep the chosen photo backdrop.
+                        var next = spec.docBuilder!(widget.data, aspect);
+                        // Carry the user's photo into the new template ONLY when
+                        // the template doesn't define its own photo — so a photo
+                        // template (Immersive, Cover Story…) lands exactly like
+                        // its thumbnail instead of being overridden.
+                        final nextIsPhoto =
+                            next.background.kind == CardBackgroundKind.photo ||
+                                next.background.kind ==
+                                    CardBackgroundKind.blurredPhoto;
+                        if (keepPhoto && !nextIsPhoto) {
+                          next = next.copyWith(background: bg);
+                        }
+                        widget.controller.swapDoc(next);
                         Navigator.of(context).pop();
                       },
                     );
                   },
                 ),
               ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _catPill(String label, ShareableCategory? cat, bool selected,
+      {IconData? icon, bool iconOnly = false}) {
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _cat = cat);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: iconOnly ? 11 : 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? _kVoltLime : Colors.white.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: selected ? _kVoltLime : Colors.white24),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null)
+              Icon(icon,
+                  size: 14,
+                  color: selected ? const Color(0xFF0B0C0F) : Colors.white70),
+            if (icon != null && !iconOnly) const SizedBox(width: 5),
+            if (!iconOnly)
+              Text(label,
+                  style: TextStyle(
+                      color:
+                          selected ? const Color(0xFF0B0C0F) : Colors.white70,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5)),
           ],
         ),
       ),

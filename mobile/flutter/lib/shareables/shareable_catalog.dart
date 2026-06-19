@@ -106,6 +106,7 @@ import 'templates/photo_magazine_doc.dart';
 import 'templates/photo_quote_doc.dart';
 import 'templates/photo_split_doc.dart';
 import 'templates/photo_stats_doc.dart';
+import 'templates/immersive_templates.dart';
 import 'templates/polaroid_doc.dart';
 import 'templates/pr_prediction_doc.dart';
 import 'templates/prs_doc.dart';
@@ -376,6 +377,8 @@ enum ShareableTemplate {
   photoSplit,
   photoMagazine,
   photoLockscreen,
+  immersiveBottom,
+  immersiveCenter,
   // --- Onboarding-demo ports (viral formats) ---
   discord,
   instagramStory,
@@ -1332,6 +1335,46 @@ class ShareableCatalog {
         builder: (d, w) =>
             PhotoLockscreenTemplate(data: d, showWatermark: w),
         docBuilder: photoLockscreenDoc,
+      ),
+      // Immersive — minimal photo-forward "story" cards: a single full-bleed
+      // atmospheric photo, a subtle dark scrim, and only a big title + one key
+      // metric + date stamp + ⚡ watermark. Food/nutrition shares bind to their
+      // own photo; workout-shaped kinds fall back to a kind-appropriate stock
+      // background (see `_immersiveBg`). minHighlights:1 so the one key metric
+      // it spotlights is always populated.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.immersiveBottom,
+        name: 'Immersive · Bottom',
+        category: ShareableCategory.studio,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.personalRecords,
+          ShareableKind.strength,
+          ShareableKind.foodLog,
+          ShareableKind.nutrition,
+          ShareableKind.statsOverview,
+          ShareableKind.milestones,
+          ShareableKind.weeklyProgress,
+        },
+        minHighlights: 1,
+        docBuilder: immersiveBottomDoc,
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.immersiveCenter,
+        name: 'Immersive · Center',
+        category: ShareableCategory.studio,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.personalRecords,
+          ShareableKind.strength,
+          ShareableKind.foodLog,
+          ShareableKind.nutrition,
+          ShareableKind.statsOverview,
+          ShareableKind.milestones,
+          ShareableKind.weeklyProgress,
+        },
+        minHighlights: 1,
+        docBuilder: immersiveCenterDoc,
       ),
       // ── Onboarding-demo ports — six viral formats sourced from the
       // pre-signup share gallery in `workout_showcase_screen.dart`.
