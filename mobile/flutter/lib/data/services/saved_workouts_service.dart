@@ -43,7 +43,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/social/saved-workouts/save-from-activity',
+        '/saved-workouts/save-from-activity',
         queryParameters: {'user_id': userId},
         data: {
           'activity_id': activityId,
@@ -133,13 +133,18 @@ class SavedWorkoutsService {
         if (folder != null) 'folder': folder,
       };
 
+      // Backend router is mounted at /saved-workouts (NOT /social/...). The list
+      // endpoint takes user_id as a query param and returns a paginated object
+      // {workouts, total_count, folders} — unwrap `workouts`.
       final response = await _apiClient.get(
-        '/social/saved-workouts/$userId',
-        queryParameters: queryParams,
+        '/saved-workouts/',
+        queryParameters: {'user_id': userId, ...queryParams},
       );
 
       if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(response.data);
+        final data = response.data;
+        final list = (data is Map) ? (data['workouts'] as List? ?? const []) : (data as List);
+        return List<Map<String, dynamic>>.from(list);
       } else {
         throw Exception('Failed to get saved workouts: ${response.statusCode}');
       }
@@ -156,7 +161,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.delete(
-        '/social/saved-workouts/$savedWorkoutId',
+        '/saved-workouts/$savedWorkoutId',
         queryParameters: {'user_id': userId},
       );
 
@@ -188,7 +193,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/social/saved-workouts/schedule',
+        '/saved-workouts/schedule',
         queryParameters: {'user_id': userId},
         data: {
           if (savedWorkoutId != null) 'saved_workout_id': savedWorkoutId,
@@ -222,19 +227,17 @@ class SavedWorkoutsService {
     ScheduledWorkoutStatus? status,
   }) async {
     try {
-      final queryParams = <String, String>{
-        if (startDate != null) 'start_date': startDate.toIso8601String().split('T')[0],
-        if (endDate != null) 'end_date': endDate.toIso8601String().split('T')[0],
-        if (status != null) 'status': status.value,
-      };
-
+      // Backend exposes GET /saved-workouts/scheduled/upcoming?user_id=&days_ahead=
+      // returning {scheduled, total_count}. There is no per-user path variant.
       final response = await _apiClient.get(
-        '/social/saved-workouts/scheduled/$userId',
-        queryParameters: queryParams,
+        '/saved-workouts/scheduled/upcoming',
+        queryParameters: {'user_id': userId},
       );
 
       if (response.statusCode == 200) {
-        return List<Map<String, dynamic>>.from(response.data);
+        final data = response.data;
+        final list = (data is Map) ? (data['scheduled'] as List? ?? const []) : (data as List);
+        return List<Map<String, dynamic>>.from(list);
       } else {
         throw Exception('Failed to get scheduled workouts: ${response.statusCode}');
       }
@@ -252,7 +255,7 @@ class SavedWorkoutsService {
     try {
       final dateStr = '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
       final response = await _apiClient.get(
-        '/social/saved-workouts/scheduled/by-date',
+        '/saved-workouts/scheduled/by-date',
         queryParameters: {'user_id': userId, 'date': dateStr},
       );
 
@@ -274,7 +277,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.put(
-        '/social/saved-workouts/scheduled/$scheduledWorkoutId',
+        '/saved-workouts/scheduled/$scheduledWorkoutId',
         queryParameters: {'user_id': userId},
         data: {
           'status': status.value,
@@ -305,7 +308,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/social/saved-workouts/challenge/$activityId',
+        '/saved-workouts/challenge/$activityId',
         queryParameters: {'user_id': userId},
       );
 
@@ -327,7 +330,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.get(
-        '/social/saved-workouts/badges/$activityId',
+        '/saved-workouts/badges/$activityId',
       );
 
       if (response.statusCode == 200) {
@@ -358,7 +361,7 @@ class SavedWorkoutsService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/social/saved-workouts/do-now/$savedWorkoutId',
+        '/saved-workouts/do-now/$savedWorkoutId',
         queryParameters: {'user_id': userId},
       );
 
