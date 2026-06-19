@@ -609,34 +609,25 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               realDateKeys.contains(_dateKey(item.placeholderDate!)));
         }
 
-        // Pick the actionable target on first data load + auto-scroll to it.
-        // Carousel starts at index 0 (earliest, usually the missed card if
-        // present) so users see what they missed, then the animation reveals
-        // today's / next workout. Feels intentional, not magic.
+        // Pick the actionable target on first data load + position the carousel
+        // on it. With the full week pre-warmed at bootstrap, the items are
+        // already present on the first paint — so we JUMP straight to today's /
+        // next workout (no 800ms dwell, no slide). The old dwell-then-animate
+        // made the staged data fill visible ("next card → empty placeholder →
+        // settle"); jumping lands on the right card instantly while the rest of
+        // the week stays one swipe away.
         if (!_hasScrolledToInitial && carouselItems.length > 1) {
           _hasScrolledToInitial = true;
           final targetIndex = _pickInitialIndex(carouselItems, today);
-          _currentPage = 0;
+          _currentPage = targetIndex;
 
-          if (targetIndex != 0) {
-            // Dwell briefly on the first (likely missed) card, then slide to
-            // the actionable target. Reuses the same tween vocabulary as the
-            // on-completion auto-scroll below.
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              await Future.delayed(const Duration(milliseconds: 800));
-              if (!mounted || !_pageController.hasClients) return;
-              await _pageController.animateToPage(
-                targetIndex,
-                duration: const Duration(milliseconds: 550),
-                curve: Curves.easeOutCubic,
-              );
-              if (mounted) widget.onPageChanged?.call(targetIndex);
-            });
-          } else {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) widget.onPageChanged?.call(0);
-            });
-          }
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            if (targetIndex != 0 && _pageController.hasClients) {
+              _pageController.jumpToPage(targetIndex);
+            }
+            widget.onPageChanged?.call(targetIndex);
+          });
         }
 
         // Re-target the carousel when the item list changes after the
