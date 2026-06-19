@@ -390,7 +390,9 @@ List<RouteBase> _workoutRoutes() => [
       ),
       GoRoute(
         path: '/stats/readiness',
-        builder: (context, state) => const ComprehensiveStatsScreen(initialTab: 2),
+        // Score/Strength tab. Index shifted 2→3 when the Overload tab was
+        // inserted at index 1 in ComprehensiveStatsScreen.
+        builder: (context, state) => const ComprehensiveStatsScreen(initialTab: 3),
       ),
 
       // Redirects from old /progress/* routes to /stats/*

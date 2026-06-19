@@ -298,6 +298,14 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
 
             const SizedBox(height: AppSpacing.lg),
 
+            // ── 1c. PROGRESSIVE OVERLOAD ENTRY ───────────────────────────
+            // Hero entry into the Progressive Overload Dashboard (Stats tab 1).
+            // Deep-links via the plain `/stats` GoRoute (?tab=1) — NOT a shell
+            // branch root — per the branch-route push rule.
+            const _OverloadEntryCard(),
+
+            const SizedBox(height: AppSpacing.lg),
+
             // ── 2. ACTIVITY ROW (2-up) ───────────────────────────────────
             const _OverviewSectionLabel(label: 'Activity'),
             const SizedBox(height: AppSpacing.sm),
@@ -534,6 +542,52 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
 // ═══════════════════════════════════════════════════════════════════
 // REUSABLE WIDGETS
 // ═══════════════════════════════════════════════════════════════════
+
+/// Hero entry into the Progressive Overload Dashboard. Shows the overall
+/// strength score with a "View progress" affordance and deep-links to the
+/// Overload tab (Stats index 1) via the plain `/stats` GoRoute.
+class _OverloadEntryCard extends ConsumerWidget {
+  const _OverloadEntryCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tc = ThemeColors.of(context);
+    final score = ref.watch(overallStrengthScoreProvider);
+
+    return ZealovaCard(
+      variant: ZealovaCardVariant.hero,
+      onTap: () => context.push('/stats?tab=1'),
+      padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
+      child: Row(
+        children: [
+          Icon(Icons.trending_up_rounded, size: 22, color: tc.accent),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('PROGRESSIVE OVERLOAD',
+                    style:
+                        ZType.lbl(11, color: tc.textPrimary, letterSpacing: 1.6)),
+                const SizedBox(height: 3),
+                Text(
+                  score > 0
+                      ? 'Strength $score · trend, muscle map & lift progress'
+                      : 'Track your strength trend, muscle map & lifts',
+                  style: TextStyle(fontSize: 12.5, color: tc.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text('VIEW',
+              style: ZType.lbl(10.5, color: tc.accent, letterSpacing: 1.4)),
+          Icon(Icons.chevron_right_rounded, size: 18, color: tc.accent),
+        ],
+      ),
+    );
+  }
+}
 
 class SectionHeader extends StatelessWidget {
   final String title;

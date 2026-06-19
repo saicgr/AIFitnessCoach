@@ -1135,7 +1135,7 @@ class _PrimaryCtas extends StatelessWidget {
 
   /// Returns: (button label, primary route, /stats tab index).
   ///   Train  → Workout screen, stats Overview (0)
-  ///   Nourish → Nutrition screen, stats Nutrition (4)
+  ///   Nourish → Nutrition screen, stats Nutrition (5, post-Overload-tab insert)
   ///   Move    → Health/activity hub, stats Overview (0)
   ///   Sleep   → Sleep detail screen, stats Overview (0)
   (String, String, int) _ctaTargets(BuildContext context, PillarKind kind) {
@@ -1144,7 +1144,8 @@ class _PrimaryCtas extends StatelessWidget {
       case PillarKind.train:
         return (l10n.pillarDetailOpenWorkouts, '/workouts', 0);
       case PillarKind.nourish:
-        return (l10n.pillarDetailOpenNutrition, '/nutrition', 4);
+        // Stats Nutrition tab is index 5 (Overload was inserted at index 1).
+        return (l10n.pillarDetailOpenNutrition, '/nutrition', 5);
       case PillarKind.move:
         // Combined health hub holds the activity detail.
         return (l10n.pillarDetailOpenActivity, '/health', 0);

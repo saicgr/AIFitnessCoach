@@ -144,6 +144,10 @@ const Map<String, VolumeLandmarks> _baseVolumeLandmarks = {
   'traps': VolumeLandmarks(mev: 6, mavHigh: 20, mrv: 26),
   'forearms': VolumeLandmarks(mev: 4, mavHigh: 14, mrv: 18),
   'lower_back': VolumeLandmarks(mev: 4, mavHigh: 10, mrv: 14),
+  // 2026-06 16-group expansion — KEEP IN SYNC with backend VOLUME_LANDMARKS.
+  'rear_delts': VolumeLandmarks(mev: 6, mavHigh: 12, mrv: 20),
+  'obliques': VolumeLandmarks(mev: 4, mavHigh: 10, mrv: 16),
+  'adductors': VolumeLandmarks(mev: 4, mavHigh: 10, mrv: 16),
 };
 
 const _defaultLandmarks = VolumeLandmarks(mev: 6, mavHigh: 16, mrv: 20);

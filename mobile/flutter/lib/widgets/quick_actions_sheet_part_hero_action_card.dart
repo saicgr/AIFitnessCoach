@@ -311,7 +311,8 @@ class _PhotoHeroCard extends StatelessWidget {
           onTap: () {
             HapticFeedback.lightImpact();
             onClose();
-            context.push('/stats?tab=1&openPhoto=true');
+            // Photos tab is index 2 (Overload was inserted at index 1).
+            context.push('/stats?tab=2&openPhoto=true');
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(

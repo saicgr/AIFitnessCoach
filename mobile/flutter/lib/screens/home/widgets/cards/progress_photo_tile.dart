@@ -45,7 +45,8 @@ class ProgressPhotoCard extends ConsumerWidget {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        context.push('/stats?tab=1');
+        // Photos tab is index 2 (Overload was inserted at index 1).
+        context.push('/stats?tab=2');
       },
       child: Container(
         margin: size == TileSize.full

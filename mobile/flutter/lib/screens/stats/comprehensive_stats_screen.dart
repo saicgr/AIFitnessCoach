@@ -21,6 +21,7 @@ import 'widgets/strength_tab.dart';
 import 'widgets/measurements_tab.dart';
 import 'widgets/nutrition_tab.dart';
 import 'widgets/mood_tab.dart';
+import '../progress/dashboard/progressive_overload_dashboard_screen.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 /// Comprehensive Stats Screen
@@ -52,7 +53,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    _tabController = TabController(length: 7, vsync: this);
     _tabController.addListener(() {
       if (!_tabController.indexIsChanging) {
         setState(() => _currentTabIndex = _tabController.index);
@@ -60,7 +61,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
         _scrollToSelectedPill(_tabController.index);
       }
     });
-    if (widget.initialTab != null && widget.initialTab! >= 0 && widget.initialTab! < 6) {
+    if (widget.initialTab != null && widget.initialTab! >= 0 && widget.initialTab! < 7) {
       _tabController.index = widget.initialTab!;
       _currentTabIndex = widget.initialTab!;
     }
@@ -96,11 +97,12 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       // Only load overview tab data on init — other tabs load lazily
       _loadTabData(0);
 
-      // If openPhotoSheet is requested, switch to Photos tab
+      // If openPhotoSheet is requested, switch to Photos tab (now index 2 after
+      // the Overload tab was inserted at index 1).
       if (widget.openPhotoSheet) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) {
-            _tabController.animateTo(1);
+            _tabController.animateTo(2);
           }
         });
       }
@@ -145,17 +147,18 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
           )));
         });
         break;
-      case 1: // Photos
+      // case 1 (Overload) self-fetches via overloadDashboardProvider on mount.
+      case 2: // Photos
         ref.read(progressPhotosNotifierProvider(_userId!).notifier).loadAll();
         break;
-      case 2: // Score
+      case 3: // Score
         ref.read(scoresProvider.notifier).loadPersonalRecords(userId: _userId!);
         break;
-      // Tabs 3-5 (Measurements, Nutrition, Mood) load their own data via providers
+      // Tabs 4-6 (Measurements, Nutrition, Mood) load their own data via providers
     }
   }
 
-  static const _tabLabels = ['Overview', 'Photos', 'Score', 'Measurements', 'Nutrition', 'Mood'];
+  static const _tabLabels = ['Overview', 'Overload', 'Photos', 'Score', 'Measurements', 'Nutrition', 'Mood'];
 
   Widget _buildPillTabBar() {
     // Signature text-tabs: Barlow uppercase labels with an accent underline on
@@ -197,10 +200,11 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
       appBar: PillAppBar(
         title: AppLocalizations.of(context).youHubStatsScores,
         actions: [
-          // Time Range Selector (hide on Photos tab)
+          // Time Range Selector — hide on Overload (index 1, has its own range
+          // bar) and Photos (index 2).
           PillAppBarAction(
             icon: Icons.calendar_month_outlined,
-            visible: _currentTabIndex != 1,
+            visible: _currentTabIndex != 1 && _currentTabIndex != 2,
             onTap: () => DateRangeFilterSheet.show(context, ref),
           ),
           // Export
@@ -226,6 +230,7 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
               controller: _tabController,
               children: [
                 const OverviewTab(),
+                const ProgressiveOverloadDashboardScreen(),
                 PhotosTab(userId: _userId, openPhotoSheet: widget.openPhotoSheet),
                 StrengthTab(userId: _userId),
                 MeasurementsTab(userId: _userId),

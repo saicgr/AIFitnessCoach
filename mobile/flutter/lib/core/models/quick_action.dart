@@ -238,7 +238,8 @@ const quickActionRegistry = <String, QuickAction>{
     icon: Icons.show_chart_outlined,
     color: Color(0xFF22C55E),
     behavior: QuickActionBehavior.route,
-    route: '/stats?tab=2',
+    // Score tab is index 3 (Overload was inserted at index 1).
+    route: '/stats?tab=3',
   ),
   'achievements': QuickAction(
     id: 'achievements',

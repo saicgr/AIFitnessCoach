@@ -16,7 +16,7 @@ import '../../../../widgets/design_system/zealova.dart';
 /// A tappable [GlassCard] with a glowing [HexagonBadge] holding the user's
 /// overall strength score, the level label ("Elite"/"Advanced"/…) and a small
 /// "Strength Score" caption beneath. Tapping deep-links to the Score tab of the
-/// stats screen (`/stats?tab=2`).
+/// stats screen (`/stats?tab=3`).
 ///
 /// Self-contained: it watches [scoresProvider] directly and renders its own
 /// skeleton (never a spinner) until the overview slice is populated. The parent
@@ -70,7 +70,8 @@ class StrengthScoreCard extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       onTap: () {
         HapticService.instance.tap();
-        context.push('/stats?tab=2');
+        // Score tab is index 3 (Overload was inserted at index 1).
+        context.push('/stats?tab=3');
       },
       child: (!hasData && isInitialLoad)
           ? _buildSkeleton(context)

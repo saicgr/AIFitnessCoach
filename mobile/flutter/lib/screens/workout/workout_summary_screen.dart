@@ -11,6 +11,8 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../core/utils/weight_utils.dart';
 import '../../data/models/workout.dart';
 import '../../data/models/exercise.dart';
+import '../../data/models/scores.dart';
+import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
@@ -50,6 +52,15 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       eventName: 'workout_summary_viewed',
       properties: {'workout_id': widget.workoutId},
     );
+
+    // Silently refresh strength scores so the "Strength Score Changes" section
+    // reflects THIS workout's recompute (which runs as a post-completion background
+    // task). Fire-and-forget; the section hides itself until non-zero deltas land.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(scoresProvider.notifier).loadStrengthScores();
+      }
+    });
   }
 
   Future<WorkoutSummaryResponse?> _fetchSummary() {
@@ -379,6 +390,15 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           const SizedBox(height: 16),
         ],
 
+        // Strength Score Changes — what this workout moved (post-workout recompute
+        // persists score_change per muscle; we surface the top movers here).
+        ...() {
+          final delta = _buildScoreDeltaSection(isDark, accentColor);
+          return delta == null
+              ? const <Widget>[]
+              : <Widget>[delta, const SizedBox(height: 16)];
+        }(),
+
         // Coach summary - try structured first, fallback to raw text
         if (summary.coachSummary != null &&
             summary.coachSummary!.isNotEmpty) ...[
@@ -620,6 +640,94 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           ),
           const SizedBox(height: 12),
           ...prs.map((pr) => _buildPRCard(pr, isDark, accentColor)),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // STRENGTH SCORE CHANGES SECTION (post-workout "what changed")
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Top muscle movers from the latest strength recompute. Returns null when there
+  /// are no non-zero changes yet (additive section — never blocks the summary, and
+  /// shows nothing rather than fake zeros while the background recompute catches up).
+  Widget? _buildScoreDeltaSection(bool isDark, Color accentColor) {
+    final muscleScores =
+        ref.watch(scoresProvider.select((s) => s.strengthScores?.muscleScores));
+    if (muscleScores == null || muscleScores.isEmpty) return null;
+
+    final movers = muscleScores.values
+        .where((m) => (m.scoreChange ?? 0) != 0)
+        .toList()
+      ..sort((a, b) => (b.scoreChange!.abs()).compareTo(a.scoreChange!.abs()));
+    if (movers.isEmpty) return null;
+    final top = movers.take(3).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.04)
+            : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.trending_up, size: 20, color: accentColor),
+              const SizedBox(width: 6),
+              _buildSectionTitle('Strength Score Changes', isDark),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...top.map((m) => _buildScoreDeltaRow(m, isDark, accentColor)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScoreDeltaRow(
+      StrengthScoreData m, bool isDark, Color accentColor) {
+    final change = m.scoreChange ?? 0;
+    final up = change > 0;
+    final Color moverColor = up ? AppColors.success : AppColors.textSecondary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(up ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 16, color: moverColor),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              m.muscleGroupDisplayName,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: isDark ? AppColors.textPrimary : Colors.black87,
+              ),
+            ),
+          ),
+          Text(
+            '${up ? '+' : ''}$change',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: moverColor,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            'pts',
+            style: TextStyle(
+              fontSize: 11,
+              color: isDark ? AppColors.textSecondary : Colors.grey.shade600,
+            ),
+          ),
         ],
       ),
     );

@@ -69,8 +69,9 @@ class _PhotoHeroCard extends ConsumerWidget {
             backgroundColor: Colors.green,
           ),
         );
-        // Navigate to Stats Photos tab after successful upload
-        context.push('/stats?tab=1');
+        // Navigate to Stats Photos tab after successful upload (index 2 — the
+        // Overload tab was inserted at index 1).
+        context.push('/stats?tab=2');
       }
     } catch (e) {
       if (context.mounted) {
