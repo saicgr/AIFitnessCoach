@@ -46,6 +46,9 @@ async def run_media_job(job_id: str):
             # === WORKOUT_HISTORY_IMPORT_BRANCH ===
             elif job_type == "workout_history_import":
                 result = await _execute_workout_history_import(job)
+            # === AI_WORKOUT_IMPORT_BRANCH ===
+            elif job_type == "workout_import":
+                result = await _execute_workout_import(job)
             else:
                 raise ValueError(f"Unknown media job type: {job_type}")
 
@@ -321,6 +324,51 @@ async def _execute_workout_history_import(job: dict) -> dict:
     importer = WorkoutHistoryImporter()
     summary = await importer.run(job)
     return summary
+
+
+# === AI_WORKOUT_IMPORT_BRANCH ===
+async def _execute_workout_import(job: dict) -> dict:
+    """Run AI workout extraction from an uploaded video and return the
+    REVIEWABLE workout (we do NOT persist here — the client reviews the result
+    then calls POST /saved-workouts/import-ai/save to commit it, mirroring the
+    photo/text sync path).
+
+    Input contract: job['s3_keys'][0] is the video s3_key; job['params']:
+      { "user_id": "...", "user_hint": <str|None>, "source": "video" }
+
+    Returns:
+      { "workout": <ExtractedWorkout dict>, "source": "video" }
+    so GET /media-jobs/{id} surfaces it under result_json.workout.
+    """
+    from services.ai_workout_extractor import get_ai_workout_extractor
+
+    params = job.get("params") or {}
+    user_id = params.get("user_id") or job.get("user_id")
+    user_hint = params.get("user_hint")
+    s3_keys = job.get("s3_keys") or []
+    if not user_id:
+        raise ValueError("workout_import job missing user_id")
+    if not s3_keys or not s3_keys[0]:
+        raise ValueError("workout_import job missing s3_keys")
+
+    s3_key = s3_keys[0]
+    logger.info(
+        f"🤖 [MediaJobRunner] workout_import starting "
+        f"(user={user_id}, s3_key={s3_key}, hint={user_hint!r})"
+    )
+
+    extractor = get_ai_workout_extractor()
+    workout = await extractor.extract_from_video(
+        s3_key=s3_key,
+        user_hint=user_hint,
+        num_frames=3,
+    )
+
+    logger.info(
+        f"✅ [MediaJobRunner] workout_import extracted '{workout.get('name')}' "
+        f"({len(workout.get('exercises', []))} exercises)"
+    )
+    return {"workout": workout, "source": "video"}
 
 
 async def resume_pending_media_jobs():

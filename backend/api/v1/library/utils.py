@@ -565,24 +565,80 @@ def row_to_library_program(row: dict) -> LibraryProgram:
     )
 
 
-def derive_exercise_type(video_url: str, body_part: str) -> str:
+# Dynamic-warmup / activation-drill name patterns. The library has almost no
+# exercises filed under a "warmup" video folder (only 2 rows), so a pure
+# video-path heuristic would render an empty Warmup pill. These name patterns
+# catch the dynamic mobility / activation drills that double as warmups
+# (~41 rows) so the filter is actually usable. Patterns are deliberately
+# specific (full move names, not bare words) to avoid sweeping in heavy lifts.
+_WARMUP_NAME_RE = re.compile(
+    r'\b('
+    r'arm circles?|leg swings?|hip circles?|jumping jacks?|high knees?|'
+    r'butt kicks?|inchworms?|world.?s greatest stretch|cat[\s\-]?cow|'
+    r'bird dog|scapular|band pull[\s\-]?aparts?|jog in place|skaters?|'
+    r'a[\s\-]?skips?|toy soldiers?|walkouts?|torso twists?|leg kicks?|'
+    r'shoulder rolls?|wrist circles?|ankle circles?|hip openers?|'
+    r'lunge with twist|spider crawl|frankenstein|standing knee'
+    r')\b',
+    re.IGNORECASE,
+)
+
+
+def derive_exercise_type(
+    video_url: str,
+    body_part: str,
+    name: str = "",
+    category: str = "",
+) -> str:
     """
-    Derive exercise type from video path folder or body part.
+    Derive exercise type from name, DB category, video path folder, or body part.
     Video paths look like: s3://ai-fitness-coach/VERTICAL VIDEOS/Yoga/...
+
+    Args:
+        video_url: S3 video path (primary type signal for cardio/yoga/strength).
+        body_part: Normalized body part (used as a last-resort fallback).
+        name: Exercise name — used to surface dynamic-warmup drills that have
+              no dedicated "warmup" video folder.
+        category: The MV `category` column ('stretching', 'cardio', 'yoga',
+              'plyometric', 'core', etc.). A far more reliable stretch signal
+              than the video path (208 'stretching' rows vs 152 path matches).
+
+    Resolution order (first match wins):
+        1. Warmup  — name matches a dynamic-warmup/activation drill, OR the
+                     video path is filed under a warmup folder.
+        2. Stretching — category == 'stretching', OR path contains stretch/mobility.
+        3. video-path heuristics (yoga / cardio / functional / core / strength).
+        4. category fallback (when there's no usable video path).
+        5. body-part fallback.
     """
-    if not video_url:
-        # Fallback based on body part
+    video_lower = (video_url or "").lower()
+    category_lower = (category or "").strip().lower()
+
+    # 1. Warmup — name-driven (dynamic drills) or rare warmup video folder.
+    if (name and _WARMUP_NAME_RE.search(name)) or 'warmup' in video_lower or 'warm-up' in video_lower or 'warm up' in video_lower:
+        return 'Warmup'
+
+    # 2. Stretching — DB category is the most reliable signal; fall back to path.
+    if category_lower == 'stretching' or 'stretch' in video_lower or 'mobility' in video_lower:
+        return 'Stretching'
+
+    if not video_lower:
+        # No video path — lean on the DB category, then body part.
+        if category_lower == 'yoga':
+            return 'Yoga'
+        if category_lower == 'cardio':
+            return 'Cardio'
+        if category_lower in ('functional', 'conditioning', 'balance'):
+            return 'Functional'
+        if category_lower in ('core', 'abs'):
+            return 'Core'
         if body_part and body_part.lower() in ['core', 'other']:
             return 'Functional'
         return 'Strength'
 
-    video_lower = video_url.lower()
-
-    # Check video path for exercise type indicators
+    # 3. Video path heuristics.
     if 'yoga' in video_lower:
         return 'Yoga'
-    elif 'stretch' in video_lower or 'mobility' in video_lower:
-        return 'Stretching'
     elif 'hiit' in video_lower or 'cardio' in video_lower:
         return 'Cardio'
     elif 'calisthenics' in video_lower or 'functional' in video_lower:

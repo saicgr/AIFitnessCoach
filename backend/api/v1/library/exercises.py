@@ -27,7 +27,7 @@ from core.locale import parse_accept_language, overlay_exercise_i18n
 # changes when the underlying exercise tables change (rare, gated by the MV
 # refresh hook in migration 2038). 1h TTL is a safe ceiling.
 _LIBRARY_REF_CACHE = RedisCache(prefix="library_ref", ttl_seconds=3600, max_size=32)
-_FILTER_OPTIONS_KEY = "filter_options:v1"
+_FILTER_OPTIONS_KEY = "filter_options:v2"  # v2: adds Warmup exercise-type bucket
 
 from .models import LibraryExercise, ExercisesByBodyPart
 from .utils import (
@@ -68,7 +68,7 @@ async def get_filter_options(response: Response):
         # Get all exercises from cleaned view with all needed fields including new columns
         all_rows = await fetch_all_rows(
             db, "exercise_library_cleaned",
-            "name, target_muscle, body_part, display_body_part, equipment, video_url, goals, suitable_for, avoid_if"
+            "name, target_muscle, body_part, display_body_part, equipment, video_url, category, goals, suitable_for, avoid_if"
         )
 
         # Count dictionaries
@@ -94,8 +94,14 @@ async def get_filter_options(response: Response):
             else:
                 equipment_counts["Bodyweight"] = equipment_counts.get("Bodyweight", 0) + 1
 
-            # Exercise type (still derived from video path)
-            et = derive_exercise_type(video_url, bp)
+            # Exercise type — derived from name/category/video path so the
+            # Warmup + Stretching pills surface real exercises (the library has
+            # almost no "warmup" video folder; warmups live as dynamic drills).
+            et = derive_exercise_type(
+                video_url, bp,
+                name=row.get("name", ""),
+                category=row.get("category", ""),
+            )
             exercise_type_counts[et] = exercise_type_counts.get(et, 0) + 1
 
             # Goals (from database column)
@@ -216,13 +222,17 @@ async def get_exercise_types():
         db = get_supabase_db()
 
         # Get all exercises from cleaned view
-        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "video_url, body_part, display_body_part, target_muscle")
+        all_rows = await fetch_all_rows(db, "exercise_library_cleaned", "name, video_url, body_part, display_body_part, target_muscle, category")
 
         # Count by derived exercise type
         type_counts: Dict[str, int] = {}
         for row in all_rows:
             bp = row.get("display_body_part") or normalize_body_part(row.get("target_muscle") or row.get("body_part", ""))
-            et = derive_exercise_type(row.get("video_url", ""), bp)
+            et = derive_exercise_type(
+                row.get("video_url", ""), bp,
+                name=row.get("name", ""),
+                category=row.get("category", ""),
+            )
             type_counts[et] = type_counts.get(et, 0) + 1
 
         # Sort by count descending
@@ -443,7 +453,11 @@ async def list_exercises(
         if exercise_types_list:
             types_lower = [et.lower() for et in exercise_types_list]
             def matches_any_type(ex: LibraryExercise) -> bool:
-                derived_type = derive_exercise_type(ex.video_url or "", ex.body_part)
+                derived_type = derive_exercise_type(
+                    ex.video_url or "", ex.body_part,
+                    name=ex.name or "",
+                    category=ex.category or "",
+                )
                 return derived_type.lower() in types_lower
             exercises = [e for e in exercises if matches_any_type(e)]
 

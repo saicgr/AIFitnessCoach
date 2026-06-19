@@ -936,6 +936,39 @@ class ParseWorkoutInputV2Response(BaseModel):
 
 
 # =============================================================================
+# AI WORKOUT IMPORT SCHEMAS (photo / text / video → reviewable custom workout)
+# =============================================================================
+#
+# Used by services/ai_workout_extractor.py as Gemini's `response_schema` so an
+# imported workout (gym whiteboard photo, a pasted routine, a short clip) comes
+# back as a fully-structured, reviewable workout. Mirrors the field names the
+# `workouts` table / WorkoutExerciseSchema use so the reviewed result drops
+# straight into the custom-workout persist path.
+
+
+class ImportedWorkoutExerciseSchema(BaseModel):
+    """One exercise parsed from an imported workout."""
+    name: str = Field(..., description="Exercise name in standard gym terminology (expand abbreviations, e.g. 'OHP' -> 'Overhead Press').")
+    sets: int = Field(default=3, ge=1, le=20, description="Number of sets.")
+    reps: int = Field(default=10, ge=1, le=100, description="Reps per set. Use a representative number for ranges ('8-12' -> 10). Use 1 for purely time-based moves.")
+    rest_seconds: Optional[int] = Field(default=None, ge=0, le=600, description="Rest between sets in seconds if stated or clearly implied; null otherwise.")
+    duration_seconds: Optional[int] = Field(default=None, ge=1, le=3600, description="Work duration in seconds for timed moves (planks, carries, intervals); null for rep-based.")
+    weight_kg: Optional[float] = Field(default=None, ge=0, le=1000, description="Working weight in KILOGRAMS if a load is stated (convert lbs->kg: lbs*0.4536). Null for bodyweight or unspecified.")
+    muscle_group: Optional[str] = Field(default=None, description="Primary muscle/body part targeted (e.g. 'chest', 'quads', 'back').")
+    notes: Optional[str] = Field(default=None, description="Any form cue, tempo, or modifier explicitly present in the source (e.g. 'AMRAP', 'each side', 'slow eccentric'). Null if none.")
+
+
+class ImportedWorkoutResponse(BaseModel):
+    """A complete workout extracted from an imported source, ready for review."""
+    name: str = Field(..., description="Concise descriptive workout name. Infer one if the source has no title (e.g. 'Push Day A', 'Full-Body Dumbbell Circuit').")
+    workout_type: str = Field(default="strength", description="One of: strength, cardio, hiit, mobility, full_body, push, pull, legs, upper, lower, core. Pick the best single fit.")
+    difficulty: str = Field(default="medium", description="REQUIRED. Exactly one of: easy, medium, hard, hell. Map any beginner->easy, intermediate->medium, advanced->hard.")
+    estimated_duration_minutes: int = Field(default=45, ge=1, le=480, description="Estimated total duration in minutes (include rest).")
+    exercises: List[ImportedWorkoutExerciseSchema] = Field(..., description="Every exercise found, in source order. Never empty.")
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0, description="Your confidence 0.0-1.0 that this extraction faithfully represents the source. For a single video frame, lower it accordingly.")
+
+
+# =============================================================================
 # WORKOUT INSIGHTS SCHEMAS
 # =============================================================================
 

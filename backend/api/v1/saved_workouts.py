@@ -1,10 +1,12 @@
 """Saved and Scheduled Workouts API endpoints."""
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, Field, model_validator
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime, date, timezone
+import asyncio
 import json
 
 from models.saved_workouts import (
@@ -73,6 +75,257 @@ async def _notify_workout_interaction(
         }).execute()
     except Exception as e:
         logger.warning(f" [Notifications] Failed to notify {action}: {e}", exc_info=True)
+
+
+# ============================================================
+# AI IMPORT WORKOUT (photo / text / video → reviewable custom workout)
+# ============================================================
+
+
+class ImportAiWorkoutRequest(BaseModel):
+    """Request body for POST /saved-workouts/import-ai.
+
+    Exactly one `source` must be supplied with the appropriate payload:
+      - source='photo' → s3_key required (runs synchronously, returns workout)
+      - source='text'  → raw_text required (runs synchronously, returns workout)
+      - source='video' → s3_key required (async — returns job_id to poll)
+    """
+    user_id: str = Field(..., max_length=100)
+    source: str = Field(..., description="'photo' | 'text' | 'video'")
+    s3_key: Optional[str] = Field(default=None, description="S3 key for photo/video")
+    raw_text: Optional[str] = Field(default=None, description="Workout text for source='text'")
+    user_hint: Optional[str] = Field(default=None, max_length=500, description="Optional disambiguation hint")
+
+    @model_validator(mode="after")
+    def _check_source_payload(self) -> "ImportAiWorkoutRequest":
+        s = (self.source or "").lower().strip()
+        if s not in ("photo", "text", "video"):
+            raise ValueError("source must be one of: photo, text, video")
+        self.source = s
+        if s in ("photo", "video") and not self.s3_key:
+            raise ValueError(f"s3_key is required when source='{s}'")
+        if s == "text" and not (self.raw_text and self.raw_text.strip()):
+            raise ValueError("raw_text is required when source='text'")
+        return self
+
+
+class ImportAiWorkoutExercise(BaseModel):
+    """A single reviewed exercise in an AI-imported workout."""
+    name: str = Field(..., max_length=200)
+    sets: int = Field(default=3, ge=1, le=20)
+    reps: Optional[int] = Field(default=None, ge=1, le=100)
+    rest_seconds: Optional[int] = Field(default=60, ge=0, le=600)
+    duration_seconds: Optional[int] = Field(default=None, ge=1, le=3600)
+    weight_kg: Optional[float] = Field(default=None, ge=0, le=1000)
+    muscle_group: Optional[str] = Field(default=None, max_length=100)
+    notes: Optional[str] = Field(default=None, max_length=2000)
+
+
+class ExtractedWorkout(BaseModel):
+    """The reviewable workout returned by the extractor (photo/text sync path)."""
+    name: str = Field(..., max_length=200)
+    workout_type: str = Field(default="strength", max_length=50)
+    difficulty: str = Field(default="medium", max_length=50)
+    estimated_duration_minutes: int = Field(default=45, ge=1, le=480)
+    exercises: List[ImportAiWorkoutExercise] = Field(..., min_length=1, max_length=100)
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
+
+
+class ImportAiWorkoutResponse(BaseModel):
+    """Response from POST /saved-workouts/import-ai.
+
+    photo/text → `workout` is populated (review then call import-ai/save).
+    video      → `job_id` is populated; poll GET /media-jobs/{job_id}; the
+                 completed result_json contains {"workout": <ExtractedWorkout>}.
+    """
+    workout: Optional[ExtractedWorkout] = None
+    job_id: Optional[str] = None
+    status: str = Field(default="completed")
+
+
+class SaveAiWorkoutRequest(BaseModel):
+    """Persist a reviewed AI-imported workout into the `workouts` table tagged
+    generation_method='ai_import' so the frontend Custom pill shows it."""
+    user_id: str = Field(..., max_length=100)
+    name: str = Field(..., min_length=1, max_length=200)
+    workout_type: str = Field(default="strength", max_length=50)
+    difficulty: str = Field(default="medium", max_length=50)
+    estimated_duration_minutes: int = Field(default=45, ge=1, le=480)
+    exercises: List[ImportAiWorkoutExercise] = Field(..., min_length=1, max_length=100)
+    scheduled_date: Optional[date] = Field(
+        default=None,
+        description="Date to file the workout under. Defaults to today (UTC) when omitted.",
+    )
+    source_url: Optional[str] = Field(default=None, max_length=2000)
+
+
+class SaveAiWorkoutResponse(BaseModel):
+    """Response from POST /saved-workouts/import-ai/save."""
+    workout_id: str
+    name: str
+    generation_source: str = "ai_import"
+
+
+def _extracted_to_workout_exercises(exercises: List[ImportAiWorkoutExercise]) -> List[Dict[str, Any]]:
+    """Map reviewed exercises onto the `workouts.exercises_json` shape used by
+    the active-workout screen + the rest of the workout pipeline."""
+    out: List[Dict[str, Any]] = []
+    for ex in exercises:
+        is_timed = ex.duration_seconds is not None and (ex.reps is None)
+        out.append({
+            "name": ex.name,
+            "sets": ex.sets,
+            "reps": ex.reps if ex.reps is not None else 1,
+            "weight_kg": ex.weight_kg,
+            "rest_seconds": ex.rest_seconds if ex.rest_seconds is not None else 60,
+            "duration_seconds": ex.duration_seconds,
+            "is_timed": is_timed,
+            "muscle_group": ex.muscle_group,
+            "notes": ex.notes,
+        })
+    return out
+
+
+@router.post("/import-ai", response_model=ImportAiWorkoutResponse, status_code=200)
+async def import_ai_workout(
+    request: ImportAiWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Extract a structured workout from a photo/screenshot, pasted text, or a
+    short video using AI.
+
+    photo / text run synchronously and return the extracted workout for the
+    client to REVIEW (nothing is persisted yet — the client edits then calls
+    POST /saved-workouts/import-ai/save). video enqueues a `workout_import`
+    media job and returns {job_id}; poll GET /media-jobs/{job_id} — the
+    completed result_json carries {"workout": <ExtractedWorkout>}.
+    """
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        if request.source in ("photo", "text"):
+            from services.ai_workout_extractor import get_ai_workout_extractor
+            extractor = get_ai_workout_extractor()
+            if request.source == "photo":
+                payload = await extractor.extract_from_photo(
+                    s3_key=request.s3_key, user_hint=request.user_hint,
+                )
+            else:
+                payload = await extractor.extract_from_text(
+                    raw_text=request.raw_text or "", user_hint=request.user_hint,
+                )
+            return ImportAiWorkoutResponse(
+                workout=ExtractedWorkout(**payload),
+                job_id=None,
+                status="completed",
+            )
+
+        # video → async media job (mirrors custom_exercise_import).
+        from services.media_job_service import get_media_job_service
+        from services.media_job_runner import run_media_job
+
+        media_job_service = get_media_job_service()
+        job_id = media_job_service.create_job(
+            user_id=request.user_id,
+            job_type="workout_import",
+            s3_keys=[request.s3_key or ""],
+            mime_types=["video/mp4"],
+            media_types=["video"],
+            params={
+                "user_id": request.user_id,
+                "user_hint": request.user_hint,
+                "source": "video",
+            },
+        )
+        asyncio.create_task(run_media_job(job_id))
+        logger.info(f"🎬 Enqueued workout_import job {job_id} for user {request.user_id}")
+        return ImportAiWorkoutResponse(workout=None, job_id=job_id, status="pending")
+
+    except HTTPException:
+        raise
+    except ValueError as ve:
+        logger.warning(f"⚠️ AI workout import validation failure: {ve}")
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        logger.error(f"❌ Failed to AI-import workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
+
+
+@router.post("/import-ai/save", response_model=SaveAiWorkoutResponse, status_code=200)
+async def save_ai_workout(
+    request: SaveAiWorkoutRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Persist a reviewed AI-imported workout into the `workouts` table tagged
+    generation_method='ai_import' / generation_source='ai_import' so it shows
+    under the frontend Custom pill (GET /workouts/?user_id=)."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    from core.db import get_supabase_db
+
+    db = get_supabase_db()
+    try:
+        exercises = _extracted_to_workout_exercises(request.exercises)
+        scheduled = request.scheduled_date or datetime.now(timezone.utc).date()
+
+        # Reuse the difficulty normaliser the Workout schema validator uses so a
+        # stray 'beginner'/'advanced' never 500s the insert.
+        from models.schemas import _coerce_workout_difficulty
+        try:
+            difficulty = _coerce_workout_difficulty(request.difficulty) or "medium"
+        except ValueError:
+            difficulty = "medium"
+
+        workout_data = {
+            "user_id": request.user_id,
+            "name": request.name[:200],
+            "type": (request.workout_type or "strength")[:50],
+            "difficulty": difficulty,
+            "scheduled_date": scheduled.isoformat(),
+            "exercises_json": exercises,
+            "duration_minutes": request.estimated_duration_minutes,
+            "generation_method": "ai_import",
+            "generation_source": "ai_import",
+            "generation_metadata": {
+                "imported_via": "ai_workout_import",
+                "source_url": request.source_url,
+                "exercise_count": len(exercises),
+            },
+            # Manual/imported workouts coexist with the day's canonical workout.
+            "is_current": False,
+        }
+
+        created = db.create_workout(workout_data)
+        if not created:
+            raise safe_internal_error(Exception("Insert returned no rows"), "saved_workouts")
+
+        workout_id = str(created.get("id"))
+        logger.info(
+            f"🏋️ AI-imported workout saved: id={workout_id} "
+            f"'{request.name}' ({len(exercises)} exercises) for user {request.user_id}"
+        )
+
+        try:
+            await log_user_activity(
+                user_id=request.user_id,
+                action="workout_ai_imported",
+                endpoint="/api/v1/saved-workouts/import-ai/save",
+                message=f"AI-imported workout: {request.name}",
+                metadata={"workout_id": workout_id, "exercise_count": len(exercises)},
+                status_code=200,
+            )
+        except Exception as e:
+            logger.error(f"Activity logging failed: {e}", exc_info=True, extra={"user_id_full": request.user_id, "failed_action": "workout_ai_imported"})
+
+        return SaveAiWorkoutResponse(workout_id=workout_id, name=request.name)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to save AI-imported workout: {e}", exc_info=True)
+        raise safe_internal_error(e, "saved_workouts")
 
 
 # ============================================================
