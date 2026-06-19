@@ -37,6 +37,34 @@ _MICRONUTRIENT_KEYS = [
 ]
 
 
+# Mirror of the food_logs_source_type_check DB constraint (migrations
+# 1960/2272/2273). The client can send arbitrary source_type strings, and a
+# value outside this set raises a 23514 that surfaces as a 500 (see
+# log_food_direct). Coerce anything unrecognized to 'manual' so a future
+# client provenance never bricks a log — extend BOTH this set and the DB
+# constraint when a new provenance is worth keeping distinct.
+_VALID_FOOD_SOURCE_TYPES = frozenset({
+    'text', 'image', 'barcode', 'restaurant',
+    'menu', 'buffet', 'watch', 'history', 'manual',
+    'scheduled_log', 'meal_plan', 'chat',
+})
+
+
+def _normalize_source_type(source_type: Optional[str]) -> str:
+    """Clamp a client-supplied source_type to the food_logs DB allowlist.
+
+    Returns 'manual' for None/empty/unknown values so an unexpected client
+    provenance can never trip the food_logs_source_type_check (23514).
+    """
+    if source_type and source_type in _VALID_FOOD_SOURCE_TYPES:
+        return source_type
+    if source_type and source_type not in _VALID_FOOD_SOURCE_TYPES:
+        logger.warning(
+            f"[food-log] unknown source_type={source_type!r} coerced to 'manual'"
+        )
+    return 'manual'
+
+
 def _extract_micronutrients(food_analysis: dict) -> dict:
     """Extract all micronutrient values from a Gemini food analysis response."""
     micros = {}
@@ -970,6 +998,11 @@ async def log_food_direct(
     # correct. Also closes an IDOR — a caller could otherwise log food onto
     # another user's account by passing a different user_id.
     body.user_id = current_user["id"]
+
+    # Durable guard: clamp source_type to the food_logs DB allowlist so an
+    # unexpected client provenance coerces to 'manual' instead of raising a
+    # 23514 (food_logs_source_type_check) that surfaces as a 500.
+    body.source_type = _normalize_source_type(body.source_type)
 
     logger.info(f"Logging food directly for user {body.user_id}, source: {body.source_type}")
 

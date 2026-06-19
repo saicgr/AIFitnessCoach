@@ -730,7 +730,7 @@ async def increment_usage(slug: str, request: Request):
     try:
         await check_and_consume(
             ip=ip,
-            tool=f"usage-ping",
+            tool="usage-ping",
             limit=USAGE_PING_LIMIT,
             window_hours=USAGE_PING_WINDOW_HOURS,
         )

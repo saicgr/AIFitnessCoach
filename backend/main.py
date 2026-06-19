@@ -920,16 +920,24 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # Send server errors to Discord #alerts (500, 502, 503, 504 + unhandled exceptions)
 from services.discord_webhooks import notify_error as _discord_notify_error
 
-# Alert-worthy status codes: 5xx (server errors) + 429 (abuse).
+# Alert-worthy status codes: 5xx (server errors) only.
 # 401 is excluded: stale Supabase sessions are routine user-side state
 # (logged out elsewhere, JWT expired) — every reopen of the app fires 20+
 # parallel requests so a single stale session storm = 20+ Discord pings,
 # which then trip Discord's 429 rate limit and spam our logs.
 # 404s are excluded — they're "client asked for something that doesn't exist"
 # (deleted resource, missing exercise image, typo in URL), not a backend
-# problem worth paging oncall. Sentry's _before_send already filters 4xx out
-# of the error tracker, Discord must match.
-_ALERT_STATUS_CODES = {429, 500, 502, 503, 504}
+# problem worth paging oncall.
+# 429 is excluded: every 429 reaching THIS handler is an intentional,
+# documented business limit raised via HTTPException (free-tool daily caps,
+# feature caps, AI-tool quotas — error envelopes limit_reached /
+# capacity_reached / quota_exceeded). They are the product working as designed,
+# not a defect. Genuine *abuse* rate-limiting is SlowAPI's RateLimitExceeded,
+# which takes a separate path (structured_rate_limit_handler) and never reaches
+# here — so dropping 429 loses no abuse signal.
+# Sentry's _before_send already filters 4xx out of the error tracker; Discord
+# matches by alerting on 5xx only.
+_ALERT_STATUS_CODES = {500, 502, 503, 504}
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
