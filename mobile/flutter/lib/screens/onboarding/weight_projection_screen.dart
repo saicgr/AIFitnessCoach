@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,10 +7,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../core/config/science_citations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
+import '../../widgets/citation_link.dart';
 import '../../widgets/glass_back_button.dart';
+import 'goal_speed_calculator.dart';
 import 'pre_auth_quiz_screen.dart';
 import 'widgets/calorie_macro_estimator.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
@@ -35,6 +40,20 @@ class _WeightProjectionScreenState
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _lineAnimation;
+
+  /// Tracks the last rate the curves were drawn for, so changing the pace
+  /// replays the draw (smooth recompute) rather than hard-cutting.
+  String? _lastDrawnRate;
+
+  /// Replays the line-draw animation and gives a tactile tick — called when
+  /// the user drags to a new pace so the curve, goal date and multiplier all
+  /// re-animate together (Cal-AI-grade live recompute).
+  void _replayForRate(String rate) {
+    if (_lastDrawnRate == rate) return;
+    _lastDrawnRate = rate;
+    HapticFeedback.selectionClick();
+    _animationController.forward(from: 0);
+  }
 
   @override
   void initState() {
@@ -281,6 +300,16 @@ class _WeightProjectionScreenState
       goalDate: goalDate,
     );
 
+    // Plan-vs-solo projection — feeds the grey "On your own" comparison curve
+    // and the substantiated "⚡ N× faster" chip. Sampled at the same number of
+    // points as the plan curve so both lines share the x-axis indices.
+    final speed = GoalSpeedCalculator.compute(
+      currentWeightKg: currentWeight,
+      goalWeightKg: goalWeight,
+      weightChangeRate: weightChangeRate,
+      numPoints: projectionData.length,
+    );
+
     final formattedGoalDate = DateFormat('MMM, yyyy').format(goalDate);
     final isLosingWeight = goalWeight < currentWeight;
 
@@ -396,6 +425,9 @@ class _WeightProjectionScreenState
                       weightDirection: weightDirection,
                       weightChangeRate: rate,
                     );
+                    // Live recompute: replay the curve draw + multiplier with a
+                    // tactile tick instead of a hard cut.
+                    _replayForRate(rate);
                   },
                 ),
 
@@ -413,8 +445,17 @@ class _WeightProjectionScreenState
                     textSecondary,
                     isLosingWeight,
                     goalDate,
+                    speed,
                   ),
                 ),
+
+                const SizedBox(height: 10),
+
+                // Legend + "⚡ N× faster than going solo" chip + safe-rate
+                // citation. The multiplier is the user's own plan-vs-solo
+                // projection, anchored to a tappable source.
+                _buildSpeedRow(speed, isDark, textPrimary, textSecondary)
+                    .animate().fadeIn(delay: 500.ms),
 
                 const SizedBox(height: 16),
 
@@ -511,13 +552,22 @@ class _WeightProjectionScreenState
     Color textSecondary,
     bool isLosingWeight,
     DateTime goalDate,
+    GoalSpeedProjection? speed,
   ) {
     final minWeight = isLosingWeight ? goalWeight : currentWeight;
     final maxWeight = isLosingWeight ? currentWeight : goalWeight;
     final weightRange = maxWeight - minWeight;
     final padding = weightRange * 0.15;
+    // The solo curve can sit "behind" the goal (heavier on a loss), so widen
+    // the axis a touch to keep it on-canvas.
     final chartMinY = minWeight - padding;
     final chartMaxY = maxWeight + padding;
+
+    // Confidence-band half-widths, fanning out toward the goal (more
+    // uncertainty later) — communicates "estimate", not "guarantee".
+    final bandMax = weightRange * 0.10;
+    final n = data.length;
+    double bandHalfAt(int i) => n <= 1 ? 0 : bandMax * (i / (n - 1));
 
     // Convert weight for display if using imperial
     double displayWeight(double kg) => useMetric ? kg : kg * 2.20462;
@@ -545,6 +595,29 @@ class _WeightProjectionScreenState
             (_lineAnimation.value * data.length).ceil().clamp(1, data.length);
         final visibleData = data.sublist(0, visiblePointCount);
 
+        // Solo curve draws with a deliberate LAG (value^1.8) so the speed gap
+        // is *felt* during the reveal, both lines settling together at the end.
+        final soloT = math.pow(_lineAnimation.value, 1.8).toDouble();
+        final soloVisibleCount =
+            (soloT * data.length).ceil().clamp(1, data.length);
+        final soloSpots = (speed == null)
+            ? const <FlSpot>[]
+            : [
+                for (int i = 0; i < soloVisibleCount; i++)
+                  FlSpot(i.toDouble(), speed.soloCurve[i].weightKg),
+              ];
+
+        // Confidence band: upper/lower invisible lines around the plan curve,
+        // shaded between. Tracks the same visible-point count as the plan.
+        final bandUpper = [
+          for (int i = 0; i < visiblePointCount; i++)
+            FlSpot(i.toDouble(), visibleData[i].weight + bandHalfAt(i)),
+        ];
+        final bandLower = [
+          for (int i = 0; i < visiblePointCount; i++)
+            FlSpot(i.toDouble(), visibleData[i].weight - bandHalfAt(i)),
+        ];
+
         // v7: the 🎯 goal-date chip pops in over the line's endpoint as the
         // draw completes (last 15% of the animation).
         final chipT = Curves.easeOutBack.transform(
@@ -571,20 +644,61 @@ class _WeightProjectionScreenState
                 lineTouchData: LineTouchData(
                   enabled: true,
                   handleBuiltInTouches: true,
+                  // Generous hit-area so taps land easily anywhere near a point.
+                  touchSpotThreshold: 26,
+                  // Touch indicator: a soft guide line + an enlarged dot on the
+                  // plan and solo lines (never the invisible band edges).
+                  getTouchedSpotIndicator: (barData, spotIndexes) {
+                    return spotIndexes.map((_) {
+                      final isBand = barData.barWidth == 0;
+                      if (isBand) {
+                        return const TouchedSpotIndicatorData(
+                          FlLine(color: Colors.transparent),
+                          FlDotData(show: false),
+                        );
+                      }
+                      final isSolo = barData.dashArray != null;
+                      final dotColor = isSolo
+                          ? (isDark ? Colors.white : Colors.black)
+                              .withValues(alpha: 0.45)
+                          : AppColors.orange;
+                      return TouchedSpotIndicatorData(
+                        FlLine(
+                          color: AppColors.orange.withValues(alpha: 0.35),
+                          strokeWidth: 2,
+                          dashArray: const [4, 3],
+                        ),
+                        FlDotData(
+                          show: true,
+                          getDotPainter: (s, p, b, i) => FlDotCirclePainter(
+                            radius: isSolo ? 4.5 : 6,
+                            color: dotColor,
+                            strokeWidth: 2.5,
+                            strokeColor: Colors.white,
+                          ),
+                        ),
+                      );
+                    }).toList();
+                  },
                   touchTooltipData: LineTouchTooltipData(
                     tooltipRoundedRadius: 12,
                     getTooltipColor: (_) =>
                         (isDark ? AppColors.elevated : AppColorsLight.elevated)
-                            .withValues(alpha: 0.95),
-                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            .withValues(alpha: 0.96),
+                    tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                     tooltipMargin: 12,
                     fitInsideHorizontally: true,
                     fitInsideVertically: true,
                     getTooltipItems: (touchedSpots) {
+                      // Render ONE combined tooltip on the plan spot showing
+                      // both "Your plan" and "On your own" at the tapped date;
+                      // suppress the band edges + the duplicate solo box.
+                      final planBarIndex = soloSpots.isNotEmpty ? 3 : 2;
                       return touchedSpots.map((spot) {
+                        if (spot.barIndex != planBarIndex) return null;
                         final pointIndex = spot.spotIndex.clamp(0, data.length - 1);
                         final date = data[pointIndex].date;
-                        final weight = displayWeight(spot.y);
+                        final planW = displayWeight(spot.y);
                         final isStart = pointIndex == 0;
                         final isEnd = pointIndex == data.length - 1;
                         final label = isStart
@@ -592,14 +706,53 @@ class _WeightProjectionScreenState
                             : isEnd
                                 ? 'Goal'
                                 : DateFormat('MMM yyyy').format(date);
+                        final children = <TextSpan>[
+                          TextSpan(
+                            text: '\nYour plan  ',
+                            style: TextStyle(
+                              color: AppColors.orange,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '${planW.toStringAsFixed(1)} $weightUnit',
+                            style: TextStyle(
+                              color: textPrimary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ];
+                        if (speed != null) {
+                          final soloW =
+                              displayWeight(speed.soloCurve[pointIndex].weightKg);
+                          children.add(TextSpan(
+                            text: '\nOn your own  ',
+                            style: TextStyle(
+                              color: textSecondary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ));
+                          children.add(TextSpan(
+                            text: '${soloW.toStringAsFixed(1)} $weightUnit',
+                            style: TextStyle(
+                              color: textSecondary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ));
+                        }
                         return LineTooltipItem(
-                          '$label\n${weight.toStringAsFixed(1)} $weightUnit',
+                          label,
                           TextStyle(
                             color: textPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            height: 1.4,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12.5,
+                            height: 1.5,
                           ),
+                          children: children,
                         );
                       }).toList();
                     },
@@ -694,7 +847,48 @@ class _WeightProjectionScreenState
                 maxX: (data.length - 1).toDouble(),
                 minY: chartMinY,
                 maxY: chartMaxY,
+                // Confidence band fans between the two invisible band lines
+                // (indices 0 & 1) — reads as an estimate range, not a promise.
+                betweenBarsData: [
+                  BetweenBarsData(
+                    fromIndex: 0,
+                    toIndex: 1,
+                    color: AppColors.orange.withValues(alpha: 0.12),
+                  ),
+                ],
                 lineBarsData: [
+                  // 0 — lower band edge (invisible)
+                  LineChartBarData(
+                    spots: bandLower,
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    barWidth: 0,
+                    color: Colors.transparent,
+                    dotData: const FlDotData(show: false),
+                  ),
+                  // 1 — upper band edge (invisible)
+                  LineChartBarData(
+                    spots: bandUpper,
+                    isCurved: true,
+                    curveSmoothness: 0.35,
+                    barWidth: 0,
+                    color: Colors.transparent,
+                    dotData: const FlDotData(show: false),
+                  ),
+                  // 2 — "On your own" comparison curve (grey, dashed, lags)
+                  if (soloSpots.isNotEmpty)
+                    LineChartBarData(
+                      spots: soloSpots,
+                      isCurved: true,
+                      curveSmoothness: 0.35,
+                      color: (isDark ? Colors.white : Colors.black)
+                          .withValues(alpha: 0.32),
+                      barWidth: 2.5,
+                      isStrokeCapRound: true,
+                      dashArray: const [6, 5],
+                      dotData: const FlDotData(show: false),
+                    ),
+                  // 3 — the plan curve (orange), drawn on top
                   LineChartBarData(
                     spots: visibleData.asMap().entries.map((entry) {
                       return FlSpot(
@@ -704,9 +898,16 @@ class _WeightProjectionScreenState
                     }).toList(),
                     isCurved: true,
                     curveSmoothness: 0.35,
-                    color: AppColors.orange,
-                    barWidth: 3,
+                    gradient: const LinearGradient(
+                      colors: [AppColors.orange, Color(0xFFEA580C)],
+                    ),
+                    barWidth: 3.5,
                     isStrokeCapRound: true,
+                    shadow: Shadow(
+                      color: AppColors.orange.withValues(alpha: 0.45),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
                     dotData: FlDotData(
                       show: true,
                       getDotPainter: (spot, percent, barData, index) {
@@ -719,17 +920,6 @@ class _WeightProjectionScreenState
                           strokeColor: Colors.white,
                         );
                       },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.orange.withValues(alpha: 0.3),
-                          AppColors.orange.withValues(alpha: 0.05),
-                        ],
-                      ),
                     ),
                   ),
                 ],
@@ -777,6 +967,164 @@ class _WeightProjectionScreenState
           ],
         );
       },
+    );
+  }
+
+  /// Legend dot/dash swatch for the chart lines.
+  Widget _legendSwatch(Color color, {required bool dashed}) {
+    if (!dashed) {
+      return Container(
+        width: 14,
+        height: 4,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      );
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(
+        2,
+        (_) => Container(
+          width: 6,
+          height: 3,
+          margin: const EdgeInsets.only(right: 2),
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Legend + the substantiated "⚡ N× faster than going solo" chip + the
+  /// estimate/safe-rate caption with a tappable citation. The multiplier is
+  /// the user's own plan-vs-solo projection — never a fabricated number.
+  Widget _buildSpeedRow(
+    GoalSpeedProjection? speed,
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    final greyLegend =
+        (isDark ? Colors.white : Colors.black).withValues(alpha: 0.32);
+
+    Widget legendLabel(Color color, String label, {required bool dashed}) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _legendSwatch(color, dashed: dashed),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: textSecondary,
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            legendLabel(AppColors.orange, 'Your plan', dashed: false),
+            const SizedBox(width: 16),
+            legendLabel(greyLegend, 'On your own', dashed: true),
+          ],
+        ),
+        if (speed != null) ...[
+          const SizedBox(height: 10),
+          // ⚡ N× faster chip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.orange.withValues(alpha: 0.18),
+                  AppColors.orange.withValues(alpha: 0.08),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.orange.withValues(alpha: 0.30)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('⚡', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 8),
+                RichText(
+                  text: TextSpan(
+                    style: TextStyle(fontSize: 14, color: textPrimary),
+                    children: [
+                      TextSpan(
+                        text: speed.multiplierLabel,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.orange,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const TextSpan(
+                        text: ' faster',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      TextSpan(
+                        text: '  than going solo',
+                        style: TextStyle(color: textSecondary, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          CitationLink(
+            citation: speed.citation,
+            accent: AppColors.orange,
+            fontSize: 11,
+            leading: 'Why this works — ',
+          ),
+        ],
+        const SizedBox(height: 8),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.info_outline_rounded,
+                size: 13, color: textSecondary.withValues(alpha: 0.7)),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Shaded band is an estimated range — actual results vary.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: textSecondary.withValues(alpha: 0.85),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  CitationLink(
+                    citation: ScienceCitations.safeRate,
+                    accent: textSecondary,
+                    fontSize: 11,
+                    leading: 'Safe rate: ',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
