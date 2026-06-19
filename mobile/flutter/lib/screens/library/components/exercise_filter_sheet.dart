@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/app_typography.dart';
 import '../../../data/services/context_logging_service.dart';
 import '../providers/library_providers.dart';
 import '../providers/muscle_group_images_provider.dart';
@@ -23,14 +25,14 @@ class ExerciseFilterSheet extends ConsumerWidget {
     final selectedAvoid = ref.watch(selectedAvoidSetProvider);
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Signature accent (volt/orange) drives the primary action + chrome —
+    // replaces the off-brand cyan the sheet previously used for Clear all,
+    // the loading spinner, and the Apply button.
+    final accent = ref.watch(accentColorProvider).getColor(isDark);
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final success = isDark ? AppColors.success : AppColorsLight.success;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -85,8 +87,10 @@ class ExerciseFilterSheet extends ConsumerWidget {
                       TextButton(
                         onPressed: () => clearAllFilters(ref),
                         child: Text(
-                          AppLocalizations.of(context).settingsCardPartClearAll,
-                          style: TextStyle(color: cyan),
+                          AppLocalizations.of(context)
+                              .settingsCardPartClearAll
+                              .toUpperCase(),
+                          style: ZType.lbl(12, color: accent, letterSpacing: 1.0),
                         ),
                       ),
                     ],
@@ -99,7 +103,7 @@ class ExerciseFilterSheet extends ConsumerWidget {
                 Expanded(
                   child: filterOptionsAsync.when(
                     loading: () => Center(
-                      child: CircularProgressIndicator(color: cyan),
+                      child: CircularProgressIndicator(color: accent),
                     ),
                     error: (e, _) => Center(
                       child: Column(
@@ -338,21 +342,28 @@ class ExerciseFilterSheet extends ConsumerWidget {
                   ),
                   child: SizedBox(
                     width: double.infinity,
+                    // Signature primary CTA — same grammar as the Library
+                    // "BUILD CUSTOM WORKOUT" button: accent fill, dark-on-orange
+                    // label, condensed uppercase type.
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: cyan,
-                        foregroundColor: Colors.white,
+                        backgroundColor: accent,
+                        foregroundColor: const Color(0xFF160B03),
+                        elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: Text(
-                        AppLocalizations.of(context).exerciseFilterApplyFilters,
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        AppLocalizations.of(context)
+                            .exerciseFilterApplyFilters
+                            .toUpperCase(),
+                        style: ZType.lbl(
+                          15,
+                          color: const Color(0xFF160B03),
+                          letterSpacing: 2.0,
                         ),
                       ),
                     ),
@@ -394,12 +405,8 @@ class _SectionHeader extends StatelessWidget {
         Icon(icon, size: 18, color: color),
         const SizedBox(width: 8),
         Text(
-          title,
-          style: TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: textPrimary,
-          ),
+          title.toUpperCase(),
+          style: ZType.lbl(13, color: textPrimary, letterSpacing: 1.2),
         ),
         if (count > 0) ...[
           const SizedBox(width: 8),

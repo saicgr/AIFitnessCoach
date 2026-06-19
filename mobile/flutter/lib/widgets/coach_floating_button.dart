@@ -47,10 +47,17 @@ class CoachFloatingButton extends ConsumerWidget {
   /// real bottom edge instead of floating ~100pt up over content (issue 10).
   final bool liftAboveNav;
 
+  /// Extra vertical lift (pt) added to the resolved `bottom`. Screens that dock
+  /// their own full-width CTA at the bottom (e.g. Library's "BUILD CUSTOM
+  /// WORKOUT") pass the CTA's height + gap so the FAB floats clearly ABOVE the
+  /// button instead of overlapping its right edge.
+  final double extraBottomOffset;
+
   const CoachFloatingButton({
     super.key,
     this.isHomeTab = false,
     this.liftAboveNav = true,
+    this.extraBottomOffset = 0,
   });
 
   /// Vertical gap between the top of the floating nav and the bottom of
@@ -70,10 +77,11 @@ class CoachFloatingButton extends ConsumerWidget {
 
     return Positioned(
       right: 16,
-      bottom: liftAboveNav
-          ? bottomInset + _navHeight + _gapAboveNav
-          // No nav on this screen — sit just above the home indicator.
-          : bottomInset + 16,
+      bottom: (liftAboveNav
+              ? bottomInset + _navHeight + _gapAboveNav
+              // No nav on this screen — sit just above the home indicator.
+              : bottomInset + 16) +
+          extraBottomOffset,
       child: GestureDetector(
         onTap: () => _open(context),
         behavior: HitTestBehavior.opaque,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/theme/app_typography.dart';
@@ -13,6 +12,7 @@ import 'providers/library_providers.dart';
 import 'tabs/discover_tab.dart';
 import 'tabs/exercises_tab.dart';
 import 'tabs/my_library_tab.dart';
+import 'tabs/my_workouts_tab.dart';
 import 'tabs/workouts_tab.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -41,13 +41,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
-  static const _tabLabels = ['Discover', 'Exercises', 'Workouts', 'Saved'];
+  static const _tabLabels = ['Discover', 'Exercises', 'Workouts', 'Custom', 'You'];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(
-      length: 4,
+      length: 5,
       vsync: this,
       initialIndex: widget.initialTab ?? 0,
     );
@@ -97,7 +97,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
   void _applyCategoryDeepLink(String tileKey) {
     switch (tileKey) {
       case 'saved':
-        _tabController.animateTo(3); // Saved tab — no category filter applied.
+        _openSaved(); // Saved workouts now live behind the header ☆ icon.
         return;
       case 'strength':
         _switchToExercises('strength', 'category');
@@ -166,6 +166,15 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     _tabController.animateTo(1);
   }
 
+  /// Open the user's saved/bookmarked workouts (the `saved_workouts` table) as a
+  /// pushed screen — surfaced via the header ☆ icon rather than a top-level pill.
+  void _openSaved() {
+    HapticService.light();
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const _SavedWorkoutsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -201,11 +210,20 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                         AppLocalizations.of(context).workoutsLibrary.toUpperCase(),
                         style: ZType.disp(30, color: tc.textPrimary),
                       ),
+                      const Spacer(),
+                      // Saved/bookmarked workouts — surfaced as a header icon
+                      // (not a top-level pill) so the pill row stays at five.
+                      IconButton(
+                        onPressed: _openSaved,
+                        tooltip: 'Saved workouts',
+                        icon: Icon(Icons.bookmark_border_rounded,
+                            color: tc.textPrimary, size: 24),
+                      ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
 
                 // Search bar — updates exerciseSearchProvider and auto-switches to Exercises tab
                 Padding(
@@ -258,7 +276,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
 
                 // Tab selector pills (signature-v2 `.nl-ltab`). Flex each pill
                 // so the four share the row width evenly — fixed-width pills
@@ -326,76 +344,49 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
                     children: [
                       DiscoverTab(onSwitchToExercises: _switchToExercises),
                       const ExercisesTab(),
-                      const WorkoutsTab(),
+                      const MyWorkoutsTab(mode: MyWorkoutsMode.generated),
+                      const MyWorkoutsTab(mode: MyWorkoutsMode.custom),
                       const MyLibraryTab(),
                     ],
                   ),
                 ),
 
-                // Docked "BUILD A WORKOUT" CTA (signature-v2 `.rh-cta`) — the
-                // single orange action on this screen. Routes to the custom
-                // workout builder (`/workout/build`, same route the Workouts
-                // tab's Builder + CUSTOM chip use).
-                Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    8,
-                    16,
-                    8 + MediaQuery.of(context).padding.bottom,
-                  ),
-                  child: GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      context.push('/workout/build');
-                    },
-                    child: Container(
-                      height: 46,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: accentColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.construction_rounded,
-                            size: 18,
-                            color: Color(0xFF160B03),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            AppLocalizations.of(context)
-                                .customWorkoutBuilderBuildCustomWorkout
-                                .toUpperCase(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: ZType.lbl(
-                              16,
-                              color: const Color(0xFF160B03),
-                              letterSpacing: 2.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
 
-            // Coach access on Library. The screen sits under the Workout tab
-            // but uses its own Material TabBar (4 tabs at the top of the
-            // screen), not a bottom FloatingTabBar — so it never inherits a
-            // coach-sparkle slot. Per the redesign plan's "coach access
-            // universal" directive, mount the CoachFloatingButton in
-            // collapsed (icon-only) form. liftAboveNav:false drops it to the
-            // real bottom edge — Library has no bottom nav to clear, so the
-            // default +100pt lift left it floating over content (issue 10).
+            // Coach access on Library. The screen uses its own top pill row (not
+            // a bottom FloatingTabBar), so it never inherits a coach-sparkle
+            // slot — mount the CoachFloatingButton in collapsed (icon-only)
+            // form. liftAboveNav:false drops it to the real bottom edge. The
+            // "Build a workout" CTA now lives on the Custom pill, so there's no
+            // docked button to clear anymore.
             const CoachFloatingButton(liftAboveNav: false),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Pushed screen for the user's saved/bookmarked workouts (header ☆ icon).
+class _SavedWorkoutsScreen extends StatelessWidget {
+  const _SavedWorkoutsScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Scaffold(
+      backgroundColor: tc.background,
+      appBar: AppBar(
+        backgroundColor: tc.background,
+        elevation: 0,
+        iconTheme: IconThemeData(color: tc.textPrimary),
+        title: Text(
+          'SAVED',
+          style: ZType.disp(22, color: tc.textPrimary),
+        ),
+      ),
+      body: const SafeArea(top: false, child: SavedWorkoutsTab()),
     );
   }
 }

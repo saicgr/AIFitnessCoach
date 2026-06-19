@@ -16,6 +16,9 @@ import '../widgets/filter_button.dart';
 import '../widgets/active_filter_chips.dart';
 import '../widgets/exercise_card.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../data/services/haptic_service.dart';
+import '../../custom_exercises/widgets/create_exercise_sheet.dart';
+import '../../exercises/import_exercise_screen.dart';
 import '../components/exercise_filter_sheet.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
@@ -61,6 +64,17 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     showGlassSheet(
       context: context,
       builder: (context) => const ExerciseFilterSheet(),
+    );
+  }
+
+  /// Open the manual "create custom exercise" form. Mirrors the entry point in
+  /// `custom_exercises_screen.dart` so behavior stays consistent.
+  void _showCreateExercise(BuildContext context) {
+    HapticService.light();
+    showGlassSheet(
+      context: context,
+      useRootNavigator: true,
+      builder: (_) => const GlassSheet(child: CreateExerciseSheet()),
     );
   }
 
@@ -156,6 +170,20 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
                 style: ZType.lbl(11, color: textMuted, letterSpacing: 1.4),
               ),
               const Spacer(),
+              // Create a custom exercise (manual form).
+              _MiniIconButton(
+                icon: Icons.add_rounded,
+                tooltip: 'Create exercise',
+                onTap: () => _showCreateExercise(context),
+              ),
+              const SizedBox(width: 6),
+              // AI-import a custom exercise (photo / video / describe).
+              _MiniIconButton(
+                icon: Icons.auto_awesome_rounded,
+                tooltip: 'Import with AI',
+                onTap: () => showImportExerciseScreen(context),
+              ),
+              const SizedBox(width: 8),
               // "Performed" toggle chip
               Padding(
                 padding: const EdgeInsetsDirectional.only(end: 8),
@@ -177,7 +205,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           ),
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         // Inline muscle-group chip row (signature-v2 `.nl-chips`). Quick-toggle
         // the most-used body parts without opening the advanced filter sheet —
@@ -188,7 +216,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           selected: selectedMuscles,
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
         // "Did you mean?" suggestion banner
         if (searchSuggestion != null && searchSuggestion.isNotEmpty) ...[
@@ -452,6 +480,42 @@ class _MuscleChipRow extends ConsumerWidget {
             onTap: () => _toggle(ref, name),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Compact 32pt icon button used in the Exercises header action row
+/// (Create exercise / AI import).
+class _MiniIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+  const _MiniIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tc = ThemeColors.of(context);
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 32,
+          height: 32,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: tc.elevated,
+            borderRadius: BorderRadius.circular(9),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Icon(icon, size: 18, color: tc.textPrimary),
+        ),
       ),
     );
   }

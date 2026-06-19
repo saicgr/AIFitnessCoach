@@ -8,27 +8,26 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton_list.dart';
-import '../../../data/models/workout_studio_models.dart';
 import '../../../data/providers/workout_studio_providers.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/design_system/zealova.dart';
-import '../../workout/customization_studio_sheet.dart';
 
-/// "Workouts" tab of the Library — the user's saved custom workouts.
+/// "Saved" workouts — the user's bookmarked/saved workouts (the `saved_workouts`
+/// table), reached from the Library header's ☆ icon.
 ///
 /// Reads [currentUserIdProvider]; if signed out, shows a friendly sign-in
 /// prompt. Otherwise loads via [SavedWorkoutsService.getSavedWorkouts] and
 /// renders a pull-to-refresh list of tiles. Each tile has a 3-dot menu with
 /// Do-now / Rename / Delete. No mock data, no silent fallback — load errors
-/// surface a retry state.
-class WorkoutsTab extends ConsumerStatefulWidget {
-  const WorkoutsTab({super.key});
+/// surface a retry state. Building a workout lives on the Library "Custom" pill,
+/// not here.
+class SavedWorkoutsTab extends ConsumerStatefulWidget {
+  const SavedWorkoutsTab({super.key});
 
   @override
-  ConsumerState<WorkoutsTab> createState() => _WorkoutsTabState();
+  ConsumerState<SavedWorkoutsTab> createState() => _SavedWorkoutsTabState();
 }
 
-class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
+class _SavedWorkoutsTabState extends ConsumerState<SavedWorkoutsTab>
     with AutomaticKeepAliveClientMixin {
   // Keep the tab alive so swiping between Library tabs doesn't dispose this
   // state and re-trigger a fetch every time the user flicks across.
@@ -42,18 +41,6 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
     // post-mutation reloads always hit the network.
     ref.invalidate(savedWorkoutsListProvider(uid));
     await ref.read(savedWorkoutsListProvider(uid).future);
-  }
-
-  /// Open the Customization Studio in CREATE mode (no workoutId → builds &
-  /// persists a brand-new workout), then jump straight into it.
-  Future<void> _buildNew() async {
-    HapticService.selection();
-    final BuiltWorkout? result = await showCustomizationStudio(context);
-    if (!mounted || result == null) return;
-    if (result.workoutId != null) {
-      context.push('/workout/${result.workoutId}');
-    }
-    await _refresh();
   }
 
   // ---- Actions ----------------------------------------------------------
@@ -213,20 +200,7 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
       );
     }
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
-          child: ZealovaButton(
-            label: 'Build a workout',
-            trailingIcon: Icons.tune_rounded,
-            onTap: _buildNew,
-            height: 48,
-          ),
-        ),
-        Expanded(child: _buildList(uid, textSecondary, textMuted)),
-      ],
-    );
+    return _buildList(uid, textSecondary, textMuted);
   }
 
   Widget _buildList(String uid, Color textSecondary, Color textMuted) {
@@ -267,7 +241,7 @@ class _WorkoutsTabState extends ConsumerState<WorkoutsTab>
               icon: Icons.bookmark_border_rounded,
               title: 'No saved workouts yet',
               subtitle:
-                  'Tap "Build a workout" above, or generate one in chat and tap Save.',
+                  'Save a workout from chat or a friend\'s post, or build your own from the Custom tab.',
               color: textSecondary,
               mutedColor: textMuted,
             ),
