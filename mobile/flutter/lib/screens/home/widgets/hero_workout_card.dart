@@ -709,8 +709,13 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
             // The text block (title + meta line + START) lives in the bottom
             // ~45% of the card, so the scrim ramps to a strong opaque band
             // there: the meta/subtitle was near-invisible over a light
-            // exercise illustration (issue A4). A 4-stop ramp keeps the upper
-            // illustration visible while guaranteeing legible text below.
+            // exercise illustration (issue A4 / H). A 5-stop ramp keeps the
+            // upper illustration visible while guaranteeing legible text below.
+            // Both modes use a DARK scrim at the foot now — light mode's old
+            // white scrim washed the dark title/meta into the illustration
+            // (the "After" hero in the mockup pins the text over a dark band so
+            // it reads over ANY illustration colour). The light variant stays
+            // softer up top so the illustration still shows through.
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -719,18 +724,20 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     end: Alignment.bottomCenter,
                     colors: isDark
                         ? [
-                            Colors.black.withValues(alpha: 0.4),
-                            Colors.black.withValues(alpha: 0.28),
-                            Colors.black.withValues(alpha: 0.72),
-                            Colors.black.withValues(alpha: 0.92),
+                            Colors.black.withValues(alpha: 0.42),
+                            Colors.black.withValues(alpha: 0.30),
+                            Colors.black.withValues(alpha: 0.66),
+                            Colors.black.withValues(alpha: 0.90),
+                            Colors.black.withValues(alpha: 0.97),
                           ]
                         : [
-                            Colors.white.withValues(alpha: 0.45),
-                            Colors.white.withValues(alpha: 0.35),
-                            Colors.white.withValues(alpha: 0.82),
-                            Colors.white.withValues(alpha: 0.97),
+                            Colors.black.withValues(alpha: 0.10),
+                            Colors.black.withValues(alpha: 0.22),
+                            Colors.black.withValues(alpha: 0.58),
+                            Colors.black.withValues(alpha: 0.82),
+                            Colors.black.withValues(alpha: 0.92),
                           ],
-                    stops: const [0.0, 0.3, 0.62, 1.0],
+                    stops: const [0.0, 0.32, 0.6, 0.82, 1.0],
                   ),
                 ),
               ),
@@ -799,23 +806,28 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     child: SizedBox(height: 60),
                   ),
 
-                  // Workout title — Anton display masthead (Signature).
+                  // Workout title — Anton display masthead (Signature). Now
+                  // WHITE in both modes: the foot scrim is dark in light mode
+                  // too (H), so white-on-dark + a strong drop shadow reads over
+                  // any illustration — the old dark-title-on-white-scrim washed
+                  // out over a light illustration.
                   Text(
                     (workout.name ?? AppLocalizations.of(context).navWorkout)
                         .toUpperCase(),
                     style: ZType.disp(
                       26,
-                      color: isDark ? Colors.white : Colors.black87,
+                      color: Colors.white,
                     ).copyWith(
-                      // A4: shadow in BOTH modes — in light mode a white halo
-                      // keeps the dark title crisp over a light illustration.
-                      shadows: [
+                      shadows: const [
                         Shadow(
-                          color: isDark
-                              ? Colors.black54
-                              : Colors.white.withValues(alpha: 0.85),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                          color: Colors.black,
+                          blurRadius: 12,
+                          offset: Offset(0, 2),
+                        ),
+                        Shadow(
+                          color: Colors.black54,
+                          blurRadius: 4,
+                          offset: Offset(0, 1),
                         ),
                       ],
                     ),
@@ -829,21 +841,17 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                     Text(
                       workout.description!,
                       style: TextStyle(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.78)
-                            : Colors.black.withValues(alpha: 0.62),
+                        // White-on-dark-scrim in both modes (H), with a black
+                        // shadow so the description reads over any illustration.
+                        color: Colors.white.withValues(alpha: 0.86),
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                         height: 1.3,
-                        // A4: shadow in BOTH modes so the description reads over
-                        // a light illustration too (was dark-mode only).
-                        shadows: [
+                        shadows: const [
                           Shadow(
-                            color: isDark
-                                ? Colors.black38
-                                : Colors.white.withValues(alpha: 0.8),
-                            blurRadius: 4,
-                            offset: const Offset(0, 1),
+                            color: Colors.black87,
+                            blurRadius: 6,
+                            offset: Offset(0, 1),
                           ),
                         ],
                       ),
@@ -873,22 +881,20 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       parts.join(' · '),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        // A4: the meta line ("TOMORROW · UPPER · 60m · 6
-                        // exercises") was near-invisible — same legibility
-                        // treatment as the title now (a soft shadow in BOTH
-                        // modes so it reads over a light illustration too).
-                        color: isDark ? Colors.white : Colors.black87,
+                      style: const TextStyle(
+                        // The meta line ("TOMORROW · UPPER · 60m · 6 exercises")
+                        // was near-invisible over a light illustration — now
+                        // white-on-dark-scrim in both modes (H) with a strong
+                        // black shadow, same legibility treatment as the title.
+                        color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.3,
                         shadows: [
                           Shadow(
-                            color: isDark
-                                ? Colors.black.withValues(alpha: 0.55)
-                                : Colors.white.withValues(alpha: 0.85),
-                            blurRadius: 6,
-                            offset: const Offset(0, 1),
+                            color: Colors.black,
+                            blurRadius: 8,
+                            offset: Offset(0, 1),
                           ),
                         ],
                       ),

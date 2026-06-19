@@ -1387,6 +1387,9 @@ class HomeFuelStrip extends ConsumerWidget {
 
     final prefs = ref.watch(nutritionPreferencesProvider);
     final calTarget = prefs.currentCalorieTarget;
+    final pTarget = prefs.currentProteinTarget;
+    final cTarget = prefs.currentCarbsTarget;
+    final fTarget = prefs.currentFatTarget;
     final eatenCal = summary?.totalCalories ?? 0;
     final eatenP = (summary?.totalProteinG ?? 0).round();
     final eatenC = (summary?.totalCarbsG ?? 0).round();
@@ -1403,50 +1406,90 @@ class HomeFuelStrip extends ConsumerWidget {
           HapticService.light();
           context.go('/nutrition');
         },
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
+            // Top row — eaten/target small on the left, the prominent "left"
+            // (or "over") number as the large accent value on the right. The
+            // remaining-budget figure is what the user glances for, so it gets
+            // the display-size numeral (issue 9).
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('FUEL',
-                          style: ZType.lbl(11, color: c.textMuted)),
-                      const SizedBox(width: 9),
-                      Text(nf.format(eatenCal),
-                          style: ZType.disp(26, color: c.textPrimary)
-                              .copyWith(height: 1.0)),
-                      const SizedBox(width: 7),
-                      Flexible(
-                        child: Text(
-                          over
-                              ? '/ ${nf.format(calTarget)} · ${nf.format(-calLeft)} over'
-                              : '/ ${nf.format(calTarget)} · ${nf.format(calLeft)} left',
-                          style: ZType.lbl(9.5,
-                              color: over ? c.warning : c.textMuted),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                      Text('FUEL', style: ZType.lbl(11, color: c.textMuted)),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${nf.format(eatenCal)} / ${nf.format(calTarget)}',
+                        style: ZType.lbl(11.5, color: c.textSecondary),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      _FuelDot(color: AppColors.macroProtein, label: 'P $eatenP', c: c),
-                      const SizedBox(width: 14),
-                      _FuelDot(color: AppColors.macroCarbs, label: 'C $eatenC', c: c),
-                      const SizedBox(width: 14),
-                      _FuelDot(color: AppColors.macroFat, label: 'F $eatenF', c: c),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      nf.format(over ? -calLeft : calLeft),
+                      style: ZType.disp(30,
+                              color: over ? c.warning : c.accent)
+                          .copyWith(height: 1.0),
+                    ),
+                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        over ? 'KCAL OVER' : 'KCAL LEFT',
+                        style: ZType.lbl(9,
+                            color: over ? c.warning : c.textMuted,
+                            letterSpacing: 1),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+                const Text('🥣', style: TextStyle(fontSize: 30)),
+              ],
             ),
-            const SizedBox(width: 8),
-            const Text('🥣', style: TextStyle(fontSize: 32)),
+            const SizedBox(height: 10),
+            // Per-macro LEFT row — replaces the eaten-only dots so the macro
+            // figures match the headline number (remaining, not consumed).
+            // 0-floor clamp; falls back to eaten when no target is set.
+            Row(
+              children: [
+                _FuelMacroLeft(
+                  color: AppColors.macroProtein,
+                  letter: 'P',
+                  eaten: eatenP,
+                  target: pTarget,
+                  c: c,
+                ),
+                const SizedBox(width: 12),
+                _FuelMacroLeft(
+                  color: AppColors.macroCarbs,
+                  letter: 'C',
+                  eaten: eatenC,
+                  target: cTarget,
+                  c: c,
+                ),
+                const SizedBox(width: 12),
+                _FuelMacroLeft(
+                  color: AppColors.macroFat,
+                  letter: 'F',
+                  eaten: eatenF,
+                  target: fTarget,
+                  c: c,
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -1454,26 +1497,49 @@ class HomeFuelStrip extends ConsumerWidget {
   }
 }
 
-/// One semantic macro dot + value for the FUEL strip (`● P 96`).
-class _FuelDot extends StatelessWidget {
+/// One per-macro "left" cell for the FUEL strip — a semantic dot + the macro
+/// letter + the remaining grams (`● P 48g left`). When no target is set it
+/// degrades to the eaten figure so a fresh account still reads coherently.
+/// Macro-specific colours per `feedback_accent_colors`.
+class _FuelMacroLeft extends StatelessWidget {
   final Color color;
-  final String label;
+  final String letter;
+  final int eaten;
+  final int target;
   final ThemeColors c;
-  const _FuelDot({required this.color, required this.label, required this.c});
+  const _FuelMacroLeft({
+    required this.color,
+    required this.letter,
+    required this.eaten,
+    required this.target,
+    required this.c,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 6,
-          height: 6,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 5),
-        Text(label, style: ZType.lbl(10, color: c.textMuted, letterSpacing: 0.8)),
-      ],
+    final hasTarget = target > 0;
+    final left = hasTarget ? (target - eaten).clamp(0, target) : eaten;
+    final suffix = hasTarget ? 'g left' : 'g';
+    return Expanded(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '$letter $left$suffix',
+              style: ZType.lbl(10.5, color: c.textSecondary, letterSpacing: 0.4),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

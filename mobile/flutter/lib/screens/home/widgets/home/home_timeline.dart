@@ -184,7 +184,47 @@ class HomeTimeline extends ConsumerWidget {
       // sibling Home tile rebuilding (or the shimmer sweep) doesn't force
       // the whole feed to re-rasterise.
       child: RepaintBoundary(
-        child: Container(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section header LIFTED OUT of the bordered box (I) — matches the
+            // HabitsSection "YOUR HABITS" pattern where the kicker sits above
+            // the content, not inside its frame. Uses the timeline-appropriate
+            // 'activity' glyph (the old 'check' read as a completed-task mark).
+            Padding(
+              padding: const EdgeInsets.only(left: 2, bottom: 8),
+              child: Row(
+                children: [
+                  LineIcon('activity', size: 16, color: c.textSecondary),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      // Signature kicker — Barlow Condensed uppercase eyebrow,
+                      // consistent with the other v2 home masthead headers.
+                      'TIMELINE',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: ZType.lbl(12,
+                          color: c.textSecondary, letterSpacing: 1.8),
+                    ),
+                  ),
+                  // Silent-refresh indicator: feed reloading, stale data shown.
+                  if (timelineState.isLoading && timelineState.days.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1.6,
+                          valueColor: AlwaysStoppedAnimation(c.textMuted),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: c.elevated,
@@ -194,36 +234,6 @@ class HomeTimeline extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                LineIcon('check', size: 16, color: c.textSecondary),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Text(
-                    // Signature kicker — Barlow Condensed uppercase eyebrow,
-                    // consistent with the other v2 home masthead headers.
-                    'TIMELINE',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: ZType.lbl(12, color: c.textPrimary),
-                  ),
-                ),
-                // Silent-refresh indicator: feed reloading but stale data shown.
-                if (timelineState.isLoading && timelineState.days.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.6,
-                        valueColor: AlwaysStoppedAnimation(c.textMuted),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
             // Trend rail — global last-14-day metric sparklines (self-hides
             // when there's no data). Reads its own providers.
             const TimelineTrendsRail(),
@@ -245,6 +255,8 @@ class HomeTimeline extends ConsumerWidget {
             ),
           ],
         ),
+        ),
+          ],
         ),
       ),
     );

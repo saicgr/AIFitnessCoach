@@ -5,13 +5,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/today_workout.dart';
 import '../providers/today_workout_provider.dart';
+import '../repositories/workout_repository.dart';
 import '../repositories/nutrition_repository.dart';
 import '../repositories/hydration_repository.dart';
 import '../providers/nutrition_preferences_provider.dart';
+import '../../core/providers/timezone_provider.dart';
 import '../../utils/tz.dart';
 import 'api_client.dart';
+import 'data_cache_service.dart';
 
 /// Pre-fetches all home screen data via the /home/bootstrap endpoint
 /// during the splash → home transition so the home screen renders instantly.
@@ -242,11 +244,38 @@ class BootstrapPrefetchService {
       // Pre-seed today workout cache
       _preSeedWorkout(data['today_workout']);
 
+      // Warm the FULL week list during splash. The hero carousel (Workouts
+      // tab) renders one card per scheduled day from `workoutsProvider`, which
+      // otherwise only starts loading when that tab is first opened — so the
+      // user saw the next-workout card paint first, then the rest of the week
+      // fill in piecemeal. Kicking off the real /workouts/ fetch here (parallel
+      // to bootstrap, in-memory + disk cached via WorkoutsNotifier) means the
+      // whole week is ready before the tab is reached. Fire-and-forget; full
+      // `Workout` objects (no summary/detail fidelity gap).
+      // ignore: unawaited_futures
+      ref.read(workoutsProvider.notifier).refresh();
+
       // Pre-seed nutrition data
       _preSeedNutrition(ref, data['nutrition_summary']);
 
       // Pre-seed hydration data
       _preSeedHydration(ref, data['hydration']);
+
+      // Warm the coach hero (J). The /home/bootstrap payload does NOT carry the
+      // Gemini coach insight, so a fresh install used to wait on a cold
+      // /coach/daily-insight round-trip behind the hero skeleton. If the
+      // payload one day starts including it we seed from there; otherwise we
+      // fetch it in parallel here and write it THROUGH to the same disk cache
+      // (DataCacheService.coachInsightKey) the provider reads cache-first — so
+      // the hero paints real content on first frame, skeleton only as a brief
+      // flash. The provider's user?.id gate is untouched. Fire-and-forget.
+      final coachFromBootstrap = data['coach_insight'];
+      if (coachFromBootstrap is Map<String, dynamic>) {
+        await _cacheCoachInsight(uid, coachFromBootstrap);
+      } else {
+        // ignore: unawaited_futures
+        _prefetchCoachInsight(ref, uid);
+      }
 
       // Persist the raw blob to disk so the NEXT cold start can pre-hydrate
       // Home before the first frame (see [hydrateFromDiskBlob]). Wrapped in a
@@ -355,5 +384,62 @@ class BootstrapPrefetchService {
     } catch (e) {
       debugPrint('⚠️ [Bootstrap] Hydration pre-seed failed: $e');
     }
+  }
+
+  /// Fetch the coach daily-insight in parallel with the rest of bootstrap and
+  /// write it through to the disk cache the hero reads cache-first (J). Skips
+  /// the network entirely when a non-expired, same-local-day entry already
+  /// exists (a warm start already paints from it), so this only costs a round
+  /// trip on the genuine cold/first-paint case. Best-effort — a failure just
+  /// means the hero falls back to its own provider fetch, exactly as before.
+  static Future<void> _prefetchCoachInsight(Ref ref, String uid) async {
+    try {
+      // Already warm? Don't burn a fetch — the provider will paint from disk.
+      final existing = await DataCacheService.instance.getCached(
+        DataCacheService.coachInsightKey,
+        userId: uid,
+      );
+      if (existing != null) return;
+
+      // Resolve the timezone the same way the provider does. The notifier
+      // hydrates from cache synchronously on creation, so reading it here in
+      // the redirect window almost always yields the real IANA zone; if it's
+      // still loading we fall back to the device offset name (the server treats
+      // an unknown tz leniently and the morning refresh corrects it).
+      final tzState = ref.read(timezoneProvider);
+      final tz = tzState.isLoading ? DateTime.now().timeZoneName : tzState.timezone;
+
+      final api = ref.read(apiClientProvider);
+      final res = await api.get<Map<String, dynamic>>(
+        '/coach/daily-insight',
+        queryParameters: {
+          'date': Tz.localDate(),
+          'tz': tz,
+          'source': 'home',
+        },
+      );
+      final data = res.data;
+      if (data is! Map<String, dynamic>) return;
+      await _cacheCoachInsight(uid, data);
+      debugPrint('⚡ [Bootstrap] Coach insight prefetched + cached');
+    } catch (e) {
+      debugPrint('⚠️ [Bootstrap] Coach insight prefetch failed: $e');
+    }
+  }
+
+  /// Write a coach-insight payload through to the hero's disk cache. Mirrors
+  /// the provider's guard: never persist a server deterministic_fallback over
+  /// the cache (it would downgrade the hero to a template), and never persist
+  /// an empty insight.
+  static Future<void> _cacheCoachInsight(
+      String uid, Map<String, dynamic> data) async {
+    final isServerFallback =
+        (data['delivery'] as String?) == 'deterministic_fallback' ||
+            (data['source'] as String?) == 'deterministic_fallback';
+    final headline = (data['headline'] as String?)?.trim() ?? '';
+    final body = (data['body'] as String?)?.trim() ?? '';
+    if (isServerFallback || (headline.isEmpty && body.isEmpty)) return;
+    await DataCacheService.instance
+        .cache(DataCacheService.coachInsightKey, data, userId: uid);
   }
 }

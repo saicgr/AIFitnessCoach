@@ -17,8 +17,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderProxyBox;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' show NumberFormat;
 
 import '../../../core/theme/app_typography.dart';
+import '../../../widgets/design_system/zealova_stat_tile.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/sleep_score_provider.dart';
@@ -150,6 +152,63 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
   /// "Show more" / "Show less" toggle. The toggle only appears when the text
   /// actually exceeds 3 lines (measured), so short tips show no link. The full
   /// tip is always reachable inline — nothing is truncated away.
+  /// A 2-cell stat band — "Protein left" / "Calories left" — promoting the
+  /// values that were previously buried inside the to-do detail text into a
+  /// glanceable row. Reads the SAME nutrition providers the to-do section uses
+  /// (no new data path): protein left = currentProteinTarget − eatenProtein,
+  /// calories left = currentCalorieTarget − eatenCal, both 0-floor clamped.
+  /// Built from [ZealovaStatTile] + [ZType] + [ThemeColors] so it inherits the
+  /// signature-v2 typography rather than inventing a bespoke surface. Hidden
+  /// when no calorie target exists yet (e.g. a fresh install pre-onboarding).
+  Widget _statBand(ThemeColors c) {
+    final prefs = ref.watch(nutritionPreferencesProvider);
+    final nut = ref.watch(dailyNutritionProvider(todayNutritionKey()));
+    final calTarget = prefs.currentCalorieTarget;
+    final pTarget = prefs.currentProteinTarget;
+    if (calTarget <= 0) return const SizedBox.shrink();
+
+    final eatenCal = (nut.summary?.totalCalories ?? 0).round();
+    final eatenP = (nut.summary?.totalProteinG ?? 0).round();
+    final calLeft = (calTarget - eatenCal).clamp(0, calTarget);
+    final pLeft = pTarget > 0 ? (pTarget - eatenP).clamp(0, pTarget) : 0;
+    final nf = NumberFormat.decimalPattern();
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: c.glassSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: c.cardBorder),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: ZealovaStatTile(
+                value: pTarget > 0 ? '$pLeft' : '—',
+                unit: pTarget > 0 ? 'g' : null,
+                label: 'Protein left',
+                valueSize: 24,
+                accentValue: true,
+              ),
+            ),
+            Container(width: 1, height: 30, color: c.cardBorder),
+            const SizedBox(width: 14),
+            Expanded(
+              child: ZealovaStatTile(
+                value: nf.format(calLeft),
+                unit: 'kcal',
+                label: 'Calories left',
+                valueSize: 24,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// The "TO DO TODAY" checklist — the day's coach tasks, each wired to real
   /// provider data (protein intake vs target, today's workout completion, last
   /// night's sleep). Self-hides if there's nothing actionable to show.
@@ -439,6 +498,13 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             c, insight.body.replaceAll('\n', ' ').replaceAll('  ', ' '),
           ),
         ],
+        // Stat band — promotes the buried "left" values (protein + calories
+        // remaining) into a glanceable 2-cell row above the to-dos. Built from
+        // the signature-v2 ZealovaStatTile so it conforms to the design system
+        // (Anton numeral + Barlow label), sourced from the same nutrition
+        // providers the to-do section reads. Self-hides when no calorie target
+        // is configured (fresh install before onboarding sets one).
+        _statBand(c),
         // TO DO TODAY — the day's coach tasks (protein / workout / sleep),
         // each wired to real data with live progress + a checkbox (spec).
         _todoSection(c),
