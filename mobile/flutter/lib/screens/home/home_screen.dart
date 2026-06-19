@@ -63,6 +63,7 @@ import 'widgets/readiness_tile.dart';
 import 'widgets/score_change_announcement_sheet.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
+import 'widgets/hero_fasting_card.dart';
 import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
 import 'widgets/home/unified_home_widgets.dart';
@@ -1364,6 +1365,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // returns SizedBox.shrink() unless its gate fires, so this Column
     // is cheap even with all 80 imports present.
     slivers.add(const SliverToBoxAdapter(child: ExtendedHomeCardsStack()));
+
+    // Active fast → prominent live hero above the timeline. Hidden entirely
+    // when not fasting so Home stays uncluttered (the timeline still shows an
+    // at-a-glance fasting row).
+    if (ref.watch(fastingProvider.select((s) => s.activeFast != null))) {
+      slivers.add(const SliverToBoxAdapter(child: HeroFastingCard()));
+    }
 
     // Timeline always renders LAST (issue 7) — after every section and the
     // contextual card stack — so it's the final card on the Home scroll.

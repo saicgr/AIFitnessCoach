@@ -2,15 +2,22 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/design_system/zealova.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 /// Hero fasting card - prominent action-focused fasting display
-/// Shows current fast progress or start fast button
+/// Shows current fast progress or start fast button.
+///
+/// Signature v2 styling: ZealovaCard hero variant (accent left edge), Anton
+/// hero numerals, Barlow Condensed labels/chips. The live 1s timer + progress
+/// + zone logic is unchanged.
 class HeroFastingCard extends ConsumerStatefulWidget {
   const HeroFastingCard({super.key});
 
@@ -67,10 +74,7 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final tc = ThemeColors.of(context);
 
     final fastingState = ref.watch(fastingProvider);
     final hasFast = fastingState.hasFast;
@@ -92,279 +96,276 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
     // Get current zone
     final zone = activeFast?.currentZone;
 
+    // Ring goes accent until the goal is reached, then success.
+    final ringColor = progress >= 1.0 ? AppColors.success : tc.accent;
+
+    // "EAT AT h:mm a" — the moment the fasting window closes. Derived from the
+    // fast's start time + the target window so it stays stable across ticks.
+    String? eatAtLabel;
+    if (hasFast && activeFast != null) {
+      final eatAt = activeFast.startTime.add(Duration(hours: targetHours));
+      eatAtLabel = DateFormat('h:mm a').format(eatAt);
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      child: Container(
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: AppColors.orange.withValues(alpha: 0.4),
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.orange.withValues(alpha: 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+      child: ZealovaCard(
+        variant: ZealovaCardVariant.hero,
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+        radius: 18,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Status badge — Barlow uppercase
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              decoration: BoxDecoration(
+                color: (hasFast ? AppColors.success : tc.accent)
+                    .withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                hasFast
+                    ? AppLocalizations.of(context).heroFastingCardFasting
+                    : AppLocalizations.of(context).heroFastingCardNotFasting,
+                style: ZType.lbl(
+                  11,
+                  color: hasFast ? AppColors.success : tc.accent,
+                  letterSpacing: 1.8,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            if (hasFast && activeFast != null) ...[
+              // Elapsed time — Anton hero numeral
+              Text(
+                AppLocalizations.of(context).heroFastingCardHM(hours, mins),
+                style: ZType.disp(40, color: tc.textPrimary),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                AppLocalizations.of(context)
+                    .heroFastingCardOfHGoal(targetHours)
+                    .toUpperCase(),
+                style: ZType.lbl(12, color: tc.textMuted),
+              ),
+              const SizedBox(height: 16),
+
+              // Circular progress — bigger
+              SizedBox(
+                width: 120,
+                height: 120,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      height: 120,
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 10,
+                        backgroundColor: tc.isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.05),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(ringColor),
+                      ),
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${(progress * 100).round()}%',
+                          style: ZType.disp(26, color: tc.textPrimary),
+                        ),
+                        if (zone != null)
+                          Icon(
+                            Icons.local_fire_department,
+                            color: zone.color,
+                            size: 22,
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Zone chip — keep zone color semantics
+              if (zone != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: zone.color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    zone.displayName.toUpperCase(),
+                    style: ZType.lbl(11, color: zone.color),
+                  ),
+                ),
+
+              // "EAT AT h:mm a" — when the eating window opens.
+              if (eatAtLabel != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  'EAT AT $eatAtLabel',
+                  style: ZType.lbl(12, color: tc.textSecondary),
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // End Fast button — success fill
+              _FastingActionButton(
+                label: AppLocalizations.of(context).heroFastingCardEndFast,
+                icon: Icons.check_circle_outline,
+                background: AppColors.success,
+                onPressed: _userId == null
+                    ? null
+                    : () async {
+                        HapticService.medium();
+                        await ref.read(fastingProvider.notifier).endFast(
+                              userId: _userId!,
+                            );
+                      },
+              ),
+            ] else ...[
+              // Not fasting state — bigger icon + more content
+              const SizedBox(height: 8),
+              Icon(
+                Icons.timer_outlined,
+                size: 72,
+                color: tc.accent.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                AppLocalizations.of(context)
+                    .heroFastingCardReadyToFast
+                    .toUpperCase(),
+                style: ZType.disp(24, color: tc.textPrimary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                (preferences != null
+                        ? AppLocalizations.of(context)
+                            .heroFastingCardProtocol(preferences.defaultProtocol)
+                        : 'Intermittent fasting')
+                    .toUpperCase(),
+                style: ZType.lbl(12, color: tc.textMuted),
+              ),
+              const SizedBox(height: 14),
+              // Benefit hints
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _FastingBenefit(
+                      icon: Icons.local_fire_department,
+                      label: AppLocalizations.of(context)
+                          .heroFastingCardBurnFat),
+                  const SizedBox(width: 16),
+                  _FastingBenefit(
+                      icon: Icons.auto_fix_high,
+                      label: AppLocalizations.of(context)
+                          .heroFastingCardAutophagy),
+                  const SizedBox(width: 16),
+                  _FastingBenefit(
+                      icon: Icons.bolt,
+                      label: AppLocalizations.of(context)
+                          .workoutSummaryGeneralEnergy),
+                ],
+              ),
+              const SizedBox(height: 16),
+
+              // Start Fast button — orange/accent fill
+              _FastingActionButton(
+                label: AppLocalizations.of(context).heroFastingCardStartFast,
+                icon: Icons.play_arrow_rounded,
+                background: AppColors.orange,
+                onPressed: _userId == null
+                    ? null
+                    : () async {
+                        HapticService.medium();
+                        final protocol = FastingProtocol.fromString(
+                            preferences?.defaultProtocol ?? '16:8');
+                        await ref.read(fastingProvider.notifier).startFast(
+                              userId: _userId!,
+                              protocol: protocol,
+                            );
+                      },
+              ),
+            ],
+            const SizedBox(height: 6),
+
+            // View Details
+            TextButton.icon(
+              onPressed: () {
+                HapticService.light();
+                context.push('/fasting');
+              },
+              icon: Icon(
+                Icons.insights_outlined,
+                size: 16,
+                color: tc.textMuted,
+              ),
+              label: Text(
+                AppLocalizations.of(context).heroWorkoutCardViewDetails,
+                style: ZType.lbl(11, color: tc.textMuted),
+              ),
             ),
           ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Status badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: hasFast
-                      ? AppColors.success.withValues(alpha: 0.15)
-                      : AppColors.orange.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  hasFast ? AppLocalizations.of(context).heroFastingCardFasting : AppLocalizations.of(context).heroFastingCardNotFasting,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: hasFast ? AppColors.success : AppColors.orange,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
+      ),
+    );
+  }
+}
 
-              if (hasFast && activeFast != null) ...[
-                // Elapsed time
-                Text(
-                  AppLocalizations.of(context)!.heroFastingCardHM(hours, mins),
-                  style: TextStyle(
-                    fontSize: 40,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                Text(
-                  AppLocalizations.of(context)!.heroFastingCardOfHGoal(targetHours),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 14),
+/// Full-width Signature CTA — solid fill, Barlow uppercase label, rounded ~14.
+class _FastingActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color background;
+  final VoidCallback? onPressed;
 
-                // Circular progress — bigger
-                SizedBox(
-                  width: 120,
-                  height: 120,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        width: 120,
-                        height: 120,
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 10,
-                          backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.05),
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            progress >= 1.0 ? AppColors.success : AppColors.orange,
-                          ),
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '${(progress * 100).round()}%',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: textPrimary,
-                            ),
-                          ),
-                          if (zone != null)
-                            Icon(
-                              Icons.local_fire_department,
-                              color: zone.color,
-                              size: 22,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
+  const _FastingActionButton({
+    required this.label,
+    required this.icon,
+    required this.background,
+    required this.onPressed,
+  });
 
-                // Zone info
-                if (zone != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: zone.color.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      zone.displayName,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: zone.color,
-                      ),
-                    ),
-                  ),
-
-                const Spacer(),
-
-                // End Fast button
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _userId == null
-                        ? null
-                        : () async {
-                            HapticService.medium();
-                            await ref.read(fastingProvider.notifier).endFast(
-                                  userId: _userId!,
-                                );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle_outline, size: 20),
-                        SizedBox(width: 8),
-                        Text(
-                          AppLocalizations.of(context).heroFastingCardEndFast,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ] else ...[
-                // Not fasting state — bigger icon + more content
-                const SizedBox(height: 8),
-                Icon(
-                  Icons.timer_outlined,
-                  size: 72,
-                  color: AppColors.orange.withValues(alpha: 0.5),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  AppLocalizations.of(context).heroFastingCardReadyToFast,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  preferences != null
-                      ? AppLocalizations.of(context)!.heroFastingCardProtocol(preferences.defaultProtocol)
-                      : 'Intermittent fasting',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Benefit hints
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _FastingBenefit(icon: Icons.local_fire_department, label: AppLocalizations.of(context).heroFastingCardBurnFat, isDark: isDark),
-                    const SizedBox(width: 16),
-                    _FastingBenefit(icon: Icons.auto_fix_high, label: AppLocalizations.of(context).heroFastingCardAutophagy, isDark: isDark),
-                    const SizedBox(width: 16),
-                    _FastingBenefit(icon: Icons.bolt, label: AppLocalizations.of(context).workoutSummaryGeneralEnergy, isDark: isDark),
-                  ],
-                ),
-
-                const Spacer(),
-
-                // Start Fast button
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: _userId == null
-                        ? null
-                        : () async {
-                            HapticService.medium();
-                            final protocol = FastingProtocol.fromString(
-                                preferences?.defaultProtocol ?? '16:8');
-                            await ref.read(fastingProvider.notifier).startFast(
-                                  userId: _userId!,
-                                  protocol: protocol,
-                                );
-                          },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.play_arrow_rounded, size: 24),
-                        SizedBox(width: 8),
-                        Text(
-                          AppLocalizations.of(context).heroFastingCardStartFast,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              const SizedBox(height: 4),
-
-              // View Details
-              TextButton.icon(
-                onPressed: () {
-                  HapticService.light();
-                  context.push('/fasting');
-                },
-                icon: Icon(
-                  Icons.insights_outlined,
-                  size: 16,
-                  color: textSecondary,
-                ),
-                label: Text(
-                  AppLocalizations.of(context).heroWorkoutCardViewDetails,
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: background,
+          foregroundColor: Colors.white,
+          disabledBackgroundColor: background.withValues(alpha: 0.4),
+          disabledForegroundColor: Colors.white70,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 22, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(
+              label.toUpperCase(),
+              style: ZType.lbl(16, color: Colors.white, letterSpacing: 1.2),
+            ),
+          ],
         ),
       ),
     );
@@ -374,25 +375,23 @@ class _HeroFastingCardState extends ConsumerState<HeroFastingCard> {
 class _FastingBenefit extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool isDark;
 
   const _FastingBenefit({
     required this.icon,
     required this.label,
-    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final tc = ThemeColors.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 20, color: AppColors.orange.withValues(alpha: 0.7)),
+        Icon(icon, size: 20, color: tc.accent.withValues(alpha: 0.7)),
         const SizedBox(height: 4),
         Text(
-          label,
-          style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w500),
+          label.toUpperCase(),
+          style: ZType.lbl(10, color: tc.textSecondary, letterSpacing: 1.2),
         ),
       ],
     );
